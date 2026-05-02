@@ -1,36 +1,572 @@
-# Lumora live
+# Mutation introspection
 
-**URL:** https://
-**Health:** `curl: (6) Could not resolve host: api`
-
-## Diagnostic
+## Relevant mutations + arg shapes
+```json
+{
+  "name": "deploymentTriggerCreate",
+  "args": [
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "DeploymentTriggerCreateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "deploymentTriggerDelete",
+  "args": [
+    {
+      "name": "id",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "deploymentTriggerUpdate",
+  "args": [
+    {
+      "name": "id",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    },
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "DeploymentTriggerUpdateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "projectTokenCreate",
+  "args": [
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "ProjectTokenCreateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceConnect",
+  "args": [
+    {
+      "name": "id",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    },
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "ServiceConnectInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceCreate",
+  "args": [
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "ServiceCreateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceDomainCreate",
+  "args": [
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "ServiceDomainCreateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceDomainDelete",
+  "args": [
+    {
+      "name": "id",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceDomainUpdate",
+  "args": [
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "ServiceDomainUpdateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceInstanceAutoDeployUpdate",
+  "args": [
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "ServiceInstanceAutoDeployUpdateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceInstanceDeploy",
+  "args": [
+    {
+      "name": "commitSha",
+      "type": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    },
+    {
+      "name": "environmentId",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    },
+    {
+      "name": "latestCommit",
+      "type": {
+        "name": "Boolean",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    },
+    {
+      "name": "serviceId",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceInstanceDeployV2",
+  "args": [
+    {
+      "name": "commitSha",
+      "type": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    },
+    {
+      "name": "environmentId",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    },
+    {
+      "name": "serviceId",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceInstanceLimitsUpdate",
+  "args": [
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "ServiceInstanceLimitsUpdateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceInstanceRedeploy",
+  "args": [
+    {
+      "name": "environmentId",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    },
+    {
+      "name": "serviceId",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
+{
+  "name": "serviceInstanceUpdate",
+  "args": [
+    {
+      "name": "environmentId",
+      "type": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    },
+    {
+      "name": "input",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "ServiceInstanceUpdateInput",
+          "kind": "INPUT_OBJECT",
+          "ofType": null
+        }
+      }
+    },
+    {
+      "name": "serviceId",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "String",
+          "kind": "SCALAR",
+          "ofType": null
+        }
+      }
+    }
+  ]
+}
 ```
-EID=4d8c32c6-f62b-4bbc-85ca-3403bb22e397 SID=e8c4d684-c92b-4346-899d-498f580841ae
-projectTokenCreate raw: {"errors":[{"message":"Problem processing request","traceId":"3658762987905382985"}]}
-have PROJECT_TOKEN: no
-=== whoami with project token ===
-Unauthorized. Please check that your RAILWAY_TOKEN is valid and has access to the resource you're trying to use.
-=== link ===
-Unauthorized. Please check that your RAILWAY_TOKEN is valid and has access to the resource you're trying to use.
-Invalid RAILWAY_TOKEN. Please check that it is valid and has access to the resource you're trying to use.
-=== variables ===
-Invalid RAILWAY_TOKEN. Please check that it is valid and has access to the resource you're trying to use.
-=== volume ===
-Invalid RAILWAY_TOKEN. Please check that it is valid and has access to the resource you're trying to use.
-=== up ===
-Invalid RAILWAY_TOKEN. Please check that it is valid and has access to the resource you're trying to use.
-create-domain: {"errors":[{"message":"Problem processing request","traceId":"7456595542546575246"}]}
-DOMAIN=
-health 1: curl: (6) Could not resolve host: api
-health 2: curl: (6) Could not resolve host: api
-health 3: curl: (6) Could not resolve host: api
-health 4: curl: (6) Could not resolve host: api
-health 5: curl: (6) Could not resolve host: api
-health 6: curl: (6) Could not resolve host: api
-health 7: curl: (6) Could not resolve host: api
-health 8: curl: (6) Could not resolve host: api
-health 9: curl: (6) Could not resolve host: api
-health 10: curl: (6) Could not resolve host: api
-health 11: curl: (6) Could not resolve host: api
-health 12: curl: (6) Could not resolve host: api
+
+## Detail: ServiceCreateInput
+```json
+{
+  "data": {
+    "__type": {
+      "name": "ServiceCreateInput",
+      "inputFields": [
+        {
+          "name": "branch",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "environmentId",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "icon",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "name",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "projectId",
+          "type": {
+            "name": null,
+            "kind": "NON_NULL",
+            "ofType": {
+              "name": "String",
+              "kind": "SCALAR"
+            }
+          }
+        },
+        {
+          "name": "registryCredentials",
+          "type": {
+            "name": "RegistryCredentialsInput",
+            "kind": "INPUT_OBJECT",
+            "ofType": null
+          }
+        },
+        {
+          "name": "source",
+          "type": {
+            "name": "ServiceSourceInput",
+            "kind": "INPUT_OBJECT",
+            "ofType": null
+          }
+        },
+        {
+          "name": "templateId",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "templateServiceId",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "variables",
+          "type": {
+            "name": "EnvironmentVariables",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## Detail: ServiceConnectInput
+```json
+{
+  "data": {
+    "__type": {
+      "name": "ServiceConnectInput",
+      "inputFields": [
+        {
+          "name": "branch",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "image",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "repo",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## Detail: ServiceSourceInput
+```json
+{
+  "data": {
+    "__type": {
+      "name": "ServiceSourceInput",
+      "inputFields": [
+        {
+          "name": "image",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        },
+        {
+          "name": "repo",
+          "type": {
+            "name": "String",
+            "kind": "SCALAR",
+            "ofType": null
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## Detail: ProjectTokenCreateInput
+```json
+{
+  "data": {
+    "__type": {
+      "name": "ProjectTokenCreateInput",
+      "inputFields": [
+        {
+          "name": "environmentId",
+          "type": {
+            "name": null,
+            "kind": "NON_NULL",
+            "ofType": {
+              "name": "String",
+              "kind": "SCALAR"
+            }
+          }
+        },
+        {
+          "name": "name",
+          "type": {
+            "name": null,
+            "kind": "NON_NULL",
+            "ofType": {
+              "name": "String",
+              "kind": "SCALAR"
+            }
+          }
+        },
+        {
+          "name": "projectId",
+          "type": {
+            "name": null,
+            "kind": "NON_NULL",
+            "ofType": {
+              "name": "String",
+              "kind": "SCALAR"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
 ```
