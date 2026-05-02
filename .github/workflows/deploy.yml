@@ -18,26 +18,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Railway CLI
+      - name: Install Railway CLI (npm — pinned)
         run: |
-          curl -fsSL https://railway.com/install.sh | sh
-          echo "$HOME/.railway/bin" >> "$GITHUB_PATH"
+          npm i -g @railway/cli@latest
+          railway --version
 
-      - name: Verify auth
+      - name: Probe both auth env vars
         env:
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway whoami
-
-      - name: Init or link project
-        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway init --name lumora 2>&1 | tee /tmp/init.log || true
-          # Show current link
-          railway status 2>&1 || true
+          echo "--- whoami via RAILWAY_API_TOKEN only ---"
+          (env -u RAILWAY_TOKEN railway whoami 2>&1 || echo "[fail-API-only]") | head -5
+          echo
+          echo "--- whoami via RAILWAY_TOKEN only ---"
+          (env -u RAILWAY_API_TOKEN railway whoami 2>&1 || echo "[fail-PROJ-only]") | head -5
+          echo
+          echo "--- list (test command) ---"
+          railway list 2>&1 | head -20 || true
+
+      - name: Init project (uses whichever env worked)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          set -e
+          railway init --name lumora 2>&1 | tee /tmp/init.log
 
       - name: Set env vars
         env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           railway variables \
@@ -46,27 +56,39 @@ jobs:
             --set "BRAND_NAME=Lumora" \
             --set "CLAUDE_MODEL=claude-opus-4-7" \
             --set "DEMO_MODE=auto" \
-            --set "DB_PATH=/data/lumora.db"
+            --set "DB_PATH=/data/lumora.db" 2>&1 | tee /tmp/vars.log
 
-      - name: Add persistent volume
+      - name: Add volume
         env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway volume add --mount-path /data 2>&1 | tee -a /tmp/init.log || true
+        run: railway volume add --mount-path /data 2>&1 | tee /tmp/vol.log || true
 
       - name: Deploy
         env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --ci
+        run: railway up --ci 2>&1 | tee /tmp/up.log
 
-      - name: Generate public domain
+      - name: Generate domain
         env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway domain 2>&1 | tee /tmp/domain.log || true
 
-      - name: Summary
+      - name: Status
         if: always()
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          echo "## Lumora deploy summary" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          tail -n 60 /tmp/init.log /tmp/domain.log 2>/dev/null >> "$GITHUB_STEP_SUMMARY" || true
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "## Railway deploy logs" >> "$GITHUB_STEP_SUMMARY"
+          for f in /tmp/init.log /tmp/vars.log /tmp/vol.log /tmp/up.log /tmp/domain.log; do
+            if [ -f "$f" ]; then
+              echo -e "\n### $f" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              tail -n 50 "$f" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          railway status 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
