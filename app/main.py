@@ -179,6 +179,47 @@ onsubmit='event.preventDefault(); fetch("/api/portal/pay-stub",{{method:"POST",h
 <p><a href='/account.html'>← Back to my account</a></p></div></body></html>"""
 
 
+
+
+# ---------- iCalendar (.ics) export for a booking ----------
+@app.get("/api/booking/{bid}/calendar.ics")
+def booking_ics(bid: str):
+    from fastapi.responses import Response
+    with db.connect() as c:
+        r = c.execute("SELECT * FROM bookings WHERE id=?", (bid,)).fetchone()
+    if not r:
+        raise HTTPException(404, "booking not found")
+    b = db.row_to_dict(r)
+    # Build ICS body — escape commas/semicolons/newlines per RFC 5545
+    def esc(t): return (t or "").replace("\\","\\\\").replace(",","\\,").replace(";","\\;").replace("\n","\\n")
+    start = b["target_date"].replace("-","") + "T" + b["time_slot"].replace(":","") + "00"
+    # +2 hour default duration (Asia/Dubai)
+    from datetime import datetime, timedelta
+    sdt = datetime.fromisoformat(b["target_date"] + "T" + b["time_slot"] + ":00")
+    edt = sdt + timedelta(hours=2)
+    end = edt.strftime("%Y%m%dT%H%M00")
+    brand = settings.brand()
+    ics = (
+        "BEGIN:VCALENDAR\r\n"
+        "VERSION:2.0\r\n"
+        f"PRODID:-//{brand['name']}//Booking//EN\r\n"
+        "CALSCALE:GREGORIAN\r\n"
+        "METHOD:PUBLISH\r\n"
+        "BEGIN:VEVENT\r\n"
+        f"UID:{b['id']}@{brand['domain']}\r\n"
+        f"DTSTART;TZID=Asia/Dubai:{start}\r\n"
+        f"DTEND;TZID=Asia/Dubai:{end}\r\n"
+        f"SUMMARY:{esc(brand['name'] + ' - ' + b['service_id'].replace('_',' '))}\r\n"
+        f"DESCRIPTION:{esc('Booking ' + b['id'] + '. Track at https://' + brand['domain'] + '/me.html?b=' + b['id'])}\r\n"
+        f"LOCATION:{esc(b['address'])}\r\n"
+        "STATUS:CONFIRMED\r\n"
+        "END:VEVENT\r\n"
+        "END:VCALENDAR\r\n"
+    )
+    return Response(content=ics, media_type="text/calendar",
+                    headers={"Content-Disposition": f'attachment; filename="{b["id"]}.ics"'})
+
+
 # ---------- static frontend (mounted last so /api/* take precedence) ----------
 if settings.WEB_DIR.exists():
     app.mount("/widget", StaticFiles(directory=str(settings.WEB_DIR), html=False), name="widget")

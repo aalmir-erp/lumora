@@ -15,7 +15,7 @@
 
 <div id="shell" class="admin-shell" style="display:none">
   <aside class="admin-side">
-    <div style="margin-bottom:24px"><img src="/logo.svg" height="32" style="filter:brightness(0) invert(1)"></div>
+    <div style="margin-bottom:24px;display:flex;align-items:center;gap:8px"><img src="/logo.svg" height="32" style="filter:brightness(0) invert(1)"><span id="admin-ver" style="font-size:10px;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:6px;font-weight:600">v—</span></div>
     <a href="#dashboard" class="active" data-tab="dashboard">📊 Dashboard</a>
     <a href="#bookings"  data-tab="bookings">📋 Bookings</a>
     <a href="#convos"    data-tab="convos">💬 Conversations</a>
@@ -142,6 +142,7 @@ document.querySelectorAll(".admin-side [data-tab]").forEach(a =>
   a.addEventListener("click", e => { e.preventDefault(); show(a.dataset.tab); }));
 
 async function boot() {
+  fetch("/api/health").then(r=>r.json()).then(j => { document.getElementById("admin-ver").textContent = "v" + j.version; }).catch(()=>{});
   document.getElementById("login").style.display = "none";
   document.getElementById("shell").style.display = "";
   show("dashboard");
@@ -150,11 +151,44 @@ async function boot() {
 
 async function loadDash() {
   const s = await adm("/api/admin/stats");
+  // 14-day bookings series for sparkline
+  let series = await adm("/api/admin/bookings?limit=300").then(r => r.bookings).catch(() => []);
+  const byDay = {};
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    byDay[d.toISOString().slice(0,10)] = 0;
+  }
+  series.forEach(b => {
+    const day = (b.created_at || "").slice(0,10);
+    if (day in byDay) byDay[day]++;
+  });
+  const vals = Object.values(byDay);
+  const maxV = Math.max(1, ...vals);
+  const path = vals.map((v,i) => {
+    const x = (i / (vals.length-1)) * 100;
+    const y = 30 - (v / maxV) * 28;
+    return (i===0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+  }).join(" ");
+  const spark = `<svg viewBox="0 0 100 30" style="width:100%;height:36px;margin-top:8px;display:block">
+    <path d="${path}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${path} L 100,30 L 0,30 Z" fill="color-mix(in srgb, var(--primary) 14%, transparent)"/>
+  </svg>`;
   document.getElementById("kpis").innerHTML = `
-    <div class="kpi"><div class="k">Bookings today</div><div class="v">${s.bookings_today}</div></div>
+    <div class="kpi"><div class="k">Bookings today</div><div class="v">${s.bookings_today}</div>${spark}</div>
     <div class="kpi"><div class="k">All bookings</div><div class="v">${s.bookings_total}</div></div>
     <div class="kpi"><div class="k">Revenue (paid)</div><div class="v">${s.revenue_aed} <small style="font-size:14px">AED</small></div></div>
     <div class="kpi"><div class="k">Active handoffs</div><div class="v">${s.active_handoffs}</div></div>`;
+  // Status distribution
+  const total = s.by_status.reduce((a,r)=>a+r.n, 0) || 1;
+  const colors = { pending:"#F59E0B", confirmed:"#0D9488", in_progress:"#3B82F6", completed:"#A78BFA", cancelled:"#EF4444" };
+  const bar = s.by_status.map(r => `<div style="flex:${r.n};background:${colors[r.status]||'#94A3B8'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;padding:8px;min-width:0;overflow:hidden;white-space:nowrap" title="${r.status}: ${r.n}">${r.status} ${r.n}</div>`).join("");
+  const existing = document.getElementById("status-bar");
+  if (existing) existing.remove();
+  const el = document.createElement("div");
+  el.id = "status-bar";
+  el.innerHTML = `<h3 style="margin:24px 0 8px">Booking status distribution</h3>
+    <div style="display:flex;border-radius:8px;overflow:hidden;height:36px;background:var(--bg)">${bar}</div>`;
+  document.querySelector("#t-dashboard").appendChild(el);
 }
 
 async function loadBookings() {

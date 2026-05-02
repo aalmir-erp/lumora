@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Booking confirmed • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
+<style>
+@keyframes confetti { 0% { transform: translateY(-30vh) rotate(0deg); opacity: 1 } 100% { transform: translateY(30vh) rotate(720deg); opacity: 0 } }
+.confetti { position: fixed; top: 0; pointer-events: none; z-index: 100; }
+.confetti span { position: absolute; width: 10px; height: 10px; animation: confetti 2.5s ease-out forwards; }
+.timeline { position: relative; padding-inline-start: 28px; }
+.timeline::before { content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.tl-step { position: relative; padding: 14px 0 14px 0; }
+.tl-step::before {
+  content: ""; position: absolute; left: -24px; top: 18px; width: 16px; height: 16px;
+  border-radius: 50%; background: var(--surface); border: 3px solid var(--border);
+}
+.tl-step.done::before { background: var(--primary); border-color: var(--primary); }
+.tl-step.now::before { background: var(--accent); border-color: var(--accent); animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 var(--accent)} 50%{box-shadow:0 0 0 8px transparent} }
+</style>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="40" alt="Lumora"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
+  <div class="nav-cta">
+    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Theme &amp; font">⚙️</button>
+    <a class="btn btn-primary" href="/me.html">My account</a>
+  </div>
+</div></nav>
+
+<div class="confetti" id="confetti"></div>
+
+<section style="padding-top:48px">
+  <div class="container" style="max-width:680px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:80px;line-height:1;margin-bottom:12px">🎉</div>
+      <h1 style="margin:0 0 8px">You're booked!</h1>
+      <p style="color:var(--muted);font-size:16px;margin:0">
+        Your booking <b id="bid">…</b> is confirmed. We'll WhatsApp you 30 min before your cleaner arrives.
+      </p>
+    </div>
+
+    <div id="info" class="form" style="margin-bottom:18px">Loading…</div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">
+      <a id="cal-link" class="btn btn-ghost" download>📅 Add to calendar</a>
+      <a id="wa-share" class="btn btn-ghost" target="_blank">📲 Share on WhatsApp</a>
+      <a class="btn btn-primary" href="/me.html">📋 Track booking →</a>
+    </div>
+
+    <div class="form">
+      <h3 style="margin:0 0 12px">What happens next</h3>
+      <div class="timeline">
+        <div class="tl-step done">
+          <b>Booking received</b>
+          <div style="color:var(--muted);font-size:13px">We've recorded your booking and notified the team.</div>
+        </div>
+        <div class="tl-step now">
+          <b>Cleaner being assigned</b>
+          <div style="color:var(--muted);font-size:13px">A trained, background-checked Lumora cleaner is being matched to your job (~30 min).</div>
+        </div>
+        <div class="tl-step">
+          <b>WhatsApp confirmation</b>
+          <div style="color:var(--muted);font-size:13px">You'll get the cleaner's name + ETA on WhatsApp 30 min before arrival.</div>
+        </div>
+        <div class="tl-step">
+          <b>Service delivered</b>
+          <div style="color:var(--muted);font-size:13px">Track live status from your account, sign the quote, pay digitally.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;color:var(--muted);font-size:13px">
+      Need to change something? <a href="https://wa.me/" id="wa-help">WhatsApp our team</a> any time.
+    </div>
+  </div>
+</section>
+
+<nav class="mobile-nav"><div class="mobile-nav-inner">
+  <a href="/"><span class="ico">🏠</span><span>Home</span></a>
+  <a href="/services.html"><span class="ico">📋</span><span>Services</span></a>
+  <a href="/book.html"><span class="ico">➕</span><span>Book</span></a>
+  <a href="/me.html" class="active"><span class="ico">👤</span><span>Account</span></a>
+  <a href="#" onclick="document.querySelector('.us-launcher').click();return false"><span class="ico">💬</span><span>Chat</span></a>
+</div></nav>
+
+<script src="/theme.js"></script>
+<script src="/app.js"></script>
+<script>
+// Confetti
+const colors = ["#0D9488","#F59E0B","#FCD34D","#A7F3D0","#FB7185"];
+const c = document.getElementById("confetti");
+for (let i = 0; i < 30; i++) {
+  const s = document.createElement("span");
+  s.style.left = (Math.random()*100) + "%";
+  s.style.background = colors[i%colors.length];
+  s.style.borderRadius = (i%2 ? "50%" : "0");
+  s.style.animationDelay = (Math.random()*0.6) + "s";
+  c.appendChild(s);
+}
+setTimeout(() => c.remove(), 3500);
+
+// Booking detail
+const bid = (new URLSearchParams(location.search)).get("id");
+document.getElementById("bid").textContent = bid || "—";
+if (!bid) { document.getElementById("info").innerHTML = "<p>Missing booking id.</p>"; }
+else {
+  fetch("/api/portal/booking/"+bid).then(r=>r.json()).then(j => {
+    if (!j.booking) throw new Error("not found");
+    const b = j.booking;
+    document.getElementById("info").innerHTML = `
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center">
+        <div>
+          <div style="font-weight:700;font-size:15px">${b.service_id.replace(/_/g,' ')}</div>
+          <div style="color:var(--muted);font-size:13px">📅 ${b.target_date} at ${b.time_slot}</div>
+          <div style="color:var(--muted);font-size:13px">📍 ${(b.address||'').replace(/[<>]/g,'')}</div>
+        </div>
+        <div style="text-align:end">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Estimated</div>
+          <div style="font-size:24px;font-weight:800;color:var(--primary)">${b.estimated_total||'—'} ${b.currency||'AED'}</div>
+        </div>
+      </div>`;
+    document.getElementById("cal-link").href = `/api/booking/${bid}/calendar.ics`;
+    const waBrand = (window.LUMORA_BRAND && window.LUMORA_BRAND.whatsapp) || "971564020087";
+    const waPhone = waBrand.replace(/[^0-9]/g, "");
+    const text = encodeURIComponent(`I just booked ${b.service_id.replace(/_/g,' ')} with Lumora on ${b.target_date} at ${b.time_slot}. Booking ${bid}. https://${(window.LUMORA_BRAND||{}).domain||'sales.mir.ae'}/me.html?b=${bid}`);
+    document.getElementById("wa-share").href = `https://wa.me/?text=${text}`;
+    document.getElementById("wa-help").href = `https://wa.me/${waPhone}?text=${encodeURIComponent("Hi, I need to update my booking " + bid)}`;
+  }).catch(e => { document.getElementById("info").innerHTML = "<p>Booking not found.</p>"; });
+}
+</script>
+<script src="/widget.js"></script>
+</body></html>

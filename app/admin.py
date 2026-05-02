@@ -501,3 +501,26 @@ def patch_brand(body: BrandPatch):
     db.log_event("brand", "global", "updated", actor="admin",
                  details={"keys": list(payload)})
     return {"ok": True, "brand": get_settings().brand()}
+
+
+# ---------- CSV exports ----------
+@router.get("/export/bookings.csv")
+def export_bookings_csv():
+    from fastapi.responses import Response
+    import csv, io
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT id, service_id, target_date, time_slot, customer_name, phone, "
+            "address, status, estimated_total, currency, created_at "
+            "FROM bookings ORDER BY created_at DESC"
+        ).fetchall()
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["id","service","date","time","customer","phone","address",
+                "status","total","currency","created_at"])
+    for r in rows:
+        w.writerow([r[k] for k in ("id","service_id","target_date","time_slot",
+                    "customer_name","phone","address","status",
+                    "estimated_total","currency","created_at")])
+    return Response(content=buf.getvalue(), media_type="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=lumora-bookings.csv"})

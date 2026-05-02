@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="/style.css">
 </head><body>
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36"></a>
+  <a href="/"><img src="/logo.svg" height="36"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-cta"><a class="btn btn-ghost" href="/account.html">My account</a></div>
 </div></nav>
 
@@ -94,4 +94,15 @@ function wireSignaturePad(q) {
 load();
 </script>
 <script src="/theme.js"></script>
+
+<nav class="mobile-nav" aria-label="Primary mobile">
+  <div class="mobile-nav-inner">
+    <a href="/"           data-mobnav="home"><span class="ico">🏠</span><span>Home</span></a>
+    <a href="/services.html" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
+    <a href="/book.html"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
+    <a href="/me.html"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
+    <a href="#" onclick="document.querySelector('.us-launcher').click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
+  </div>
+</nav>
+
 </body></html>

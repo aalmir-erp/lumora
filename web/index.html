@@ -255,7 +255,7 @@
 <body>
 
 <nav class="nav"><div class="nav-inner">
-  <a href="/" aria-label="Lumora home"><img src="/logo.svg" alt="Lumora" height="40"></a>
+  <a href="/" aria-label="Lumora home"><img src="/logo.svg" alt="Lumora" height="40"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
     <a href="/services.html" data-i18n="services">Services</a>
     <a href="#how">How it works</a>
@@ -265,7 +265,13 @@
   </div>
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Theme &amp; font" aria-label="Settings">⚙️</button>
-    <select class="lang-pick" aria-label="Language"></select>
+    <div class="lang-flags" role="group" aria-label="Language">
+      <button data-lang="en" title="English">🇬🇧</button>
+      <button data-lang="ar" title="العربية">🇦🇪</button>
+      <button data-lang="hi" title="हिन्दी">🇮🇳</button>
+      <button data-lang="tl" title="Filipino">🇵🇭</button>
+    </div>
+    <select class="lang-pick" hidden  aria-label="Language"></select>
     <a class="btn btn-ghost" href="/login.html">Sign in</a>
     <a class="btn btn-primary" href="/book.html" data-i18n="cta_book">Book now</a>
   </div>
@@ -352,7 +358,7 @@
   <div class="container">
     <h2 class="reveal">17 services. One platform.</h2>
     <p class="sub reveal">Pricing is competitive UAE-market and configurable from admin. All include 5% VAT.</p>
-    <div class="services-grid" id="svc-grid"><div style="color:var(--muted)">Loading…</div></div>
+    <div class="services-grid" id="svc-grid"><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div></div>
     <p style="text-align:center;margin-top:32px"><a class="btn btn-primary" href="/services.html">See all services →</a></p>
   </div>
 </section>
@@ -523,5 +529,16 @@ function askLumi(text) {
 </script>
 <script src="/widget.js" data-api-base=""></script>
 <script src="/theme.js"></script>
+
+<nav class="mobile-nav" aria-label="Primary mobile">
+  <div class="mobile-nav-inner">
+    <a href="/"           data-mobnav="home"><span class="ico">🏠</span><span>Home</span></a>
+    <a href="/services.html" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
+    <a href="/book.html"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
+    <a href="/me.html"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
+    <a href="#" onclick="document.querySelector('.us-launcher').click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
+  </div>
+</nav>
+
 </body>
 </html>

@@ -198,3 +198,118 @@ footer a { color: #cbd5e1; font-size: 13px; }
   .admin-shell { grid-template-columns: 1fr; }
   .admin-side { display: none; }
 }
+
+/* ============================================================
+   MOBILE BOTTOM NAV — visible on screens < 880px
+   ============================================================ */
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 99;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 16px rgba(15,23,42,.06);
+}
+.mobile-nav-inner { display: flex; justify-content: space-around; align-items: center; max-width: 600px; margin: 0 auto; }
+.mobile-nav a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 4px; text-decoration: none; color: var(--muted); font-size: 11px;
+  transition: color 0.15s;
+}
+.mobile-nav a .ico { font-size: 22px; line-height: 1; }
+.mobile-nav a.active, .mobile-nav a:hover { color: var(--primary); }
+@media (max-width: 880px) {
+  .mobile-nav { display: block; }
+  body { padding-bottom: 70px; } /* breathing room above the bar */
+  .nav-links { display: none; }   /* hide top nav links on mobile (we have bottom) */
+}
+
+/* ============================================================
+   SKELETON LOADERS
+   ============================================================ */
+@keyframes skel-shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+.skel {
+  background: linear-gradient(90deg, var(--bg) 0%, var(--border) 50%, var(--bg) 100%);
+  background-size: 200% 100%; animation: skel-shimmer 1.4s linear infinite;
+  border-radius: 8px;
+}
+.skel-line { height: 14px; margin: 6px 0; border-radius: 6px; }
+.skel-card {
+  background: var(--surface); padding: 16px; border-radius: 14px;
+  border: 1px solid var(--border); margin-bottom: 12px;
+}
+
+/* ============================================================
+   TRUST BADGES (re-usable)
+   ============================================================ */
+.tbadges { display: flex; flex-wrap: wrap; gap: 8px; }
+.tbadge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  color: var(--primary-dark); border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600;
+}
+.tbadge.gold { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+.tbadge.green { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+
+/* ============================================================
+   STAR RATING DISPLAY
+   ============================================================ */
+.stars-inline { color: #F59E0B; letter-spacing: 1px; font-size: 14px; }
+
+/* ============================================================
+   DARK THEME POLISH — patch hardcoded shades to use vars
+   ============================================================ */
+[data-theme="dark"] .nav, [data-theme="midnight"] .nav {
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom-color: var(--border);
+}
+[data-theme="dark"] body, [data-theme="midnight"] body { color: var(--text); }
+[data-theme="dark"] .form, [data-theme="midnight"] .form,
+[data-theme="dark"] .review, [data-theme="midnight"] .review,
+[data-theme="dark"] .feat, [data-theme="midnight"] .feat,
+[data-theme="dark"] .step, [data-theme="midnight"] .step,
+[data-theme="dark"] .why, [data-theme="midnight"] .why,
+[data-theme="dark"] .price-card, [data-theme="midnight"] .price-card,
+[data-theme="dark"] .svc-card, [data-theme="midnight"] .svc-card,
+[data-theme="dark"] .kpi, [data-theme="midnight"] .kpi {
+  background: var(--surface); color: var(--text); border-color: var(--border);
+}
+[data-theme="dark"] .area-tag, [data-theme="midnight"] .area-tag {
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--primary); border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+}
+[data-theme="dark"] details.faq, [data-theme="midnight"] details.faq {
+  background: var(--surface); color: var(--text); border-color: var(--border);
+}
+[data-theme="dark"] details.faq[open], [data-theme="midnight"] details.faq[open] {
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+}
+[data-theme="dark"] .hero-bg, [data-theme="midnight"] .hero-bg {
+  background:
+    radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 40%),
+    radial-gradient(circle at 80% 30%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 40%),
+    var(--bg);
+}
+[data-theme="dark"] .trust-bar, [data-theme="midnight"] .trust-bar {
+  background: var(--surface); color: var(--text);
+}
+
+/* High-contrast focus for accessibility */
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* ============================================================
+   ONE-CLICK LANGUAGE FLAG PICKER
+   ============================================================ */
+.lang-flags { display: inline-flex; gap: 4px; background: var(--bg);
+  padding: 4px; border-radius: 999px; border: 1px solid var(--border); }
+.lang-flags button {
+  width: 32px; height: 32px; border: 0; border-radius: 50%; cursor: pointer;
+  background: transparent; font-size: 16px; padding: 0; transition: all 0.15s;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.lang-flags button:hover { transform: scale(1.15); }
+.lang-flags button.active {
+  background: var(--surface); box-shadow: 0 2px 8px rgba(15,23,42,.12);
+  transform: scale(1.1);
+}
+@media (max-width:520px) { .lang-flags button { width: 28px; height: 28px; font-size: 14px; } }

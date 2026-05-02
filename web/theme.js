@@ -4,7 +4,11 @@
   const LS_FONT  = "lumora.font";
 
   const THEMES = {
-    light:    { label: "☀️ Light",     primary:"#0D9488", primaryDark:"#115E59", accent:"#F59E0B",
+    emirati:  { label: "🇦🇪 Emirati",   primary:"#0E5C3A", primaryDark:"#0A3D27", accent:"#C5A572",
+                bg:"#FFFEF7", surface:"#FFFFFF", text:"#1A1A1A", muted:"#6B6259", border:"#E8E0D1" },
+    royal:    { label: "👑 Royal navy", primary:"#C5A572", primaryDark:"#9C7E4F", accent:"#0E5C3A",
+                bg:"#0F1729", surface:"#1A2440", text:"#F1F5F9", muted:"#94A3B8", border:"#2D3D63" },
+        light:    { label: "☀️ Light",     primary:"#0D9488", primaryDark:"#115E59", accent:"#F59E0B",
                 bg:"#F8FAFC", surface:"#FFFFFF", text:"#0F172A", muted:"#64748B", border:"#E2E8F0" },
     dark:     { label: "🌙 Dark",      primary:"#2DD4BF", primaryDark:"#14B8A6", accent:"#FBBF24",
                 bg:"#0F172A", surface:"#1E293B", text:"#F1F5F9", muted:"#94A3B8", border:"#334155" },

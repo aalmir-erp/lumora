@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="/widget.css">
 </head><body>
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36"></a>
+  <a href="/"><img src="/logo.svg" height="36"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
     <a href="/services.html" data-i18n="services">Services</a>
     <a href="/book.html" data-i18n="cta_book">Book</a>
@@ -14,7 +14,13 @@
   </div>
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Theme &amp; font" aria-label="Settings">⚙️</button>
-    <select class="lang-pick"></select>
+    <div class="lang-flags" role="group" aria-label="Language">
+      <button data-lang="en" title="English">🇬🇧</button>
+      <button data-lang="ar" title="العربية">🇦🇪</button>
+      <button data-lang="hi" title="हिन्दी">🇮🇳</button>
+      <button data-lang="tl" title="Filipino">🇵🇭</button>
+    </div>
+    <select class="lang-pick" hidden ></select>
   </div>
 </div></nav>
 
@@ -22,7 +28,15 @@
   <h2>Book a service</h2>
   <p class="sub">Get an instant quote and confirm in seconds.</p>
 
-  <div class="form" id="booking-form">
+  
+<div class="tbadges" style="margin-bottom:18px;justify-content:center">
+  <span class="tbadge green">✓ Verified bookings</span>
+  <span class="tbadge gold">★ 4.9 rating</span>
+  <span class="tbadge">🛡️ Insured</span>
+  <span class="tbadge">🔒 Secure payment</span>
+  <span class="tbadge">⏱️ 60-sec booking</span>
+</div>
+<div class="form" id="booking-form">
     <label>Service</label>
     <select id="service" required></select>
 
@@ -126,11 +140,7 @@ document.getElementById("book-btn").addEventListener("click", async () => {
       if (tc.name === "create_booking" && tc.result && tc.result.ok) bid = tc.result.booking.id;
     }
     if (bid) {
-      out.innerHTML = `<div class="form" style="background:#ECFDF5;border-color:#A7F3D0">
-        <h3 style="margin:0 0 8px">✅ Booked — ${bid}</h3>
-        <p style="color:var(--muted)">We'll WhatsApp you a confirmation. Track your booking on your account page.</p>
-        <a class="btn btn-primary" href="/account.html?b=${bid}">View booking</a>
-      </div>`;
+      location.href = '/booked.html?id=' + bid;
     } else {
       out.innerHTML = `<div class="form" style="background:#FFFBEB;border-color:#FDE68A">
         <p>${escapeHtml(r.text || "Couldn't auto-book. Please call us at +971 56 4020087.")}</p>
@@ -143,4 +153,15 @@ function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<
 </script>
 <script src="/widget.js"></script>
 <script src="/theme.js"></script>
+
+<nav class="mobile-nav" aria-label="Primary mobile">
+  <div class="mobile-nav-inner">
+    <a href="/"           data-mobnav="home"><span class="ico">🏠</span><span>Home</span></a>
+    <a href="/services.html" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
+    <a href="/book.html"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
+    <a href="/me.html"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
+    <a href="#" onclick="document.querySelector('.us-launcher').click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
+  </div>
+</nav>
+
 </body></html>

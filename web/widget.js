@@ -26,6 +26,7 @@
     el("div", { class: "us-quickreplies" }),
     el("form", { class: "us-input", autocomplete: "off" },
       el("input", { type: "text", placeholder: "Type your message…", required: "true", maxlength: "1000" }),
+      el("button", { type: "button", class: "us-mic", "aria-label": "Voice input" }, "🎤"),
       el("button", { type: "submit" }, "Send")),
     el("div", { class: "us-mode" }, ""));
   document.body.appendChild(launcher);
@@ -276,4 +277,28 @@
     }
     return e;
   }
+
+  // ---- Voice input (Web Speech API; free; degrades gracefully) ----
+  const micBtn = panel.querySelector(".us-mic");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) micBtn.style.display = "none";
+  else {
+    const rec = new SR();
+    rec.continuous = false; rec.interimResults = true;
+    rec.onstart = () => { micBtn.classList.add("recording"); micBtn.textContent = "🔴"; };
+    rec.onend = () => { micBtn.classList.remove("recording"); micBtn.textContent = "🎤"; };
+    rec.onresult = (e) => {
+      let txt = "";
+      for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+      input.value = txt;
+      if (e.results[e.results.length-1].isFinal) form.requestSubmit();
+    };
+    rec.onerror = () => { micBtn.classList.remove("recording"); micBtn.textContent = "🎤"; };
+    micBtn.onclick = () => {
+      const lang = (window.lumoraLang ? lumoraLang() : "en");
+      rec.lang = { en: "en-US", ar: "ar-AE", hi: "hi-IN", tl: "fil-PH" }[lang] || "en-US";
+      try { rec.start(); } catch {}
+    };
+  }
+
 })();
