@@ -1,14 +1,16 @@
-name: Fetch failed deploy logs
+name: Deploy + verify
 on: { push: { branches: [main] }, workflow_dispatch: {} }
 permissions: { contents: write }
+concurrency: { group: railway-deploy, cancel-in-progress: false }
 
 env:
   PID: 15485030-5fc0-44e4-afc7-02f2cdc1d22f
   SID: e8c4d684-c92b-4346-899d-498f580841ae
   EID: 4d8c32c6-f62b-4bbc-85ca-3403bb22e397
+  DOMAIN: lumora-production-4071.up.railway.app
 
 jobs:
-  logs:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,32 +20,53 @@ jobs:
           API=https://backboard.railway.com/graphql/v2
           gql() { curl -sS -X POST $API -H "Authorization: Bearer $T" -H "Content-Type: application/json" -d "$1"; }
 
-          # Get latest 3 deployments
-          D=$(gql "$(jq -n '{query:"query{ deployments(input:{projectId:\"'$PID'\", serviceId:\"'$SID'\"}, first:3){ edges{ node{ id status createdAt } } } }"}')")
-          echo "deployments:" > /tmp/o
-          echo "$D" | jq . >> /tmp/o
-
-          for DID in $(echo "$D" | jq -r '.data.deployments.edges[].node.id'); do
-            echo "" >> /tmp/o
-            echo "=== build logs for $DID ===" >> /tmp/o
-            BL=$(gql "$(jq -n --arg id "$DID" '{query:"query($id: String!){ buildLogs(deploymentId:$id, limit:200){ message timestamp severity } }", variables:{id:$id}}')")
-            echo "$BL" | jq -r '.data.buildLogs[]? | "[\(.timestamp)] \(.severity // "info"): \(.message)"' | head -80 >> /tmp/o
-            echo "" >> /tmp/o
-            echo "=== deploy logs for $DID ===" >> /tmp/o
-            DL=$(gql "$(jq -n --arg id "$DID" '{query:"query($id: String!){ deploymentLogs(deploymentId:$id, limit:120){ message timestamp severity } }", variables:{id:$id}}')")
-            echo "$DL" | jq -r '.data.deploymentLogs[]? | "[\(.timestamp)] \(.severity // "info"): \(.message)"' | head -60 >> /tmp/o
+          # Wait for the latest deployment (auto-triggered by this push) to finish
+          for try in $(seq 1 36); do
+            sleep 10
+            D=$(gql "$(jq -n '{query:"query{ deployments(input:{projectId:\"'$PID'\", serviceId:\"'$SID'\"}, first:1){ edges{ node{ id status createdAt staticUrl } } } }"}')")
+            ST=$(echo "$D" | jq -r '.data.deployments.edges[0].node.status // "unknown"')
+            DID=$(echo "$D" | jq -r '.data.deployments.edges[0].node.id')
+            echo "try $try: deploy $DID status=$ST"
+            case "$ST" in
+              SUCCESS|DEPLOYED) break ;;
+              FAILED|CRASHED|REMOVED) break ;;
+            esac
           done
 
+          # Health check
+          for try in $(seq 1 12); do
+            sleep 8
+            HEALTH=$(curl -sS --max-time 8 "https://$DOMAIN/api/health" 2>&1)
+            echo "h$try: $HEALTH"
+            echo "$HEALTH" | grep -q '"ok":true' && break
+          done
+
+          # Build logs (in case of fail)
+          BL=$(gql "$(jq -n --arg id "$DID" '{query:"query($id: String!){ buildLogs(deploymentId:$id, limit:60){ message } }", variables:{id:$id}}')" \
+               | jq -r '.data.buildLogs[]?.message // empty' | tail -40)
+          DL=$(gql "$(jq -n --arg id "$DID" '{query:"query($id: String!){ deploymentLogs(deploymentId:$id, limit:40){ message } }", variables:{id:$id}}')" \
+               | jq -r '.data.deploymentLogs[]?.message // empty' | tail -30)
+
           {
-            echo "# Failed deploy logs"
+            echo "# Lumora deploy"
             echo
+            echo "**URL:** https://$DOMAIN"
+            echo "**Status:** $ST"
+            echo "**Health:** \`$HEALTH\`"
+            echo
+            echo "## Build logs"
             echo '```'
-            cat /tmp/o
+            echo "$BL"
+            echo '```'
+            echo
+            echo "## Runtime logs"
+            echo '```'
+            echo "$DL"
             echo '```'
           } > DEPLOYED.md
 
           git config user.email d@a; git config user.name d
           git add DEPLOYED.md
-          git commit -m "logs" || true
+          git commit -m "deploy: $ST — https://$DOMAIN" || true
           git pull --rebase --autostash origin main || true
           git push origin HEAD:main || true
