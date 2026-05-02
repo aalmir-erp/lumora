@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"ok":true,"service":"Lumora","version":"0.3.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
+**Health:** `{"ok":true,"service":"Lumora","version":"0.4.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
 
 ## Build logs
 ```
@@ -33,9 +33,9 @@
 [7/7] RUN mkdir -p /data
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NGQ5NjNmYmI1MjUzNjdkNGMzMGQxNTViZDYzZTQzNjRhODFiYmUyNTM5ZWVjNmZkZjA2OWI4ZmRhYzJlZmVmZCIsInNpemUiOjIxOTAsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wMlQyMzo1MTowNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:d0eb85b43a845f4af57278011129527b11c658bb677421f261596e72ea070e45
-containerimage.digest: sha256:4d963fbb525367d4c30d155bd63e4364a81bbe2539eec6fdf069b8fdac2efefd
+containerimage.config.digest: sha256:045c5bed7ee2c5cf679012a956bced010302cf509e36520f5cf9f1246d14eddf
+containerimage.digest: sha256:819f7cc261d065d13ecdf4250b78ca49a25c21c016abe66fbc023dbec2151fcb
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODE5ZjdjYzI2MWQwNjVkMTNlY2RmNDI1MGI3OGNhNDlhMjVjMjFjMDE2YWJlNjZmYmMwMjNkYmVjMjE1MWZjYiIsInNpemUiOjIxOTAsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wMlQyMzo1NzozMloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 
 [35m====================
@@ -50,11 +50,12 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/732ee51e-4ab2-4c69-9740-57197c3fb294/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/674283bc-fc07-4634-b832-52ad4ad649f0/vol_onr647rhdeir9di9
 Starting Container
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:59303 - "GET /api/health HTTP/1.1" 200 OK
 INFO:     Started server process [2]
 INFO:     Waiting for application startup.
+[startup] auto-seeded 45 market vendors
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.2:44469 - "GET /api/health HTTP/1.1" 200 OK
 ```
