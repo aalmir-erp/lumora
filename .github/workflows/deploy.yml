@@ -1,149 +1,117 @@
 name: Deploy Lumora to Railway
 
 on:
-  push:
-    branches: [main]
+  push: { branches: [main] }
   workflow_dispatch:
 
-permissions:
-  contents: write
-
-concurrency:
-  group: railway-deploy
-  cancel-in-progress: false
+permissions: { contents: write }
+concurrency: { group: railway-deploy, cancel-in-progress: false }
 
 env:
-  LUMORA_PROJECT_ID: 15485030-5fc0-44e4-afc7-02f2cdc1d22f
+  PID: 15485030-5fc0-44e4-afc7-02f2cdc1d22f
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: npm i -g @railway/cli@latest && railway --version
 
-      - name: Install Railway CLI
-        run: |
-          npm i -g @railway/cli@latest
-          railway --version
-
-      - name: Audit existing apps before deploying
+      - name: One-shot deploy with full diagnostics
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
-          echo "--- sales.mir.ae current /api/health ---"
-          curl -sS --max-time 10 -i https://sales.mir.ae/api/health 2>&1 | head -20 || true
-          echo
-          echo "--- aalmirgitnew-production.up.railway.app /api/health ---"
-          curl -sS --max-time 10 -i https://aalmirgitnew-production.up.railway.app/api/health 2>&1 | head -20 || true
-
-      - name: Resolve env id for lumora/production
-        id: env
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
+          set +e
           API=https://backboard.railway.com/graphql/v2
-          RESP=$(curl -sS -X POST $API \
-            -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
-            -d "$(jq -n --arg q 'query{ project(id:"'$LUMORA_PROJECT_ID'"){ environments{ edges{ node{ id name } } } services{ edges{ node{ id name } } } } }' '{query:$q}')")
-          echo "$RESP" > /tmp/proj.json
-          jq . /tmp/proj.json
-          EID=$(jq -r '[.data.project.environments.edges[].node|select(.name=="production")|.id]|first // empty' /tmp/proj.json)
-          SID=$(jq -r '[.data.project.services.edges[].node|.id]|first // empty' /tmp/proj.json)
-          echo "EID=$EID" >> $GITHUB_ENV
-          echo "SID=$SID" >> $GITHUB_ENV
+          DIAG=/tmp/diag.md
+          : > $DIAG
 
-      - name: Create service in lumora project (if missing) + link CLI
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          set -e
-          API=https://backboard.railway.com/graphql/v2
+          log(){ echo "=== $* ===" | tee -a $DIAG; }
+          run(){ log "$*"; eval "$*" 2>&1 | tee -a $DIAG; echo | tee -a $DIAG; }
+          gqlq(){ # gqlq <variable_json> <query>
+            local q="$1"
+            local r=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
+              -d "$(jq -n --arg q "$q" '{query:$q}')")
+            echo "$r"
+          }
 
-          # Check if service exists
-          RESP=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
-            -d "$(jq -n --arg q 'query{ project(id:"'$LUMORA_PROJECT_ID'"){ services{ edges{ node{ id name } } } } }' '{query:$q}')")
-          SID=$(echo "$RESP" | jq -r '[.data.project.services.edges[].node|.id]|first // empty')
+          log "Step 1: project lookup"
+          P=$(gqlq 'query{ project(id:"'$PID'"){ id name environments{ edges{ node{ id name } } } services{ edges{ node{ id name } } } } }')
+          echo "$P" | jq . | tee -a $DIAG
+          EID=$(echo "$P" | jq -r '[.data.project.environments.edges[].node|select(.name=="production")|.id]|first // empty')
+          SID=$(echo "$P" | jq -r '[.data.project.services.edges[].node|.id]|first // empty')
+          log "EID=$EID SID=$SID"
 
           if [ -z "$SID" ]; then
-            echo "Creating service 'lumora'..."
-            CREATE=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
-              -d "$(jq -n --arg q 'mutation($i:ServiceCreateInput!){ serviceCreate(input:$i){ id name } }' --arg pid "$LUMORA_PROJECT_ID" '{query:$q, variables:{input:{projectId:$pid, name:"lumora"}}}')")
-            echo "$CREATE" | jq .
-            SID=$(echo "$CREATE" | jq -r '.data.serviceCreate.id // empty')
+            log "Step 2: create service via mutation"
+            C=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
+              -d "$(jq -n '{query:"mutation($input: ServiceCreateInput!){ serviceCreate(input:$input){ id name } }", variables:{input:{projectId:"'$PID'", name:"lumora"}}}')")
+            echo "$C" | jq . | tee -a $DIAG
+            SID=$(echo "$C" | jq -r '.data.serviceCreate.id // empty')
+            log "new SID=$SID"
           fi
-          echo "SID=$SID"
-          echo "SID=$SID" >> $GITHUB_ENV
 
-          railway link --project ${{ env.LUMORA_PROJECT_ID }} --service "$SID" --environment ${{ env.EID }}
-          railway status
+          run "railway link --project $PID --service $SID --environment $EID"
+          run "railway status"
 
-      - name: Set variables
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway variables \
-            --set "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" \
-            --set "ADMIN_TOKEN=${{ secrets.ADMIN_TOKEN }}" \
-            --set "BRAND_NAME=Lumora" \
-            --set "CLAUDE_MODEL=claude-opus-4-7" \
-            --set "DEMO_MODE=auto" \
-            --set "DB_PATH=/data/lumora.db"
+          log "Step 3: set vars"
+          run "railway variables --set 'ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY' --set 'ADMIN_TOKEN=$ADMIN_TOKEN' --set 'BRAND_NAME=Lumora' --set 'CLAUDE_MODEL=claude-opus-4-7' --set 'DEMO_MODE=auto' --set 'DB_PATH=/data/lumora.db'"
 
-      - name: Add volume
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway volume add --mount-path /data || true
+          log "Step 4: volume"
+          run "railway volume add --mount-path /data"
 
-      - name: Deploy
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --ci
+          log "Step 5: deploy"
+          run "railway up --ci"
 
-      - name: Create + report domain
-        if: always()
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          API=https://backboard.railway.com/graphql/v2
-          # Refresh service id (created during railway up)
-          RESP=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
-            -d "$(jq -n --arg q 'query{ project(id:"'$LUMORA_PROJECT_ID'"){ services{ edges{ node{ id name serviceInstances{ edges{ node{ environmentId domains{ serviceDomains{ domain } customDomains{ domain } } } } } } } } } }' '{query:$q}')")
-          echo "$RESP" > /tmp/svc.json
-          SID=$(jq -r '[.data.project.services.edges[].node|.id]|first // empty' /tmp/svc.json)
-          DOMAIN=$(jq -r '[.data.project.services.edges[].node.serviceInstances.edges[].node.domains.serviceDomains[]?.domain]|first // empty' /tmp/svc.json)
+          log "Step 6: domain"
+          DOMAIN=""
+          for try in 1 2 3 4 5; do
+            S=$(gqlq 'query{ project(id:"'$PID'"){ services{ edges{ node{ id name serviceInstances{ edges{ node{ environmentId domains{ serviceDomains{ domain } customDomains{ domain } } } } } } } } } }')
+            DOMAIN=$(echo "$S" | jq -r '[.data.project.services.edges[].node.serviceInstances.edges[].node.domains.serviceDomains[]?.domain]|first // empty')
+            [ -n "$DOMAIN" ] && break
+            sleep 5
+          done
           if [ -z "$DOMAIN" ] && [ -n "$SID" ]; then
-            CREATE=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
-              -d "$(jq -n --arg q 'mutation($i:ServiceDomainCreateInput!){ serviceDomainCreate(input:$i){ domain } }' --arg sid "$SID" --arg eid "$EID" '{query:$q, variables:{input:{serviceId:$sid, environmentId:$eid}}}')")
-            DOMAIN=$(echo "$CREATE" | jq -r '.data.serviceDomainCreate.domain // empty')
+            log "create service domain via mutation"
+            CD=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
+              -d "$(jq -n --arg sid "$SID" --arg eid "$EID" '{query:"mutation($i: ServiceDomainCreateInput!){ serviceDomainCreate(input:$i){ domain } }", variables:{input:{serviceId:$sid, environmentId:$eid}}}')")
+            echo "$CD" | jq . | tee -a $DIAG
+            DOMAIN=$(echo "$CD" | jq -r '.data.serviceDomainCreate.domain // empty')
           fi
-          # Wait + health check
+          log "DOMAIN=$DOMAIN"
+
+          log "Step 7: health check"
+          HEALTH=""
           if [ -n "$DOMAIN" ]; then
-            for i in 1 2 3 4 5 6 7 8 9 10; do
-              sleep 10
-              CODE=$(curl -sS -o /tmp/h.json -w '%{http_code}' --max-time 8 "https://$DOMAIN/api/health")
-              echo "attempt $i → $CODE"
-              [ "$CODE" = "200" ] && break
+            for try in 1 2 3 4 5 6 7 8; do
+              HEALTH=$(curl -sS --max-time 8 "https://$DOMAIN/api/health" 2>&1)
+              echo "attempt $try: $HEALTH" | tee -a $DIAG
+              echo "$HEALTH" | grep -q '"ok":true' && break
+              sleep 12
             done
           fi
+
           {
             echo "# Lumora — live deploy"
             echo
             echo "**Public URL:** https://$DOMAIN"
-            echo "**Project ID:** $LUMORA_PROJECT_ID"
+            echo "**Project ID:** $PID"
             echo "**Service ID:** $SID"
-            echo "**Last deploy:** $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "**Env ID:** $EID"
             echo
             echo "## /api/health"
             echo '```json'
-            cat /tmp/h.json 2>/dev/null || echo "(no response yet)"
-            echo
+            echo "$HEALTH"
             echo '```'
             echo
-            echo "## Project services"
-            echo '```json'
-            cat /tmp/svc.json
+            echo "## Full diagnostic log"
+            echo '```'
+            cat $DIAG
             echo '```'
           } > DEPLOYED.md
+
           git config user.email "deploy@github-actions"; git config user.name "Lumora deploy bot"
           git add DEPLOYED.md
           git commit -m "deploy: https://$DOMAIN" || true
