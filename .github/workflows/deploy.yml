@@ -1,64 +1,136 @@
 name: Deploy Lumora to Railway
-on: { push: { branches: [main] }, workflow_dispatch: {} }
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+
 permissions: { contents: write }
 concurrency: { group: railway-deploy, cancel-in-progress: false }
+
 env:
   PID: 15485030-5fc0-44e4-afc7-02f2cdc1d22f
+  SID: e8c4d684-c92b-4346-899d-498f580841ae
+  EID: 4d8c32c6-f62b-4bbc-85ca-3403bb22e397
+  REPO: aalmir-erp/lumora
+  BRANCH: main
 
 jobs:
-  introspect:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Introspect mutations
+      - name: Connect service to GitHub repo + deploy via GraphQL
         env:
           T: ${{ secrets.RAILWAY_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set +e
           API=https://backboard.railway.com/graphql/v2
-          DIAG=/tmp/diag.md
-          : > $DIAG
-          gql() { curl -sS -X POST $API -H "Authorization: Bearer $T" -H "Content-Type: application/json" -d "$(jq -n --arg q "$1" '{query:$q}')"; }
+          DIAG=/tmp/diag.md; : > $DIAG
 
-          # 1) List mutation names matching keywords
-          R=$(gql 'query { __schema { mutationType { fields { name args { name type { name kind ofType { name kind ofType { name kind } } } } } } } }')
-          echo "$R" | jq '.data.__schema.mutationType.fields[]| select(.name | test("ServiceCreate|ServiceConnect|ServiceInstance|projectTokenCreate|ServiceDomain|deploymentTrigger"; "i"))' > /tmp/muts.json
-          cat /tmp/muts.json
+          gql() {
+            curl -sS -X POST $API \
+              -H "Authorization: Bearer $T" \
+              -H "Content-Type: application/json" \
+              -d "$1"
+          }
+
+          echo "=== 1. Connect service to repo ==="  | tee -a $DIAG
+          PAYLOAD=$(jq -n --arg sid "$SID" --arg repo "$REPO" --arg branch "$BRANCH" \
+            '{query:"mutation($id: String!, $input: ServiceConnectInput!){ serviceConnect(id:$id, input:$input){ id } }",
+              variables:{id:$sid, input:{repo:$repo, branch:$branch}}}')
+          gql "$PAYLOAD" | tee -a $DIAG; echo | tee -a $DIAG
+
+          echo "=== 2. Set environment variables (per service+env) ==="  | tee -a $DIAG
+          # variableCollectionUpsert mutation
+          for kv in \
+            "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" \
+            "ADMIN_TOKEN=$ADMIN_TOKEN" \
+            "BRAND_NAME=Lumora" \
+            "CLAUDE_MODEL=claude-opus-4-7" \
+            "DEMO_MODE=auto" \
+            "DB_PATH=/data/lumora.db"; do
+            K="${kv%%=*}"; V="${kv#*=}"
+            P=$(jq -n --arg pid "$PID" --arg sid "$SID" --arg eid "$EID" --arg n "$K" --arg v "$V" \
+              '{query:"mutation($i: VariableUpsertInput!){ variableUpsert(input:$i) }",
+                variables:{i:{projectId:$pid, environmentId:$eid, serviceId:$sid, name:$n, value:$v}}}')
+            R=$(gql "$P")
+            echo "  $K → $(echo "$R" | jq -c '.data // .errors[0].message')" | tee -a $DIAG
+          done
+
+          echo "=== 3. Create volume ===" | tee -a $DIAG
+          VP=$(jq -n --arg pid "$PID" --arg sid "$SID" --arg eid "$EID" \
+            '{query:"mutation($i: VolumeCreateInput!){ volumeCreate(input:$i){ id } }",
+              variables:{i:{projectId:$pid, environmentId:$eid, mountPath:"/data", serviceId:$sid}}}')
+          gql "$VP" | tee -a $DIAG; echo | tee -a $DIAG
+
+          echo "=== 4. Trigger deploy ===" | tee -a $DIAG
+          DP=$(jq -n --arg sid "$SID" --arg eid "$EID" \
+            '{query:"mutation($sid: String!, $eid: String!){ serviceInstanceDeployV2(serviceId:$sid, environmentId:$eid) }",
+              variables:{sid:$sid, eid:$eid}}')
+          gql "$DP" | tee -a $DIAG; echo | tee -a $DIAG
+
+          echo "=== 5. Poll deployment status (~6 min max) ===" | tee -a $DIAG
+          DEP_STATUS=""
+          for try in $(seq 1 36); do
+            sleep 10
+            ST=$(gql "$(jq -n --arg pid "$PID" --arg sid "$SID" --arg eid "$EID" \
+              '{query:"query{ deployments(input:{projectId:$pid, serviceId:$sid, environmentId:$eid}, first:1){ edges{ node{ id status staticUrl url } } } }",
+                variables:{pid:$pid, sid:$sid, eid:$eid}}')")
+            DEP_STATUS=$(echo "$ST" | jq -r '.data.deployments.edges[0].node.status // "unknown"')
+            echo "  try $try: status=$DEP_STATUS" | tee -a $DIAG
+            case "$DEP_STATUS" in
+              SUCCESS|DEPLOYED|FAILED|CRASHED|REMOVED) break;;
+            esac
+          done
+
+          echo "=== 6. Create or fetch domain ===" | tee -a $DIAG
+          # Try to find existing domain
+          DOMAIN=""
+          S=$(gql "$(jq -n '{query:"query{ project(id:\"'$PID'\"){ services{ edges{ node{ id name serviceInstances{ edges{ node{ environmentId domains{ serviceDomains{ domain } } } } } } } } } }"}')")
+          DOMAIN=$(echo "$S" | jq -r '[.data.project.services.edges[].node.serviceInstances.edges[].node.domains.serviceDomains[]?.domain]|first // empty')
+          if [ -z "$DOMAIN" ]; then
+            CD=$(gql "$(jq -n --arg sid "$SID" --arg eid "$EID" \
+              '{query:"mutation($i: ServiceDomainCreateInput!){ serviceDomainCreate(input:$i){ domain } }",
+                variables:{i:{serviceId:$sid, environmentId:$eid}}}')")
+            DOMAIN=$(echo "$CD" | jq -r '.data.serviceDomainCreate.domain // empty')
+            echo "create-domain: $CD" | tee -a $DIAG
+          fi
+          echo "DOMAIN=$DOMAIN" | tee -a $DIAG
+
+          echo "=== 7. Health check ===" | tee -a $DIAG
+          HEALTH=""
+          if [ -n "$DOMAIN" ]; then
+            for try in $(seq 1 18); do
+              sleep 10
+              HEALTH=$(curl -sS --max-time 8 "https://$DOMAIN/api/health" 2>&1)
+              echo "  try $try: $HEALTH" | tee -a $DIAG
+              echo "$HEALTH" | grep -q '"ok":true' && break
+            done
+          fi
+
+          echo "=== 8. Report ===" | tee -a $DIAG
+          # Commit comment
+          curl -sS -X POST "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments" \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -d "$(jq -n --arg b "🚀 https://$DOMAIN — health: \`$HEALTH\`" '{body:$b}')" >/dev/null
 
           {
-            echo "# Mutation introspection"
+            echo "# Lumora live"
             echo
-            echo "## Relevant mutations + arg shapes"
-            echo '```json'
-            cat /tmp/muts.json
+            echo "**URL:** https://$DOMAIN"
+            echo "**Health:** \`$HEALTH\`"
+            echo "**Deploy status:** $DEP_STATUS"
+            echo
+            echo '## Diagnostic'
             echo '```'
-            echo
-            echo "## Detail: ServiceCreateInput"
-            echo '```json'
-            curl -sS -X POST $API -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
-              -d "$(jq -n '{query:"{ __type(name: \"ServiceCreateInput\") { name inputFields { name type { name kind ofType { name kind } } } } }"}')" | jq .
-            echo '```'
-            echo
-            echo "## Detail: ServiceConnectInput"
-            echo '```json'
-            curl -sS -X POST $API -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
-              -d "$(jq -n '{query:"{ __type(name: \"ServiceConnectInput\") { name inputFields { name type { name kind ofType { name kind } } } } }"}')" | jq .
-            echo '```'
-            echo
-            echo "## Detail: ServiceSourceInput"
-            echo '```json'
-            curl -sS -X POST $API -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
-              -d "$(jq -n '{query:"{ __type(name: \"ServiceSourceInput\") { name inputFields { name type { name kind ofType { name kind } } } } }"}')" | jq .
-            echo '```'
-            echo
-            echo "## Detail: ProjectTokenCreateInput"
-            echo '```json'
-            curl -sS -X POST $API -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
-              -d "$(jq -n '{query:"{ __type(name: \"ProjectTokenCreateInput\") { name inputFields { name type { name kind ofType { name kind } } } } }"}')" | jq .
+            cat $DIAG
             echo '```'
           } > DEPLOYED.md
           git config user.email d@a; git config user.name d
           git add DEPLOYED.md
-          git commit -m "introspect" || true
+          git commit -m "deploy: https://$DOMAIN" || true
           git pull --rebase --autostash origin main || true
           git push origin HEAD:main || true
