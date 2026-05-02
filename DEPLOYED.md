@@ -1,71 +1,83 @@
-# Failed deploy logs
+# Lumora deploy
 
+**URL:** https://lumora-production-4071.up.railway.app
+**Status:** FAILED
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"gheyJWtRShmsPyodnpoFkQ"}`
+
+## Build logs
 ```
-deployments:
-{
-  "data": {
-    "deployments": {
-      "edges": [
-        {
-          "node": {
-            "id": "d3f02b48-5d64-412a-b6e8-0cbef5e43949",
-            "status": "FAILED",
-            "createdAt": "2026-05-02T22:48:28.163Z"
-          }
-        },
-        {
-          "node": {
-            "id": "119dda59-91ee-435d-ac1c-ac1a7faa73c0",
-            "status": "FAILED",
-            "createdAt": "2026-05-02T22:47:51.805Z"
-          }
-        },
-        {
-          "node": {
-            "id": "f1ae9c38-fc75-4f67-b56d-17bab33d3a8f",
-            "status": "FAILED",
-            "createdAt": "2026-05-02T22:47:38.415Z"
-          }
-        }
-      ]
-    }
-  }
-}
+Downloading charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (216 kB)
 
-=== build logs for d3f02b48-5d64-412a-b6e8-0cbef5e43949 ===
-[2026-05-02T22:48:30.825481288Z] info: scheduling build on Metal builder "builder-zoruvv"
-[2026-05-02T22:48:33.074414330Z] info: [snapshot] received sha256:732f8919eb475ac9b6f30b98f0e1e2218ce422df618e294084c43d155bb4aa42 md5:81e2c1165bb7840105b0aba9327accda
-[2026-05-02T22:48:33.074523584Z] info: receiving snapshot
-[2026-05-02T22:48:33.078916315Z] debug: found 'Dockerfile' at 'Dockerfile'
-[2026-05-02T22:48:33.078920711Z] debug: found 'railway.json' at 'railway.json'
+Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
 
-=== deploy logs for d3f02b48-5d64-412a-b6e8-0cbef5e43949 ===
+Installing collected packages: websockets, uvloop, urllib3, typing-extensions, sniffio, pyyaml, python-multipart, python-dotenv, jiter, idna, httptools, h11, docstring-parser, distro, click, charset_normalizer, certifi, annotated-types, annotated-doc, uvicorn, typing-inspection, requests, pydantic-core, httpcore, anyio, watchfiles, stripe, starlette, pydantic, httpx, fastapi, anthropic
 
-=== build logs for 119dda59-91ee-435d-ac1c-ac1a7faa73c0 ===
-[2026-05-02T22:47:54.192061088Z] info: scheduling build on Metal builder "builder-zoruvv"
-[2026-05-02T22:47:56.473683263Z] info: [snapshot] received sha256:3e64b5564fa9ee6c82bcf8c928920554b8b35810437d208005d7db05edd0aaef md5:1b52499c7179660acb46cda9209d51d4
-[2026-05-02T22:47:56.473749733Z] info: receiving snapshot
-[2026-05-02T22:47:56.479750477Z] debug: found 'Dockerfile' at 'Dockerfile'
-[2026-05-02T22:47:56.479757547Z] debug: found 'railway.json' at 'railway.json'
-[2026-05-02T22:47:56.479763516Z] debug: skipping 'Dockerfile' at 'whatsapp_bridge/Dockerfile' as it is not rooted at a valid path (root_dir=, fileOpts={acceptChildOfRepoRoot:false})
-[2026-05-02T22:47:56.479916335Z] info: analyzing snapshot
-[2026-05-02T22:47:56.805164035Z] info: uploading snapshot
-[2026-05-02T22:47:56.820724101Z] info: unpacking archive
-[2026-05-02T22:47:57.121937820Z] error: dockerfile invalid: docker VOLUME at Line 21 is not supported, use Railway Volumes
+Successfully installed annotated-doc-0.0.4 annotated-types-0.7.0 anthropic-0.97.0 anyio-4.13.0 certifi-2026.4.22 charset_normalizer-3.4.7 click-8.3.3 distro-1.9.0 docstring-parser-0.18.0 fastapi-0.136.1 h11-0.16.0 httpcore-1.0.9 httptools-0.7.1 httpx-0.28.1 idna-3.13 jiter-0.14.0 pydantic-2.13.3 pydantic-core-2.46.3 python-dotenv-1.2.2 python-multipart-0.0.27 pyyaml-6.0.3 requests-2.33.1 sniffio-1.3.1 starlette-1.0.0 stripe-15.1.0 typing-extensions-4.15.0 typing-inspection-0.4.2 urllib3-2.6.3 uvicorn-0.46.0 uvloop-0.22.1 watchfiles-1.1.1 websockets-16.0
 
-=== deploy logs for 119dda59-91ee-435d-ac1c-ac1a7faa73c0 ===
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
 
-=== build logs for f1ae9c38-fc75-4f67-b56d-17bab33d3a8f ===
-[2026-05-02T22:47:42.047201441Z] info: scheduling build on Metal builder "builder-zoruvv"
-[2026-05-02T22:47:44.170722922Z] info: [snapshot] received sha256:1bd3f95bd273a53eb202bb8c00d6d0d0dc891998d4155c30edf74bf7b268a46e md5:7fa7b206ca62ba6a08f48ca5c5196107
-[2026-05-02T22:47:44.170757344Z] info: receiving snapshot
-[2026-05-02T22:47:44.174753250Z] debug: found 'Dockerfile' at 'Dockerfile'
-[2026-05-02T22:47:44.174756434Z] debug: found 'railway.json' at 'railway.json'
-[2026-05-02T22:47:44.174760180Z] debug: skipping 'Dockerfile' at 'whatsapp_bridge/Dockerfile' as it is not rooted at a valid path (root_dir=, fileOpts={acceptChildOfRepoRoot:false})
-[2026-05-02T22:47:44.174806870Z] info: analyzing snapshot
-[2026-05-02T22:47:44.504643234Z] info: uploading snapshot
-[2026-05-02T22:47:44.508947222Z] info: unpacking archive
-[2026-05-02T22:47:44.841920052Z] error: dockerfile invalid: docker VOLUME at Line 21 is not supported, use Railway Volumes
 
-=== deploy logs for f1ae9c38-fc75-4f67-b56d-17bab33d3a8f ===
+[notice] A new release of pip is available: 25.0.1 -> 26.1
+[notice] To update, run: pip install --upgrade pip
+
+[4/7] RUN pip install -r requirements.txt
+[5/7] COPY app ./app
+[5/7] COPY app ./app
+[6/7] COPY web ./web
+[6/7] COPY web ./web
+[7/7] RUN mkdir -p /data
+[7/7] RUN mkdir -p /data
+exporting to docker image format
+exporting to docker image format
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6YmVhMjY2ZjljOTNjZjlmYjliMmM0NTc1YTliMzVlNzA4MDViMzA3Yzc2ODcwODlmMmZmZDhkNTcxMDljYTMzMyIsInNpemUiOjIxOTAsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wMlQyMjo0OTo0MVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:bd2a63d95df427362ccdb66940106bd7ccfe1e7fc81f02e60759dd6f6549fe7d
+containerimage.digest: sha256:bea266f9c93cf9fb9b2c4575a9b35e70805b307c7687089f2ffd8d57109ca333
+image push
+
+[35m====================
+Starting Healthcheck
+====================
+[0m
+[37mPath: /api/health[0m
+[37mRetry window: 30s[0m
+
+[93mAttempt #1 failed with service unavailable. Continuing to retry for 19s[0m
+[93mAttempt #2 failed with service unavailable. Continuing to retry for 8s[0m
+
+[91m1/1 replicas never became healthy![0m
+[91mHealthcheck failed![0m
+```
+
+## Runtime logs
+```
+Starting Container
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Invalid value for '--port': '$PORT' is not a valid integer.
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/1039e565-a45f-4025-ac30-f1b2325534dc/vol_onr647rhdeir9di9
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Invalid value for '--port': '$PORT' is not a valid integer.
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Invalid value for '--port': '$PORT' is not a valid integer.
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/1039e565-a45f-4025-ac30-f1b2325534dc/vol_onr647rhdeir9di9
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Invalid value for '--port': '$PORT' is not a valid integer.
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/1039e565-a45f-4025-ac30-f1b2325534dc/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/1039e565-a45f-4025-ac30-f1b2325534dc/vol_onr647rhdeir9di9
+Error: Invalid value for '--port': '$PORT' is not a valid integer.
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/1039e565-a45f-4025-ac30-f1b2325534dc/vol_onr647rhdeir9di9
+Usage: uvicorn [OPTIONS] APP
+Try 'uvicorn --help' for help.
+
+Error: Invalid value for '--port': '$PORT' is not a valid integer.
 ```
