@@ -52,14 +52,32 @@ jobs:
           echo "EID=$EID" >> $GITHUB_ENV
           echo "SID=$SID" >> $GITHUB_ENV
 
-      - name: Link CLI to lumora project
+      - name: Create service in lumora project (if missing) + link CLI
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway link --project ${{ env.LUMORA_PROJECT_ID }} --environment ${{ env.EID }}
-          railway status || true
+          set -e
+          API=https://backboard.railway.com/graphql/v2
 
-      - name: Set variables (per environment)
+          # Check if service exists
+          RESP=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
+            -d "$(jq -n --arg q 'query{ project(id:"'$LUMORA_PROJECT_ID'"){ services{ edges{ node{ id name } } } } }' '{query:$q}')")
+          SID=$(echo "$RESP" | jq -r '[.data.project.services.edges[].node|.id]|first // empty')
+
+          if [ -z "$SID" ]; then
+            echo "Creating service 'lumora'..."
+            CREATE=$(curl -sS -X POST $API -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
+              -d "$(jq -n --arg q 'mutation($i:ServiceCreateInput!){ serviceCreate(input:$i){ id name } }' --arg pid "$LUMORA_PROJECT_ID" '{query:$q, variables:{input:{projectId:$pid, name:"lumora"}}}')")
+            echo "$CREATE" | jq .
+            SID=$(echo "$CREATE" | jq -r '.data.serviceCreate.id // empty')
+          fi
+          echo "SID=$SID"
+          echo "SID=$SID" >> $GITHUB_ENV
+
+          railway link --project ${{ env.LUMORA_PROJECT_ID }} --service "$SID" --environment ${{ env.EID }}
+          railway status
+
+      - name: Set variables
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
