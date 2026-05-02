@@ -94,35 +94,38 @@ jobs:
           done
           railway status 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
 
-      - name: Capture deploy URL and commit to repo
+      - name: Find live URL via Railway GraphQL
         if: always()
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           set +e
-          DOMAIN_OUT=$(railway domain 2>&1)
-          DOMAIN=$(echo "$DOMAIN_OUT" | grep -Eo 'https?://[a-zA-Z0-9.-]+' | head -1)
-          STATUS=$(railway status 2>&1)
+          QUERY='{ me { projects { edges { node { id name services { edges { node { id name serviceInstances { edges { node { domains { serviceDomains { domain } customDomains { domain } } } } } } } } } } } } }'
+          BODY=$(jq -n --arg q "$QUERY" '{query:$q}')
+          RESP=$(curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$BODY")
+          echo "$RESP" | jq . > /tmp/projects.json || echo "$RESP" > /tmp/projects.json
+          # Extract first lumora project domain
+          DOMAIN=$(jq -r '.data.me.projects.edges[]?.node | select(.name=="lumora") | .services.edges[]?.node.serviceInstances.edges[]?.node.domains.serviceDomains[]?.domain' /tmp/projects.json | head -1)
+          PROJECT_ID=$(jq -r '.data.me.projects.edges[]?.node | select(.name=="lumora") | .id' /tmp/projects.json | head -1)
           {
             echo "# Lumora deploy"
             echo
-            echo "**Live URL:** $DOMAIN"
+            echo "**Live URL:** https://$DOMAIN"
             echo
-            echo "Last deploy: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "**Project ID:** $PROJECT_ID"
             echo
-            echo '## railway domain'
-            echo '```'
-            echo "$DOMAIN_OUT"
-            echo '```'
+            echo "**Last deploy:** $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
-            echo '## railway status'
-            echo '```'
-            echo "$STATUS"
+            echo "## Raw GraphQL response"
+            echo '```json'
+            cat /tmp/projects.json
             echo '```'
           } > DEPLOYED.md
           git config user.email "deploy@github-actions"
           git config user.name "Lumora deploy bot"
           git add DEPLOYED.md
-          git commit -m "Deploy report: $DOMAIN" || echo "no changes"
+          git commit -m "Deploy report: https://$DOMAIN" || echo "no changes"
           git push origin HEAD:main || true
