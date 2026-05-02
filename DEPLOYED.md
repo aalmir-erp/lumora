@@ -15,7 +15,7 @@ Invalid RAILWAY_TOKEN. Please check that it is valid and has access to the resou
 Invalid RAILWAY_TOKEN. Please check that it is valid and has access to the resource you're trying to use.
 --- railway up ---
 Invalid RAILWAY_TOKEN. Please check that it is valid and has access to the resource you're trying to use.
-CREATE-DOMAIN: {"errors":[{"message":"Problem processing request","traceId":"2069611530130711166"}]}
+CREATE-DOMAIN: {"errors":[{"message":"Problem processing request","traceId":"7215810047743945810"}]}
 DOMAIN=
 health attempt 1: curl: (6) Could not resolve host: api
 health attempt 2: curl: (6) Could not resolve host: api
