@@ -1,4 +1,4 @@
-/* Lumora chatbot widget — multi-language, live-agent aware. */
+/* Lumora chatbot widget — multi-language, live-agent aware, click-to-act. */
 (function () {
   const script = document.currentScript || document.querySelector("script[data-api-base]");
   const API_BASE = (script && script.dataset.apiBase) ||
@@ -44,19 +44,22 @@
   let busy = false;
   let pollT = null;
   let agentMode = false;
+  let userMsgCount = 0;
 
   // i18n integration
   function applyI18n() {
     const t = (k, d) => (window.lumoraT ? window.lumoraT(k, d) : d);
     input.placeholder = t("bot_placeholder", "Type your message…");
     sendBtn.textContent = t("bot_send", "Send");
-    quickWrap.innerHTML = "";
-    const qs = QR_FALLBACK;
-    qs.forEach((q) => {
-      const b = el("button", { type: "button" }, q);
-      b.onclick = () => { input.value = q; form.requestSubmit(); };
-      quickWrap.appendChild(b);
-    });
+    if (userMsgCount === 0) {
+      quickWrap.innerHTML = "";
+      quickWrap.style.display = "";
+      QR_FALLBACK.forEach((q) => {
+        const b = el("button", { type: "button" }, q);
+        b.onclick = () => { input.value = q; form.requestSubmit(); };
+        quickWrap.appendChild(b);
+      });
+    }
   }
   window.addEventListener("lumora:lang", applyI18n);
   applyI18n();
@@ -76,11 +79,17 @@
     if (!text) return;
     input.value = "";
     addMsg("user", text);
+    userMsgCount++;
+    if (userMsgCount === 1) hideQuickReplies();   // hide suggestions after first user msg
     await send(text);
   });
 
   // Auto-open if URL has ?chat=1
   if (new URLSearchParams(location.search).get("chat") === "1") setTimeout(() => launcher.click(), 400);
+
+  function hideQuickReplies() {
+    quickWrap.style.display = "none";
+  }
 
   function greet() {
     const t = window.lumoraT ? window.lumoraT("bot_greeting") : null;
@@ -139,8 +148,6 @@
         for (const m of (d.messages || [])) {
           since = Math.max(since, m.id);
           localStorage.setItem(SINCE_KEY, String(since));
-          // We already render our own user messages and bot replies; only render
-          // agent-injected assistant messages here.
           if (m.role === "assistant" && m.agent_handled) {
             addMsg("bot", m.content, null, true);
           }
@@ -149,18 +156,98 @@
     }, 3500);
   }
 
+  // -------- click-to-act extraction --------
+  // Returns { cleanText, actions[] } where cleanText has any [[choices:...]] marker stripped.
+  function extractActions(text, toolCalls) {
+    const out = [];
+    let cleanText = text || "";
+
+    // 1) Bot-emitted [[choices: Label=reply; Label=reply]] marker
+    cleanText = cleanText.replace(/\[\[\s*choices?\s*:\s*([^\]]+)\]\]/gi, (_, body) => {
+      body.split(/\s*;\s*/).forEach(pair => {
+        const m = pair.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/);
+        if (m) out.push({ label: m[1], send: m[2] });
+        else if (pair.trim()) out.push({ label: pair.trim(), send: pair.trim() });
+      });
+      return "";
+    }).replace(/\n{3,}/g, "\n\n").trim();
+
+    // 2) Tool-driven actions (always added in addition to LLM choices)
+    for (const tc of toolCalls || []) {
+      const r = tc.result || {};
+      if (tc.name === "list_slots" && r.ok && Array.isArray(r.slots) && !out.length) {
+        for (const s of r.slots) out.push({ label: "🕒 " + s, send: `Book at ${s} on ${r.date}` });
+      }
+      if (tc.name === "create_booking" && r.ok && r.booking && !out.length) {
+        out.push({ label: "📋 Track this booking", send: `Track ${r.booking.id}` });
+        out.push({ label: "💳 View invoice", send: `Show me the invoice for ${r.booking.id}` });
+      }
+    }
+
+    // 3) Text-pattern fallback when bot didn't emit choices
+    if (out.length === 0 && cleanText) {
+      const seen = new Set();
+      // Time slots: "HH:MM" bullets
+      const reTime = /(?:^|\n)\s*(?:[•\-\*]\s+)?(?:🕒\s*)?(\d{1,2}:\d{2})(?:\s*(?:AM|PM|am|pm))?\b/g;
+      let m;
+      while ((m = reTime.exec(cleanText))) {
+        if (seen.has(m[1])) continue; seen.add(m[1]);
+        out.push({ label: "🕒 " + m[1], send: `Book at ${m[1]}` });
+      }
+      // "How many bedrooms?" — offer 1..5
+      if (!out.length && /how\s+many\s+(bed)?room/i.test(cleanText)) {
+        for (const n of [1, 2, 3, 4, 5]) out.push({ label: `${n} BR`, send: String(n) });
+        out.push({ label: "Studio", send: "1" });
+      }
+      // "Which area / where do you live?"
+      if (!out.length && /(which area|where|emirate)/i.test(cleanText)) {
+        for (const a of ["Dubai", "Sharjah", "Ajman", "Abu Dhabi"]) out.push({ label: a, send: a });
+      }
+      // Yes/no questions
+      if (!out.length && /\?\s*$/.test(cleanText) && /\b(confirm|proceed|continue|right|correct|sound good)\b/i.test(cleanText)) {
+        out.push({ label: "✅ Yes", send: "Yes" });
+        out.push({ label: "❌ No", send: "No" });
+      }
+    }
+
+    return { cleanText, actions: out };
+  }
+
   function addMsg(who, text, toolCalls, isAgent) {
+    let cleanText = text;
+    let actions = [];
+    if (who === "bot") {
+      const ex = extractActions(text, toolCalls);
+      cleanText = ex.cleanText;
+      actions = ex.actions;
+    }
     const div = el("div", { class: "us-msg " + (who === "user" ? "user" : "bot") });
-    div.innerHTML = formatMd(text);
+    div.innerHTML = formatMd(cleanText);
     if (isAgent) {
       const tag = el("div", { class: "us-tool-tag" }, "👤 Live agent");
       div.prepend(tag);
     } else if (toolCalls && toolCalls.length) {
-      const tag = el("div", { class: "us-tool-tag" },
-        "Used: " + toolCalls.map(t => t.name).join(", "));
+      const names = [...new Set(toolCalls.map(t => t.name))].join(", ");
+      const tag = el("div", { class: "us-tool-tag" }, "Used: " + names);
       div.appendChild(tag);
     }
     body.appendChild(div);
+
+    if (who === "bot" && actions.length) {
+      const wrap = el("div", { class: "us-actions" });
+      actions.forEach(a => {
+        const b = el("button", { type: "button" }, a.label);
+        b.onclick = () => {
+          // Disable all buttons in this group once one is tapped
+          [...wrap.querySelectorAll("button")].forEach(x => x.disabled = true);
+          b.classList.add("us-action-picked");
+          input.value = a.send;
+          form.requestSubmit();
+        };
+        wrap.appendChild(b);
+      });
+      body.appendChild(wrap);
+    }
     body.scrollTop = body.scrollHeight;
   }
 

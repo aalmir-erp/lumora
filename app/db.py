@@ -117,12 +117,94 @@ CREATE TABLE IF NOT EXISTS agent_takeovers (
     started_at TEXT NOT NULL,
     ended_at TEXT
 );
+
+-- ---------- accounts + auth ----------
+
+CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone TEXT UNIQUE NOT NULL,
+    name TEXT,
+    email TEXT,
+    language TEXT DEFAULT 'en',
+    created_at TEXT NOT NULL,
+    last_seen_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS vendors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT NOT NULL,
+    phone TEXT,
+    company TEXT,
+    rating REAL DEFAULT 5.0,
+    completed_jobs INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    is_approved INTEGER DEFAULT 1,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_vendors_email ON vendors(email);
+
+CREATE TABLE IF NOT EXISTS vendor_services (
+    vendor_id INTEGER NOT NULL,
+    service_id TEXT NOT NULL,
+    area TEXT DEFAULT '*',
+    PRIMARY KEY (vendor_id, service_id, area),
+    FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS assignments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    booking_id TEXT NOT NULL,
+    vendor_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'assigned',
+    payout_amount REAL,
+    notes TEXT,
+    claimed_at TEXT NOT NULL,
+    started_at TEXT,
+    completed_at TEXT,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id),
+    FOREIGN KEY (vendor_id) REFERENCES vendors(id)
+);
+CREATE INDEX IF NOT EXISTS idx_assn_vendor ON assignments(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_assn_booking ON assignments(booking_id);
+
+CREATE TABLE IF NOT EXISTS otps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone TEXT NOT NULL,
+    code_hash TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    used_at TEXT,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_otps_phone ON otps(phone);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    token TEXT PRIMARY KEY,
+    user_type TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_user ON auth_sessions(user_type, user_id);
 """
 
 
 def init_db() -> None:
     with connect() as c:
         c.executescript(SCHEMA)
+        # Idempotent column additions for vendor_services price config
+        for stmt in (
+            "ALTER TABLE vendor_services ADD COLUMN price_aed REAL",
+            "ALTER TABLE vendor_services ADD COLUMN price_unit TEXT DEFAULT 'fixed'",
+            "ALTER TABLE vendor_services ADD COLUMN sla_hours INTEGER DEFAULT 24",
+            "ALTER TABLE vendor_services ADD COLUMN active INTEGER DEFAULT 1",
+            "ALTER TABLE vendor_services ADD COLUMN notes TEXT",
+        ):
+            try:
+                c.execute(stmt)
+            except Exception:  # noqa: BLE001
+                pass  # column exists
 
 
 @contextmanager

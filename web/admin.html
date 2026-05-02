@@ -16,11 +16,12 @@
 <div id="shell" class="admin-shell" style="display:none">
   <aside class="admin-side">
     <div style="margin-bottom:24px"><img src="/logo.svg" height="32" style="filter:brightness(0) invert(1)"></div>
-    <a href="#dashboard" class="active" data-tab="dashboard">Dashboard</a>
-    <a href="#bookings"  data-tab="bookings">Bookings</a>
-    <a href="#convos"    data-tab="convos">Conversations</a>
-    <a href="#pricing"   data-tab="pricing">Pricing</a>
-    <a href="#whatsapp"  data-tab="whatsapp">WhatsApp</a>
+    <a href="#dashboard" class="active" data-tab="dashboard">📊 Dashboard</a>
+    <a href="#bookings"  data-tab="bookings">📋 Bookings</a>
+    <a href="#convos"    data-tab="convos">💬 Conversations</a>
+    <a href="#pricing"   data-tab="pricing">💰 Services & Pricing</a>
+    <a href="#vendors"   data-tab="vendors">🤝 Vendors</a>
+    <a href="#whatsapp"  data-tab="whatsapp">📲 WhatsApp</a>
     <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
   </aside>
   <main class="admin-main">
@@ -63,9 +64,26 @@
     </div>
 
     <div id="t-pricing" class="tab" style="display:none">
-      <h2>Pricing & Services</h2>
-      <p class="sub">Edits override the base catalog and apply immediately to the bot.</p>
-      <div id="pricing-table"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
+        <div>
+          <h2 style="margin:0">Services &amp; Pricing</h2>
+          <p style="margin:4px 0 0;color:var(--muted)">17 services in catalog. Click a card to expand: edit info, pricing rule, and the vendors who offer this service at their own price.</p>
+        </div>
+        <input id="svc-search" placeholder="🔎 Filter services…"
+               style="padding:9px 14px;border:1px solid var(--border);border-radius:999px;font-size:13px;width:220px">
+      </div>
+      <div id="svc-cards" style="display:grid;grid-template-columns:1fr;gap:12px"></div>
+    </div>
+
+    <div id="t-vendors" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
+        <div>
+          <h2 style="margin:0">Vendors</h2>
+          <p style="margin:4px 0 0;color:var(--muted)">Approve, suspend, and view performance. Click a vendor to manage their services + per-service pricing.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateVendor()">+ Add vendor</button>
+      </div>
+      <div id="vendor-table"></div>
     </div>
 
     <div id="t-whatsapp" class="tab" style="display:none">
@@ -73,6 +91,11 @@
       <div id="wa-status">Checking…</div>
     </div>
   </main>
+</div>
+
+<!-- Modal for vendor add-to-service -->
+<div id="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeModal()">
+  <div id="modal" style="background:#fff;border-radius:16px;padding:24px;max-width:520px;width:90%;max-height:90vh;overflow:auto"></div>
 </div>
 
 <script src="/app.js"></script>
@@ -88,6 +111,7 @@ function show(tab) {
   if (tab==="bookings")  loadBookings();
   if (tab==="convos")    loadSessions();
   if (tab==="pricing")   loadPricing();
+  if (tab==="vendors")   loadVendors();
   if (tab==="whatsapp")  loadWA();
 }
 async function adm(path, opts={}) {
@@ -182,22 +206,309 @@ document.getElementById("agent-reply-form").addEventListener("submit", async e =
   openConv(currentSid);
 });
 
+// =============== Services & Pricing — rich UI ===============
+const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
+  hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
+  tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
+let _allServices = [];
+let _expandedSid = null;
+
 async function loadPricing() {
-  const p = await adm("/api/admin/pricing");
-  const ruleRows = Object.entries(p.rules).map(([sid, rule]) => `
-    <tr><td>${sid}</td><td><pre style="margin:0;font-size:11px">${escapeHtml(JSON.stringify(rule,null,1))}</pre></td>
-    <td><button class="btn btn-ghost" onclick="editRule('${sid}', ${JSON.stringify(JSON.stringify(rule)).replace(/"/g,'&quot;')})">Edit</button></td></tr>`).join("");
-  document.getElementById("pricing-table").innerHTML = `
-    <table class="list"><thead><tr><th>Service ID</th><th>Rule (JSON)</th><th></th></tr></thead><tbody>${ruleRows}</tbody></table>`;
+  const r = await adm("/api/admin/services-summary");
+  _allServices = r.services;
+  renderServiceCards();
 }
-window.editRule = async (sid, ruleJson) => {
-  const next = prompt("Edit rule for "+sid+" as JSON", ruleJson);
-  if (!next) return;
-  try {
-    const obj = JSON.parse(next);
-    await adm("/api/admin/pricing", { method:"POST", body:{ rules: { [sid]: obj } } });
-    loadPricing();
-  } catch (e) { alert("Bad JSON: "+e.message); }
+function renderServiceCards() {
+  const q = (document.getElementById("svc-search").value || "").toLowerCase();
+  const wrap = document.getElementById("svc-cards");
+  const list = _allServices.filter(s =>
+    !q || s.name.toLowerCase().includes(q) || s.id.includes(q) || s.category.toLowerCase().includes(q));
+  wrap.innerHTML = list.map(s => `
+    <div class="svc-row" data-sid="${s.id}" style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+      <div onclick="toggleSvc('${s.id}')" style="padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:14px;min-width:0">
+          <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#0D9488,#0F766E);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${ICONS[s.icon]||"🧽"}</div>
+          <div style="min-width:0">
+            <div style="font-weight:700;font-size:15px">${escapeHtml(s.name)}
+              <span style="background:var(--bg);color:var(--muted);font-size:11px;padding:2px 8px;border-radius:999px;margin-inline-start:6px">${s.category}</span>
+            </div>
+            <div style="color:var(--muted);font-size:12px;margin-top:2px">${escapeHtml(s.description||'').slice(0,90)}${(s.description||'').length>90?'…':''}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:18px;align-items:center;flex-shrink:0">
+          <div style="text-align:end"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Starts at</div><div style="font-weight:700;color:var(--primary)">${s.starting_price||'—'} AED</div></div>
+          <div style="text-align:end"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Vendors</div><div style="font-weight:700">${s.vendor_count||0}</div></div>
+          <div style="font-size:18px;color:var(--muted);transition:transform .2s" id="caret-${s.id}">▾</div>
+        </div>
+      </div>
+      <div id="exp-${s.id}" style="display:none;border-top:1px solid var(--border);padding:0;background:#FAFBFD"></div>
+    </div>`).join("");
+}
+document.getElementById("svc-search").oninput = renderServiceCards;
+
+window.toggleSvc = async function(sid) {
+  const exp = document.getElementById("exp-"+sid);
+  const caret = document.getElementById("caret-"+sid);
+  if (_expandedSid === sid) {
+    exp.style.display = "none"; caret.style.transform = ""; _expandedSid = null; return;
+  }
+  // Close any other expanded
+  if (_expandedSid) {
+    document.getElementById("exp-"+_expandedSid).style.display = "none";
+    document.getElementById("caret-"+_expandedSid).style.transform = "";
+  }
+  _expandedSid = sid;
+  caret.style.transform = "rotate(180deg)";
+  exp.style.display = "block";
+  exp.innerHTML = `<div style="padding:24px;color:var(--muted)">Loading…</div>`;
+  const detail = await adm("/api/admin/service/"+sid);
+  exp.innerHTML = renderServiceDetail(sid, detail);
+};
+
+function renderServiceDetail(sid, d) {
+  const s = d.service, rule = d.rule||{}, vendors = d.vendors||[], sum = d.summary||{};
+  // Build form fields based on which keys are in rule
+  const numericFields = ["base_per_bedroom","min_charge","hourly_rate","per_split_unit","per_seat",
+    "per_sqm_carpet","per_mattress_single","per_mattress_king","per_central_outlet","min_units",
+    "min_hours","supplies_addon","base_flat","per_extra_room","per_extra_window","per_extra_hour",
+    "with_appliances","callout_flat","weekly_discount_pct","daily_contract_discount_pct",
+    "team_size","warranty_days","per_kg","per_piece","overnight_flat"];
+  const presentFields = numericFields.filter(k => k in rule);
+  const ruleFormHtml = presentFields.map(k => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <label style="flex:1;font-size:13px;color:var(--muted)">${k.replace(/_/g,' ')}</label>
+      <input type="number" step="0.5" data-rk="${k}" value="${rule[k]}" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:8px">
+    </div>`).join("");
+  const includes = (s.includes||[]).map(x => `<span style="background:#ECFDF5;color:#065F46;padding:3px 10px;border-radius:999px;font-size:12px;display:inline-block;margin:2px">✓ ${escapeHtml(x)}</span>`).join("");
+  const excludes = (s.excludes||[]).map(x => `<span style="background:#FEE2E2;color:#991B1B;padding:3px 10px;border-radius:999px;font-size:12px;display:inline-block;margin:2px">✗ ${escapeHtml(x)}</span>`).join("");
+  const vendorRows = vendors.map(v => {
+    const statusDot = v.is_active && v.active ? '🟢' : '⚪';
+    return `
+    <tr>
+      <td>
+        <div style="font-weight:600">${statusDot} ${escapeHtml(v.name)} ${v.is_approved?'':'<span class="badge pending">pending</span>'}</div>
+        <div style="font-size:11px;color:var(--muted)">${escapeHtml(v.email)}${v.company?' • '+escapeHtml(v.company):''}</div>
+      </td>
+      <td style="text-align:center">★ ${(v.rating||5).toFixed(1)}<br><small style="color:var(--muted)">${v.completed_jobs||0} jobs</small></td>
+      <td>
+        <input type="number" step="1" value="${v.price_aed||''}" placeholder="default" data-vp="${v.vendor_id}"
+               style="width:90px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;text-align:end" />
+        <select data-vu="${v.vendor_id}" style="margin-inline-start:4px;font-size:11px;padding:5px 4px;border:1px solid var(--border);border-radius:6px">
+          ${["fixed","per_bedroom","per_hour","per_unit"].map(u=>`<option value="${u}" ${u===v.price_unit?'selected':''}>${u}</option>`).join("")}
+        </select>
+      </td>
+      <td><label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" data-va="${v.vendor_id}" ${v.active?'checked':''}>active</label></td>
+      <td style="text-align:end">
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="saveVendorPricing('${sid}', ${v.vendor_id})">Save</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;color:#DC2626" onclick="removeVendorFromService('${sid}', ${v.vendor_id})">Remove</button>
+      </td>
+    </tr>`;
+  }).join("");
+  return `
+    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:0">
+      <!-- LEFT: rule + info -->
+      <div style="padding:24px;border-inline-end:1px solid var(--border)">
+        <h4 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Pricing rule</h4>
+        ${presentFields.length ? ruleFormHtml : '<p style="color:var(--muted);font-size:13px">No numeric fields — rule is informational.</p>'}
+        <button class="btn btn-primary" style="margin-top:12px;font-size:13px" onclick="saveRule('${sid}')">Save rule</button>
+
+        <h4 style="margin:24px 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Service info</h4>
+        <label style="font-size:12px;color:var(--muted)">Description</label>
+        <textarea id="info-desc-${sid}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;min-height:60px;font-family:inherit;font-size:13px">${escapeHtml(s.description||'')}</textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div><label style="font-size:12px;color:var(--muted)">Starting price (AED)</label>
+               <input type="number" id="info-start-${sid}" value="${s.starting_price||''}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+          <div><label style="font-size:12px;color:var(--muted)">Category</label>
+               <input id="info-cat-${sid}" value="${escapeHtml(s.category||'')}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+        </div>
+        <button class="btn btn-ghost" style="margin-top:10px;font-size:13px" onclick="saveInfo('${sid}')">Save info</button>
+
+        <h4 style="margin:24px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Includes</h4>
+        <div>${includes||'<span style="color:var(--muted);font-size:12px">—</span>'}</div>
+        <h4 style="margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Excludes</h4>
+        <div>${excludes||'<span style="color:var(--muted);font-size:12px">—</span>'}</div>
+      </div>
+
+      <!-- RIGHT: vendors -->
+      <div style="padding:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h4 style="margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">
+            Vendors offering this service${vendors.length?` <span style="color:var(--text);font-weight:700">(${vendors.length})</span>`:''}
+          </h4>
+          <button class="btn btn-primary" style="font-size:12px;padding:6px 12px" onclick="openAddVendor('${sid}')">+ Add vendor</button>
+        </div>
+        ${vendors.length === 0 ? `<div style="padding:24px;background:#FFFBEB;border-radius:10px;color:#92400E;text-align:center">
+          ⚠️ No vendors offer this service yet. Customers booking this will go to the open marketplace.
+        </div>` : `
+        <div style="display:flex;gap:18px;font-size:12px;color:var(--muted);margin-bottom:8px">
+          ${sum.min_price_aed ? `<span>From <b style="color:var(--text)">${sum.min_price_aed} AED</b></span>` : ''}
+          ${sum.avg_rating ? `<span>Avg ★ <b style="color:var(--text)">${sum.avg_rating}</b></span>` : ''}
+          <span>Active <b style="color:var(--text)">${sum.active_vendor_count}</b></span>
+        </div>
+        <table class="list" style="font-size:13px">
+          <thead><tr><th>Vendor</th><th>Rating</th><th>Custom price</th><th>Active</th><th></th></tr></thead>
+          <tbody>${vendorRows}</tbody>
+        </table>`}
+      </div>
+    </div>`;
+}
+
+window.saveRule = async function(sid) {
+  const exp = document.getElementById("exp-"+sid);
+  const fields = [...exp.querySelectorAll("[data-rk]")];
+  const rule = {};
+  fields.forEach(f => { rule[f.dataset.rk] = parseFloat(f.value) || 0; });
+  // preserve non-numeric fields (notes, etc) from current rule
+  const cur = (await adm("/api/admin/service/"+sid)).rule;
+  for (const k in cur) if (!(k in rule) && typeof cur[k] !== 'number') rule[k] = cur[k];
+  await adm("/api/admin/service/"+sid+"/rule", { method:"POST", body:{ rule } });
+  toast("✓ Rule saved");
+};
+window.saveInfo = async function(sid) {
+  const desc = document.getElementById("info-desc-"+sid).value;
+  const start = parseFloat(document.getElementById("info-start-"+sid).value);
+  const cat = document.getElementById("info-cat-"+sid).value;
+  await adm("/api/admin/service/"+sid+"/info", { method:"POST",
+    body:{ description: desc, starting_price: start, category: cat } });
+  toast("✓ Info saved");
+  // Refresh card list to show updated starting_price
+  loadPricing();
+};
+window.saveVendorPricing = async function(sid, vid) {
+  const exp = document.getElementById("exp-"+sid);
+  const price = parseFloat(exp.querySelector(`[data-vp="${vid}"]`).value) || null;
+  const unit = exp.querySelector(`[data-vu="${vid}"]`).value;
+  const active = exp.querySelector(`[data-va="${vid}"]`).checked;
+  await adm("/api/admin/service/"+sid+"/vendor", { method:"POST",
+    body:{ vendor_id: vid, price_aed: price, price_unit: unit, active } });
+  toast("✓ Vendor pricing saved");
+};
+window.removeVendorFromService = async function(sid, vid) {
+  if (!confirm("Remove this vendor from this service?")) return;
+  await adm("/api/admin/service/"+sid+"/vendor/"+vid, { method:"DELETE" });
+  toggleSvc(sid); toggleSvc(sid);  // refresh
+};
+
+window.openAddVendor = async function(sid) {
+  const r = await adm("/api/admin/vendors");
+  const detail = await adm("/api/admin/service/"+sid);
+  const taken = new Set(detail.vendors.map(v => v.vendor_id));
+  const available = r.vendors.filter(v => !taken.has(v.id) && v.is_approved && v.is_active);
+  document.getElementById("modal-bg").style.display = "flex";
+  document.getElementById("modal").innerHTML = `
+    <h3 style="margin:0 0 6px">Add vendor to "${escapeHtml(detail.service.name)}"</h3>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 16px">Pick a vendor and set their price (or leave blank to use the platform's default rule).</p>
+    <label style="font-size:12px;color:var(--muted)">Vendor</label>
+    <select id="m-vid" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px">
+      ${available.length ? available.map(v => `<option value="${v.id}">${escapeHtml(v.name)} • ★${(v.rating||5).toFixed(1)} • ${v.completed_jobs||0} jobs</option>`).join("") : '<option disabled>No more vendors available — add one in the Vendors tab.</option>'}
+    </select>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label style="font-size:12px;color:var(--muted)">Custom price (AED, optional)</label>
+        <input id="m-price" type="number" placeholder="leave blank for default" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px"></div>
+      <div><label style="font-size:12px;color:var(--muted)">Price unit</label>
+        <select id="m-unit" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px">
+          <option value="fixed">fixed</option><option value="per_bedroom">per bedroom</option>
+          <option value="per_hour">per hour</option><option value="per_unit">per unit</option>
+        </select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><label style="font-size:12px;color:var(--muted)">SLA hours</label>
+        <input id="m-sla" type="number" value="24" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px"></div>
+      <div><label style="font-size:12px;color:var(--muted)">Notes</label>
+        <input id="m-notes" placeholder="e.g. weekends only" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddVendor('${sid}')" ${available.length?'':'disabled'}>Add vendor</button>
+    </div>`;
+};
+window.confirmAddVendor = async function(sid) {
+  const vid = parseInt(document.getElementById("m-vid").value);
+  const price = parseFloat(document.getElementById("m-price").value) || null;
+  const unit = document.getElementById("m-unit").value;
+  const sla = parseInt(document.getElementById("m-sla").value) || 24;
+  const notes = document.getElementById("m-notes").value || null;
+  await adm("/api/admin/service/"+sid+"/vendor", { method:"POST",
+    body:{ vendor_id: vid, price_aed: price, price_unit: unit, sla_hours: sla, notes, active: true } });
+  closeModal();
+  // re-expand to refresh
+  if (_expandedSid === sid) { _expandedSid = null; toggleSvc(sid); } else { toggleSvc(sid); }
+  loadPricing();
+};
+window.closeModal = () => { document.getElementById("modal-bg").style.display = "none"; };
+
+function toast(msg) {
+  const t = document.createElement("div");
+  t.textContent = msg;
+  t.style.cssText = "position:fixed;bottom:24px;right:24px;background:#0F766E;color:#fff;padding:10px 18px;border-radius:8px;z-index:2000;box-shadow:0 8px 24px rgba(0,0,0,.2);font-size:14px";
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+// =============== Vendors tab ===============
+async function loadVendors() {
+  const r = await adm("/api/admin/vendors");
+  document.getElementById("vendor-table").innerHTML = `
+    <table class="list">
+      <thead><tr><th>Vendor</th><th>Email / Phone</th><th>Services</th><th>★ Rating</th><th>Jobs</th><th>Status</th><th></th></tr></thead>
+      <tbody>${r.vendors.map(v => `
+        <tr>
+          <td><div style="font-weight:600">${escapeHtml(v.name)}</div>
+              ${v.company?`<div style="font-size:11px;color:var(--muted)">${escapeHtml(v.company)}</div>`:''}</td>
+          <td><div style="font-size:13px">${escapeHtml(v.email)}</div>
+              ${v.phone?`<div style="font-size:11px;color:var(--muted)">${escapeHtml(v.phone)}</div>`:''}</td>
+          <td><div style="font-size:11px;color:var(--muted)">${(v.services||[]).slice(0,4).join(', ')||'—'}${v.services && v.services.length>4?` +${v.services.length-4}`:''}</div></td>
+          <td>${(v.rating||5).toFixed(1)}</td>
+          <td>${v.completed_jobs||0}</td>
+          <td>
+            ${v.is_approved ? '<span class="badge confirmed">approved</span>' : '<span class="badge pending">pending</span>'}
+            ${v.is_active ? '' : '<br><span class="badge cancelled">disabled</span>'}
+          </td>
+          <td style="text-align:end;font-size:12px">
+            ${v.is_approved ? '' : `<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'approve')">Approve</button>`}
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'${v.is_active?'disable':'enable'}')">${v.is_active?'Disable':'Enable'}</button>
+          </td>
+        </tr>`).join("")}</tbody></table>`;
+}
+window.setVendor = async function(vid, action) {
+  const body = {};
+  if (action === 'approve') body.is_approved = true;
+  if (action === 'disable') body.is_active = false;
+  if (action === 'enable')  body.is_active = true;
+  await adm("/api/admin/vendors/"+vid, { method:"POST", body });
+  loadVendors();
+};
+window.openCreateVendor = function() {
+  document.getElementById("modal-bg").style.display = "flex";
+  document.getElementById("modal").innerHTML = `
+    <h3 style="margin:0 0 16px">Add vendor</h3>
+    <label style="font-size:12px;color:var(--muted)">Name</label>
+    <input id="cv-name" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+    <label style="font-size:12px;color:var(--muted)">Email</label>
+    <input id="cv-email" type="email" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+    <label style="font-size:12px;color:var(--muted)">Password</label>
+    <input id="cv-pw" type="text" placeholder="Vendor uses this to log in" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+    <label style="font-size:12px;color:var(--muted)">Phone</label>
+    <input id="cv-phone" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+    <label style="font-size:12px;color:var(--muted)">Company (optional)</label>
+    <input id="cv-co" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:16px">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCreateVendor()">Create</button>
+    </div>`;
+};
+window.confirmCreateVendor = async function() {
+  const body = {
+    name: document.getElementById("cv-name").value,
+    email: document.getElementById("cv-email").value,
+    password: document.getElementById("cv-pw").value,
+    phone: document.getElementById("cv-phone").value || null,
+    company: document.getElementById("cv-co").value || null,
+    is_approved: true,
+  };
+  if (!body.name || !body.email || !body.password) { alert("Name, email, password required"); return; }
+  try { await adm("/api/admin/vendors", { method:"POST", body }); closeModal(); loadVendors(); }
+  catch(e) { alert("Error: "+e.message); }
 };
 
 async function loadWA() {

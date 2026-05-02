@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36"></a>
+  <div class="nav-cta"><a class="btn btn-ghost" href="/">Home</a></div>
+</div></nav>
+
+<section><div class="container" style="max-width:480px">
+  <div class="form">
+    <h2 style="margin:0 0 4px">Sign in</h2>
+    <p class="sub" id="lead">Customers sign in with phone (we'll send a code).
+       Vendors use email & password.</p>
+
+    <div style="display:flex;gap:6px;margin-bottom:18px;background:var(--bg);border-radius:10px;padding:4px">
+      <button id="tab-c" class="btn btn-primary" style="flex:1" onclick="setTab('c')">I'm a customer</button>
+      <button id="tab-v" class="btn btn-ghost" style="flex:1" onclick="setTab('v')">I'm a vendor</button>
+    </div>
+
+    <!-- CUSTOMER FLOW -->
+    <div id="cust">
+      <label>Phone (with country code)</label>
+      <input id="cphone" placeholder="+971501234567">
+      <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="sendOtp()">Send code</button>
+
+      <div id="otp-box" style="display:none;margin-top:18px">
+        <label>6-digit code</label>
+        <input id="cotp" placeholder="123456" maxlength="6">
+        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="verifyOtp()">Verify &amp; sign in</button>
+      </div>
+      <div id="dev-otp" style="margin-top:14px;color:var(--muted);font-size:13px"></div>
+    </div>
+
+    <!-- VENDOR FLOW -->
+    <div id="vend" style="display:none">
+      <div id="vendor-tabs" style="display:flex;gap:6px;margin-bottom:14px">
+        <button id="vt-l" class="btn btn-ghost" style="flex:1;font-size:13px" onclick="vTab('l')">Sign in</button>
+        <button id="vt-r" class="btn btn-ghost" style="flex:1;font-size:13px" onclick="vTab('r')">Register</button>
+      </div>
+
+      <div id="v-login">
+        <label>Email</label><input id="vemail" type="email">
+        <label>Password</label><input id="vpw" type="password">
+        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="vendorLogin()">Sign in</button>
+      </div>
+
+      <div id="v-register" style="display:none">
+        <label>Full name</label><input id="rname">
+        <label>Email</label><input id="remail" type="email">
+        <label>Password</label><input id="rpw" type="password" placeholder="6+ characters">
+        <label>Phone (optional)</label><input id="rphone">
+        <label>Company (optional)</label><input id="rcompany">
+        <label>Services you offer (tap to toggle)</label>
+        <div id="svc-pick" style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"></div>
+        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="vendorRegister()">Create account</button>
+      </div>
+    </div>
+
+    <div id="msg" style="margin-top:14px;font-size:13px"></div>
+  </div>
+</div></section>
+
+<script src="/app.js"></script>
+<script>
+const TOK = "lumora.user.tok";
+const UTYPE = "lumora.user.type";
+let pickedServices = new Set();
+let vTabState = "l";
+
+if (localStorage.getItem(TOK)) {
+  const t = localStorage.getItem(UTYPE);
+  location.replace(t === "vendor" ? "/vendor.html" : "/me.html");
+}
+
+function setTab(t) {
+  document.getElementById("tab-c").className = "btn " + (t==="c"?"btn-primary":"btn-ghost");
+  document.getElementById("tab-v").className = "btn " + (t==="v"?"btn-primary":"btn-ghost");
+  document.getElementById("cust").style.display = t==="c" ? "" : "none";
+  document.getElementById("vend").style.display = t==="v" ? "" : "none";
+  if (t==="v" && !pickedServices.size) loadServices();
+}
+
+function vTab(t) {
+  vTabState = t;
+  document.getElementById("vt-l").className = "btn " + (t==="l"?"btn-primary":"btn-ghost");
+  document.getElementById("vt-r").className = "btn " + (t==="r"?"btn-primary":"btn-ghost");
+  document.getElementById("v-login").style.display    = t==="l" ? "" : "none";
+  document.getElementById("v-register").style.display = t==="r" ? "" : "none";
+}
+
+async function loadServices() {
+  const r = await fetch("/api/services").then(x=>x.json());
+  const wrap = document.getElementById("svc-pick");
+  wrap.innerHTML = r.services.map(s =>
+    `<button type="button" class="btn btn-ghost" data-sid="${s.id}" style="font-size:12px;padding:6px 10px" onclick="toggleSvc(this)">${s.name}</button>`).join("");
+}
+function toggleSvc(btn) {
+  const id = btn.dataset.sid;
+  if (pickedServices.has(id)) { pickedServices.delete(id); btn.className = "btn btn-ghost"; }
+  else { pickedServices.add(id); btn.className = "btn btn-primary"; }
+  btn.style.fontSize = "12px"; btn.style.padding = "6px 10px";
+}
+
+async function sendOtp() {
+  const phone = document.getElementById("cphone").value.trim();
+  if (!phone) return msg("Phone required", true);
+  msg("Sending code…");
+  try {
+    const r = await api("/api/auth/customer/start", { method:"POST", body:{ phone }});
+    document.getElementById("otp-box").style.display = "";
+    if (r.dev_otp) {
+      document.getElementById("dev-otp").innerHTML =
+        `Demo mode — your code: <b style="font-size:18px;color:var(--primary)">${r.dev_otp}</b><br>` +
+        `<small>Set up the WhatsApp bridge to send via WA instead.</small>`;
+    } else {
+      msg(`Code sent via ${r.delivered_via}`);
+    }
+  } catch(e) { msg("Error: "+e.message, true); }
+}
+
+async function verifyOtp() {
+  const phone = document.getElementById("cphone").value.trim();
+  const code = document.getElementById("cotp").value.trim();
+  try {
+    const r = await api("/api/auth/customer/verify", { method:"POST", body:{ phone, code }});
+    localStorage.setItem(TOK, r.token);
+    localStorage.setItem(UTYPE, "customer");
+    location.replace("/me.html");
+  } catch(e) { msg("Error: "+e.message, true); }
+}
+
+async function vendorLogin() {
+  const email = document.getElementById("vemail").value.trim();
+  const password = document.getElementById("vpw").value;
+  try {
+    const r = await api("/api/auth/vendor/login", { method:"POST", body:{ email, password }});
+    if (!r.approved) return msg("Account pending approval. Contact admin.", true);
+    localStorage.setItem(TOK, r.token);
+    localStorage.setItem(UTYPE, "vendor");
+    location.replace("/vendor.html");
+  } catch(e) { msg("Error: "+e.message, true); }
+}
+
+async function vendorRegister() {
+  const body = {
+    name: document.getElementById("rname").value.trim(),
+    email: document.getElementById("remail").value.trim(),
+    password: document.getElementById("rpw").value,
+    phone: document.getElementById("rphone").value.trim(),
+    company: document.getElementById("rcompany").value.trim(),
+    services: [...pickedServices],
+  };
+  if (!body.name || !body.email || !body.password) return msg("Name + email + password required", true);
+  try {
+    const r = await api("/api/auth/vendor/register", { method:"POST", body });
+    if (r.approval_required) {
+      msg("Account created — pending admin approval. We'll WhatsApp you when approved.");
+    } else {
+      msg("Account created. Please sign in.");
+      vTab("l");
+      document.getElementById("vemail").value = body.email;
+    }
+  } catch(e) { msg("Error: "+e.message, true); }
+}
+
+function msg(t, err) {
+  const m = document.getElementById("msg");
+  m.style.color = err ? "#DC2626" : "var(--primary)";
+  m.textContent = t;
+}
+</script>
+</body></html>

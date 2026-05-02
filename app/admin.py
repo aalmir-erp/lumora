@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from . import db, kb, quotes, tools
+from . import auth_users, db, kb, quotes, tools
 from .auth import require_admin
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -228,3 +228,243 @@ async def admin_stream(request: Request):
             await asyncio.sleep(2.0)
 
     return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+# ---------- Vendors ----------
+@router.get("/vendors")
+def list_vendors():
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT id, email, name, phone, company, rating, completed_jobs, "
+            "is_active, is_approved, created_at FROM vendors ORDER BY created_at DESC"
+        ).fetchall()
+        for_each = []
+        for r in rows:
+            d = dict(r)
+            svcs = [x["service_id"] for x in c.execute(
+                "SELECT service_id FROM vendor_services WHERE vendor_id=?",
+                (r["id"],)).fetchall()]
+            d["services"] = svcs
+            for_each.append(d)
+    return {"vendors": for_each}
+
+
+class CreateVendorBody(BaseModel):
+    email: str
+    password: str
+    name: str
+    phone: str | None = None
+    company: str | None = None
+    services: list[str] = []
+    is_approved: bool = True
+
+
+@router.post("/vendors")
+def create_vendor(body: CreateVendorBody):
+    pwhash = auth_users.hash_password(body.password)
+    import datetime as _dt
+    with db.connect() as c:
+        try:
+            cur = c.execute(
+                "INSERT INTO vendors(email, password_hash, name, phone, company, "
+                "is_approved, created_at) VALUES(?,?,?,?,?,?,?)",
+                (body.email.lower(), pwhash, body.name, body.phone, body.company,
+                 1 if body.is_approved else 0,
+                 _dt.datetime.utcnow().isoformat() + "Z"),
+            )
+            vid = cur.lastrowid
+            for sid in body.services:
+                c.execute("INSERT OR IGNORE INTO vendor_services(vendor_id, service_id, area) "
+                          "VALUES(?,?, '*')", (vid, sid))
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(400, f"create failed: {e}")
+    return {"ok": True, "vendor_id": vid}
+
+
+class VendorPatchBody(BaseModel):
+    is_approved: bool | None = None
+    is_active: bool | None = None
+    services: list[str] | None = None
+
+
+@router.post("/vendors/{vid}")
+def update_vendor(vid: int, body: VendorPatchBody):
+    with db.connect() as c:
+        if body.is_approved is not None:
+            c.execute("UPDATE vendors SET is_approved=? WHERE id=?",
+                      (1 if body.is_approved else 0, vid))
+        if body.is_active is not None:
+            c.execute("UPDATE vendors SET is_active=? WHERE id=?",
+                      (1 if body.is_active else 0, vid))
+        if body.services is not None:
+            c.execute("DELETE FROM vendor_services WHERE vendor_id=?", (vid,))
+            for sid in body.services:
+                c.execute("INSERT INTO vendor_services(vendor_id, service_id, area) "
+                          "VALUES(?,?, '*')", (vid, sid))
+    return {"ok": True}
+
+
+class AssignBody(BaseModel):
+    booking_id: str
+    vendor_id: int
+
+
+@router.post("/assign")
+def assign(body: AssignBody):
+    """Admin manual assignment (overrides marketplace)."""
+    import datetime as _dt
+    with db.connect() as c:
+        existing = c.execute("SELECT id FROM assignments WHERE booking_id=?",
+                             (body.booking_id,)).fetchone()
+        if existing:
+            raise HTTPException(409, "already assigned; release first")
+        b = c.execute("SELECT estimated_total FROM bookings WHERE id=?",
+                      (body.booking_id,)).fetchone()
+        if not b:
+            raise HTTPException(404, "booking not found")
+        import os
+        pct = float(os.getenv("VENDOR_PAYOUT_PCT", "0.8"))
+        payout = round((b["estimated_total"] or 0) * pct, 2)
+        cur = c.execute(
+            "INSERT INTO assignments(booking_id, vendor_id, status, payout_amount, claimed_at) "
+            "VALUES(?,?,?,?,?)",
+            (body.booking_id, body.vendor_id, "assigned", payout,
+             _dt.datetime.utcnow().isoformat() + "Z"))
+    db.log_event("booking", body.booking_id, "admin_assigned",
+                 actor="admin", details={"vendor_id": body.vendor_id})
+    return {"ok": True, "assignment_id": cur.lastrowid, "payout": payout}
+
+
+@router.delete("/assignments/{aid}")
+def unassign(aid: int):
+    with db.connect() as c:
+        c.execute("DELETE FROM assignments WHERE id=?", (aid,))
+    return {"ok": True}
+
+
+# ---------- Service detail (services × vendors × pricing) ----------
+@router.get("/service/{sid}")
+def service_detail(sid: str):
+    """Full service detail: definition + pricing rule + vendors offering it (with price)."""
+    s = next((x for x in kb.services()["services"] if x["id"] == sid), None)
+    if not s:
+        raise HTTPException(404, "service not found")
+    rule = kb.pricing()["rules"].get(sid, {})
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT vs.vendor_id, vs.area, vs.price_aed, vs.price_unit, "
+            "vs.sla_hours, vs.active, vs.notes, "
+            "v.name, v.email, v.phone, v.company, v.rating, v.completed_jobs, "
+            "v.is_approved, v.is_active "
+            "FROM vendor_services vs JOIN vendors v ON v.id = vs.vendor_id "
+            "WHERE vs.service_id=? ORDER BY vs.price_aed IS NULL, vs.price_aed",
+            (sid,),
+        ).fetchall()
+    vendors = [dict(r) for r in rows]
+    # Stats for the summary card
+    summary = {
+        "vendor_count": len(vendors),
+        "active_vendor_count": sum(1 for v in vendors if v["active"] and v["is_active"]),
+        "min_price_aed": min((v["price_aed"] for v in vendors if v["price_aed"]), default=None),
+        "avg_rating": (round(sum(v["rating"] or 5 for v in vendors) / len(vendors), 2)
+                       if vendors else None),
+    }
+    return {"service": s, "rule": rule, "vendors": vendors, "summary": summary}
+
+
+class ServiceInfoBody(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    category: str | None = None
+    icon: str | None = None
+    starting_price: float | None = None
+    includes: list[str] | None = None
+    excludes: list[str] | None = None
+
+
+@router.post("/service/{sid}/info")
+def update_service_info(sid: str, body: ServiceInfoBody):
+    overrides = db.cfg_get("services_overrides", {}) or {}
+    patch = {k: v for k, v in body.model_dump(exclude_none=True).items()}
+    overrides[sid] = {**overrides.get(sid, {}), **patch}
+    db.cfg_set("services_overrides", overrides)
+    return {"ok": True, "service": next((x for x in kb.services()["services"]
+                                          if x["id"] == sid), None)}
+
+
+class ServiceRuleBody(BaseModel):
+    rule: dict
+
+
+@router.post("/service/{sid}/rule")
+def update_service_rule(sid: str, body: ServiceRuleBody):
+    overrides = db.cfg_get("pricing_overrides", {}) or {}
+    overrides.setdefault("rules", {})[sid] = body.rule
+    db.cfg_set("pricing_overrides", overrides)
+    return {"ok": True, "rule": kb.pricing()["rules"].get(sid)}
+
+
+class VendorPricingBody(BaseModel):
+    vendor_id: int
+    price_aed: float | None = None
+    price_unit: str | None = "fixed"   # fixed | per_bedroom | per_hour | per_unit
+    sla_hours: int | None = 24
+    active: bool = True
+    area: str = "*"
+    notes: str | None = None
+
+
+@router.post("/service/{sid}/vendor")
+def assign_or_update_vendor(sid: str, body: VendorPricingBody):
+    """Add a vendor to this service or update their pricing/SLA/active flag."""
+    valid_units = {"fixed", "per_bedroom", "per_hour", "per_unit"}
+    if body.price_unit not in valid_units:
+        raise HTTPException(400, f"price_unit must be one of {valid_units}")
+    with db.connect() as c:
+        # Check vendor exists
+        v = c.execute("SELECT id FROM vendors WHERE id=?", (body.vendor_id,)).fetchone()
+        if not v:
+            raise HTTPException(404, "vendor not found")
+        c.execute(
+            "INSERT INTO vendor_services(vendor_id, service_id, area, price_aed, "
+            "price_unit, sla_hours, active, notes) VALUES(?,?,?,?,?,?,?,?) "
+            "ON CONFLICT(vendor_id, service_id, area) DO UPDATE SET "
+            "price_aed=excluded.price_aed, price_unit=excluded.price_unit, "
+            "sla_hours=excluded.sla_hours, active=excluded.active, notes=excluded.notes",
+            (body.vendor_id, sid, body.area, body.price_aed, body.price_unit,
+             body.sla_hours, 1 if body.active else 0, body.notes),
+        )
+    db.log_event("service", sid, "vendor_pricing_set", actor="admin",
+                 details={"vendor_id": body.vendor_id, "price": body.price_aed})
+    return {"ok": True}
+
+
+@router.delete("/service/{sid}/vendor/{vid}")
+def remove_vendor_from_service(sid: str, vid: int):
+    with db.connect() as c:
+        c.execute("DELETE FROM vendor_services WHERE service_id=? AND vendor_id=?",
+                  (sid, vid))
+    return {"ok": True}
+
+
+@router.get("/services-summary")
+def services_summary():
+    """Lightweight list of services with vendor counts, for the admin grid."""
+    services = kb.services()["services"]
+    rules = kb.pricing()["rules"]
+    with db.connect() as c:
+        counts = {r["service_id"]: dict(r) for r in c.execute(
+            "SELECT service_id, COUNT(*) AS vendor_count, "
+            "MIN(price_aed) AS min_price, AVG(price_aed) AS avg_price "
+            "FROM vendor_services GROUP BY service_id").fetchall()}
+    out = []
+    for s in services:
+        c2 = counts.get(s["id"], {})
+        out.append({
+            **s,
+            "rule": rules.get(s["id"], {}),
+            "vendor_count": c2.get("vendor_count", 0),
+            "min_price_aed": c2.get("min_price"),
+            "avg_price_aed": c2.get("avg_price"),
+        })
+    return {"services": out}

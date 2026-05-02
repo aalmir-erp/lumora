@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My account • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
+</head><body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36"></a>
+  <div class="nav-links">
+    <a href="/services.html">Services</a>
+    <a href="/book.html">Book</a>
+    <a href="/me.html">My account</a>
+  </div>
+  <div class="nav-cta">
+    <span id="who" style="font-size:13px;color:var(--muted)"></span>
+    <button class="btn btn-ghost" onclick="logout()">Sign out</button>
+  </div>
+</div></nav>
+
+<section><div class="container">
+  <h2 style="margin:0 0 8px">My bookings</h2>
+  <p class="sub">Past + upcoming services, quotes, invoices.</p>
+  <div style="margin-bottom:16px"><a class="btn btn-primary" href="/book.html">Book another service</a></div>
+  <div id="list">Loading…</div>
+</div></section>
+
+<script src="/app.js"></script>
+<script>
+const TOK = "lumora.user.tok";
+const UTYPE = "lumora.user.type";
+const tok = localStorage.getItem(TOK);
+if (!tok || localStorage.getItem(UTYPE) !== "customer") location.replace("/login.html");
+
+async function authd(path, opts={}) {
+  return api(path, { ...opts, headers: { ...(opts.headers||{}), Authorization: "Bearer "+tok } });
+}
+function logout() {
+  authd("/api/auth/logout", { method:"POST" }).catch(()=>{});
+  localStorage.removeItem(TOK); localStorage.removeItem(UTYPE);
+  location.replace("/");
+}
+
+(async () => {
+  try {
+    const m = await authd("/api/me");
+    document.getElementById("who").textContent = m.user.phone || "";
+  } catch (e) { logout(); return; }
+
+  try {
+    const r = await authd("/api/me/bookings");
+    const list = document.getElementById("list");
+    if (!r.bookings.length) {
+      list.innerHTML = `<div class="form" style="text-align:center;color:var(--muted)">
+        No bookings yet. <a href="/book.html">Book your first service →</a></div>`;
+      return;
+    }
+    list.innerHTML = r.bookings.map(b => render(b)).join("");
+  } catch (e) {
+    document.getElementById("list").innerHTML = "Error: "+e.message;
+  }
+})();
+
+function render(b) {
+  const a = b.assignment || {};
+  const quotes = (b.quotes || []).map(q => `
+    <tr>
+      <td>${q.id}</td>
+      <td>${q.total} ${q.currency}</td>
+      <td><span class="badge ${q.status==='signed'?'signed':'pending'}">${q.status}</span></td>
+      <td><a class="btn btn-ghost" href="/quote.html?id=${q.id}">${q.status==='signed'?'View':'Sign'}</a></td>
+    </tr>`).join("");
+  const invs = (b.invoices || []).map(i => `
+    <tr>
+      <td>${i.id}</td>
+      <td>${i.amount} ${i.currency}</td>
+      <td><span class="badge ${i.payment_status}">${i.payment_status}</span></td>
+      <td>${i.payment_status === 'paid'
+            ? '<span style="color:#065F46">✓ Paid</span>'
+            : `<a class="btn btn-primary" href="${i.payment_url}">Pay now</a>`}</td>
+    </tr>`).join("");
+  const vendorBlock = a.vendor_id ? `
+    <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">
+      <b>Assigned:</b> ${escapeHtml(a.vendor_name || 'Vendor #'+a.vendor_id)} (${(a.vendor_rating||5).toFixed(1)} ★)
+      • Status: <span class="badge ${a.status}">${a.status}</span>
+    </p>` : `<p style="margin:10px 0 0;font-size:13px;color:#92400E">⏳ Waiting for a vendor to claim this job.</p>`;
+  const rateBlock = (b.status === 'completed' && a.vendor_id) ? `
+    <div style="margin-top:10px">
+      <button class="btn btn-ghost" onclick="rate('${b.id}', 5)">★★★★★</button>
+      <button class="btn btn-ghost" onclick="rate('${b.id}', 4)">★★★★</button>
+      <button class="btn btn-ghost" onclick="rate('${b.id}', 3)">★★★</button>
+    </div>` : '';
+  return `
+    <div class="form" style="margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div>
+          <h3 style="margin:0">${b.id} — ${b.service_id.replace(/_/g,' ')}</h3>
+          <div style="color:var(--muted);font-size:13px">${b.target_date} at ${b.time_slot} • ${escapeHtml(b.address)}</div>
+        </div>
+        <span class="badge ${b.status}">${b.status}</span>
+      </div>
+      ${vendorBlock}
+      ${b.estimated_total ? `<p style="margin:10px 0 0">Estimated: <b>${b.estimated_total} ${b.currency||'AED'}</b></p>` : ''}
+      ${quotes ? `<h4 style="margin:14px 0 4px;font-size:14px">Quotes</h4>
+        <table class="list"><thead><tr><th>ID</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>${quotes}</tbody></table>` : ''}
+      ${invs ? `<h4 style="margin:14px 0 4px;font-size:14px">Invoices</h4>
+        <table class="list"><thead><tr><th>ID</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>${invs}</tbody></table>` : ''}
+      ${rateBlock}
+    </div>`;
+}
+
+async function rate(bid, stars) {
+  try {
+    await authd("/api/me/booking/"+bid+"/rate", { method:"POST", body:{ stars } });
+    alert("Thanks for your rating!");
+    location.reload();
+  } catch(e) { alert("Error: "+e.message); }
+}
+
+function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+</script>
+<script src="/widget.js"></script>
+</body></html>

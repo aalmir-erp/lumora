@@ -1,19 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" width="200" height="56">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" width="260" height="64" role="img" aria-label="Lumora">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0D9488"/>
-      <stop offset="100%" stop-color="#115E59"/>
-    </linearGradient>
+    <radialGradient id="bg2" cx="0.45" cy="0.45" r="0.65">
+      <stop offset="0%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#0F766E"/>
+    </radialGradient>
   </defs>
-  <!-- mark: stylised "L" with sparkle -->
-  <g transform="translate(8 6)">
-    <rect x="0" y="0" width="44" height="44" rx="12" fill="url(#g)"/>
-    <path d="M14 10 v18 q0 4 4 4 h12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-    <g fill="#F59E0B">
-      <circle cx="34" cy="14" r="2.4"/>
-      <path d="M34 6 v4 M34 18 v4 M26 14 h4 M38 14 h4" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round"/>
-    </g>
+
+  <!-- mark: rounded square containing a mini Lumi face -->
+  <g transform="translate(6 6)">
+    <rect width="52" height="52" rx="14" fill="url(#bg2)"/>
+    <!-- bandana -->
+    <path d="M11 22 Q11 12 26 12 Q41 12 41 22 Q41 19 38 17 Q33 12 26 12 Q19 12 14 17 Q11 19 11 22 Z" fill="#FAFAFA"/>
+    <!-- face -->
+    <circle cx="26" cy="29" r="13" fill="#FCD34D"/>
+    <circle cx="22" cy="29" r="1.6" fill="#0F172A"/>
+    <circle cx="30" cy="29" r="1.6" fill="#0F172A"/>
+    <path d="M21 33 Q26 37 31 33" stroke="#0F172A" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <!-- pulsing sparkle -->
+    <circle cx="42" cy="14" r="2" fill="#F59E0B">
+      <animate attributeName="r" values="1.6;2.6;1.6" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
   </g>
-  <text x="64" y="36" font-family="-apple-system,Segoe UI,Roboto,sans-serif"
-        font-weight="700" font-size="26" fill="#0F172A" letter-spacing="-0.5">Lumora</text>
+
+  <text x="72" y="42" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        font-weight="700" font-size="30" fill="#0F172A" letter-spacing="-0.6">Lumora</text>
+  <circle cx="244" cy="42" r="4" fill="url(#bg2)"/>
 </svg>

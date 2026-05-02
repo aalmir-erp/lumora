@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, db, demo_brain, kb, llm, portal, quotes, tools, whatsapp
+from . import admin, db, demo_brain, kb, llm, portal, portal_v2, quotes, tools, whatsapp
 from .auth import ADMIN_TOKEN
 from .config import get_settings
 
@@ -29,6 +29,7 @@ app.add_middleware(
 # Routers
 app.include_router(admin.router)
 app.include_router(portal.router)
+app.include_router(portal_v2.router)
 app.include_router(whatsapp.router)
 
 
@@ -182,6 +183,111 @@ onsubmit='event.preventDefault(); fetch("/api/portal/pay-stub",{{method:"POST",h
 if settings.WEB_DIR.exists():
     app.mount("/widget", StaticFiles(directory=str(settings.WEB_DIR), html=False), name="widget")
     app.mount("/", StaticFiles(directory=str(settings.WEB_DIR), html=True), name="site")
+
+
+# ---------- SEO / GEO endpoints ----------
+@app.get("/robots.txt", response_class=HTMLResponse)
+def robots_txt():
+    base = f"https://{settings.BRAND_DOMAIN}"
+    return (
+        "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin.html\n\n"
+        # Allow major AI crawlers explicitly
+        "User-agent: GPTBot\nAllow: /\n"
+        "User-agent: ClaudeBot\nAllow: /\n"
+        "User-agent: PerplexityBot\nAllow: /\n"
+        "User-agent: Google-Extended\nAllow: /\n"
+        "User-agent: anthropic-ai\nAllow: /\n"
+        "User-agent: cohere-ai\nAllow: /\n"
+        "User-agent: CCBot\nAllow: /\n"
+        f"\nSitemap: {base}/sitemap.xml\n"
+    )
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml():
+    base = f"https://{settings.BRAND_DOMAIN}"
+    today = _dt.date.today().isoformat()
+    services = kb.services()["services"]
+    urls = ["/", "/services.html", "/book.html", "/account.html", "/login.html"]
+    for s in services:
+        urls.append(f"/services.html?service={s['id']}")
+    for area in ("dubai", "sharjah", "ajman", "abu-dhabi"):
+        urls.append(f"/services.html?area={area}")
+    body = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    body += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    for u in urls:
+        priority = "1.0" if u == "/" else "0.8"
+        body += (f"  <url><loc>{base}{u}</loc>"
+                 f"<lastmod>{today}</lastmod><changefreq>weekly</changefreq>"
+                 f"<priority>{priority}</priority></url>\n")
+    body += "</urlset>\n"
+    from fastapi.responses import Response
+    return Response(content=body, media_type="application/xml")
+
+
+@app.get("/llms.txt", response_class=HTMLResponse)
+def llms_txt():
+    """Standard for AI assistants to discover what this site is about.
+
+    See https://llmstxt.org for spec.
+    """
+    b = settings.brand()
+    services_list = "\n".join(
+        f"- **{s['name']}** — {s['description']} (from {s.get('starting_price','?')} AED)"
+        for s in kb.services()["services"]
+    )
+    return f"""# {b['name']}
+
+> {b['tagline']}. UAE's smart home & commercial services platform — cleaning, AC, pest, handyman, maid service, gardening and more — booked in seconds via web or WhatsApp, with live tracking, multi-language support (English, Arabic, Hindi, Filipino) and digital invoicing.
+
+## What we offer
+
+{services_list}
+
+## Areas served
+
+Dubai (all areas), Sharjah, Ajman, Umm Al Quwain, Abu Dhabi (small surcharge).
+
+## How customers book
+
+1. Open https://{b['domain']} or message us on WhatsApp at {b['whatsapp']}.
+2. Get an instant AI-powered quote in 10 seconds.
+3. Pick a date and time, confirm with name + phone + address.
+4. Track the cleaner / vendor live, sign the digital quote, pay online.
+
+## How vendors join
+
+Vendors can self-register at https://{b['domain']}/login.html (Vendor tab) — set their services + custom pricing + service area, then claim incoming jobs from the marketplace.
+
+## Pricing
+
+Transparent, AED, includes 5% VAT. See https://{b['domain']}/services.html or ask Lumi (our AI assistant).
+
+## Contact
+
+- WhatsApp: {b['whatsapp']}
+- Email: {b['email']}
+- Web: https://{b['domain']}
+
+## Languages
+
+English, Arabic (العربية), Hindi (हिन्दी), Filipino.
+
+## Trust
+
+- All cleaners background-checked and insured
+- Female-only crews available on request
+- 24-hour re-clean guarantee
+- 4.9★ from 2,400+ jobs
+
+## API for developers
+
+Open endpoints for integration:
+- GET /api/services — services catalogue
+- GET /api/pricing — pricing rules
+- GET /api/health — service status
+- POST /api/chat — Lumi the AI concierge (Claude-powered)
+"""
 
 
 @app.get("/__admin_token__")

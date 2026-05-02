@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vendor portal • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36"></a>
+  <div class="nav-links">
+    <a href="#avail" onclick="setTab('avail');return false">Available jobs</a>
+    <a href="#mine" onclick="setTab('mine');return false">My jobs</a>
+    <a href="#earn" onclick="setTab('earn');return false">Earnings</a>
+    <a href="#profile" onclick="setTab('profile');return false">Profile</a>
+  </div>
+  <div class="nav-cta">
+    <span id="who" style="font-size:13px;color:var(--muted)"></span>
+    <button class="btn btn-ghost" onclick="logout()">Sign out</button>
+  </div>
+</div></nav>
+
+<section><div class="container">
+  <div id="kpis" class="kpis"></div>
+
+  <!-- Available jobs (marketplace) -->
+  <div id="t-avail" class="vtab">
+    <h2>📥 Incoming jobs</h2>
+    <p class="sub">First vendor to claim wins. Refresh often during peak hours.</p>
+    <button class="btn btn-ghost" onclick="loadAvail()">Refresh</button>
+    <div id="avail-list" style="margin-top:14px"></div>
+  </div>
+
+  <!-- My jobs -->
+  <div id="t-mine" class="vtab" style="display:none">
+    <h2>🧰 My jobs</h2>
+    <div style="margin-bottom:12px">
+      <select id="filt" onchange="loadMine()">
+        <option value="">All</option>
+        <option value="accepted">Accepted</option>
+        <option value="in_progress">In progress</option>
+        <option value="completed">Completed</option>
+      </select>
+    </div>
+    <div id="mine-list"></div>
+  </div>
+
+  <!-- Earnings -->
+  <div id="t-earn" class="vtab" style="display:none">
+    <h2>💰 Earnings</h2>
+    <div id="earn-detail"></div>
+  </div>
+
+  <!-- Profile -->
+  <div id="t-profile" class="vtab" style="display:none">
+    <h2>👤 Profile</h2>
+    <div id="profile-detail"></div>
+  </div>
+</div></section>
+
+<script src="/app.js"></script>
+<script>
+const TOK = "lumora.user.tok";
+const UTYPE = "lumora.user.type";
+const tok = localStorage.getItem(TOK);
+if (!tok || localStorage.getItem(UTYPE) !== "vendor") location.replace("/login.html");
+
+async function vapi(p, o={}) { return api(p, {...o, headers:{...(o.headers||{}), Authorization:"Bearer "+tok}}); }
+function logout(){ vapi("/api/auth/logout", {method:"POST"}).catch(()=>{});
+  localStorage.removeItem(TOK); localStorage.removeItem(UTYPE); location.replace("/"); }
+
+let me = null, services = [];
+(async () => {
+  try {
+    const m = await vapi("/api/me");
+    me = m.user;
+    document.getElementById("who").textContent = me.email + " • " + (me.rating||5).toFixed(1) + "★";
+  } catch(e) { logout(); return; }
+  services = (await fetch("/api/services").then(r=>r.json())).services;
+  await refreshKpis();
+  setTab("avail");
+})();
+
+function setTab(t) {
+  document.querySelectorAll(".vtab").forEach(x => x.style.display = "none");
+  document.getElementById("t-"+t).style.display = "";
+  if (t==="avail") loadAvail();
+  if (t==="mine") loadMine();
+  if (t==="earn") loadEarn();
+  if (t==="profile") loadProfile();
+}
+
+async function refreshKpis() {
+  const e = await vapi("/api/vendor/earnings");
+  const mine = await vapi("/api/vendor/jobs/mine");
+  const open = mine.jobs.filter(j => j.status === "accepted" || j.status === "in_progress").length;
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><div class="k">EARNED</div><div class="v">${e.completed_total_aed} <small style="font-size:14px">AED</small></div></div>
+    <div class="kpi"><div class="k">PENDING</div><div class="v">${e.pending_total_aed} <small style="font-size:14px">AED</small></div></div>
+    <div class="kpi"><div class="k">OPEN JOBS</div><div class="v">${open}</div></div>
+    <div class="kpi"><div class="k">RATING</div><div class="v">${(me.rating||5).toFixed(1)} ★</div></div>`;
+}
+
+async function loadAvail() {
+  const r = await vapi("/api/vendor/jobs/available");
+  const wrap = document.getElementById("avail-list");
+  if (r.note) { wrap.innerHTML = `<div class="form" style="background:#FEF3C7">${r.note}</div>`; return; }
+  if (!r.jobs.length) { wrap.innerHTML = '<div class="form" style="text-align:center;color:var(--muted)">No new jobs right now. Check back soon!</div>'; return; }
+  wrap.innerHTML = r.jobs.map(jobCard).join("");
+}
+
+function jobCard(j) {
+  return `<div class="form" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h3 style="margin:0">${j.id} — ${j.service_id.replace(/_/g,' ')}</h3>
+        <div style="color:var(--muted);font-size:13px">${j.target_date} at ${j.time_slot} • ${escapeHtml(j.address)}</div>
+        ${j.bedrooms?`<div style="font-size:12px;color:var(--muted)">${j.bedrooms} bedroom${j.bedrooms>1?'s':''}</div>`:''}
+        ${j.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">📝 ${escapeHtml(j.notes)}</div>`:''}
+      </div>
+      <div style="text-align:end">
+        <div style="font-size:20px;font-weight:700">${j.estimated_total||'—'} ${j.currency||'AED'}</div>
+        <div style="font-size:11px;color:var(--muted)">est. payout: ${Math.round((j.estimated_total||0)*0.8)} AED</div>
+        <button class="btn btn-primary" style="margin-top:8px" onclick="claim('${j.id}')">Claim job</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function claim(bid) {
+  if (!confirm("Claim this job? Other vendors can't take it once you do.")) return;
+  try {
+    const r = await vapi("/api/vendor/jobs/claim", { method:"POST", body:{ booking_id: bid } });
+    alert("Claimed! Payout: " + r.payout_amount + " AED");
+    setTab("mine");
+  } catch(e) { alert("Error: "+e.message); }
+}
+
+async function loadMine() {
+  const filt = document.getElementById("filt").value;
+  const r = await vapi("/api/vendor/jobs/mine" + (filt?"?status="+filt:""));
+  const wrap = document.getElementById("mine-list");
+  if (!r.jobs.length) { wrap.innerHTML = '<div class="form" style="text-align:center;color:var(--muted)">No jobs match.</div>'; return; }
+  wrap.innerHTML = r.jobs.map(j => `
+    <div class="form" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h3 style="margin:0">${j.booking_id} — ${j.service_id.replace(/_/g,' ')}</h3>
+          <div style="color:var(--muted);font-size:13px">${j.target_date} at ${j.time_slot} • ${escapeHtml(j.address)}</div>
+          <div style="font-size:13px;margin-top:6px">📞 ${escapeHtml(j.customer_name)} • ${j.phone}</div>
+          ${j.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px">📝 ${escapeHtml(j.notes)}</div>`:''}
+        </div>
+        <div style="text-align:end">
+          <span class="badge ${j.status}">${j.status}</span>
+          <div style="font-size:18px;font-weight:700;margin-top:6px">+${j.payout_amount||0} AED</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+        ${j.status==='accepted' ? `<button class="btn btn-ghost" onclick="setStatus('${j.booking_id}','in_progress')">Mark in progress</button>` : ''}
+        ${j.status==='in_progress' ? `<button class="btn btn-primary" onclick="setStatus('${j.booking_id}','completed')">Mark completed</button>` : ''}
+        ${j.status!=='completed' && j.status!=='cancelled' ? `<button class="btn btn-ghost" style="color:#DC2626" onclick="setStatus('${j.booking_id}','cancelled')">Decline</button>` : ''}
+        <a class="btn btn-ghost" href="https://wa.me/${(j.phone||'').replace(/[^0-9]/g,'')}" target="_blank">WhatsApp customer</a>
+      </div>
+    </div>`).join("");
+}
+
+async function setStatus(bid, status) {
+  if (status === 'cancelled' && !confirm("Decline this job? It will be returned to the marketplace.")) return;
+  try {
+    await vapi("/api/vendor/jobs/status", { method:"POST", body:{ booking_id: bid, status } });
+    await refreshKpis();
+    loadMine();
+  } catch(e) { alert("Error: "+e.message); }
+}
+
+async function loadEarn() {
+  const e = await vapi("/api/vendor/earnings");
+  document.getElementById("earn-detail").innerHTML = `
+    <div class="form">
+      <p>Total earned: <b style="font-size:24px;color:var(--primary)">${e.completed_total_aed} AED</b></p>
+      <p>Pending payouts: <b>${e.pending_total_aed} AED</b></p>
+      <h4 style="margin-top:14px">By month</h4>
+      ${e.by_month.length === 0 ? '<p style="color:var(--muted)">No completed jobs yet.</p>' :
+        '<table class="list"><thead><tr><th>Month</th><th>Total</th></tr></thead><tbody>' +
+        e.by_month.map(r => `<tr><td>${r.m}</td><td>${r.total} AED</td></tr>`).join('') + '</tbody></table>'}
+    </div>`;
+}
+
+async function loadProfile() {
+  const m = await vapi("/api/vendor/me");
+  const my = new Set(m.services.map(s => s.service_id));
+  document.getElementById("profile-detail").innerHTML = `
+    <div class="form">
+      <p><b>Name:</b> ${escapeHtml(m.vendor.name)}</p>
+      <p><b>Email:</b> ${escapeHtml(m.vendor.email)}</p>
+      ${m.vendor.phone?`<p><b>Phone:</b> ${escapeHtml(m.vendor.phone)}</p>`:''}
+      ${m.vendor.company?`<p><b>Company:</b> ${escapeHtml(m.vendor.company)}</p>`:''}
+      <p><b>Rating:</b> ${(m.vendor.rating||5).toFixed(1)} ★ • <b>Completed jobs:</b> ${m.vendor.completed_jobs||0}</p>
+      <h4 style="margin-top:18px">Services I offer (tap to toggle)</h4>
+      <div id="svc-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        ${services.map(s => `<button type="button" class="btn ${my.has(s.id)?'btn-primary':'btn-ghost'}" data-sid="${s.id}" style="font-size:12px;padding:6px 10px" onclick="toggleSvc(this)">${s.name}</button>`).join("")}
+      </div>
+      <button class="btn btn-primary" style="margin-top:14px" onclick="saveServices()">Save</button>
+    </div>`;
+}
+
+let pendingSvcs = null;
+function toggleSvc(btn) {
+  if (!pendingSvcs) {
+    pendingSvcs = new Set([...document.querySelectorAll("#svc-grid .btn-primary")].map(b=>b.dataset.sid));
+  }
+  const id = btn.dataset.sid;
+  if (pendingSvcs.has(id)) { pendingSvcs.delete(id); btn.className = "btn btn-ghost"; }
+  else { pendingSvcs.add(id); btn.className = "btn btn-primary"; }
+  btn.style.fontSize="12px"; btn.style.padding="6px 10px";
+}
+async function saveServices() {
+  const list = pendingSvcs ? [...pendingSvcs] : [...document.querySelectorAll("#svc-grid .btn-primary")].map(b=>b.dataset.sid);
+  try {
+    await vapi("/api/vendor/me/services", { method:"POST", body:{ services: list } });
+    alert("Services updated.");
+    pendingSvcs = null;
+    loadProfile();
+  } catch(e) { alert("Error: "+e.message); }
+}
+
+function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+</script>
+</body></html>
