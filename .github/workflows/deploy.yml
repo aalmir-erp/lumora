@@ -1,4 +1,4 @@
-name: Status check
+name: Fetch failed deploy logs
 on: { push: { branches: [main] }, workflow_dispatch: {} }
 permissions: { contents: write }
 
@@ -8,42 +8,42 @@ env:
   EID: 4d8c32c6-f62b-4bbc-85ca-3403bb22e397
 
 jobs:
-  status:
+  logs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Probe deploys
-        env:
-          T: ${{ secrets.RAILWAY_TOKEN }}
+      - env: { T: "${{ secrets.RAILWAY_TOKEN }}" }
         run: |
           set +e
           API=https://backboard.railway.com/graphql/v2
           gql() { curl -sS -X POST $API -H "Authorization: Bearer $T" -H "Content-Type: application/json" -d "$1"; }
 
-          # Try a few different deployment query shapes
+          # Get latest 3 deployments
+          D=$(gql "$(jq -n '{query:"query{ deployments(input:{projectId:\"'$PID'\", serviceId:\"'$SID'\"}, first:3){ edges{ node{ id status createdAt } } } }"}')")
+          echo "deployments:" > /tmp/o
+          echo "$D" | jq . >> /tmp/o
+
+          for DID in $(echo "$D" | jq -r '.data.deployments.edges[].node.id'); do
+            echo "" >> /tmp/o
+            echo "=== build logs for $DID ===" >> /tmp/o
+            BL=$(gql "$(jq -n --arg id "$DID" '{query:"query($id: String!){ buildLogs(deploymentId:$id, limit:200){ message timestamp severity } }", variables:{id:$id}}')")
+            echo "$BL" | jq -r '.data.buildLogs[]? | "[\(.timestamp)] \(.severity // "info"): \(.message)"' | head -80 >> /tmp/o
+            echo "" >> /tmp/o
+            echo "=== deploy logs for $DID ===" >> /tmp/o
+            DL=$(gql "$(jq -n --arg id "$DID" '{query:"query($id: String!){ deploymentLogs(deploymentId:$id, limit:120){ message timestamp severity } }", variables:{id:$id}}')")
+            echo "$DL" | jq -r '.data.deploymentLogs[]? | "[\(.timestamp)] \(.severity // "info"): \(.message)"' | head -60 >> /tmp/o
+          done
+
           {
-            echo "# Deploy status probe"
+            echo "# Failed deploy logs"
             echo
-            echo "## Service detail (with source + state)"
-            P=$(gql "$(jq -n '{query:"query{ project(id:\"'$PID'\"){ id name services{ edges{ node{ id name source{ repo template image } templateServiceId serviceInstances{ edges{ node{ id environmentId latestDeployment{ id status url staticUrl createdAt updatedAt meta } source{ repo template image } isUpdatable suspend } } } } } } } }"}')")
-            echo '```json'
-            echo "$P" | jq .
             echo '```'
-
-            echo
-            echo "## All deployments query (project-level)"
-            D=$(gql "$(jq -n '{query:"query{ deployments(input:{projectId:\"'$PID'\"}, first:10){ edges{ node{ id status createdAt staticUrl url meta } } } }"}')")
-            echo '```json'
-            echo "$D" | jq .
+            cat /tmp/o
             echo '```'
-
-            echo
-            echo "## Health check on assigned domain"
-            curl -sS -i --max-time 10 https://lumora-production-4071.up.railway.app/api/health 2>&1 | head -25
           } > DEPLOYED.md
 
           git config user.email d@a; git config user.name d
           git add DEPLOYED.md
-          git commit -m "status probe" || true
+          git commit -m "logs" || true
           git pull --rebase --autostash origin main || true
           git push origin HEAD:main || true
