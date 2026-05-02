@@ -2,10 +2,11 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"ok":true,"service":"Lumora","version":"0.2.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
+**Health:** `{"ok":true,"service":"Lumora","version":"0.3.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
 
 ## Build logs
 ```
+[internal] load .dockerignore
 [7/7] RUN mkdir -p /data
 [6/7] COPY web ./web
 [5/7] COPY app ./app
@@ -24,7 +25,6 @@
 [2/7] WORKDIR /app
 [3/7] COPY requirements.txt ./
 [4/7] RUN pip install -r requirements.txt
-[4/7] RUN pip install -r requirements.txt
 [5/7] COPY app ./app
 [5/7] COPY app ./app
 [6/7] COPY web ./web
@@ -33,9 +33,9 @@
 [7/7] RUN mkdir -p /data
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:d947518c52b26b16315ebc18f31e938ea7c2b8c34959eee86bb159417b11640f
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZDk0NzUxOGM1MmIyNmIxNjMxNWViYzE4ZjMxZTkzOGVhN2MyYjhjMzQ5NTllZWU4NmJiMTU5NDE3YjExNjQwZiIsInNpemUiOjIxOTAsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wMlQyMzo0NTowOVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:f32ff5b917092ced1cae97bb073b16e2ac86c0e5b3a6442da67dc407fbf4bc29
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NGQ5NjNmYmI1MjUzNjdkNGMzMGQxNTViZDYzZTQzNjRhODFiYmUyNTM5ZWVjNmZkZjA2OWI4ZmRhYzJlZmVmZCIsInNpemUiOjIxOTAsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wMlQyMzo1MTowNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:d0eb85b43a845f4af57278011129527b11c658bb677421f261596e72ea070e45
+containerimage.digest: sha256:4d963fbb525367d4c30d155bd63e4364a81bbe2539eec6fdf069b8fdac2efefd
 image push
 
 [35m====================
@@ -50,11 +50,11 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/a16adf2f-48eb-47a9-9595-e0799dd8ed56/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/732ee51e-4ab2-4c69-9740-57197c3fb294/vol_onr647rhdeir9di9
 Starting Container
-INFO:     Started server process [2]
-INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:40667 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.2:59303 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     Started server process [2]
+INFO:     Waiting for application startup.
 ```
