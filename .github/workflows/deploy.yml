@@ -4,7 +4,7 @@ on:
   push: { branches: [main] }
   workflow_dispatch:
 
-permissions: { contents: write, statuses: write, issues: write }
+permissions: { contents: write, issues: write }
 concurrency: { group: railway-deploy, cancel-in-progress: false }
 
 env:
@@ -17,35 +17,47 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm i -g @railway/cli@latest && railway --version
 
-      - name: Deploy + report
+      - name: Deploy via project-scoped token
         env:
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          WORKSPACE_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set +e
           API=https://backboard.railway.com/graphql/v2
-          # token used directly for curl
-          TOK="$RAILWAY_API_TOKEN"
           DIAG=/tmp/diag.txt; : > $DIAG
 
-          echo "=== whoami ===" | tee -a $DIAG
-          railway whoami 2>&1 | tee -a $DIAG
+          gql() { # gql <query-str>
+            curl -sS -X POST $API -H "Authorization: Bearer $WORKSPACE_TOKEN" -H "Content-Type: application/json" \
+              -d "$(jq -n --arg q "$1" '{query:$q}')"
+          }
 
-          # 1. Get env id + service id
-          P=$(curl -sS -X POST $API -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
-            -d "$(jq -n --arg q 'query{ project(id:"'$PID'"){ environments{ edges{ node{ id name } } } services{ edges{ node{ id name } } } } }' '{query:$q}')")
-          EID=$(echo "$P" | jq -r '[.data.project.environments.edges[].node|select(.name=="production")|.id]|first // empty')
-          SID=$(echo "$P" | jq -r '[.data.project.services.edges[].node|.id]|first // empty')
+          # 1) Lookup env + service
+          P=$(gql 'query{ project(id:"'$PID'"){ environments{ edges{ node{ id name } } } services{ edges{ node{ id name } } } } }')
+          EID=$(echo "$P" | jq -r '[.data.project.environments.edges[].node|select(.name=="production")|.id]|first')
+          SID=$(echo "$P" | jq -r '[.data.project.services.edges[].node|.id]|first')
           echo "EID=$EID SID=$SID" | tee -a $DIAG
 
-          if [ -z "$SID" ]; then
-            C=$(curl -sS -X POST $API -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
-              -d "$(jq -n '{query:"mutation($input: ServiceCreateInput!){ serviceCreate(input:$input){ id name } }", variables:{input:{projectId:"'$PID'", name:"lumora"}}}')")
+          # 2) Create service if missing
+          if [ "$SID" = "null" ] || [ -z "$SID" ]; then
+            C=$(curl -sS -X POST $API -H "Authorization: Bearer $WORKSPACE_TOKEN" -H "Content-Type: application/json" \
+              -d "$(jq -n '{query:"mutation($i:ServiceCreateInput!){ serviceCreate(input:$i){ id name } }", variables:{input:{projectId:"'$PID'", name:"lumora"}}}')")
             SID=$(echo "$C" | jq -r '.data.serviceCreate.id // empty')
             echo "created SID=$SID" | tee -a $DIAG
           fi
+
+          # 3) Mint a project-scoped token (this is what the CLI accepts as RAILWAY_TOKEN)
+          PT=$(curl -sS -X POST $API -H "Authorization: Bearer $WORKSPACE_TOKEN" -H "Content-Type: application/json" \
+            -d "$(jq -n --arg pid "$PID" --arg eid "$EID" '{query:"mutation($i:ProjectTokenCreateInput!){ projectTokenCreate(input:$i) }", variables:{input:{projectId:$pid, environmentId:$eid, name:"gh-actions-deploy"}}}')")
+          echo "projectTokenCreate raw: $PT" | tee -a $DIAG
+          PROJECT_TOKEN=$(echo "$PT" | jq -r '.data.projectTokenCreate // empty')
+          echo "have PROJECT_TOKEN: $([ -n "$PROJECT_TOKEN" ] && echo yes || echo no)" | tee -a $DIAG
+
+          export RAILWAY_TOKEN="$PROJECT_TOKEN"
+
+          echo "=== whoami with project token ===" | tee -a $DIAG
+          railway whoami 2>&1 | tee -a $DIAG
 
           echo "=== link ===" | tee -a $DIAG
           railway link --project $PID --service $SID --environment $EID 2>&1 | tee -a $DIAG
@@ -63,45 +75,37 @@ jobs:
           echo "=== volume ===" | tee -a $DIAG
           railway volume add --mount-path /data 2>&1 | tee -a $DIAG
 
-          echo "=== up (this takes 1-3 min) ===" | tee -a $DIAG
+          echo "=== up ===" | tee -a $DIAG
           railway up --ci 2>&1 | tee -a $DIAG
 
-          # Wait for deploy + create domain if needed
-          sleep 5
+          # Domain (using workspace token for queries)
           for try in 1 2 3 4 5 6; do
-            S=$(curl -sS -X POST $API -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
-              -d "$(jq -n --arg q 'query{ project(id:"'$PID'"){ services{ edges{ node{ id name serviceInstances{ edges{ node{ environmentId domains{ serviceDomains{ domain } } } } } } } } } }' '{query:$q}')")
+            S=$(gql 'query{ project(id:"'$PID'"){ services{ edges{ node{ serviceInstances{ edges{ node{ environmentId domains{ serviceDomains{ domain } } } } } } } } } }')
             DOMAIN=$(echo "$S" | jq -r '[.data.project.services.edges[].node.serviceInstances.edges[].node.domains.serviceDomains[]?.domain]|first // empty')
             [ -n "$DOMAIN" ] && break
             sleep 5
           done
           if [ -z "$DOMAIN" ]; then
-            CD=$(curl -sS -X POST $API -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
-              -d "$(jq -n --arg sid "$SID" --arg eid "$EID" '{query:"mutation($i: ServiceDomainCreateInput!){ serviceDomainCreate(input:$i){ domain } }", variables:{input:{serviceId:$sid, environmentId:$eid}}}')")
+            CD=$(curl -sS -X POST $API -H "Authorization: Bearer $WORKSPACE_TOKEN" -H "Content-Type: application/json" \
+              -d "$(jq -n --arg sid "$SID" --arg eid "$EID" '{query:"mutation($i:ServiceDomainCreateInput!){ serviceDomainCreate(input:$i){ domain } }", variables:{input:{serviceId:$sid, environmentId:$eid}}}')")
             DOMAIN=$(echo "$CD" | jq -r '.data.serviceDomainCreate.domain // empty')
             echo "create-domain: $CD" | tee -a $DIAG
           fi
           echo "DOMAIN=$DOMAIN" | tee -a $DIAG
 
-          # Wait for service to come up
           for try in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            sleep 10
+            sleep 12
             HEALTH=$(curl -sS --max-time 8 "https://$DOMAIN/api/health" 2>&1)
-            echo "health try $try: $HEALTH" | tee -a $DIAG
+            echo "health $try: $HEALTH" | tee -a $DIAG
             echo "$HEALTH" | grep -q '"ok":true' && break
           done
 
-          # Post a commit comment with URL (issues:write covers commit comments)
-          COMMENT=$(jq -n --arg b "🚀 Lumora deployed
-          URL: https://$DOMAIN
-          Health: \`$HEALTH\`
-          Service: $SID
-          " '{body:$b}')
+          # Commit comment with URL
           curl -sS -X POST "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments" \
             -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            -d "$COMMENT" | jq -r '.html_url // .message' | tee -a $DIAG
+            -d "$(jq -n --arg b "🚀 https://$DOMAIN — health: $HEALTH" '{body:$b}')" >/dev/null
 
-          # Also commit DEPLOYED.md (best effort)
+          # DEPLOYED.md commit
           {
             echo "# Lumora live"
             echo
@@ -110,7 +114,7 @@ jobs:
             echo
             echo "## Diagnostic"
             echo '```'
-            cat $DIAG
+            sed 's/'"$WORKSPACE_TOKEN"'/<workspace-token>/g; s/'"$PROJECT_TOKEN"'/<project-token>/g' $DIAG 2>/dev/null || cat $DIAG
             echo '```'
           } > DEPLOYED.md
           git config user.email deploy@github-actions
