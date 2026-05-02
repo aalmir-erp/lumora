@@ -94,38 +94,69 @@ jobs:
           done
           railway status 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
 
-      - name: Find live URL via Railway GraphQL
+      - name: Diagnostic — capture everything to DEPLOYED.md
         if: always()
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           set +e
-          QUERY='{ me { projects { edges { node { id name services { edges { node { id name serviceInstances { edges { node { domains { serviceDomains { domain } customDomains { domain } } } } } } } } } } } } }'
-          BODY=$(jq -n --arg q "$QUERY" '{query:$q}')
-          RESP=$(curl -sS -X POST https://backboard.railway.com/graphql/v2 \
-            -H "Authorization: Bearer $RAILWAY_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$BODY")
-          echo "$RESP" | jq . > /tmp/projects.json || echo "$RESP" > /tmp/projects.json
-          # Extract first lumora project domain
-          DOMAIN=$(jq -r '.data.me.projects.edges[]?.node | select(.name=="lumora") | .services.edges[]?.node.serviceInstances.edges[]?.node.domains.serviceDomains[]?.domain' /tmp/projects.json | head -1)
-          PROJECT_ID=$(jq -r '.data.me.projects.edges[]?.node | select(.name=="lumora") | .id' /tmp/projects.json | head -1)
+          T="$RAILWAY_TOKEN"
+          API=https://backboard.railway.com/graphql/v2
+          tmp=/tmp/diag
+          mkdir -p $tmp
+
+          # Probe several GraphQL shapes
+          for QF in \
+            'workspaces' \
+            'teams' \
+            'projects' \
+            'projectToken { projectId environmentId }' \
+            'me { id email }' ; do
+              echo "--- query: $QF ---"
+              curl -sS -X POST $API \
+                -H "Authorization: Bearer $T" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n --arg q "{ $QF }" '{query:$q}')" | jq -c .
+              echo
+            done > $tmp/probe.txt 2>&1
+
+          # Try team-scoped projects via __typename probe
+          cat > $tmp/q.json <<'GQL'
+          {"query":"query { __schema { queryType { fields { name args { name type { name kind } } } } } }"}
+          GQL
+          curl -sS -X POST $API -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
+            -d @$tmp/q.json | jq '.data.__schema.queryType.fields[] | select(.name | test("project|workspace|team|me"; "i")) | {name, args}' > $tmp/schema.json 2>&1
+
+          # Inspect what files railway init left behind
+          ls -la .railway/ railway.toml 2>&1 > $tmp/files.txt
+
           {
-            echo "# Lumora deploy"
+            echo "# Lumora deploy — diagnostic"
             echo
-            echo "**Live URL:** https://$DOMAIN"
+            echo "## GraphQL probes"
+            echo '```'
+            cat $tmp/probe.txt
+            echo '```'
             echo
-            echo "**Project ID:** $PROJECT_ID"
-            echo
-            echo "**Last deploy:** $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo
-            echo "## Raw GraphQL response"
+            echo "## Schema (project/workspace/team fields)"
             echo '```json'
-            cat /tmp/projects.json
+            cat $tmp/schema.json
+            echo '```'
+            echo
+            echo "## Files railway left in working dir"
+            echo '```'
+            cat $tmp/files.txt
+            echo '```'
+            echo
+            echo "## .railway/config.json (if present)"
+            echo '```json'
+            cat .railway/config.json 2>&1 | head -40
             echo '```'
           } > DEPLOYED.md
+
           git config user.email "deploy@github-actions"
           git config user.name "Lumora deploy bot"
           git add DEPLOYED.md
-          git commit -m "Deploy report: https://$DOMAIN" || echo "no changes"
+          git commit -m "diagnostic dump" || true
           git push origin HEAD:main || true
