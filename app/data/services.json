@@ -9,8 +9,108 @@
       "duration_per_bedroom_hours": 1.5,
       "min_team": 2,
       "starting_price": 350,
-      "includes": ["Kitchen deep clean", "Bathroom descaling + disinfection", "Dust + wipe all surfaces", "Vacuum + mop floors", "Interior windows + glass", "Balcony sweep + wipe-down"],
-      "excludes": ["Pest control", "Carpet shampoo", "Exterior windows above ground floor"]
+      "includes": [
+        "Kitchen deep clean",
+        "Bathroom descaling + disinfection",
+        "Dust + wipe all surfaces",
+        "Vacuum + mop floors",
+        "Interior windows + glass",
+        "Balcony sweep + wipe-down"
+      ],
+      "excludes": [
+        "Pest control",
+        "Carpet shampoo",
+        "Exterior windows above ground floor"
+      ],
+      "addons": [
+        {
+          "id": "oven",
+          "name": "Inside oven",
+          "price": 80,
+          "icon": "🔥"
+        },
+        {
+          "id": "fridge",
+          "name": "Inside fridge",
+          "price": 60,
+          "icon": "🧊"
+        },
+        {
+          "id": "sofa3",
+          "name": "Sofa shampoo (3-seater)",
+          "price": 100,
+          "icon": "🛋️"
+        },
+        {
+          "id": "mattress_king",
+          "name": "Mattress sanitization (King)",
+          "price": 120,
+          "icon": "🛏️"
+        },
+        {
+          "id": "balcony_glass",
+          "name": "Balcony glass deep clean",
+          "price": 50,
+          "icon": "🪟"
+        },
+        {
+          "id": "cabinets",
+          "name": "Inside kitchen cabinets",
+          "price": 90,
+          "icon": "🗄️"
+        }
+      ],
+      "benefits": [
+        "Removes 99% of dust mites + allergens for healthier breathing",
+        "Brings back the 'just-moved-in' feel — gloss, shine, smell",
+        "Limescale + mineral build-up gone from sinks, taps, glass",
+        "Saves 4-6 hours of weekend you'd spend doing it yourself"
+      ],
+      "when_to_book": [
+        "Before / after moving",
+        "Quarterly maintenance",
+        "Pre-event hosting",
+        "Post-Ramadan refresh",
+        "Allergy season"
+      ],
+      "process_steps": [
+        {
+          "icon": "📞",
+          "title": "You book in 30 seconds",
+          "desc": "Tell Lumi the size + date — instant quote."
+        },
+        {
+          "icon": "🚐",
+          "title": "Crew arrives on time",
+          "desc": "2 cleaners + supplies + equipment, in uniform."
+        },
+        {
+          "icon": "✨",
+          "title": "Top-to-bottom deep clean",
+          "desc": "3-5 hrs. We treat your home like ours."
+        },
+        {
+          "icon": "💳",
+          "title": "Sign + pay digitally",
+          "desc": "Before the crew leaves. WhatsApp confirmation."
+        }
+      ],
+      "duration_label": "3–6 hours",
+      "team_label": "2 trained cleaners",
+      "faqs": [
+        {
+          "q": "Do you bring your own supplies?",
+          "a": "Yes — eco-friendly, MOH-approved chemicals + microfiber cloths + commercial vacuum. Tell us if you'd rather we use yours."
+        },
+        {
+          "q": "Will you move heavy furniture?",
+          "a": "We move what 2 people can safely lift (sofas, dining chairs, beds). Heavy wardrobes stay put — we clean around and behind."
+        },
+        {
+          "q": "What if something gets damaged?",
+          "a": "All Lumora vendors are insured. Report within 24 hrs and we cover repair or replacement."
+        }
+      ]
     },
     {
       "id": "general_cleaning",
@@ -21,8 +121,78 @@
       "duration_per_bedroom_hours": 1.0,
       "min_team": 1,
       "starting_price": 200,
-      "includes": ["Dust + wipe surfaces", "Vacuum + mop floors", "Bathroom clean", "Kitchen wipe-down", "Trash out"],
-      "excludes": ["Inside oven/fridge", "Window exteriors"]
+      "includes": [
+        "Dust + wipe surfaces",
+        "Vacuum + mop floors",
+        "Bathroom clean",
+        "Kitchen wipe-down",
+        "Trash out"
+      ],
+      "excludes": [
+        "Inside oven/fridge",
+        "Window exteriors"
+      ],
+      "addons": [
+        {
+          "id": "laundry",
+          "name": "+ 1 hr laundry",
+          "price": 40,
+          "icon": "🧺"
+        },
+        {
+          "id": "iron",
+          "name": "Ironing 10 pieces",
+          "price": 60,
+          "icon": "👔"
+        },
+        {
+          "id": "fridge",
+          "name": "Inside fridge",
+          "price": 60,
+          "icon": "🧊"
+        }
+      ],
+      "benefits": [
+        "Keeps your home consistently fresh between deep cleans",
+        "Hand-back time: 1-2 hrs of your life back per visit",
+        "Same cleaner each time on weekly plans"
+      ],
+      "when_to_book": [
+        "Weekly maintenance",
+        "Bi-weekly upkeep",
+        "After parties",
+        "Before guests"
+      ],
+      "process_steps": [
+        {
+          "icon": "📅",
+          "title": "Pick a slot",
+          "desc": "Same-day if before noon."
+        },
+        {
+          "icon": "🚪",
+          "title": "Cleaner arrives",
+          "desc": "Solo cleaner with supplies."
+        },
+        {
+          "icon": "🧹",
+          "title": "Standard clean",
+          "desc": "1-2 hrs depending on size."
+        },
+        {
+          "icon": "⭐",
+          "title": "Rate + repeat",
+          "desc": "Save your fav cleaner for next time."
+        }
+      ],
+      "duration_label": "1–2 hours",
+      "team_label": "1 trained cleaner",
+      "faqs": [
+        {
+          "q": "Difference vs deep cleaning?",
+          "a": "General is the maintenance clean. Deep is for after months without cleaning, or first-time visit. Start with deep, then maintain with general."
+        }
+      ]
     },
     {
       "id": "maid_service",
@@ -32,8 +202,72 @@
       "description": "Trained maid for housekeeping. Hourly basis, minimum 2 hours.",
       "min_hours": 2,
       "starting_price": 35,
-      "includes": ["General cleaning", "Laundry assistance", "Ironing", "Light cooking on request"],
-      "excludes": ["Childcare", "Elderly care"]
+      "includes": [
+        "General cleaning",
+        "Laundry assistance",
+        "Ironing",
+        "Light cooking on request"
+      ],
+      "excludes": [
+        "Childcare",
+        "Elderly care"
+      ],
+      "addons": [
+        {
+          "id": "supplies",
+          "name": "Bring our supplies",
+          "price": 15,
+          "icon": "🧴"
+        },
+        {
+          "id": "cooking",
+          "name": "Light cooking (1 meal)",
+          "price": 30,
+          "icon": "🍳"
+        },
+        {
+          "id": "laundry",
+          "name": "Laundry assist",
+          "price": 20,
+          "icon": "🧺"
+        }
+      ],
+      "benefits": [
+        "Trusted, vetted, English-speaking maids",
+        "Pay by the hour — only what you need",
+        "Same maid on recurring bookings"
+      ],
+      "when_to_book": [
+        "Weekly help",
+        "Pre/post-party",
+        "Vacation prep",
+        "Babysitting backup"
+      ],
+      "process_steps": [
+        {
+          "icon": "⏱️",
+          "title": "Pick hours",
+          "desc": "Min 2 hrs. Hourly rate, no hidden fees."
+        },
+        {
+          "icon": "🚪",
+          "title": "Maid arrives",
+          "desc": "In uniform with ID."
+        },
+        {
+          "icon": "📝",
+          "title": "Tell her tasks",
+          "desc": "Or pre-list in booking notes."
+        },
+        {
+          "icon": "💸",
+          "title": "Pay on completion",
+          "desc": "Cash, card, or online."
+        }
+      ],
+      "duration_label": "2+ hours",
+      "team_label": "1 trained maid",
+      "faqs": []
     },
     {
       "id": "move_in_out",
@@ -44,8 +278,71 @@
       "duration_per_bedroom_hours": 2.0,
       "min_team": 2,
       "starting_price": 600,
-      "includes": ["Everything in deep clean", "Inside cabinets", "Inside oven + fridge", "Wall spot-clean"],
-      "excludes": ["Painting", "Repairs"]
+      "includes": [
+        "Everything in deep clean",
+        "Inside cabinets",
+        "Inside oven + fridge",
+        "Wall spot-clean"
+      ],
+      "excludes": [
+        "Painting",
+        "Repairs"
+      ],
+      "addons": [
+        {
+          "id": "painting",
+          "name": "Paint touch-ups (small)",
+          "price": 150,
+          "icon": "🎨"
+        },
+        {
+          "id": "key_collection",
+          "name": "Key collection from agent",
+          "price": 50,
+          "icon": "🔑"
+        },
+        {
+          "id": "professional_photos",
+          "name": "Property photos for landlord",
+          "price": 80,
+          "icon": "📸"
+        }
+      ],
+      "benefits": [
+        "Get your full security deposit back — guaranteed report",
+        "Hands the property over spotless to the next tenant",
+        "Tackles the hidden spots inspectors check"
+      ],
+      "when_to_book": [
+        "After tenants vacate",
+        "Before handover to landlord",
+        "End-of-lease cleaning"
+      ],
+      "process_steps": [
+        {
+          "icon": "📋",
+          "title": "Empty property scheduled",
+          "desc": "Furniture out, just walls + floors."
+        },
+        {
+          "icon": "🚐",
+          "title": "Crew of 2 arrives",
+          "desc": "With deep-clean equipment."
+        },
+        {
+          "icon": "🧽",
+          "title": "Inside everything",
+          "desc": "Cabinets, oven, fridge, AC vents."
+        },
+        {
+          "icon": "📄",
+          "title": "Photo report",
+          "desc": "Sent to your phone."
+        }
+      ],
+      "duration_label": "4–8 hours",
+      "team_label": "2 cleaners",
+      "faqs": []
     },
     {
       "id": "office_cleaning",
@@ -55,8 +352,66 @@
       "description": "Daily, weekly, or one-off office cleaning. Workstations, pantry, restrooms, reception.",
       "min_hours": 3,
       "starting_price": 120,
-      "includes": ["Desks + surfaces", "Floors", "Pantry", "Restrooms", "Reception/lobby"],
-      "excludes": ["IT equipment internals"]
+      "includes": [
+        "Desks + surfaces",
+        "Floors",
+        "Pantry",
+        "Restrooms",
+        "Reception/lobby"
+      ],
+      "excludes": [
+        "IT equipment internals"
+      ],
+      "addons": [
+        {
+          "id": "sanitization",
+          "name": "COVID-grade sanitization",
+          "price": 100,
+          "icon": "🦠"
+        },
+        {
+          "id": "window_glass",
+          "name": "Glass partition polish",
+          "price": 80,
+          "icon": "🪟"
+        }
+      ],
+      "benefits": [
+        "Healthier team → 12-20% less sick days",
+        "Better client impression on first visit",
+        "Daily / weekly contracts — predictable cost"
+      ],
+      "when_to_book": [
+        "Daily ops",
+        "Weekly maintenance",
+        "After-event",
+        "End-of-lease"
+      ],
+      "process_steps": [
+        {
+          "icon": "📑",
+          "title": "Get a quote",
+          "desc": "Tell us area + frequency."
+        },
+        {
+          "icon": "🌙",
+          "title": "After-hours clean",
+          "desc": "Or before opening."
+        },
+        {
+          "icon": "🧹",
+          "title": "Standard checklist",
+          "desc": "Desks + floors + restrooms + pantry."
+        },
+        {
+          "icon": "📊",
+          "title": "Monthly report",
+          "desc": "For HR/admin records."
+        }
+      ],
+      "duration_label": "3+ hours per visit",
+      "team_label": "1-3 cleaners (size-based)",
+      "faqs": []
     },
     {
       "id": "post_construction",
@@ -66,8 +421,64 @@
       "description": "Heavy-debris cleanup after fit-out. Cement haze removal, paint splatter, HEPA dust extraction.",
       "min_hours": 4,
       "starting_price": 240,
-      "includes": ["Debris removal", "Cement haze", "Paint splatter on glass", "HEPA dust extraction"],
-      "excludes": ["Heavy waste disposal (separate quote)"]
+      "includes": [
+        "Debris removal",
+        "Cement haze",
+        "Paint splatter on glass",
+        "HEPA dust extraction"
+      ],
+      "excludes": [
+        "Heavy waste disposal (separate quote)"
+      ],
+      "addons": [
+        {
+          "id": "haul",
+          "name": "Debris haul-away",
+          "price": 300,
+          "icon": "🚛"
+        },
+        {
+          "id": "polish",
+          "name": "Marble/tile polish",
+          "price": 250,
+          "icon": "💎"
+        }
+      ],
+      "benefits": [
+        "Cement haze + paint splatter gone",
+        "Construction dust + debris hauled out",
+        "Property ready for handover or move-in"
+      ],
+      "when_to_book": [
+        "After fit-out",
+        "After renovation",
+        "Before furniture delivery"
+      ],
+      "process_steps": [
+        {
+          "icon": "🦺",
+          "title": "Site visit",
+          "desc": "Quote based on size + condition."
+        },
+        {
+          "icon": "🚛",
+          "title": "Crew of 3 + truck",
+          "desc": "HEPA vacuums + scrapers."
+        },
+        {
+          "icon": "🧯",
+          "title": "Phase 1 — heavy debris",
+          "desc": "Then Phase 2 — fine clean."
+        },
+        {
+          "icon": "✨",
+          "title": "Move-in ready",
+          "desc": "Photo report + warranty."
+        }
+      ],
+      "duration_label": "4-12 hours",
+      "team_label": "3 specialists",
+      "faqs": []
     },
     {
       "id": "sofa_carpet",
@@ -76,8 +487,70 @@
       "icon": "sofa",
       "description": "Deep extraction shampoo for sofas, carpets, mattresses.",
       "starting_price": 35,
-      "includes": ["Pre-treatment", "Hot water extraction", "Deodorizing"],
-      "excludes": ["Stain guarantee on set-in stains"]
+      "includes": [
+        "Pre-treatment",
+        "Hot water extraction",
+        "Deodorizing"
+      ],
+      "excludes": [
+        "Stain guarantee on set-in stains"
+      ],
+      "addons": [
+        {
+          "id": "stain",
+          "name": "Stain protector spray",
+          "price": 40,
+          "icon": "🛡️"
+        },
+        {
+          "id": "deodorize",
+          "name": "Premium deodorizing",
+          "price": 30,
+          "icon": "🌿"
+        },
+        {
+          "id": "pet_treat",
+          "name": "Pet odor treatment",
+          "price": 60,
+          "icon": "🐶"
+        }
+      ],
+      "benefits": [
+        "Deep extracts dust mites + allergens trapped in fibers",
+        "Removes coffee, juice, oil stains",
+        "Restores sofa color — looks years younger"
+      ],
+      "when_to_book": [
+        "Annually",
+        "After spills",
+        "Before guests",
+        "Pet households"
+      ],
+      "process_steps": [
+        {
+          "icon": "🧪",
+          "title": "Pre-treat",
+          "desc": "Stain + soil loosener."
+        },
+        {
+          "icon": "💦",
+          "title": "Hot water extraction",
+          "desc": "Industrial machine."
+        },
+        {
+          "icon": "🌬️",
+          "title": "Dry + deodorize",
+          "desc": "3-6 hr to fully dry."
+        },
+        {
+          "icon": "🛋️",
+          "title": "Looks new",
+          "desc": "Stain protection optional."
+        }
+      ],
+      "duration_label": "1-3 hours",
+      "team_label": "1-2 specialists",
+      "faqs": []
     },
     {
       "id": "ac_cleaning",
@@ -86,8 +559,78 @@
       "icon": "wind",
       "description": "Split AC and central duct cleaning. Coil wash, drain pan flush, filter clean.",
       "starting_price": 150,
-      "includes": ["Coil wash", "Drain pan flush", "Filter clean", "Vent dust extraction"],
-      "excludes": ["Gas refill", "Compressor repair"]
+      "includes": [
+        "Coil wash",
+        "Drain pan flush",
+        "Filter clean",
+        "Vent dust extraction"
+      ],
+      "excludes": [
+        "Gas refill",
+        "Compressor repair"
+      ],
+      "addons": [
+        {
+          "id": "gas",
+          "name": "Gas top-up (per kg)",
+          "price": 150,
+          "icon": "💨"
+        },
+        {
+          "id": "deep_disinfect",
+          "name": "Anti-bacterial coil disinfection",
+          "price": 40,
+          "icon": "🦠"
+        },
+        {
+          "id": "filter",
+          "name": "Premium filter replacement",
+          "price": 80,
+          "icon": "🛡️"
+        }
+      ],
+      "benefits": [
+        "Cuts AC electricity bill by 15-30%",
+        "Removes mold + bacteria → fewer allergies",
+        "Restores cooling performance to like-new",
+        "Extends compressor life by 3-5 years"
+      ],
+      "when_to_book": [
+        "Before summer (Mar-May)",
+        "Every 6 months",
+        "If AC smells musty",
+        "If cooling is weak"
+      ],
+      "process_steps": [
+        {
+          "icon": "❄️",
+          "title": "Tell us how many ACs",
+          "desc": "Min 2 split units."
+        },
+        {
+          "icon": "🔧",
+          "title": "Tech arrives with kit",
+          "desc": "High-pressure pump + chemicals."
+        },
+        {
+          "icon": "🧪",
+          "title": "Coil + drain pan wash",
+          "desc": "30-45 min per unit."
+        },
+        {
+          "icon": "🌬️",
+          "title": "Cool air restored",
+          "desc": "Test + report given."
+        }
+      ],
+      "duration_label": "30 min per unit",
+      "team_label": "1 AC technician",
+      "faqs": [
+        {
+          "q": "Do you handle central AC?",
+          "a": "Yes — per outlet rate. We handle ducting, fan-coils, and evaporator coils."
+        }
+      ]
     },
     {
       "id": "disinfection",
@@ -96,8 +639,57 @@
       "icon": "shield",
       "description": "MOH-approved disinfection. ULV fogging + electrostatic spray. Certificate provided.",
       "starting_price": 250,
-      "includes": ["ULV fogging", "Electrostatic spray", "High-touch surface wipe", "Certificate"],
-      "excludes": []
+      "includes": [
+        "ULV fogging",
+        "Electrostatic spray",
+        "High-touch surface wipe",
+        "Certificate"
+      ],
+      "excludes": [],
+      "addons": [
+        {
+          "id": "certificate",
+          "name": "Official certificate",
+          "price": 0,
+          "icon": "📜"
+        }
+      ],
+      "benefits": [
+        "MOH-approved chemicals — safe for kids + pets after dry",
+        "Kills 99.99% of viruses + bacteria + spores",
+        "Property certified for inspections + handovers"
+      ],
+      "when_to_book": [
+        "After illness in family",
+        "Pre-event",
+        "Office reopening",
+        "Daycare/clinic"
+      ],
+      "process_steps": [
+        {
+          "icon": "😷",
+          "title": "Crew arrives in PPE",
+          "desc": "You vacate the area."
+        },
+        {
+          "icon": "💨",
+          "title": "ULV fogging",
+          "desc": "Penetrates all surfaces."
+        },
+        {
+          "icon": "⏱️",
+          "title": "30-45 min wait",
+          "desc": "Then it's safe to return."
+        },
+        {
+          "icon": "📜",
+          "title": "Certificate emailed",
+          "desc": "For records."
+        }
+      ],
+      "duration_label": "45 min",
+      "team_label": "1-2 PPE-trained",
+      "faqs": []
     },
     {
       "id": "window_cleaning",
@@ -106,8 +698,37 @@
       "icon": "window",
       "description": "Interior + accessible exterior windows. Glass, frames, sills.",
       "starting_price": 150,
-      "includes": ["Glass clean", "Frame wipe", "Sill clean", "Streak-free finish"],
-      "excludes": ["High-rise rope-access windows (separate quote)"]
+      "includes": [
+        "Glass clean",
+        "Frame wipe",
+        "Sill clean",
+        "Streak-free finish"
+      ],
+      "excludes": [
+        "High-rise rope-access windows (separate quote)"
+      ],
+      "addons": [
+        {
+          "id": "high_rise",
+          "name": "High-rise rope access",
+          "price": 600,
+          "icon": "🧗"
+        }
+      ],
+      "benefits": [
+        "Streak-free finish",
+        "Hard water deposits removed",
+        "Glass + frames + sills cleaned"
+      ],
+      "when_to_book": [
+        "Quarterly",
+        "After sandstorm",
+        "Before hosting"
+      ],
+      "process_steps": [],
+      "duration_label": "1-2 hours",
+      "team_label": "1-2 cleaners",
+      "faqs": []
     },
     {
       "id": "pest_control",
@@ -116,8 +737,71 @@
       "icon": "bug",
       "description": "General pest treatment for cockroaches, ants, bedbugs, rodents. Municipality-approved chemicals.",
       "starting_price": 200,
-      "includes": ["Inspection", "Treatment", "30-day warranty", "Eco-friendly options"],
-      "excludes": ["Termite (separate package)"]
+      "includes": [
+        "Inspection",
+        "Treatment",
+        "30-day warranty",
+        "Eco-friendly options"
+      ],
+      "excludes": [
+        "Termite (separate package)"
+      ],
+      "addons": [
+        {
+          "id": "warranty_extended",
+          "name": "6-month warranty (vs 30 days)",
+          "price": 120,
+          "icon": "🛡️"
+        },
+        {
+          "id": "bedbug",
+          "name": "Bedbug heat treatment",
+          "price": 400,
+          "icon": "🛏️"
+        },
+        {
+          "id": "rodent",
+          "name": "Rodent baiting",
+          "price": 150,
+          "icon": "🐀"
+        }
+      ],
+      "benefits": [
+        "Municipality-approved chemicals — safe + effective",
+        "30-day warranty: free re-treatment if pests come back",
+        "Targets cockroaches, ants, bedbugs, rodents"
+      ],
+      "when_to_book": [
+        "Seeing pests",
+        "Pre-move-in",
+        "Quarterly",
+        "After construction"
+      ],
+      "process_steps": [
+        {
+          "icon": "🔍",
+          "title": "Inspection",
+          "desc": "Identify species + entry points."
+        },
+        {
+          "icon": "🧪",
+          "title": "Targeted treatment",
+          "desc": "Spray + bait + gel."
+        },
+        {
+          "icon": "🚪",
+          "title": "Vacate 1-2 hrs",
+          "desc": "For chemicals to set."
+        },
+        {
+          "icon": "🛡️",
+          "title": "Warranty active",
+          "desc": "Free callback if pests return."
+        }
+      ],
+      "duration_label": "1-2 hours",
+      "team_label": "1 certified technician",
+      "faqs": []
     },
     {
       "id": "laundry",
@@ -126,8 +810,37 @@
       "icon": "tshirt",
       "description": "Pickup, wash, iron, deliver. Per-piece or per-kg.",
       "starting_price": 5,
-      "includes": ["Wash", "Iron", "Fold", "Pickup + delivery within Dubai"],
-      "excludes": ["Dry-cleaning of leather/silk"]
+      "includes": [
+        "Wash",
+        "Iron",
+        "Fold",
+        "Pickup + delivery within Dubai"
+      ],
+      "excludes": [
+        "Dry-cleaning of leather/silk"
+      ],
+      "addons": [
+        {
+          "id": "express",
+          "name": "Express 4-hr",
+          "price": 30,
+          "icon": "⚡"
+        }
+      ],
+      "benefits": [
+        "Pickup + delivery within Dubai",
+        "Per-piece or per-kg pricing",
+        "Eco-friendly detergents"
+      ],
+      "when_to_book": [
+        "Weekly",
+        "Before travel",
+        "Suit/dress emergency"
+      ],
+      "process_steps": [],
+      "duration_label": "24 hrs (or 4 hrs express)",
+      "team_label": "-",
+      "faqs": []
     },
     {
       "id": "babysitting",
@@ -136,8 +849,36 @@
       "icon": "baby",
       "description": "Trained, background-checked nannies. Hourly or by-the-day.",
       "starting_price": 40,
-      "includes": ["Background-checked staff", "First-aid trained", "Light cooking for child"],
-      "excludes": ["Overnight (separate rate)"]
+      "includes": [
+        "Background-checked staff",
+        "First-aid trained",
+        "Light cooking for child"
+      ],
+      "excludes": [
+        "Overnight (separate rate)"
+      ],
+      "addons": [
+        {
+          "id": "meal",
+          "name": "Light meal prep",
+          "price": 30,
+          "icon": "🍽️"
+        }
+      ],
+      "benefits": [
+        "First-aid trained",
+        "Background-checked",
+        "English + Arabic speakers"
+      ],
+      "when_to_book": [
+        "Date nights",
+        "Work emergencies",
+        "Weekend hours"
+      ],
+      "process_steps": [],
+      "duration_label": "3+ hours",
+      "team_label": "1 nanny",
+      "faqs": []
     },
     {
       "id": "gardening",
@@ -146,8 +887,37 @@
       "icon": "leaf",
       "description": "Lawn mowing, hedge trimming, plant care, irrigation check.",
       "starting_price": 150,
-      "includes": ["Mowing", "Trimming", "Weeding", "Irrigation inspection"],
-      "excludes": ["New planting (extra)"]
+      "includes": [
+        "Mowing",
+        "Trimming",
+        "Weeding",
+        "Irrigation inspection"
+      ],
+      "excludes": [
+        "New planting (extra)"
+      ],
+      "addons": [
+        {
+          "id": "new_plants",
+          "name": "New plants (up to 5)",
+          "price": 150,
+          "icon": "🌱"
+        }
+      ],
+      "benefits": [
+        "Lawn mowing + hedge trim",
+        "Irrigation check",
+        "Plant care"
+      ],
+      "when_to_book": [
+        "Monthly",
+        "Pre-season",
+        "After overgrowth"
+      ],
+      "process_steps": [],
+      "duration_label": "2-4 hours",
+      "team_label": "1-2 gardeners",
+      "faqs": []
     },
     {
       "id": "handyman",
@@ -156,8 +926,70 @@
       "icon": "wrench",
       "description": "Plumbing, electrical, carpentry, painting touch-ups. Hourly + parts.",
       "starting_price": 120,
-      "includes": ["Diagnosis", "Repair", "Hourly rate"],
-      "excludes": ["Major rewiring or repiping (separate quote)"]
+      "includes": [
+        "Diagnosis",
+        "Repair",
+        "Hourly rate"
+      ],
+      "excludes": [
+        "Major rewiring or repiping (separate quote)"
+      ],
+      "addons": [
+        {
+          "id": "parts",
+          "name": "Parts (charged at cost)",
+          "price": 0,
+          "icon": "🔩"
+        },
+        {
+          "id": "emergency",
+          "name": "Same-day rush",
+          "price": 50,
+          "icon": "⚡"
+        }
+      ],
+      "benefits": [
+        "Plumbing, electrical, carpentry — one number",
+        "Hourly + parts at cost (no markup)",
+        "Same-day for emergencies"
+      ],
+      "when_to_book": [
+        "Leaking tap",
+        "Power switch broken",
+        "Door won't lock",
+        "Curtain rod fell",
+        "Furniture assembly"
+      ],
+      "process_steps": [
+        {
+          "icon": "📞",
+          "title": "Describe the problem",
+          "desc": "Photo helps."
+        },
+        {
+          "icon": "🛠️",
+          "title": "Tech with toolkit",
+          "desc": "30 min ETA standard."
+        },
+        {
+          "icon": "🔧",
+          "title": "Diagnose + fix",
+          "desc": "Hourly rate."
+        },
+        {
+          "icon": "💵",
+          "title": "Pay for hours + parts",
+          "desc": "Itemised invoice."
+        }
+      ],
+      "duration_label": "30 min - 3 hrs",
+      "team_label": "1 multi-skilled technician",
+      "faqs": [
+        {
+          "q": "What if it's a major job?",
+          "a": "For anything over 4 hours we send a fixed quote first — no surprises."
+        }
+      ]
     },
     {
       "id": "kitchen_deep",
@@ -166,8 +998,59 @@
       "icon": "chef",
       "description": "Inside oven, hood, fridge, freezer. Cabinet degrease, tile descaling.",
       "starting_price": 280,
-      "includes": ["Inside oven", "Hood + filter", "Inside fridge", "Cabinet degrease"],
-      "excludes": ["Appliance repair"]
+      "includes": [
+        "Inside oven",
+        "Hood + filter",
+        "Inside fridge",
+        "Cabinet degrease"
+      ],
+      "excludes": [
+        "Appliance repair"
+      ],
+      "addons": [
+        {
+          "id": "appliances",
+          "name": "Inside oven + fridge + microwave",
+          "price": 180,
+          "icon": "🍳"
+        }
+      ],
+      "benefits": [
+        "Removes years of grease build-up",
+        "Prevents pest infestations",
+        "Restores hood + filter performance"
+      ],
+      "when_to_book": [
+        "Before Eid hosting",
+        "Quarterly",
+        "After heavy frying",
+        "Move-out"
+      ],
+      "process_steps": [
+        {
+          "icon": "🧽",
+          "title": "Degrease all surfaces",
+          "desc": "Hood, walls, cabinets."
+        },
+        {
+          "icon": "🔥",
+          "title": "Inside oven (optional)",
+          "desc": "Industrial degreaser."
+        },
+        {
+          "icon": "🧊",
+          "title": "Inside fridge (optional)",
+          "desc": "Empty + clean + organize."
+        },
+        {
+          "icon": "✨",
+          "title": "Sparkling kitchen",
+          "desc": "You + family enjoy it."
+        }
+      ],
+      "duration_label": "2-4 hours",
+      "team_label": "1-2 specialists",
+      "faqs": []
     },
     {
       "id": "villa_deep",
@@ -176,9 +1059,331 @@
       "icon": "home",
       "description": "Full-villa deep clean including outdoor. 4-person crew. By size.",
       "starting_price": 1100,
-      "includes": ["All deep clean", "Garden sweep", "Pool deck wipe", "Outdoor furniture"],
-      "excludes": ["Pool water treatment"]
+      "includes": [
+        "All deep clean",
+        "Garden sweep",
+        "Pool deck wipe",
+        "Outdoor furniture"
+      ],
+      "excludes": [
+        "Pool water treatment"
+      ],
+      "addons": [
+        {
+          "id": "pool_deck",
+          "name": "Pool deck pressure wash",
+          "price": 250,
+          "icon": "🏊"
+        },
+        {
+          "id": "garden",
+          "name": "Garden tidy + leaf removal",
+          "price": 180,
+          "icon": "🌿"
+        },
+        {
+          "id": "car_wash",
+          "name": "Cars washed (up to 2)",
+          "price": 100,
+          "icon": "🚗"
+        }
+      ],
+      "benefits": [
+        "Whole villa from gate to roof",
+        "4-person crew",
+        "Outdoor + indoor in one visit"
+      ],
+      "when_to_book": [
+        "Before/after major events",
+        "Quarterly maintenance",
+        "End of summer"
+      ],
+      "process_steps": [
+        {
+          "icon": "🏠",
+          "title": "Walk-through",
+          "desc": "Identify priority rooms."
+        },
+        {
+          "icon": "👥",
+          "title": "4 cleaners deploy",
+          "desc": "Parallel work in zones."
+        },
+        {
+          "icon": "🌿",
+          "title": "Outdoor + indoor",
+          "desc": "Garden + pool deck included."
+        },
+        {
+          "icon": "📋",
+          "title": "Inspector walk-through",
+          "desc": "With you, room by room."
+        }
+      ],
+      "duration_label": "6-10 hours",
+      "team_label": "4 cleaners",
+      "faqs": []
+    },
+    {
+      "id": "car_wash",
+      "name": "Car Wash & Detail",
+      "category": "Specialty",
+      "icon": "truck",
+      "description": "Premium hand wash, interior detail, wax + polish. Mobile — we come to you.",
+      "starting_price": 80,
+      "includes": [
+        "Exterior hand wash",
+        "Interior vacuum",
+        "Dashboard polish",
+        "Tire shine",
+        "Window clean"
+      ],
+      "excludes": [
+        "Engine bay (separate package)",
+        "Paint correction"
+      ],
+      "addons": [
+        {
+          "id": "wax",
+          "name": "Carnauba wax",
+          "price": 80,
+          "icon": "✨"
+        },
+        {
+          "id": "interior_detail",
+          "name": "Full interior detail",
+          "price": 150,
+          "icon": "🪑"
+        },
+        {
+          "id": "engine",
+          "name": "Engine bay clean",
+          "price": 100,
+          "icon": "🔧"
+        }
+      ],
+      "benefits": [
+        "Mobile — we come to your home/office",
+        "Eco wash uses just 4L of water",
+        "Restores showroom shine"
+      ],
+      "when_to_book": [
+        "Weekly",
+        "Before sale",
+        "After sandstorm"
+      ],
+      "duration_label": "45 min - 2 hrs",
+      "team_label": "1 detailer",
+      "faqs": []
+    },
+    {
+      "id": "swimming_pool",
+      "name": "Swimming Pool Maintenance",
+      "category": "Outdoor",
+      "icon": "shield",
+      "description": "Weekly pool cleaning + chemical balancing + filter check. Keeps water crystal-clear.",
+      "starting_price": 250,
+      "includes": [
+        "Skim + brush",
+        "pH + chlorine balance",
+        "Filter clean",
+        "Water level top-up"
+      ],
+      "excludes": [
+        "Equipment repair",
+        "Major leaks"
+      ],
+      "addons": [
+        {
+          "id": "deep",
+          "name": "Quarterly deep clean",
+          "price": 300,
+          "icon": "🌊"
+        }
+      ],
+      "benefits": [
+        "Crystal-clear water",
+        "Saves equipment lifespan",
+        "Family-safe water chemistry"
+      ],
+      "when_to_book": [
+        "Weekly",
+        "After heavy rain",
+        "After sandstorm"
+      ],
+      "duration_label": "1 hour",
+      "team_label": "1 pool tech",
+      "faqs": []
+    },
+    {
+      "id": "marble_polish",
+      "name": "Marble & Floor Polishing",
+      "category": "Specialty",
+      "icon": "sparkles",
+      "description": "Diamond polishing for marble, granite, terrazzo. Restores high gloss + removes etches.",
+      "starting_price": 15,
+      "includes": [
+        "3-step diamond polish",
+        "Sealing",
+        "Buffing"
+      ],
+      "excludes": [
+        "Crack repair (separate)"
+      ],
+      "addons": [
+        {
+          "id": "sealer",
+          "name": "Premium nano-sealer",
+          "price": 40,
+          "icon": "🛡️"
+        }
+      ],
+      "benefits": [
+        "Restores hotel-grade gloss",
+        "Removes scratches + etches",
+        "Long-lasting protection"
+      ],
+      "when_to_book": [
+        "Annually",
+        "Before guests",
+        "After scuffs"
+      ],
+      "duration_label": "4-8 hours",
+      "team_label": "2 specialists",
+      "faqs": []
+    },
+    {
+      "id": "curtain_cleaning",
+      "name": "Curtain & Drapery Cleaning",
+      "category": "Specialty",
+      "icon": "window",
+      "description": "On-site steam clean of curtains + drapes. No need to take them down.",
+      "starting_price": 40,
+      "includes": [
+        "Steam clean",
+        "Deodorize",
+        "Anti-bacterial spray"
+      ],
+      "excludes": [
+        "Silk/leather (dry-clean instead)"
+      ],
+      "addons": [
+        {
+          "id": "dry_clean",
+          "name": "Off-site dry-clean (silk)",
+          "price": 80,
+          "icon": "👔"
+        }
+      ],
+      "benefits": [
+        "No removal needed — saves hours",
+        "Kills dust mites",
+        "Removes odors"
+      ],
+      "when_to_book": [
+        "Annually",
+        "After cooking heavy",
+        "Pet households"
+      ],
+      "duration_label": "1-2 hours",
+      "team_label": "1 specialist",
+      "faqs": []
+    },
+    {
+      "id": "smart_home",
+      "name": "Smart Home Setup",
+      "category": "Maintenance",
+      "icon": "wrench",
+      "description": "Install + configure smart locks, cameras, lights, speakers. Apple HomeKit / Alexa / Google.",
+      "starting_price": 200,
+      "includes": [
+        "Device install",
+        "WiFi setup",
+        "App config",
+        "Family training"
+      ],
+      "excludes": [
+        "Hardware (you bring)"
+      ],
+      "addons": [
+        {
+          "id": "camera_pack",
+          "name": "4-camera install + cloud",
+          "price": 600,
+          "icon": "📷"
+        },
+        {
+          "id": "voice",
+          "name": "Voice assistant setup",
+          "price": 120,
+          "icon": "🎤"
+        }
+      ],
+      "benefits": [
+        "Pro install — no fiddling",
+        "All your devices in one app",
+        "Family-trained on use"
+      ],
+      "when_to_book": [
+        "After moving",
+        "After buying devices",
+        "WiFi upgrades"
+      ],
+      "duration_label": "2-4 hours",
+      "team_label": "1 IT specialist",
+      "faqs": []
+    },
+    {
+      "id": "painting",
+      "name": "Wall Painting",
+      "category": "Specialty",
+      "icon": "hardhat",
+      "description": "Interior wall painting — patch, prime, paint. Drop cloths + clean-up included.",
+      "starting_price": 300,
+      "includes": [
+        "Surface prep",
+        "Primer",
+        "2 coats paint",
+        "Clean-up"
+      ],
+      "excludes": [
+        "Paint (separate cost)",
+        "Heavy plaster repair"
+      ],
+      "addons": [
+        {
+          "id": "premium_paint",
+          "name": "Jotun premium paint",
+          "price": 200,
+          "icon": "🎨"
+        },
+        {
+          "id": "feature_wall",
+          "name": "Feature wall design",
+          "price": 150,
+          "icon": "🖼️"
+        }
+      ],
+      "benefits": [
+        "Hotel-quality finish",
+        "No mess to clean up",
+        "Same-day for one room"
+      ],
+      "when_to_book": [
+        "Move-in/out",
+        "Refresh",
+        "Color change"
+      ],
+      "duration_label": "4-8 hrs per room",
+      "team_label": "1-2 painters",
+      "faqs": []
     }
   ],
-  "areas_served": ["Dubai (all areas)", "Sharjah", "Ajman", "Umm Al Quwain (selected)", "Abu Dhabi (surcharge)"]
+  "areas_served": [
+    "Dubai (all areas)",
+    "Sharjah",
+    "Ajman",
+    "Umm Al Quwain (selected)",
+    "Abu Dhabi (surcharge)"
+  ]
 }

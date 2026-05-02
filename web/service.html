@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<!-- Per-service SEO: filled in dynamically by JS at boot -->
+<title>Service • Lumora</title>
+<meta name="description" content="">
+<link rel="canonical" href="">
+
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
+
+<!-- Pixels (dormant unless IDs are set) -->
+<script>
+window.LUMORA_PIXELS = {
+  fb: "",   // Facebook Pixel ID
+  ga: "",   // GA4 measurement ID
+  tt: ""    // TikTok pixel ID
+};
+</script>
+
+<style>
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes shine { 0% { background-position:-200% center } 100% { background-position:200% center } }
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s, transform .6s; }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  .svc-hero { position: relative; overflow: hidden;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 8%, var(--bg)) 0%, var(--bg) 100%); }
+  .svc-hero::before { content: ""; position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--primary) 20%, transparent) 1px, transparent 0);
+    background-size: 28px 28px; pointer-events: none; opacity: 0.4; }
+  .svc-hero-inner {
+    max-width: 1180px; margin: 0 auto; padding: 56px 24px;
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: center;
+  }
+  @media (max-width:880px){ .svc-hero-inner { grid-template-columns:1fr; padding:32px 20px } }
+  .svc-pill { display: inline-flex; gap:8px; align-items: center;
+    background: var(--surface); padding: 6px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; color: var(--primary-dark);
+    border: 1px solid var(--border); margin-bottom: 14px; }
+  .svc-h1 { font-size: 48px; line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 14px; }
+  .price-big {
+    display:inline-block;
+    background: linear-gradient(90deg, var(--primary) 20%, var(--accent) 50%, var(--primary) 80%);
+    background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: shine 5s linear infinite; font-weight: 800;
+  }
+  .mascot-wrap { position: relative; width: 240px; height: 240px; margin: 0 auto;
+    animation: float 3.5s ease-in-out infinite; }
+  .mascot-wrap::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -20px; margin: 0 auto;
+    width: 70%; height: 12px; background: rgba(13,148,136,.2); border-radius: 50%;
+    filter: blur(8px); animation: float 3.5s ease-in-out infinite reverse;
+  }
+  .svc-icon-emoji {
+    position: absolute; top: -6px; inset-inline-end: -6px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); color: #fff; display:flex; align-items:center; justify-content:center;
+    font-size: 28px; box-shadow: 0 8px 24px rgba(245,158,11,.4);
+    animation: float 2s ease-in-out infinite;
+  }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .btn-wa {
+    background: #25D366; color: #fff; border: 0; border-radius: 999px;
+    padding: 14px 22px; font-weight: 700; font-size: 15px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  }
+  .btn-wa:hover { background: #1FB855; transform: translateY(-1px); }
+
+  .urgency {
+    display: inline-flex; gap: 8px; align-items: center;
+    background: #FEF3C7; color: #92400E; padding: 8px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; margin-top: 14px;
+  }
+  .urgency .dot { width: 8px; height: 8px; border-radius: 50%; background: #DC2626;
+    animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.5} }
+
+  .social-proof { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px;
+    color: var(--muted); font-size: 14px; align-items: center; }
+  .social-proof b { color: var(--text); }
+
+  .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 16px; margin-top: 24px; }
+  .benefit {
+    background: var(--surface); padding: 20px; border-radius: 14px; border: 1px solid var(--border);
+    transition: transform .15s, border-color .15s;
+  }
+  .benefit:hover { transform: translateY(-3px); border-color: var(--primary); }
+  .benefit .ico {
+    width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 8px;
+  }
+
+  .steps-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; }
+  .step-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 22px; text-align: center; position: relative;
+  }
+  .step-card .step-ico { font-size: 32px; margin-bottom: 8px; }
+  .step-card .step-num {
+    position: absolute; top: -12px; inset-inline-start: 14px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display:flex;align-items:center;justify-content:center; font-weight:800; font-size:13px;
+  }
+
+  /* Addons */
+  .addon-card {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px; cursor: pointer;
+    transition: all .12s;
+  }
+  .addon-card:hover { border-color: var(--primary); }
+  .addon-card.picked { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
+  .addon-card .a-ico { font-size: 26px; }
+  .addon-card .a-body { flex: 1; }
+  .addon-card .a-name { font-weight: 600; font-size: 14px; }
+  .addon-card .a-price { color: var(--primary); font-weight: 700; font-size: 13px; }
+  .addon-card .a-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-size:12px; color:#fff;
+  }
+  .addon-card.picked .a-check { background: var(--primary); border-color: var(--primary); }
+
+  /* Sticky bottom CTA bar (mobile-first conversion booster) */
+  .sticky-cta {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 12px 16px; display: flex; gap: 8px; align-items: center;
+    box-shadow: 0 -8px 24px rgba(15,23,42,.08);
+  }
+  .sticky-cta .price { flex: 1; font-weight: 700; font-size: 16px; color: var(--text); }
+  .sticky-cta .price small { font-weight: 500; color: var(--muted); font-size: 12px; }
+  body { padding-bottom: 80px; }
+  @media (min-width:880px){ .sticky-cta { padding-inline: 32px; } }
+
+  .badge-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px }
+  .badge-row span {
+    font-size:12px; padding:5px 11px; border-radius:999px;
+    background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+    color: var(--primary-dark); border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  }
+</style>
+
+</head>
+<body>
+
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="40" alt="Lumora"></a>
+  <div class="nav-links">
+    <a href="/services.html">All services</a>
+    <a href="/me.html">My account</a>
+  </div>
+  <div class="nav-cta">
+    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Theme + font" aria-label="Settings">⚙️</button>
+    <select class="lang-pick" aria-label="Language"></select>
+    <a class="btn btn-primary" href="#book" onclick="document.getElementById('book-form').scrollIntoView({behavior:'smooth'});return false">Book now</a>
+  </div>
+</div></nav>
+
+<section class="svc-hero">
+  <div class="svc-hero-inner">
+    <div>
+      <div id="cat-pill" class="svc-pill reveal">📂 …</div>
+      <h1 class="svc-h1 reveal" id="svc-name">Loading…</h1>
+      <p class="lead reveal" id="svc-desc"></p>
+      <div class="badge-row reveal" id="badges"></div>
+
+      <div class="urgency reveal"><span class="dot"></span><span>3 vendors free in your area • next slot in <b id="next-slot">—</b></span></div>
+
+      <div class="cta-row reveal">
+        <a id="cta-book" class="btn btn-primary" href="#book" onclick="conv('book_click');document.getElementById('book-form').scrollIntoView({behavior:'smooth'});return false;" style="font-size:16px;padding:14px 24px">Get instant quote →</a>
+        <a id="cta-wa" class="btn-wa" href="#" target="_blank" onclick="conv('whatsapp_click')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3.5A11.95 11.95 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.8 1.4 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3zM12 22c-1.9 0-3.7-.5-5.3-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.96 9.96 0 012 12c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10zm5.5-7.5c-.3-.2-1.8-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.6.1-.2.2-.3.3-.5.1-.2.1-.4 0-.5-.1-.2-.7-1.7-1-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1 2.9 1.2 3.1c.2.2 2 3.1 4.9 4.4.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.4z"/></svg>
+          WhatsApp us
+        </a>
+      </div>
+
+      <div class="social-proof reveal">
+        <span><b>4.9★</b> rating</span>
+        <span>•</span>
+        <span><b>2,400+</b> jobs done</span>
+        <span>•</span>
+        <span><b>180+</b> vetted vendors</span>
+        <span>•</span>
+        <span>🛡️ Insured</span>
+      </div>
+    </div>
+
+    <div class="reveal" style="text-align:center">
+      <div class="mascot-wrap">
+        <img src="/avatar.svg" width="240" height="240" alt="Lumi mascot" loading="eager">
+        <div class="svc-icon-emoji" id="svc-emoji">✨</div>
+      </div>
+      <div style="margin-top:32px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="background:var(--primary);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px">L</span>
+          <b>Hi, I'm Lumi 👋</b>
+        </div>
+        <div style="color:var(--muted);font-size:14px">Tell me your size + location and I'll quote in 5 seconds.</div>
+        <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="conv('chat_click');document.querySelector('.us-launcher').click()">💬 Chat with me</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Benefits -->
+<section>
+  <div class="container">
+    <h2 class="reveal">Why book with Lumora?</h2>
+    <div class="benefits-grid" id="benefits"></div>
+  </div>
+</section>
+
+<!-- Process -->
+<section style="background:color-mix(in srgb, var(--primary) 6%, var(--bg))">
+  <div class="container">
+    <h2 class="reveal">How it works</h2>
+    <div class="steps-row" id="steps"></div>
+  </div>
+</section>
+
+<!-- Addons -->
+<section>
+  <div class="container">
+    <h2 class="reveal">Boost your service with add-ons</h2>
+    <p class="sub reveal">Tap to include — your quote updates live below.</p>
+    <div id="addons-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px"></div>
+  </div>
+</section>
+
+<!-- Includes / Excludes -->
+<section style="background:color-mix(in srgb, var(--primary) 4%, var(--bg))">
+  <div class="container" style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    <div>
+      <h2 class="reveal" style="margin:0 0 12px;font-size:24px">✓ What's included</h2>
+      <ul id="includes" style="padding:0;list-style:none"></ul>
+    </div>
+    <div>
+      <h2 class="reveal" style="margin:0 0 12px;font-size:24px">✗ Not included</h2>
+      <ul id="excludes" style="padding:0;list-style:none"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- When to book / scenarios -->
+<section>
+  <div class="container">
+    <h2 class="reveal">When you might need this</h2>
+    <div id="scenarios" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  </div>
+</section>
+
+<!-- Booking form -->
+<section id="book" style="background:color-mix(in srgb, var(--primary) 8%, var(--bg))">
+  <div class="container" style="max-width:680px">
+    <h2 class="reveal" style="text-align:center">Book your service</h2>
+    <p class="sub reveal" style="text-align:center">Get a confirmed price + slot in under 60 seconds.</p>
+    <div id="book-form" class="form reveal">
+      <div class="row">
+        <div><label>Bedrooms <small style="color:var(--muted)">(if applicable)</small></label>
+          <input id="f-br" type="number" min="0" max="10"></div>
+        <div><label>Hours <small style="color:var(--muted)">(if hourly)</small></label>
+          <input id="f-hrs" type="number" min="0" max="24"></div>
+      </div>
+      <div class="row">
+        <div><label>Units <small style="color:var(--muted)">(AC/sofa/etc)</small></label>
+          <input id="f-units" type="number" min="0"></div>
+        <div><label>First-time customer?</label>
+          <select id="f-first"><option value="">No</option><option value="1">Yes — apply 15% off</option></select></div>
+      </div>
+      <button class="btn btn-ghost btn-block" type="button" onclick="getQuote()" style="margin-top:6px">Calculate price</button>
+      <div id="quote-box" style="margin-top:14px"></div>
+
+      <hr style="margin:24px 0;border:0;border-top:1px solid var(--border)">
+
+      <div class="row">
+        <div><label>Date</label><input id="f-date" type="date" required></div>
+        <div><label>Time</label>
+          <select id="f-time"><option>10:00</option><option>12:00</option><option>14:00</option><option>16:00</option></select></div>
+      </div>
+      <label>Full name</label><input id="f-name">
+      <div class="row">
+        <div><label>Phone (with country code)</label><input id="f-phone" placeholder="+971501234567"></div>
+        <div><label>Area / Emirate</label><input id="f-area" placeholder="Dubai Marina"></div>
+      </div>
+      <label>Address</label><textarea id="f-addr" placeholder="Tower / villa, apartment no, street, area"></textarea>
+      <button class="btn btn-primary btn-block" type="button" onclick="confirmBooking()" style="margin-top:14px;font-size:16px">Confirm booking →</button>
+      <div id="book-result" style="margin-top:14px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container" style="max-width:760px">
+    <h2 class="reveal">Common questions</h2>
+    <div id="faqs"></div>
+  </div>
+</section>
+
+<footer><div class="container">
+  <div><img src="/logo.svg" height="36" alt="Lumora" style="filter:brightness(0) invert(1)"></div>
+  <div><h4>Product</h4><a href="/services.html">All services</a><br><a href="/book.html">Book</a><br><a href="/me.html">My account</a></div>
+  <div><h4>Vendors</h4><a href="/login.html">Vendor portal</a></div>
+  <div><h4>Contact</h4><a href="https://wa.me/971566900255">WhatsApp</a><br><a href="mailto:hello@sales.mir.ae">Email</a></div>
+</div></footer>
+
+<!-- STICKY CTA BAR -->
+<div class="sticky-cta">
+  <div class="price"><span id="sticky-price">—</span><br><small>incl. 5% VAT</small></div>
+  <a class="btn-wa" id="sticky-wa" href="#" target="_blank" onclick="conv('whatsapp_sticky')">WhatsApp</a>
+  <a class="btn btn-primary" href="#book" onclick="conv('book_sticky');document.getElementById('book-form').scrollIntoView({behavior:'smooth'});return false">Book →</a>
+</div>
+
+<script src="/theme.js"></script>
+<script src="/app.js"></script>
+<script>
+const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
+  hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
+  tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
+let SVC = null;
+let pickedAddons = new Set();
+
+const params = new URLSearchParams(location.search);
+const sid = params.get("id") || "deep_cleaning";
+
+(async () => {
+  const r = await fetch("/api/services").then(x=>x.json());
+  const found = r.services.find(s => s.id === sid);
+  if (!found) { document.body.innerHTML = "<p style='padding:40px;text-align:center'>Service not found.</p>"; return; }
+  SVC = found;
+  render();
+  // Reveal pass
+  const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); }),
+    { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+})();
+
+function render() {
+  // SEO
+  const title = `${SVC.name} in UAE — from ${SVC.starting_price} AED | Lumora`;
+  document.title = title;
+  document.querySelector("meta[name='description']").content = SVC.description;
+  document.querySelector("link[rel='canonical']").href = location.href;
+
+  // Inject Schema.org Service JSON-LD
+  const sld = document.createElement("script");
+  sld.type = "application/ld+json";
+  sld.textContent = JSON.stringify({
+    "@context":"https://schema.org","@type":"Service",
+    name: SVC.name, description: SVC.description,
+    provider: {"@type":"LocalBusiness","name":"Lumora","url":"https://sales.mir.ae"},
+    areaServed: "United Arab Emirates",
+    offers: { "@type":"Offer", "priceCurrency":"AED", "price": SVC.starting_price }
+  });
+  document.head.appendChild(sld);
+
+  // Hero
+  document.getElementById("cat-pill").innerHTML = "📂 " + SVC.category;
+  document.getElementById("svc-name").innerHTML = SVC.name + " <span class='price-big'>from " + SVC.starting_price + " AED</span>";
+  document.getElementById("svc-desc").textContent = SVC.description;
+  document.getElementById("svc-emoji").textContent = ICONS[SVC.icon] || "✨";
+
+  // Badges
+  const badges = document.getElementById("badges");
+  badges.innerHTML = "";
+  if (SVC.duration_label) badges.innerHTML += `<span>⏱️ ${SVC.duration_label}</span>`;
+  if (SVC.team_label) badges.innerHTML += `<span>👥 ${SVC.team_label}</span>`;
+  badges.innerHTML += `<span>✓ Insured</span><span>✓ Background-checked</span>`;
+
+  // Next-slot urgency
+  const dt = new Date(); dt.setHours(dt.getHours()+3);
+  document.getElementById("next-slot").textContent = dt.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+
+  // Benefits
+  const b = document.getElementById("benefits");
+  b.innerHTML = (SVC.benefits||[]).map((t,i) => `
+    <div class="benefit reveal in"><div class="ico">${["🎯","💚","⚡","✨","🛡️"][i%5]}</div>
+      <div style="font-size:14px;line-height:1.5">${t}</div></div>`).join("") ||
+    `<div style="color:var(--muted)">Benefits coming soon.</div>`;
+
+  // Steps
+  const stepsWrap = document.getElementById("steps");
+  stepsWrap.innerHTML = (SVC.process_steps||[]).map((s,i) => `
+    <div class="step-card reveal in"><div class="step-num">${i+1}</div>
+      <div class="step-ico">${s.icon}</div>
+      <h3 style="margin:6px 0 4px;font-size:15px">${s.title}</h3>
+      <div style="color:var(--muted);font-size:13px">${s.desc}</div></div>`).join("") ||
+    `<div style="color:var(--muted)">Process: book → arrive → deliver → pay.</div>`;
+
+  // Addons
+  const ag = document.getElementById("addons-grid");
+  ag.innerHTML = (SVC.addons||[]).map(a => `
+    <div class="addon-card" data-aid="${a.id}" onclick="toggleAddon('${a.id}', this)">
+      <div class="a-ico">${a.icon||"➕"}</div>
+      <div class="a-body">
+        <div class="a-name">${a.name}</div>
+        <div class="a-price">+ ${a.price} AED</div>
+      </div>
+      <div class="a-check">✓</div>
+    </div>`).join("") || `<div style="color:var(--muted)">No add-ons for this service.</div>`;
+
+  // Includes / Excludes
+  document.getElementById("includes").innerHTML = (SVC.includes||[]).map(x =>
+    `<li style="padding:8px 0;border-bottom:1px solid var(--border)">✅ ${x}</li>`).join("");
+  document.getElementById("excludes").innerHTML = (SVC.excludes||[]).map(x =>
+    `<li style="padding:8px 0;border-bottom:1px solid var(--border);color:var(--muted)">✗ ${x}</li>`).join("") ||
+    `<li style="color:var(--muted);padding:8px 0">No exclusions.</li>`;
+
+  // Scenarios
+  document.getElementById("scenarios").innerHTML = (SVC.when_to_book||[]).map(s => `
+    <span style="background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:14px">📌 ${s}</span>`).join("");
+
+  // FAQs
+  document.getElementById("faqs").innerHTML = (SVC.faqs||[]).map(f => `
+    <details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:8px">
+      <summary style="font-weight:600;cursor:pointer">${f.q}</summary>
+      <p style="margin:10px 0 0;color:var(--muted);line-height:1.6">${f.a}</p>
+    </details>`).join("") || `<p style="color:var(--muted)">No FAQs yet — ask Lumi anything in chat.</p>`;
+
+  // CTAs
+  const waMsg = encodeURIComponent(`Hi Lumora! I want to book ${SVC.name}. Can you help?`);
+  document.getElementById("cta-wa").href = `https://wa.me/971566900255?text=${waMsg}`;
+  document.getElementById("sticky-wa").href = `https://wa.me/971566900255?text=${waMsg}`;
+  document.getElementById("sticky-price").textContent = `from ${SVC.starting_price} AED`;
+}
+
+function toggleAddon(aid, el) {
+  if (pickedAddons.has(aid)) { pickedAddons.delete(aid); el.classList.remove("picked"); }
+  else { pickedAddons.add(aid); el.classList.add("picked"); }
+  // Live recompute the quote if user already filled the basic fields
+  if (document.getElementById("f-br").value || document.getElementById("f-hrs").value || document.getElementById("f-units").value) {
+    getQuote();
+  }
+}
+
+async function getQuote() {
+  const args = {
+    service_id: sid,
+    bedrooms: parseInt(document.getElementById("f-br").value) || null,
+    hours: parseInt(document.getElementById("f-hrs").value) || null,
+    units: parseInt(document.getElementById("f-units").value) || null,
+    first_time: !!document.getElementById("f-first").value,
+    addons: [...pickedAddons],
+  };
+  // Construct natural-language query for Lumi (which calls get_quote with addons)
+  const cmd = `quote for ${args.service_id}` +
+    (args.bedrooms ? ` ${args.bedrooms} bedroom` : "") +
+    (args.hours ? ` ${args.hours} hours` : "") +
+    (args.units ? ` ${args.units} units` : "") +
+    (args.first_time ? " first time" : "") +
+    (pickedAddons.size ? " with addons " + [...pickedAddons].join(",") : "");
+  document.getElementById("quote-box").innerHTML = "<i style='color:var(--muted)'>Calculating…</i>";
+  try {
+    const r = await fetch("/api/chat", { method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({message: "How much for: " + cmd}) }).then(x=>x.json());
+    // Find quote tool call in response
+    let quote = null;
+    for (const t of (r.tool_calls||[])) if (t.name === "get_quote" && t.result && t.result.ok) quote = t.result;
+    if (quote) {
+      document.getElementById("sticky-price").textContent = quote.total + " AED";
+      document.getElementById("quote-box").innerHTML = `
+        <div style="background:color-mix(in srgb, var(--primary) 8%, var(--surface));border:1px solid var(--primary);border-radius:12px;padding:16px">
+          ${quote.breakdown.map(b => `<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span>${b.label}</span><span><b>${b.amount} AED</b></span></div>`).join("")}
+          <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:800;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><span>Total</span><span>${quote.total} AED</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Includes 5% VAT • indicative</div>
+        </div>`;
+    } else {
+      document.getElementById("quote-box").innerHTML = `<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:12px;font-size:14px">${r.text || "Couldn't compute. Tell Lumi in chat."}</div>`;
+    }
+  } catch(e) { document.getElementById("quote-box").innerHTML = "Error: " + e.message; }
+}
+
+async function confirmBooking() {
+  const date = document.getElementById("f-date").value;
+  const time = document.getElementById("f-time").value;
+  const name = document.getElementById("f-name").value;
+  const phone = document.getElementById("f-phone").value;
+  const address = document.getElementById("f-addr").value;
+  if (!date || !name || !phone || !address) {
+    document.getElementById("book-result").innerHTML = '<div style="color:#DC2626">Please complete date, name, phone, address.</div>';
+    return;
+  }
+  conv("booking_submit");
+  const cmd = `Book ${sid} on ${date} at ${time} for ${name}, phone ${phone}, address: ${address}` +
+    (document.getElementById("f-br").value ? `, ${document.getElementById("f-br").value} bedrooms` : "") +
+    (document.getElementById("f-hrs").value ? `, ${document.getElementById("f-hrs").value} hours` : "") +
+    (document.getElementById("f-units").value ? `, ${document.getElementById("f-units").value} units` : "") +
+    (pickedAddons.size ? `, addons: ${[...pickedAddons].join(",")}` : "");
+  document.getElementById("book-result").innerHTML = "<i style='color:var(--muted)'>Booking…</i>";
+  try {
+    const r = await fetch("/api/chat", { method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({message: cmd, phone, language: window.lumoraLang ? lumoraLang() : "en"})}).then(x=>x.json());
+    let bid = null;
+    for (const t of (r.tool_calls||[])) if (t.name === "create_booking" && t.result && t.result.ok) bid = t.result.booking.id;
+    if (bid) {
+      conv("booking_success");
+      document.getElementById("book-result").innerHTML = `
+        <div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:12px;padding:18px;text-align:center">
+          <h3 style="margin:0 0 6px">✅ Booked! ${bid}</h3>
+          <p style="color:var(--muted);margin:0 0 12px">We'll WhatsApp you a confirmation.</p>
+          <a class="btn btn-primary" href="/me.html?b=${bid}">Track booking →</a>
+        </div>`;
+    } else {
+      document.getElementById("book-result").innerHTML = `<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:12px">${r.text || "Couldn't auto-book. Try chat or WhatsApp."}</div>`;
+    }
+  } catch(e) { document.getElementById("book-result").innerHTML = "Error: " + e.message; }
+}
+
+// Conversion pixels (no-op until IDs are configured)
+function conv(name) {
+  try {
+    const p = window.LUMORA_PIXELS;
+    if (p.fb && window.fbq) window.fbq("track", "Lead", {content_name: SVC && SVC.name, lumora_event: name});
+    if (p.ga && window.gtag) window.gtag("event", name, {service_id: sid});
+    if (p.tt && window.ttq) window.ttq.track("Contact", {content_name: SVC && SVC.name});
+  } catch {}
+}
+</script>
+
+<script src="/widget.js" data-api-base=""></script>
+</body></html>

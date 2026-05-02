@@ -13,6 +13,7 @@
     <a href="/account.html" data-i18n="track">Track</a>
   </div>
   <div class="nav-cta">
+    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Theme &amp; font" aria-label="Settings">⚙️</button>
     <select class="lang-pick"></select>
   </div>
 </div></nav>
@@ -141,4 +142,5 @@ document.getElementById("book-btn").addEventListener("click", async () => {
 function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 </script>
 <script src="/widget.js"></script>
+<script src="/theme.js"></script>
 </body></html>

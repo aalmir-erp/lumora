@@ -30,7 +30,8 @@ def _now() -> str:
 def get_quote(service_id: str, bedrooms: int | None = None,
               hours: int | None = None, units: int | None = None,
               area: str | None = None, first_time: bool = False,
-              recurring: str | None = None) -> dict:
+              recurring: str | None = None,
+              addons: list[str] | None = None) -> dict:
     p = kb.pricing()
     rules = p["rules"]
     if service_id not in rules:
@@ -83,6 +84,16 @@ def get_quote(service_id: str, bedrooms: int | None = None,
         s = p["surcharges"]["abu_dhabi"]
         breakdown.append({"label": "Abu Dhabi travel", "amount": s})
         subtotal += s
+
+    # Addons (id list mapped against services.json addons[])
+    if addons:
+        svc_def = next((x for x in kb.services()["services"] if x["id"] == service_id), None)
+        addon_map = {a["id"]: a for a in (svc_def.get("addons") if svc_def else [])}
+        for aid in addons:
+            a = addon_map.get(aid)
+            if a:
+                breakdown.append({"label": f"+ {a['name']}", "amount": a["price"]})
+                subtotal += a["price"]
 
     discount = 0.0
     if first_time and not recurring:
