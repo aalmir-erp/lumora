@@ -1,0 +1,432 @@
+{
+  "_note": "Market-research seed dataset for UAE home-services vendors (May 2026). Pricing reflects competitive market rates. Vendors are based on real UAE brands but configured as Lumora partners. Idempotent — re-seeding updates rather than duplicates.",
+  "vendors": [
+    {
+      "email": "ops@justmop.lumora",
+      "name": "JustMop UAE",
+      "company": "JustMop FZ-LLC",
+      "phone": "+971 4 XXX 1001",
+      "rating": 4.8,
+      "completed_jobs": 312,
+      "services": {
+        "general_cleaning": {"price_aed": 180, "price_unit": "fixed", "sla_hours": 4},
+        "deep_cleaning":    {"price_aed": 380, "price_unit": "fixed", "sla_hours": 12},
+        "maid_service":     {"price_aed": 32,  "price_unit": "per_hour", "sla_hours": 6},
+        "move_in_out":      {"price_aed": 650, "price_unit": "fixed", "sla_hours": 24}
+      }
+    },
+    {
+      "email": "ops@justclean.lumora",
+      "name": "JustClean Premium",
+      "company": "JustClean ME",
+      "phone": "+971 4 XXX 1002", "rating": 4.7, "completed_jobs": 244,
+      "services": {
+        "general_cleaning": {"price_aed": 190, "price_unit": "fixed"},
+        "deep_cleaning":    {"price_aed": 420, "price_unit": "fixed"},
+        "laundry":          {"price_aed": 7,   "price_unit": "per_unit"},
+        "sofa_carpet":      {"price_aed": 38,  "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@matic.lumora",
+      "name": "Matic Services",
+      "company": "Matic FZ-LLC", "phone": "+971 4 XXX 1003", "rating": 4.7, "completed_jobs": 198,
+      "services": {
+        "general_cleaning": {"price_aed": 175},
+        "deep_cleaning":    {"price_aed": 360},
+        "ac_cleaning":      {"price_aed": 145, "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@homemaids.lumora",
+      "name": "Home Maids",
+      "company": "Home Maids LLC", "phone": "+971 4 XXX 1004", "rating": 4.6, "completed_jobs": 432,
+      "services": {
+        "maid_service":     {"price_aed": 35, "price_unit": "per_hour"},
+        "general_cleaning": {"price_aed": 200},
+        "babysitting":      {"price_aed": 38, "price_unit": "per_hour"}
+      }
+    },
+    {
+      "email": "ops@mckleenz.lumora",
+      "name": "McKleenz",
+      "company": "McKleenz UAE", "phone": "+971 4 XXX 1005", "rating": 4.8, "completed_jobs": 287,
+      "services": {
+        "deep_cleaning":     {"price_aed": 430},
+        "ac_cleaning":       {"price_aed": 160, "price_unit": "per_unit"},
+        "marble_polish":     {"price_aed": 18,  "price_unit": "per_unit"},
+        "swimming_pool":     {"price_aed": 280},
+        "pest_control":      {"price_aed": 260}
+      }
+    },
+    {
+      "email": "ops@bio-on.lumora",
+      "name": "Bio-On Cleaning",
+      "company": "Bio-On Services", "phone": "+971 4 XXX 1006", "rating": 4.9, "completed_jobs": 156,
+      "services": {
+        "deep_cleaning":  {"price_aed": 450},
+        "disinfection":   {"price_aed": 280},
+        "post_construction": {"price_aed": 70, "price_unit": "per_hour"}
+      }
+    },
+    {
+      "email": "ops@healthyhome.lumora",
+      "name": "The Healthy Home",
+      "company": "Healthy Home FZ", "phone": "+971 4 XXX 1007", "rating": 4.9, "completed_jobs": 378,
+      "services": {
+        "deep_cleaning":   {"price_aed": 580, "price_unit": "fixed", "notes": "HEPA + UV sterilization"},
+        "ac_cleaning":     {"price_aed": 220, "price_unit": "per_unit", "notes": "Premium chemical wash"},
+        "sofa_carpet":     {"price_aed": 50,  "price_unit": "per_unit", "notes": "Hot water extraction"},
+        "disinfection":    {"price_aed": 320}
+      }
+    },
+    {
+      "email": "ops@newomniyat.lumora",
+      "name": "NewOmniyat Cleaning",
+      "company": "Omniyat Group", "phone": "+971 4 XXX 1008", "rating": 4.7, "completed_jobs": 201,
+      "services": {
+        "deep_cleaning":  {"price_aed": 390},
+        "villa_deep":     {"price_aed": 1200},
+        "marble_polish":  {"price_aed": 16, "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@allclean.lumora",
+      "name": "AllClean Dubai",
+      "company": "AllClean Services", "phone": "+971 4 XXX 1009", "rating": 4.6, "completed_jobs": 167,
+      "services": {
+        "deep_cleaning": {"price_aed": 350},
+        "villa_deep":    {"price_aed": 1100},
+        "move_in_out":   {"price_aed": 600}
+      }
+    },
+    {
+      "email": "ops@fixpert.lumora",
+      "name": "Fixpert Solutions",
+      "company": "Fixpert UAE", "phone": "+971 4 XXX 1010", "rating": 4.5, "completed_jobs": 142,
+      "services": {
+        "handyman":      {"price_aed": 110, "price_unit": "per_hour"},
+        "smart_home":    {"price_aed": 220, "price_unit": "fixed"},
+        "ac_cleaning":   {"price_aed": 150, "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@primo.lumora",
+      "name": "Primo Maintenance",
+      "company": "Primo Services LLC", "phone": "+971 4 XXX 1011", "rating": 4.7, "completed_jobs": 234,
+      "services": {
+        "ac_cleaning":     {"price_aed": 155, "price_unit": "per_unit"},
+        "handyman":        {"price_aed": 120, "price_unit": "per_hour"},
+        "post_construction": {"price_aed": 65, "price_unit": "per_hour"}
+      }
+    },
+    {
+      "email": "ops@procleanac.lumora",
+      "name": "Pro Clean AC",
+      "company": "Pro Clean Services", "phone": "+971 4 XXX 1012", "rating": 4.8, "completed_jobs": 312,
+      "services": {
+        "ac_cleaning": {"price_aed": 165, "price_unit": "per_unit", "notes": "Coil + drain pan + filter"}
+      }
+    },
+    {
+      "email": "ops@cleanshine.lumora",
+      "name": "Clean & Shine",
+      "company": "Clean Shine LLC", "phone": "+971 4 XXX 1013", "rating": 4.6, "completed_jobs": 189,
+      "services": {
+        "ac_cleaning":      {"price_aed": 140, "price_unit": "per_unit"},
+        "general_cleaning": {"price_aed": 175},
+        "window_cleaning":  {"price_aed": 145}
+      }
+    },
+    {
+      "email": "ops@enviroclean.lumora",
+      "name": "Enviroclean UAE",
+      "company": "Enviroclean ME", "phone": "+971 4 XXX 1014", "rating": 4.7, "completed_jobs": 154,
+      "services": {
+        "ac_cleaning":  {"price_aed": 170, "price_unit": "per_unit"},
+        "disinfection": {"price_aed": 250},
+        "pest_control": {"price_aed": 230}
+      }
+    },
+    {
+      "email": "ops@saniac.lumora",
+      "name": "Sani AC Service",
+      "company": "Sani Services", "phone": "+971 4 XXX 1015", "rating": 4.5, "completed_jobs": 98,
+      "services": {
+        "ac_cleaning": {"price_aed": 135, "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@ecoguardians.lumora",
+      "name": "Eco Guardians",
+      "company": "Eco Guardians UAE", "phone": "+971 4 XXX 1016", "rating": 4.7, "completed_jobs": 267,
+      "services": {
+        "pest_control":  {"price_aed": 220},
+        "disinfection":  {"price_aed": 240},
+        "deep_cleaning": {"price_aed": 380},
+        "gardening":     {"price_aed": 175},
+        "handyman":      {"price_aed": 115, "price_unit": "per_hour"}
+      }
+    },
+    {
+      "email": "ops@lulupest.lumora",
+      "name": "Lulu Pest Control",
+      "company": "Lulu Pest LLC", "phone": "+971 4 XXX 1017", "rating": 4.7, "completed_jobs": 312,
+      "services": {
+        "pest_control": {"price_aed": 200, "notes": "Municipality-certified"},
+        "sofa_carpet":  {"price_aed": 35,  "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@alrasa.lumora",
+      "name": "AlRasa Pest Control",
+      "company": "AlRasa LLC", "phone": "+971 4 XXX 1018", "rating": 4.6, "completed_jobs": 189,
+      "services": {
+        "pest_control": {"price_aed": 210}
+      }
+    },
+    {
+      "email": "ops@rentokil.lumora",
+      "name": "Rentokil Boecker",
+      "company": "Rentokil Boecker UAE", "phone": "+971 4 XXX 1019", "rating": 4.9, "completed_jobs": 524,
+      "services": {
+        "pest_control":  {"price_aed": 380, "notes": "Global pest brand, premium tier"},
+        "disinfection":  {"price_aed": 320}
+      }
+    },
+    {
+      "email": "ops@smilehandyy.lumora",
+      "name": "Smile Handyy",
+      "company": "Smile Handyy UAE", "phone": "+971 4 XXX 1020", "rating": 4.6, "completed_jobs": 198,
+      "services": {
+        "handyman":      {"price_aed": 105, "price_unit": "per_hour"},
+        "painting":      {"price_aed": 320},
+        "smart_home":    {"price_aed": 240}
+      }
+    },
+    {
+      "email": "ops@homegenie.lumora",
+      "name": "HomeGenie",
+      "company": "HomeGenie ME", "phone": "+971 4 XXX 1021", "rating": 4.5, "completed_jobs": 156,
+      "services": {
+        "general_cleaning": {"price_aed": 165},
+        "maid_service":     {"price_aed": 30, "price_unit": "per_hour"},
+        "babysitting":      {"price_aed": 35, "price_unit": "per_hour"},
+        "laundry":          {"price_aed": 6,  "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@servicemarket.lumora",
+      "name": "ServiceMarket Crew",
+      "company": "ServiceMarket UAE", "phone": "+971 4 XXX 1022", "rating": 4.6, "completed_jobs": 298,
+      "services": {
+        "deep_cleaning":  {"price_aed": 370},
+        "ac_cleaning":    {"price_aed": 150, "price_unit": "per_unit"},
+        "handyman":       {"price_aed": 115, "price_unit": "per_hour"},
+        "pest_control":   {"price_aed": 220}
+      }
+    },
+    {
+      "email": "ops@spotless.lumora",
+      "name": "Spotless Maids",
+      "company": "Spotless UAE", "phone": "+971 4 XXX 1023", "rating": 4.7, "completed_jobs": 178,
+      "services": {
+        "maid_service":     {"price_aed": 33, "price_unit": "per_hour"},
+        "general_cleaning": {"price_aed": 180},
+        "laundry":          {"price_aed": 7, "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@sparklingclean.lumora",
+      "name": "Sparkling Clean Co",
+      "company": "Sparkling Clean LLC", "phone": "+971 4 XXX 1024", "rating": 4.6, "completed_jobs": 145,
+      "services": {
+        "deep_cleaning":   {"price_aed": 360},
+        "kitchen_deep":    {"price_aed": 290},
+        "window_cleaning": {"price_aed": 140}
+      }
+    },
+    {
+      "email": "ops@royalvilla.lumora",
+      "name": "Royal Villa Cleaners",
+      "company": "Royal Villa Services", "phone": "+971 4 XXX 1025", "rating": 4.8, "completed_jobs": 87,
+      "services": {
+        "villa_deep":     {"price_aed": 1450, "notes": "5-person crew + outdoor"},
+        "swimming_pool":  {"price_aed": 320},
+        "gardening":      {"price_aed": 200},
+        "marble_polish":  {"price_aed": 17, "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@quickcar.lumora",
+      "name": "QuickCar Detail",
+      "company": "QuickCar LLC", "phone": "+971 4 XXX 1026", "rating": 4.5, "completed_jobs": 234,
+      "services": {
+        "car_wash": {"price_aed": 75, "notes": "Mobile, 4L water"}
+      }
+    },
+    {
+      "email": "ops@autoshine.lumora",
+      "name": "AutoShine Dubai",
+      "company": "AutoShine LLC", "phone": "+971 4 XXX 1027", "rating": 4.6, "completed_jobs": 312,
+      "services": {
+        "car_wash": {"price_aed": 95, "notes": "Wax + interior"}
+      }
+    },
+    {
+      "email": "ops@palmpool.lumora",
+      "name": "Palm Pool Care",
+      "company": "Palm Pool Services", "phone": "+971 4 XXX 1028", "rating": 4.7, "completed_jobs": 142,
+      "services": {
+        "swimming_pool": {"price_aed": 240},
+        "gardening":     {"price_aed": 165}
+      }
+    },
+    {
+      "email": "ops@aquatech.lumora",
+      "name": "AquaTech Pool",
+      "company": "AquaTech UAE", "phone": "+971 4 XXX 1029", "rating": 4.6, "completed_jobs": 98,
+      "services": {
+        "swimming_pool": {"price_aed": 260, "notes": "Chemistry expert"}
+      }
+    },
+    {
+      "email": "ops@marblemasters.lumora",
+      "name": "Marble Masters",
+      "company": "Marble Masters LLC", "phone": "+971 4 XXX 1030", "rating": 4.8, "completed_jobs": 76,
+      "services": {
+        "marble_polish": {"price_aed": 14, "price_unit": "per_unit"},
+        "post_construction": {"price_aed": 60, "price_unit": "per_hour"}
+      }
+    },
+    {
+      "email": "ops@curtaincare.lumora",
+      "name": "Curtain Care UAE",
+      "company": "Curtain Care LLC", "phone": "+971 4 XXX 1031", "rating": 4.5, "completed_jobs": 89,
+      "services": {
+        "curtain_cleaning": {"price_aed": 38, "price_unit": "per_unit"},
+        "sofa_carpet":      {"price_aed": 32, "price_unit": "per_unit"}
+      }
+    },
+    {
+      "email": "ops@laundromax.lumora",
+      "name": "LaundroMax",
+      "company": "LaundroMax LLC", "phone": "+971 4 XXX 1032", "rating": 4.6, "completed_jobs": 412,
+      "services": {
+        "laundry": {"price_aed": 6, "price_unit": "per_unit", "notes": "Express 4hr available"}
+      }
+    },
+    {
+      "email": "ops@nannyme.lumora",
+      "name": "Nanny ME",
+      "company": "Nanny ME LLC", "phone": "+971 4 XXX 1033", "rating": 4.8, "completed_jobs": 145,
+      "services": {
+        "babysitting": {"price_aed": 40, "price_unit": "per_hour", "notes": "DHA-licensed"}
+      }
+    },
+    {
+      "email": "ops@brightnanny.lumora",
+      "name": "Bright Nanny Co",
+      "company": "Bright Nanny", "phone": "+971 4 XXX 1034", "rating": 4.7, "completed_jobs": 87,
+      "services": {
+        "babysitting":  {"price_aed": 45, "price_unit": "per_hour"},
+        "maid_service": {"price_aed": 35, "price_unit": "per_hour"}
+      }
+    },
+    {
+      "email": "ops@greenleaf.lumora",
+      "name": "GreenLeaf Gardens",
+      "company": "GreenLeaf LLC", "phone": "+971 4 XXX 1035", "rating": 4.6, "completed_jobs": 124,
+      "services": {
+        "gardening":     {"price_aed": 170},
+        "swimming_pool": {"price_aed": 250}
+      }
+    },
+    {
+      "email": "ops@desertbloom.lumora",
+      "name": "Desert Bloom Landscape",
+      "company": "Desert Bloom UAE", "phone": "+971 4 XXX 1036", "rating": 4.7, "completed_jobs": 95,
+      "services": {
+        "gardening": {"price_aed": 195, "notes": "Specializes in arid plants"}
+      }
+    },
+    {
+      "email": "ops@fixright.lumora",
+      "name": "FixRight Handyman",
+      "company": "FixRight LLC", "phone": "+971 4 XXX 1037", "rating": 4.7, "completed_jobs": 234,
+      "services": {
+        "handyman": {"price_aed": 100, "price_unit": "per_hour"},
+        "painting": {"price_aed": 290}
+      }
+    },
+    {
+      "email": "ops@plumbpro.lumora",
+      "name": "PlumbPro UAE",
+      "company": "PlumbPro Services", "phone": "+971 4 XXX 1038", "rating": 4.6, "completed_jobs": 178,
+      "services": {
+        "handyman": {"price_aed": 130, "price_unit": "per_hour", "notes": "Plumbing specialist"}
+      }
+    },
+    {
+      "email": "ops@brushpaint.lumora",
+      "name": "Brush & Paint",
+      "company": "Brush & Paint LLC", "phone": "+971 4 XXX 1039", "rating": 4.8, "completed_jobs": 156,
+      "services": {
+        "painting":     {"price_aed": 280, "notes": "Jotun preferred partner"},
+        "wall_painting": {"price_aed": 280}
+      }
+    },
+    {
+      "email": "ops@smartden.lumora",
+      "name": "SmartDen IoT",
+      "company": "SmartDen FZ-LLC", "phone": "+971 4 XXX 1040", "rating": 4.7, "completed_jobs": 67,
+      "services": {
+        "smart_home": {"price_aed": 250, "notes": "Apple Home + Alexa specialist"},
+        "handyman":   {"price_aed": 140, "price_unit": "per_hour"}
+      }
+    },
+    {
+      "email": "ops@elitemovers.lumora",
+      "name": "Elite Movers Cleaners",
+      "company": "Elite Movers UAE", "phone": "+971 4 XXX 1041", "rating": 4.7, "completed_jobs": 245,
+      "services": {
+        "move_in_out": {"price_aed": 580},
+        "post_construction": {"price_aed": 65, "price_unit": "per_hour"}
+      }
+    },
+    {
+      "email": "ops@disinfect247.lumora",
+      "name": "Disinfect 24/7",
+      "company": "Disinfect 247 LLC", "phone": "+971 4 XXX 1042", "rating": 4.8, "completed_jobs": 134,
+      "services": {
+        "disinfection": {"price_aed": 245, "notes": "MOH-approved, 30-min service"}
+      }
+    },
+    {
+      "email": "ops@gleamwindows.lumora",
+      "name": "Gleam Windows",
+      "company": "Gleam Windows LLC", "phone": "+971 4 XXX 1043", "rating": 4.6, "completed_jobs": 112,
+      "services": {
+        "window_cleaning": {"price_aed": 130, "notes": "High-rise rope access available"}
+      }
+    },
+    {
+      "email": "ops@chefsdream.lumora",
+      "name": "Chef's Dream Kitchen Co",
+      "company": "Chef's Dream LLC", "phone": "+971 4 XXX 1044", "rating": 4.8, "completed_jobs": 89,
+      "services": {
+        "kitchen_deep":  {"price_aed": 320, "notes": "Inside oven + hood specialist"},
+        "deep_cleaning": {"price_aed": 410}
+      }
+    },
+    {
+      "email": "ops@silkysofa.lumora",
+      "name": "Silky Sofa & Carpet",
+      "company": "Silky Services UAE", "phone": "+971 4 XXX 1045", "rating": 4.7, "completed_jobs": 178,
+      "services": {
+        "sofa_carpet":      {"price_aed": 33, "price_unit": "per_unit"},
+        "curtain_cleaning": {"price_aed": 35, "price_unit": "per_unit"}
+      }
+    }
+  ]
+}

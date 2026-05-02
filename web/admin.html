@@ -495,28 +495,121 @@ function toast(msg) {
 // =============== Vendors tab ===============
 async function loadVendors() {
   const r = await adm("/api/admin/vendors");
+  // Also fetch all services to compute price ranges
+  const ssum = await adm("/api/admin/services-summary");
+  const svcMap = Object.fromEntries(ssum.services.map(s => [s.id, s]));
+  const vendors = r.vendors;
+
+  const totalSvcOfferings = vendors.reduce((a,v) => a + (v.services||[]).length, 0);
+  const approved = vendors.filter(v => v.is_approved).length;
+
   document.getElementById("vendor-table").innerHTML = `
-    <table class="list">
-      <thead><tr><th>Vendor</th><th>Email / Phone</th><th>Services</th><th>★ Rating</th><th>Jobs</th><th>Status</th><th></th></tr></thead>
-      <tbody>${r.vendors.map(v => `
-        <tr>
-          <td><div style="font-weight:600">${escapeHtml(v.name)}</div>
-              ${v.company?`<div style="font-size:11px;color:var(--muted)">${escapeHtml(v.company)}</div>`:''}</td>
-          <td><div style="font-size:13px">${escapeHtml(v.email)}</div>
-              ${v.phone?`<div style="font-size:11px;color:var(--muted)">${escapeHtml(v.phone)}</div>`:''}</td>
-          <td><div style="font-size:11px;color:var(--muted)">${(v.services||[]).slice(0,4).join(', ')||'—'}${v.services && v.services.length>4?` +${v.services.length-4}`:''}</div></td>
-          <td>${(v.rating||5).toFixed(1)}</td>
-          <td>${v.completed_jobs||0}</td>
+    <div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="kpi" style="padding:14px"><div class="k">Vendors</div><div class="v" style="font-size:22px">${vendors.length}</div></div>
+      <div class="kpi" style="padding:14px"><div class="k">Approved</div><div class="v" style="font-size:22px">${approved}</div></div>
+      <div class="kpi" style="padding:14px"><div class="k">Service offerings</div><div class="v" style="font-size:22px">${totalSvcOfferings}</div></div>
+      <div style="margin-inline-start:auto;display:flex;gap:6px;align-items:center">
+        <input id="vsearch" placeholder="🔎 Search vendor / email / service…"
+          style="padding:8px 14px;border:1px solid var(--border);border-radius:999px;font-size:13px;width:260px">
+        <button class="btn btn-ghost" onclick="seedMarket()" title="Bulk-load 45 UAE market vendors">📥 Seed market vendors</button>
+      </div>
+    </div>
+    <table class="list" id="vtable">
+      <thead><tr>
+        <th>Vendor</th><th>Services offered</th><th>★ Rating</th><th>Jobs</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>${vendors.map(v => `
+        <tr style="cursor:pointer" onclick="openVendor(${v.id})">
+          <td>
+            <div style="font-weight:600">${escapeHtml(v.name)}</div>
+            <div style="font-size:11px;color:var(--muted)">${escapeHtml(v.email)}</div>
+            ${v.company?`<div style="font-size:10px;color:var(--muted)">${escapeHtml(v.company)}</div>`:''}
+          </td>
+          <td><div style="display:flex;flex-wrap:wrap;gap:4px;max-width:380px">
+            ${(v.services||[]).slice(0,8).map(sid => `<span style="background:color-mix(in srgb,var(--primary) 8%,var(--surface));color:var(--primary-dark);padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid color-mix(in srgb,var(--primary) 22%,transparent)">${escapeHtml((svcMap[sid]||{}).name || sid)}</span>`).join("")}
+            ${v.services && v.services.length>8?`<span style="font-size:11px;color:var(--muted)">+${v.services.length-8}</span>`:''}
+          </div></td>
+          <td style="text-align:center">${(v.rating||5).toFixed(1)}</td>
+          <td style="text-align:center">${v.completed_jobs||0}</td>
           <td>
             ${v.is_approved ? '<span class="badge confirmed">approved</span>' : '<span class="badge pending">pending</span>'}
             ${v.is_active ? '' : '<br><span class="badge cancelled">disabled</span>'}
           </td>
-          <td style="text-align:end;font-size:12px">
-            ${v.is_approved ? '' : `<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'approve')">Approve</button>`}
+          <td style="text-align:end" onclick="event.stopPropagation()">
+            ${!v.is_approved ? `<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'approve')">Approve</button>` : ''}
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'${v.is_active?'disable':'enable'}')">${v.is_active?'Disable':'Enable'}</button>
           </td>
-        </tr>`).join("")}</tbody></table>`;
+        </tr>`).join("")}</tbody>
+    </table>`;
+  document.getElementById("vsearch").oninput = filterVendorTable;
+  window._allVendors = vendors;
+  window._svcMap = svcMap;
 }
+function filterVendorTable() {
+  const q = (document.getElementById("vsearch").value||"").toLowerCase();
+  const rows = document.querySelectorAll("#vtable tbody tr");
+  rows.forEach(tr => {
+    const txt = tr.textContent.toLowerCase();
+    tr.style.display = (!q || txt.includes(q)) ? "" : "none";
+  });
+}
+
+async function seedMarket() {
+  if (!confirm("Bulk-import 45 UAE market vendors with their service offerings + competitive prices? Re-runs are safe (updates existing).")) return;
+  toast("Seeding…");
+  try {
+    const r = await adm("/api/admin/seed/vendors", { method:"POST" });
+    toast(`✓ Seeded — ${r.created} new, ${r.updated} updated, ${r.service_offerings} offerings`);
+    loadVendors();
+  } catch(e) { alert("Error: "+e.message); }
+}
+
+window.openVendor = async function(vid) {
+  const all = window._allVendors || [];
+  const v = all.find(x => x.id === vid);
+  if (!v) return;
+  // Fetch detail across all services
+  const ssum = await adm("/api/admin/services-summary");
+  const offerings = [];
+  for (const sid of (v.services || [])) {
+    const d = await adm("/api/admin/service/" + sid).catch(() => null);
+    if (!d) continue;
+    const my = d.vendors.find(x => x.vendor_id === vid);
+    if (my) offerings.push({...my, service_id: sid, service_name: (window._svcMap[sid]||{}).name || sid, service_starting: (ssum.services.find(x=>x.id===sid)||{}).starting_price});
+  }
+  document.getElementById("modal-bg").style.display = "flex";
+  document.getElementById("modal").innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+      <div>
+        <h3 style="margin:0">${escapeHtml(v.name)}</h3>
+        <div style="font-size:12px;color:var(--muted)">${escapeHtml(v.email)}${v.company?' • '+escapeHtml(v.company):''}${v.phone?' • '+escapeHtml(v.phone):''}</div>
+      </div>
+      <button class="btn btn-ghost" onclick="closeModal()" style="font-size:20px;padding:0 10px">×</button>
+    </div>
+    <div style="display:flex;gap:14px;margin:12px 0">
+      <div><div style="font-size:11px;color:var(--muted)">Rating</div><div style="font-weight:700">★ ${(v.rating||5).toFixed(1)}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Completed</div><div style="font-weight:700">${v.completed_jobs||0} jobs</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Status</div><div>${v.is_approved?'<span class="badge confirmed">approved</span>':'<span class="badge pending">pending</span>'}${v.is_active?'':'<span class="badge cancelled">disabled</span>'}</div></div>
+    </div>
+    <h4 style="margin:18px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Services + per-service price</h4>
+    ${offerings.length === 0 ? '<p style="color:var(--muted);font-size:13px">No services configured yet.</p>' :
+      `<table class="list" style="font-size:13px">
+        <thead><tr><th>Service</th><th>Price</th><th>Platform avg</th><th>Δ</th><th></th></tr></thead>
+        <tbody>${offerings.map(o => {
+          const platform = o.service_starting || 0;
+          const delta = (o.price_aed && platform) ? ((o.price_aed - platform) / platform * 100).toFixed(0) : null;
+          const dColor = delta == null ? '#94A3B8' : (delta > 0 ? '#DC2626' : '#059669');
+          return `<tr>
+            <td>${escapeHtml(o.service_name)}</td>
+            <td><b>${o.price_aed||'—'}</b> ${o.price_unit==='per_hour'?'/hr':o.price_unit==='per_unit'?'/unit':o.price_unit==='per_bedroom'?'/BR':''}</td>
+            <td style="color:var(--muted)">${platform||'—'}</td>
+            <td style="color:${dColor}">${delta!=null?(delta>0?'+':'')+delta+'%':'—'}</td>
+            <td><a class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="closeModal();show('pricing');setTimeout(()=>toggleSvc('${o.service_id}'),300);return false">Edit →</a></td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table>`}
+  `;
+};
 window.setVendor = async function(vid, action) {
   const body = {};
   if (action === 'approve') body.is_approved = true;

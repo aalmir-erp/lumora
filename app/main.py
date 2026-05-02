@@ -340,3 +340,45 @@ def show_admin_token_in_dev(request: Request):
     if request.client.host not in ("127.0.0.1", "localhost", "::1"):
         raise HTTPException(403, "local-only")
     return {"admin_token": ADMIN_TOKEN}
+
+
+@app.on_event("startup")
+def _auto_seed_market_vendors_if_empty():
+    """One-shot: if vendors table is empty, auto-load market seed so the admin
+    has a populated catalog right after the first deploy."""
+    try:
+        from . import db
+        from .config import get_settings
+        from . import auth_users
+        import datetime as _dt, json
+        with db.connect() as c:
+            n = c.execute("SELECT COUNT(*) AS n FROM vendors").fetchone()["n"]
+        if n > 0:
+            return
+        seed_path = get_settings().DATA_DIR / "vendors_seed.json"
+        if not seed_path.exists():
+            return
+        seed = json.loads(seed_path.read_text())
+        valid_sids = {svc["id"] for svc in __import__("app.kb", fromlist=["services"]).services()["services"]}
+        pwhash = auth_users.hash_password("lumora-vendor-default")
+        now = _dt.datetime.utcnow().isoformat() + "Z"
+        with db.connect() as c:
+            for v in seed.get("vendors", []):
+                cur = c.execute(
+                    "INSERT OR IGNORE INTO vendors(email, password_hash, name, phone, company, "
+                    "rating, completed_jobs, is_approved, is_active, created_at) "
+                    "VALUES(?,?,?,?,?,?,?,1,1,?)",
+                    (v["email"].lower(), pwhash, v.get("name"), v.get("phone"), v.get("company"),
+                     v.get("rating", 4.7), v.get("completed_jobs", 0), now))
+                vid = cur.lastrowid or c.execute("SELECT id FROM vendors WHERE email=?", (v["email"].lower(),)).fetchone()["id"]
+                for sid, info in (v.get("services") or {}).items():
+                    if sid not in valid_sids:
+                        continue
+                    c.execute(
+                        "INSERT OR IGNORE INTO vendor_services(vendor_id, service_id, area, price_aed, "
+                        "price_unit, sla_hours, active, notes) VALUES(?,?,?,?,?,?,?,?)",
+                        (vid, sid, "*", info.get("price_aed"), info.get("price_unit","fixed"),
+                         info.get("sla_hours", 24), 1, info.get("notes")))
+        print(f"[startup] auto-seeded {len(seed.get('vendors', []))} market vendors")
+    except Exception as e:
+        print(f"[startup] auto-seed skipped: {e}")

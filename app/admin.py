@@ -524,3 +524,65 @@ def export_bookings_csv():
                     "estimated_total","currency","created_at")])
     return Response(content=buf.getvalue(), media_type="text/csv",
                     headers={"Content-Disposition": "attachment; filename=lumora-bookings.csv"})
+
+
+# ---------- Seed market vendors (idempotent bulk-load) ----------
+@router.post("/seed/vendors")
+def seed_market_vendors():
+    """Load app/data/vendors_seed.json and upsert vendors + per-service pricing.
+    Re-running this endpoint updates prices but never duplicates."""
+    import datetime as _dt, json
+    from .config import get_settings
+    from . import auth_users
+    settings = get_settings()
+    seed_path = settings.DATA_DIR / "vendors_seed.json"
+    if not seed_path.exists():
+        raise HTTPException(404, "vendors_seed.json not found")
+    seed = json.loads(seed_path.read_text())
+    vendors = seed.get("vendors", [])
+    valid_sids = {s["id"] for s in kb.services()["services"]}
+    created = updated = svc_links = 0
+    default_pw = "lumora-vendor-default"
+    pwhash = auth_users.hash_password(default_pw)
+    now = _dt.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        for v in vendors:
+            email = v["email"].lower().strip()
+            existing = c.execute("SELECT id FROM vendors WHERE email=?", (email,)).fetchone()
+            if existing:
+                vid = existing["id"]
+                c.execute(
+                    "UPDATE vendors SET name=?, phone=?, company=?, rating=?, "
+                    "completed_jobs=?, is_approved=1, is_active=1 WHERE id=?",
+                    (v.get("name"), v.get("phone"), v.get("company"),
+                     v.get("rating", 4.7), v.get("completed_jobs", 0), vid))
+                updated += 1
+            else:
+                cur = c.execute(
+                    "INSERT INTO vendors(email, password_hash, name, phone, company, "
+                    "rating, completed_jobs, is_approved, is_active, created_at) "
+                    "VALUES(?,?,?,?,?,?,?,1,1,?)",
+                    (email, pwhash, v.get("name"), v.get("phone"), v.get("company"),
+                     v.get("rating", 4.7), v.get("completed_jobs", 0), now))
+                vid = cur.lastrowid
+                created += 1
+            for sid, info in (v.get("services") or {}).items():
+                if sid not in valid_sids:
+                    continue
+                c.execute(
+                    "INSERT INTO vendor_services(vendor_id, service_id, area, price_aed, "
+                    "price_unit, sla_hours, active, notes) VALUES(?,?,?,?,?,?,?,?) "
+                    "ON CONFLICT(vendor_id, service_id, area) DO UPDATE SET "
+                    "price_aed=excluded.price_aed, price_unit=excluded.price_unit, "
+                    "sla_hours=excluded.sla_hours, active=excluded.active, notes=excluded.notes",
+                    (vid, sid, "*",
+                     info.get("price_aed"),
+                     info.get("price_unit", "fixed"),
+                     info.get("sla_hours", 24),
+                     1, info.get("notes")))
+                svc_links += 1
+    db.log_event("seed", "vendors", "executed", actor="admin",
+                 details={"created": created, "updated": updated, "svc_links": svc_links})
+    return {"ok": True, "created": created, "updated": updated,
+            "service_offerings": svc_links,
+            "default_password_hint": "Vendors can sign in with the email above and password 'lumora-vendor-default' — change on first login."}
