@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quote • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36"></a>
+  <div class="nav-cta"><a class="btn btn-ghost" href="/account.html">My account</a></div>
+</div></nav>
+
+<section><div class="container" style="max-width:720px">
+  <div id="quote-shell" class="form">
+    <p>Loading…</p>
+  </div>
+</div></section>
+
+<script src="/app.js"></script>
+<script>
+const id = (new URLSearchParams(location.search)).get("id");
+const shell = document.getElementById("quote-shell");
+
+async function load() {
+  if (!id) { shell.innerHTML = "Missing id."; return; }
+  try {
+    const q = await api("/api/portal/quote/" + id);
+    shell.innerHTML = render(q);
+    if (q.status !== "signed") wireSignaturePad(q);
+  } catch (e) { shell.innerHTML = "Error: " + e.message; }
+}
+
+function render(q) {
+  const lines = (q.breakdown || []).map(b => `
+    <tr><td>${b.label}</td><td style="text-align:end">${b.amount} ${q.currency}</td></tr>`).join("");
+  const signed = q.status === "signed";
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <h2 style="margin:0">Quote ${q.id}</h2>
+      <span class="badge ${signed?'signed':'pending'}">${signed?'Signed':'Pending signature'}</span>
+    </div>
+    <p style="color:var(--muted);font-size:13px">Service: ${q.service_id.replace(/_/g,' ')} • Valid until ${q.valid_until||'?'}</p>
+    <table class="list" style="margin:16px 0"><tbody>${lines}</tbody></table>
+    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:18px">
+      <span>Total (incl. 5% VAT)</span><span>${q.total} ${q.currency}</span>
+    </div>
+    ${signed ? `<p style="margin-top:24px;color:var(--muted)">Signed at ${new Date(q.signed_at).toLocaleString()}</p>
+        ${q.signature_data_url ? `<img src="${q.signature_data_url}" style="border:1px solid var(--border);border-radius:8px;padding:8px;max-width:300px">` : ''}`
+      : `
+      <h3 style="margin-top:32px">Sign to accept</h3>
+      <p style="color:var(--muted)">Use your finger or mouse. Signing creates an invoice + payment link.</p>
+      <canvas id="sigpad" class="sigpad" width="600" height="200"></canvas>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="button" class="btn btn-ghost" id="clear-sig">Clear</button>
+        <button type="button" class="btn btn-primary" id="sign-btn">Sign & accept</button>
+      </div>
+      <div id="sig-result" style="margin-top:12px"></div>
+    `}`;
+}
+
+function wireSignaturePad(q) {
+  const cv = document.getElementById("sigpad");
+  const ctx = cv.getContext("2d");
+  let drawing = false; let last = null;
+  ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.strokeStyle = "#0F172A";
+  function pos(ev) {
+    const r = cv.getBoundingClientRect();
+    const t = ev.touches ? ev.touches[0] : ev;
+    return { x: (t.clientX - r.left) * (cv.width / r.width),
+             y: (t.clientY - r.top)  * (cv.height / r.height) };
+  }
+  function start(e) { drawing = true; last = pos(e); e.preventDefault(); }
+  function move(e)  { if (!drawing) return; const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    last = p; e.preventDefault(); }
+  function end()    { drawing = false; }
+  ["mousedown","touchstart"].forEach(t=>cv.addEventListener(t, start));
+  ["mousemove","touchmove"].forEach(t=>cv.addEventListener(t, move));
+  ["mouseup","mouseleave","touchend","touchcancel"].forEach(t=>cv.addEventListener(t, end));
+
+  document.getElementById("clear-sig").onclick = () => ctx.clearRect(0,0,cv.width,cv.height);
+  document.getElementById("sign-btn").onclick = async () => {
+    const dataUrl = cv.toDataURL("image/png");
+    const out = document.getElementById("sig-result");
+    out.innerHTML = "Signing…";
+    try {
+      const r = await api("/api/portal/quote/sign", { method:"POST",
+        body: { quote_id: q.id, signature_data_url: dataUrl } });
+      out.innerHTML = `<div class="form" style="background:#ECFDF5;border-color:#A7F3D0">
+        <p>✅ Signed. ${r.invoice ? `Invoice <b>${r.invoice.id}</b> created — <a href="${r.invoice.payment_url}">Pay now</a>` : ''}</p>
+      </div>`;
+      setTimeout(()=>location.reload(), 1500);
+    } catch (e) { out.innerHTML = "Error: " + e.message; }
+  };
+}
+load();
+</script>
+</body></html>

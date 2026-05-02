@@ -1,0 +1,102 @@
+{
+  "currency": "AED",
+  "vat_pct": 5,
+  "rules": {
+    "deep_cleaning": {
+      "base_per_bedroom": 200,
+      "min_charge": 350,
+      "team_size": 2,
+      "notes": "Studios = 1 BR rate. Maids' room = 0.5 BR."
+    },
+    "general_cleaning": {
+      "base_per_bedroom": 120,
+      "min_charge": 200,
+      "team_size": 1
+    },
+    "maid_service": {
+      "hourly_rate": 35,
+      "min_hours": 2,
+      "supplies_addon": 15
+    },
+    "move_in_out": {
+      "base_per_bedroom": 280,
+      "min_charge": 600,
+      "team_size": 2
+    },
+    "office_cleaning": {
+      "hourly_rate": 40,
+      "min_hours": 3,
+      "weekly_discount_pct": 15,
+      "daily_contract_discount_pct": 25
+    },
+    "post_construction": {
+      "hourly_rate": 60,
+      "min_hours": 4,
+      "team_size": 3
+    },
+    "sofa_carpet": {
+      "per_seat": 35,
+      "per_sqm_carpet": 12,
+      "per_mattress_single": 70,
+      "per_mattress_king": 120
+    },
+    "ac_cleaning": {
+      "per_split_unit": 150,
+      "per_central_outlet": 80,
+      "min_units": 2
+    },
+    "disinfection": {
+      "base_flat": 250,
+      "per_extra_room": 60,
+      "includes_certificate": true
+    },
+    "window_cleaning": {
+      "base_flat": 150,
+      "per_extra_window": 25
+    },
+    "pest_control": {
+      "base_flat": 220,
+      "warranty_days": 30
+    },
+    "laundry": {
+      "per_piece": 7,
+      "per_kg": 18,
+      "min_charge": 60
+    },
+    "babysitting": {
+      "hourly_rate": 40,
+      "min_hours": 3,
+      "overnight_flat": 350
+    },
+    "gardening": {
+      "base_flat": 180,
+      "per_extra_hour": 80
+    },
+    "handyman": {
+      "hourly_rate": 120,
+      "callout_flat": 80,
+      "min_hours": 1
+    },
+    "kitchen_deep": {
+      "base_flat": 300,
+      "with_appliances": 480
+    },
+    "villa_deep": {
+      "base_per_bedroom": 280,
+      "min_charge": 1100,
+      "team_size": 4
+    }
+  },
+  "surcharges": {
+    "abu_dhabi": 50,
+    "weekend_express": 25,
+    "after_hours": 50,
+    "same_day": 30
+  },
+  "discounts": {
+    "first_time": {"code": "WELCOME15", "pct": 15, "max_aed": 75},
+    "weekly_recurring": {"pct": 20},
+    "biweekly_recurring": {"pct": 10},
+    "annual_contract": {"pct": 25}
+  }
+}

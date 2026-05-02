@@ -1,0 +1,184 @@
+{
+  "services": [
+    {
+      "id": "deep_cleaning",
+      "name": "Deep Cleaning",
+      "category": "Residential",
+      "icon": "sparkles",
+      "description": "Top-to-bottom deep clean: kitchen degrease, bathroom descale, dust extraction, floor scrub, balcony, interior windows.",
+      "duration_per_bedroom_hours": 1.5,
+      "min_team": 2,
+      "starting_price": 350,
+      "includes": ["Kitchen deep clean", "Bathroom descaling + disinfection", "Dust + wipe all surfaces", "Vacuum + mop floors", "Interior windows + glass", "Balcony sweep + wipe-down"],
+      "excludes": ["Pest control", "Carpet shampoo", "Exterior windows above ground floor"]
+    },
+    {
+      "id": "general_cleaning",
+      "name": "General Cleaning",
+      "category": "Residential",
+      "icon": "broom",
+      "description": "Standard maintenance clean — dusting, mopping, bathrooms, kitchen wipe-down. Best for already-clean homes.",
+      "duration_per_bedroom_hours": 1.0,
+      "min_team": 1,
+      "starting_price": 200,
+      "includes": ["Dust + wipe surfaces", "Vacuum + mop floors", "Bathroom clean", "Kitchen wipe-down", "Trash out"],
+      "excludes": ["Inside oven/fridge", "Window exteriors"]
+    },
+    {
+      "id": "maid_service",
+      "name": "Hourly Maid",
+      "category": "Residential",
+      "icon": "user",
+      "description": "Trained maid for housekeeping. Hourly basis, minimum 2 hours.",
+      "min_hours": 2,
+      "starting_price": 35,
+      "includes": ["General cleaning", "Laundry assistance", "Ironing", "Light cooking on request"],
+      "excludes": ["Childcare", "Elderly care"]
+    },
+    {
+      "id": "move_in_out",
+      "name": "Move-In / Move-Out",
+      "category": "Residential",
+      "icon": "truck",
+      "description": "Vacant property handover clean. Inside cabinets, oven, fridge included.",
+      "duration_per_bedroom_hours": 2.0,
+      "min_team": 2,
+      "starting_price": 600,
+      "includes": ["Everything in deep clean", "Inside cabinets", "Inside oven + fridge", "Wall spot-clean"],
+      "excludes": ["Painting", "Repairs"]
+    },
+    {
+      "id": "office_cleaning",
+      "name": "Office Cleaning",
+      "category": "Commercial",
+      "icon": "briefcase",
+      "description": "Daily, weekly, or one-off office cleaning. Workstations, pantry, restrooms, reception.",
+      "min_hours": 3,
+      "starting_price": 120,
+      "includes": ["Desks + surfaces", "Floors", "Pantry", "Restrooms", "Reception/lobby"],
+      "excludes": ["IT equipment internals"]
+    },
+    {
+      "id": "post_construction",
+      "name": "Post-Construction",
+      "category": "Specialty",
+      "icon": "hardhat",
+      "description": "Heavy-debris cleanup after fit-out. Cement haze removal, paint splatter, HEPA dust extraction.",
+      "min_hours": 4,
+      "starting_price": 240,
+      "includes": ["Debris removal", "Cement haze", "Paint splatter on glass", "HEPA dust extraction"],
+      "excludes": ["Heavy waste disposal (separate quote)"]
+    },
+    {
+      "id": "sofa_carpet",
+      "name": "Sofa & Carpet Shampoo",
+      "category": "Specialty",
+      "icon": "sofa",
+      "description": "Deep extraction shampoo for sofas, carpets, mattresses.",
+      "starting_price": 35,
+      "includes": ["Pre-treatment", "Hot water extraction", "Deodorizing"],
+      "excludes": ["Stain guarantee on set-in stains"]
+    },
+    {
+      "id": "ac_cleaning",
+      "name": "AC Duct & Coil Cleaning",
+      "category": "Maintenance",
+      "icon": "wind",
+      "description": "Split AC and central duct cleaning. Coil wash, drain pan flush, filter clean.",
+      "starting_price": 150,
+      "includes": ["Coil wash", "Drain pan flush", "Filter clean", "Vent dust extraction"],
+      "excludes": ["Gas refill", "Compressor repair"]
+    },
+    {
+      "id": "disinfection",
+      "name": "Disinfection & Sanitization",
+      "category": "Specialty",
+      "icon": "shield",
+      "description": "MOH-approved disinfection. ULV fogging + electrostatic spray. Certificate provided.",
+      "starting_price": 250,
+      "includes": ["ULV fogging", "Electrostatic spray", "High-touch surface wipe", "Certificate"],
+      "excludes": []
+    },
+    {
+      "id": "window_cleaning",
+      "name": "Window Cleaning",
+      "category": "Specialty",
+      "icon": "window",
+      "description": "Interior + accessible exterior windows. Glass, frames, sills.",
+      "starting_price": 150,
+      "includes": ["Glass clean", "Frame wipe", "Sill clean", "Streak-free finish"],
+      "excludes": ["High-rise rope-access windows (separate quote)"]
+    },
+    {
+      "id": "pest_control",
+      "name": "Pest Control",
+      "category": "Maintenance",
+      "icon": "bug",
+      "description": "General pest treatment for cockroaches, ants, bedbugs, rodents. Municipality-approved chemicals.",
+      "starting_price": 200,
+      "includes": ["Inspection", "Treatment", "30-day warranty", "Eco-friendly options"],
+      "excludes": ["Termite (separate package)"]
+    },
+    {
+      "id": "laundry",
+      "name": "Laundry & Ironing",
+      "category": "Residential",
+      "icon": "tshirt",
+      "description": "Pickup, wash, iron, deliver. Per-piece or per-kg.",
+      "starting_price": 5,
+      "includes": ["Wash", "Iron", "Fold", "Pickup + delivery within Dubai"],
+      "excludes": ["Dry-cleaning of leather/silk"]
+    },
+    {
+      "id": "babysitting",
+      "name": "Babysitting / Nanny",
+      "category": "Care",
+      "icon": "baby",
+      "description": "Trained, background-checked nannies. Hourly or by-the-day.",
+      "starting_price": 40,
+      "includes": ["Background-checked staff", "First-aid trained", "Light cooking for child"],
+      "excludes": ["Overnight (separate rate)"]
+    },
+    {
+      "id": "gardening",
+      "name": "Gardening & Landscaping",
+      "category": "Outdoor",
+      "icon": "leaf",
+      "description": "Lawn mowing, hedge trimming, plant care, irrigation check.",
+      "starting_price": 150,
+      "includes": ["Mowing", "Trimming", "Weeding", "Irrigation inspection"],
+      "excludes": ["New planting (extra)"]
+    },
+    {
+      "id": "handyman",
+      "name": "Handyman",
+      "category": "Maintenance",
+      "icon": "wrench",
+      "description": "Plumbing, electrical, carpentry, painting touch-ups. Hourly + parts.",
+      "starting_price": 120,
+      "includes": ["Diagnosis", "Repair", "Hourly rate"],
+      "excludes": ["Major rewiring or repiping (separate quote)"]
+    },
+    {
+      "id": "kitchen_deep",
+      "name": "Kitchen Deep Clean",
+      "category": "Specialty",
+      "icon": "chef",
+      "description": "Inside oven, hood, fridge, freezer. Cabinet degrease, tile descaling.",
+      "starting_price": 280,
+      "includes": ["Inside oven", "Hood + filter", "Inside fridge", "Cabinet degrease"],
+      "excludes": ["Appliance repair"]
+    },
+    {
+      "id": "villa_deep",
+      "name": "Villa Deep Clean",
+      "category": "Residential",
+      "icon": "home",
+      "description": "Full-villa deep clean including outdoor. 4-person crew. By size.",
+      "starting_price": 1100,
+      "includes": ["All deep clean", "Garden sweep", "Pool deck wipe", "Outdoor furniture"],
+      "excludes": ["Pool water treatment"]
+    }
+  ],
+  "areas_served": ["Dubai (all areas)", "Sharjah", "Ajman", "Umm Al Quwain (selected)", "Abu Dhabi (surcharge)"]
+}

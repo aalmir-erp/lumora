@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<div id="login" class="paystub" style="display:none">
+  <div class="card">
+    <img src="/logo.svg" height="40" style="margin:0 auto 16px"><br>
+    <h2>Admin</h2>
+    <p style="color:var(--muted)">Enter your admin token. Set <code>ADMIN_TOKEN</code> as a Railway env var. For local dev, hit <code>/__admin_token__</code>.</p>
+    <input id="tok" placeholder="bearer token" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px"><br><br>
+    <button id="login-btn" class="btn btn-primary btn-block">Sign in</button>
+  </div>
+</div>
+
+<div id="shell" class="admin-shell" style="display:none">
+  <aside class="admin-side">
+    <div style="margin-bottom:24px"><img src="/logo.svg" height="32" style="filter:brightness(0) invert(1)"></div>
+    <a href="#dashboard" class="active" data-tab="dashboard">Dashboard</a>
+    <a href="#bookings"  data-tab="bookings">Bookings</a>
+    <a href="#convos"    data-tab="convos">Conversations</a>
+    <a href="#pricing"   data-tab="pricing">Pricing</a>
+    <a href="#whatsapp"  data-tab="whatsapp">WhatsApp</a>
+    <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
+  </aside>
+  <main class="admin-main">
+    <div id="t-dashboard" class="tab">
+      <h2>Dashboard</h2>
+      <div class="kpis" id="kpis"></div>
+      <h3>Recent activity (live)</h3>
+      <div id="activity" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;font-family:ui-monospace,monospace;font-size:12px;max-height:360px;overflow:auto;color:var(--muted)"></div>
+    </div>
+
+    <div id="t-bookings" class="tab" style="display:none">
+      <h2>Bookings</h2>
+      <input id="b-q" placeholder="search by name, phone, id…" style="margin-bottom:12px;padding:8px;border:1px solid var(--border);border-radius:8px;width:300px">
+      <select id="b-status" style="padding:8px;border:1px solid var(--border);border-radius:8px;margin-inline-start:8px">
+        <option value="">All</option><option>pending</option><option>confirmed</option>
+        <option>in_progress</option><option>completed</option><option>cancelled</option>
+      </select>
+      <button class="btn btn-ghost" id="b-refresh">Refresh</button>
+      <div id="bookings-table" style="margin-top:16px"></div>
+    </div>
+
+    <div id="t-convos" class="tab" style="display:none">
+      <h2>Conversations</h2>
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:16px">
+        <div>
+          <button class="btn btn-ghost" id="c-refresh">Refresh sessions</button>
+          <div id="sessions-list" style="margin-top:8px"></div>
+        </div>
+        <div>
+          <div id="conv-header" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="color:var(--muted)">No session selected</span>
+          </div>
+          <div id="conv-msgs" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;height:420px;overflow:auto;margin-top:12px"></div>
+          <form id="agent-reply-form" style="display:none;margin-top:12px">
+            <input id="agent-reply" placeholder="Type your reply as the agent…" style="padding:10px;border:1px solid var(--border);border-radius:8px;width:80%">
+            <button class="btn btn-primary">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="t-pricing" class="tab" style="display:none">
+      <h2>Pricing & Services</h2>
+      <p class="sub">Edits override the base catalog and apply immediately to the bot.</p>
+      <div id="pricing-table"></div>
+    </div>
+
+    <div id="t-whatsapp" class="tab" style="display:none">
+      <h2>WhatsApp Bridge</h2>
+      <div id="wa-status">Checking…</div>
+    </div>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+<script>
+const KEY = "lumora.admin.tok";
+let TOK = localStorage.getItem(KEY) || "";
+
+function show(tab) {
+  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
+  document.getElementById("t-"+tab).style.display = "";
+  document.querySelectorAll(".admin-side a").forEach(a => a.classList.toggle("active", a.dataset.tab===tab));
+  if (tab==="dashboard") loadDash();
+  if (tab==="bookings")  loadBookings();
+  if (tab==="convos")    loadSessions();
+  if (tab==="pricing")   loadPricing();
+  if (tab==="whatsapp")  loadWA();
+}
+async function adm(path, opts={}) {
+  return api(path, { ...opts, headers: { "Authorization": "Bearer "+TOK, ...(opts.headers||{}) }});
+}
+
+document.getElementById("login-btn").onclick = async () => {
+  TOK = document.getElementById("tok").value.trim();
+  try { await adm("/api/admin/stats"); localStorage.setItem(KEY, TOK); boot(); }
+  catch (e) { alert("Bad token: " + e.message); }
+};
+document.getElementById("logout").onclick = () => { localStorage.removeItem(KEY); location.reload(); };
+
+document.querySelectorAll(".admin-side [data-tab]").forEach(a =>
+  a.addEventListener("click", e => { e.preventDefault(); show(a.dataset.tab); }));
+
+async function boot() {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("shell").style.display = "";
+  show("dashboard");
+  startStream();
+}
+
+async function loadDash() {
+  const s = await adm("/api/admin/stats");
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><div class="k">Bookings today</div><div class="v">${s.bookings_today}</div></div>
+    <div class="kpi"><div class="k">All bookings</div><div class="v">${s.bookings_total}</div></div>
+    <div class="kpi"><div class="k">Revenue (paid)</div><div class="v">${s.revenue_aed} <small style="font-size:14px">AED</small></div></div>
+    <div class="kpi"><div class="k">Active handoffs</div><div class="v">${s.active_handoffs}</div></div>`;
+}
+
+async function loadBookings() {
+  const q = document.getElementById("b-q").value;
+  const status = document.getElementById("b-status").value;
+  const url = "/api/admin/bookings?" + new URLSearchParams({...(q?{q}:{}), ...(status?{status}:{})});
+  const r = await adm(url);
+  document.getElementById("bookings-table").innerHTML = `
+    <table class="list"><thead><tr>
+      <th>ID</th><th>Service</th><th>Date / Time</th><th>Customer</th><th>Total</th><th>Status</th><th>Action</th>
+    </tr></thead><tbody>${r.bookings.map(b => `
+      <tr>
+        <td>${b.id}</td><td>${b.service_id}</td>
+        <td>${b.target_date} ${b.time_slot}</td>
+        <td>${b.customer_name}<br><small>${b.phone}</small></td>
+        <td>${b.estimated_total||'-'}</td>
+        <td>
+          <select onchange="changeStatus('${b.id}', this.value)">
+            ${['pending','confirmed','in_progress','completed','cancelled']
+              .map(s=>`<option ${b.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td><button class="btn btn-ghost" onclick="makeInvoice('${b.id}')">Invoice</button></td>
+      </tr>`).join("")}</tbody></table>`;
+}
+window.changeStatus = async (bid, s) => { await adm(`/api/admin/bookings/${bid}/status`, { method:"POST", body:{status:s} }); };
+window.makeInvoice  = async (bid) => { const r = await adm(`/api/admin/bookings/${bid}/invoice`, { method:"POST" }); alert("Invoice: "+JSON.stringify(r)); };
+document.getElementById("b-refresh").onclick = loadBookings;
+
+async function loadSessions() {
+  const r = await adm("/api/admin/sessions");
+  document.getElementById("sessions-list").innerHTML = r.sessions.map(s => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer" onclick="openConv('${s.session_id}')">
+      <div style="font-size:12px;color:var(--muted)">${s.channel||'web'} • ${s.msgs} msgs</div>
+      <div style="font-weight:600;font-size:13px;word-break:break-all">${s.session_id}</div>
+      ${s.takeover && !s.takeover.ended_at ? '<span class="badge in_progress">agent-handled</span>' : ''}
+    </div>`).join("");
+}
+document.getElementById("c-refresh").onclick = loadSessions;
+let currentSid = null;
+window.openConv = async (sid) => {
+  currentSid = sid;
+  const r = await adm("/api/admin/conversations?session_id="+encodeURIComponent(sid));
+  document.getElementById("conv-header").innerHTML = `
+    <b>${sid}</b>
+    <button class="btn btn-ghost" onclick="takeover('${sid}')">Take over</button>
+    <button class="btn btn-ghost" onclick="release('${sid}')">Release</button>`;
+  document.getElementById("conv-msgs").innerHTML = r.messages.map(m => `
+    <div style="margin-bottom:8px"><b style="color:${m.role==='user'?'var(--text)':'var(--primary)'}">${m.role}${m.agent_handled?' (agent)':''}:</b>
+      <div style="white-space:pre-wrap">${escapeHtml(m.content)}</div></div>`).join("");
+  document.getElementById("agent-reply-form").style.display = "";
+};
+window.takeover = async (sid) => { await adm("/api/admin/takeover", { method:"POST", body:{session_id:sid} }); openConv(sid); };
+window.release  = async (sid) => { await adm("/api/admin/release",  { method:"POST", body:{session_id:sid} }); openConv(sid); };
+document.getElementById("agent-reply-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!currentSid) return;
+  const text = document.getElementById("agent-reply").value;
+  if (!text) return;
+  await adm("/api/admin/reply", { method:"POST", body:{session_id: currentSid, text} });
+  document.getElementById("agent-reply").value = "";
+  openConv(currentSid);
+});
+
+async function loadPricing() {
+  const p = await adm("/api/admin/pricing");
+  const ruleRows = Object.entries(p.rules).map(([sid, rule]) => `
+    <tr><td>${sid}</td><td><pre style="margin:0;font-size:11px">${escapeHtml(JSON.stringify(rule,null,1))}</pre></td>
+    <td><button class="btn btn-ghost" onclick="editRule('${sid}', ${JSON.stringify(JSON.stringify(rule)).replace(/"/g,'&quot;')})">Edit</button></td></tr>`).join("");
+  document.getElementById("pricing-table").innerHTML = `
+    <table class="list"><thead><tr><th>Service ID</th><th>Rule (JSON)</th><th></th></tr></thead><tbody>${ruleRows}</tbody></table>`;
+}
+window.editRule = async (sid, ruleJson) => {
+  const next = prompt("Edit rule for "+sid+" as JSON", ruleJson);
+  if (!next) return;
+  try {
+    const obj = JSON.parse(next);
+    await adm("/api/admin/pricing", { method:"POST", body:{ rules: { [sid]: obj } } });
+    loadPricing();
+  } catch (e) { alert("Bad JSON: "+e.message); }
+};
+
+async function loadWA() {
+  try {
+    const s = await api("/api/wa/status");
+    document.getElementById("wa-status").innerHTML = `
+      <div class="form">
+        <p>Configured: <b>${s.configured?'yes':'no'}</b></p>
+        ${s.bridge ? `<pre style="background:var(--bg);padding:12px;border-radius:8px">${escapeHtml(JSON.stringify(s.bridge,null,2))}</pre>` : ''}
+        <p style="color:var(--muted);font-size:13px">Set <code>WA_BRIDGE_URL</code> + <code>WA_BRIDGE_TOKEN</code> on the bot service. Run <code>whatsapp_bridge/</code> as a separate Railway service and visit its <code>/qr</code> page to pair.</p>
+      </div>`;
+  } catch (e) { document.getElementById("wa-status").innerHTML = "Error: "+e.message; }
+}
+
+let es = null;
+function startStream() {
+  if (es) try { es.close(); } catch {}
+  // EventSource doesn't allow custom headers; pass token as query param via short-lived cookie alt.
+  // For demo, bypass SSE auth in dev by using a polling fallback:
+  const log = document.getElementById("activity");
+  let lastId = 0; let lastEvt = 0;
+  setInterval(async () => {
+    try {
+      const r = await adm("/api/admin/conversations?limit=20");
+      // Just render last few for activity feed
+      log.innerHTML = r.messages.slice(-30).map(m => `
+        <div>[${new Date(m.created_at).toLocaleTimeString()}] ${m.role}: ${escapeHtml((m.content||'').slice(0,140))}</div>`).reverse().join("");
+    } catch {}
+  }, 4000);
+}
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// boot
+if (TOK) { adm("/api/admin/stats").then(boot).catch(()=>{ document.getElementById("login").style.display=""; }); }
+else      { document.getElementById("login").style.display = ""; }
+</script>
+</body></html>

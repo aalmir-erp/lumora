@@ -1,0 +1,63 @@
+import json
+import os
+from functools import lru_cache
+from pathlib import Path
+
+
+class Settings:
+    BASE_DIR = Path(__file__).resolve().parent
+    DATA_DIR = BASE_DIR / "data"
+    WEB_DIR = BASE_DIR.parent / "web"
+
+    # Brand (env can override)
+    BRAND_NAME = os.getenv("BRAND_NAME", "Lumora")
+    BRAND_TAGLINE = os.getenv("BRAND_TAGLINE", "UAE's smart home services platform")
+    BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "sales.mir.ae")
+
+    APP_VERSION = "0.2.0"
+
+    # Anthropic
+    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+    MODEL = os.getenv("CLAUDE_MODEL", "claude-opus-4-7")
+    MAX_TOKENS = int(os.getenv("CLAUDE_MAX_TOKENS", "4096"))
+
+    DEMO_MODE = os.getenv("DEMO_MODE", "auto").lower()  # auto | on | off
+
+    ALLOWED_ORIGINS = [
+        o.strip() for o in os.getenv(
+            "ALLOWED_ORIGINS",
+            "https://sales.mir.ae,https://www.sales.mir.ae,"
+            "https://urbanservices.ae,https://www.urbanservices.ae,"
+            "http://localhost:8000,http://127.0.0.1:8000,http://127.0.0.1:8788"
+        ).split(",") if o.strip()
+    ]
+
+    HANDOFF_WHATSAPP = os.getenv("HANDOFF_WHATSAPP", "+971566900255")
+    HANDOFF_EMAIL = os.getenv("HANDOFF_EMAIL", "hello@sales.mir.ae")
+
+    # WhatsApp bridge endpoint (Node service URL where the QR-paired bridge lives).
+    WA_BRIDGE_URL = os.getenv("WA_BRIDGE_URL", "")
+    WA_BRIDGE_TOKEN = os.getenv("WA_BRIDGE_TOKEN", "")  # shared secret
+
+    @property
+    def use_llm(self) -> bool:
+        if self.DEMO_MODE == "on":
+            return False
+        if self.DEMO_MODE == "off":
+            return True
+        return bool(self.ANTHROPIC_API_KEY)
+
+    @lru_cache
+    def brand(self) -> dict:
+        with open(self.DATA_DIR / "brand.json", encoding="utf-8") as f:
+            base = json.load(f)
+        # Env overrides
+        base["name"] = self.BRAND_NAME
+        base["tagline"] = self.BRAND_TAGLINE
+        base["domain"] = self.BRAND_DOMAIN
+        return base
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

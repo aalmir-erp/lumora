@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" width="200" height="56">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0D9488"/>
+      <stop offset="100%" stop-color="#115E59"/>
+    </linearGradient>
+  </defs>
+  <!-- mark: stylised "L" with sparkle -->
+  <g transform="translate(8 6)">
+    <rect x="0" y="0" width="44" height="44" rx="12" fill="url(#g)"/>
+    <path d="M14 10 v18 q0 4 4 4 h12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <g fill="#F59E0B">
+      <circle cx="34" cy="14" r="2.4"/>
+      <path d="M34 6 v4 M34 18 v4 M26 14 h4 M38 14 h4" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round"/>
+    </g>
+  </g>
+  <text x="64" y="36" font-family="-apple-system,Segoe UI,Roboto,sans-serif"
+        font-weight="700" font-size="26" fill="#0F172A" letter-spacing="-0.5">Lumora</text>
+</svg>

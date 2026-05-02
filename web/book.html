@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Book • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
+</head><body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36"></a>
+  <div class="nav-links">
+    <a href="/services.html" data-i18n="services">Services</a>
+    <a href="/book.html" data-i18n="cta_book">Book</a>
+    <a href="/account.html" data-i18n="track">Track</a>
+  </div>
+  <div class="nav-cta">
+    <select class="lang-pick"></select>
+  </div>
+</div></nav>
+
+<section><div class="container" style="max-width:720px">
+  <h2>Book a service</h2>
+  <p class="sub">Get an instant quote and confirm in seconds.</p>
+
+  <div class="form" id="booking-form">
+    <label>Service</label>
+    <select id="service" required></select>
+
+    <div class="row">
+      <div><label>Bedrooms</label><input id="bedrooms" type="number" min="0" max="10" placeholder="2"></div>
+      <div><label>Hours (if hourly)</label><input id="hours" type="number" min="0" max="24" placeholder=""></div>
+    </div>
+    <div class="row">
+      <div><label>Units (AC/sofa/etc)</label><input id="units" type="number" min="0" placeholder=""></div>
+      <div><label>First-time customer</label>
+        <select id="first_time"><option value="">No</option><option value="1">Yes</option></select></div>
+    </div>
+
+    <button class="btn btn-ghost" type="button" id="quote-btn">Get instant quote</button>
+    <div id="quote-out" style="margin-top:12px;color:var(--muted)"></div>
+
+    <hr style="margin:24px 0;border:0;border-top:1px solid var(--border)">
+
+    <div class="row">
+      <div><label>Date</label><input id="date" type="date" required></div>
+      <div><label>Time slot</label>
+        <select id="time" required><option value="">Pick a date first…</option></select></div>
+    </div>
+    <label>Full name</label><input id="name" required>
+    <div class="row">
+      <div><label>Phone</label><input id="phone" required placeholder="+971501234567"></div>
+      <div><label>Area</label><input id="area" placeholder="Dubai Marina"></div>
+    </div>
+    <label>Address</label><textarea id="address" required placeholder="Tower, apt no, area, emirate"></textarea>
+    <label>Notes (optional)</label><textarea id="notes"></textarea>
+
+    <button class="btn btn-primary btn-block" type="button" id="book-btn" style="margin-top:18px">Confirm booking</button>
+    <div id="result" style="margin-top:18px"></div>
+  </div>
+</div></section>
+
+<script src="/app.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+let services = [];
+
+fetch("/api/services").then(r=>r.json()).then(d=>{
+  services = d.services;
+  document.getElementById("service").innerHTML =
+    services.map(s => `<option value="${s.id}">${s.name} (from ${s.starting_price} AED)</option>`).join("");
+  if (params.get("service")) document.getElementById("service").value = params.get("service");
+});
+
+async function getSlots() {
+  const date = document.getElementById("date").value;
+  if (!date) return;
+  const r = await fetch(`/api/services`); // not the slots endpoint — slots come via /api/chat tool
+  // Use a small helper endpoint via the bot? we've exposed list_slots only via tool. Use a direct call:
+  try {
+    const j = await api("/api/chat", { method:"POST", body:{ message: `slots for ${date}` }});
+    // demo brain returns text — we just probe directly from the slot generator via list_slots tool route? add ad-hoc endpoint
+  } catch {}
+  // Simpler: call portal endpoint we'll add — for now derive locally
+  const dt = new Date(date);
+  const slots = dt.getDay()===5 ? ["09:00","11:00","13:00","15:00"] : ["08:00","10:00","12:00","14:00","16:00","18:00"];
+  document.getElementById("time").innerHTML = slots.map(s=>`<option>${s}</option>`).join("");
+}
+document.getElementById("date").addEventListener("change", getSlots);
+
+document.getElementById("quote-btn").addEventListener("click", async () => {
+  const out = document.getElementById("quote-out");
+  out.innerHTML = "Fetching…";
+  try {
+    const msg = `quote for ${document.getElementById("service").value} ` +
+      (document.getElementById("bedrooms").value ? `${document.getElementById("bedrooms").value} bedroom ` : "") +
+      (document.getElementById("hours").value ? `${document.getElementById("hours").value} hours ` : "") +
+      (document.getElementById("units").value ? `${document.getElementById("units").value} units ` : "") +
+      (document.getElementById("first_time").value ? "first-time" : "");
+    const r = await api("/api/chat", { method:"POST", body:{ message: "How much for: " + msg }});
+    out.innerHTML = `<div style="background:var(--bg);border-radius:10px;padding:14px;white-space:pre-wrap">${escapeHtml(r.text)}</div>`;
+  } catch (e) { out.innerHTML = "Error: " + e.message; }
+});
+
+document.getElementById("book-btn").addEventListener("click", async () => {
+  const out = document.getElementById("result");
+  out.innerHTML = "Booking…";
+  try {
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+    const name = document.getElementById("name").value;
+    const phone = document.getElementById("phone").value;
+    const address = document.getElementById("address").value;
+    const service = document.getElementById("service").value;
+    if (!date || !time || !name || !phone || !address) {
+      out.innerHTML = "Please complete the form."; return;
+    }
+    // Fast path: ask the bot to book — uses create_booking tool.
+    const cmd = `Book ${service} on ${date} at ${time} for ${name}, phone ${phone}, address: ${address}` +
+      (document.getElementById("bedrooms").value ? `, ${document.getElementById("bedrooms").value} bedrooms` : "") +
+      (document.getElementById("hours").value ? `, ${document.getElementById("hours").value} hours` : "") +
+      (document.getElementById("units").value ? `, ${document.getElementById("units").value} units` : "") +
+      (document.getElementById("notes").value ? `, notes: ${document.getElementById("notes").value}` : "");
+    const r = await api("/api/chat", { method:"POST", body:{ message: cmd, phone, language: window.lumoraLang() }});
+    let bid = null;
+    for (const tc of (r.tool_calls || [])) {
+      if (tc.name === "create_booking" && tc.result && tc.result.ok) bid = tc.result.booking.id;
+    }
+    if (bid) {
+      out.innerHTML = `<div class="form" style="background:#ECFDF5;border-color:#A7F3D0">
+        <h3 style="margin:0 0 8px">✅ Booked — ${bid}</h3>
+        <p style="color:var(--muted)">We'll WhatsApp you a confirmation. Track your booking on your account page.</p>
+        <a class="btn btn-primary" href="/account.html?b=${bid}">View booking</a>
+      </div>`;
+    } else {
+      out.innerHTML = `<div class="form" style="background:#FFFBEB;border-color:#FDE68A">
+        <p>${escapeHtml(r.text || "Couldn't auto-book. Please call us at +971 56 6900255.")}</p>
+      </div>`;
+    }
+  } catch (e) { out.innerHTML = "Error: " + e.message; }
+});
+
+function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+</script>
+<script src="/widget.js"></script>
+</body></html>

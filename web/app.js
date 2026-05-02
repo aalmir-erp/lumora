@@ -1,0 +1,99 @@
+/* Lumora shared frontend utils.
+ *
+ * - i18n loader + helpers (window.t, window.setLang)
+ * - PWA service-worker registration
+ * - install-app button
+ * - global fetch wrapper with JSON
+ */
+(function () {
+  // ---------- i18n ----------
+  const LS_LANG = "lumora.lang";
+  let i18n = null;
+  let currentLang = localStorage.getItem(LS_LANG) || "en";
+
+  async function loadI18n() {
+    if (i18n) return i18n;
+    try {
+      const r = await fetch("/api/i18n");
+      i18n = await r.json();
+    } catch (e) {
+      console.warn("i18n fetch failed:", e);
+      i18n = { en: {} };
+    }
+    return i18n;
+  }
+
+  function applyLang(lang) {
+    if (!i18n[lang]) lang = "en";
+    currentLang = lang;
+    localStorage.setItem(LS_LANG, lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = i18n[lang].dir || "ltr";
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      const val = i18n[lang][key];
+      if (val) el.textContent = val;
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-placeholder");
+      const val = i18n[lang][key];
+      if (val) el.placeholder = val;
+    });
+    window.dispatchEvent(new CustomEvent("lumora:lang", { detail: { lang } }));
+  }
+
+  window.lumoraT = function (key, fallback) {
+    return (i18n && i18n[currentLang] && i18n[currentLang][key]) || fallback || key;
+  };
+  window.lumoraLang = function () { return currentLang; };
+  window.lumoraSetLang = function (lang) { applyLang(lang); };
+
+  // ---------- API helper ----------
+  window.api = async function (path, opts = {}) {
+    const o = { headers: { "content-type": "application/json", ...(opts.headers || {}) }, ...opts };
+    if (o.body && typeof o.body !== "string") o.body = JSON.stringify(o.body);
+    const r = await fetch(path, o);
+    const text = await r.text();
+    let json; try { json = text ? JSON.parse(text) : {}; } catch { json = { raw: text }; }
+    if (!r.ok) throw Object.assign(new Error(json.detail || r.statusText), { status: r.status, json });
+    return json;
+  };
+
+  // ---------- service worker ----------
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(console.warn);
+    });
+  }
+
+  // ---------- install prompt (PWA) ----------
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.querySelectorAll("[data-install]").forEach((b) => (b.style.display = ""));
+  });
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-install]");
+    if (!t || !deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt = null;
+  });
+
+  // ---------- language picker ----------
+  document.addEventListener("change", (e) => {
+    const t = e.target.closest(".lang-pick");
+    if (t) applyLang(t.value);
+  });
+
+  // ---------- bootstrap ----------
+  loadI18n().then(() => {
+    applyLang(currentLang);
+    // populate any <select.lang-pick>
+    document.querySelectorAll(".lang-pick").forEach((sel) => {
+      sel.innerHTML = Object.entries(i18n).map(
+        ([k, v]) => `<option value="${k}" ${k === currentLang ? "selected" : ""}>${v.label || k}</option>`
+      ).join("");
+    });
+  });
+})();

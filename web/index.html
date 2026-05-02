@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<title>Lumora — UAE's smart home services platform</title>
+<meta name="description" content="Cleaning, maid, AC, pest, handyman & more — booked in seconds, with live tracking and digital invoices.">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="apple-touch-icon" href="/icon-192.svg">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
+</head>
+<body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/" aria-label="Lumora home"><img src="/logo.svg" alt="Lumora" height="36"></a>
+  <div class="nav-links">
+    <a href="/services.html" data-i18n="services">Services</a>
+    <a href="/book.html" data-i18n="cta_book">Book</a>
+    <a href="/account.html" data-i18n="track">Track</a>
+  </div>
+  <div class="nav-cta">
+    <select class="lang-pick" aria-label="Language"></select>
+    <button class="btn btn-ghost" data-install style="display:none" data-i18n="install_app">Install app</button>
+    <a class="btn btn-primary" href="/book.html" data-i18n="cta_book">Book a service</a>
+  </div>
+</div></nav>
+
+<header class="hero">
+  <div>
+    <h1><span data-i18n="hero_title">UAE's smart home services platform</span> <span class="accent">.</span></h1>
+    <p class="lead" data-i18n="hero_sub">Cleaning, maid, AC, pest, handyman & more — booked in seconds, with live tracking and digital invoices.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="/book.html" data-i18n="cta_book">Book a service</a>
+      <a class="btn btn-ghost" href="#services" data-i18n="cta_quote">Get instant quote</a>
+    </div>
+    <div class="trust-row">
+      <div><b>4.9★</b> from 2,400+ jobs</div>
+      <div>Background-checked staff</div>
+      <div>5-min booking</div>
+      <div>5% VAT included</div>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div style="display:flex;gap:12px;align-items:center">
+      <img src="/avatar.svg" width="64" height="64" alt="Lumi">
+      <div>
+        <div style="font-weight:700;font-size:18px">Hi, I'm Lumi</div>
+        <div style="color:var(--muted);font-size:13px" data-i18n="bot_greeting">Tell me what you need — I'll quote &amp; book.</div>
+      </div>
+    </div>
+    <div style="margin-top:18px;font-size:14px;color:var(--muted)">
+      Try: <em>“Deep clean my 2BR Friday morning”</em>, <em>“AC service for 4 splits”</em>, <em>“Handyman to fix a leak today”</em>.
+    </div>
+    <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="document.querySelector('.us-launcher').click()">
+      <span data-i18n="cta_chat">Chat with us</span>
+    </button>
+  </div>
+</header>
+
+<section id="services">
+  <div class="container">
+    <h2 data-i18n="services">Services</h2>
+    <p class="sub">Pricing is competitive UAE-market and configurable from admin. All prices include 5% VAT.</p>
+    <div class="services-grid" id="svc-grid">
+      <div style="color:var(--muted)">Loading…</div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <h2>What sets Lumora apart</h2>
+    <p class="sub">Things our competitors don't have.</p>
+    <div class="features">
+      <div class="feat"><div class="ico">⚡</div><h3>Instant AI quote</h3><p>Type or chat — Lumi computes a quote and shows the breakdown in seconds.</p></div>
+      <div class="feat"><div class="ico">📲</div><h3>WhatsApp + Web in one</h3><p>Same conversation across channels — your phone is the only ID we need.</p></div>
+      <div class="feat"><div class="ico">✍️</div><h3>Digital sign quotes</h3><p>Sign on-screen with your finger. Auto-generates an invoice + payment link.</p></div>
+      <div class="feat"><div class="ico">📅</div><h3>Track every step</h3><p>Confirmed → on the way → arrived → completed. Live status from your account page.</p></div>
+      <div class="feat"><div class="ico">🌍</div><h3>4 languages</h3><p>English, Arabic (RTL), Hindi, Filipino — at the click of a button.</p></div>
+      <div class="feat"><div class="ico">🤝</div><h3>Human anytime</h3><p>Lumi knows when to step aside. A real person can join the same chat in one tap.</p></div>
+      <div class="feat"><div class="ico">📱</div><h3>Installable PWA</h3><p>Add to home screen — works offline for browsing services and tracking.</p></div>
+      <div class="feat"><div class="ico">🔒</div><h3>Privacy-first</h3><p>We never sell or share your data. Encrypted at rest. Delete anytime from your account.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>What our customers say</h2>
+    <div class="testimonials">
+      <div class="review"><div class="stars">★★★★★</div><p>“Booked deep clean for my 3BR in JLT — done in 3 hours, spotless. Quote came instantly via the chat.”</p><b>— Sara M., Dubai Marina</b></div>
+      <div class="review"><div class="stars">★★★★★</div><p>“The Arabic chat is excellent and the cleaner spoke Hindi too. Felt very seamless.”</p><b>— Ahmed K., Sharjah</b></div>
+      <div class="review"><div class="stars">★★★★★</div><p>“Tracking on the website is the best part — knew exactly when the team would arrive.”</p><b>— Mary T., Business Bay</b></div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="container">
+  <div>
+    <img src="/logo.svg" alt="Lumora" height="40">
+    <p style="margin:12px 0 0;font-size:13px;opacity:0.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses.</p>
+  </div>
+  <div>
+    <h4>Product</h4>
+    <a href="/services.html">Services</a><br>
+    <a href="/book.html">Book</a><br>
+    <a href="/account.html">Track</a>
+  </div>
+  <div>
+    <h4>Contact</h4>
+    <a href="https://wa.me/971566900255">WhatsApp +971 56 6900255</a><br>
+    <a href="mailto:hello@sales.mir.ae">hello@sales.mir.ae</a><br>
+    <a href="/admin.html">Admin</a>
+  </div>
+</div></footer>
+
+<script src="/app.js"></script>
+<script>
+  // Render services grid
+  fetch("/api/services").then(r => r.json()).then((data) => {
+    const grid = document.getElementById("svc-grid");
+    const icons = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
+      hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
+      tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
+    grid.innerHTML = data.services.map(s => `
+      <div class="svc-card">
+        <span class="svc-cat">${s.category}</span>
+        <div class="svc-icon">${icons[s.icon] || "🧽"}</div>
+        <h3>${s.name}</h3>
+        <p>${s.description}</p>
+        <div class="svc-price"><span data-i18n="starting_from">starting from</span>
+          <span style="font-size:18px;font-weight:700;color:var(--text)"> ${s.starting_price} AED</span></div>
+        <a class="btn btn-ghost" style="margin-top:12px" href="/book.html?service=${s.id}" data-i18n="book_now">Book now</a>
+      </div>
+    `).join("");
+    // Re-apply i18n on freshly rendered nodes
+    if (window.lumoraSetLang && window.lumoraLang) window.lumoraSetLang(window.lumoraLang());
+  });
+</script>
+<script src="/widget.js" data-api-base=""></script>
+</body>
+</html>

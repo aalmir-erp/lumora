@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Services • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
+</head><body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36"></a>
+  <div class="nav-links">
+    <a href="/services.html" data-i18n="services">Services</a>
+    <a href="/book.html" data-i18n="cta_book">Book</a>
+    <a href="/account.html" data-i18n="track">Track</a>
+  </div>
+  <div class="nav-cta">
+    <select class="lang-pick"></select>
+    <a class="btn btn-primary" href="/book.html" data-i18n="cta_book">Book</a>
+  </div>
+</div></nav>
+
+<section>
+  <div class="container">
+    <h2 data-i18n="services">All Services</h2>
+    <p class="sub">Pick a category or search.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px" id="cat-tabs"></div>
+    <input type="search" id="svc-search" placeholder="Search services…"
+      style="width:100%;max-width:480px;margin-bottom:24px">
+    <div class="services-grid" id="svc-grid"></div>
+    <div id="empty" style="display:none;color:var(--muted);text-align:center;padding:32px">No services match.</div>
+  </div>
+</section>
+
+<footer><div class="container">
+  <div><img src="/logo.svg" height="40">
+    <p style="margin:12px 0;font-size:13px;opacity:0.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses.</p></div>
+  <div><h4>Contact</h4><a href="https://wa.me/971566900255">WhatsApp</a><br><a href="mailto:hello@sales.mir.ae">Email</a></div>
+  <div><h4>Lumora</h4><a href="/admin.html">Admin</a></div>
+</div></footer>
+
+<script src="/app.js"></script>
+<script>
+let allServices = []; let activeCat = "All";
+const icons = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
+  hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
+  tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
+
+function render() {
+  const q = document.getElementById("svc-search").value.toLowerCase();
+  const filtered = allServices.filter(s =>
+    (activeCat === "All" || s.category === activeCat) &&
+    (!q || s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)));
+  const grid = document.getElementById("svc-grid");
+  document.getElementById("empty").style.display = filtered.length ? "none" : "block";
+  grid.innerHTML = filtered.map(s => `
+    <div class="svc-card">
+      <span class="svc-cat">${s.category}</span>
+      <div class="svc-icon">${icons[s.icon] || "🧽"}</div>
+      <h3>${s.name}</h3>
+      <p>${s.description}</p>
+      <div class="svc-price"><span data-i18n="starting_from">starting from</span>
+        <span style="font-size:18px;font-weight:700;color:var(--text)"> ${s.starting_price} AED</span></div>
+      <a class="btn btn-ghost" style="margin-top:12px" href="/book.html?service=${s.id}">Book</a>
+    </div>`).join("");
+}
+
+fetch("/api/services").then(r=>r.json()).then(d=>{
+  allServices = d.services;
+  const cats = ["All", ...new Set(d.services.map(s=>s.category))];
+  document.getElementById("cat-tabs").innerHTML = cats.map(c =>
+    `<button class="btn ${c===activeCat?'btn-primary':'btn-ghost'}" data-cat="${c}">${c}</button>`).join("");
+  render();
+});
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-cat]");
+  if (!t) return; activeCat = t.dataset.cat;
+  document.querySelectorAll("[data-cat]").forEach(b => b.classList.toggle("btn-primary", b.dataset.cat===activeCat));
+  document.querySelectorAll("[data-cat]").forEach(b => b.classList.toggle("btn-ghost", b.dataset.cat!==activeCat));
+  render();
+});
+document.getElementById("svc-search").addEventListener("input", render);
+</script>
+<script src="/widget.js"></script>
+</body></html>

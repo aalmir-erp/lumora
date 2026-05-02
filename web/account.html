@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My account • Lumora</title><meta name="theme-color" content="#0D9488">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
+</head><body>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36"></a>
+  <div class="nav-links">
+    <a href="/services.html" data-i18n="services">Services</a>
+    <a href="/book.html" data-i18n="cta_book">Book</a>
+    <a href="/account.html" data-i18n="track">Track</a>
+  </div>
+  <div class="nav-cta"><select class="lang-pick"></select></div>
+</div></nav>
+
+<section><div class="container" style="max-width:880px">
+  <h2 data-i18n="track_title">Track your bookings</h2>
+  <p class="sub" data-i18n="track_sub">Enter your phone or booking ID.</p>
+
+  <div class="form" style="margin-bottom:24px">
+    <div class="row">
+      <div><label data-i18n="track_phone">Phone</label><input id="phone" placeholder="+971501234567"></div>
+      <div><label data-i18n="track_booking">Booking ID</label><input id="bid" placeholder="LM-A1B2C3"></div>
+    </div>
+    <button class="btn btn-primary" type="button" id="track-btn" style="margin-top:14px" data-i18n="track_submit">Track</button>
+  </div>
+
+  <div id="results"></div>
+</div></section>
+
+<script src="/app.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+if (params.get("b")) document.getElementById("bid").value = params.get("b");
+if (params.get("phone")) document.getElementById("phone").value = params.get("phone");
+if (params.get("b") || params.get("phone")) lookup();
+
+document.getElementById("track-btn").addEventListener("click", lookup);
+
+function statusBadge(s) { return `<span class="badge ${s}">${(window.lumoraT&&window.lumoraT("status_"+s))||s}</span>`; }
+
+async function lookup() {
+  const phone = document.getElementById("phone").value.trim();
+  const bid = document.getElementById("bid").value.trim();
+  const out = document.getElementById("results");
+  out.innerHTML = "Loading…";
+  try {
+    let bookings = [];
+    if (bid) {
+      const r = await api("/api/portal/booking/" + bid);
+      bookings = [r.booking];
+    } else if (phone) {
+      const r = await api("/api/portal/bookings?phone=" + encodeURIComponent(phone));
+      bookings = r.bookings || [];
+    }
+    if (!bookings.length) { out.innerHTML = `<p data-i18n="no_bookings">No bookings found.</p>`; return; }
+    out.innerHTML = bookings.map(renderBooking).join("");
+  } catch (e) {
+    out.innerHTML = "Error: " + e.message;
+  }
+}
+
+function renderBooking(b) {
+  const quotes = (b.quotes || []).map(q => `
+    <tr>
+      <td>${q.id}</td>
+      <td>${q.total} ${q.currency}</td>
+      <td><span class="badge ${q.status==='signed'?'signed':'pending'}">${q.status}</span></td>
+      <td>${q.signed_at ? new Date(q.signed_at).toLocaleString() : ''}</td>
+      <td><a class="btn btn-ghost" href="/quote.html?id=${q.id}">View / sign</a></td>
+    </tr>`).join("");
+  const invs = (b.invoices || []).map(i => `
+    <tr>
+      <td>${i.id}</td>
+      <td>${i.amount} ${i.currency}</td>
+      <td><span class="badge ${i.payment_status}">${i.payment_status}</span></td>
+      <td>${i.paid_at ? new Date(i.paid_at).toLocaleString() : ''}</td>
+      <td><a class="btn btn-ghost" href="${i.payment_url}">Pay</a></td>
+    </tr>`).join("");
+  return `
+    <div class="form" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div>
+          <h3 style="margin:0">${b.id} — ${b.service_id.replace(/_/g,' ')}</h3>
+          <div style="color:var(--muted);font-size:13px">${b.target_date} at ${b.time_slot}</div>
+        </div>
+        ${statusBadge(b.status)}
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin:14px 0 4px">
+        ${b.customer_name} • ${b.phone}<br>${b.address}
+      </p>
+      ${b.estimated_total ? `<p>Estimated total: <b>${b.estimated_total} ${b.currency||'AED'}</b></p>` : ''}
+      ${quotes ? `<h4 style="margin:16px 0 6px">Quotes</h4>
+        <table class="list"><thead><tr><th>ID</th><th>Total</th><th>Status</th><th>Signed</th><th></th></tr></thead><tbody>${quotes}</tbody></table>` : ''}
+      ${invs ? `<h4 style="margin:16px 0 6px">Invoices</h4>
+        <table class="list"><thead><tr><th>ID</th><th>Amount</th><th>Status</th><th>Paid</th><th></th></tr></thead><tbody>${invs}</tbody></table>` : ''}
+    </div>`;
+}
+</script>
+<script src="/widget.js"></script>
+</body></html>
