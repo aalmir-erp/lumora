@@ -20,6 +20,7 @@ jobs:
       - name: Deploy + report
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           GH_TOKEN: ${{ github.token }}
