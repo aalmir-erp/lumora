@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  issues: write
 
 concurrency:
   group: railway-deploy
@@ -93,19 +94,35 @@ jobs:
           done
           railway status 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
 
-      - name: Report URL via GitHub issue
+      - name: Capture deploy URL and commit to repo
         if: always()
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
         run: |
           set +e
-          DOMAIN=$(railway domain 2>&1 | grep -Eo 'https?://[a-zA-Z0-9.-]+' | head -1)
-          STATUS=$(railway status 2>&1 | head -40)
-          VARS=$(railway variables 2>&1 | head -30)
-          BODY=$(printf "## Deploy result\n\n**URL:** %s\n\n### railway status\n\`\`\`\n%s\n\`\`\`\n\n### railway variables (names only)\n\`\`\`\n%s\n\`\`\`\n" "$DOMAIN" "$STATUS" "$VARS")
-          curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/${{ github.repository }}/issues \
-            -d "$(jq -n --arg t "Deploy report ${{ github.run_number }}: $DOMAIN" --arg b "$BODY" '{title:$t, body:$b, labels:["deploy"]}')"
-
+          DOMAIN_OUT=$(railway domain 2>&1)
+          DOMAIN=$(echo "$DOMAIN_OUT" | grep -Eo 'https?://[a-zA-Z0-9.-]+' | head -1)
+          STATUS=$(railway status 2>&1)
+          {
+            echo "# Lumora deploy"
+            echo
+            echo "**Live URL:** $DOMAIN"
+            echo
+            echo "Last deploy: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo '## railway domain'
+            echo '```'
+            echo "$DOMAIN_OUT"
+            echo '```'
+            echo
+            echo '## railway status'
+            echo '```'
+            echo "$STATUS"
+            echo '```'
+          } > DEPLOYED.md
+          git config user.email "deploy@github-actions"
+          git config user.name "Lumora deploy bot"
+          git add DEPLOYED.md
+          git commit -m "Deploy report: $DOMAIN" || echo "no changes"
+          git push origin HEAD:main || true
