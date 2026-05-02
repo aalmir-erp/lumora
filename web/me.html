@@ -81,9 +81,9 @@ function render(b) {
     </tr>`).join("");
   const vendorBlock = a.vendor_id ? `
     <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">
-      <b>Assigned:</b> ${escapeHtml(a.vendor_name || 'Vendor #'+a.vendor_id)} (${(a.vendor_rating||5).toFixed(1)} ★)
+      <b>Your Lumora cleaner is assigned</b> (${(a.vendor_rating||5).toFixed(1)} ★ rated)
       • Status: <span class="badge ${a.status}">${a.status}</span>
-    </p>` : `<p style="margin:10px 0 0;font-size:13px;color:#92400E">⏳ Waiting for a vendor to claim this job.</p>`;
+    </p>` : `<p style="margin:10px 0 0;font-size:13px;color:#92400E">⏳ Confirming your booking — your cleaner will be assigned shortly.</p>`;
   const rateBlock = (b.status === 'completed' && a.vendor_id) ? `
     <div style="margin-top:10px">
       <button class="btn btn-ghost" onclick="rate('${b.id}', 5)">★★★★★</button>

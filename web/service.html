@@ -171,7 +171,7 @@ window.LUMORA_PIXELS = {
       <p class="lead reveal" id="svc-desc"></p>
       <div class="badge-row reveal" id="badges"></div>
 
-      <div class="urgency reveal"><span class="dot"></span><span>3 vendors free in your area • next slot in <b id="next-slot">—</b></span></div>
+      <div class="urgency reveal"><span class="dot"></span><span>3 specialists available in your area • next slot in <b id="next-slot">—</b></span></div>
 
       <div class="cta-row reveal">
         <a id="cta-book" class="btn btn-primary" href="#book" onclick="conv('book_click');document.getElementById('book-form').scrollIntoView({behavior:'smooth'});return false;" style="font-size:16px;padding:14px 24px">Get instant quote →</a>
@@ -186,7 +186,7 @@ window.LUMORA_PIXELS = {
         <span>•</span>
         <span><b>2,400+</b> jobs done</span>
         <span>•</span>
-        <span><b>180+</b> vetted vendors</span>
+        <span><b>180+</b> trained professionals</span>
         <span>•</span>
         <span>🛡️ Insured</span>
       </div>
@@ -307,8 +307,8 @@ window.LUMORA_PIXELS = {
 <footer><div class="container">
   <div><img src="/logo.svg" height="36" alt="Lumora" style="filter:brightness(0) invert(1)"></div>
   <div><h4>Product</h4><a href="/services.html">All services</a><br><a href="/book.html">Book</a><br><a href="/me.html">My account</a></div>
-  <div><h4>Vendors</h4><a href="/login.html">Vendor portal</a></div>
-  <div><h4>Contact</h4><a href="https://wa.me/971566900255">WhatsApp</a><br><a href="mailto:hello@sales.mir.ae">Email</a></div>
+  <div><h4>Partners</h4><a href="/login.html">Partner portal</a></div>
+  <div><h4>Contact</h4><a href="https://wa.me/971564020087">WhatsApp</a><br><a href="mailto:hello@sales.mir.ae">Email</a></div>
 </div></footer>
 
 <!-- STICKY CTA BAR -->
@@ -426,8 +426,8 @@ function render() {
 
   // CTAs
   const waMsg = encodeURIComponent(`Hi Lumora! I want to book ${SVC.name}. Can you help?`);
-  document.getElementById("cta-wa").href = `https://wa.me/971566900255?text=${waMsg}`;
-  document.getElementById("sticky-wa").href = `https://wa.me/971566900255?text=${waMsg}`;
+  document.getElementById("cta-wa").href = `https://wa.me/971564020087?text=${waMsg}`;
+  document.getElementById("sticky-wa").href = `https://wa.me/971564020087?text=${waMsg}`;
   document.getElementById("sticky-price").textContent = `from ${SVC.starting_price} AED`;
 }
 

@@ -32,7 +32,7 @@ class Settings:
         ).split(",") if o.strip()
     ]
 
-    HANDOFF_WHATSAPP = os.getenv("HANDOFF_WHATSAPP", "+971566900255")
+    HANDOFF_WHATSAPP = os.getenv("HANDOFF_WHATSAPP", "+971564020087")
     HANDOFF_EMAIL = os.getenv("HANDOFF_EMAIL", "hello@sales.mir.ae")
 
     # WhatsApp bridge endpoint (Node service URL where the QR-paired bridge lives).
@@ -47,14 +47,21 @@ class Settings:
             return True
         return bool(self.ANTHROPIC_API_KEY)
 
-    @lru_cache
     def brand(self) -> dict:
+        """File defaults → env overrides → DB overrides (admin-set, runtime editable)."""
+        from . import db
         with open(self.DATA_DIR / "brand.json", encoding="utf-8") as f:
             base = json.load(f)
-        # Env overrides
         base["name"] = self.BRAND_NAME
         base["tagline"] = self.BRAND_TAGLINE
         base["domain"] = self.BRAND_DOMAIN
+        try:
+            ov = db.cfg_get("brand_overrides", {}) or {}
+            for k, v in ov.items():
+                if v not in (None, ""):
+                    base[k] = v
+        except Exception:  # noqa: BLE001
+            pass
         return base
 
 

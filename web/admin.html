@@ -21,6 +21,7 @@
     <a href="#convos"    data-tab="convos">💬 Conversations</a>
     <a href="#pricing"   data-tab="pricing">💰 Services & Pricing</a>
     <a href="#vendors"   data-tab="vendors">🤝 Vendors</a>
+    <a href="#brand"     data-tab="brand">🎨 Brand &amp; Contact</a>
     <a href="#whatsapp"  data-tab="whatsapp">📲 WhatsApp</a>
     <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
   </aside>
@@ -86,6 +87,17 @@
       <div id="vendor-table"></div>
     </div>
 
+    <div id="t-brand" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
+        <div>
+          <h2 style="margin:0">Brand &amp; Contact</h2>
+          <p style="margin:4px 0 0;color:var(--muted)">These settings propagate everywhere on the site within seconds — chat replies, footers, WhatsApp links, JSON-LD, the lot.</p>
+        </div>
+        <button class="btn btn-primary" onclick="saveBrand()">Save changes</button>
+      </div>
+      <div id="brand-form"></div>
+    </div>
+
     <div id="t-whatsapp" class="tab" style="display:none">
       <h2>WhatsApp Bridge</h2>
       <div id="wa-status">Checking…</div>
@@ -112,6 +124,7 @@ function show(tab) {
   if (tab==="convos")    loadSessions();
   if (tab==="pricing")   loadPricing();
   if (tab==="vendors")   loadVendors();
+  if (tab==="brand")     loadBrand();
   if (tab==="whatsapp")  loadWA();
 }
 async function adm(path, opts={}) {
@@ -545,5 +558,50 @@ function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({"&":"&amp;","<":"
 // boot
 if (TOK) { adm("/api/admin/stats").then(boot).catch(()=>{ document.getElementById("login").style.display=""; }); }
 else      { document.getElementById("login").style.display = ""; }
+
+async function loadBrand() {
+  const b = await adm("/api/admin/brand");
+  const fields = [
+    ["name","Brand name","text"],
+    ["tagline","Tagline (shown in hero, footer, search results)","text"],
+    ["phone","Phone (display format, e.g. +971 56 4020087)","text"],
+    ["whatsapp","WhatsApp (digits only, no spaces — for wa.me links)","text"],
+    ["email","Email","email"],
+    ["address","Address (footer + invoices)","text"],
+    ["legal_owner","Legal owner / company name","text"],
+    ["vat_trn","VAT TRN (UAE 15-digit)","text"],
+    ["domain","Public domain","text"],
+    ["primary_color","Primary color (hex)","color"],
+    ["accent_color","Accent color (hex)","color"],
+  ];
+  document.getElementById("brand-form").innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px">
+      <p style="font-size:13px;color:var(--muted);margin-top:0">
+        ⚠️ Customer-facing tone: never expose vendor / marketplace concepts to end customers. Use "our team", "our cleaners", "our specialists".
+      </p>
+      ${fields.map(([k,label,type]) => `
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">${label}</label>
+          <input id="br-${k}" type="${type}" value="${(b[k]||'').toString().replace(/"/g,'&quot;')}"
+                 style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;${type==='color'?'height:46px;padding:4px':''}">
+        </div>`).join("")}
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+        <button class="btn btn-ghost" onclick="loadBrand()">Reset (reload current)</button>
+        <button class="btn btn-primary" onclick="saveBrand()">Save changes</button>
+      </div>
+    </div>`;
+}
+async function saveBrand() {
+  const keys = ["name","tagline","phone","whatsapp","email","address","legal_owner","vat_trn","domain","primary_color","accent_color"];
+  const body = {};
+  for (const k of keys) {
+    const el = document.getElementById("br-"+k);
+    if (el && el.value) body[k] = el.value.trim();
+  }
+  try {
+    await adm("/api/admin/brand", { method:"POST", body });
+    toast("✓ Brand saved — public site updates instantly");
+  } catch(e) { alert("Error: "+e.message); }
+}
 </script>
 </body></html>

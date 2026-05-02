@@ -96,4 +96,27 @@
       ).join("");
     });
   });
+
+  // ---------- live brand binding ----------
+  // Fetch /api/brand once, then sync any element with class .lumora-phone / .lumora-whatsapp / .lumora-email
+  // and rewrite any wa.me / tel: anchor href to use the live number.
+  fetch("/api/brand").then(r => r.json()).then((b) => {
+    window.LUMORA_BRAND = b;
+    document.querySelectorAll(".lumora-phone").forEach(el => el.textContent = b.phone || el.textContent);
+    document.querySelectorAll(".lumora-whatsapp").forEach(el => el.textContent = b.phone || el.textContent);
+    document.querySelectorAll(".lumora-email").forEach(el => el.textContent = b.email || el.textContent);
+    // Rewrite all wa.me + tel: links to use the live number
+    const wa = (b.whatsapp || "").replace(/[^0-9]/g, "");
+    const tel = (b.phone || "").replace(/[^+0-9]/g, "");
+    document.querySelectorAll("a[href*='wa.me/'], a[data-wa]").forEach(a => {
+      try {
+        const u = new URL(a.href, location.href);
+        const text = u.searchParams.get("text") || a.dataset.waText || "";
+        a.href = `https://wa.me/${wa}` + (text ? `?text=${encodeURIComponent(text)}` : "");
+      } catch {}
+    });
+    document.querySelectorAll("a[href^='tel:']").forEach(a => { a.href = "tel:" + tel; });
+    window.dispatchEvent(new CustomEvent("lumora:brand", { detail: b }));
+  }).catch(() => {});
+
 })();

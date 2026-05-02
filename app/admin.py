@@ -468,3 +468,36 @@ def services_summary():
             "avg_price_aed": c2.get("avg_price"),
         })
     return {"services": out}
+
+
+# ---------- Brand settings (runtime editable) ----------
+class BrandPatch(BaseModel):
+    name: str | None = None
+    tagline: str | None = None
+    phone: str | None = None
+    whatsapp: str | None = None
+    email: str | None = None
+    address: str | None = None
+    primary_color: str | None = None
+    accent_color: str | None = None
+    legal_owner: str | None = None
+    vat_trn: str | None = None
+    domain: str | None = None
+
+
+@router.get("/brand")
+def get_brand_admin():
+    from .config import get_settings
+    return get_settings().brand()
+
+
+@router.post("/brand")
+def patch_brand(body: BrandPatch):
+    from .config import get_settings
+    overrides = db.cfg_get("brand_overrides", {}) or {}
+    payload = body.model_dump(exclude_none=True)
+    overrides.update({k: v for k, v in payload.items() if v not in (None, "")})
+    db.cfg_set("brand_overrides", overrides)
+    db.log_event("brand", "global", "updated", actor="admin",
+                 details={"keys": list(payload)})
+    return {"ok": True, "brand": get_settings().brand()}

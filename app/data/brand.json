@@ -3,8 +3,8 @@
   "tagline": "UAE's smart home services platform",
   "domain": "sales.mir.ae",
   "legal_owner": "Urban Services FZ-LLC",
-  "phone": "+971 56 6900255",
-  "whatsapp": "+971566900255",
+  "phone": "+971 56 4020087",
+  "whatsapp": "+971564020087",
   "email": "hello@sales.mir.ae",
   "address": "Dubai, United Arab Emirates",
   "vat_trn": "100XXXXXXXXXXXX",
@@ -13,7 +13,12 @@
   "accent_color": "#F59E0B",
   "neutral_50": "#F8FAFC",
   "neutral_900": "#0F172A",
-  "languages": ["en", "ar", "hi", "tl"],
+  "languages": [
+    "en",
+    "ar",
+    "hi",
+    "tl"
+  ],
   "default_language": "en",
   "currency": "AED",
   "vat_pct": 5

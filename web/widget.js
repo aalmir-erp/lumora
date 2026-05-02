@@ -126,7 +126,7 @@
       if (data.text) addMsg("bot", data.text, data.tool_calls);
     } catch (err) {
       typing.remove();
-      addMsg("bot", "Sorry, I'm having trouble. WhatsApp us at +971 56 6900255.");
+      addMsg("bot", "Sorry, I'm having trouble. WhatsApp us at +971 56 4020087.");
       console.error(err);
     } finally {
       busy = false; sendBtn.disabled = false;
