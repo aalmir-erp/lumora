@@ -1,8 +1,6 @@
-/* Lumora service worker — minimal offline shell + asset cache. */
-const CACHE = "lumora-v0.2.0";
+/* Lumora service worker — network-first for HTML/JS so deploys are seen instantly. */
+const CACHE = "lumora-v0.8.0";
 const SHELL = [
-  "/", "/index.html", "/services.html", "/book.html", "/account.html",
-  "/style.css", "/app.js", "/widget.js", "/widget.css", "/i18n.js",
   "/logo.svg", "/avatar.svg", "/icon-192.svg", "/icon-512.svg",
   "/manifest.webmanifest"
 ];
@@ -20,8 +18,25 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  // Never cache API or admin/portal traffic.
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/pay/")) return;
+
+  // Network-first for HTML / JS / CSS so new deploys are seen on next request.
+  const isCode = /\.(html|js|css|json|webmanifest)$/i.test(url.pathname) ||
+                 url.pathname === "/" || url.pathname.endsWith("/");
+  if (isCode) {
+    e.respondWith(
+      fetch(e.request).then((res) => {
+        if (e.request.method === "GET" && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+        }
+        return res;
+      }).catch(() => caches.match(e.request).then(hit => hit || caches.match("/index.html")))
+    );
+    return;
+  }
+
+  // Cache-first for static images / icons.
   e.respondWith(
     caches.match(e.request).then((hit) =>
       hit ||

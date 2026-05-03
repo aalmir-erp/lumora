@@ -289,6 +289,18 @@ def booking_ics(bid: str):
 
 
 # ---------- static frontend (mounted last so /api/* take precedence) ----------
+# Force fresh HTML/JS/CSS on every request so deploys are visible immediately;
+# without this, browsers + Railway's edge cache hold the previous build.
+@app.middleware("http")
+async def _no_cache_for_code(request, call_next):
+    resp = await call_next(request)
+    p = request.url.path
+    if (p.endswith((".html", ".js", ".css", ".json", ".webmanifest")) or p == "/" or p.endswith("/")):
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+    return resp
+
 if settings.WEB_DIR.exists():
     app.mount("/widget", StaticFiles(directory=str(settings.WEB_DIR), html=False), name="widget")
     app.mount("/", StaticFiles(directory=str(settings.WEB_DIR), html=True), name="site")

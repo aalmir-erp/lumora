@@ -60,9 +60,23 @@
   };
 
   // ---------- service worker ----------
+  // One-time purge: existing visitors are stuck on the old cache-first SW
+  // (lumora-v0.2.0). Force a clean re-register so they pick up new deploys.
+  const SW_RESET_KEY = "lumora.sw.reset.v0.8.0";
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js").catch(console.warn);
+    window.addEventListener("load", async () => {
+      try {
+        if (!localStorage.getItem(SW_RESET_KEY)) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+          if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+          localStorage.setItem(SW_RESET_KEY, "1");
+        }
+        await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
+      } catch (e) { console.warn(e); }
     });
   }
 
