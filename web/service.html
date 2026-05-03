@@ -280,6 +280,18 @@ window.LUMORA_PIXELS = {
         <div><label>First-time customer?</label>
           <select id="f-first"><option value="">No</option><option value="1">Yes — apply 15% off</option></select></div>
       </div>
+      
+      <div class="row">
+        <div><label>Recurring</label>
+          <select id="f-recurring">
+            <option value="">One-time</option>
+            <option value="weekly">Weekly (save 20%)</option>
+            <option value="biweekly">Bi-weekly (save 10%)</option>
+            <option value="monthly">Monthly</option>
+          </select></div>
+        <div></div>
+      </div>
+
       <button class="btn btn-ghost btn-block" type="button" onclick="getQuote()" style="margin-top:6px">Calculate price</button>
       <div id="quote-box" style="margin-top:14px"></div>
 
@@ -307,6 +319,15 @@ window.LUMORA_PIXELS = {
   <div class="container" style="max-width:760px">
     <h2 class="reveal">Common questions</h2>
     <div id="faqs"></div>
+  </div>
+</section>
+
+
+<section style="background:color-mix(in srgb, var(--accent) 6%, var(--bg))">
+  <div class="container">
+    <h2 class="reveal" style="text-align:center">What customers say about this service</h2>
+    <div id="rev-summary" style="text-align:center;margin-bottom:24px;color:var(--muted)">Loading reviews…</div>
+    <div id="reviews-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px"></div>
   </div>
 </section>
 
@@ -513,6 +534,24 @@ async function confirmBooking() {
     }
   } catch(e) { document.getElementById("book-result").innerHTML = "Error: " + e.message; }
 }
+
+
+fetch("/api/reviews/" + sid).then(r => r.json()).then(d => {
+  if (!d.count) {
+    document.getElementById("rev-summary").innerHTML = `Be the first to review this service!`;
+    document.getElementById("reviews-list").innerHTML = "";
+    return;
+  }
+  document.getElementById("rev-summary").innerHTML =
+    `<span style="color:#F59E0B;font-size:24px;letter-spacing:2px">${"★".repeat(Math.round(d.avg))}${"☆".repeat(5-Math.round(d.avg))}</span>` +
+    ` <b>${d.avg.toFixed(1)}</b> from ${d.count} review${d.count>1?'s':''}`;
+  document.getElementById("reviews-list").innerHTML = d.reviews.map(r => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+      <div style="color:#F59E0B;letter-spacing:2px;margin-bottom:6px">${"★".repeat(r.stars)}${"☆".repeat(5-r.stars)}</div>
+      <p style="margin:0 0 10px;font-size:14px">${(r.comment||"").replace(/[<>]/g,'')}</p>
+      <div style="font-size:12px;color:var(--muted)">— ${(r.customer_name||"Verified customer").split(" ")[0]} • ${new Date(r.created_at).toLocaleDateString()}</div>
+    </div>`).join("");
+}).catch(()=>{});
 
 // Conversion pixels (no-op until IDs are configured)
 function conv(name) {

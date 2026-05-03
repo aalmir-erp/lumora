@@ -365,3 +365,174 @@ def vendor_earnings(user: a.AuthedUser = Depends(a.current_vendor)):
         "pending_total_aed": round(pending_total, 2),
         "by_month": [dict(r) for r in by_month],
     }
+
+
+# ============================================================
+# CUSTOMER profile + saved addresses + cancel/reschedule
+# ============================================================
+
+class ProfilePatch(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    language: str | None = None
+
+
+@router.post("/me/profile")
+def update_profile(body: ProfilePatch, user: a.AuthedUser = Depends(a.current_customer)):
+    fields, vals = [], []
+    for k, v in body.model_dump(exclude_none=True).items():
+        if v is not None:
+            fields.append(f"{k}=?"); vals.append(v)
+    if not fields:
+        return {"ok": True, "noop": True}
+    vals.append(user.user_id)
+    with db.connect() as c:
+        c.execute(f"UPDATE customers SET {', '.join(fields)} WHERE id=?", vals)
+    return {"ok": True}
+
+
+@router.get("/me/addresses")
+def list_addresses(user: a.AuthedUser = Depends(a.current_customer)):
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT * FROM saved_addresses WHERE customer_id=? ORDER BY is_default DESC, id DESC",
+            (user.user_id,)).fetchall()
+    return {"addresses": db.rows_to_dicts(rows)}
+
+
+class SavedAddress(BaseModel):
+    label: str | None = None
+    address: str
+    area: str | None = None
+    is_default: bool = False
+
+
+@router.post("/me/addresses")
+def add_address(body: SavedAddress, user: a.AuthedUser = Depends(a.current_customer)):
+    with db.connect() as c:
+        if body.is_default:
+            c.execute("UPDATE saved_addresses SET is_default=0 WHERE customer_id=?",
+                      (user.user_id,))
+        cur = c.execute(
+            "INSERT INTO saved_addresses(customer_id, label, address, area, is_default, created_at) "
+            "VALUES(?,?,?,?,?,?)",
+            (user.user_id, body.label, body.address, body.area,
+             1 if body.is_default else 0, _dt.datetime.utcnow().isoformat() + "Z"))
+    return {"ok": True, "id": cur.lastrowid}
+
+
+@router.delete("/me/addresses/{aid}")
+def delete_address(aid: int, user: a.AuthedUser = Depends(a.current_customer)):
+    with db.connect() as c:
+        c.execute("DELETE FROM saved_addresses WHERE id=? AND customer_id=?",
+                  (aid, user.user_id))
+    return {"ok": True}
+
+
+class CancelBody(BaseModel):
+    reason: str | None = None
+
+
+@router.post("/me/booking/{bid}/cancel")
+def cancel_booking(bid: str, body: CancelBody,
+                   user: a.AuthedUser = Depends(a.current_customer)):
+    with db.connect() as c:
+        b = c.execute("SELECT phone, status FROM bookings WHERE id=?", (bid,)).fetchone()
+        if not b or b["phone"] != user.record["phone"]:
+            raise HTTPException(403, "not your booking")
+        if b["status"] in ("completed", "cancelled"):
+            raise HTTPException(400, f"cannot cancel a {b['status']} booking")
+        c.execute(
+            "UPDATE bookings SET status='cancelled', cancelled_at=?, "
+            "cancellation_reason=?, updated_at=? WHERE id=?",
+            (_dt.datetime.utcnow().isoformat() + "Z", body.reason,
+             _dt.datetime.utcnow().isoformat() + "Z", bid))
+    db.log_event("booking", bid, "customer_cancelled",
+                 actor=f"customer:{user.user_id}", details={"reason": body.reason})
+    return {"ok": True}
+
+
+class RescheduleBody(BaseModel):
+    target_date: str
+    time_slot: str
+
+
+@router.post("/me/booking/{bid}/reschedule")
+def reschedule_booking(bid: str, body: RescheduleBody,
+                       user: a.AuthedUser = Depends(a.current_customer)):
+    with db.connect() as c:
+        b = c.execute("SELECT phone, status FROM bookings WHERE id=?", (bid,)).fetchone()
+        if not b or b["phone"] != user.record["phone"]:
+            raise HTTPException(403, "not your booking")
+        if b["status"] in ("completed", "cancelled"):
+            raise HTTPException(400, "cannot reschedule")
+        c.execute(
+            "UPDATE bookings SET target_date=?, time_slot=?, status='rescheduled', updated_at=? WHERE id=?",
+            (body.target_date, body.time_slot,
+             _dt.datetime.utcnow().isoformat() + "Z", bid))
+    db.log_event("booking", bid, "customer_rescheduled",
+                 actor=f"customer:{user.user_id}",
+                 details={"to": f"{body.target_date} {body.time_slot}"})
+    return {"ok": True, "new_date": body.target_date, "new_time": body.time_slot}
+
+
+# ============================================================
+# REVIEWS (per-service public, written by customers)
+# ============================================================
+
+class ReviewBody(BaseModel):
+    booking_id: str
+    stars: int
+    comment: str | None = None
+
+
+@router.post("/me/review")
+def submit_review(body: ReviewBody, user: a.AuthedUser = Depends(a.current_customer)):
+    if body.stars < 1 or body.stars > 5:
+        raise HTTPException(400, "stars 1-5")
+    with db.connect() as c:
+        b = c.execute("SELECT phone, service_id FROM bookings WHERE id=?",
+                      (body.booking_id,)).fetchone()
+        if not b or b["phone"] != user.record["phone"]:
+            raise HTTPException(403, "not your booking")
+        asn = c.execute("SELECT vendor_id FROM assignments WHERE booking_id=?",
+                        (body.booking_id,)).fetchone()
+        c.execute(
+            "INSERT INTO reviews(booking_id, customer_id, vendor_id, service_id, "
+            "stars, comment, created_at) VALUES(?,?,?,?,?,?,?)",
+            (body.booking_id, user.user_id, asn["vendor_id"] if asn else None,
+             b["service_id"], body.stars, body.comment,
+             _dt.datetime.utcnow().isoformat() + "Z"))
+        # Update vendor running average
+        if asn:
+            v = c.execute("SELECT rating, completed_jobs FROM vendors WHERE id=?",
+                          (asn["vendor_id"],)).fetchone()
+            n = max(1, v["completed_jobs"])
+            new = ((v["rating"] or 5.0) * n + body.stars) / (n + 1)
+            c.execute("UPDATE vendors SET rating=? WHERE id=?",
+                      (round(new, 2), asn["vendor_id"]))
+    return {"ok": True}
+
+
+# Public — list recent reviews for a service (no auth)
+public_router = APIRouter(prefix="/api", tags=["reviews"])
+
+
+@public_router.get("/reviews/{service_id}")
+def list_reviews(service_id: str, limit: int = 20):
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT r.stars, r.comment, r.created_at, c.name AS customer_name "
+            "FROM reviews r LEFT JOIN customers c ON c.id = r.customer_id "
+            "WHERE r.service_id=? AND r.comment IS NOT NULL "
+            "ORDER BY r.id DESC LIMIT ?",
+            (service_id, limit)).fetchall()
+        # Aggregate stats
+        agg = c.execute(
+            "SELECT COUNT(*) AS n, AVG(stars) AS avg FROM reviews WHERE service_id=?",
+            (service_id,)).fetchone()
+    return {
+        "reviews": [dict(r) for r in rows],
+        "count": agg["n"] or 0,
+        "avg": round(agg["avg"] or 0, 2) if agg["avg"] else None
+    }

@@ -6,25 +6,109 @@
 <link rel="stylesheet" href="/widget.css">
 </head><body>
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
+  <a href="/"><img src="/logo.svg" height="36" alt="Lumora"></a>
+  <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
     <a href="/services.html">Services</a>
     <a href="/book.html">Book</a>
-    <a href="/me.html">My account</a>
+    <a href="/me.html" class="active" style="color:var(--primary)">My account</a>
   </div>
   <div class="nav-cta">
+    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Theme &amp; font">⚙️</button>
+    <div class="lang-flags" role="group" aria-label="Language">
+      <button data-lang="en" title="English">🇬🇧</button>
+      <button data-lang="ar" title="العربية">🇦🇪</button>
+      <button data-lang="hi" title="हिन्दी">🇮🇳</button>
+      <button data-lang="tl" title="Filipino">🇵🇭</button>
+    </div>
+    <select class="lang-pick" hidden></select>
     <span id="who" style="font-size:13px;color:var(--muted)"></span>
     <button class="btn btn-ghost" onclick="logout()">Sign out</button>
   </div>
 </div></nav>
 
 <section><div class="container">
-  <h2 style="margin:0 0 8px">My bookings</h2>
-  <p class="sub">Past + upcoming services, quotes, invoices.</p>
-  <div style="margin-bottom:16px"><a class="btn btn-primary" href="/book.html">Book another service</a></div>
-  <div id="list"><div class="skel-card"><div class="skel skel-line" style="width:40%;height:18px"></div><div class="skel skel-line" style="width:60%"></div><div class="skel skel-line" style="width:30%"></div></div><div class="skel-card"><div class="skel skel-line" style="width:40%;height:18px"></div><div class="skel skel-line" style="width:60%"></div><div class="skel skel-line" style="width:30%"></div></div><div class="skel-card"><div class="skel skel-line" style="width:40%;height:18px"></div><div class="skel skel-line" style="width:60%"></div><div class="skel skel-line" style="width:30%"></div></div></div>
+  <!-- Tabs -->
+  <div style="display:flex;gap:6px;margin-bottom:18px;background:var(--bg);padding:4px;border-radius:10px;width:fit-content">
+    <button class="btn btn-primary" id="t-bookings-btn" onclick="setTab('bookings')">📋 My bookings</button>
+    <button class="btn btn-ghost" id="t-addresses-btn" onclick="setTab('addresses')">📍 Saved addresses</button>
+    <button class="btn btn-ghost" id="t-profile-btn" onclick="setTab('profile')">👤 Profile</button>
+  </div>
+
+  <!-- Bookings tab -->
+  <div id="t-bookings">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
+      <div>
+        <h2 style="margin:0">My bookings</h2>
+        <p style="margin:4px 0 0;color:var(--muted)" id="live-status">🟢 Live updates on</p>
+      </div>
+      <a class="btn btn-primary" href="/book.html">+ Book another</a>
+    </div>
+    <div id="list">
+      <div class="skel-card"><div class="skel skel-line" style="width:40%;height:18px"></div><div class="skel skel-line" style="width:60%"></div></div>
+      <div class="skel-card"><div class="skel skel-line" style="width:40%;height:18px"></div><div class="skel skel-line" style="width:60%"></div></div>
+    </div>
+  </div>
+
+  <!-- Saved addresses tab -->
+  <div id="t-addresses" style="display:none">
+    <h2>Saved addresses</h2>
+    <p class="sub">For one-tap booking next time. Mark one as default.</p>
+    <div id="addr-list" style="margin-bottom:18px"></div>
+    <div class="form" style="max-width:480px">
+      <h4 style="margin:0 0 12px">Add new address</h4>
+      <label>Label (e.g. Home, Office)</label>
+      <input id="ad-label" placeholder="Home">
+      <label>Area / Emirate</label>
+      <input id="ad-area" placeholder="Dubai Marina">
+      <label>Full address</label>
+      <textarea id="ad-address" placeholder="Tower / villa, apartment, street, area"></textarea>
+      <label style="display:flex;gap:6px;align-items:center;margin-top:10px;font-weight:normal">
+        <input type="checkbox" id="ad-default"> Set as default
+      </label>
+      <button class="btn btn-primary btn-block" type="button" onclick="addAddress()" style="margin-top:12px">Save address</button>
+    </div>
+  </div>
+
+  <!-- Profile tab -->
+  <div id="t-profile" style="display:none">
+    <h2>Profile</h2>
+    <p class="sub">We use this to personalise your bookings + send updates.</p>
+    <div class="form" style="max-width:480px">
+      <label>Full name</label>
+      <input id="pf-name">
+      <label>Email (optional)</label>
+      <input id="pf-email" type="email" placeholder="you@example.com">
+      <label>Phone</label>
+      <input id="pf-phone" disabled style="opacity:0.6">
+      <small style="color:var(--muted)">Phone can't be changed (it's your login). Contact support.</small>
+      <label style="margin-top:10px">Preferred language</label>
+      <select id="pf-lang">
+        <option value="en">English</option>
+        <option value="ar">العربية</option>
+        <option value="hi">हिन्दी</option>
+        <option value="tl">Filipino</option>
+      </select>
+      <button class="btn btn-primary btn-block" type="button" onclick="saveProfile()" style="margin-top:14px">Save profile</button>
+      <p id="pf-msg" style="margin-top:10px;color:var(--primary);font-size:13px;min-height:18px"></p>
+    </div>
+  </div>
 </div></section>
 
+<!-- Modal for cancel + reschedule + review -->
+<div id="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeModal()">
+  <div id="modal" style="background:var(--surface);color:var(--text);border-radius:16px;padding:24px;max-width:480px;width:90%;max-height:90vh;overflow:auto"></div>
+</div>
+
+<nav class="mobile-nav"><div class="mobile-nav-inner">
+  <a href="/"><span class="ico">🏠</span><span>Home</span></a>
+  <a href="/services.html"><span class="ico">📋</span><span>Services</span></a>
+  <a href="/book.html"><span class="ico">➕</span><span>Book</span></a>
+  <a href="/me.html" class="active"><span class="ico">👤</span><span>Account</span></a>
+  <a href="#" onclick="document.querySelector('.us-launcher').click();return false"><span class="ico">💬</span><span>Chat</span></a>
+</div></nav>
+
+<script src="/theme.js"></script>
 <script src="/app.js"></script>
 <script>
 const TOK = "lumora.user.tok";
@@ -32,21 +116,37 @@ const UTYPE = "lumora.user.type";
 const tok = localStorage.getItem(TOK);
 if (!tok || localStorage.getItem(UTYPE) !== "customer") location.replace("/login.html");
 
-async function authd(path, opts={}) {
-  return api(path, { ...opts, headers: { ...(opts.headers||{}), Authorization: "Bearer "+tok } });
+async function authd(p, o={}) {
+  return api(p, {...o, headers:{...(o.headers||{}), Authorization:"Bearer "+tok}});
 }
 function logout() {
-  authd("/api/auth/logout", { method:"POST" }).catch(()=>{});
+  authd("/api/auth/logout", {method:"POST"}).catch(()=>{});
   localStorage.removeItem(TOK); localStorage.removeItem(UTYPE);
   location.replace("/");
 }
 
+let _user = null;
 (async () => {
   try {
     const m = await authd("/api/me");
-    document.getElementById("who").textContent = m.user.phone || "";
+    _user = m.user;
+    document.getElementById("who").textContent = _user.phone || "";
   } catch (e) { logout(); return; }
+  loadBookings();
+  // Live polling every 20s
+  setInterval(loadBookings, 20000);
+})();
 
+function setTab(t) {
+  for (const x of ["bookings","addresses","profile"]) {
+    document.getElementById("t-"+x).style.display = (x===t ? "" : "none");
+    document.getElementById("t-"+x+"-btn").className = "btn " + (x===t ? "btn-primary" : "btn-ghost");
+  }
+  if (t==="addresses") loadAddresses();
+  if (t==="profile") loadProfile();
+}
+
+async function loadBookings() {
   try {
     const r = await authd("/api/me/bookings");
     const list = document.getElementById("list");
@@ -55,81 +155,205 @@ function logout() {
         No bookings yet. <a href="/book.html">Book your first service →</a></div>`;
       return;
     }
-    list.innerHTML = r.bookings.map(b => render(b)).join("");
-  } catch (e) {
-    document.getElementById("list").innerHTML = "Error: "+e.message;
-  }
-})();
+    list.innerHTML = r.bookings.map(renderBooking).join("");
+  } catch (e) { document.getElementById("list").innerHTML = "Error: "+e.message; }
+}
 
-function render(b) {
+function renderBooking(b) {
   const a = b.assignment || {};
+  const status = b.status;
+  const isLive = status === "in_progress";
+  const canCancel = !["completed","cancelled","in_progress"].includes(status);
+  const canReschedule = canCancel;
+  const canReview = status === "completed" && a.vendor_id;
+
   const quotes = (b.quotes || []).map(q => `
-    <tr>
-      <td>${q.id}</td>
-      <td>${q.total} ${q.currency}</td>
-      <td><span class="badge ${q.status==='signed'?'signed':'pending'}">${q.status}</span></td>
-      <td><a class="btn btn-ghost" href="/quote.html?id=${q.id}">${q.status==='signed'?'View':'Sign'}</a></td>
-    </tr>`).join("");
+    <tr><td>${q.id}</td><td>${q.total} ${q.currency}</td>
+        <td><span class="badge ${q.status==='signed'?'signed':'pending'}">${q.status}</span></td>
+        <td><a class="btn btn-ghost" style="font-size:11px;padding:4px 10px" href="/quote.html?id=${q.id}">${q.status==='signed'?'View':'Sign'}</a></td></tr>`).join("");
   const invs = (b.invoices || []).map(i => `
-    <tr>
-      <td>${i.id}</td>
-      <td>${i.amount} ${i.currency}</td>
-      <td><span class="badge ${i.payment_status}">${i.payment_status}</span></td>
-      <td>${i.payment_status === 'paid'
-            ? '<span style="color:#065F46">✓ Paid</span>'
-            : `<a class="btn btn-primary" href="${i.payment_url}">Pay now</a>`}</td>
-    </tr>`).join("");
-  const vendorBlock = a.vendor_id ? `
-    <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">
-      <b>Your Lumora cleaner is assigned</b> (${(a.vendor_rating||5).toFixed(1)} ★ rated)
-      • Status: <span class="badge ${a.status}">${a.status}</span>
-    </p>` : `<p style="margin:10px 0 0;font-size:13px;color:#92400E">⏳ Confirming your booking — your cleaner will be assigned shortly.</p>`;
-  const rateBlock = (b.status === 'completed' && a.vendor_id) ? `
-    <div style="margin-top:10px">
-      <button class="btn btn-ghost" onclick="rate('${b.id}', 5)">★★★★★</button>
-      <button class="btn btn-ghost" onclick="rate('${b.id}', 4)">★★★★</button>
-      <button class="btn btn-ghost" onclick="rate('${b.id}', 3)">★★★</button>
-    </div>` : '';
+    <tr><td>${i.id}</td><td>${i.amount} ${i.currency}</td>
+        <td><span class="badge ${i.payment_status}">${i.payment_status}</span></td>
+        <td>${i.payment_status === 'paid' ? '✓' : `<a class="btn btn-primary" style="font-size:11px;padding:4px 10px" href="${i.payment_url}">Pay</a>`}</td></tr>`).join("");
+
+  const cleanerLine = a.vendor_id
+    ? `<p style="margin:10px 0 0;font-size:13px;color:var(--muted)">
+         <b>Your Lumora cleaner is assigned</b> (${(a.vendor_rating||5).toFixed(1)} ★ rated)
+         • Status: <span class="badge ${a.status||'assigned'}">${a.status||'assigned'}</span>
+       </p>`
+    : `<p style="margin:10px 0 0;font-size:13px;color:#92400E">⏳ Confirming your booking — your cleaner will be assigned shortly</p>`;
+
+  const isRecurringChip = b.recurring ? `<span class="tbadge gold" style="margin-inline-start:6px">🔁 ${b.recurring}</span>` : "";
+
   return `
-    <div class="form" style="margin-bottom:18px">
+    <div class="form" style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
         <div>
-          <h3 style="margin:0">${b.id} — ${b.service_id.replace(/_/g,' ')}</h3>
-          <div style="color:var(--muted);font-size:13px">${b.target_date} at ${b.time_slot} • ${escapeHtml(b.address)}</div>
+          <h3 style="margin:0">${b.id} — ${b.service_id.replace(/_/g,' ')}${isRecurringChip}</h3>
+          <div style="color:var(--muted);font-size:13px">📅 ${b.target_date} at ${b.time_slot} • 📍 ${escapeHtml(b.address)}</div>
         </div>
-        <span class="badge ${b.status}">${b.status}</span>
+        <div style="text-align:end">
+          <span class="badge ${status}" ${isLive?'style="animation:pulse 1.5s infinite"':''}>${status}</span>
+          ${b.estimated_total?`<div style="font-weight:700;margin-top:4px">${b.estimated_total} ${b.currency||'AED'}</div>`:''}
+        </div>
       </div>
-      ${vendorBlock}
-      ${b.estimated_total ? `<p style="margin:10px 0 0">Estimated: <b>${b.estimated_total} ${b.currency||'AED'}</b></p>` : ''}
-      ${quotes ? `<h4 style="margin:14px 0 4px;font-size:14px">Quotes</h4>
-        <table class="list"><thead><tr><th>ID</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>${quotes}</tbody></table>` : ''}
-      ${invs ? `<h4 style="margin:14px 0 4px;font-size:14px">Invoices</h4>
-        <table class="list"><thead><tr><th>ID</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>${invs}</tbody></table>` : ''}
-      ${rateBlock}
+      ${cleanerLine}
+      ${quotes ? `<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--muted);font-size:13px">📄 Quotes (${b.quotes.length})</summary>
+        <table class="list" style="margin-top:6px;font-size:13px"><tbody>${quotes}</tbody></table></details>` : ''}
+      ${invs ? `<details style="margin-top:6px"><summary style="cursor:pointer;color:var(--muted);font-size:13px">💳 Invoices (${b.invoices.length})</summary>
+        <table class="list" style="margin-top:6px;font-size:13px"><tbody>${invs}</tbody></table></details>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">
+        <a class="btn btn-ghost" style="font-size:12px" href="/api/booking/${b.id}/calendar.ics">📅 Add to calendar</a>
+        ${canReschedule ? `<button class="btn btn-ghost" style="font-size:12px" onclick="openReschedule('${b.id}', '${b.target_date}', '${b.time_slot}')">📆 Reschedule</button>` : ''}
+        ${canCancel ? `<button class="btn btn-ghost" style="font-size:12px;color:#DC2626" onclick="openCancel('${b.id}')">✕ Cancel</button>` : ''}
+        ${canReview ? `<button class="btn btn-primary" style="font-size:12px" onclick="openReview('${b.id}')">⭐ Leave review</button>` : ''}
+        <a class="btn btn-ghost" style="font-size:12px;color:#25D366" href="https://wa.me/${(window.LUMORA_BRAND&&window.LUMORA_BRAND.whatsapp||'971564020087').replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Hi, regarding my booking '+b.id)}" target="_blank">📲 WhatsApp us</a>
+      </div>
     </div>`;
 }
 
-async function rate(bid, stars) {
+window.openCancel = (bid) => {
+  showModal(`
+    <h3 style="margin:0 0 8px">Cancel booking ${bid}?</h3>
+    <p style="color:var(--muted);font-size:13px">Free up to 4 hours before your slot. Within 4 hours, 50% charge applies.</p>
+    <label style="font-size:12px;color:var(--muted);margin-top:8px;display:block">Reason (optional, helps us improve)</label>
+    <textarea id="cancel-reason" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;min-height:60px"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeModal()">Keep booking</button>
+      <button class="btn btn-primary" style="background:#DC2626" onclick="confirmCancel('${bid}')">Cancel booking</button>
+    </div>`);
+};
+window.confirmCancel = async (bid) => {
   try {
-    await authd("/api/me/booking/"+bid+"/rate", { method:"POST", body:{ stars } });
-    alert("Thanks for your rating!");
-    location.reload();
+    await authd(`/api/me/booking/${bid}/cancel`, {method:"POST", body:{reason: document.getElementById("cancel-reason").value || null}});
+    closeModal(); loadBookings();
   } catch(e) { alert("Error: "+e.message); }
+};
+
+window.openReschedule = (bid, curDate, curTime) => {
+  showModal(`
+    <h3 style="margin:0 0 8px">Reschedule ${bid}</h3>
+    <p style="color:var(--muted);font-size:13px">Free up to 2 hours before your current slot.</p>
+    <label>Date</label>
+    <input id="rs-date" type="date" value="${curDate}" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px">
+    <label>Time</label>
+    <select id="rs-time" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px">
+      ${["08:00","10:00","12:00","14:00","16:00","18:00"].map(t => `<option ${t===curTime?'selected':''}>${t}</option>`).join("")}
+    </select>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmReschedule('${bid}')">Reschedule</button>
+    </div>`);
+};
+window.confirmReschedule = async (bid) => {
+  try {
+    await authd(`/api/me/booking/${bid}/reschedule`, {method:"POST", body:{
+      target_date: document.getElementById("rs-date").value,
+      time_slot: document.getElementById("rs-time").value
+    }});
+    closeModal(); loadBookings();
+  } catch(e) { alert("Error: "+e.message); }
+};
+
+window.openReview = (bid) => {
+  showModal(`
+    <h3 style="margin:0 0 8px">How was your service?</h3>
+    <div id="stars" style="font-size:36px;color:#F59E0B;cursor:pointer;text-align:center;margin:14px 0">
+      ${[1,2,3,4,5].map(n => `<span data-star="${n}" onclick="pickStar(${n})">★</span>`).join("")}
+    </div>
+    <label>Comment (optional)</label>
+    <textarea id="rev-comment" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;min-height:80px"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmReview('${bid}')">Submit review</button>
+    </div>`);
+  pickStar(5);
+};
+let _stars = 5;
+window.pickStar = (n) => {
+  _stars = n;
+  document.querySelectorAll("#stars [data-star]").forEach(s =>
+    s.style.opacity = (parseInt(s.dataset.star) <= n) ? "1" : "0.3");
+};
+window.confirmReview = async (bid) => {
+  try {
+    await authd("/api/me/review", {method:"POST", body:{
+      booking_id: bid, stars: _stars,
+      comment: document.getElementById("rev-comment").value || null
+    }});
+    closeModal(); loadBookings();
+  } catch(e) { alert("Error: "+e.message); }
+};
+
+// ---- Saved addresses ----
+async function loadAddresses() {
+  const r = await authd("/api/me/addresses");
+  const wrap = document.getElementById("addr-list");
+  if (!r.addresses.length) {
+    wrap.innerHTML = '<div class="form" style="color:var(--muted);text-align:center">No saved addresses yet — add your first below.</div>';
+    return;
+  }
+  wrap.innerHTML = r.addresses.map(a => `
+    <div class="form" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div>
+        <div style="font-weight:600">${escapeHtml(a.label || "Untitled")} ${a.is_default?'<span class="badge confirmed" style="margin-inline-start:4px">default</span>':''}</div>
+        <div style="font-size:13px;color:var(--muted)">${escapeHtml(a.address)}</div>
+        ${a.area?`<div style="font-size:12px;color:var(--muted)">📍 ${escapeHtml(a.area)}</div>`:''}
+      </div>
+      <button class="btn btn-ghost" style="color:#DC2626" onclick="delAddress(${a.id})">Delete</button>
+    </div>`).join("");
 }
+window.addAddress = async () => {
+  const body = {
+    label: document.getElementById("ad-label").value || null,
+    address: document.getElementById("ad-address").value.trim(),
+    area: document.getElementById("ad-area").value || null,
+    is_default: document.getElementById("ad-default").checked,
+  };
+  if (!body.address) { alert("Address is required"); return; }
+  try {
+    await authd("/api/me/addresses", {method:"POST", body});
+    document.getElementById("ad-label").value = "";
+    document.getElementById("ad-area").value = "";
+    document.getElementById("ad-address").value = "";
+    document.getElementById("ad-default").checked = false;
+    loadAddresses();
+  } catch(e) { alert("Error: "+e.message); }
+};
+window.delAddress = async (id) => {
+  if (!confirm("Delete this address?")) return;
+  await authd("/api/me/addresses/"+id, {method:"DELETE"});
+  loadAddresses();
+};
+
+// ---- Profile ----
+async function loadProfile() {
+  document.getElementById("pf-name").value = _user.name || "";
+  document.getElementById("pf-email").value = _user.email || "";
+  document.getElementById("pf-phone").value = _user.phone || "";
+  document.getElementById("pf-lang").value = _user.language || "en";
+}
+window.saveProfile = async () => {
+  try {
+    await authd("/api/me/profile", {method:"POST", body:{
+      name: document.getElementById("pf-name").value || null,
+      email: document.getElementById("pf-email").value || null,
+      language: document.getElementById("pf-lang").value || null,
+    }});
+    document.getElementById("pf-msg").textContent = "✓ Saved";
+    _user.name = document.getElementById("pf-name").value;
+    _user.email = document.getElementById("pf-email").value;
+    setTimeout(() => document.getElementById("pf-msg").textContent = "", 3000);
+  } catch(e) { document.getElementById("pf-msg").style.color = "#DC2626"; document.getElementById("pf-msg").textContent = "Error: "+e.message; }
+};
+
+function showModal(html) {
+  document.getElementById("modal-bg").style.display = "flex";
+  document.getElementById("modal").innerHTML = html;
+}
+window.closeModal = () => { document.getElementById("modal-bg").style.display = "none"; };
 
 function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 </script>
 <script src="/widget.js"></script>
-<script src="/theme.js"></script>
-
-<nav class="mobile-nav" aria-label="Primary mobile">
-  <div class="mobile-nav-inner">
-    <a href="/"           data-mobnav="home"><span class="ico">🏠</span><span>Home</span></a>
-    <a href="/services.html" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
-    <a href="/book.html"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
-    <a href="/me.html"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
-    <a href="#" onclick="document.querySelector('.us-launcher').click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
-  </div>
-</nav>
-
 </body></html>

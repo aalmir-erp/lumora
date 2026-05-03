@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(admin.router)
 app.include_router(portal.router)
 app.include_router(portal_v2.router)
+app.include_router(portal_v2.public_router)
 app.include_router(whatsapp.router)
 
 

@@ -187,6 +187,35 @@ CREATE TABLE IF NOT EXISTS auth_sessions (
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_auth_user ON auth_sessions(user_type, user_id);
+
+CREATE TABLE IF NOT EXISTS saved_addresses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL,
+    label TEXT,
+    address TEXT NOT NULL,
+    area TEXT,
+    is_default INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_addr_customer ON saved_addresses(customer_id);
+
+CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    booking_id TEXT NOT NULL,
+    customer_id INTEGER,
+    vendor_id INTEGER,
+    service_id TEXT NOT NULL,
+    stars INTEGER NOT NULL,
+    comment TEXT,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id),
+    FOREIGN KEY (customer_id) REFERENCES customers(id),
+    FOREIGN KEY (vendor_id) REFERENCES vendors(id)
+);
+CREATE INDEX IF NOT EXISTS idx_reviews_service ON reviews(service_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_vendor ON reviews(vendor_id);
+
 """
 
 
@@ -200,6 +229,10 @@ def init_db() -> None:
             "ALTER TABLE vendor_services ADD COLUMN sla_hours INTEGER DEFAULT 24",
             "ALTER TABLE vendor_services ADD COLUMN active INTEGER DEFAULT 1",
             "ALTER TABLE vendor_services ADD COLUMN notes TEXT",
+            "ALTER TABLE bookings ADD COLUMN recurring TEXT",
+            "ALTER TABLE bookings ADD COLUMN photos_json TEXT",
+            "ALTER TABLE bookings ADD COLUMN cancelled_at TEXT",
+            "ALTER TABLE bookings ADD COLUMN cancellation_reason TEXT",
         ):
             try:
                 c.execute(stmt)
