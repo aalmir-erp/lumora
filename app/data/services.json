@@ -1574,6 +1574,133 @@
         "emirate",
         "property_address"
       ]
+    },
+    {
+      "id": "mobile_repair",
+      "name": "Mobile Phone Repair",
+      "category": "Tech & Appliance",
+      "icon": "wrench",
+      "description": "Same-day mobile screen, battery, charging port, water damage and software repair — at your home or office.",
+      "starting_price": 80,
+      "duration_label": "30-90 minutes",
+      "team_label": "1 certified technician",
+      "includes": ["On-site diagnosis", "Genuine or OEM parts", "90-day repair warranty", "Data preservation"],
+      "excludes": ["Cost of replacement parts", "Logic-board level repair (sent to lab)"],
+      "benefits": ["No driving to a mall", "Pay only after the fix works", "OEM parts where available", "90-day warranty"],
+      "intake": ["device_make (Apple/Samsung/Huawei/Xiaomi/OnePlus/Other)", "device_model", "issue (cracked_screen/battery/charging_port/no_power/water_damage/software/other)", "preferred_date", "time_slot", "emirate", "property_address"],
+      "addons": [
+        { "id": "screen_protector", "name": "Screen protector + apply", "price": 35, "icon": "📱" },
+        { "id": "rush_2h", "name": "Rush — within 2 hours", "price": 60, "icon": "⚡" }
+      ]
+    },
+    {
+      "id": "laptop_repair",
+      "name": "Laptop Repair",
+      "category": "Tech & Appliance",
+      "icon": "wrench",
+      "description": "Laptop screen, keyboard, battery, fan, SSD upgrade, OS reinstall and virus removal — on-site.",
+      "starting_price": 150,
+      "duration_label": "45-120 minutes",
+      "team_label": "1 certified technician",
+      "includes": ["On-site diagnosis", "Major brands serviced (Apple, Dell, HP, Lenovo, Asus)", "30-day repair warranty", "Data backup before any reinstall"],
+      "excludes": ["Cost of replacement parts (quoted before repair)", "Liquid-damage logic-board repair"],
+      "benefits": ["Avoid losing your work device for days", "Backup-first policy", "Genuine OEM parts", "Free diagnostic if you choose not to repair"],
+      "intake": ["laptop_make (Apple/Dell/HP/Lenovo/Asus/Acer/Other)", "laptop_model", "issue (screen/keyboard/battery/fan_overheating/slow/wont_boot/virus/upgrade_ram_or_ssd/other)", "preferred_date", "time_slot", "emirate", "property_address"],
+      "addons": [
+        { "id": "ssd_upgrade", "name": "SSD upgrade install (drive cost extra)", "price": 80, "icon": "💾" },
+        { "id": "data_recovery", "name": "Data recovery attempt", "price": 250, "icon": "🗄️" }
+      ]
+    },
+    {
+      "id": "washing_machine_repair",
+      "name": "Washing Machine Repair",
+      "category": "Tech & Appliance",
+      "icon": "wrench",
+      "description": "Front-load and top-load washer repair — drum, motor, drain pump, electronic board, water inlet, door lock.",
+      "starting_price": 120,
+      "duration_label": "1-3 hours",
+      "team_label": "1 appliance technician",
+      "includes": ["On-site diagnosis", "Major brands (Bosch, LG, Samsung, Siemens, Whirlpool)", "30-day labour warranty", "Disposal of old parts"],
+      "excludes": ["Replacement parts cost (quoted upfront)", "Plumbing alterations beyond connection"],
+      "benefits": ["Avoid replacing a 5-year-old machine for a small fault", "Same-day available", "Branded spare parts"],
+      "intake": ["machine_make (Bosch/LG/Samsung/Siemens/Whirlpool/Other)", "type (front_load/top_load)", "issue (not_starting/no_drain/no_spin/leaking/noisy/error_code/other)", "preferred_date", "time_slot", "emirate", "property_address"],
+      "addons": [
+        { "id": "drum_clean", "name": "Drum deep clean + descale", "price": 50, "icon": "🌀" }
+      ]
+    },
+    {
+      "id": "fridge_repair",
+      "name": "Refrigerator Repair",
+      "category": "Tech & Appliance",
+      "icon": "wrench",
+      "description": "Fridge & freezer repair — compressor, gas refill, thermostat, defrost, water dispenser, ice maker.",
+      "starting_price": 150,
+      "duration_label": "1-2 hours",
+      "team_label": "1 appliance technician",
+      "includes": ["On-site diagnosis", "Gas top-up where required", "30-day labour warranty", "Brands: LG, Samsung, Bosch, Hitachi, Panasonic, Beko"],
+      "excludes": ["Replacement compressor cost (quoted upfront)"],
+      "benefits": ["Don't lose AED 800 of groceries to a small fault", "Most repairs done same-day", "Gas refill done in-place"],
+      "intake": ["fridge_make (LG/Samsung/Bosch/Hitachi/Panasonic/Beko/Other)", "type (single_door/double_door/side_by_side/french_door)", "issue (not_cooling/freezer_only/water_leak/noisy/ice_maker/water_dispenser/other)", "preferred_date", "time_slot", "emirate", "property_address"]
+    },
+    {
+      "id": "dishwasher_repair",
+      "name": "Dishwasher Repair",
+      "category": "Tech & Appliance",
+      "icon": "wrench",
+      "description": "Dishwasher repair & maintenance — pump, spray arms, heating element, salt/rinse-aid system, door seal.",
+      "starting_price": 130,
+      "duration_label": "1-2 hours",
+      "team_label": "1 appliance technician",
+      "includes": ["On-site diagnosis", "Brands: Bosch, Siemens, Miele, LG, Samsung", "30-day labour warranty"],
+      "excludes": ["Replacement parts cost"],
+      "benefits": ["Don't hand-wash for a week — fixed today", "Quiet and energy-efficient again", "Manufacturer-quality parts"],
+      "intake": ["dishwasher_make (Bosch/Siemens/Miele/LG/Samsung/Other)", "issue (not_starting/no_water/not_draining/poor_cleaning/leaking/error_code/other)", "preferred_date", "time_slot", "emirate", "property_address"]
+    },
+    {
+      "id": "oven_microwave_repair",
+      "name": "Oven & Microwave Repair",
+      "category": "Tech & Appliance",
+      "icon": "wrench",
+      "description": "Built-in oven, gas hob, electric hob, microwave and combi oven repair — on-site.",
+      "starting_price": 130,
+      "duration_label": "1-2 hours",
+      "team_label": "1 appliance technician",
+      "includes": ["On-site diagnosis", "Gas-line safety check", "30-day labour warranty", "Brands: Bosch, Siemens, Whirlpool, AEG, Miele, LG"],
+      "excludes": ["Gas-network alterations (DEWA/SEWA-approved contractor required)"],
+      "benefits": ["Cook again tonight, not next week", "Branded parts only", "Gas-safety checked"],
+      "intake": ["appliance (built_in_oven/gas_hob/electric_hob/microwave/combi_oven)", "make_model", "issue (not_heating/door/thermostat/fan/light/clock/other)", "preferred_date", "time_slot", "emirate", "property_address"]
+    },
+    {
+      "id": "water_heater_repair",
+      "name": "Water Heater Repair / Install",
+      "category": "Tech & Appliance",
+      "icon": "wrench",
+      "description": "Geyser & water-heater repair, descaling, thermostat replacement, leak fix, full install of new unit.",
+      "starting_price": 100,
+      "duration_label": "1-3 hours",
+      "team_label": "1 plumber-electrician",
+      "includes": ["On-site diagnosis", "Element + thermostat brands stocked", "Power isolation + safe drain"],
+      "excludes": ["Cost of new heater unit (we can supply on request)"],
+      "benefits": ["Hot water restored same-day", "Descaling extends heater life by years", "Insurance-covered work"],
+      "intake": ["heater_type (storage_geyser/instant/central)", "issue (no_hot_water/leak/tripping_breaker/insufficient_hot_water/install_new/replace_unit)", "preferred_date", "time_slot", "emirate", "property_address"]
+    },
+    {
+      "id": "tv_setup",
+      "name": "Smart TV Mount &amp; Setup",
+      "category": "Tech & Appliance",
+      "icon": "wrench",
+      "description": "TV wall mounting, soundbar install, Apple TV / Fire Stick setup, OSN/beIN/Netflix configuration, cable hide.",
+      "starting_price": 150,
+      "duration_label": "1-2 hours",
+      "team_label": "1 AV technician",
+      "includes": ["Wall mounting (bracket cost extra if not provided)", "All cables connected", "Apps logged in", "Cable hiding (in-wall conduit if available)"],
+      "excludes": ["Drilling into reinforced/structural walls without landlord NOC"],
+      "benefits": ["No tangled cables, no trial-and-error setup", "OSN/beIN/Netflix all configured for you", "Soundbar paired and tuned"],
+      "intake": ["tv_size_inches", "wall_type (drywall/concrete/wood)", "scope (mount_only/mount+setup/setup_only/soundbar/streaming_box)", "preferred_date", "time_slot", "emirate", "property_address"],
+      "addons": [
+        { "id": "bracket_full_motion", "name": "Full-motion wall bracket (supply + install)", "price": 180, "icon": "📺" },
+        { "id": "cable_conduit", "name": "In-wall cable conduit (≤2m)", "price": 120, "icon": "🔌" }
+      ]
     }
   ],
   "areas_served": [

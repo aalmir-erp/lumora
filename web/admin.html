@@ -197,8 +197,41 @@ function show(tab) {
   if (tab==="whatsapp")  loadWA();
 }
 async function adm(path, opts={}) {
-  return api(path, { ...opts, headers: { "Authorization": "Bearer "+TOK, ...(opts.headers||{}) }});
+  try {
+    return await api(path, { ...opts, headers: { "Authorization": "Bearer "+TOK, ...(opts.headers||{}) }});
+  } catch (e) {
+    console.error("[admin]", path, e);
+    // Surface in a toast so admin sees WHY a section is blank instead of just blankness.
+    const msg = (e && e.message) || String(e);
+    if (msg.includes("403") || msg.includes("Invalid admin")) {
+      toast("⚠ Token rejected. Sign in again.", true);
+      setTimeout(() => { localStorage.removeItem(KEY); location.reload(); }, 1500);
+    } else if (msg.includes("401")) {
+      toast("⚠ Not authenticated. Sign in again.", true);
+    } else {
+      toast("⚠ " + path + ": " + msg, true);
+    }
+    throw e;
+  }
 }
+
+// Top-right toast helper used by adm() above so errors surface, not silent.
+function toast(text, isError) {
+  let t = document.getElementById("admin-toast");
+  if (!t) {
+    t = document.createElement("div"); t.id = "admin-toast";
+    t.style.cssText = "position:fixed;top:16px;right:16px;z-index:9999;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.18);transition:opacity .3s";
+    document.body.appendChild(t);
+  }
+  t.style.background = isError ? "#FEE2E2" : "#ECFDF5";
+  t.style.color = isError ? "#991B1B" : "#065F46";
+  t.style.border = isError ? "1px solid #FCA5A5" : "1px solid #6EE7B7";
+  t.style.opacity = "1";
+  t.textContent = text;
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(() => { t.style.opacity = "0"; }, 4500);
+}
+window.toast = toast;
 
 document.getElementById("login-btn").onclick = async () => {
   TOK = document.getElementById("tok").value.trim();
@@ -219,7 +252,15 @@ async function boot() {
 }
 
 async function loadDash() {
-  const s = await adm("/api/admin/stats");
+  // Loading placeholder so blank screen doesn't appear during fetch
+  const k = document.getElementById("kpis");
+  if (k) k.innerHTML = '<div style="grid-column:1/-1;padding:20px;color:var(--muted);text-align:center">Loading dashboard…</div>';
+  let s;
+  try { s = await adm("/api/admin/stats"); }
+  catch (e) {
+    if (k) k.innerHTML = `<div style="grid-column:1/-1;padding:24px;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:12px;color:#991B1B"><b>Couldn't load dashboard.</b><br>${(e.message||e).toString().replace(/[<>]/g,'')}<br><small>Try logging out and back in. Token expired or invalid.</small></div>`;
+    return;
+  }
   // 14-day bookings series for sparkline
   let series = await adm("/api/admin/bookings?limit=300").then(r => r.bookings).catch(() => []);
   const byDay = {};
@@ -714,7 +755,7 @@ window.confirmAddVendor = async function(sid) {
 };
 window.closeModal = () => { document.getElementById("modal-bg").style.display = "none"; };
 
-function toast(msg) {
+function _toastBottom(msg) {
   const t = document.createElement("div");
   t.textContent = msg;
   t.style.cssText = "position:fixed;bottom:24px;right:24px;background:#0F766E;color:#fff;padding:10px 18px;border-radius:8px;z-index:2000;box-shadow:0 8px 24px rgba(0,0,0,.2);font-size:14px";

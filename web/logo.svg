@@ -1,29 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" width="260" height="64" role="img" aria-label="Lumora">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80" role="img" aria-label="Lumora logo">
   <defs>
-    <radialGradient id="bg2" cx="0.45" cy="0.45" r="0.65">
-      <stop offset="0%" stop-color="#14B8A6"/>
-      <stop offset="100%" stop-color="#0F766E"/>
+    <linearGradient id="lm-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#0F766E"/>
+      <stop offset="55%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <radialGradient id="lm-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FCD34D" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FCD34D" stop-opacity="0"/>
     </radialGradient>
   </defs>
-
-  <!-- mark: rounded square containing a mini Lumi face -->
-  <g transform="translate(6 6)">
-    <rect width="52" height="52" rx="14" fill="url(#bg2)"/>
-    <!-- bandana -->
-    <path d="M11 22 Q11 12 26 12 Q41 12 41 22 Q41 19 38 17 Q33 12 26 12 Q19 12 14 17 Q11 19 11 22 Z" fill="#FAFAFA"/>
-    <!-- face -->
-    <circle cx="26" cy="29" r="13" fill="#FCD34D"/>
-    <circle cx="22" cy="29" r="1.6" fill="#0F172A"/>
-    <circle cx="30" cy="29" r="1.6" fill="#0F172A"/>
-    <path d="M21 33 Q26 37 31 33" stroke="#0F172A" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-    <!-- pulsing sparkle -->
-    <circle cx="42" cy="14" r="2" fill="#F59E0B">
-      <animate attributeName="r" values="1.6;2.6;1.6" dur="2.4s" repeatCount="indefinite"/>
-    </circle>
+  <g>
+    <rect x="8" y="8" width="64" height="64" rx="18" fill="url(#lm-grad)"/>
+    <rect x="12" y="12" width="56" height="20" rx="14" fill="#fff" opacity="0.10"/>
+    <circle cx="40" cy="42" r="22" fill="url(#lm-glow)"/>
+    <path d="M28 24 L28 52 L52 52" stroke="#FFFFFF" stroke-width="6"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <g transform="translate(54 25)">
+      <path d="M0 -8 L1.6 -1.6 L8 0 L1.6 1.6 L0 8 L-1.6 1.6 L-8 0 L-1.6 -1.6 Z" fill="#FCD34D"/>
+    </g>
+    <circle cx="56" cy="56" r="3.5" fill="#FCD34D"/>
   </g>
-
-  <text x="72" y="42" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        font-weight="700" font-size="30" fill="#0F172A" letter-spacing="-0.6">Lumora</text>
-  <circle cx="244" cy="42" r="4" fill="url(#bg2)"/>
+  <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+     font-weight="800" letter-spacing="-0.5">
+    <text x="92" y="50" font-size="38" fill="#0F172A">Lum</text>
+    <text x="170" y="50" font-size="38" fill="url(#lm-grad)">ora</text>
+    <path d="M92 60 Q180 70 250 56" stroke="url(#lm-grad)" stroke-width="2.5"
+          stroke-linecap="round" fill="none" opacity="0.85"/>
+    <text x="92" y="74" font-size="10" font-weight="600" letter-spacing="2.6"
+          fill="#475569">UAE HOME &amp; BUSINESS SERVICES</text>
+  </g>
 </svg>
