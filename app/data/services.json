@@ -283,7 +283,32 @@
       ],
       "duration_label": "2+ hours",
       "team_label": "1 trained maid",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Hourly Maid cost in UAE?",
+          "a": "Hourly Maid starts from AED 35. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does hourly maid take?",
+          "a": "Typically 2+ hours. Our crew: 1 trained maid. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Hourly Maid?",
+          "a": "Includes: General cleaning; Laundry assistance; Ironing. All materials, tools and PPE are brought by our team. Excludes: Childcare; Elderly care."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the hourly maid, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "hours_needed",
         "frequency (one-time/weekly/biweekly)",
@@ -367,7 +392,32 @@
       ],
       "duration_label": "4–8 hours",
       "team_label": "2 cleaners",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Move-In / Move-Out cost in UAE?",
+          "a": "Move-In / Move-Out starts from AED 600. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does move-in / move-out take?",
+          "a": "Typically 4–8 hours. Our crew: 2 cleaners. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Move-In / Move-Out?",
+          "a": "Includes: Everything in deep clean; Inside cabinets; Inside oven + fridge. All materials, tools and PPE are brought by our team. Excludes: Painting; Repairs."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the move-in / move-out, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "bedrooms",
         "move_type (move-in/move-out)",
@@ -444,7 +494,32 @@
       ],
       "duration_label": "3+ hours per visit",
       "team_label": "1-3 cleaners (size-based)",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Office Cleaning cost in UAE?",
+          "a": "Office Cleaning starts from AED 120. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does office cleaning take?",
+          "a": "Typically 3+ hours per visit. Our crew: 1-3 cleaners (size-based). You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Office Cleaning?",
+          "a": "Includes: Desks + surfaces; Floors; Pantry. All materials, tools and PPE are brought by our team. Excludes: IT equipment internals."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the office cleaning, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "office_size_sqft",
         "frequency (daily/weekly/monthly)",
@@ -519,7 +594,32 @@
       ],
       "duration_label": "4-12 hours",
       "team_label": "3 specialists",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Post-Construction cost in UAE?",
+          "a": "Post-Construction starts from AED 240. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does post-construction take?",
+          "a": "Typically 4-12 hours. Our crew: 3 specialists. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Post-Construction?",
+          "a": "Includes: Debris removal; Cement haze; Paint splatter on glass. All materials, tools and PPE are brought by our team. Excludes: Heavy waste disposal (separate quote)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the post-construction, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "property_type (apartment/villa)",
         "property_size",
@@ -600,7 +700,32 @@
       ],
       "duration_label": "1-3 hours",
       "team_label": "1-2 specialists",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Sofa & Carpet Shampoo cost in UAE?",
+          "a": "Sofa & Carpet Shampoo starts from AED 35. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does sofa & carpet shampoo take?",
+          "a": "Typically 1-3 hours. Our crew: 1-2 specialists. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Sofa & Carpet Shampoo?",
+          "a": "Includes: Pre-treatment; Hot water extraction; Deodorizing. All materials, tools and PPE are brought by our team. Excludes: Stain guarantee on set-in stains."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the sofa & carpet shampoo, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "sofa_seats_count",
         "carpet_sqft (if any)",
@@ -756,7 +881,32 @@
       ],
       "duration_label": "45 min",
       "team_label": "1-2 PPE-trained",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Disinfection & Sanitization cost in UAE?",
+          "a": "Disinfection & Sanitization starts from AED 250. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does disinfection & sanitization take?",
+          "a": "Typically 45 min. Our crew: 1-2 PPE-trained. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Disinfection & Sanitization?",
+          "a": "Includes: ULV fogging; Electrostatic spray; High-touch surface wipe. All materials, tools and PPE are brought by our team."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the disinfection & sanitization, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "property_size_sqft",
         "certificate_required (yes/no)",
@@ -803,7 +953,32 @@
       "process_steps": [],
       "duration_label": "1-2 hours",
       "team_label": "1-2 cleaners",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Window Cleaning cost in UAE?",
+          "a": "Window Cleaning starts from AED 150. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does window cleaning take?",
+          "a": "Typically 1-2 hours. Our crew: 1-2 cleaners. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Window Cleaning?",
+          "a": "Includes: Glass clean; Frame wipe; Sill clean. All materials, tools and PPE are brought by our team. Excludes: High-rise rope-access windows (separate quote)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the window cleaning, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "property_type (apartment/villa)",
         "floor_number",
@@ -886,7 +1061,32 @@
       ],
       "duration_label": "1-2 hours",
       "team_label": "1 certified technician",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Pest Control cost in UAE?",
+          "a": "Pest Control starts from AED 200. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does pest control take?",
+          "a": "Typically 1-2 hours. Our crew: 1 certified technician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Pest Control?",
+          "a": "Includes: Inspection; Treatment; 30-day warranty. All materials, tools and PPE are brought by our team. Excludes: Termite (separate package)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the pest control, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "pest_type (ants/cockroaches/bedbugs/rodents/termites/general)",
         "property_size_sqft",
@@ -933,7 +1133,32 @@
       "process_steps": [],
       "duration_label": "24 hrs (or 4 hrs express)",
       "team_label": "-",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Laundry & Ironing cost in UAE?",
+          "a": "Laundry & Ironing starts from AED 5. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does laundry & ironing take?",
+          "a": "Typically 24 hrs (or 4 hrs express). Our crew: -. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Laundry & Ironing?",
+          "a": "Includes: Wash; Iron; Fold. All materials, tools and PPE are brought by our team. Excludes: Dry-cleaning of leather/silk."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the laundry & ironing, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "wash_kg_or_items_count",
         "wash_only_or_with_iron",
@@ -980,7 +1205,32 @@
       "process_steps": [],
       "duration_label": "3+ hours",
       "team_label": "1 nanny",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Babysitting / Nanny cost in UAE?",
+          "a": "Babysitting / Nanny starts from AED 40. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does babysitting / nanny take?",
+          "a": "Typically 3+ hours. Our crew: 1 nanny. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Babysitting / Nanny?",
+          "a": "Includes: Background-checked staff; First-aid trained; Light cooking for child. All materials, tools and PPE are brought by our team. Excludes: Overnight (separate rate)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the babysitting / nanny, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "children_count",
         "children_ages",
@@ -1028,7 +1278,32 @@
       "process_steps": [],
       "duration_label": "2-4 hours",
       "team_label": "1-2 gardeners",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Gardening & Landscaping cost in UAE?",
+          "a": "Gardening & Landscaping starts from AED 150. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does gardening & landscaping take?",
+          "a": "Typically 2-4 hours. Our crew: 1-2 gardeners. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Gardening & Landscaping?",
+          "a": "Includes: Mowing; Trimming; Weeding. All materials, tools and PPE are brought by our team. Excludes: New planting (extra)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the gardening & landscaping, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "garden_size_sqm",
         "tasks (mowing/pruning/landscaping/irrigation)",
@@ -1178,7 +1453,32 @@
       ],
       "duration_label": "2-4 hours",
       "team_label": "1-2 specialists",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Kitchen Deep Clean cost in UAE?",
+          "a": "Kitchen Deep Clean starts from AED 280. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does kitchen deep clean take?",
+          "a": "Typically 2-4 hours. Our crew: 1-2 specialists. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Kitchen Deep Clean?",
+          "a": "Includes: Inside oven; Hood + filter; Inside fridge. All materials, tools and PPE are brought by our team. Excludes: Appliance repair."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the kitchen deep clean, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "kitchen_size (small/medium/large)",
         "preferred_date",
@@ -1257,7 +1557,32 @@
       ],
       "duration_label": "6-10 hours",
       "team_label": "4 cleaners",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Villa Deep Clean cost in UAE?",
+          "a": "Villa Deep Clean starts from AED 1100. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does villa deep clean take?",
+          "a": "Typically 6-10 hours. Our crew: 4 cleaners. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Villa Deep Clean?",
+          "a": "Includes: All deep clean; Garden sweep; Pool deck wipe. All materials, tools and PPE are brought by our team. Excludes: Pool water treatment."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the villa deep clean, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "villa_bedrooms",
         "floors",
@@ -1317,7 +1642,32 @@
       ],
       "duration_label": "45 min - 2 hrs",
       "team_label": "1 detailer",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Car Wash & Detail cost in UAE?",
+          "a": "Car Wash & Detail starts from AED 80. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does car wash & detail take?",
+          "a": "Typically 45 min - 2 hrs. Our crew: 1 detailer. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Car Wash & Detail?",
+          "a": "Includes: Exterior hand wash; Interior vacuum; Dashboard polish. All materials, tools and PPE are brought by our team. Excludes: Engine bay (separate package); Paint correction."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the car wash & detail, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "car_size (sedan/SUV/4x4/pickup/luxury)",
         "wash_type (exterior_only/interior+exterior/full_detail)",
@@ -1365,7 +1715,32 @@
       ],
       "duration_label": "1 hour",
       "team_label": "1 pool tech",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Swimming Pool Maintenance cost in UAE?",
+          "a": "Swimming Pool Maintenance starts from AED 250. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does swimming pool maintenance take?",
+          "a": "Typically 1 hour. Our crew: 1 pool tech. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Swimming Pool Maintenance?",
+          "a": "Includes: Skim + brush; pH + chlorine balance; Filter clean. All materials, tools and PPE are brought by our team. Excludes: Equipment repair; Major leaks."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the swimming pool maintenance, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "pool_size_sqm",
         "pool_type (residential_villa/community/commercial)",
@@ -1412,7 +1787,32 @@
       ],
       "duration_label": "4-8 hours",
       "team_label": "2 specialists",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Marble & Floor Polishing cost in UAE?",
+          "a": "Marble & Floor Polishing starts from AED 15. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does marble & floor polishing take?",
+          "a": "Typically 4-8 hours. Our crew: 2 specialists. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Marble & Floor Polishing?",
+          "a": "Includes: 3-step diamond polish; Sealing; Buffing. All materials, tools and PPE are brought by our team. Excludes: Crack repair (separate)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the marble & floor polishing, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "floor_area_sqft",
         "floor_type (marble/granite/terrazzo)",
@@ -1458,7 +1858,32 @@
       ],
       "duration_label": "1-2 hours",
       "team_label": "1 specialist",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Curtain & Drapery Cleaning cost in UAE?",
+          "a": "Curtain & Drapery Cleaning starts from AED 40. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does curtain & drapery cleaning take?",
+          "a": "Typically 1-2 hours. Our crew: 1 specialist. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Curtain & Drapery Cleaning?",
+          "a": "Includes: Steam clean; Deodorize; Anti-bacterial spray. All materials, tools and PPE are brought by our team. Excludes: Silk/leather (dry-clean instead)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the curtain & drapery cleaning, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "curtain_panels_count",
         "fabric_type (cotton/silk/blackout/sheer)",
@@ -1511,7 +1936,32 @@
       ],
       "duration_label": "2-4 hours",
       "team_label": "1 IT specialist",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Smart Home Setup cost in UAE?",
+          "a": "Smart Home Setup starts from AED 200. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does smart home setup take?",
+          "a": "Typically 2-4 hours. Our crew: 1 IT specialist. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Smart Home Setup?",
+          "a": "Includes: Device install; WiFi setup; App config. All materials, tools and PPE are brought by our team. Excludes: Hardware (you bring)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the smart home setup, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "device_types (lighting/CCTV/locks/thermostat/audio)",
         "scope (install/configure/troubleshoot)",
@@ -1564,7 +2014,32 @@
       ],
       "duration_label": "4-8 hrs per room",
       "team_label": "1-2 painters",
-      "faqs": [],
+      "faqs": [
+        {
+          "q": "How much does Wall Painting cost in UAE?",
+          "a": "Wall Painting starts from AED 300. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does wall painting take?",
+          "a": "Typically 4-8 hrs per room. Our crew: 1-2 painters. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Wall Painting?",
+          "a": "Includes: Surface prep; Primer; 2 coats paint. All materials, tools and PPE are brought by our team. Excludes: Paint (separate cost); Heavy plaster repair."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the wall painting, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ],
       "intake": [
         "rooms_count",
         "walls_or_full_room",
@@ -1584,13 +2059,70 @@
       "starting_price": 80,
       "duration_label": "30-90 minutes",
       "team_label": "1 certified technician",
-      "includes": ["On-site diagnosis", "Genuine or OEM parts", "90-day repair warranty", "Data preservation"],
-      "excludes": ["Cost of replacement parts", "Logic-board level repair (sent to lab)"],
-      "benefits": ["No driving to a mall", "Pay only after the fix works", "OEM parts where available", "90-day warranty"],
-      "intake": ["device_make (Apple/Samsung/Huawei/Xiaomi/OnePlus/Other)", "device_model", "issue (cracked_screen/battery/charging_port/no_power/water_damage/software/other)", "preferred_date", "time_slot", "emirate", "property_address"],
+      "includes": [
+        "On-site diagnosis",
+        "Genuine or OEM parts",
+        "90-day repair warranty",
+        "Data preservation"
+      ],
+      "excludes": [
+        "Cost of replacement parts",
+        "Logic-board level repair (sent to lab)"
+      ],
+      "benefits": [
+        "No driving to a mall",
+        "Pay only after the fix works",
+        "OEM parts where available",
+        "90-day warranty"
+      ],
+      "intake": [
+        "device_make (Apple/Samsung/Huawei/Xiaomi/OnePlus/Other)",
+        "device_model",
+        "issue (cracked_screen/battery/charging_port/no_power/water_damage/software/other)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
       "addons": [
-        { "id": "screen_protector", "name": "Screen protector + apply", "price": 35, "icon": "📱" },
-        { "id": "rush_2h", "name": "Rush — within 2 hours", "price": 60, "icon": "⚡" }
+        {
+          "id": "screen_protector",
+          "name": "Screen protector + apply",
+          "price": 35,
+          "icon": "📱"
+        },
+        {
+          "id": "rush_2h",
+          "name": "Rush — within 2 hours",
+          "price": 60,
+          "icon": "⚡"
+        }
+      ],
+      "faqs": [
+        {
+          "q": "How much does Mobile Phone Repair cost in UAE?",
+          "a": "Mobile Phone Repair starts from AED 80. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does mobile phone repair take?",
+          "a": "Typically 30-90 minutes. Our crew: 1 certified technician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Mobile Phone Repair?",
+          "a": "Includes: On-site diagnosis; Genuine or OEM parts; 90-day repair warranty. All materials, tools and PPE are brought by our team. Excludes: Cost of replacement parts; Logic-board level repair (sent to lab)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the mobile phone repair, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
       ]
     },
     {
@@ -1602,13 +2134,70 @@
       "starting_price": 150,
       "duration_label": "45-120 minutes",
       "team_label": "1 certified technician",
-      "includes": ["On-site diagnosis", "Major brands serviced (Apple, Dell, HP, Lenovo, Asus)", "30-day repair warranty", "Data backup before any reinstall"],
-      "excludes": ["Cost of replacement parts (quoted before repair)", "Liquid-damage logic-board repair"],
-      "benefits": ["Avoid losing your work device for days", "Backup-first policy", "Genuine OEM parts", "Free diagnostic if you choose not to repair"],
-      "intake": ["laptop_make (Apple/Dell/HP/Lenovo/Asus/Acer/Other)", "laptop_model", "issue (screen/keyboard/battery/fan_overheating/slow/wont_boot/virus/upgrade_ram_or_ssd/other)", "preferred_date", "time_slot", "emirate", "property_address"],
+      "includes": [
+        "On-site diagnosis",
+        "Major brands serviced (Apple, Dell, HP, Lenovo, Asus)",
+        "30-day repair warranty",
+        "Data backup before any reinstall"
+      ],
+      "excludes": [
+        "Cost of replacement parts (quoted before repair)",
+        "Liquid-damage logic-board repair"
+      ],
+      "benefits": [
+        "Avoid losing your work device for days",
+        "Backup-first policy",
+        "Genuine OEM parts",
+        "Free diagnostic if you choose not to repair"
+      ],
+      "intake": [
+        "laptop_make (Apple/Dell/HP/Lenovo/Asus/Acer/Other)",
+        "laptop_model",
+        "issue (screen/keyboard/battery/fan_overheating/slow/wont_boot/virus/upgrade_ram_or_ssd/other)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
       "addons": [
-        { "id": "ssd_upgrade", "name": "SSD upgrade install (drive cost extra)", "price": 80, "icon": "💾" },
-        { "id": "data_recovery", "name": "Data recovery attempt", "price": 250, "icon": "🗄️" }
+        {
+          "id": "ssd_upgrade",
+          "name": "SSD upgrade install (drive cost extra)",
+          "price": 80,
+          "icon": "💾"
+        },
+        {
+          "id": "data_recovery",
+          "name": "Data recovery attempt",
+          "price": 250,
+          "icon": "🗄️"
+        }
+      ],
+      "faqs": [
+        {
+          "q": "How much does Laptop Repair cost in UAE?",
+          "a": "Laptop Repair starts from AED 150. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does laptop repair take?",
+          "a": "Typically 45-120 minutes. Our crew: 1 certified technician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Laptop Repair?",
+          "a": "Includes: On-site diagnosis; Major brands serviced (Apple, Dell, HP, Lenovo, Asus); 30-day repair warranty. All materials, tools and PPE are brought by our team. Excludes: Cost of replacement parts (quoted before repair); Liquid-damage logic-board repair."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the laptop repair, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
       ]
     },
     {
@@ -1620,12 +2209,63 @@
       "starting_price": 120,
       "duration_label": "1-3 hours",
       "team_label": "1 appliance technician",
-      "includes": ["On-site diagnosis", "Major brands (Bosch, LG, Samsung, Siemens, Whirlpool)", "30-day labour warranty", "Disposal of old parts"],
-      "excludes": ["Replacement parts cost (quoted upfront)", "Plumbing alterations beyond connection"],
-      "benefits": ["Avoid replacing a 5-year-old machine for a small fault", "Same-day available", "Branded spare parts"],
-      "intake": ["machine_make (Bosch/LG/Samsung/Siemens/Whirlpool/Other)", "type (front_load/top_load)", "issue (not_starting/no_drain/no_spin/leaking/noisy/error_code/other)", "preferred_date", "time_slot", "emirate", "property_address"],
+      "includes": [
+        "On-site diagnosis",
+        "Major brands (Bosch, LG, Samsung, Siemens, Whirlpool)",
+        "30-day labour warranty",
+        "Disposal of old parts"
+      ],
+      "excludes": [
+        "Replacement parts cost (quoted upfront)",
+        "Plumbing alterations beyond connection"
+      ],
+      "benefits": [
+        "Avoid replacing a 5-year-old machine for a small fault",
+        "Same-day available",
+        "Branded spare parts"
+      ],
+      "intake": [
+        "machine_make (Bosch/LG/Samsung/Siemens/Whirlpool/Other)",
+        "type (front_load/top_load)",
+        "issue (not_starting/no_drain/no_spin/leaking/noisy/error_code/other)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
       "addons": [
-        { "id": "drum_clean", "name": "Drum deep clean + descale", "price": 50, "icon": "🌀" }
+        {
+          "id": "drum_clean",
+          "name": "Drum deep clean + descale",
+          "price": 50,
+          "icon": "🌀"
+        }
+      ],
+      "faqs": [
+        {
+          "q": "How much does Washing Machine Repair cost in UAE?",
+          "a": "Washing Machine Repair starts from AED 120. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does washing machine repair take?",
+          "a": "Typically 1-3 hours. Our crew: 1 appliance technician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Washing Machine Repair?",
+          "a": "Includes: On-site diagnosis; Major brands (Bosch, LG, Samsung, Siemens, Whirlpool); 30-day labour warranty. All materials, tools and PPE are brought by our team. Excludes: Replacement parts cost (quoted upfront); Plumbing alterations beyond connection."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the washing machine repair, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
       ]
     },
     {
@@ -1637,10 +2277,55 @@
       "starting_price": 150,
       "duration_label": "1-2 hours",
       "team_label": "1 appliance technician",
-      "includes": ["On-site diagnosis", "Gas top-up where required", "30-day labour warranty", "Brands: LG, Samsung, Bosch, Hitachi, Panasonic, Beko"],
-      "excludes": ["Replacement compressor cost (quoted upfront)"],
-      "benefits": ["Don't lose AED 800 of groceries to a small fault", "Most repairs done same-day", "Gas refill done in-place"],
-      "intake": ["fridge_make (LG/Samsung/Bosch/Hitachi/Panasonic/Beko/Other)", "type (single_door/double_door/side_by_side/french_door)", "issue (not_cooling/freezer_only/water_leak/noisy/ice_maker/water_dispenser/other)", "preferred_date", "time_slot", "emirate", "property_address"]
+      "includes": [
+        "On-site diagnosis",
+        "Gas top-up where required",
+        "30-day labour warranty",
+        "Brands: LG, Samsung, Bosch, Hitachi, Panasonic, Beko"
+      ],
+      "excludes": [
+        "Replacement compressor cost (quoted upfront)"
+      ],
+      "benefits": [
+        "Don't lose AED 800 of groceries to a small fault",
+        "Most repairs done same-day",
+        "Gas refill done in-place"
+      ],
+      "intake": [
+        "fridge_make (LG/Samsung/Bosch/Hitachi/Panasonic/Beko/Other)",
+        "type (single_door/double_door/side_by_side/french_door)",
+        "issue (not_cooling/freezer_only/water_leak/noisy/ice_maker/water_dispenser/other)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
+      "faqs": [
+        {
+          "q": "How much does Refrigerator Repair cost in UAE?",
+          "a": "Refrigerator Repair starts from AED 150. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does refrigerator repair take?",
+          "a": "Typically 1-2 hours. Our crew: 1 appliance technician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Refrigerator Repair?",
+          "a": "Includes: On-site diagnosis; Gas top-up where required; 30-day labour warranty. All materials, tools and PPE are brought by our team. Excludes: Replacement compressor cost (quoted upfront)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the refrigerator repair, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ]
     },
     {
       "id": "dishwasher_repair",
@@ -1651,10 +2336,53 @@
       "starting_price": 130,
       "duration_label": "1-2 hours",
       "team_label": "1 appliance technician",
-      "includes": ["On-site diagnosis", "Brands: Bosch, Siemens, Miele, LG, Samsung", "30-day labour warranty"],
-      "excludes": ["Replacement parts cost"],
-      "benefits": ["Don't hand-wash for a week — fixed today", "Quiet and energy-efficient again", "Manufacturer-quality parts"],
-      "intake": ["dishwasher_make (Bosch/Siemens/Miele/LG/Samsung/Other)", "issue (not_starting/no_water/not_draining/poor_cleaning/leaking/error_code/other)", "preferred_date", "time_slot", "emirate", "property_address"]
+      "includes": [
+        "On-site diagnosis",
+        "Brands: Bosch, Siemens, Miele, LG, Samsung",
+        "30-day labour warranty"
+      ],
+      "excludes": [
+        "Replacement parts cost"
+      ],
+      "benefits": [
+        "Don't hand-wash for a week — fixed today",
+        "Quiet and energy-efficient again",
+        "Manufacturer-quality parts"
+      ],
+      "intake": [
+        "dishwasher_make (Bosch/Siemens/Miele/LG/Samsung/Other)",
+        "issue (not_starting/no_water/not_draining/poor_cleaning/leaking/error_code/other)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
+      "faqs": [
+        {
+          "q": "How much does Dishwasher Repair cost in UAE?",
+          "a": "Dishwasher Repair starts from AED 130. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does dishwasher repair take?",
+          "a": "Typically 1-2 hours. Our crew: 1 appliance technician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Dishwasher Repair?",
+          "a": "Includes: On-site diagnosis; Brands: Bosch, Siemens, Miele, LG, Samsung; 30-day labour warranty. All materials, tools and PPE are brought by our team. Excludes: Replacement parts cost."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the dishwasher repair, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ]
     },
     {
       "id": "oven_microwave_repair",
@@ -1665,10 +2393,55 @@
       "starting_price": 130,
       "duration_label": "1-2 hours",
       "team_label": "1 appliance technician",
-      "includes": ["On-site diagnosis", "Gas-line safety check", "30-day labour warranty", "Brands: Bosch, Siemens, Whirlpool, AEG, Miele, LG"],
-      "excludes": ["Gas-network alterations (DEWA/SEWA-approved contractor required)"],
-      "benefits": ["Cook again tonight, not next week", "Branded parts only", "Gas-safety checked"],
-      "intake": ["appliance (built_in_oven/gas_hob/electric_hob/microwave/combi_oven)", "make_model", "issue (not_heating/door/thermostat/fan/light/clock/other)", "preferred_date", "time_slot", "emirate", "property_address"]
+      "includes": [
+        "On-site diagnosis",
+        "Gas-line safety check",
+        "30-day labour warranty",
+        "Brands: Bosch, Siemens, Whirlpool, AEG, Miele, LG"
+      ],
+      "excludes": [
+        "Gas-network alterations (DEWA/SEWA-approved contractor required)"
+      ],
+      "benefits": [
+        "Cook again tonight, not next week",
+        "Branded parts only",
+        "Gas-safety checked"
+      ],
+      "intake": [
+        "appliance (built_in_oven/gas_hob/electric_hob/microwave/combi_oven)",
+        "make_model",
+        "issue (not_heating/door/thermostat/fan/light/clock/other)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
+      "faqs": [
+        {
+          "q": "How much does Oven & Microwave Repair cost in UAE?",
+          "a": "Oven & Microwave Repair starts from AED 130. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does oven & microwave repair take?",
+          "a": "Typically 1-2 hours. Our crew: 1 appliance technician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Oven & Microwave Repair?",
+          "a": "Includes: On-site diagnosis; Gas-line safety check; 30-day labour warranty. All materials, tools and PPE are brought by our team. Excludes: Gas-network alterations (DEWA/SEWA-approved contractor required)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the oven & microwave repair, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ]
     },
     {
       "id": "water_heater_repair",
@@ -1679,10 +2452,53 @@
       "starting_price": 100,
       "duration_label": "1-3 hours",
       "team_label": "1 plumber-electrician",
-      "includes": ["On-site diagnosis", "Element + thermostat brands stocked", "Power isolation + safe drain"],
-      "excludes": ["Cost of new heater unit (we can supply on request)"],
-      "benefits": ["Hot water restored same-day", "Descaling extends heater life by years", "Insurance-covered work"],
-      "intake": ["heater_type (storage_geyser/instant/central)", "issue (no_hot_water/leak/tripping_breaker/insufficient_hot_water/install_new/replace_unit)", "preferred_date", "time_slot", "emirate", "property_address"]
+      "includes": [
+        "On-site diagnosis",
+        "Element + thermostat brands stocked",
+        "Power isolation + safe drain"
+      ],
+      "excludes": [
+        "Cost of new heater unit (we can supply on request)"
+      ],
+      "benefits": [
+        "Hot water restored same-day",
+        "Descaling extends heater life by years",
+        "Insurance-covered work"
+      ],
+      "intake": [
+        "heater_type (storage_geyser/instant/central)",
+        "issue (no_hot_water/leak/tripping_breaker/insufficient_hot_water/install_new/replace_unit)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
+      "faqs": [
+        {
+          "q": "How much does Water Heater Repair / Install cost in UAE?",
+          "a": "Water Heater Repair / Install starts from AED 100. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does water heater repair / install take?",
+          "a": "Typically 1-3 hours. Our crew: 1 plumber-electrician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Water Heater Repair / Install?",
+          "a": "Includes: On-site diagnosis; Element + thermostat brands stocked; Power isolation + safe drain. All materials, tools and PPE are brought by our team. Excludes: Cost of new heater unit (we can supply on request)."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the water heater repair / install, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
+      ]
     },
     {
       "id": "tv_setup",
@@ -1693,13 +2509,68 @@
       "starting_price": 150,
       "duration_label": "1-2 hours",
       "team_label": "1 AV technician",
-      "includes": ["Wall mounting (bracket cost extra if not provided)", "All cables connected", "Apps logged in", "Cable hiding (in-wall conduit if available)"],
-      "excludes": ["Drilling into reinforced/structural walls without landlord NOC"],
-      "benefits": ["No tangled cables, no trial-and-error setup", "OSN/beIN/Netflix all configured for you", "Soundbar paired and tuned"],
-      "intake": ["tv_size_inches", "wall_type (drywall/concrete/wood)", "scope (mount_only/mount+setup/setup_only/soundbar/streaming_box)", "preferred_date", "time_slot", "emirate", "property_address"],
+      "includes": [
+        "Wall mounting (bracket cost extra if not provided)",
+        "All cables connected",
+        "Apps logged in",
+        "Cable hiding (in-wall conduit if available)"
+      ],
+      "excludes": [
+        "Drilling into reinforced/structural walls without landlord NOC"
+      ],
+      "benefits": [
+        "No tangled cables, no trial-and-error setup",
+        "OSN/beIN/Netflix all configured for you",
+        "Soundbar paired and tuned"
+      ],
+      "intake": [
+        "tv_size_inches",
+        "wall_type (drywall/concrete/wood)",
+        "scope (mount_only/mount+setup/setup_only/soundbar/streaming_box)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
       "addons": [
-        { "id": "bracket_full_motion", "name": "Full-motion wall bracket (supply + install)", "price": 180, "icon": "📺" },
-        { "id": "cable_conduit", "name": "In-wall cable conduit (≤2m)", "price": 120, "icon": "🔌" }
+        {
+          "id": "bracket_full_motion",
+          "name": "Full-motion wall bracket (supply + install)",
+          "price": 180,
+          "icon": "📺"
+        },
+        {
+          "id": "cable_conduit",
+          "name": "In-wall cable conduit (≤2m)",
+          "price": 120,
+          "icon": "🔌"
+        }
+      ],
+      "faqs": [
+        {
+          "q": "How much does Smart TV Mount &amp; Setup cost in UAE?",
+          "a": "Smart TV Mount &amp; Setup starts from AED 150. Final price depends on the details you give us — use the calculator on this page to get an exact quote in 30 seconds. All prices include 5% VAT."
+        },
+        {
+          "q": "How long does smart tv mount &amp; setup take?",
+          "a": "Typically 1-2 hours. Our crew: 1 AV technician. You'll see the expected duration on the booking confirmation."
+        },
+        {
+          "q": "What's included in Smart TV Mount &amp; Setup?",
+          "a": "Includes: Wall mounting (bracket cost extra if not provided); All cables connected; Apps logged in. All materials, tools and PPE are brought by our team. Excludes: Drilling into reinforced/structural walls without landlord NOC."
+        },
+        {
+          "q": "Where do you cover and how fast can you arrive?",
+          "a": "Servia covers all 7 UAE emirates. Same-day available across Dubai, Sharjah, Ajman and Abu Dhabi (usually within 2-4 hours). RAK, UAQ and Fujairah usually need 24-48h notice."
+        },
+        {
+          "q": "What's your guarantee?",
+          "a": "7-day satisfaction guarantee. If you're not happy with the smart tv mount &amp; setup, message us within 24h (48h for paint/pest/disinfection) and we re-do it free of charge — no arguments, no fine print. AED 25,000 damage cover per booking."
+        },
+        {
+          "q": "How do I pay?",
+          "a": "Advance payment confirms your slot. Pay via Apple Pay, Google Pay, Visa/Mastercard, or a WhatsApp link. We never see your card number — payment goes through a PCI-compliant gateway. Refundable per our refund policy."
+        }
       ]
     },
     {
@@ -1711,27 +2582,98 @@
       "starting_price": 60,
       "duration_label": "Hourly · Min 3 hrs",
       "team_label": "1 vetted driver",
-      "includes": ["Vetted, English-speaking driver", "UAE driving licence + clean record", "Real-time route via WhatsApp", "Punctual pickup or AED 25 credit"],
-      "excludes": ["Fuel and Salik / parking charges (added to invoice)", "Vehicle (use yours, or add 'rental car' add-on)"],
-      "benefits": ["No hidden surge pricing", "Same driver on recurring routes (school run, daily commute)", "Female driver on request", "Can hold a sign at airport pickup"],
-      "intake": ["service_type (airport_pickup/airport_dropoff/hourly/full_day/school_run/event/medical_visit/other)", "vehicle (i_have_one/need_rental_sedan/need_rental_suv/need_rental_van)", "passengers_count", "pickup_location", "dropoff_location_or_route", "preferred_date", "time_slot", "emirate", "duration_hours"],
+      "includes": [
+        "Vetted, English-speaking driver",
+        "UAE driving licence + clean record",
+        "Real-time route via WhatsApp",
+        "Punctual pickup or AED 25 credit"
+      ],
+      "excludes": [
+        "Fuel and Salik / parking charges (added to invoice)",
+        "Vehicle (use yours, or add 'rental car' add-on)"
+      ],
+      "benefits": [
+        "No hidden surge pricing",
+        "Same driver on recurring routes (school run, daily commute)",
+        "Female driver on request",
+        "Can hold a sign at airport pickup"
+      ],
+      "intake": [
+        "service_type (airport_pickup/airport_dropoff/hourly/full_day/school_run/event/medical_visit/other)",
+        "vehicle (i_have_one/need_rental_sedan/need_rental_suv/need_rental_van)",
+        "passengers_count",
+        "pickup_location",
+        "dropoff_location_or_route",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "duration_hours"
+      ],
       "addons": [
-        { "id": "rental_sedan", "name": "Rental sedan (per hour, fuel extra)", "price": 25, "icon": "🚗" },
-        { "id": "rental_suv", "name": "Rental SUV (per hour, fuel extra)", "price": 45, "icon": "🚙" },
-        { "id": "airport_meet_greet", "name": "Airport meet-and-greet sign + bag-help", "price": 60, "icon": "✈️" },
-        { "id": "child_seat", "name": "Child seat", "price": 25, "icon": "👶" }
+        {
+          "id": "rental_sedan",
+          "name": "Rental sedan (per hour, fuel extra)",
+          "price": 25,
+          "icon": "🚗"
+        },
+        {
+          "id": "rental_suv",
+          "name": "Rental SUV (per hour, fuel extra)",
+          "price": 45,
+          "icon": "🚙"
+        },
+        {
+          "id": "airport_meet_greet",
+          "name": "Airport meet-and-greet sign + bag-help",
+          "price": 60,
+          "icon": "✈️"
+        },
+        {
+          "id": "child_seat",
+          "name": "Child seat",
+          "price": 25,
+          "icon": "👶"
+        }
       ],
       "process_steps": [
-        { "icon": "📞", "title": "Tell us your trip", "desc": "Pickup, dropoff, time, vehicle preference." },
-        { "icon": "👤", "title": "Driver assigned", "desc": "You get name + photo + WhatsApp + live ETA." },
-        { "icon": "🚗", "title": "On-time pickup", "desc": "Driver arrives 5 mins early. You ride." },
-        { "icon": "💳", "title": "Pay after the ride", "desc": "Hourly rate × hours + fuel/Salik. Tap to pay." }
+        {
+          "icon": "📞",
+          "title": "Tell us your trip",
+          "desc": "Pickup, dropoff, time, vehicle preference."
+        },
+        {
+          "icon": "👤",
+          "title": "Driver assigned",
+          "desc": "You get name + photo + WhatsApp + live ETA."
+        },
+        {
+          "icon": "🚗",
+          "title": "On-time pickup",
+          "desc": "Driver arrives 5 mins early. You ride."
+        },
+        {
+          "icon": "💳",
+          "title": "Pay after the ride",
+          "desc": "Hourly rate × hours + fuel/Salik. Tap to pay."
+        }
       ],
       "faqs": [
-        { "q": "Can I book a chauffeur for the airport?", "a": "Yes — choose 'airport_pickup' or 'airport_dropoff'. Add the meet-and-greet add-on if you want the driver waiting with a sign at arrivals." },
-        { "q": "Hourly minimum?", "a": "3 hours per booking. Multiple short trips can be combined under one hourly block." },
-        { "q": "Can I get the same driver every day?", "a": "Yes — set frequency to 'recurring' and we'll match the same driver wherever possible." },
-        { "q": "Female driver available?", "a": "Yes, on request. Mention 'female driver only' in the notes." }
+        {
+          "q": "Can I book a chauffeur for the airport?",
+          "a": "Yes — choose 'airport_pickup' or 'airport_dropoff'. Add the meet-and-greet add-on if you want the driver waiting with a sign at arrivals."
+        },
+        {
+          "q": "Hourly minimum?",
+          "a": "3 hours per booking. Multiple short trips can be combined under one hourly block."
+        },
+        {
+          "q": "Can I get the same driver every day?",
+          "a": "Yes — set frequency to 'recurring' and we'll match the same driver wherever possible."
+        },
+        {
+          "q": "Female driver available?",
+          "a": "Yes, on request. Mention 'female driver only' in the notes."
+        }
       ]
     }
   ],
