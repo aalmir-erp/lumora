@@ -30,6 +30,7 @@
     <div style="margin-bottom:24px;display:flex;align-items:center;gap:8px"><img src="/logo.svg" height="32" style="filter:brightness(0) invert(1)"><span id="admin-ver" style="font-size:10px;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:6px;font-weight:600">v—</span></div>
     <a href="#dashboard" class="active" data-tab="dashboard">📊 Dashboard</a>
     <a href="#bookings"  data-tab="bookings">📋 Bookings</a>
+    <a href="#customers" data-tab="customers">👤 Customers</a>
     <a href="#convos"    data-tab="convos">💬 Conversations</a>
     <a href="#pricing"   data-tab="pricing">💰 Services & Pricing</a>
     <a href="#vendors"   data-tab="vendors">🤝 Vendors</a>
@@ -54,6 +55,14 @@
       </select>
       <button class="btn btn-ghost" id="b-refresh">Refresh</button>
       <div id="bookings-table" style="margin-top:16px"></div>
+    </div>
+
+    <div id="t-customers" class="tab" style="display:none">
+      <h2>Customers</h2>
+      <p class="sub" style="color:var(--muted);margin-top:-6px">Browse signed-up customers. Click <b>👁 View as</b> to log in as them and see exactly what they see — bookings, addresses, profile.</p>
+      <input id="cust-q" placeholder="🔎 Search by name, phone, email…"
+        style="margin:12px 0;padding:8px 12px;border:1px solid var(--border);border-radius:8px;width:320px">
+      <div id="customers-table"></div>
     </div>
 
     <div id="t-convos" class="tab" style="display:none">
@@ -133,6 +142,7 @@ function show(tab) {
   document.querySelectorAll(".admin-side a").forEach(a => a.classList.toggle("active", a.dataset.tab===tab));
   if (tab==="dashboard") loadDash();
   if (tab==="bookings")  loadBookings();
+  if (tab==="customers") loadCustomers();
   if (tab==="convos")    loadSessions();
   if (tab==="pricing")   loadPricing();
   if (tab==="vendors")   loadVendors();
@@ -223,12 +233,61 @@ async function loadBookings() {
               .map(s=>`<option ${b.status===s?'selected':''}>${s}</option>`).join('')}
           </select>
         </td>
-        <td><button class="btn btn-ghost" onclick="makeInvoice('${b.id}')">Invoice</button></td>
+        <td>
+          <button class="btn btn-ghost" onclick="makeInvoice('${b.id}')">Invoice</button>
+          ${b.customer_id ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('customer', ${b.customer_id})" title="Sign in as this customer to see their account">👁 View as customer</button>` : ''}
+        </td>
       </tr>`).join("")}</tbody></table>`;
 }
 window.changeStatus = async (bid, s) => { await adm(`/api/admin/bookings/${bid}/status`, { method:"POST", body:{status:s} }); };
 window.makeInvoice  = async (bid) => { const r = await adm(`/api/admin/bookings/${bid}/invoice`, { method:"POST" }); alert("Invoice: "+JSON.stringify(r)); };
+
+window.impersonate = async (user_type, user_id) => {
+  if (!confirm(`Sign in as this ${user_type}? You'll be able to return to admin from a banner on the page.`)) return;
+  try {
+    const r = await adm("/api/admin/impersonate", { method:"POST", body:{ user_type, user_id }});
+    if (!r.ok) throw new Error(r.detail || "failed");
+    // Save admin token for restore + set the impersonated user session
+    const adminTok = localStorage.getItem("lumora.admin.tok");
+    localStorage.setItem("lumora.admin.original_tok", adminTok);
+    localStorage.setItem("lumora.user.tok", r.token);
+    localStorage.setItem("lumora.user.type", r.user_type);
+    localStorage.setItem("lumora.user.impersonated", "1");
+    localStorage.setItem("lumora.user.impersonated_name", r.user.name || r.user.email || ("#"+r.user.id));
+    location.href = r.redirect;
+  } catch (e) { alert("Couldn't impersonate: " + (e.message || e)); }
+};
 document.getElementById("b-refresh").onclick = loadBookings;
+
+async function loadCustomers() {
+  const r = await adm("/api/admin/customers");
+  window._allCustomers = r.customers || [];
+  renderCustomers();
+}
+function renderCustomers() {
+  const q = (document.getElementById("cust-q").value || "").toLowerCase();
+  const list = (window._allCustomers || []).filter(c =>
+    !q || (c.name||"").toLowerCase().includes(q) ||
+          (c.phone||"").toLowerCase().includes(q) ||
+          (c.email||"").toLowerCase().includes(q));
+  document.getElementById("customers-table").innerHTML = !list.length
+    ? '<div style="padding:24px;color:var(--muted);text-align:center">No customers yet.</div>'
+    : `<table class="list"><thead><tr>
+        <th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th style="text-align:center">Bookings</th><th>Joined</th><th></th>
+      </tr></thead><tbody>${list.map(c => `
+        <tr>
+          <td>#${c.id}</td>
+          <td>${escapeHtml(c.name||'—')}</td>
+          <td><code style="font-size:12px">${escapeHtml(c.phone||'')}</code></td>
+          <td>${escapeHtml(c.email||'—')}</td>
+          <td style="text-align:center">${c.bookings||0}</td>
+          <td><small style="color:var(--muted)">${(c.created_at||'').slice(0,10)}</small></td>
+          <td style="text-align:end">
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('customer', ${c.id})">👁 View as</button>
+          </td>
+        </tr>`).join("")}</tbody></table>`;
+}
+document.getElementById("cust-q").oninput = renderCustomers;
 
 async function loadSessions() {
   const r = await adm("/api/admin/sessions");
@@ -563,6 +622,7 @@ async function loadVendors() {
           <td style="text-align:end" onclick="event.stopPropagation()">
             ${!v.is_approved ? `<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'approve')">Approve</button>` : ''}
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'${v.is_active?'disable':'enable'}')">${v.is_active?'Disable':'Enable'}</button>
+            ${v.is_approved && v.is_active ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('vendor', ${v.id})" title="Sign in as this vendor">👁 View as</button>` : ''}
           </td>
         </tr>`).join("")}</tbody>
     </table>`;

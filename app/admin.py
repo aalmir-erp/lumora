@@ -37,17 +37,20 @@ def stats():
 # ---------- Bookings ----------
 @router.get("/bookings")
 def list_bookings(status: str | None = None, q: str | None = None, limit: int = 100):
-    sql = "SELECT * FROM bookings"
+    # Join customers on phone so admin can impersonate by customer_id even when
+    # the booking row itself doesn't carry a foreign key.
+    sql = ("SELECT b.*, c.id AS customer_id FROM bookings b "
+           "LEFT JOIN customers c ON c.phone = b.phone")
     params: list = []
     where = []
     if status:
-        where.append("status=?"); params.append(status)
+        where.append("b.status=?"); params.append(status)
     if q:
-        where.append("(customer_name LIKE ? OR phone LIKE ? OR address LIKE ? OR id LIKE ?)")
+        where.append("(b.customer_name LIKE ? OR b.phone LIKE ? OR b.address LIKE ? OR b.id LIKE ?)")
         params.extend([f"%{q}%"] * 4)
     if where:
         sql += " WHERE " + " AND ".join(where)
-    sql += " ORDER BY created_at DESC LIMIT ?"
+    sql += " ORDER BY b.created_at DESC LIMIT ?"
     params.append(limit)
     with db.connect() as c:
         rows = c.execute(sql, params).fetchall()
@@ -587,3 +590,42 @@ def seed_market_vendors():
     return {"ok": True, "created": created, "updated": updated,
             "service_offerings": svc_links,
             "default_password_hint": "Vendors can sign in with the email above and password 'lumora-vendor-default' — change on first login."}
+
+
+# ---------- impersonation ("login as customer/vendor") ----------
+class ImpersonateBody(BaseModel):
+    user_type: str   # 'customer' or 'vendor'
+    user_id: int
+
+
+@router.post("/impersonate", dependencies=[Depends(require_admin)])
+def impersonate(body: ImpersonateBody):
+    if body.user_type not in ("customer", "vendor"):
+        raise HTTPException(400, "user_type must be 'customer' or 'vendor'")
+    table = "customers" if body.user_type == "customer" else "vendors"
+    with db.connect() as c:
+        row = c.execute(f"SELECT * FROM {table} WHERE id=?", (body.user_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, f"{body.user_type} not found")
+    rec = db.row_to_dict(row)
+    token = auth_users.create_session(body.user_type, body.user_id)
+    db.log_event("admin", "impersonate", body.user_type, actor="admin",
+                 details={"user_id": body.user_id, "name": rec.get("name") or rec.get("email")})
+    return {"ok": True, "token": token, "user_type": body.user_type,
+            "user": {"id": body.user_id,
+                     "name": rec.get("name"),
+                     "email": rec.get("email"),
+                     "phone": rec.get("phone")},
+            "redirect": "/me.html" if body.user_type == "customer" else "/vendor.html"}
+
+
+@router.get("/customers", dependencies=[Depends(require_admin)])
+def list_customers():
+    """Lightweight customer list for the admin 'login as' picker."""
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT id, name, phone, email, created_at, "
+            "(SELECT COUNT(*) FROM bookings WHERE customer_phone=customers.phone) AS bookings "
+            "FROM customers ORDER BY id DESC LIMIT 200"
+        ).fetchall()
+    return {"customers": [db.row_to_dict(r) for r in rows]}
