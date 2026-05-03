@@ -9,23 +9,23 @@
 <meta name="description" content="Same-day home services across Dubai, Sharjah, Ajman & Abu Dhabi. Verified cleaners, transparent pricing from 35 AED, instant WhatsApp booking, 4.9★ rated. Book in 60 seconds.">
 <meta name="keywords" content="cleaning service dubai, deep cleaning dubai price, maid service dubai, ac cleaning dubai, home services uae, sharjah cleaning, handyman dubai, lumora">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
-<link rel="canonical" href="https://sales.mir.ae/">
-<link rel="alternate" hreflang="en" href="https://sales.mir.ae/?lang=en">
-<link rel="alternate" hreflang="ar" href="https://sales.mir.ae/?lang=ar">
-<link rel="alternate" hreflang="hi" href="https://sales.mir.ae/?lang=hi">
-<link rel="alternate" hreflang="fil" href="https://sales.mir.ae/?lang=tl">
-<link rel="alternate" hreflang="x-default" href="https://sales.mir.ae/">
+<link rel="canonical" href="https://lumora.ae/">
+<link rel="alternate" hreflang="en" href="https://lumora.ae/?lang=en">
+<link rel="alternate" hreflang="ar" href="https://lumora.ae/?lang=ar">
+<link rel="alternate" hreflang="hi" href="https://lumora.ae/?lang=hi">
+<link rel="alternate" hreflang="fil" href="https://lumora.ae/?lang=tl">
+<link rel="alternate" hreflang="x-default" href="https://lumora.ae/">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Lumora — Trusted home services in UAE from 35 AED">
 <meta property="og:description" content="Cleaning, AC, maid, handyman in 60 seconds. Verified, insured, 4.9★ rated. Book now.">
-<meta property="og:url" content="https://sales.mir.ae/">
-<meta property="og:image" content="https://sales.mir.ae/icon-512.svg">
+<meta property="og:url" content="https://lumora.ae/">
+<meta property="og:image" content="https://lumora.ae/icon-512.svg">
 <meta property="og:locale" content="en_AE">
 <meta property="og:site_name" content="Lumora">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Lumora — Trusted home services UAE">
-<meta name="twitter:image" content="https://sales.mir.ae/icon-512.svg">
+<meta name="twitter:image" content="https://lumora.ae/icon-512.svg">
 
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
@@ -66,10 +66,46 @@
   .hero-sub { font-size:19px; color:#ECFDF5; margin:0 0 28px; max-width:540px; line-height:1.5; }
   .mascot-frame { position:relative; width:280px; height:280px; margin:0 auto;
     aspect-ratio:1/1; }
+  /* CLS-prevention reservations for elements below fold whose final styles
+     come from style.css. These match the production layout exactly so nothing
+     reflows when style.css applies. */
+  .live-strip { padding:12px 0; min-height:46px; overflow:hidden; }
+  .stats-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:18px; padding:32px 24px; max-width:1100px; margin:0 auto; }
+  .stat { text-align:center; padding:20px; min-height:120px; background:var(--surface);
+    border:1px solid var(--border); border-radius:18px; }
+  .svc-tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px; min-height:180px; }
+  .svc-tile { background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:24px 16px; text-align:center; text-decoration:none;
+    color:var(--text); min-height:180px; display:block; }
+  .svc-tile .e { font-size:44px; line-height:1; margin-bottom:8px; display:inline-block; }
+  .svc-tile h3 { margin:4px 0; font-size:15px; font-weight:700; }
+  .svc-tile small { color:var(--muted); font-size:12px; display:block; }
+  .svc-tile .price { color:var(--primary); font-weight:700; font-size:13px; margin-top:6px; }
+  .steps-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; }
+  .step { background:var(--surface); border-radius:16px; padding:24px; text-align:center;
+    border:1px solid var(--border); min-height:180px; }
+  /* Mobile bottom nav — fixed from first paint to avoid layout shift */
+  .mobile-nav { position:fixed; bottom:0; left:0; right:0; z-index:50;
+    background:#fff; border-top:1px solid var(--border); display:none; }
+  .mobile-nav-inner { display:flex; max-width:540px; margin:0 auto; }
+  .mobile-nav a { flex:1; text-align:center; padding:8px 4px; text-decoration:none;
+    color:var(--text); font-size:11px; }
+  .mobile-nav .ico { display:block; font-size:22px; margin-bottom:2px; }
+  @media (max-width:720px){ .mobile-nav { display:block; } body { padding-bottom:60px; } }
+  /* Reserve nav version pill width so it doesn't expand on JS load */
+  #lumora-version { display:inline-block; min-width:48px; text-align:center; }
+  /* Footer reservation */
+  footer { background:#0F172A; color:#fff; padding:48px 24px; min-height:240px; }
+  footer .container { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:32px; max-width:1180px; margin:0 auto; }
+  footer h4 { color:#fff; font-size:13px; margin:0 0 12px; }
+  footer a { color:#CBD5E1; font-size:13px; text-decoration:none; line-height:1.9; }
+
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
   }
-  /* Mobile (Lighthouse profile) — kill decorative continuous animations to free CPU. */
   @media (max-width: 720px) {
     .live-strip, .hero-shell .float-icon, .wa-fab { animation: none !important; }
     .live-strip .row { animation: none !important; }
@@ -92,13 +128,13 @@
 {
   "@context": "https://schema.org",
   "@type": ["LocalBusiness", "HomeAndConstructionBusiness"],
-  "@id": "https://sales.mir.ae/#org",
+  "@id": "https://lumora.ae/#org",
   "name": "Lumora",
   "description": "UAE home services — cleaning, AC, maid, handyman & more, booked in 60 seconds.",
-  "url": "https://sales.mir.ae/",
-  "logo": "https://sales.mir.ae/logo.svg",
+  "url": "https://lumora.ae/",
+  "logo": "https://lumora.ae/logo.svg",
   "telephone": "+971564020087",
-  "email": "hello@sales.mir.ae",
+  "email": "hello@lumora.ae",
   "priceRange": "AED 35 - AED 1500",
   "address": {"@type": "PostalAddress", "addressLocality": "Dubai", "addressCountry": "AE"},
   "areaServed": [{"@type":"City","name":"Dubai"},{"@type":"City","name":"Sharjah"},{"@type":"City","name":"Ajman"},{"@type":"City","name":"Abu Dhabi"}],
@@ -665,7 +701,7 @@
   <div>
     <h4>Get in touch</h4>
     <a href="https://wa.me/971564020087">WhatsApp +971 56 4020087</a><br>
-    <a href="mailto:hello@sales.mir.ae">hello@sales.mir.ae</a><br>
+    <a href="mailto:hello@lumora.ae">hello@lumora.ae</a><br>
     <a href="/faq.html">FAQ</a>
   </div>
 </div></footer>

@@ -129,7 +129,7 @@ else {
     document.getElementById("cal-link").href = `/api/booking/${bid}/calendar.ics`;
     const waBrand = (window.LUMORA_BRAND && window.LUMORA_BRAND.whatsapp) || "971564020087";
     const waPhone = waBrand.replace(/[^0-9]/g, "");
-    const text = encodeURIComponent(`I just booked ${b.service_id.replace(/_/g,' ')} with Lumora on ${b.target_date} at ${b.time_slot}. Booking ${bid}. https://${(window.LUMORA_BRAND||{}).domain||'sales.mir.ae'}/me.html?b=${bid}`);
+    const text = encodeURIComponent(`I just booked ${b.service_id.replace(/_/g,' ')} with Lumora on ${b.target_date} at ${b.time_slot}. Booking ${bid}. https://${(window.LUMORA_BRAND||{}).domain||'lumora.ae'}/me.html?b=${bid}`);
     document.getElementById("wa-share").href = `https://wa.me/?text=${text}`;
     document.getElementById("wa-help").href = `https://wa.me/${waPhone}?text=${encodeURIComponent("Hi, I need to update my booking " + bid)}`;
   }).catch(e => { document.getElementById("info").innerHTML = "<p>Booking not found.</p>"; });

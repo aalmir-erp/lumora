@@ -101,8 +101,8 @@ def _make_payment_link(invoice_id: str, amount: float, currency: str) -> str:
                 },
                 "quantity": 1,
             }],
-            success_url=os.getenv("PAYMENT_SUCCESS_URL", "https://sales.mir.ae/account.html"),
-            cancel_url=os.getenv("PAYMENT_CANCEL_URL", "https://sales.mir.ae/account.html"),
+            success_url=os.getenv("PAYMENT_SUCCESS_URL", "https://lumora.ae/account.html"),
+            cancel_url=os.getenv("PAYMENT_CANCEL_URL", "https://lumora.ae/account.html"),
             metadata={"invoice_id": invoice_id},
         )
         return sess.url

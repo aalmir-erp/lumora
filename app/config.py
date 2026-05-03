@@ -12,9 +12,9 @@ class Settings:
     # Brand (env can override)
     BRAND_NAME = os.getenv("BRAND_NAME", "Lumora")
     BRAND_TAGLINE = os.getenv("BRAND_TAGLINE", "UAE's smart home services platform")
-    BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "sales.mir.ae")
+    BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "lumora.ae")
 
-    APP_VERSION = "0.14.0"
+    APP_VERSION = "0.15.0"
 
     # Anthropic
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
@@ -26,14 +26,14 @@ class Settings:
     ALLOWED_ORIGINS = [
         o.strip() for o in os.getenv(
             "ALLOWED_ORIGINS",
-            "https://sales.mir.ae,https://www.sales.mir.ae,"
+            "https://lumora.ae,https://www.lumora.ae,"
             "https://urbanservices.ae,https://www.urbanservices.ae,"
             "http://localhost:8000,http://127.0.0.1:8000,http://127.0.0.1:8788"
         ).split(",") if o.strip()
     ]
 
     HANDOFF_WHATSAPP = os.getenv("HANDOFF_WHATSAPP", "+971564020087")
-    HANDOFF_EMAIL = os.getenv("HANDOFF_EMAIL", "hello@sales.mir.ae")
+    HANDOFF_EMAIL = os.getenv("HANDOFF_EMAIL", "hello@lumora.ae")
 
     # WhatsApp bridge endpoint (Node service URL where the QR-paired bridge lives).
     WA_BRIDGE_URL = os.getenv("WA_BRIDGE_URL", "")
