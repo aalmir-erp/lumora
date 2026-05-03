@@ -2,7 +2,7 @@ name: Lighthouse PageSpeed
 on:
   push: { branches: [main] }
   workflow_dispatch: {}
-  schedule: [{ cron: "0 2 * * *" }]   # nightly at 02:00 UTC
+  schedule: [{ cron: "0 2 * * *" }]
 
 permissions: { contents: write }
 concurrency: { group: lighthouse, cancel-in-progress: true }
@@ -15,60 +15,86 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      # Wait a moment so the deploy after the trigger commit has time to land.
-      - name: Wait 60s for deploy to settle
-        run: sleep 60
+      - name: Wait for deploy to settle
+        run: sleep 90
 
-      - name: Install Lighthouse + Chrome
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with: { node-version: "20" }
+
+      - name: Install Lighthouse
+        run: npm install -g lighthouse@12
+
+      - name: Verify Chrome
         run: |
-          npm install -g lighthouse@latest
-          # Chrome is already installed on ubuntu-latest runners
+          which google-chrome || which chromium || which chromium-browser || true
+          google-chrome --version || true
+          chromium --version || true
 
-      - name: Run Lighthouse on homepage (mobile)
+      - name: Probe target is up
         run: |
-          lighthouse "${TARGET}/?cb=$(date +%s)" \
-            --output=json --output=html \
-            --output-path=./lh-home \
-            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
-            --form-factor=mobile --throttling-method=simulate \
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET/api/health" || true)
+            echo "probe $i → $code"
+            [ "$code" = "200" ] && break
+            sleep 10
+          done
+
+      - name: Lighthouse — homepage (mobile)
+        run: |
+          set -x
+          lighthouse "$TARGET/?cb=$(date +%s)" \
+            --output json --output html \
+            --output-path ./lh-home \
+            --form-factor mobile --throttling-method simulate \
             --only-categories=performance,accessibility,best-practices,seo \
+            --chrome-flags="--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu" \
+            --max-wait-for-load=45000 \
+            --quiet
+          ls -la lh-home* || true
+
+      - name: Lighthouse — FAQ
+        if: always()
+        run: |
+          lighthouse "$TARGET/faq.html?cb=$(date +%s)" \
+            --output json --output html --output-path ./lh-faq \
+            --form-factor mobile --throttling-method simulate \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --chrome-flags="--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu" \
+            --max-wait-for-load=45000 \
             --quiet || true
 
-      - name: Run Lighthouse on /faq.html (mobile)
+      - name: Lighthouse — service landing
+        if: always()
         run: |
-          lighthouse "${TARGET}/faq.html?cb=$(date +%s)" \
-            --output=json --output=html \
-            --output-path=./lh-faq \
-            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
-            --form-factor=mobile --throttling-method=simulate \
+          lighthouse "$TARGET/service.html?id=deep_cleaning&cb=$(date +%s)" \
+            --output json --output html --output-path ./lh-service \
+            --form-factor mobile --throttling-method simulate \
             --only-categories=performance,accessibility,best-practices,seo \
+            --chrome-flags="--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu" \
+            --max-wait-for-load=45000 \
             --quiet || true
 
-      - name: Run Lighthouse on /service.html?id=deep_cleaning (mobile)
-        run: |
-          lighthouse "${TARGET}/service.html?id=deep_cleaning&cb=$(date +%s)" \
-            --output=json --output=html \
-            --output-path=./lh-service \
-            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
-            --form-factor=mobile --throttling-method=simulate \
-            --only-categories=performance,accessibility,best-practices,seo \
-            --quiet || true
-
-      - name: Summarise scores
+      - name: Summarise
+        if: always()
         id: scores
         run: |
+          ls -la *.json *.html 2>&1 | head -20 || true
           python3 <<'PY'
-          import json, os, glob, datetime
-          out = []
+          import json, glob, os, datetime
+          rows = []
           best = {"perf":0,"a11y":0,"best":0,"seo":0}
           worst = {"perf":100,"a11y":100,"best":100,"seo":100}
-          for f in sorted(glob.glob("lh-*.report.json")):
+          files = sorted(glob.glob("lh-*.report.json")) or sorted(glob.glob("lh-*.json"))
+          if not files:
+              print("NO LH REPORTS FOUND")
+          for f in files:
               try:
                   d = json.load(open(f))
               except Exception as e:
-                  out.append(f"{f}: failed to parse ({e})")
-                  continue
+                  rows.append(f"{f}: parse error ({e})"); continue
               c = d.get("categories", {})
               row = {
                   "perf": int((c.get("performance",{}).get("score") or 0) * 100),
@@ -77,33 +103,43 @@ jobs:
                   "seo":  int((c.get("seo",{}).get("score") or 0) * 100),
               }
               url = d.get("finalDisplayedUrl") or d.get("requestedUrl","?")
-              out.append(f"{f.replace('.report.json','')}: perf={row['perf']} a11y={row['a11y']} bp={row['best']} seo={row['seo']}  ({url})")
+              rows.append(f"  {f}: perf={row['perf']} a11y={row['a11y']} bp={row['best']} seo={row['seo']}  ({url})")
               for k in best: best[k] = max(best[k], row[k]); worst[k] = min(worst[k], row[k])
-          summary = "Lighthouse run " + datetime.datetime.utcnow().isoformat(timespec="minutes") + "Z\n" + "\n".join(out)
-          summary += f"\n\nBest: perf={best['perf']} a11y={best['a11y']} bp={best['best']} seo={best['seo']}"
+          when = datetime.datetime.utcnow().isoformat(timespec="minutes") + "Z"
+          summary = f"Lighthouse run {when}\n" + "\n".join(rows)
+          summary += f"\n\nBest:  perf={best['perf']} a11y={best['a11y']} bp={best['best']} seo={best['seo']}"
           summary += f"\nWorst: perf={worst['perf']} a11y={worst['a11y']} bp={worst['best']} seo={worst['seo']}"
           print(summary)
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write("perf=" + str(best['perf']) + "\n")
-              f.write("worst_perf=" + str(worst['perf']) + "\n")
-          # Persist a markdown report at LIGHTHOUSE.md so we can commit it
+          gh = os.environ.get("GITHUB_OUTPUT")
+          if gh:
+              with open(gh, "a") as f:
+                  f.write(f"perf={best['perf']}\nworst_perf={worst['perf']}\n")
           with open("LIGHTHOUSE.md", "w") as f:
-              f.write("# Lighthouse PageSpeed scores\n\n")
-              f.write("```\n" + summary + "\n```\n\n")
-              f.write("HTML reports are attached as workflow artifacts.\n")
+              f.write("# Lighthouse PageSpeed\n\n```\n" + summary + "\n```\n")
           PY
 
-      - name: Upload HTML reports
+      - name: Upload reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-reports
-          path: ./lh-*.report.html
+          path: |
+            lh-*.report.html
+            lh-*.report.json
+            lh-*.html
+            lh-*.json
+            LIGHTHOUSE.md
           retention-days: 30
 
-      - name: Commit LIGHTHOUSE.md
+      - name: Commit results
+        if: always()
         run: |
           git config user.email "lighthouse-bot@lumora.local"
-          git config user.name  "lighthouse-bot"
-          git add LIGHTHOUSE.md || true
-          git diff --cached --quiet || git commit -m "lighthouse: perf=${{ steps.scores.outputs.perf }} (worst=${{ steps.scores.outputs.worst_perf }})" || true
-          git push origin HEAD:main || true
+          git config user.name "lighthouse-bot"
+          if [ -f LIGHTHOUSE.md ]; then
+            git add LIGHTHOUSE.md
+            git diff --cached --quiet || git commit -m "lighthouse: perf=${{ steps.scores.outputs.perf }} (worst=${{ steps.scores.outputs.worst_perf }})"
+            git push origin HEAD:main || true
+          else
+            echo "No LIGHTHOUSE.md generated, skipping commit"
+          fi
