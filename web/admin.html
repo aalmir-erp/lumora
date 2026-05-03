@@ -364,6 +364,7 @@ async function loadBookings() {
         </td>
         <td>
           <button class="btn btn-ghost" onclick="makeInvoice('${b.id}')">Invoice</button>
+          ${b.status !== 'completed' ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="completeJob('${b.id}')" title="Mark complete + WhatsApp customer the review link">✓ Complete</button>` : ''}
           ${b.customer_id ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('customer', ${b.customer_id})" title="Sign in as this customer to see their account">👁 View as customer</button>` : ''}
         </td>
       </tr>`).join("")}</tbody></table>`;
@@ -371,6 +372,15 @@ async function loadBookings() {
 window.changeStatus = async (bid, s) => { await adm(`/api/admin/bookings/${bid}/status`, { method:"POST", body:{status:s} }); };
 window.makeInvoice  = async (bid) => { const r = await adm(`/api/admin/bookings/${bid}/invoice`, { method:"POST" }); alert("Invoice: "+JSON.stringify(r)); };
 
+
+window.completeJob = async function(bid) {
+  if (!confirm("Mark booking " + bid + " as complete? This sends the customer a WhatsApp with the review link.")) return;
+  try {
+    const r = await adm("/api/admin/jobs/" + bid + "/complete", { method:"POST", body:{ photos: [], notes: null }});
+    toast("✓ Complete — review link sent to customer");
+    loadBookings();
+  } catch (e) { toast("Failed: " + e.message, true); }
+};
 window.impersonate = async (user_type, user_id) => {
   if (!confirm(`Sign in as this ${user_type}? You'll be able to return to admin from a banner on the page.`)) return;
   try {

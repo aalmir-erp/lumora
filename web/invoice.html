@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<meta name="robots" content="noindex,nofollow">
+<title>Invoice — Servia</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="stylesheet" href="/style.css">
+<style>
+  body { background:#F1F5F9; }
+  .doc-shell { max-width: 800px; margin: 24px auto 80px; padding: 0 16px; }
+  .doc {
+    background:#fff; border-radius:18px; box-shadow:0 8px 28px rgba(15,23,42,.08);
+    padding: 36px 36px 28px; position:relative; overflow:hidden;
+  }
+  .doc::before {
+    content:""; position:absolute; top:0; left:0; right:0; height:6px;
+    background: linear-gradient(90deg, var(--primary-dark), var(--primary), var(--accent));
+  }
+  .doc-head { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; }
+  .doc-head .left img { height:44px; }
+  .doc-head .left small { color:var(--muted); font-size:13px; display:block; margin-top:4px; }
+  .doc-head .right { text-align:end; }
+  .doc-head h1 { font-size:32px; margin:0 0 4px; letter-spacing:-0.02em; color:var(--text); }
+  .doc-head .id { font-family:ui-monospace,monospace; color:var(--muted); font-size:13px; }
+
+  .doc-meta { display:grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap:18px; margin:26px 0 18px; }
+  .doc-meta .lbl { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:4px; }
+  .doc-meta .val { font-size:14px; font-weight:600; color:var(--text); }
+
+  .billto { background:#F8FAFC; border:1px solid var(--border); border-radius:12px;
+    padding:16px 20px; margin-bottom:22px; }
+  .billto .lbl { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px; }
+  .billto .val { font-size:15px; font-weight:600; color:var(--text); line-height:1.5; }
+
+  table.lines { width:100%; border-collapse: collapse; margin: 12px 0 4px; }
+  table.lines th { text-align:start; font-size:11px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--muted); font-weight:600;
+    padding:10px 8px; border-bottom:2px solid var(--border); }
+  table.lines th:last-child, table.lines td:last-child { text-align:end; }
+  table.lines td { padding:14px 8px; border-bottom:1px solid var(--border); font-size:14px; }
+  table.lines td.label { color:var(--text); font-weight:500; }
+  table.lines td.amount { font-weight:600; white-space:nowrap; }
+
+  .totals { display:flex; justify-content:flex-end; margin-top:10px; }
+  .totals table { font-size:14px; }
+  .totals td { padding:6px 12px; }
+  .totals tr.grand td { font-size:18px; font-weight:800; padding-top:12px;
+    border-top:2px solid var(--border); color:var(--primary-dark); }
+
+  .pay-box {
+    margin-top:24px; padding:20px 22px; border-radius:14px;
+    background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+    display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .pay-box.paid { background:#ECFDF5; border-color:#6EE7B7; }
+  .pay-box.paid .pay-title { color:#065F46; }
+  .pay-title { font-weight:700; font-size:16px; color:var(--primary-dark); }
+  .pay-sub { color:var(--muted); font-size:13px; margin-top:2px; }
+  .pay-btn { background: var(--primary-dark); color:#fff; border:0;
+    padding:14px 28px; border-radius:999px; font-weight:700; font-size:15px;
+    cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px; min-height:48px; }
+  .pay-btn:hover { background: var(--primary); }
+
+  .pay-methods { display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  .pay-methods .pm {
+    flex:1; min-width:120px; padding:14px 12px; border:1px solid var(--border);
+    border-radius:10px; text-align:center; cursor:pointer; background:#fff;
+    transition:.15s; font-size:13px; font-weight:600; color:var(--text);
+  }
+  .pay-methods .pm:hover { border-color:var(--primary); transform: translateY(-1px); }
+  .pay-methods .pm .ico { font-size:22px; margin-bottom:4px; display:block; }
+
+  .doc-footer { margin-top:32px; padding-top:20px; border-top:1px solid var(--border);
+    display:grid; grid-template-columns:1fr 1fr; gap:18px; font-size:12px; color:var(--muted); }
+  .doc-footer h4 { color:var(--text); font-size:12px; text-transform:uppercase;
+    letter-spacing:.06em; margin:0 0 6px; }
+  @media print {
+    body { background:#fff; }
+    .doc-shell { margin:0; padding:0; }
+    .doc { box-shadow:none; border-radius:0; padding:0; }
+    .nav, .mobile-nav, .pay-box .pay-btn, .pay-methods, .actions { display:none !important; }
+  }
+  @media (max-width:680px) { .doc { padding:24px 18px; } .doc-head h1 { font-size:24px; } }
+
+  .actions { display:flex; gap:10px; margin: 18px 0 0; flex-wrap:wrap; }
+  .actions a, .actions button {
+    flex:1; min-height:44px; min-width:120px; border-radius:999px;
+    font-weight:600; font-size:13px; cursor:pointer; text-decoration:none;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    border:1px solid var(--border); background:#fff; color:var(--text);
+  }
+  .actions a:hover, .actions button:hover { border-color:var(--primary); }
+</style>
+</head><body>
+
+<nav class="nav"><div class="nav-inner">
+  <a href="/" aria-label="Home"><img src="/logo.svg" height="36" alt="Servia"></a>
+  <small id="lumora-version" style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:6px;margin-inline-start:6px">v?</small>
+  <div class="nav-cta" style="margin-inline-start:auto">
+    <a class="btn btn-ghost" href="/me.html">My account</a>
+  </div>
+</div></nav>
+
+<div class="doc-shell">
+  <div class="doc" id="doc">
+    <p style="color:var(--muted);text-align:center;padding:40px 0">Loading invoice…</p>
+  </div>
+
+  <div class="actions">
+    <a href="#" id="back-btn">← Back</a>
+    <button onclick="window.print()">🖨 Print / Save PDF</button>
+    <a href="" id="wa-share" target="_blank">📲 Send to WhatsApp</a>
+    <a href="mailto:?subject=Servia%20Invoice" id="email-share">✉ Email</a>
+  </div>
+</div>
+
+<script src="/theme.js" defer></script>
+<script src="/app.js" defer></script>
+<script src="/cms.js" defer></script>
+<script>
+const id = (new URLSearchParams(location.search)).get("id");
+async function render() {
+  if (!id) { document.getElementById("doc").innerHTML = '<p style="padding:40px;text-align:center;color:var(--muted)">Missing invoice id.</p>'; return; }
+  let inv, b = null;
+  try {
+    // Public invoice fetch — uses portal endpoint that returns invoice + booking summary
+    inv = await fetch("/api/portal/invoice/" + id).then(r => r.json());
+    if (!inv || inv.error) throw new Error((inv && inv.error) || "not found");
+  } catch (e) {
+    document.getElementById("doc").innerHTML = `<p style="padding:40px;text-align:center;color:#DC2626">Couldn't load invoice ${escapeHtml(id)}: ${escapeHtml(e.message||e)}</p>`;
+    return;
+  }
+  if (inv.booking_id) {
+    try { b = await fetch("/api/portal/booking/" + inv.booking_id).then(r => r.json()); } catch {}
+  }
+  const brand = window.LUMORA_BRAND || {};
+  const paid = inv.payment_status === "paid";
+  const lines = (inv.line_items || inv.breakdown || []).map(l =>
+    `<tr><td class="label">${escapeHtml(l.label||l.name)}</td><td class="amount">${(l.amount).toFixed(2)} ${inv.currency}</td></tr>`
+  ).join("") || `<tr><td class="label">${escapeHtml((b && b.service_id) || 'Service')}</td><td class="amount">${(inv.amount).toFixed(2)} ${inv.currency}</td></tr>`;
+
+  const subtotal = (inv.amount * 100/105).toFixed(2);
+  const vat = (inv.amount - inv.amount*100/105).toFixed(2);
+
+  document.getElementById("doc").innerHTML = `
+    <div class="doc-head">
+      <div class="left">
+        <img src="/logo.svg" alt="Servia" height="44">
+        <small><b>${escapeHtml(brand.legal_owner || 'Servia Home Services LLC')}</b><br>
+        ${escapeHtml(brand.email || 'hello@servia.ae')} · ${escapeHtml(brand.phone || '+971 56 4020087')}<br>
+        TRN: <code>${escapeHtml(brand.trn || '100xxxxxxxxxxxx')}</code></small>
+      </div>
+      <div class="right">
+        <h1>INVOICE</h1>
+        <div class="id">${escapeHtml(inv.id)}</div>
+        <div style="margin-top:6px"><span class="badge ${paid?'confirmed':'pending'}" style="font-size:12px">${paid?'PAID':'UNPAID'}</span></div>
+      </div>
+    </div>
+
+    <div class="doc-meta">
+      <div><div class="lbl">Issue date</div><div class="val">${(inv.created_at||'').slice(0,10)}</div></div>
+      ${inv.due_at ? `<div><div class="lbl">Due</div><div class="val">${inv.due_at.slice(0,10)}</div></div>` : ''}
+      ${b ? `<div><div class="lbl">Booking ref</div><div class="val">${escapeHtml(b.id||inv.booking_id)}</div></div>` : ''}
+      ${b ? `<div><div class="lbl">Service date</div><div class="val">${escapeHtml(b.target_date||'—')} ${escapeHtml(b.time_slot||'')}</div></div>` : ''}
+    </div>
+
+    ${b ? `<div class="billto">
+      <div class="lbl">Bill to</div>
+      <div class="val">${escapeHtml(b.customer_name || 'Customer')}<br>
+      ${escapeHtml(b.address || '')}<br>
+      ${escapeHtml(b.phone || '')}</div>
+    </div>` : ''}
+
+    <table class="lines">
+      <thead><tr><th>Description</th><th>Amount</th></tr></thead>
+      <tbody>${lines}</tbody>
+    </table>
+
+    <div class="totals">
+      <table>
+        <tr><td>Subtotal</td><td><b>${subtotal} ${inv.currency}</b></td></tr>
+        <tr><td>VAT (5%)</td><td><b>${vat} ${inv.currency}</b></td></tr>
+        <tr class="grand"><td>Total due</td><td>${inv.amount.toFixed(2)} ${inv.currency}</td></tr>
+      </table>
+    </div>
+
+    <div class="pay-box ${paid?'paid':''}">
+      <div>
+        <div class="pay-title">${paid ? '✅ Paid in full' : '💳 Pay to confirm your booking'}</div>
+        <div class="pay-sub">${paid ? 'Paid via ' + escapeHtml(inv.paid_via||'card') + ' on ' + (inv.paid_at||'').slice(0,16).replace('T',' ') : 'Apple Pay · Google Pay · Visa · Mastercard · WhatsApp link'}</div>
+      </div>
+      ${paid ? '' : `<a class="pay-btn" href="${escapeHtml(inv.payment_url||'#')}">Pay ${inv.amount.toFixed(2)} ${inv.currency} →</a>`}
+    </div>
+
+    ${paid ? '' : `
+    <div class="pay-methods">
+      <div class="pm" onclick="location.href='${escapeHtml(inv.payment_url||'#')}'"><span class="ico">🍎</span>Apple Pay</div>
+      <div class="pm" onclick="location.href='${escapeHtml(inv.payment_url||'#')}'"><span class="ico">🟢</span>Google Pay</div>
+      <div class="pm" onclick="location.href='${escapeHtml(inv.payment_url||'#')}'"><span class="ico">💳</span>Card</div>
+      <div class="pm" onclick="navigator.clipboard.writeText(location.href);alert('Payment link copied — paste in your bank app or WhatsApp')"><span class="ico">🔗</span>Copy link</div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:14px;text-align:center">🔒 Secure payment via PCI-compliant gateway. Servia never sees your card number.</p>`}
+
+    <div class="doc-footer">
+      <div>
+        <h4>Payment terms</h4>
+        Advance payment confirms your slot. Due on receipt.<br>
+        Refundable per <a href="/refund.html">refund policy</a>.
+      </div>
+      <div>
+        <h4>Need help?</h4>
+        WhatsApp <a href="https://wa.me/971564020087">+971 56 4020087</a><br>
+        Email <a href="mailto:hello@servia.ae">hello@servia.ae</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function escapeHtml(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+render().then(() => {
+  // wire share buttons after render
+  document.getElementById("back-btn").href = "/me.html";
+  const url = location.href;
+  document.getElementById("wa-share").href = "https://wa.me/?text=" + encodeURIComponent("Servia invoice: " + url);
+  document.getElementById("email-share").href = "mailto:?subject=" + encodeURIComponent("Servia Invoice " + (id||"")) + "&body=" + encodeURIComponent(url);
+});
+</script>
+</body></html>

@@ -818,3 +818,91 @@ def payments_status():
         "paytabs": {"enabled": bool(os.getenv("PAYTABS_PROFILE_ID")), "note": "UAE-local"},
         "tap": {"enabled": bool(os.getenv("TAP_API_KEY")), "note": "GCC"},
     }
+
+
+# ---------- service-delivery completion + automated followups ----------
+class CompleteJobBody(BaseModel):
+    notes: str | None = None
+    photos: list[str] = []   # URLs of completion photos uploaded externally
+
+
+@router.post("/jobs/{bid}/complete", dependencies=[Depends(require_admin)])
+def complete_job(bid: str, body: CompleteJobBody):
+    """Mark a booking complete + send the customer the review link via WhatsApp.
+
+    The bot will WhatsApp again 7 days later for retention follow-up.
+    """
+    from . import tools as _t
+    with db.connect() as c:
+        b = c.execute("SELECT * FROM bookings WHERE id=?", (bid,)).fetchone()
+        if not b:
+            raise HTTPException(404, "booking not found")
+        # Add delivery metadata column if missing (safe migration)
+        try:
+            c.execute("ALTER TABLE bookings ADD COLUMN delivery_notes TEXT")
+        except Exception: pass
+        try:
+            c.execute("ALTER TABLE bookings ADD COLUMN delivery_photos TEXT")
+        except Exception: pass
+        c.execute("UPDATE bookings SET status='completed', delivery_notes=?, "
+                  "delivery_photos=?, completed_at=? WHERE id=?",
+                  (body.notes, ",".join(body.photos),
+                   __import__("datetime").datetime.utcnow().isoformat() + "Z", bid))
+    db.log_event("booking", bid, "completed", actor="admin",
+                 details={"photos": len(body.photos)})
+
+    # Send delivery + review-request WhatsApp to customer
+    from .config import get_settings
+    base = "https://" + get_settings().BRAND_DOMAIN
+    review_url = f"{base}/delivered.html?b={bid}"
+    msg = (
+        f"✅ Your Servia service is complete (booking {bid}).\n\n"
+        f"How did it go? Tap to review (30 seconds): {review_url}\n\n"
+        f"5★? We'll send your invoice to WhatsApp + email shortly. "
+        f"Need anything else? Reply to this message and we'll help."
+    )
+    push = _t.send_whatsapp(b["phone"], msg) if b["phone"] else {"ok": False, "error": "no phone"}
+    return {"ok": True, "review_url": review_url, "wa_send": push}
+
+
+@router.get("/jobs/pending-followup", dependencies=[Depends(require_admin)])
+def list_pending_followups():
+    """Bookings completed 6-8 days ago without a 7-day follow-up sent yet.
+    Cron job (or admin manual click) calls /jobs/{bid}/followup."""
+    import datetime as _dt
+    cutoff_old = (_dt.datetime.utcnow() - _dt.timedelta(days=8)).isoformat() + "Z"
+    cutoff_new = (_dt.datetime.utcnow() - _dt.timedelta(days=6)).isoformat() + "Z"
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT id, customer_name, phone, service_id, completed_at "
+                "FROM bookings WHERE status='completed' "
+                "AND completed_at BETWEEN ? AND ? "
+                "AND COALESCE(followup_sent_at,'') = '' "
+                "ORDER BY completed_at",
+                (cutoff_old, cutoff_new)).fetchall()
+        except Exception:
+            # followup_sent_at column may not exist — try to add
+            try: c.execute("ALTER TABLE bookings ADD COLUMN followup_sent_at TEXT")
+            except Exception: pass
+            try: c.execute("ALTER TABLE bookings ADD COLUMN completed_at TEXT")
+            except Exception: pass
+            rows = []
+    return {"pending": [db.row_to_dict(r) for r in rows]}
+
+
+@router.post("/jobs/{bid}/followup", dependencies=[Depends(require_admin)])
+def send_followup(bid: str):
+    from . import tools as _t
+    with db.connect() as c:
+        b = c.execute("SELECT * FROM bookings WHERE id=?", (bid,)).fetchone()
+        if not b:
+            raise HTTPException(404, "booking not found")
+        c.execute("UPDATE bookings SET followup_sent_at=? WHERE id=?",
+                  (__import__("datetime").datetime.utcnow().isoformat() + "Z", bid))
+    msg = (
+        f"Hi {b['customer_name']}, hope everything's still great after your Servia "
+        f"{b['service_id'].replace('_',' ')} last week. Want to book the same crew "
+        f"again? Reply with the day + time and we'll lock it in. — Lumi"
+    )
+    return _t.send_whatsapp(b["phone"], msg)

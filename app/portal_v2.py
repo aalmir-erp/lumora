@@ -536,3 +536,49 @@ def list_reviews(service_id: str, limit: int = 20):
         "count": agg["n"] or 0,
         "avg": round(agg["avg"] or 0, 2) if agg["avg"] else None
     }
+
+
+# ---------- public review submission (used by /delivered.html) ----------
+class PublicReviewBody(BaseModel):
+    booking_id: str
+    rating: int
+    text: str | None = None
+    tags: list[str] = []
+
+
+@public_router.post("/reviews")
+def submit_public_review(body: PublicReviewBody):
+    """Public review endpoint — no auth needed; verifies the booking exists.
+    Used by /delivered.html immediately after the crew finishes a job."""
+    if body.rating < 1 or body.rating > 5:
+        raise HTTPException(400, "rating must be 1-5")
+    with db.connect() as c:
+        b = c.execute("SELECT id, phone, service_id FROM bookings WHERE id=?",
+                      (body.booking_id,)).fetchone()
+        if not b:
+            raise HTTPException(404, "booking not found")
+        cust = c.execute("SELECT id FROM customers WHERE phone=?",
+                         (b["phone"],)).fetchone()
+        asn = c.execute("SELECT vendor_id FROM assignments WHERE booking_id=?",
+                        (body.booking_id,)).fetchone()
+        comment = body.text or ""
+        if body.tags:
+            comment = " · ".join(body.tags) + ("\n" + comment if comment else "")
+        c.execute(
+            "INSERT INTO reviews(booking_id, customer_id, vendor_id, service_id, "
+            "stars, comment, created_at) VALUES(?,?,?,?,?,?,?)",
+            (body.booking_id, cust["id"] if cust else None,
+             asn["vendor_id"] if asn else None,
+             b["service_id"], body.rating, comment,
+             _dt.datetime.utcnow().isoformat() + "Z"))
+        # Update vendor rolling average
+        if asn:
+            v = c.execute("SELECT rating, completed_jobs FROM vendors WHERE id=?",
+                          (asn["vendor_id"],)).fetchone()
+            n = (v["completed_jobs"] or 0) + 1
+            new_avg = ((v["rating"] or 5) * (n - 1) + body.rating) / n
+            c.execute("UPDATE vendors SET rating=?, completed_jobs=? WHERE id=?",
+                      (round(new_avg, 2), n, asn["vendor_id"]))
+    db.log_event("review", body.booking_id, "submitted",
+                 details={"rating": body.rating, "tags": body.tags})
+    return {"ok": True}
