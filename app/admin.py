@@ -629,3 +629,111 @@ def list_customers():
             "FROM customers ORDER BY id DESC LIMIT 200"
         ).fetchall()
     return {"customers": [db.row_to_dict(r) for r in rows]}
+
+
+# ---------- vendor outreach / onboarding ----------
+class OutreachLead(BaseModel):
+    name: str
+    phone: str               # E.164 like +9715xxxxxxxx
+    company: str | None = None
+    services: list[str] = []  # service IDs to pre-check on the signup form
+    email: str | None = None
+    notes: str | None = None
+
+
+@router.post("/outreach/invite", dependencies=[Depends(require_admin)])
+def send_outreach_invite(body: OutreachLead, request: Request):
+    """Send a WhatsApp invite to a prospective vendor with a personalised signup
+    link. Records the lead so we can track conversions."""
+    from . import tools as _tools
+    from .config import get_settings as _gs
+    b = _gs().brand()
+    # Build prefilled signup URL
+    base = str(request.base_url).rstrip("/")
+    qs = {"as": "partner", "ref": "outreach"}
+    if body.name: qs["name"] = body.name
+    if body.email: qs["email"] = body.email
+    if body.company: qs["company"] = body.company
+    if body.services: qs["services"] = ",".join(body.services)
+    from urllib.parse import urlencode
+    signup_url = f"{base}/login.html?{urlencode(qs)}"
+
+    msg = (
+        f"السلام عليكم {body.name},\n\n"
+        f"This is {b['name']} — UAE's home services platform. We send 1000s of bookings/month "
+        f"to vetted partners across {', '.join((body.services or [])[:3]) or 'cleaning, AC, handyman & more'}.\n\n"
+        f"We'd like to invite you to join our partner network:\n"
+        f"✓ 80% payout on every job (we keep 20% platform fee)\n"
+        f"✓ Set your own pricing per service\n"
+        f"✓ Weekly bank transfer\n"
+        f"✓ Free customer acquisition + marketing\n"
+        f"✓ No listing or monthly fees\n\n"
+        f"Sign up in 2 minutes (services pre-selected for you):\n{signup_url}\n\n"
+        f"Or reply YES and our team will set you up.\n\n"
+        f"— {b['name']} Partner Onboarding\n{b.get('whatsapp', '')}"
+    )
+
+    push = _tools.send_whatsapp(body.phone, msg)
+    db.log_event("admin", "outreach_invite", "sent", actor="admin",
+                 details={"phone": body.phone, "name": body.name,
+                          "services": body.services, "ok": push.get("ok"),
+                          "signup_url": signup_url})
+    # Persist the lead so we can show it in the outreach tab
+    _record_outreach_lead(body, signup_url, push.get("ok", False))
+    return {"ok": True, "wa_send": push, "signup_url": signup_url}
+
+
+def _record_outreach_lead(b: OutreachLead, url: str, sent: bool) -> None:
+    with db.connect() as c:
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS outreach_leads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT, phone TEXT UNIQUE, company TEXT, email TEXT,
+                services TEXT, notes TEXT, signup_url TEXT,
+                wa_sent INTEGER DEFAULT 0, status TEXT DEFAULT 'invited',
+                created_at TEXT, updated_at TEXT)
+        """)
+        now = __import__("datetime").datetime.utcnow().isoformat() + "Z"
+        c.execute(
+            "INSERT INTO outreach_leads(name,phone,company,email,services,notes,signup_url,wa_sent,created_at,updated_at) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?) "
+            "ON CONFLICT(phone) DO UPDATE SET name=excluded.name, company=excluded.company, "
+            "email=excluded.email, services=excluded.services, notes=excluded.notes, "
+            "signup_url=excluded.signup_url, wa_sent=excluded.wa_sent, updated_at=excluded.updated_at",
+            (b.name, b.phone, b.company, b.email, ",".join(b.services or []),
+             b.notes, url, 1 if sent else 0, now, now))
+
+
+@router.get("/outreach/leads", dependencies=[Depends(require_admin)])
+def list_outreach_leads():
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT * FROM outreach_leads ORDER BY id DESC LIMIT 500"
+            ).fetchall()
+        except Exception:
+            return {"leads": []}
+    return {"leads": [db.row_to_dict(r) for r in rows]}
+
+
+class BulkLeadsBody(BaseModel):
+    leads: list[OutreachLead]
+
+
+@router.post("/outreach/bulk", dependencies=[Depends(require_admin)])
+def bulk_invite(body: BulkLeadsBody, request: Request):
+    sent = 0
+    failed = 0
+    results = []
+    for lead in body.leads:
+        try:
+            r = send_outreach_invite(lead, request)
+            results.append({"phone": lead.phone, "ok": r.get("ok"), "wa": r.get("wa_send", {}).get("ok")})
+            if r.get("wa_send", {}).get("ok"):
+                sent += 1
+            else:
+                failed += 1
+        except Exception as e:  # noqa: BLE001
+            failed += 1
+            results.append({"phone": lead.phone, "ok": False, "error": str(e)})
+    return {"ok": True, "sent": sent, "failed": failed, "results": results}

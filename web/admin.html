@@ -34,6 +34,7 @@
     <a href="#convos"    data-tab="convos">💬 Conversations</a>
     <a href="#pricing"   data-tab="pricing">💰 Services & Pricing</a>
     <a href="#vendors"   data-tab="vendors">🤝 Vendors</a>
+    <a href="#outreach"  data-tab="outreach">📨 Vendor outreach</a>
     <a href="#brand"     data-tab="brand">🎨 Brand &amp; Contact</a>
     <a href="#whatsapp"  data-tab="whatsapp">📲 WhatsApp</a>
     <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
@@ -108,6 +109,51 @@
       <div id="vendor-table"></div>
     </div>
 
+    <div id="t-outreach" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
+        <div>
+          <h2 style="margin:0">Vendor outreach</h2>
+          <p style="margin:4px 0 0;color:var(--muted)">Invite UAE service providers to join Lumora. We send a personalised WhatsApp invite with a one-click signup link that pre-fills their name + services. Onboard in minutes.</p>
+        </div>
+        <button class="btn btn-ghost" id="ou-refresh">Refresh</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start">
+        <!-- Left: invite form -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px">
+          <h3 style="margin:0 0 12px;font-size:15px">Invite a single vendor</h3>
+          <label style="font-size:12px;color:var(--muted)">Name</label>
+          <input id="ou-name" placeholder="Ahmed Al Marzouqi" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+          <label style="font-size:12px;color:var(--muted)">WhatsApp number (with country code)</label>
+          <input id="ou-phone" placeholder="+971501234567" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+          <label style="font-size:12px;color:var(--muted)">Company (optional)</label>
+          <input id="ou-company" placeholder="Sparkle Cleaning LLC" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+          <label style="font-size:12px;color:var(--muted)">Email (optional)</label>
+          <input id="ou-email" type="email" placeholder="ahmed@sparkle.ae" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+          <label style="font-size:12px;color:var(--muted)">Services they offer (tap to toggle — pre-checks signup form)</label>
+          <div id="ou-services" style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0"></div>
+          <label style="font-size:12px;color:var(--muted)">Notes</label>
+          <textarea id="ou-notes" rows="2" placeholder="e.g. found via Bayut, has 12 staff, Dubai+Sharjah" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px"></textarea>
+          <button class="btn btn-primary btn-block" onclick="sendOutreach()" style="margin-top:8px">📲 Send WhatsApp invite</button>
+          <div id="ou-result" style="margin-top:10px;font-size:13px"></div>
+
+          <h3 style="margin:24px 0 12px;font-size:15px;border-top:1px solid var(--border);padding-top:18px">Bulk invite (paste CSV)</h3>
+          <p style="margin:0 0 8px;font-size:11px;color:var(--muted)">One per line: <code>Name, Phone, Company, Services (comma-separated)</code></p>
+          <textarea id="ou-bulk" rows="5" placeholder="Ahmed, +971501234567, Sparkle LLC, deep_cleaning,ac_cleaning&#10;Priya, +971555555555, JustClean, maid_service" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px"></textarea>
+          <button class="btn btn-ghost btn-block" onclick="sendBulkOutreach()" style="margin-top:8px">Send bulk invites</button>
+        </div>
+
+        <!-- Right: leads + status -->
+        <div>
+          <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:13px">
+            <b>📡 WhatsApp bridge required.</b> The actual message is delivered via the Lumora WhatsApp bridge (Node service). Set <code>WA_BRIDGE_URL</code> in Railway env. Without it, leads are still recorded with their signup URL — you can manually copy/paste-send for now. <a href="https://wa.me/971564020087?text=Hi%20Lumora%2C%20guide%20me%20on%20the%20WhatsApp%20bridge%20setup" target="_blank">Need help setting it up?</a>
+          </div>
+          <h3 style="margin:0 0 12px;font-size:15px">Recent leads (top 50)</h3>
+          <div id="ou-leads"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="t-brand" class="tab" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
         <div>
@@ -146,6 +192,7 @@ function show(tab) {
   if (tab==="convos")    loadSessions();
   if (tab==="pricing")   loadPricing();
   if (tab==="vendors")   loadVendors();
+  if (tab==="outreach")  loadOutreach();
   if (tab==="brand")     loadBrand();
   if (tab==="whatsapp")  loadWA();
 }
@@ -519,6 +566,105 @@ window.removeVendorFromService = async function(sid, vid) {
   await adm("/api/admin/service/"+sid+"/vendor/"+vid, { method:"DELETE" });
   toggleSvc(sid); toggleSvc(sid);  // refresh
 };
+
+// -------- Vendor outreach tab --------
+let _ouServices = [];
+let _ouSelectedSvcs = new Set();
+async function loadOutreach() {
+  // Load service catalog into the picker once
+  if (!_ouServices.length) {
+    const r = await adm("/api/admin/services-summary").catch(() => null);
+    _ouServices = (r && r.services) || [];
+    document.getElementById("ou-services").innerHTML = _ouServices.map(s => `
+      <button type="button" class="btn btn-ghost" data-sid="${s.id}" style="font-size:11px;padding:5px 10px"
+              onclick="ouToggleSvc(this)">${escapeHtml(s.name)}</button>`).join("");
+  }
+  const r2 = await adm("/api/admin/outreach/leads").catch(() => ({leads:[]}));
+  renderOutreachLeads(r2.leads || []);
+}
+window.ouToggleSvc = function(btn) {
+  const id = btn.dataset.sid;
+  if (_ouSelectedSvcs.has(id)) { _ouSelectedSvcs.delete(id); btn.className = "btn btn-ghost"; }
+  else { _ouSelectedSvcs.add(id); btn.className = "btn btn-primary"; }
+  btn.style.fontSize = "11px"; btn.style.padding = "5px 10px";
+};
+function renderOutreachLeads(leads) {
+  const wrap = document.getElementById("ou-leads");
+  if (!leads.length) {
+    wrap.innerHTML = '<div style="padding:24px;color:var(--muted);text-align:center">No outreach leads yet. Send your first invite on the left.</div>';
+    return;
+  }
+  wrap.innerHTML = `<table class="list"><thead><tr>
+      <th>Name</th><th>Phone</th><th>Services</th><th>Status</th><th>Joined?</th><th>Sent</th><th></th>
+    </tr></thead><tbody>${leads.map(l => `
+      <tr>
+        <td>
+          <div style="font-weight:600">${escapeHtml(l.name||'—')}</div>
+          ${l.company ? `<div style="font-size:11px;color:var(--muted)">${escapeHtml(l.company)}</div>` : ''}
+        </td>
+        <td><code style="font-size:12px">${escapeHtml(l.phone||'')}</code></td>
+        <td><div style="max-width:240px;font-size:11px;color:var(--muted)">${escapeHtml(l.services||'').replace(/,/g,', ')}</div></td>
+        <td><span class="badge ${l.status==='joined'?'confirmed':'pending'}">${l.status||'invited'}</span></td>
+        <td>${l.status==='joined' ? '✅' : '—'}</td>
+        <td>${l.wa_sent ? '📲' : '<span style="color:#DC2626">✗</span>'}</td>
+        <td style="text-align:end">
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="copyToClipboard(${JSON.stringify(l.signup_url || '').replace(/"/g,'&quot;')})">📋 Copy link</button>
+          <a class="btn btn-ghost" style="font-size:11px;padding:4px 10px" target="_blank" href="https://wa.me/${(l.phone||'').replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Hi ' + (l.name||'') + ', here is your Lumora partner signup link: ' + (l.signup_url || ''))}">WA again</a>
+        </td>
+      </tr>`).join("")}</tbody></table>`;
+}
+window.copyToClipboard = function(text) { navigator.clipboard.writeText(text); toast("✓ Link copied"); };
+
+window.sendOutreach = async function() {
+  const body = {
+    name: document.getElementById("ou-name").value.trim(),
+    phone: document.getElementById("ou-phone").value.trim(),
+    company: document.getElementById("ou-company").value.trim() || null,
+    email: document.getElementById("ou-email").value.trim() || null,
+    services: [..._ouSelectedSvcs],
+    notes: document.getElementById("ou-notes").value.trim() || null,
+  };
+  if (!body.name || !body.phone) {
+    document.getElementById("ou-result").innerHTML = '<span style="color:#DC2626">Name and phone are required.</span>';
+    return;
+  }
+  document.getElementById("ou-result").textContent = "Sending…";
+  try {
+    const r = await adm("/api/admin/outreach/invite", { method:"POST", body });
+    const waOk = r.wa_send && r.wa_send.ok;
+    document.getElementById("ou-result").innerHTML =
+      `<div style="background:${waOk?'#ECFDF5':'#FEF3C7'};padding:10px;border-radius:8px;border:1px solid ${waOk?'#6EE7B7':'#FCD34D'}">
+        ${waOk ? '✅ WhatsApp invite sent.' : '⚠️ Saved as lead, but WhatsApp bridge not configured. Open the link below and send manually:'}<br>
+        <a href="${r.signup_url}" target="_blank" style="font-size:12px;word-break:break-all">${r.signup_url}</a>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;margin-inline-start:8px" onclick="copyToClipboard('${r.signup_url}')">📋 Copy</button>
+      </div>`;
+    // Reset form
+    ["ou-name","ou-phone","ou-company","ou-email","ou-notes"].forEach(id => document.getElementById(id).value = "");
+    _ouSelectedSvcs.clear();
+    document.querySelectorAll("#ou-services button").forEach(b => b.className = "btn btn-ghost");
+    loadOutreach();
+  } catch (e) { document.getElementById("ou-result").innerHTML = '<span style="color:#DC2626">Error: '+e.message+'</span>'; }
+};
+
+window.sendBulkOutreach = async function() {
+  const lines = (document.getElementById("ou-bulk").value || "").split("\n").map(s => s.trim()).filter(Boolean);
+  if (!lines.length) return alert("Paste at least one line first.");
+  const leads = lines.map(line => {
+    const parts = line.split(",").map(s => s.trim());
+    return {
+      name: parts[0] || "",
+      phone: parts[1] || "",
+      company: parts[2] || null,
+      services: (parts[3] || "").split(/[\s|;]+/).filter(Boolean),
+    };
+  });
+  if (!confirm(`Send ${leads.length} WhatsApp invites?`)) return;
+  const r = await adm("/api/admin/outreach/bulk", { method:"POST", body: { leads }});
+  alert(`Sent: ${r.sent}, Failed: ${r.failed}`);
+  loadOutreach();
+};
+
+document.getElementById("ou-refresh")?.addEventListener("click", loadOutreach);
 
 window.openAddVendor = async function(sid) {
   const r = await adm("/api/admin/vendors");

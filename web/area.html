@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<title>Lumora services — loading…</title>
+<meta name="description" content="">
+<link rel="canonical" href="">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
+<link rel="preload" as="image" href="/mascot.svg" type="image/svg+xml">
+<link rel="preload" as="fetch" href="/api/services" crossorigin="anonymous">
+
+<style>
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes shine { 0%{background-position:-200% center} 100%{background-position:200% center} }
+  .reveal { opacity:0; transform:translateY(20px); transition:.6s; }
+  .reveal.in { opacity:1; transform:translateY(0); }
+
+  .area-hero { position:relative; overflow:hidden;
+    background: linear-gradient(135deg, var(--hero-a, #0F766E) 0%, var(--hero-b, #14B8A6) 100%);
+    color:#fff; padding:60px 20px 76px; }
+  .area-hero::before {
+    content:""; position:absolute; inset:0;
+    background-image: var(--hero-bg, none);
+    background-size: cover; background-position: center;
+    opacity: 0.15; mix-blend-mode: overlay;
+  }
+  .area-hero-inner { max-width: 1180px; margin:0 auto;
+    display:grid; grid-template-columns: 1.4fr 1fr; gap: 32px; align-items:center;
+    position:relative; z-index:1; }
+  @media(max-width:880px){ .area-hero-inner { grid-template-columns:1fr; gap:18px; padding:0 4px } }
+  .area-pill { display:inline-flex; align-items:center; gap:8px;
+    background: rgba(255,255,255,0.18); backdrop-filter: blur(8px);
+    padding:6px 14px; border-radius:999px; font-size:13px; font-weight:600;
+    border:1px solid rgba(255,255,255,0.25); }
+  .area-h1 { font-size: 52px; font-weight:800; line-height:1.05; margin: 14px 0 14px;
+    letter-spacing:-0.02em; }
+  .area-h1 b { background: linear-gradient(90deg, #FCD34D 30%, #fff 50%, #FCD34D 70%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    background-size: 200% auto; animation: shine 4.5s linear infinite; }
+  .area-sub { font-size: 18px; opacity:.95; max-width: 540px; line-height:1.5; }
+  .area-stats { display:flex; gap:28px; flex-wrap:wrap; margin: 22px 0; }
+  .area-stats .s { font-size:22px; font-weight:800; }
+  .area-stats .s small { display:block; font-size:12px; font-weight:500; opacity:.85; margin-top:2px }
+  .area-cta-row { display:flex; gap:12px; flex-wrap:wrap; margin-top: 8px; }
+  .area-mascot { animation: float 3.6s ease-in-out infinite; }
+
+  .areas-strip { display:flex; flex-wrap:wrap; gap:8px; margin: 32px 0; justify-content:center }
+  .areas-strip a { padding:8px 16px; border-radius:999px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 13px; font-weight: 600; text-decoration: none; color: var(--text); }
+  .areas-strip a.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .areas-strip a:hover:not(.active) { background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
+
+  .svc-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .svc-tile { background: var(--surface); border:1px solid var(--border);
+    border-radius: 16px; padding: 24px 16px; text-align:center;
+    text-decoration:none; color:var(--text); transition:.18s; }
+  .svc-tile:hover { transform: translateY(-4px); border-color: var(--primary);
+    box-shadow: 0 12px 28px rgba(15,23,42,0.1); }
+  .svc-tile .e { font-size: 44px; line-height: 1; margin-bottom: 6px; }
+  .svc-tile h3 { margin: 4px 0; font-size: 15px; }
+  .svc-tile small { color: var(--muted); font-size: 12px; display:block; }
+  .svc-tile .price { color: var(--primary); font-weight:700; font-size: 13px; margin-top:6px; }
+
+  .neighborhoods { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:8px; margin: 18px 0; }
+  .neighborhoods span { background: var(--surface); border:1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; text-align:center; }
+
+  .reasons { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+  .reasons .r { background: var(--surface); padding: 22px; border-radius: 16px; border: 1px solid var(--border); }
+  .reasons .r .ico { font-size: 32px; margin-bottom: 8px; }
+  .reasons .r h3 { margin: 0 0 4px; font-size: 16px; }
+  .reasons .r p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div style="height:4px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav"><div class="nav-inner">
+  <a href="/" aria-label="Home"><img src="/logo.svg" height="40" alt="Lumora"></a>
+  <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
+  <div class="nav-links">
+    <a href="/services.html">Services</a>
+    <a href="/book.html">Book</a>
+    <a href="/me.html">My account</a>
+    <a href="/login.html?as=partner">For partners</a>
+  </div>
+  <div class="nav-cta">
+    <a class="btn btn-ghost" href="/login.html">Sign in</a>
+    <a class="btn btn-primary" href="/book.html">Book now</a>
+  </div>
+</div></nav>
+
+<header class="area-hero" id="hero">
+  <div class="area-hero-inner">
+    <div class="reveal in">
+      <span class="area-pill">📍 <span id="hero-area-pill">Loading…</span></span>
+      <h1 class="area-h1" id="hero-h1">Trusted help <b>at home</b></h1>
+      <p class="area-sub" id="hero-sub">Cleaning, AC, maid, handyman & more — verified, insured, fixed price.</p>
+      <div class="area-stats">
+        <div class="s">4.9★<small>2,400+ families</small></div>
+        <div class="s" id="stat-areas">—<small>neighbourhoods covered</small></div>
+        <div class="s">60s<small>to book</small></div>
+        <div class="s">7-day<small>re-do guarantee</small></div>
+      </div>
+      <div class="area-cta-row">
+        <a class="btn-bigwa" id="hero-wa" href="https://wa.me/971564020087" target="_blank"
+           style="background:#25D366;color:#fff;padding:14px 24px;border-radius:999px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px">📱 Book on WhatsApp</a>
+        <a class="btn btn-primary" href="/book.html" style="font-size:15px;padding:14px 24px">Book online →</a>
+      </div>
+    </div>
+    <div style="text-align:center" class="reveal in">
+      <img class="area-mascot" src="/mascot.svg" width="240" height="240" alt="Lumi mascot waving" loading="eager">
+    </div>
+  </div>
+</header>
+
+<section style="padding:24px 16px;background:var(--surface)">
+  <div class="container">
+    <div class="areas-strip">
+      <a href="/area.html?city=dubai"        data-c="dubai">🏙 Dubai</a>
+      <a href="/area.html?city=sharjah"      data-c="sharjah">🌅 Sharjah</a>
+      <a href="/area.html?city=ajman"        data-c="ajman">⛵ Ajman</a>
+      <a href="/area.html?city=abu-dhabi"    data-c="abu-dhabi">🦅 Abu Dhabi</a>
+      <a href="/area.html?city=ras-al-khaimah" data-c="ras-al-khaimah">🏔 Ras Al Khaimah</a>
+      <a href="/area.html?city=umm-al-quwain"  data-c="umm-al-quwain">🌊 Umm Al Quwain</a>
+      <a href="/area.html?city=fujairah"       data-c="fujairah">🏝 Fujairah</a>
+    </div>
+  </div>
+</section>
+
+<section style="padding:48px 20px">
+  <div class="container">
+    <h2 class="reveal" id="sec-services-h" style="text-align:center">Most-booked services</h2>
+    <p class="sub reveal" id="sec-services-sub" style="text-align:center">Tap to see local pricing, what's included, and same-day slots.</p>
+    <div class="svc-tiles" id="svc-tiles" style="margin-top:24px"></div>
+  </div>
+</section>
+
+<section style="padding:48px 20px;background:#F8FAFC">
+  <div class="container">
+    <h2 class="reveal" id="sec-areas-h" style="text-align:center">Neighbourhoods we cover</h2>
+    <div class="neighborhoods" id="neighborhoods" style="margin-top:18px"></div>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:8px" id="more-areas"></p>
+  </div>
+</section>
+
+<section style="padding:48px 20px">
+  <div class="container">
+    <h2 class="reveal" style="text-align:center">Why families choose Lumora</h2>
+    <div class="reasons" style="margin-top:24px">
+      <div class="r reveal"><div class="ico">🛡️</div><h3>Vetted &amp; insured</h3><p>Background-checked professionals, AED 25,000 damage cover, never-shared with third parties.</p></div>
+      <div class="r reveal"><div class="ico">⏱️</div><h3>Same-day slots</h3><p id="reason-slots">Open from 7am to 10pm across the emirate, weekend slots included, on-time or AED 50 credit.</p></div>
+      <div class="r reveal"><div class="ico">💰</div><h3>Fixed transparent price</h3><p>Quote shown upfront before you confirm. Pay only after the job is done — card, cash or invoice.</p></div>
+      <div class="r reveal"><div class="ico">🌐</div><h3>Multi-language</h3><p>English, العربية, हिन्दी, Filipino — book in your language via app, WhatsApp or voice.</p></div>
+      <div class="r reveal"><div class="ico">🔁</div><h3>7-day re-do</h3><p>Not happy? We re-do the relevant scope free. No arguments, no fine print.</p></div>
+      <div class="r reveal"><div class="ico">📲</div><h3>Lumi the AI concierge</h3><p>24×7 booking, rescheduling and quotes via Claude-powered chat in your language.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:48px 20px;background:#F8FAFC">
+  <div class="container">
+    <h2 class="reveal" id="sec-faq-h" style="text-align:center">Frequently asked</h2>
+    <div id="faqs" style="max-width:760px;margin:24px auto 0"></div>
+    <p style="text-align:center;margin-top:18px"><a class="btn btn-ghost" href="/faq.html">See all 60+ FAQs →</a></p>
+  </div>
+</section>
+
+<section style="padding:48px 20px">
+  <div class="container" style="max-width:680px;text-align:center">
+    <h2 class="reveal">Book your service in 60 seconds</h2>
+    <p class="sub reveal" id="cta-sub">Pick a service, get an instant quote, lock in the slot. We do the rest.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px">
+      <a class="btn btn-primary" href="/book.html" style="font-size:16px;padding:14px 28px">Book now</a>
+      <a class="btn btn-ghost" id="cta-wa" href="https://wa.me/971564020087" target="_blank" style="font-size:16px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366">📱 WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<footer><div class="container">
+  <div><img src="/logo.svg" height="36" alt="Lumora" style="filter:brightness(0) invert(1)"></div>
+  <div><h4>Customers</h4><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
+  <div><h4>Service areas</h4>
+    <a href="/area.html?city=dubai">Dubai</a><br>
+    <a href="/area.html?city=sharjah">Sharjah</a><br>
+    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
+    <a href="/area.html?city=ajman">Ajman</a><br>
+    <a href="/area.html?city=ras-al-khaimah">Ras Al Khaimah</a></div>
+  <div><h4>Legal</h4><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a><br><a href="/faq.html">FAQ</a></div>
+  <div><h4>Contact</h4><a href="https://wa.me/971564020087">WhatsApp</a><br><a href="mailto:hello@sales.mir.ae">Email</a></div>
+</div></footer>
+
+<nav class="mobile-nav"><div class="mobile-nav-inner">
+  <a href="/"><span class="ico">🏠</span><span>Home</span></a>
+  <a href="/services.html"><span class="ico">📋</span><span>Services</span></a>
+  <a href="/book.html"><span class="ico">➕</span><span>Book</span></a>
+  <a href="/me.html"><span class="ico">👤</span><span>Account</span></a>
+  <a href="#" onclick="document.querySelector('.us-launcher').click();return false"><span class="ico">💬</span><span>Chat</span></a>
+</div></nav>
+
+<script src="/theme.js" defer></script>
+<script src="/app.js" defer></script>
+<script>
+const CITY_DATA = {
+  "dubai": {
+    name: "Dubai", emoji: "🏙", labelAr: "دبي",
+    heroA: "#0F172A", heroB: "#1E40AF",
+    h1: "Trusted home help<br>across <b>Dubai</b>",
+    sub: "From Marina to Mirdif, Lumora's vetted crews arrive on time across all 200+ Dubai communities. AC, deep cleaning, pest control, maid service & more — booked in 60 seconds, fixed price, 4.9★ rated.",
+    areaCount: 200,
+    neighborhoods: ["Dubai Marina","Downtown","Business Bay","JLT","JVC","Jumeirah","Umm Suqeim","Al Barsha","Al Quoz","DIFC","Palm Jumeirah","Arabian Ranches","Damac Hills","Dubai Hills","Mirdif","Deira","Bur Dubai","Al Karama","Discovery Gardens","International City","Silicon Oasis","Sports City","Motor City","Al Furjan","Town Square","Tilal Al Ghaf","City Walk","Dubai Creek Harbour","Mira","Reem","Al Warqa","Mudon","Springs","Meadows"],
+    moreAreas: "Plus Al Sufouh, La Mer, Bluewaters, Dubai Festival City, Ras Al Khor, Nad Al Sheba, Al Furjan, and more — if you're inside Dubai we serve you.",
+    slots: "Open from 7am to 10pm, including Friday & weekend slots — same-day booking usually available within 2 hours.",
+    faqs: [
+      {q: "What's the price for deep cleaning a 2-bedroom apartment in Dubai?", a: "Around AED 350-450 depending on community and add-ons. Get the exact quote in 30 seconds via the booking page."},
+      {q: "Do you cover Dubai Marina, JLT and JVC?", a: "Yes, all 200+ Dubai communities are covered with same-day slots most days."},
+      {q: "Can the crew enter without me being there?", a: "Yes — pre-arrange with security or leave keys with concierge. We'll send before/after photos via WhatsApp."},
+      {q: "Are your cleaners vaccinated and insured?", a: "Every professional is background-checked, trained, and we carry AED 25,000 damage cover per booking."}
+    ]
+  },
+  "sharjah": {
+    name: "Sharjah", emoji: "🌅", labelAr: "الشارقة",
+    heroA: "#0F766E", heroB: "#0E7490",
+    h1: "Lumora is here in <b>Sharjah</b>",
+    sub: "Family-friendly, fixed-price home services across Al Nahda, Al Majaz, Muwailih, Al Qasimia and the rest of the emirate. Same-day deep cleaning, AC, maid, and handyman.",
+    areaCount: 60,
+    neighborhoods: ["Al Nahda","Al Majaz","Muwailih","Al Qasimia","Rolla","Al Khan","Al Taawun","Al Mamzar","Sharjah Industrial","Al Layyah","Al Sharq","University City","Al Falah","Al Ghubaiba","Al Qulayaa","Mughaidir","Halwan","Al Yarmook"],
+    moreAreas: "Including Maleha, Al Hamriyah, Al Dhaid and outer Sharjah on request.",
+    slots: "Open 7am to 9pm. Family-friendly female crews available on request.",
+    faqs: [
+      {q: "Is Lumora available in Al Nahda Sharjah?", a: "Yes, Al Nahda is one of our most-served areas. Same-day slots available."},
+      {q: "Do you have all-female cleaning crews for Sharjah families?", a: "Yes — request 'female-only crew' when booking and we'll assign accordingly."},
+      {q: "How much for AC cleaning of 4 splits in Sharjah?", a: "Approximately AED 320-400 depending on access and unit type. Get the exact quote on the booking page."}
+    ]
+  },
+  "ajman": {
+    name: "Ajman", emoji: "⛵", labelAr: "عجمان",
+    heroA: "#7C2D12", heroB: "#B45309",
+    h1: "Reliable home services in <b>Ajman</b>",
+    sub: "Lumora's local crews cover Corniche, Mowaihat, Al Rashidiya, Al Nuaimiya and beyond — fixed prices, no hidden fees, same-day available.",
+    areaCount: 25,
+    neighborhoods: ["Corniche","Mowaihat","Al Rashidiya","Al Nuaimiya","Al Jurf","Al Hamidiya","Al Rumaila","Garden City","Helio","Al Tallah","Al Rawda","Al Zahraa"],
+    moreAreas: "Lumora covers all major Ajman neighbourhoods.",
+    slots: "Open 8am to 9pm. Inter-emirate transfer fee may apply for late slots.",
+    faqs: [
+      {q: "How quickly can a Lumora crew reach Ajman Corniche?", a: "Same-day in most cases — usually within 2-4 hours."},
+      {q: "Do you do villa deep cleaning in Mowaihat?", a: "Yes — full villa deep clean from AED 800 depending on size and bedrooms. Get an exact quote in 60 seconds."}
+    ]
+  },
+  "abu-dhabi": {
+    name: "Abu Dhabi", emoji: "🦅", labelAr: "أبو ظبي",
+    heroA: "#3F2D88", heroB: "#0F766E",
+    h1: "Premium home services in <b>Abu Dhabi</b>",
+    sub: "From Khalidiya to Al Reem, Yas Island to Saadiyat — Lumora's trained, insured professionals deliver fixed-price cleaning, AC, maid and handyman services across the capital.",
+    areaCount: 80,
+    neighborhoods: ["Khalidiya","Al Reem Island","Saadiyat","Yas Island","Al Raha","Al Bateen","Al Mushrif","Al Karamah","Al Markaziyah","Khalifa City","Mohamed Bin Zayed City","Al Shamkha","Al Reef","Hydra Village","Mussafah","Tourist Club","Al Maryah","Al Wahda","Al Nahyan","Mangrove Village"],
+    moreAreas: "Including Al Ain on scheduled days — call us for availability.",
+    slots: "Open 7am to 10pm. Full coverage across all emirate islands and mainland.",
+    faqs: [
+      {q: "Do you serve Yas Island and Saadiyat?", a: "Yes, both islands are covered with regular same-day slots."},
+      {q: "What's deep cleaning a 4-bedroom villa in Khalifa City?", a: "Around AED 1,000-1,200 depending on size and add-ons. Use the calculator on the booking page for an exact figure."}
+    ]
+  },
+  "ras-al-khaimah": {
+    name: "Ras Al Khaimah", emoji: "🏔", labelAr: "رأس الخيمة",
+    heroA: "#0F766E", heroB: "#475569",
+    h1: "Home services across <b>Ras Al Khaimah</b>",
+    sub: "From Al Hamra and Mina Al Arab to Al Nakheel and the Old Town — Lumora's verified crews cover RAK with same-day slots and 7-day satisfaction guarantee.",
+    areaCount: 18,
+    neighborhoods: ["Al Hamra","Mina Al Arab","Al Nakheel","Khuzam","Al Mamourah","Old RAK","Al Jazeera Al Hamra","Al Rams","Al Marjan Island","Al Riffa","Al Uraibi","Khatt"],
+    moreAreas: "Service available across mainland RAK and the islands.",
+    slots: "Open 8am to 9pm. 24-hour advance booking recommended.",
+    faqs: [
+      {q: "Do you do swimming pool cleaning in Al Hamra Village?", a: "Yes — weekly, biweekly and one-time pool cleaning available. Quote in 60 seconds."},
+      {q: "How much is Mina Al Arab villa AC service?", a: "Depends on number of units. Get exact pricing instantly via the booking page."}
+    ]
+  },
+  "umm-al-quwain": {
+    name: "Umm Al Quwain", emoji: "🌊", labelAr: "أم القيوين",
+    heroA: "#155E75", heroB: "#0E7490",
+    h1: "Lumora services in <b>Umm Al Quwain</b>",
+    sub: "Trained crews dispatched from Sharjah hub, covering all UAQ residential areas with same-day or next-day slots.",
+    areaCount: 8,
+    neighborhoods: ["Al Salama","Al Maydan","Al Ramlah","Al Aahad","Al Khor","Old UAQ","Falaj Al Mualla"],
+    moreAreas: "Light coverage — call us 24h ahead for confirmation.",
+    slots: "8am to 8pm. 24-hour advance booking recommended.",
+    faqs: [{q: "Do you serve Umm Al Quwain?", a: "Yes — we cover all main UAQ areas. Book 24h in advance for guaranteed slot."}]
+  },
+  "fujairah": {
+    name: "Fujairah", emoji: "🏝", labelAr: "الفجيرة",
+    heroA: "#1E40AF", heroB: "#0E7490",
+    h1: "Home services in <b>Fujairah</b>",
+    sub: "Coverage across Fujairah city and the eastern coast — verified professionals dispatched on confirmed bookings.",
+    areaCount: 6,
+    neighborhoods: ["Fujairah City","Al Faseel","Al Hayl","Mirbah","Dibba","Al Bidya"],
+    moreAreas: "Limited coverage — book 48h ahead for guaranteed slot.",
+    slots: "8am to 7pm. 48-hour advance booking recommended.",
+    faqs: [{q: "Is Fujairah serviced by Lumora?", a: "Yes — coverage across Fujairah city and the east coast. Book 48h ahead for guaranteed slot."}]
+  }
+};
+
+const POPULAR = ["deep_cleaning","general_cleaning","ac_cleaning","maid_service","pest_control","handyman","sofa_carpet","window_cleaning"];
+const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
+  hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
+  tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
+
+const params = new URLSearchParams(location.search);
+const cityKey = (params.get("city") || "dubai").toLowerCase();
+const C = CITY_DATA[cityKey] || CITY_DATA["dubai"];
+
+// Apply theme + content
+document.documentElement.style.setProperty("--hero-a", C.heroA);
+document.documentElement.style.setProperty("--hero-b", C.heroB);
+document.title = `${C.name} home services from 35 AED — cleaning, AC, maid, handyman | Lumora`;
+document.querySelector('meta[name="description"]').content =
+  `Lumora delivers fixed-price home services across ${C.name}: deep cleaning, AC, pest control, maid, handyman & more. ${C.areaCount}+ neighbourhoods covered. 4.9★ rated. Book in 60 seconds.`;
+document.querySelector('link[rel="canonical"]').href = `${location.origin}/area.html?city=${cityKey}`;
+
+document.getElementById("hero-area-pill").textContent = `${C.emoji} ${C.name} · ${C.labelAr}`;
+document.getElementById("hero-h1").innerHTML = C.h1;
+document.getElementById("hero-sub").textContent = C.sub;
+document.getElementById("stat-areas").innerHTML = `${C.areaCount}+<small>neighbourhoods covered</small>`;
+document.getElementById("reason-slots").textContent = C.slots;
+document.getElementById("cta-sub").textContent = `Book a Lumora professional in ${C.name} in under 60 seconds.`;
+document.getElementById("hero-wa").href =
+  `https://wa.me/971564020087?text=${encodeURIComponent("Hi Lumora, I'd like a service in " + C.name)}`;
+document.getElementById("cta-wa").href = document.getElementById("hero-wa").href;
+
+document.getElementById("sec-services-h").textContent = `Most-booked services in ${C.name}`;
+document.getElementById("sec-areas-h").textContent = `Lumora covers ${C.areaCount}+ areas in ${C.name}`;
+
+// Active emirate chip
+document.querySelectorAll(".areas-strip a").forEach(a => {
+  if (a.dataset.c === cityKey) a.classList.add("active");
+});
+
+// Service tiles
+fetch("/api/services").then(r => r.json()).then(d => {
+  const map = Object.fromEntries(d.services.map(s => [s.id, s]));
+  const featured = POPULAR.map(id => map[id]).filter(Boolean);
+  document.getElementById("svc-tiles").innerHTML = featured.map(s => `
+    <a class="svc-tile reveal in" href="/service.html?id=${s.id}&city=${cityKey}">
+      <div class="e">${ICONS[s.icon] || "🧽"}</div>
+      <h3>${s.name}</h3>
+      <small>${s.category} in ${C.name}</small>
+      <div class="price">from ${s.starting_price} AED</div>
+    </a>`).join("");
+});
+
+// Neighborhoods
+document.getElementById("neighborhoods").innerHTML =
+  C.neighborhoods.map(n => `<span>📍 ${n}</span>`).join("");
+document.getElementById("more-areas").textContent = C.moreAreas;
+
+// FAQs
+document.getElementById("faqs").innerHTML = C.faqs.map((f,i) => `
+  <details ${i===0?'open':''} style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:8px">
+    <summary style="cursor:pointer;font-weight:600">${f.q}</summary>
+    <p style="margin:10px 0 0;color:var(--muted);font-size:14px;line-height:1.55">${f.a}</p>
+  </details>`).join("");
+
+// Schema.org JSON-LD: LocalBusiness + Service area + FAQ + BreadcrumbList
+const ld1 = document.createElement("script");
+ld1.type = "application/ld+json";
+ld1.textContent = JSON.stringify({
+  "@context":"https://schema.org","@type":"LocalBusiness","@id":location.href+"#org",
+  name:`Lumora — ${C.name}`,
+  description: document.querySelector('meta[name="description"]').content,
+  url: location.href,
+  telephone:"+971564020087",
+  priceRange:"AED 35-1500",
+  areaServed:{"@type":"City",name:C.name,addressCountry:"AE"},
+  address:{"@type":"PostalAddress",addressLocality:C.name,addressCountry:"AE"},
+  aggregateRating:{"@type":"AggregateRating",ratingValue:"4.9",reviewCount:"2412"},
+  openingHoursSpecification:[{"@type":"OpeningHoursSpecification",
+    dayOfWeek:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    opens:"07:00",closes:"22:00"}]
+});
+document.head.appendChild(ld1);
+
+const ld2 = document.createElement("script");
+ld2.type = "application/ld+json";
+ld2.textContent = JSON.stringify({
+  "@context":"https://schema.org","@type":"BreadcrumbList",
+  itemListElement: [
+    {"@type":"ListItem",position:1,name:"Home",item:location.origin+"/"},
+    {"@type":"ListItem",position:2,name:"Service areas",item:location.origin+"/services.html"},
+    {"@type":"ListItem",position:3,name:C.name,item:location.href}
+  ]});
+document.head.appendChild(ld2);
+
+const ld3 = document.createElement("script");
+ld3.type = "application/ld+json";
+ld3.textContent = JSON.stringify({
+  "@context":"https://schema.org","@type":"FAQPage",
+  mainEntity: C.faqs.map(f => ({"@type":"Question",name:f.q,
+    acceptedAnswer:{"@type":"Answer",text:f.a}}))
+});
+document.head.appendChild(ld3);
+
+// Reveal animation
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); }), {threshold:0.12});
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+</script>
+<script src="/widget.js" data-api-base="" defer></script>
+</body></html>

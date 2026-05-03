@@ -121,17 +121,28 @@ function setTab(t) {
   if (t==="v" && !pickedServices.size) loadServices();
 }
 
+// Honor ?as=partner / ?as=admin and prefill outreach signup
 (function(){
-  const q = new URLSearchParams(location.search).get("as");
-  if (q === "partner" || q === "vendor") setTab("v");
+  const sp = new URLSearchParams(location.search);
+  const q = sp.get("as");
+  if (q === "partner" || q === "vendor") {
+    setTab("v");
+    if (sp.get("ref") === "outreach") vTab("r");
+    if (sp.get("name"))    setVal("rname", sp.get("name"));
+    if (sp.get("email"))   setVal("remail", sp.get("email"));
+    if (sp.get("company")) setVal("rcompany", sp.get("company"));
+    if (sp.get("services")) {
+      const want = sp.get("services").split(",").filter(Boolean);
+      const tryToggle = () => {
+        const btns = document.querySelectorAll("#svc-pick button[data-sid]");
+        if (!btns.length) return setTimeout(tryToggle, 150);
+        btns.forEach(b => { if (want.includes(b.dataset.sid)) toggleSvc(b); });
+      };
+      tryToggle();
+    }
+  }
   else if (q === "admin") setTab("a");
-})();
-
-// Honor ?as=partner / ?as=admin query so cross-page links land on the right tab
-(function(){
-  const q = new URLSearchParams(location.search).get("as");
-  if (q === "partner" || q === "vendor") setTab("v");
-  else if (q === "admin") setTab("a");
+  function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
 })();
 
 function vTab(t) {
