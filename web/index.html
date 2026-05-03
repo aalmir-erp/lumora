@@ -69,6 +69,15 @@
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
   }
+  /* Mobile (Lighthouse profile) — kill decorative continuous animations to free CPU. */
+  @media (max-width: 720px) {
+    .live-strip, .hero-shell .float-icon, .wa-fab { animation: none !important; }
+    .live-strip .row { animation: none !important; }
+    .live-strip { display: none; }
+    .hero-shell .float-icon { display: none; }
+    .hero-shell::before, .hero-shell::after { display: none; }
+    .mascot-frame::after { display: none; }
+  }
 </style>
 <link rel="preload" href="/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <link rel="preload" href="/widget.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
