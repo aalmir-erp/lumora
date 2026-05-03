@@ -116,7 +116,7 @@
       </div>
     </div>
     <div style="text-align:center" class="reveal in">
-      <img class="area-mascot" src="/mascot.svg" width="240" height="240" alt="Lumi mascot waving" loading="eager">
+      <img class="area-mascot" id="area-mascot" src="/mascot.svg" width="240" height="240" alt="Lumi mascot" loading="eager" decoding="async" fetchpriority="high">
     </div>
   </div>
 </header>
@@ -314,6 +314,20 @@ const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefca
 const params = new URLSearchParams(location.search);
 const cityKey = (params.get("city") || "dubai").toLowerCase();
 const C = CITY_DATA[cityKey] || CITY_DATA["dubai"];
+
+// Per-emirate mascot — feels different in every city
+const MASCOT_BY_CITY = {
+  "dubai": "ac",            // skyline AC city
+  "abu-dhabi": "maid",      // capital, residential
+  "sharjah": "cleaning",    // family-focused
+  "ajman": "garden",        // greener residential
+  "ras-al-khaimah": "pool", // resort feel
+  "umm-al-quwain": "pool",
+  "fujairah": "garden"
+};
+const _mascotName = MASCOT_BY_CITY[cityKey] || "cleaning";
+document.getElementById("area-mascot").src = "/mascots/" + _mascotName + ".svg";
+document.getElementById("area-mascot").alt = `Lumora ${_mascotName} services in ${C.name}`;
 
 // Apply theme + content
 document.documentElement.style.setProperty("--hero-a", C.heroA);

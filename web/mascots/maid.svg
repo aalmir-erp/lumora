@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Lumi maid service">
+  <defs>
+    <radialGradient id="bg" cx="0.45" cy="0.4" r="0.7"><stop offset="0%" stop-color="#A78BFA"/><stop offset="60%" stop-color="#7C3AED"/><stop offset="100%" stop-color="#5B21B6"/></radialGradient>
+    <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FB7185" stop-opacity="0.55"/><stop offset="100%" stop-color="#FB7185" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face" cx="0.45" cy="0.4" r="0.65"><stop offset="0%" stop-color="#FEF3C7"/><stop offset="100%" stop-color="#FCD34D"/></radialGradient>
+  </defs>
+  <circle cx="110" cy="110" r="100" fill="url(#bg)"/>
+  <ellipse cx="86" cy="68" rx="56" ry="30" fill="#fff" opacity="0.10"/>
+  <g><animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" dur="2.6s" repeatCount="indefinite"/>
+    <!-- folded laundry stack (left) -->
+    <g transform="translate(46 132)">
+      <rect x="-12" y="-10" width="24" height="6" rx="1" fill="#F87171"/>
+      <rect x="-12" y="-3" width="24" height="6" rx="1" fill="#22D3EE"/>
+      <rect x="-12" y="4" width="24" height="6" rx="1" fill="#FCD34D"/>
+      <rect x="-12" y="11" width="24" height="6" rx="1" fill="#86EFAC"/>
+    </g>
+    <!-- iron / mop (right) -->
+    <g transform="translate(168 132)">
+      <animateTransform attributeName="transform" type="rotate" values="-10 0 0; 10 0 0; -10 0 0" dur="2.4s" repeatCount="indefinite" additive="sum"/>
+      <rect x="-2" y="0" width="4" height="34" fill="#92400E" rx="2"/>
+      <ellipse cx="0" cy="-2" rx="14" ry="4" fill="#94A3B8"/>
+      <path d="M-12 0 L-14 12 L-10 12 M-6 0 L-8 14 L-4 14 M0 0 L0 16 L4 16 M6 0 L8 14 L12 14 M12 0 L14 12 L18 12" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </g>
+    <!-- apron-style body -->
+    <path d="M60 198 Q60 142 110 142 Q160 142 160 198 Z" fill="#FFFFFF"/>
+    <path d="M80 142 Q90 156 110 156 Q130 156 140 142 L150 198 L70 198 Z" fill="#F472B6" opacity="0.9"/>
+    <rect x="96" y="160" width="28" height="14" rx="4" fill="#7C3AED"/>
+    <text x="110" y="170" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">LUMI</text>
+    <circle cx="110" cy="100" r="42" fill="url(#face)"/>
+    <ellipse cx="84" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="136" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="93" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="127" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <circle cx="95" cy="97" r="2" fill="#FFFFFF"/>
+    <circle cx="129" cy="97" r="2" fill="#FFFFFF"/>
+    <path d="M92 122 Q110 138 128 122" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <!-- maid headpiece (small bow) -->
+    <path d="M70 86 Q70 56 110 56 Q150 56 150 86" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.4"/>
+    <path d="M100 60 Q110 50 120 60 L116 64 L110 60 L104 64 Z" fill="#F472B6"/>
+  </g>
+</svg>

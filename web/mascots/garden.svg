@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Lumi garden service">
+  <defs>
+    <radialGradient id="bg" cx="0.45" cy="0.4" r="0.7"><stop offset="0%" stop-color="#34D399"/><stop offset="60%" stop-color="#059669"/><stop offset="100%" stop-color="#064E3B"/></radialGradient>
+    <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FB7185" stop-opacity="0.55"/><stop offset="100%" stop-color="#FB7185" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face" cx="0.45" cy="0.4" r="0.65"><stop offset="0%" stop-color="#FEF3C7"/><stop offset="100%" stop-color="#FCD34D"/></radialGradient>
+  </defs>
+  <circle cx="110" cy="110" r="100" fill="url(#bg)"/>
+  <!-- leaves drifting -->
+  <g fill="#86EFAC">
+    <text x="36" y="50" font-size="16">🍃<animate attributeName="y" values="50;65;50" dur="3.6s" repeatCount="indefinite"/></text>
+    <text x="180" y="44" font-size="14">🍃<animate attributeName="y" values="44;58;44" dur="3.2s" repeatCount="indefinite"/></text>
+    <text x="184" y="158" font-size="14">🌿</text>
+    <text x="28" y="160" font-size="13">🌿</text>
+  </g>
+  <g><animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" dur="2.8s" repeatCount="indefinite"/>
+    <!-- watering can (right hand) -->
+    <g transform="translate(170 132)">
+      <animateTransform attributeName="transform" type="rotate" values="-15 0 0; 5 0 0; -15 0 0" dur="2s" repeatCount="indefinite" additive="sum"/>
+      <rect x="-12" y="-6" width="22" height="18" rx="3" fill="#22C55E"/>
+      <path d="M10 -2 L20 -8 L22 -4 L12 2 Z" fill="#16A34A"/>
+      <circle cx="22" cy="-6" r="2" fill="#16A34A"/>
+      <!-- water drops -->
+      <circle cx="22" cy="0" r="1.5" fill="#22D3EE"><animate attributeName="cy" values="0;14;0" dur="1.6s" repeatCount="indefinite"/></circle>
+      <circle cx="24" cy="4" r="1.2" fill="#22D3EE"><animate attributeName="cy" values="4;18;4" dur="1.6s" begin="0.3s" repeatCount="indefinite"/></circle>
+    </g>
+    <!-- shears (left hand) -->
+    <g transform="translate(46 132) rotate(20)">
+      <line x1="0" y1="0" x2="0" y2="-14" stroke="#94A3B8" stroke-width="2.5"/>
+      <line x1="0" y1="0" x2="-6" y2="-14" stroke="#94A3B8" stroke-width="2.5"/>
+      <circle cx="0" cy="2" r="3" fill="#0F172A"/>
+      <circle cx="-3" cy="6" r="3" fill="#0F172A"/>
+    </g>
+    <path d="M60 198 Q60 142 110 142 Q160 142 160 198 Z" fill="#FFFFFF"/>
+    <rect x="96" y="158" width="28" height="14" rx="4" fill="#059669"/>
+    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">LUMI</text>
+    <circle cx="110" cy="100" r="42" fill="url(#face)"/>
+    <ellipse cx="84" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="136" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="93" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="127" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <circle cx="95" cy="97" r="2" fill="#FFFFFF"/>
+    <circle cx="129" cy="97" r="2" fill="#FFFFFF"/>
+    <path d="M92 122 Q110 138 128 122" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <!-- straw hat -->
+    <ellipse cx="110" cy="80" rx="56" ry="8" fill="#FCD34D"/>
+    <path d="M82 80 Q82 52 110 52 Q138 52 138 80" fill="#FBBF24"/>
+    <path d="M85 76 L135 76" stroke="#92400E" stroke-width="2"/>
+  </g>
+</svg>

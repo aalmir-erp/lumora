@@ -200,7 +200,7 @@ window.LUMORA_PIXELS = {
 
     <div class="reveal" style="text-align:center">
       <div class="mascot-wrap">
-        <img src="/mascot.svg" width="240" height="240" alt="Lumi mascot" loading="eager">
+        <img id="mascot-img" src="/mascot.svg" width="240" height="240" alt="Lumi mascot" loading="eager" decoding="async" fetchpriority="high">
         <div class="svc-icon-emoji" id="svc-emoji">✨</div>
       </div>
       <div style="margin-top:32px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px">
@@ -405,6 +405,24 @@ function render() {
   document.getElementById("svc-name").innerHTML = SVC.name + " <span class='price-big'>from " + SVC.starting_price + " AED</span>";
   document.getElementById("svc-desc").textContent = SVC.description;
   document.getElementById("svc-emoji").textContent = ICONS[SVC.icon] || "✨";
+
+  // Pick a mascot variant that matches the service so the visual feels relevant.
+  const MASCOT_BY_SVC = {
+    deep_cleaning:"cleaning", general_cleaning:"cleaning", office_cleaning:"cleaning",
+    post_construction:"cleaning", sofa_carpet:"cleaning", kitchen_deep:"cleaning",
+    villa_deep:"cleaning", curtain_cleaning:"cleaning", marble_polish:"cleaning",
+    move_in_out:"cleaning", window_cleaning:"cleaning", disinfection:"cleaning",
+    ac_cleaning:"ac",
+    handyman:"handyman", smart_home:"handyman", painting:"handyman",
+    swimming_pool:"pool",
+    car_wash:"car",
+    gardening:"garden",
+    maid_service:"maid", babysitting:"maid", laundry:"maid",
+    pest_control:"pest"
+  };
+  const variant = MASCOT_BY_SVC[SVC.id] || "cleaning";
+  document.getElementById("mascot-img").src = "/mascots/" + variant + ".svg";
+  document.getElementById("mascot-img").alt = "Lumi performing " + SVC.name;
 
   // Badges
   const badges = document.getElementById("badges");

@@ -459,9 +459,21 @@
       </div>
     </div>
     <div style="text-align:center" class="reveal in">
-      <div class="mascot-frame">
-        <img src="/mascot.svg" width="280" height="280" alt="Lumi mascot waving"
-             loading="eager" decoding="async" fetchpriority="high">
+      <div class="mascot-frame" id="mascot-cycler">
+        <!-- LCP image is the first one — others stack on top with opacity 0 and cross-fade -->
+        <img id="mascot-0" src="/mascot.svg" width="280" height="280" alt="Lumi waving — Lumora UAE home services"
+             loading="eager" decoding="async" fetchpriority="high"
+             style="position:absolute;inset:0;width:100%;height:100%;opacity:1;transition:opacity .8s ease">
+        <img class="mascot-alt" data-src="/mascots/cleaning.svg" width="280" height="280" alt="Lumi cleaning"
+             loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
+        <img class="mascot-alt" data-src="/mascots/ac.svg" width="280" height="280" alt="Lumi AC service"
+             loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
+        <img class="mascot-alt" data-src="/mascots/handyman.svg" width="280" height="280" alt="Lumi handyman"
+             loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
+        <img class="mascot-alt" data-src="/mascots/pool.svg" width="280" height="280" alt="Lumi pool service"
+             loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
+        <img class="mascot-alt" data-src="/mascots/garden.svg" width="280" height="280" alt="Lumi gardening"
+             loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
       </div>
     </div>
   </div>
@@ -770,6 +782,28 @@ const POPULAR = ["deep_cleaning","general_cleaning","ac_cleaning","maid_service"
 const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
   hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
   tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
+// Cycle hero mascot through service variants — fires AFTER LCP element loads
+// so it doesn't slow first paint. Lazy-loads each variant on demand.
+(function cycleMascot(){
+  const all = [document.getElementById("mascot-0"), ...document.querySelectorAll(".mascot-alt")];
+  if (all.length < 2) return;
+  let i = 0;
+  function step(){
+    const next = (i + 1) % all.length;
+    // Promote data-src → src for the next image so it loads only when needed.
+    const el = all[next];
+    if (el.dataset.src && !el.src) el.src = el.dataset.src;
+    all.forEach((m, k) => m.style.opacity = (k === next ? "1" : "0"));
+    i = next;
+  }
+  // Start cycling 5s after LCP, every 4s. Pause when tab hidden.
+  let t = null;
+  const start = () => { stop(); t = setInterval(step, 4000); };
+  const stop  = () => { if (t) { clearInterval(t); t = null; } };
+  document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
+  setTimeout(start, 5000);
+})();
+
 // Pause continuously-running animations when their host element is off-screen.
 // Big TBT win: composite/paint costs vanish for animations the user can't see.
 (function pauseAnimsOffscreen() {

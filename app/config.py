@@ -14,7 +14,7 @@ class Settings:
     BRAND_TAGLINE = os.getenv("BRAND_TAGLINE", "UAE's smart home services platform")
     BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "lumora.ae")
 
-    APP_VERSION = "0.15.0"
+    APP_VERSION = "0.16.0"
 
     # Anthropic
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")

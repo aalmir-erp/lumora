@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Lumi handyman">
+  <defs>
+    <radialGradient id="bg" cx="0.45" cy="0.4" r="0.7"><stop offset="0%" stop-color="#F59E0B"/><stop offset="60%" stop-color="#D97706"/><stop offset="100%" stop-color="#92400E"/></radialGradient>
+    <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FB7185" stop-opacity="0.55"/><stop offset="100%" stop-color="#FB7185" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face" cx="0.45" cy="0.4" r="0.65"><stop offset="0%" stop-color="#FEF3C7"/><stop offset="100%" stop-color="#FCD34D"/></radialGradient>
+    <linearGradient id="hat" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FDE047"/><stop offset="100%" stop-color="#EAB308"/></linearGradient>
+  </defs>
+  <circle cx="110" cy="110" r="100" fill="url(#bg)"/>
+  <ellipse cx="86" cy="68" rx="56" ry="30" fill="#fff" opacity="0.10"/>
+  <g><animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" dur="2.6s" repeatCount="indefinite"/>
+    <!-- wrench (right hand swinging) -->
+    <g transform="translate(168 132)">
+      <animateTransform attributeName="transform" type="rotate" values="-25 0 0; 25 0 0; -25 0 0" dur="1.6s" repeatCount="indefinite" additive="sum"/>
+      <rect x="-3" y="-2" width="6" height="38" rx="2" fill="#94A3B8"/>
+      <path d="M-7 -8 Q-10 -2 -7 4 L-3 0 L-3 -4 L7 -4 L7 0 L3 4 Q10 -2 7 -8 Q3 -12 -7 -8 Z" fill="#CBD5E1"/>
+    </g>
+    <!-- screwdriver (left) -->
+    <g transform="translate(46 132)">
+      <rect x="-3" y="0" width="6" height="22" rx="3" fill="#DC2626"/>
+      <rect x="-1" y="22" width="2" height="14" fill="#94A3B8"/>
+    </g>
+    <!-- tool belt body -->
+    <path d="M60 198 Q60 142 110 142 Q160 142 160 198 Z" fill="#FFFFFF"/>
+    <rect x="60" y="166" width="100" height="10" fill="#92400E"/>
+    <rect x="68" y="170" width="6" height="6" fill="#FCD34D"/>
+    <rect x="78" y="170" width="6" height="6" fill="#FCD34D"/>
+    <rect x="88" y="170" width="6" height="6" fill="#FCD34D"/>
+    <rect x="96" y="158" width="28" height="14" rx="4" fill="#92400E"/>
+    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">LUMI</text>
+    <circle cx="110" cy="100" r="42" fill="url(#face)"/>
+    <ellipse cx="84" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="136" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="93" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="127" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <circle cx="95" cy="97" r="2" fill="#FFFFFF"/>
+    <circle cx="129" cy="97" r="2" fill="#FFFFFF"/>
+    <path d="M92 122 Q110 138 128 122" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <!-- hard hat instead of soft cap -->
+    <path d="M70 86 Q70 50 110 50 Q150 50 150 86 L150 92 L70 92 Z" fill="url(#hat)"/>
+    <rect x="68" y="86" width="84" height="8" rx="2" fill="#F59E0B"/>
+    <path d="M104 60 L116 60" stroke="#92400E" stroke-width="2"/>
+  </g>
+</svg>

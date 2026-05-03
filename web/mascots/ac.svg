@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Lumi AC service">
+  <defs>
+    <radialGradient id="bg" cx="0.45" cy="0.4" r="0.7"><stop offset="0%" stop-color="#0EA5E9"/><stop offset="60%" stop-color="#0284C7"/><stop offset="100%" stop-color="#075985"/></radialGradient>
+    <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FB7185" stop-opacity="0.55"/><stop offset="100%" stop-color="#FB7185" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face" cx="0.45" cy="0.4" r="0.65"><stop offset="0%" stop-color="#FEF3C7"/><stop offset="100%" stop-color="#FCD34D"/></radialGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FAFAFA"/><stop offset="100%" stop-color="#E2E8F0"/></linearGradient>
+  </defs>
+  <circle cx="110" cy="110" r="100" fill="url(#bg)"/>
+  <ellipse cx="86" cy="68" rx="56" ry="30" fill="#fff" opacity="0.10"/>
+  <!-- snowflakes drifting -->
+  <g fill="#FFFFFF" opacity="0.85">
+    <text x="38" y="56" font-size="18">❄</text>
+    <text x="172" y="50" font-size="14"><animate attributeName="y" values="50;65;50" dur="3.4s" repeatCount="indefinite"/></text>
+    <text x="180" y="148" font-size="16"><animate attributeName="y" values="148;165;148" dur="3.8s" repeatCount="indefinite"/></text>
+    <text x="28" y="162" font-size="12"><animate attributeName="y" values="162;178;162" dur="3.2s" repeatCount="indefinite"/></text>
+  </g>
+  <g><animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" dur="2.6s" repeatCount="indefinite"/>
+    <!-- AC unit (right hand) -->
+    <g transform="translate(168 130)">
+      <rect x="-22" y="-10" width="44" height="22" rx="4" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5"/>
+      <line x1="-18" y1="-2" x2="18" y2="-2" stroke="#94A3B8" stroke-width="1"/>
+      <line x1="-18" y1="2" x2="18" y2="2" stroke="#94A3B8" stroke-width="1"/>
+      <line x1="-18" y1="6" x2="18" y2="6" stroke="#94A3B8" stroke-width="1"/>
+      <text x="0" y="22" text-anchor="middle" font-size="14" fill="#0EA5E9">❄</text>
+    </g>
+    <!-- thumbs up -->
+    <g transform="translate(46 130)">
+      <animateTransform attributeName="transform" type="rotate" values="0 0 0;-8 0 0;0 0 0" dur="3s" repeatCount="indefinite" additive="sum"/>
+      <rect x="-3" y="0" width="6" height="20" rx="3" fill="url(#face)"/>
+      <circle cx="0" cy="22" r="8" fill="url(#face)"/>
+      <rect x="-1.5" y="14" width="3" height="6" rx="1.5" fill="url(#face)"/>
+    </g>
+    <path d="M60 198 Q60 142 110 142 Q160 142 160 198 Z" fill="#FFFFFF"/>
+    <rect x="96" y="158" width="28" height="14" rx="4" fill="#0EA5E9"/>
+    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">LUMI</text>
+    <circle cx="110" cy="100" r="42" fill="url(#face)"/>
+    <ellipse cx="84" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="136" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="93" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="127" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <circle cx="95" cy="97" r="2" fill="#FFFFFF"/>
+    <circle cx="129" cy="97" r="2" fill="#FFFFFF"/>
+    <path d="M92 122 Q110 138 128 122" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <path d="M70 86 Q70 60 110 60 Q150 60 150 86 Q150 76 142 70 Q126 56 110 56 Q94 56 78 70 Q70 76 70 86 Z" fill="url(#cap)"/>
+    <text x="110" y="78" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="14" fill="#0EA5E9">❄</text>
+  </g>
+</svg>

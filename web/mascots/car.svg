@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Lumi car wash">
+  <defs>
+    <radialGradient id="bg" cx="0.45" cy="0.4" r="0.7"><stop offset="0%" stop-color="#1E293B"/><stop offset="60%" stop-color="#0F172A"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FB7185" stop-opacity="0.55"/><stop offset="100%" stop-color="#FB7185" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face" cx="0.45" cy="0.4" r="0.65"><stop offset="0%" stop-color="#FEF3C7"/><stop offset="100%" stop-color="#FCD34D"/></radialGradient>
+  </defs>
+  <circle cx="110" cy="110" r="100" fill="url(#bg)"/>
+  <!-- soap bubbles -->
+  <g fill="#FFFFFF" opacity="0.4">
+    <circle cx="36" cy="48" r="6"><animate attributeName="cy" values="48;30;48" dur="3.6s" repeatCount="indefinite"/></circle>
+    <circle cx="180" cy="40" r="4"><animate attributeName="cy" values="40;25;40" dur="3.2s" repeatCount="indefinite"/></circle>
+    <circle cx="186" cy="155" r="5"><animate attributeName="cy" values="155;140;155" dur="3.8s" repeatCount="indefinite"/></circle>
+  </g>
+  <g><animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" dur="2.6s" repeatCount="indefinite"/>
+    <!-- sponge with bubbles (right hand) -->
+    <g transform="translate(168 130)">
+      <animateTransform attributeName="transform" type="rotate" values="-15 0 0; 15 0 0; -15 0 0" dur="2s" repeatCount="indefinite" additive="sum"/>
+      <rect x="-14" y="-8" width="28" height="18" rx="6" fill="#FCD34D"/>
+      <rect x="-14" y="-8" width="28" height="6" rx="3" fill="#FDE047"/>
+      <circle cx="-12" cy="-10" r="3" fill="#FFFFFF" opacity="0.85"/>
+      <circle cx="-4" cy="-13" r="2" fill="#FFFFFF" opacity="0.85"/>
+      <circle cx="6" cy="-12" r="2.5" fill="#FFFFFF" opacity="0.85"/>
+      <circle cx="14" cy="-10" r="2" fill="#FFFFFF" opacity="0.85"/>
+    </g>
+    <!-- bucket (left hand) -->
+    <g transform="translate(46 138)">
+      <path d="M-12 0 L12 0 L10 22 L-10 22 Z" fill="#94A3B8"/>
+      <ellipse cx="0" cy="0" rx="12" ry="3" fill="#475569"/>
+      <ellipse cx="0" cy="-1" rx="10" ry="2" fill="#22D3EE" opacity="0.7"/>
+    </g>
+    <path d="M60 198 Q60 142 110 142 Q160 142 160 198 Z" fill="#FFFFFF"/>
+    <rect x="96" y="158" width="28" height="14" rx="4" fill="#1E293B"/>
+    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">LUMI</text>
+    <circle cx="110" cy="100" r="42" fill="url(#face)"/>
+    <ellipse cx="84" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="136" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="93" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="127" cy="100" rx="6" ry="7.5" fill="#0F172A"><animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/></ellipse>
+    <circle cx="95" cy="97" r="2" fill="#FFFFFF"/>
+    <circle cx="129" cy="97" r="2" fill="#FFFFFF"/>
+    <path d="M92 122 Q110 138 128 122" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <!-- baseball cap -->
+    <path d="M70 86 Q70 60 110 60 Q150 60 150 86 L150 90 L70 90 Z" fill="#1E293B"/>
+    <path d="M70 86 Q110 76 150 86 L160 90 L160 96 L70 96 Z" fill="#0F172A"/>
+    <text x="110" y="78" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="11" fill="#FCD34D">🚗</text>
+  </g>
+</svg>
