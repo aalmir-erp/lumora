@@ -29,15 +29,43 @@
     localStorage.setItem(LS_LANG, lang);
     document.documentElement.lang = lang;
     document.documentElement.dir = i18n[lang].dir || "ltr";
+    document.body && (document.body.dataset.lang = lang);  // mascot dress hook
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       const val = i18n[lang][key];
       if (val) el.textContent = val;
     });
+    document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-html");
+      const val = i18n[lang][key];
+      if (val) el.innerHTML = val;
+    });
     document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
       const key = el.getAttribute("data-i18n-placeholder");
       const val = i18n[lang][key];
       if (val) el.placeholder = val;
+    });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-aria");
+      const val = i18n[lang][key];
+      if (val) el.setAttribute("aria-label", val);
+    });
+    // Highlight the active language button in the picker
+    document.querySelectorAll(".lang-list button").forEach(b => {
+      b.classList.toggle("active", b.dataset.lang === lang);
+    });
+    // Mascot dress: swap a small accessory pin per language so users feel
+    // represented (UAE, Pakistan, India, Philippines flag accents).
+    const dressMap = { ar:"🇦🇪", ur:"🇵🇰", hi:"🇮🇳", tl:"🇵🇭", en:"🇬🇧" };
+    document.querySelectorAll(".mascot-frame, .mascot-wrap").forEach(f => {
+      let pin = f.querySelector(".mascot-flag-pin");
+      if (!pin) {
+        pin = document.createElement("div");
+        pin.className = "mascot-flag-pin";
+        pin.style.cssText = "position:absolute;top:8%;inset-inline-end:8%;width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(15,23,42,.18);z-index:5;border:2px solid #FCD34D";
+        f.appendChild(pin);
+      }
+      pin.textContent = dressMap[lang] || "🇦🇪";
     });
     window.dispatchEvent(new CustomEvent("lumora:lang", { detail: { lang } }));
   }
@@ -62,7 +90,7 @@
   // ---------- service worker ----------
   // One-time purge: existing visitors are stuck on the old cache-first SW
   // (lumora-v0.2.0). Force a clean re-register so they pick up new deploys.
-  const SW_RESET_KEY = "servia.sw.reset.v1.3.0";
+  const SW_RESET_KEY = "servia.sw.reset.v1.4.0";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {

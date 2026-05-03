@@ -465,8 +465,8 @@
       <button data-lang="tl" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">Filipino</button>
     </div>
     <select class="lang-pick" hidden></select>
-    <a class="btn btn-ghost" href="/login.html" style="font-weight:600">Sign in</a>
-    <a class="btn btn-primary" href="/book.html">Book now</a>
+    <a class="btn btn-ghost" href="/login.html" style="font-weight:600" data-i18n="nav_signin">Sign in</a>
+    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
   </div>
 </div></nav>
 
@@ -480,7 +480,7 @@
   <span class="float-icon f5" aria-hidden="true">🔧</span>
   <div class="hero-grid">
     <div class="reveal in" style="animation:slideUp .8s ease both">
-      <div class="hero-pill" data-cms-key="home.hero.pill">🇦🇪 4.9★ from 2,400+ UAE families</div>
+      <div class="hero-pill" data-cms-key="home.hero.pill" data-i18n="hero_pill">🇦🇪 4.9★ from 2,400+ UAE families</div>
       <h1 class="hero-h1" data-cms-key="home.hero.h1">
         UAE's smart app for<br>
         <span class="rotator">
@@ -497,15 +497,15 @@
           <span>office cleaning</span>
           <span>smart-home install</span>
         </span><br>
-        <span style="font-size:0.62em;font-weight:600;color:#FCD34D">in 60 seconds.</span>
+        <span style="font-size:0.62em;font-weight:600;color:#FCD34D" data-i18n="hero_h1_post">in 60 seconds.</span>
       </h1>
-      <p class="hero-sub">Servia handles it all — booked in your language, paid securely in advance via Apple Pay / Google Pay / card or WhatsApp link, dispatched same-day across Dubai, Sharjah, Ajman, Abu Dhabi, RAK, UAQ &amp; Fujairah.</p>
+      <p class="hero-sub" data-i18n="hero_sub">Servia handles it all — booked in your language, paid securely in advance via Apple Pay / Google Pay / card or WhatsApp link, dispatched same-day across Dubai, Sharjah, Ajman, Abu Dhabi, RAK, UAQ &amp; Fujairah.</p>
       <div class="hero-cta-row">
         <a class="btn-bigwa" id="hero-wa" href="https://wa.me/971564020087?text=Hi+Servia%2C+I+need+help+with+a+service" target="_blank">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3.5A11.95 11.95 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.8 1.4 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3z"/></svg>
           Book on WhatsApp
         </a>
-        <a class="btn-bigbook" href="/book.html">Book online →</a>
+        <a class="btn-bigbook" href="/book.html" data-i18n="online_button">Book online →</a>
       </div>
       <div class="hero-trust">
         <span>✓ Background-checked</span>
@@ -539,7 +539,7 @@
 <!-- 🇦🇪 EMIRATE COVERAGE STRIP — clear access to per-state landing pages -->
 <section style="padding:28px 16px;background:linear-gradient(180deg,#FFFFFF,#F8FAFC);border-bottom:1px solid var(--border)">
   <div style="max-width:1180px;margin:0 auto;text-align:center">
-    <p style="margin:0 0 12px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:0.4px;text-transform:uppercase">📍 Servia operates across all 7 UAE emirates · pick yours</p>
+    <p style="margin:0 0 12px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:0.4px;text-transform:uppercase"><span data-i18n="emirate_strip">📍 Servia operates across all 7 UAE emirates · pick yours</span></p>
     <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
       <a href="/area.html?city=dubai"          class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🏙 Dubai</a>
       <a href="/area.html?city=abu-dhabi"      class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🦅 Abu Dhabi</a>
@@ -548,6 +548,26 @@
       <a href="/area.html?city=ras-al-khaimah" class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🏔 Ras Al Khaimah</a>
       <a href="/area.html?city=umm-al-quwain"  class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🌊 Umm Al Quwain</a>
       <a href="/area.html?city=fujairah"       class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🏝 Fujairah</a>
+    </div>
+  </div>
+</section>
+
+<!-- 🇦🇪 INTERACTIVE UAE COVERAGE MAP — animated live bookings + past + planned -->
+<section style="padding:36px 16px;background:#F8FAFC;border-bottom:1px solid var(--border)">
+  <div style="max-width:1180px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:18px">
+      <h2 data-i18n="map_h" style="margin:0 0 6px;font-size:28px;letter-spacing:-.02em">Live across all 7 UAE emirates</h2>
+      <p data-i18n="map_sub" style="margin:0;color:var(--muted);font-size:15px">Green pulses = bookings happening right now · faded dots = past completed jobs · gold areas = expanding coverage</p>
+    </div>
+    <div style="border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,.08);background:#fff">
+      <object data="/uae-map.svg" type="image/svg+xml" style="display:block;width:100%;max-width:100%" aria-label="Servia UAE coverage map" loading="lazy"></object>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px;font-size:12px;color:var(--muted)">
+      <span>📍 200+ Dubai areas</span><span>·</span>
+      <span>80+ Abu Dhabi</span><span>·</span>
+      <span>60+ Sharjah</span><span>·</span>
+      <span>25+ Ajman</span><span>·</span>
+      <span>RAK · UAQ · Fujairah</span>
     </div>
   </div>
 </section>

@@ -87,7 +87,81 @@
     } else if (type === "number") {
       input = el("input", { id, type: "number", min: "0", inputmode: "numeric" });
     } else if (type === "textarea") {
+      // Address fields get a richer experience: geolocation + autocomplete.
+      const isAddress = /address/i.test(key);
       input = el("textarea", { id, rows: "2", placeholder: "e.g. tower / villa, apt no, street, area" });
+      if (isAddress) {
+        // Container for the address widget
+        const widget = el("div", { class: "addr-widget" });
+        widget.style.cssText = "display:flex;flex-direction:column;gap:8px";
+        // Geolocation button + autocomplete suggestions
+        const tools = el("div", { class: "addr-tools" });
+        tools.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
+        const geoBtn = el("button", { type: "button", class: "addr-geo-btn" }, "📍 Use my location");
+        geoBtn.style.cssText = "padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--primary-dark)";
+        const sugList = el("div", { class: "addr-suggestions" });
+        sugList.style.cssText = "max-height:180px;overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff;display:none";
+        tools.appendChild(geoBtn);
+        widget.appendChild(input);
+        widget.appendChild(tools);
+        widget.appendChild(sugList);
+        input.placeholder = "Tower / villa, apt no, area, emirate — or tap 📍 Use my location";
+
+        let acTimer = null;
+        input.addEventListener("input", () => {
+          clearTimeout(acTimer);
+          const q = input.value.trim();
+          if (q.length < 4) { sugList.style.display = "none"; return; }
+          acTimer = setTimeout(async () => {
+            try {
+              const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&countrycodes=ae&limit=5&q=" + encodeURIComponent(q),
+                                    { headers: { "Accept-Language": navigator.language || "en" }});
+              const items = await r.json();
+              if (!items.length) { sugList.style.display = "none"; return; }
+              sugList.innerHTML = items.map((it, i) =>
+                `<div class="addr-sug-item" data-i="${i}" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px">📍 ${it.display_name}</div>`
+              ).join("");
+              sugList.style.display = "block";
+              sugList.querySelectorAll(".addr-sug-item").forEach(elx => {
+                elx.onclick = () => {
+                  input.value = items[+elx.dataset.i].display_name;
+                  sugList.style.display = "none";
+                  // Save coords as data attributes for booking
+                  input.dataset.lat = items[+elx.dataset.i].lat;
+                  input.dataset.lon = items[+elx.dataset.i].lon;
+                };
+              });
+            } catch {}
+          }, 350);
+        });
+
+        geoBtn.onclick = () => {
+          if (!navigator.geolocation) { alert("Geolocation not supported"); return; }
+          geoBtn.textContent = "📍 Locating…"; geoBtn.disabled = true;
+          navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude: lat, longitude: lon } = pos.coords;
+            try {
+              const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+              const j = await r.json();
+              input.value = j.display_name || `Lat ${lat.toFixed(5)}, Lon ${lon.toFixed(5)}`;
+              input.dataset.lat = lat;
+              input.dataset.lon = lon;
+              geoBtn.textContent = "✅ Location set";
+              setTimeout(() => { geoBtn.textContent = "📍 Use my location"; geoBtn.disabled = false; }, 2400);
+            } catch (e) {
+              input.value = `Lat ${lat.toFixed(5)}, Lon ${lon.toFixed(5)}`;
+              input.dataset.lat = lat; input.dataset.lon = lon;
+              geoBtn.textContent = "✅ Location set"; geoBtn.disabled = false;
+            }
+          }, (err) => {
+            geoBtn.textContent = "❌ Permission denied"; geoBtn.disabled = false;
+          }, { enableHighAccuracy: true, timeout: 10000 });
+        };
+
+        // Replace the bare input with the rich widget. We still expose `input` so values()/summary() work.
+        wrap.appendChild(widget);
+        return { wrap, input, key, label, type };
+      }
     } else {
       input = el("input", { id, type: "text" });
     }

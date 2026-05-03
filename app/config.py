@@ -14,7 +14,7 @@ class Settings:
     BRAND_TAGLINE = os.getenv("BRAND_TAGLINE", "UAE's smart home services platform")
     BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "servia.ae")
 
-    APP_VERSION = "1.3.0"
+    APP_VERSION = "1.4.0"
 
     # Anthropic
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
@@ -22,6 +22,15 @@ class Settings:
     MAX_TOKENS = int(os.getenv("CLAUDE_MAX_TOKENS", "1500"))
 
     DEMO_MODE = os.getenv("DEMO_MODE", "auto").lower()  # auto | on | off
+
+    # Stealth-launch: when GATE_BOOKINGS=1 we accept bookings up to the payment
+    # screen, then show a friendly "payment gateway temporarily unavailable"
+    # error + offer 15% off coupon when fixed + capture intent (price-acceptance
+    # + voice/text feedback). Customers feel respected (no time wasted, real-
+    # sounding error, future discount) while we get real-demand data without
+    # delivering services. Set GATE_BOOKINGS=0 to deactivate when going live.
+    GATE_BOOKINGS = os.getenv("GATE_BOOKINGS", "0") == "1"
+    GATE_DISCOUNT_PCT = int(os.getenv("GATE_DISCOUNT_PCT", "15"))
 
     ALLOWED_ORIGINS = [
         o.strip() for o in os.getenv(

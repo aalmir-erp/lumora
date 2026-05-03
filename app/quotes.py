@@ -79,11 +79,13 @@ def create_invoice(*, booking_id: str | None, quote_id: str | None,
 
 
 def _make_payment_link(invoice_id: str, amount: float, currency: str) -> str:
-    """Return a payment URL. Stripe by default; falls back to a placeholder.
-
-    To enable Stripe: set STRIPE_SECRET_KEY in env. The user is shown a Stripe
-    Checkout session URL that will eventually webhook back to /api/webhooks/stripe.
-    """
+    """Return a payment URL. If GATE_BOOKINGS env is set, route everyone to
+    the 'gateway error' gate page so we capture real demand intent during
+    stealth-launch without actually charging the customer. Otherwise Stripe
+    Checkout if STRIPE_SECRET_KEY is set, or a local stub page."""
+    from .config import get_settings as _gs
+    if _gs().GATE_BOOKINGS:
+        return f"/gate.html?inv={invoice_id}&amount={amount}"
     sk = os.getenv("STRIPE_SECRET_KEY")
     if not sk:
         return f"/pay/{invoice_id}"  # in-app stub page

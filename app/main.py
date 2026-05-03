@@ -333,6 +333,20 @@ def booking_ics(bid: str):
 # ---------- static frontend (mounted last so /api/* take precedence) ----------
 # Force fresh HTML/JS/CSS on every request so deploys are visible immediately;
 # without this, browsers + Railway's edge cache hold the previous build.
+# Clean URL redirects for emirate landing pages: /dubai → /area.html?city=dubai
+def _make_emirate_redirect(city: str):
+    async def _r():
+        return RedirectResponse(url=f"/area.html?city={city}", status_code=301)
+    return _r
+
+for _path, _city in [("/dubai","dubai"), ("/abu-dhabi","abu-dhabi"),
+                     ("/abudhabi","abu-dhabi"), ("/sharjah","sharjah"),
+                     ("/ajman","ajman"), ("/ras-al-khaimah","ras-al-khaimah"),
+                     ("/rak","ras-al-khaimah"), ("/umm-al-quwain","umm-al-quwain"),
+                     ("/uaq","umm-al-quwain"), ("/fujairah","fujairah")]:
+    app.get(_path, include_in_schema=False)(_make_emirate_redirect(_city))
+
+
 @app.middleware("http")
 async def _smart_cache(request, call_next):
     resp = await call_next(request)

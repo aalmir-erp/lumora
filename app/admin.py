@@ -906,3 +906,48 @@ def send_followup(bid: str):
         f"again? Reply with the day + time and we'll lock it in. — Servia"
     )
     return _t.send_whatsapp(b["phone"], msg)
+
+
+# ---------- stealth-launch market signals ----------
+class MarketSignalBody(BaseModel):
+    booking_id: str | None = None
+    service_id: str | None = None
+    quoted_price: float | None = None
+    customer_name: str | None = None
+    phone: str | None = None
+    emirate: str | None = None
+    voice_url: str | None = None        # uploaded voice memo (optional)
+    feedback_text: str | None = None    # what they typed
+    intent: str | None = None           # 'would_book' | 'too_expensive' | 'comparing' | 'other'
+    accepts_coupon: bool = False        # opted into 15% launch coupon
+    user_agent: str | None = None
+    referrer: str | None = None
+
+
+
+
+@router.get("/market-signals", dependencies=[Depends(require_admin)])
+def list_market_signals(limit: int = 200):
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT * FROM market_signals ORDER BY id DESC LIMIT ?",
+                (limit,)).fetchall()
+        except Exception: rows = []
+        # Aggregates
+        try:
+            stats = {
+                "total": c.execute("SELECT COUNT(*) AS n FROM market_signals").fetchone()["n"] or 0,
+                "would_book": c.execute("SELECT COUNT(*) AS n FROM market_signals WHERE intent='would_book'").fetchone()["n"] or 0,
+                "too_expensive": c.execute("SELECT COUNT(*) AS n FROM market_signals WHERE intent='too_expensive'").fetchone()["n"] or 0,
+                "avg_quoted": c.execute("SELECT AVG(quoted_price) AS a FROM market_signals WHERE quoted_price IS NOT NULL").fetchone()["a"] or 0,
+                "by_service": [dict(r) for r in c.execute(
+                    "SELECT service_id, COUNT(*) AS n, AVG(quoted_price) AS avg "
+                    "FROM market_signals WHERE service_id IS NOT NULL "
+                    "GROUP BY service_id ORDER BY n DESC LIMIT 20").fetchall()],
+                "by_emirate": [dict(r) for r in c.execute(
+                    "SELECT emirate, COUNT(*) AS n FROM market_signals "
+                    "WHERE emirate IS NOT NULL GROUP BY emirate ORDER BY n DESC").fetchall()]
+            }
+        except Exception: stats = {}
+    return {"signals": [db.row_to_dict(r) for r in rows], "stats": stats}

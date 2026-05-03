@@ -582,3 +582,49 @@ def submit_public_review(body: PublicReviewBody):
     db.log_event("review", body.booking_id, "submitted",
                  details={"rating": body.rating, "tags": body.tags})
     return {"ok": True}
+
+
+# ---------- public market-validation signal capture (no auth) ----------
+class MarketSignalPublic(BaseModel):
+    booking_id: str | None = None
+    service_id: str | None = None
+    quoted_price: float | None = None
+    customer_name: str | None = None
+    phone: str | None = None
+    emirate: str | None = None
+    voice_url: str | None = None
+    feedback_text: str | None = None
+    intent: str | None = None
+    accepts_coupon: bool = False
+
+
+@public_router.post("/market-signal")
+def public_market_signal(body: MarketSignalPublic, request: Request):
+    """Public endpoint — captures real demand intent during stealth-launch
+    when GATE_BOOKINGS=1 and we ethically deny payment with a 'gateway error'."""
+    with db.connect() as c:
+        try:
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS market_signals(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    booking_id TEXT, service_id TEXT, quoted_price REAL,
+                    customer_name TEXT, phone TEXT, emirate TEXT,
+                    voice_url TEXT, feedback_text TEXT, intent TEXT,
+                    accepts_coupon INTEGER DEFAULT 0,
+                    user_agent TEXT, referrer TEXT,
+                    created_at TEXT
+                )""")
+        except Exception: pass
+        c.execute(
+            "INSERT INTO market_signals(booking_id, service_id, quoted_price, "
+            "customer_name, phone, emirate, voice_url, feedback_text, intent, "
+            "accepts_coupon, user_agent, referrer, created_at) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (body.booking_id, body.service_id, body.quoted_price,
+             body.customer_name, body.phone, body.emirate,
+             body.voice_url, body.feedback_text, body.intent,
+             1 if body.accepts_coupon else 0,
+             request.headers.get("user-agent",""),
+             request.headers.get("referer",""),
+             _dt.datetime.utcnow().isoformat() + "Z"))
+    return {"ok": True}
