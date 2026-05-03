@@ -22,8 +22,9 @@
        Partners use email & password.</p>
 
     <div style="display:flex;gap:6px;margin-bottom:18px;background:var(--bg);border-radius:10px;padding:4px">
-      <button id="tab-c" class="btn btn-primary" style="flex:1" onclick="setTab('c')">I'm a customer</button>
-      <button id="tab-v" class="btn btn-ghost" style="flex:1" onclick="setTab('v')">I'm a partner</button>
+      <button id="tab-c" class="btn btn-primary" style="flex:1;font-size:13px" onclick="setTab('c')">👤 Customer</button>
+      <button id="tab-v" class="btn btn-ghost"   style="flex:1;font-size:13px" onclick="setTab('v')">🤝 Partner</button>
+      <button id="tab-a" class="btn btn-ghost"   style="flex:1;font-size:13px" onclick="setTab('a')">🛠 Admin</button>
     </div>
 
     <!-- CUSTOMER FLOW -->
@@ -66,6 +67,15 @@
       </div>
     </div>
 
+    <!-- ADMIN FLOW -->
+    <div id="adm" style="display:none">
+      <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px">
+        <b>Internal access only.</b><br>
+        Operations team with the admin token can sign in here. Use the bearer token configured in Railway as <code>ADMIN_TOKEN</code>.
+      </div>
+      <a class="btn btn-primary btn-block" href="/admin.html" style="text-align:center">Go to admin panel →</a>
+    </div>
+
     <div id="msg" style="margin-top:14px;font-size:13px"></div>
   </div>
 </div></section>
@@ -83,12 +93,23 @@ if (localStorage.getItem(TOK)) {
 }
 
 function setTab(t) {
-  document.getElementById("tab-c").className = "btn " + (t==="c"?"btn-primary":"btn-ghost");
-  document.getElementById("tab-v").className = "btn " + (t==="v"?"btn-primary":"btn-ghost");
+  for (const k of ["c","v","a"]) {
+    const b = document.getElementById("tab-"+k);
+    b.className = "btn " + (t===k ? "btn-primary" : "btn-ghost");
+    b.style.fontSize = "13px"; b.style.flex = "1";
+  }
   document.getElementById("cust").style.display = t==="c" ? "" : "none";
   document.getElementById("vend").style.display = t==="v" ? "" : "none";
+  document.getElementById("adm").style.display  = t==="a" ? "" : "none";
   if (t==="v" && !pickedServices.size) loadServices();
 }
+
+// Honor ?as=partner / ?as=admin query so cross-page links land on the right tab
+(function(){
+  const q = new URLSearchParams(location.search).get("as");
+  if (q === "partner" || q === "vendor") setTab("v");
+  else if (q === "admin") setTab("a");
+})();
 
 function vTab(t) {
   vTabState = t;
