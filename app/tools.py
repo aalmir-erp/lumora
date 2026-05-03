@@ -299,10 +299,10 @@ def handoff_to_human(reason: str, customer_name: str | None = None,
             meta={"session_id": session_id, "phone": phone})
     except Exception: pass
     return {
-        "ok": True, "channel": "whatsapp",
-        "whatsapp": s.HANDOFF_WHATSAPP, "email": s.HANDOFF_EMAIL,
-        "message": (f"A live agent will reach out shortly. "
-                    f"WhatsApp: {s.HANDOFF_WHATSAPP}. Email: {s.HANDOFF_EMAIL}."),
+        "ok": True, "channel": "internal",
+        "message": ("A live agent will reach out shortly through this chat. "
+                    "If you'd like to leave additional details, you can also fill out "
+                    "/contact.html and we'll be in touch within minutes."),
         "context_logged": {"reason": reason, "customer_name": customer_name,
                            "phone": phone, "summary": summary},
     }

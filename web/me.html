@@ -160,6 +160,48 @@
       </div>
     </div>
 
+    <!-- 🎬 Video Creator submission -->
+    <div id="video" style="background:linear-gradient(135deg,#1F2937,#111827);color:#fff;border-radius:18px;padding:22px;margin-top:18px">
+      <div style="display:inline-block;background:linear-gradient(135deg,#F59E0B,#FCD34D);color:#78350F;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;margin-bottom:10px">🎬 CREATOR</div>
+      <h3 style="margin:0 0 6px;font-size:18px">Submit a Servia video → earn creator points</h3>
+      <p style="font-size:13.5px;color:#CBD5E1;margin:0 0 14px;line-height:1.55">Length × follower count × platform = creator points. Roll into Ambassador tier (more % off bookings) plus Creator-Elite perks at 5,000+ pts. <a href="/share-rewards.html" style="color:#FCD34D">See scoring rules →</a></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="font-size:11px;color:#CBD5E1;font-weight:700">Booking ID</label>
+          <input id="vid-bid" placeholder="LM-XXXXXX" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#CBD5E1;font-weight:700">Platform</label>
+          <select id="vid-platform" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;width:100%">
+            <option value="instagram">Instagram</option>
+            <option value="tiktok">TikTok</option>
+            <option value="youtube">YouTube</option>
+            <option value="twitter">X / Twitter</option>
+            <option value="facebook">Facebook</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:#CBD5E1;font-weight:700">Video duration (sec)</label>
+          <input id="vid-duration" type="number" min="5" max="3600" placeholder="60" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#CBD5E1;font-weight:700">Your follower count</label>
+          <input id="vid-followers" type="number" min="0" placeholder="5000" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;width:100%">
+        </div>
+      </div>
+      <label style="font-size:11px;color:#CBD5E1;font-weight:700;margin-top:8px;display:block">Public video URL</label>
+      <input id="vid-url" placeholder="https://www.tiktok.com/@you/video/..."
+             style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;width:100%">
+      <div id="vid-est" style="font-size:13px;color:#FCD34D;margin-top:10px;font-weight:700;min-height:18px"></div>
+      <button class="btn btn-primary btn-block" onclick="submitVideoProof()"
+              style="background:linear-gradient(135deg,#F59E0B,#FCD34D);color:#7C2D12;border:0;font-weight:800;margin-top:10px">
+        Submit video for creator points
+      </button>
+      <p style="font-size:11.5px;color:#94A3B8;margin:10px 0 0;line-height:1.5">
+        We verify the post is public + tagged @servia.ae within 48h. Bonus multipliers (views ≥ 1k / 10k / 100k, pinned, multi-service) apply at 7-day post-publish review.
+      </p>
+    </div>
+
     <p style="text-align:center;margin-top:20px"><a href="/share-rewards.html">Full rewards guide →</a></p>
   </div>
 
@@ -439,6 +481,66 @@ function showModal(html) {
 window.closeModal = () => { document.getElementById("modal-bg").style.display = "none"; };
 
 function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// ---- Video creator points estimator + submission ----
+function estimateVideoPoints() {
+  const dur = parseInt(document.getElementById("vid-duration")?.value || "0", 10);
+  const fol = parseInt(document.getElementById("vid-followers")?.value || "0", 10);
+  const plat = document.getElementById("vid-platform")?.value || "instagram";
+  if (!dur && !fol) {
+    document.getElementById("vid-est").textContent = "";
+    return;
+  }
+  let base = 10;
+  if (dur >= 300) base = 100;
+  else if (dur >= 180) base = 60;
+  else if (dur >= 60) base = 25;
+  else if (dur >= 30) base = 10;
+  else base = 5;
+  let mult = 1;
+  if (fol >= 100000) mult = 10;
+  else if (fol >= 25000) mult = 5;
+  else if (fol >= 5000) mult = 3;
+  else if (fol >= 1000) mult = 2;
+  const platMult = {instagram:1, tiktok:1, youtube:1.5, twitter:0.8, facebook:0.8}[plat] || 1;
+  const points = Math.round(base * mult * platMult);
+  const tier =
+    points >= 5000 ? "💎 Elite track" :
+    points >= 1500 ? "🥇 Influencer · Platinum unlock" :
+    points >= 500  ? "🥈 Growing · +2 ambassador tiers" :
+    points >= 100  ? "🥉 Starter · +1 ambassador tier" : "Submit more videos to climb";
+  document.getElementById("vid-est").textContent =
+    `≈ ${points} creator pts · ${tier}`;
+}
+["vid-duration","vid-followers","vid-platform"].forEach(id =>
+  document.getElementById(id)?.addEventListener("input", estimateVideoPoints));
+document.getElementById("vid-platform")?.addEventListener("change", estimateVideoPoints);
+
+async function submitVideoProof() {
+  const body = {
+    booking_id: document.getElementById("vid-bid").value.trim(),
+    platform:   document.getElementById("vid-platform").value,
+    duration_sec: parseInt(document.getElementById("vid-duration").value || "0", 10),
+    followers:  parseInt(document.getElementById("vid-followers").value || "0", 10),
+    url:        document.getElementById("vid-url").value.trim(),
+  };
+  if (!body.url || !body.duration_sec) {
+    alert("Please fill in the video URL and duration."); return;
+  }
+  try {
+    const r = await fetch("/api/video-reward", {
+      method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    if (j.ok) {
+      alert(`✅ Submitted!\nEstimated points: ${j.estimated_points}\nVerification within 48h. ${j.tier_message || ""}`);
+      document.getElementById("vid-url").value = "";
+    } else {
+      alert("❌ " + (j.error || "Could not submit — try again."));
+    }
+  } catch (e) { alert("Network error: " + e.message); }
+}
 </script>
 <script src="/widget.js"></script>
 <script src="/cms.js" defer></script>

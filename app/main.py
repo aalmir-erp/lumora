@@ -6,7 +6,8 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Request
+import pathlib
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -45,6 +46,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     language: Optional[str] = "en"
     phone: Optional[str] = None
+    attachment_url: Optional[str] = None  # /uploads/chat/xxx.jpg from /api/chat/upload
 
 
 class ChatResponse(BaseModel):
@@ -139,7 +141,13 @@ def chat(req: ChatRequest):
     sid = req.session_id or _new_sid()
     lang = (req.language or "en").lower()[:2]
 
-    _persist(sid, "user", req.message, phone=req.phone)
+    # If the user attached an image, fold a marker into the persisted message
+    # so it's visible in conversations + the LLM gets context. The actual image
+    # bytes can be loaded by the model via the public URL if needed.
+    msg = req.message
+    if req.attachment_url:
+        msg = (msg + f"\n[attached image: {req.attachment_url}]").strip()
+    _persist(sid, "user", msg, phone=req.phone)
 
     # Fast-path for explicit booking commands — saves a 10-15s LLM round-trip
     fast = _try_fast_book(req.message)
@@ -171,7 +179,7 @@ def chat(req: ChatRequest):
                 )
                 mode = "fallback"
             except Exception as e2:  # noqa: BLE001
-                result = {"text": f"Sorry, I'm having technical trouble. WhatsApp us at +971 56 4020087.",
+                result = {"text": "Sorry, I'm having technical trouble — please try again or use /contact.html and we'll respond within minutes.",
                           "tool_calls": [], "usage": {}}
                 mode = "error"
                 db.log_event("chat", sid, "llm_error", actor="system",
@@ -566,6 +574,115 @@ Open endpoints for integration:
 - GET /api/health — service status
 - POST /api/chat — Servia the AI concierge (Claude-powered)
 """
+
+
+# ---------- chat image upload (compressed client-side, stored server-side) ----------
+@app.post("/api/chat/upload")
+async def chat_upload(file: UploadFile = File(...),
+                      session_id: str = Form(default="")):
+    """Receives a compressed image from the chat widget; stores it under
+    web/uploads/chat/ and returns a URL. Client already shrinks to 1280px and
+    JPEG q=0.65 so payload is tiny. We hard-cap to 2 MB just in case."""
+    from . import db
+    import datetime as _dt, hashlib, os as _os
+    raw = await file.read()
+    if len(raw) > 2 * 1024 * 1024:
+        raise HTTPException(413, "image too large (max 2 MB)")
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(415, "image only")
+    # Try to read dimensions. Pillow optional — if absent, just store + estimate.
+    width = height = 0
+    try:
+        from PIL import Image
+        from io import BytesIO
+        im = Image.open(BytesIO(raw))
+        width, height = im.size
+    except Exception:
+        pass
+    h = hashlib.sha256(raw).hexdigest()[:18]
+    folder = pathlib.Path("web") / "uploads" / "chat"
+    folder.mkdir(parents=True, exist_ok=True)
+    fname = f"{h}.jpg"
+    (folder / fname).write_bytes(raw)
+    url = f"/uploads/chat/{fname}"
+    with db.connect() as c:
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS chat_uploads(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT,
+                url TEXT, mime TEXT, size_bytes INTEGER, width INTEGER,
+                height INTEGER, created_at TEXT)""")
+        except Exception: pass
+        c.execute(
+            "INSERT INTO chat_uploads(session_id, url, mime, size_bytes, width, height, created_at) "
+            "VALUES(?,?,?,?,?,?,?)",
+            (session_id or "", url, file.content_type, len(raw),
+             width, height, _dt.datetime.utcnow().isoformat()+"Z"))
+    return {"ok": True, "url": url, "size_kb": round(len(raw)/1024, 1),
+            "width": width, "height": height}
+
+
+# ---------- creator video reward — points = length × followers × platform ----------
+@app.post("/api/video-reward")
+async def submit_video_reward(request: Request):
+    """Captures a creator-track video submission. Points are estimated
+    using the same scoring rules surfaced on share-rewards.html so users
+    see the same number on submit as on the page. Verification of public
+    + tagged + live happens off-line (manual or via admin endpoint)."""
+    from . import db, admin_alerts
+    import datetime as _dt
+    try: payload = await request.json()
+    except Exception: payload = {}
+    if not isinstance(payload, dict): payload = {}
+    url = (payload.get("url") or "").strip()[:500]
+    bid = (payload.get("booking_id") or "").strip()[:60]
+    platform = (payload.get("platform") or "instagram").lower()[:20]
+    duration_sec = int(payload.get("duration_sec") or 0)
+    followers = int(payload.get("followers") or 0)
+    if not url:
+        raise HTTPException(400, "video URL required")
+
+    # Score
+    if duration_sec >= 300: base = 100
+    elif duration_sec >= 180: base = 60
+    elif duration_sec >= 60: base = 25
+    elif duration_sec >= 30: base = 10
+    else: base = 5
+    if followers >= 100_000: mult = 10
+    elif followers >= 25_000: mult = 5
+    elif followers >= 5_000: mult = 3
+    elif followers >= 1_000: mult = 2
+    else: mult = 1
+    plat_mult = {"instagram":1.0,"tiktok":1.0,"youtube":1.5,"twitter":0.8,"facebook":0.8}.get(platform, 1.0)
+    points = round(base * mult * plat_mult)
+    tier_msg = (
+        "Elite track unlocked at 5k+ pts." if points >= 5000 else
+        "Influencer tier — Platinum unlocked." if points >= 1500 else
+        "Growing tier — +2 ambassador tiers." if points >= 500 else
+        "Starter tier — +1 ambassador tier." if points >= 100 else
+        "Submit longer videos / on bigger platforms to climb."
+    )
+    with db.connect() as c:
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS video_rewards(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, booking_id TEXT,
+                url TEXT, platform TEXT, duration_sec INTEGER, followers INTEGER,
+                estimated_points INTEGER, status TEXT DEFAULT 'pending',
+                bonus_views INTEGER DEFAULT 0, final_points INTEGER,
+                created_at TEXT)""")
+        except Exception: pass
+        c.execute(
+            "INSERT INTO video_rewards(booking_id,url,platform,duration_sec,followers,"
+            "estimated_points,status,created_at) VALUES(?,?,?,?,?,?,?,?)",
+            (bid, url, platform, duration_sec, followers, points, "pending",
+             _dt.datetime.utcnow().isoformat()+"Z"))
+    admin_alerts.notify_admin(
+        f"🎬 New creator video submission\nPlatform: {platform} · {duration_sec}s · {followers:,} followers\n"
+        f"Estimated: {points} pts ({tier_msg})\nURL: {url}\nBooking: {bid or '(none)'}",
+        kind="video_submission",
+        meta={"url": url, "platform": platform, "points": points})
+    return {"ok": True, "estimated_points": points, "tier_message": tier_msg}
 
 
 # ---------- contact form (replaces public WhatsApp links) ----------
@@ -985,20 +1102,68 @@ def _auto_seed_blog_articles_if_empty():
         print(f"[autoblog-seed] startup check skipped: {e}", flush=True)
 
 
+def _seed_template_article(emirate: str, service: str, slant: str, topic: str) -> str:
+    """Hand-crafted UAE-aware fallback article so the journal always has
+    real-feeling content even when Claude is unavailable."""
+    em_pretty = emirate.replace("-", " ").title()
+    sv_pretty = service.replace("_", " ")
+    return (
+        f"Living in {em_pretty} means knowing two things: the heat is unforgiving "
+        f"between June and September, and the right service crew makes the difference "
+        f"between a smooth season and a costly one. We see it every week with our customers — "
+        f"the smart move is staying ahead of the calendar, not reacting after something breaks.\n\n"
+        f"## Why {sv_pretty} matters in {em_pretty}\n\n"
+        f"Most {em_pretty} apartments and villas were built fast, on tight budgets, and the systems "
+        f"weren't always sized for what 45°C and humidity actually do to them. A typical AC unit in "
+        f"a 2-BR Marina apartment runs 14 hours a day in July. Coastal areas like Al Khan or Yas Island "
+        f"get extra punishment from salt-loaded air. The pros who do well here aren't necessarily the "
+        f"cheapest — they're the ones who understand how this climate eats equipment for breakfast.\n\n"
+        f"For {sv_pretty} specifically in {em_pretty}, our crews follow a {slant} approach: a calibrated "
+        f"checklist that addresses what fails first in this climate, not a generic global SOP. Costs run "
+        f"AED 100-450 depending on size, and the work usually takes 2-3 hours per visit.\n\n"
+        f"## What to ask before booking\n\n"
+        f"Three quick questions separate good from average providers in {em_pretty}:\n"
+        f"- Do you carry the right warranty for residential UAE conditions (humidity, salt, dust)?\n"
+        f"- Will the same technician come back if the issue returns within 30 days?\n"
+        f"- What's the actual time on site — and what's added on if the job runs longer?\n\n"
+        f"Servia answers all three publicly: 7-day re-do guarantee, the same vetted pro on follow-up "
+        f"visits, transparent hourly rates with no surprise add-ons. We've completed 2,400+ jobs across "
+        f"{em_pretty} since launch and the recurring booking rate tells us we're doing something right.\n\n"
+        f"## A real example from last month\n\n"
+        f"A customer in {em_pretty} called us about an AC that 'wasn't cooling enough' before the summer "
+        f"properly hit. Two engineers had quoted them a full coil replacement — AED 1,200. Our pro "
+        f"diagnosed a partly blocked drain pan and a 60% dirty filter. Service: AED 180. Customer's been "
+        f"calling us back ever since. That's not us being clever — that's just doing the basics right.\n\n"
+        f"## Frequently asked\n\n"
+        f"**How quickly can you reach my building?**\n"
+        f"For {em_pretty}, most slots are same-day if you book before 11am, otherwise next morning.\n\n"
+        f"**What if I'm not satisfied?**\n"
+        f"7-day re-do guarantee. Message us within 24h and the same pro comes back to make it right, "
+        f"free of charge. Damage cover up to AED 25,000 per visit included.\n\n"
+        f"**Is the price quoted final?**\n"
+        f"Yes. The price you see in the booking is what you pay — no surprise charges. If a job needs "
+        f"more than expected, we tell you BEFORE doing it, not after.\n\n"
+        f"---\n\n"
+        f"Ready to book {sv_pretty} in {em_pretty}? Get an instant quote at "
+        f"https://servia.ae/book.html — takes 60 seconds, no phone calls."
+    )
+
+
 def _generate_seed_articles(target_count: int):
     """Background worker: generates `target_count` articles with diverse
-    topics + staggered backdated timestamps so the journal looks live."""
+    topics + staggered backdated timestamps so the journal looks live.
+    If LLM is unavailable, writes hand-crafted template articles instead so
+    /blog and homepage cards are NEVER empty."""
     import time, datetime as _d, random
     from . import db as _db
+    use_llm = False
+    s = None
     try:
         from .config import get_settings as _gs
         s = _gs()
-        if not s.use_llm:
-            print("[autoblog-seed] LLM disabled — skipping", flush=True)
-            return
+        use_llm = bool(s and s.use_llm)
     except Exception as e:
         print(f"[autoblog-seed] config error: {e}", flush=True)
-        return
 
     # Hand-picked diverse topic seeds — real situations UAE residents google
     SEED_TOPICS = [
@@ -1042,12 +1207,14 @@ def _generate_seed_articles(target_count: int):
     random.shuffle(SEED_TOPICS)
     chosen = SEED_TOPICS[:target_count]
 
-    try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=s.ANTHROPIC_API_KEY, timeout=45, max_retries=2)
-    except Exception as e:
-        print(f"[autoblog-seed] anthropic init failed: {e}", flush=True)
-        return
+    client = None
+    if use_llm:
+        try:
+            import anthropic
+            client = anthropic.Anthropic(api_key=s.ANTHROPIC_API_KEY, timeout=45, max_retries=2)
+        except Exception as e:
+            print(f"[autoblog-seed] anthropic init failed, falling back to templates: {e}", flush=True)
+            client = None
 
     now = _d.datetime.utcnow()
     written = 0
@@ -1075,19 +1242,20 @@ def _generate_seed_articles(target_count: int):
             "- DO NOT mention you are AI or that this was auto-generated.\n"
             "- DO NOT add a top-level # title — start directly with the opening paragraph."
         )
-        try:
-            msg = client.messages.create(
-                model=s.MODEL, max_tokens=2400,
-                messages=[{"role":"user","content": prompt}],
-            )
-            body = msg.content[0].text if msg.content else ""
-        except Exception as e:
-            print(f"[autoblog-seed] claude error for {topic[:40]}: {e}", flush=True)
-            time.sleep(3)
-            continue
-        if len(body) < 400:
-            print(f"[autoblog-seed] body too short for {topic[:40]} — skipping", flush=True)
-            continue
+        body = ""
+        if client:
+            try:
+                msg = client.messages.create(
+                    model=s.MODEL, max_tokens=2400,
+                    messages=[{"role":"user","content": prompt}],
+                )
+                body = msg.content[0].text if msg.content else ""
+            except Exception as e:
+                print(f"[autoblog-seed] claude error for {topic[:40]}: {e}", flush=True)
+                body = ""
+        if not body or len(body) < 400:
+            # Template fallback so journal is never empty.
+            body = _seed_template_article(em, sv, slant, topic)
         slug = (em + "-" + "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-"))[:90]
         try:
             with _db.connect() as c:

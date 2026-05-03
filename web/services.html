@@ -39,15 +39,65 @@
   </div>
 </div></nav>
 
+<!-- Services hero -->
+<section style="background:linear-gradient(135deg,#0F766E 0%,#0D9488 50%,#F59E0B 100%);color:#fff;padding:48px 16px 36px;position:relative;overflow:hidden">
+  <div style="max-width:1180px;margin:0 auto;text-align:center;position:relative">
+    <div style="display:inline-block;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.06em;margin-bottom:14px">🇦🇪 4.9★ FROM 2,400+ UAE FAMILIES</div>
+    <h1 style="font-size:36px;letter-spacing:-.02em;margin:0 0 8px">All Servia services · one app · 60-second booking</h1>
+    <p style="margin:0 0 20px;color:#FEF3C7;font-size:15px;max-width:640px;margin-inline:auto;line-height:1.5">32 services across home, business, on-the-road and tech repair — vetted pros, transparent prices, AED 25,000 damage cover and a 7-day re-do guarantee on every booking.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
+      <span style="background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600">✓ Background-checked</span>
+      <span style="background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600">✓ Insured</span>
+      <span style="background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600">✓ Same-day available</span>
+      <span style="background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600">✓ Pay only when satisfied</span>
+    </div>
+  </div>
+</section>
+
+<!-- Trust strip -->
+<section style="background:#fff;border-bottom:1px solid var(--border);padding:18px 16px">
+  <div style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:center" class="trust-grid">
+    <div><div style="font-size:24px;margin-bottom:4px">🛡</div><div style="font-size:13px;font-weight:700">AED 25k damage cover</div><div style="font-size:11px;color:var(--muted)">on every visit</div></div>
+    <div><div style="font-size:24px;margin-bottom:4px">⚡</div><div style="font-size:13px;font-weight:700">Same-day slots</div><div style="font-size:11px;color:var(--muted)">if booked before 11am</div></div>
+    <div><div style="font-size:24px;margin-bottom:4px">↻</div><div style="font-size:13px;font-weight:700">7-day re-do guarantee</div><div style="font-size:11px;color:var(--muted)">free, no questions</div></div>
+    <div><div style="font-size:24px;margin-bottom:4px">💎</div><div style="font-size:13px;font-weight:700">Up to 20% off</div><div style="font-size:11px;color:var(--muted)">via Ambassador tier</div></div>
+  </div>
+  <style>@media(max-width:680px){.trust-grid{grid-template-columns:repeat(2,1fr) !important}}</style>
+</section>
+
 <section>
   <div class="container">
-    <h2 data-i18n="services">All Services</h2>
-    <p class="sub">Pick a category or search.</p>
+    <h2 data-i18n="services" style="margin-top:36px">All Services</h2>
+    <p class="sub">Pick a category or search 32 services across UAE.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px" id="cat-tabs"></div>
     <input type="search" id="svc-search" placeholder="Search services…"
       style="width:100%;max-width:480px;margin-bottom:24px">
     <div class="services-grid" id="svc-grid"></div>
     <div id="empty" style="display:none;color:var(--muted);text-align:center;padding:32px">No services match.</div>
+  </div>
+</section>
+
+<!-- How it works mini -->
+<section style="background:linear-gradient(180deg,#FFFBEB,#FFFFFF);padding:40px 16px;border-top:1px solid var(--border)">
+  <div style="max-width:1100px;margin:0 auto;text-align:center">
+    <h2 style="font-size:26px;letter-spacing:-.02em;margin:0 0 6px">How a Servia booking works</h2>
+    <p style="margin:0 0 24px;color:var(--muted);font-size:14px">From tap to "all done!" — every stage tracked. Updates on WhatsApp + your account.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" class="hiw-grid">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px"><div style="font-size:32px">📲</div><h3 style="font-size:14px;margin:8px 0 4px">1. Pick service + slot</h3><p style="font-size:12px;color:var(--muted);margin:0;line-height:1.4">60 seconds, no phone call.</p></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px"><div style="font-size:32px">💳</div><h3 style="font-size:14px;margin:8px 0 4px">2. Pay to confirm</h3><p style="font-size:12px;color:var(--muted);margin:0;line-height:1.4">Apple Pay · Google Pay · Card · Tabby.</p></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px"><div style="font-size:32px">🚐</div><h3 style="font-size:14px;margin:8px 0 4px">3. Pro on the way</h3><p style="font-size:12px;color:var(--muted);margin:0;line-height:1.4">Live ETA every 5 min on WhatsApp.</p></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px"><div style="font-size:32px">⭐</div><h3 style="font-size:14px;margin:8px 0 4px">4. Done · review</h3><p style="font-size:12px;color:var(--muted);margin:0;line-height:1.4">Photos · invoice · 7-day re-do.</p></div>
+    </div>
+    <style>@media(max-width:680px){.hiw-grid{grid-template-columns:repeat(2,1fr) !important}}</style>
+  </div>
+</section>
+
+<!-- Bottom CTA -->
+<section style="background:#0F172A;color:#fff;padding:36px 16px;text-align:center">
+  <div style="max-width:720px;margin:0 auto">
+    <h2 style="font-size:24px;margin:0 0 6px;letter-spacing:-.02em">Pick a service. Get started in 60 seconds.</h2>
+    <p style="color:#CBD5E1;margin:0 0 16px;font-size:14px">Same-day across all 7 emirates. Trusted by 2,400+ UAE families.</p>
+    <a class="btn btn-primary" href="/book.html" style="background:linear-gradient(135deg,#F59E0B,#FCD34D);color:#7C2D12;border:0;font-weight:800;padding:14px 32px">Book any service →</a>
   </div>
 </section>
 

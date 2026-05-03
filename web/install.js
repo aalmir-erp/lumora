@@ -17,7 +17,7 @@
     { e: "📲", t: "One-tap booking",   d: "Skip the browser. Tap the Servia icon → book in 30s." },
     { e: "🔔", t: "Real-time updates", d: "Live arrival alerts: 'Crew in 10 min', 'Arriving now', 'Done'." },
     { e: "⚡",  t: "Faster everywhere", d: "Loads instantly even on weak signal. Saves your data." },
-    { e: "🎁", t: "App-only deals",    d: "AED 50 off your first app-booking. Push-only flash discounts." },
+    { e: "🎁", t: "App-only deals",    d: "Push-only flash discounts. Ambassador tier perks unlocked instantly." },
     { e: "🛡", t: "100% safe + tiny",  d: "No app-store install. Adds a clean icon to your home screen." },
   ];
 
@@ -72,7 +72,7 @@
     b.id = "servia-install-banner";
     b.innerHTML =
       '<span style="font-size:18px">📲</span>' +
-      '<span><b>Servia mobile app</b> · faster, alerts on arrival, AED 50 off first app-booking.</span>' +
+      '<span><b>Servia mobile app</b> · faster, arrival alerts, app-only deals.</span>' +
       '<button id="servia-install-banner-go" type="button">Install</button>' +
       '<button id="servia-install-banner-x" type="button" aria-label="Dismiss">✕</button>';
     b.style.cssText =
