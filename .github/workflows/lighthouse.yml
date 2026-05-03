@@ -1,0 +1,109 @@
+name: Lighthouse PageSpeed
+on:
+  push: { branches: [main] }
+  workflow_dispatch: {}
+  schedule: [{ cron: "0 2 * * *" }]   # nightly at 02:00 UTC
+
+permissions: { contents: write }
+concurrency: { group: lighthouse, cancel-in-progress: true }
+
+env:
+  TARGET: https://lumora-production-4071.up.railway.app
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Wait a moment so the deploy after the trigger commit has time to land.
+      - name: Wait 60s for deploy to settle
+        run: sleep 60
+
+      - name: Install Lighthouse + Chrome
+        run: |
+          npm install -g lighthouse@latest
+          # Chrome is already installed on ubuntu-latest runners
+
+      - name: Run Lighthouse on homepage (mobile)
+        run: |
+          lighthouse "${TARGET}/?cb=$(date +%s)" \
+            --output=json --output=html \
+            --output-path=./lh-home \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --form-factor=mobile --throttling-method=simulate \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --quiet || true
+
+      - name: Run Lighthouse on /faq.html (mobile)
+        run: |
+          lighthouse "${TARGET}/faq.html?cb=$(date +%s)" \
+            --output=json --output=html \
+            --output-path=./lh-faq \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --form-factor=mobile --throttling-method=simulate \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --quiet || true
+
+      - name: Run Lighthouse on /service.html?id=deep_cleaning (mobile)
+        run: |
+          lighthouse "${TARGET}/service.html?id=deep_cleaning&cb=$(date +%s)" \
+            --output=json --output=html \
+            --output-path=./lh-service \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --form-factor=mobile --throttling-method=simulate \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --quiet || true
+
+      - name: Summarise scores
+        id: scores
+        run: |
+          python3 <<'PY'
+          import json, os, glob, datetime
+          out = []
+          best = {"perf":0,"a11y":0,"best":0,"seo":0}
+          worst = {"perf":100,"a11y":100,"best":100,"seo":100}
+          for f in sorted(glob.glob("lh-*.report.json")):
+              try:
+                  d = json.load(open(f))
+              except Exception as e:
+                  out.append(f"{f}: failed to parse ({e})")
+                  continue
+              c = d.get("categories", {})
+              row = {
+                  "perf": int((c.get("performance",{}).get("score") or 0) * 100),
+                  "a11y": int((c.get("accessibility",{}).get("score") or 0) * 100),
+                  "best": int((c.get("best-practices",{}).get("score") or 0) * 100),
+                  "seo":  int((c.get("seo",{}).get("score") or 0) * 100),
+              }
+              url = d.get("finalDisplayedUrl") or d.get("requestedUrl","?")
+              out.append(f"{f.replace('.report.json','')}: perf={row['perf']} a11y={row['a11y']} bp={row['best']} seo={row['seo']}  ({url})")
+              for k in best: best[k] = max(best[k], row[k]); worst[k] = min(worst[k], row[k])
+          summary = "Lighthouse run " + datetime.datetime.utcnow().isoformat(timespec="minutes") + "Z\n" + "\n".join(out)
+          summary += f"\n\nBest: perf={best['perf']} a11y={best['a11y']} bp={best['best']} seo={best['seo']}"
+          summary += f"\nWorst: perf={worst['perf']} a11y={worst['a11y']} bp={worst['best']} seo={worst['seo']}"
+          print(summary)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("perf=" + str(best['perf']) + "\n")
+              f.write("worst_perf=" + str(worst['perf']) + "\n")
+          # Persist a markdown report at LIGHTHOUSE.md so we can commit it
+          with open("LIGHTHOUSE.md", "w") as f:
+              f.write("# Lighthouse PageSpeed scores\n\n")
+              f.write("```\n" + summary + "\n```\n\n")
+              f.write("HTML reports are attached as workflow artifacts.\n")
+          PY
+
+      - name: Upload HTML reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: ./lh-*.report.html
+          retention-days: 30
+
+      - name: Commit LIGHTHOUSE.md
+        run: |
+          git config user.email "lighthouse-bot@lumora.local"
+          git config user.name  "lighthouse-bot"
+          git add LIGHTHOUSE.md || true
+          git diff --cached --quiet || git commit -m "lighthouse: perf=${{ steps.scores.outputs.perf }} (worst=${{ steps.scores.outputs.worst_perf }})" || true
+          git push origin HEAD:main || true
