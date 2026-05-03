@@ -292,13 +292,18 @@ def booking_ics(bid: str):
 # Force fresh HTML/JS/CSS on every request so deploys are visible immediately;
 # without this, browsers + Railway's edge cache hold the previous build.
 @app.middleware("http")
-async def _no_cache_for_code(request, call_next):
+async def _smart_cache(request, call_next):
     resp = await call_next(request)
     p = request.url.path
+    # Code (HTML / JS / CSS / JSON / manifest) — always fresh so deploys land instantly.
     if (p.endswith((".html", ".js", ".css", ".json", ".webmanifest")) or p == "/" or p.endswith("/")):
         resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         resp.headers["Pragma"] = "no-cache"
         resp.headers["Expires"] = "0"
+    # Icons / images / fonts — long cache + stale-while-revalidate so PageSpeed
+    # gives full marks on repeat visits without blocking new deploys.
+    elif p.endswith((".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico", ".woff", ".woff2", ".ttf")):
+        resp.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=604800"
     return resp
 
 if settings.WEB_DIR.exists():

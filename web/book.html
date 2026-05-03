@@ -153,7 +153,7 @@ document.getElementById("book-btn").addEventListener("click", async () => {
 
 function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 </script>
-<script src="/widget.js" defer></script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 <script src="/theme.js" defer></script>
 
 <nav class="mobile-nav" aria-label="Primary mobile">

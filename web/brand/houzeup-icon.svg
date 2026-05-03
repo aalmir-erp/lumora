@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192" role="img" aria-label="HouzeUp app icon">
+  <defs>
+    <linearGradient id="ic-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#0F766E"/>
+      <stop offset="55%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="ic-roof" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="176" height="176" rx="44" fill="url(#ic-grad)"/>
+  <rect x="14" y="14" width="164" height="60" rx="36" fill="#fff" opacity="0.10"/>
+
+  <path d="M52 124 L96 80 L140 124 L140 150 Q140 154 136 154 L56 154 Q52 154 52 150 Z" fill="#FFFFFF"/>
+  <path d="M52 124 L96 80 L140 124 L128 124 L96 92 L64 124 Z" fill="url(#ic-roof)"/>
+  <rect x="86" y="124" width="20" height="30" rx="3" fill="#0F766E"/>
+
+  <g transform="translate(124 56)">
+    <path d="M0 22 L0 -10 M-10 0 L0 -10 L10 0" stroke="#FFFFFF" stroke-width="6.5"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  <g transform="translate(154 44)">
+    <path d="M0 -12 L3.4 -3.4 L12 0 L3.4 3.4 L0 12 L-3.4 3.4 L-12 0 L-3.4 -3.4 Z" fill="#FCD34D"/>
+  </g>
+</svg>

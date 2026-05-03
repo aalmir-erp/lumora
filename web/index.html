@@ -30,14 +30,54 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link rel="apple-touch-icon" href="/icon-192.svg">
-<link rel="stylesheet" href="/style.css">
-<link rel="stylesheet" href="/widget.css">
+<!-- Critical above-fold CSS inlined — kills the render-blocking round-trip.
+     style.css + widget.css load asynchronously below. -->
+<style>
+  :root { --bg:#FAFAFA; --surface:#FFFFFF; --text:#0F172A; --muted:#64748B;
+    --border:#E2E8F0; --primary:#0D9488; --primary-dark:#0F766E; --accent:#F59E0B; }
+  *,*::before,*::after { box-sizing:border-box; }
+  html,body { margin:0; padding:0; }
+  body { font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--text); background:var(--bg); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  img,svg { max-width:100%; height:auto; display:block; }
+  a { color: var(--primary-dark); }
+  .uae-flag-strip { height:4px; width:100%;
+    background: linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%); }
+  .nav { background:#fff; border-bottom: 1px solid var(--border); }
+  .nav-inner { max-width:1180px; margin:0 auto; padding:14px 20px;
+    display:flex; align-items:center; gap:14px; }
+  .nav-links { display:flex; gap:18px; margin-inline-start:auto; }
+  .nav-links a { color:var(--text); font-weight:600; font-size:14px; text-decoration:none; }
+  .nav-cta { display:flex; gap:8px; align-items:center; }
+  .btn { padding:9px 16px; border-radius:999px; border:1px solid var(--border);
+    font-weight:600; font-size:14px; cursor:pointer; text-decoration:none;
+    background:var(--surface); color:var(--text); display:inline-block; }
+  .btn-primary { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .btn-ghost { background:transparent; }
+  .container { max-width:1180px; margin:0 auto; padding:0 20px; }
+  .hero-shell { position:relative; padding:56px 24px 80px; overflow:hidden; color:#fff;
+    background: linear-gradient(160deg, #0F766E 0%, #0D9488 35%, #14B8A6 100%);
+    contain: layout paint; }
+  .hero-grid { max-width:1180px; margin:0 auto; display:grid;
+    grid-template-columns: 1.2fr 1fr; gap:40px; align-items:center; position:relative; z-index:1; }
+  @media(max-width:880px){ .hero-grid { grid-template-columns:1fr; gap:24px; } }
+  .hero-h1 { font-size:56px; font-weight:800; line-height:1.05; letter-spacing:-.02em;
+    margin:14px 0 18px; color:#fff; }
+  .hero-sub { font-size:19px; color:#ECFDF5; margin:0 0 28px; max-width:540px; line-height:1.5; }
+  .mascot-frame { position:relative; width:280px; height:280px; margin:0 auto;
+    aspect-ratio:1/1; }
+  @media (prefers-reduced-motion: reduce) {
+    *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+</style>
+<link rel="preload" href="/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="/widget.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/widget.css"></noscript>
 
-<link rel="preload" as="image" href="/mascot.svg" type="image/svg+xml">
+<link rel="preload" as="image" href="/mascot.svg" type="image/svg+xml" fetchpriority="high">
 <link rel="preload" as="fetch" href="/api/services" crossorigin="anonymous">
-<link rel="preload" as="fetch" href="/api/brand" crossorigin="anonymous">
-<link rel="preload" as="fetch" href="/api/health" crossorigin="anonymous">
 <link rel="dns-prefetch" href="https://wa.me">
+<link rel="preconnect" href="https://wa.me" crossorigin>
 
 <script type="application/ld+json">
 {
@@ -234,6 +274,7 @@
 .hero-shell .float-icon {
   position: absolute; font-size: 36px; opacity: 0.18;
   animation: drift 6s ease-in-out infinite; pointer-events: none; z-index: 0;
+  will-change: transform; transform: translateZ(0);
 }
 .hero-shell .float-icon.f1 { top: 12%; left: 5%;  animation-delay: 0s; }
 .hero-shell .float-icon.f2 { top: 60%; left: 8%;  animation-delay: 1.2s; }
@@ -248,7 +289,7 @@
   overflow: hidden; padding: 12px 0; font-size: 14px;
 }
 .live-strip .row { display: flex; gap: 64px; white-space: nowrap; width: max-content;
-  animation: ticker 38s linear infinite; }
+  animation: ticker 38s linear infinite; will-change: transform; transform: translateZ(0); }
 .live-strip .row span { color: #0E7490; font-weight: 500; }
 .live-strip .row span b { color: #0F766E; }
 .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%;
@@ -324,7 +365,7 @@
 
 <div class="uae-flag-strip"></div>
 <nav class="nav"><div class="nav-inner">
-  <a href="/" aria-label="Home"><img src="/logo.svg" height="40" alt="Lumora"></a>
+  <a href="/" aria-label="Home"><img src="/logo.svg" width="124" height="40" alt="Lumora" decoding="async"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
     <a href="/services.html">Services</a>
@@ -374,7 +415,8 @@
     </div>
     <div style="text-align:center" class="reveal in">
       <div class="mascot-frame">
-        <img src="/mascot.svg" width="280" height="280" alt="Lumi mascot waving" loading="eager">
+        <img src="/mascot.svg" width="280" height="280" alt="Lumi mascot waving"
+             loading="eager" decoding="async" fetchpriority="high">
       </div>
     </div>
   </div>
@@ -566,7 +608,7 @@
 
 <footer><div class="container">
   <div>
-    <img src="/logo.svg" alt="Lumora" height="36" style="filter:brightness(0) invert(1)">
+    <img src="/logo.svg" alt="Lumora" width="112" height="36" loading="lazy" decoding="async" style="filter:brightness(0) invert(1)">
     <p style="margin:12px 0;font-size:13px;opacity:0.85">UAE's smart home services platform.</p>
     <p style="font-size:12px;opacity:0.6">© 2026 Lumora. All rights reserved.</p>
   </div>
@@ -645,7 +687,7 @@ document.querySelectorAll("[data-count]").forEach(n => countObs.observe(n));
   const row = document.getElementById("live-row");
   if (!row) return;
   const items = [];
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 8; i++) {
     const n = NAMES[Math.floor(Math.random()*NAMES.length)];
     const a = AREAS[Math.floor(Math.random()*AREAS.length)];
     const [s, e] = SVCS[Math.floor(Math.random()*SVCS.length)];
@@ -661,18 +703,36 @@ const POPULAR = ["deep_cleaning","general_cleaning","ac_cleaning","maid_service"
 const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
   hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
   tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
-fetch("/api/services").then(r => r.json()).then(d => {
+// Lazy-render service tiles only when they near the viewport — keeps TBT low.
+function _renderTiles(d) {
   const map = Object.fromEntries(d.services.map(s => [s.id, s]));
   const featured = POPULAR.map(id => map[id]).filter(Boolean);
   document.getElementById("svc-tiles").innerHTML = featured.map(s => `
     <a class="svc-tile reveal in" href="/service.html?id=${s.id}">
-      <div class="e">${ICONS[s.icon] || "🧽"}</div>
+      <div class="e" aria-hidden="true">${ICONS[s.icon] || "🧽"}</div>
       <h3>${s.name}</h3>
       <small>${s.category}</small>
       <div class="price">from ${s.starting_price} AED</div>
     </a>`).join("");
-});
+}
+const _tilesObs = new IntersectionObserver(es => {
+  if (!es.some(e => e.isIntersecting)) return;
+  _tilesObs.disconnect();
+  fetch("/api/services").then(r => r.json()).then(_renderTiles).catch(() => {});
+}, { rootMargin: "200px 0px" });
+_tilesObs.observe(document.getElementById("svc-tiles"));
 </script>
-<script src="/widget.js" data-api-base="" defer></script>
+<!-- Lazy-load chat widget so it doesn't block first paint or count toward TBT -->
+<script>
+(function(){
+  let l=false; function ld(){ if(l)return; l=true;
+    const s=document.createElement("script"); s.src="/widget.js";
+    s.dataset.apiBase=""; s.async=true; document.body.appendChild(s); }
+  if("requestIdleCallback" in window) requestIdleCallback(ld,{timeout:4000});
+  else setTimeout(ld,3000);
+  ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
+    addEventListener(ev,ld,{once:true,passive:true}));
+})();
+</script>
 </body>
 </html>

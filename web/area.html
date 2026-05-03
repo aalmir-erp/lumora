@@ -9,9 +9,10 @@
 <link rel="canonical" href="">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="stylesheet" href="/style.css">
-<link rel="stylesheet" href="/widget.css">
-<link rel="preload" as="image" href="/mascot.svg" type="image/svg+xml">
+<link rel="preload" href="/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="/widget.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/widget.css"></noscript>
+<link rel="preload" as="image" href="/mascot.svg" type="image/svg+xml" fetchpriority="high">
 <link rel="preload" as="fetch" href="/api/services" crossorigin="anonymous">
 
 <style>
@@ -408,5 +409,5 @@ document.head.appendChild(ld3);
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); }), {threshold:0.12});
 document.querySelectorAll(".reveal").forEach(el => io.observe(el));
 </script>
-<script src="/widget.js" data-api-base="" defer></script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.dataset.apiBase="";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 </body></html>
