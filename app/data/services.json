@@ -1701,6 +1701,38 @@
         { "id": "bracket_full_motion", "name": "Full-motion wall bracket (supply + install)", "price": 180, "icon": "📺" },
         { "id": "cable_conduit", "name": "In-wall cable conduit (≤2m)", "price": 120, "icon": "🔌" }
       ]
+    },
+    {
+      "id": "chauffeur",
+      "name": "Chauffeur / Personal Driver",
+      "category": "Transport & Concierge",
+      "icon": "user",
+      "description": "On-demand and hourly chauffeur for airport runs, errands, school runs, business meetings — your car or ours.",
+      "starting_price": 60,
+      "duration_label": "Hourly · Min 3 hrs",
+      "team_label": "1 vetted driver",
+      "includes": ["Vetted, English-speaking driver", "UAE driving licence + clean record", "Real-time route via WhatsApp", "Punctual pickup or AED 25 credit"],
+      "excludes": ["Fuel and Salik / parking charges (added to invoice)", "Vehicle (use yours, or add 'rental car' add-on)"],
+      "benefits": ["No hidden surge pricing", "Same driver on recurring routes (school run, daily commute)", "Female driver on request", "Can hold a sign at airport pickup"],
+      "intake": ["service_type (airport_pickup/airport_dropoff/hourly/full_day/school_run/event/medical_visit/other)", "vehicle (i_have_one/need_rental_sedan/need_rental_suv/need_rental_van)", "passengers_count", "pickup_location", "dropoff_location_or_route", "preferred_date", "time_slot", "emirate", "duration_hours"],
+      "addons": [
+        { "id": "rental_sedan", "name": "Rental sedan (per hour, fuel extra)", "price": 25, "icon": "🚗" },
+        { "id": "rental_suv", "name": "Rental SUV (per hour, fuel extra)", "price": 45, "icon": "🚙" },
+        { "id": "airport_meet_greet", "name": "Airport meet-and-greet sign + bag-help", "price": 60, "icon": "✈️" },
+        { "id": "child_seat", "name": "Child seat", "price": 25, "icon": "👶" }
+      ],
+      "process_steps": [
+        { "icon": "📞", "title": "Tell us your trip", "desc": "Pickup, dropoff, time, vehicle preference." },
+        { "icon": "👤", "title": "Driver assigned", "desc": "You get name + photo + WhatsApp + live ETA." },
+        { "icon": "🚗", "title": "On-time pickup", "desc": "Driver arrives 5 mins early. You ride." },
+        { "icon": "💳", "title": "Pay after the ride", "desc": "Hourly rate × hours + fuel/Salik. Tap to pay." }
+      ],
+      "faqs": [
+        { "q": "Can I book a chauffeur for the airport?", "a": "Yes — choose 'airport_pickup' or 'airport_dropoff'. Add the meet-and-greet add-on if you want the driver waiting with a sign at arrivals." },
+        { "q": "Hourly minimum?", "a": "3 hours per booking. Multiple short trips can be combined under one hourly block." },
+        { "q": "Can I get the same driver every day?", "a": "Yes — set frequency to 'recurring' and we'll match the same driver wherever possible." },
+        { "q": "Female driver available?", "a": "Yes, on request. Mention 'female driver only' in the notes." }
+      ]
     }
   ],
   "areas_served": [

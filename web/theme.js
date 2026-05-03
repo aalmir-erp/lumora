@@ -73,7 +73,7 @@
   window.lumoraOpenSettings = openSettingsPanel;
 
   // Apply on load
-  applyTheme(localStorage.getItem(LS_THEME) || "light");
+  applyTheme(localStorage.getItem(LS_THEME) || "emirati");
   applyFont(localStorage.getItem(LS_FONT) || "system");
 
   function openSettingsPanel() {
