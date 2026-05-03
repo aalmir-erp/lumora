@@ -406,10 +406,15 @@ def blog_post(slug: str):
             r = None
     if not r:
         raise HTTPException(404, "Post not found")
-    post = db.row_to_dict(r)
+    post = db.row_to_dict(r) or {}
     with db.connect() as c:
-        c.execute("UPDATE autoblog_posts SET view_count=view_count+1 WHERE slug=?", (slug,))
-    body = post["body_md"]
+        try: c.execute("UPDATE autoblog_posts SET view_count=view_count+1 WHERE slug=?", (slug,))
+        except Exception: pass
+    # Defensive defaults — every field can be missing from very old DB rows
+    body = post.get("body_md") or ""
+    title = post.get("topic") or "Servia article"
+    emirate = (post.get("emirate") or "uae").replace("-", " ").title()
+    pub = (post.get("published_at") or "")[:10] or "—"
     # Convert lightweight markdown to HTML (just headings + paragraphs + CTAs)
     import re as _re, html as _html
     body_h = _html.escape(body)
@@ -418,11 +423,10 @@ def blog_post(slug: str):
     body_h = _re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", body_h)
     body_h = _re.sub(r"\n\n+", "</p><p>", body_h)
     body_h = "<p>" + body_h + "</p>"
-    title = post["topic"]
     return f"""<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{_html.escape(title)} | Servia Blog</title>
-<meta name="description" content="{_html.escape(title)} — Servia UAE home services insights for {post['emirate'].replace('-',' ').title()}.">
+<meta name="description" content="{_html.escape(title)} — Servia UAE home services insights for {emirate}.">
 <link rel="canonical" href="https://servia.ae/blog/{slug}">
 <link rel="stylesheet" href="/style.css">
 </head><body>
@@ -432,9 +436,9 @@ def blog_post(slug: str):
   <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book.html">Book now</a></div>
 </div></nav>
 <article style="max-width:760px;margin:32px auto 80px;padding:0 16px">
-  <a href="/area.html?city={post['emirate']}" style="font-size:13px;color:var(--muted);text-decoration:none">📍 {post['emirate'].replace('-',' ').title()}</a>
+  <a href="/area.html?city={post.get('emirate') or 'dubai'}" style="font-size:13px;color:var(--muted);text-decoration:none">📍 {emirate}</a>
   <h1 style="font-size:32px;letter-spacing:-.02em;margin:8px 0 18px">{_html.escape(title)}</h1>
-  <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Published {post['published_at'][:10]}</p>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Published {pub}</p>
   <div style="font-size:16px;line-height:1.7">{body_h}</div>
   <div data-share="blog-{slug}" data-share-key="blog-{slug}" data-share-text="Servia: {_html.escape(title)}" style="margin-top:32px"></div>
   <div style="margin-top:32px;padding:24px;background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#78350F;border-radius:18px;text-align:center">
@@ -1076,11 +1080,14 @@ def _auto_seed_market_vendors_if_empty():
 # ---------- one-shot: backfill 10 articles on first deploy so /blog isn't empty ----------
 @app.on_event("startup")
 def _auto_seed_blog_articles_if_empty():
-    """Generate 10 real Claude-written articles with backdated timestamps
-    spanning the past 10 days, so /blog and the homepage 'Latest from journal'
-    section are populated immediately rather than waiting for the daily cron.
-    Runs in a background thread so app boot is not blocked."""
-    import os as _os, threading as _t
+    """Two-stage seed:
+    (1) SYNCHRONOUS: write 10 hand-crafted template articles immediately so
+        /blog, /blog/{slug}, and the homepage 'Latest from journal' cards
+        are NEVER empty after a fresh deploy / DB reset.
+    (2) BACKGROUND: if Claude is available, the daily cron will progressively
+        replace these with richer LLM-written content over time.
+    """
+    import os as _os, datetime as _d, random as _r
     if _os.getenv("AUTOBLOG_SEED_ENABLED", "1") == "0":
         return
     try:
@@ -1096,8 +1103,52 @@ def _auto_seed_blog_articles_if_empty():
             n = c.execute("SELECT COUNT(*) AS n FROM autoblog_posts").fetchone()["n"]
         if n >= 10:
             return
-        _t.Thread(target=_generate_seed_articles, args=(10 - n,), daemon=True).start()
-        print(f"[autoblog-seed] launching background thread to generate {10 - n} articles", flush=True)
+
+        # Stage 1: synchronous template-only seed — guaranteed instant content
+        SEED_TOPICS = [
+            ("dubai", "ac_service",
+             "AC pre-summer prep in Dubai Marina — what to demand from a technician", "pre-summer prep"),
+            ("abu-dhabi", "deep_cleaning",
+             "Deep cleaning a Khalifa City villa after sandstorm season — a checklist", "post-summer reset"),
+            ("sharjah", "pest_control",
+             "Cockroach control in Al Nahda Sharjah — why DIY sprays don't last past June", "summer-peak survival"),
+            ("dubai", "handyman",
+             "Same-day handyman in Downtown Dubai — what AED 150 actually buys you", "year-round"),
+            ("ajman", "move_in_out_cleaning",
+             "Moving out of an Ajman apartment? The deposit-saving deep clean nobody tells you about", "year-round"),
+            ("ras-al-khaimah", "ac_service",
+             "RAK AC service tips — coastal humidity is killing your compressor faster than you think", "pre-summer prep"),
+            ("dubai", "kitchen_deep_clean",
+             "Kitchen deep clean in JLT — the ramadan grease problem and how pros solve it", "post-summer reset"),
+            ("abu-dhabi", "pest_control",
+             "Bed bugs on Reem Island — why 80% of treatments fail and what works in 2026", "year-round"),
+            ("sharjah", "carpet_cleaning",
+             "Carpet cleaning in Al Khan Sharjah — sand, oil, kid spills and what AED 80 covers", "cool-season deep care"),
+            ("fujairah", "deep_cleaning",
+             "Holiday-home deep cleaning in Fujairah — the airbnb host's 4-hour reset routine", "year-round"),
+        ]
+        now = _d.datetime.utcnow()
+        wrote = 0
+        for i, (em, sv, topic, slant) in enumerate(SEED_TOPICS):
+            days_back = i + 1
+            hour = _r.choice([8, 10, 14, 17, 19])
+            minute = _r.randint(0, 59)
+            published = (now - _d.timedelta(days=days_back)).replace(
+                hour=hour, minute=minute, second=_r.randint(0, 59), microsecond=0)
+            slug = (em + "-" + "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-"))[:90]
+            body = _seed_template_article(em, sv, slant, topic)
+            try:
+                with _db.connect() as c:
+                    c.execute(
+                        "INSERT OR IGNORE INTO autoblog_posts(slug, emirate, topic, body_md, published_at) "
+                        "VALUES(?,?,?,?,?)",
+                        (slug, em, topic, body, published.isoformat() + "Z"))
+                wrote += 1
+            except Exception as e:
+                print(f"[autoblog-seed] template insert failed for {slug}: {e}", flush=True)
+        print(f"[autoblog-seed] stage 1: {wrote} template articles inserted", flush=True)
+        # Daily cron at 06:00 will progressively add fresher Claude-written
+        # articles on top of these templates. No need to enrich on startup.
     except Exception as e:
         print(f"[autoblog-seed] startup check skipped: {e}", flush=True)
 
