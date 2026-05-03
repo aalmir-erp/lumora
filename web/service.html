@@ -200,7 +200,7 @@ window.LUMORA_PIXELS = {
 
     <div class="reveal" style="text-align:center">
       <div class="mascot-wrap">
-        <img src="/avatar.svg" width="240" height="240" alt="Lumi mascot" loading="eager">
+        <img src="/mascot.svg" width="240" height="240" alt="Lumi mascot" loading="eager">
         <div class="svc-icon-emoji" id="svc-emoji">✨</div>
       </div>
       <div style="margin-top:32px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px">
@@ -327,10 +327,10 @@ window.LUMORA_PIXELS = {
   <a class="btn btn-primary" href="#book" onclick="conv('book_sticky');document.getElementById('book-form').scrollIntoView({behavior:'smooth'});return false">Book →</a>
 </div>
 
-<script src="/theme.js"></script>
-<script src="/app.js"></script>
-<script src="/intake.js"></script>
-<script>
+<script src="/theme.js" defer></script>
+<script src="/app.js" defer></script>
+<script src="/intake.js" defer></script>
+<script defer>
 const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
   hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
   tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
@@ -361,17 +361,44 @@ function render() {
   document.querySelector("meta[name='description']").content = SVC.description;
   document.querySelector("link[rel='canonical']").href = location.href;
 
-  // Inject Schema.org Service JSON-LD
+  // Schema.org Service + BreadcrumbList + FAQPage JSON-LD
   const sld = document.createElement("script");
   sld.type = "application/ld+json";
   sld.textContent = JSON.stringify({
     "@context":"https://schema.org","@type":"Service",
-    name: SVC.name, description: SVC.description,
-    provider: {"@type":"LocalBusiness","name":"Lumora","url":"https://sales.mir.ae"},
-    areaServed: "United Arab Emirates",
-    offers: { "@type":"Offer", "priceCurrency":"AED", "price": SVC.starting_price }
+    name: SVC.name, description: SVC.description, serviceType: SVC.category,
+    provider: {"@type":"LocalBusiness","name":"Lumora","url":location.origin,
+               telephone:"+971564020087", priceRange:"AED 35-1500",
+               address:{"@type":"PostalAddress",addressCountry:"AE",addressLocality:"Dubai"},
+               aggregateRating:{"@type":"AggregateRating",ratingValue:"4.9",reviewCount:"2412"}},
+    areaServed:[{"@type":"City",name:"Dubai"},{"@type":"City",name:"Sharjah"},
+                {"@type":"City",name:"Ajman"},{"@type":"City",name:"Abu Dhabi"}],
+    offers: { "@type":"Offer", "priceCurrency":"AED", "price": SVC.starting_price,
+              availability:"https://schema.org/InStock" }
   });
   document.head.appendChild(sld);
+
+  const bc = document.createElement("script");
+  bc.type = "application/ld+json";
+  bc.textContent = JSON.stringify({
+    "@context":"https://schema.org","@type":"BreadcrumbList",
+    itemListElement:[
+      {"@type":"ListItem",position:1,name:"Home",item:location.origin+"/"},
+      {"@type":"ListItem",position:2,name:"Services",item:location.origin+"/services.html"},
+      {"@type":"ListItem",position:3,name:SVC.name,item:location.href}
+    ]});
+  document.head.appendChild(bc);
+
+  if ((SVC.faqs||[]).length) {
+    const fq = document.createElement("script");
+    fq.type = "application/ld+json";
+    fq.textContent = JSON.stringify({
+      "@context":"https://schema.org","@type":"FAQPage",
+      mainEntity: SVC.faqs.map(f => ({"@type":"Question",name:f.q,
+        acceptedAnswer:{"@type":"Answer",text:f.a}}))
+    });
+    document.head.appendChild(fq);
+  }
 
   // Hero
   document.getElementById("cat-pill").innerHTML = "📂 " + SVC.category;
@@ -453,13 +480,17 @@ function toggleAddon(aid, el) {
 async function getQuote() {
   const ftext = LumoraIntake.summary();
   const firstTime = !!document.getElementById("f-first").value;
-  const cmd = `quote for ${sid}` + (ftext ? ` — ${ftext}` : "") +
-    (firstTime ? " (first-time customer)" : "") +
-    (pickedAddons.size ? `, addons: ${[...pickedAddons].join(",")}` : "");
+  if (!ftext) {
+    document.getElementById("quote-box").innerHTML = '<div style="color:var(--muted);font-size:13px">Fill at least one field above to calculate.</div>';
+    return;
+  }
+  const cmd = `Get a price quote for the service "${SVC.name}" (id=${sid}). ${ftext}.` +
+    (firstTime ? " First-time customer." : "") +
+    (pickedAddons.size ? ` Addons: ${[...pickedAddons].join(",")}.` : "");
   document.getElementById("quote-box").innerHTML = "<i style='color:var(--muted)'>Calculating…</i>";
   try {
     const r = await fetch("/api/chat", { method:"POST", headers:{"content-type":"application/json"},
-      body: JSON.stringify({message: "How much for: " + cmd}) }).then(x=>x.json());
+      body: JSON.stringify({message: cmd}) }).then(x=>x.json());
     // Find quote tool call in response
     let quote = null;
     for (const t of (r.tool_calls||[])) if (t.name === "get_quote" && t.result && t.result.ok) quote = t.result;
@@ -472,7 +503,20 @@ async function getQuote() {
           <div style="font-size:11px;color:var(--muted);margin-top:6px">Includes 5% VAT • indicative</div>
         </div>`;
     } else {
-      document.getElementById("quote-box").innerHTML = `<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:12px;font-size:14px">${r.text || "Couldn't compute. Tell Lumi in chat."}</div>`;
+      const parsed = LumoraIntake.parseBotText(r.text || "Couldn't compute. Tell Lumi in chat.");
+      let html = `<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:12px;font-size:14px">${parsed.text}</div>`;
+      if (parsed.choices.length) {
+        html += `<div class="us-actions" style="margin-top:8px;flex-wrap:wrap">` +
+          parsed.choices.map((c,i) => `<button type="button" class="btn btn-ghost" data-c="${i}" style="font-size:13px">${c.label}</button>`).join("") + `</div>`;
+      }
+      const box = document.getElementById("quote-box");
+      box.innerHTML = html;
+      box.querySelectorAll("button[data-c]").forEach(b => {
+        b.onclick = () => {
+          const c = parsed.choices[+b.dataset.c];
+          if (LumoraIntake.applyChoiceToBestField(c.send)) getQuote();
+        };
+      });
     }
   } catch(e) { document.getElementById("quote-box").innerHTML = "Error: " + e.message; }
 }

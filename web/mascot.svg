@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Lumi mascot waving">
+  <defs>
+    <radialGradient id="bg" cx="0.45" cy="0.4" r="0.7">
+      <stop offset="0%" stop-color="#14B8A6"/><stop offset="60%" stop-color="#0D9488"/><stop offset="100%" stop-color="#0F766E"/>
+    </radialGradient>
+    <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FB7185" stop-opacity="0.55"/><stop offset="100%" stop-color="#FB7185" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="face" cx="0.45" cy="0.4" r="0.65">
+      <stop offset="0%" stop-color="#FEF3C7"/><stop offset="100%" stop-color="#FCD34D"/>
+    </radialGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFAFA"/><stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="bubble" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#F8FAFC"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <circle cx="110" cy="110" r="100" fill="url(#bg)"/>
+  <ellipse cx="86" cy="68" rx="56" ry="30" fill="#fff" opacity="0.08"/>
+
+  <!-- twinkling stars -->
+  <g fill="#FCD34D">
+    <circle cx="178" cy="40" r="2.6"><animate attributeName="r" values="2.6;4.4;2.6" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.4;1;0.4" dur="2.2s" repeatCount="indefinite"/></circle>
+    <circle cx="34" cy="58"  r="2.1"><animate attributeName="r" values="2.1;3.6;2.1" dur="2.6s" begin="0.3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;1;0.3" dur="2.6s" begin="0.3s" repeatCount="indefinite"/></circle>
+    <circle cx="186" cy="148" r="2.9"><animate attributeName="r" values="2.9;4.7;2.9" dur="3s" begin="0.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.4;1;0.4" dur="3s" begin="0.6s" repeatCount="indefinite"/></circle>
+    <circle cx="26" cy="158" r="1.9"><animate attributeName="r" values="1.9;3.2;1.9" dur="2.4s" begin="0.9s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;1;0.3" dur="2.4s" begin="0.9s" repeatCount="indefinite"/></circle>
+  </g>
+
+  <!-- gentle bob -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -4; 0 0" dur="2.6s" repeatCount="indefinite"/>
+
+    <!-- speech bubble "Hi!" -->
+    <g transform="translate(160 50)">
+      <animateTransform attributeName="transform" type="translate" values="160 50; 162 46; 160 50" dur="2.2s" repeatCount="indefinite"/>
+      <path d="M-22 -16 Q-22 -28 -10 -28 L18 -28 Q30 -28 30 -16 Q30 -4 18 -4 L4 -4 L0 4 L-2 -4 Q-22 -4 -22 -16 Z"
+            fill="url(#bubble)" stroke="#CBD5E1" stroke-width="1.4"/>
+      <text x="4" y="-12" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="14" fill="#0F766E">Hi!</text>
+    </g>
+
+    <!-- waving right hand -->
+    <g transform="translate(170 132)">
+      <animateTransform attributeName="transform" type="rotate" values="-18 0 0; 18 0 0; -18 0 0" dur="1.4s" repeatCount="indefinite" additive="sum"/>
+      <rect x="-3" y="0" width="6" height="22" rx="3" fill="url(#face)"/>
+      <circle cx="0" cy="26" r="9" fill="url(#face)"/>
+      <circle cx="0" cy="26" r="9" fill="none" stroke="#F59E0B" stroke-width="1.2" opacity="0.5"/>
+    </g>
+
+    <!-- left hand giving thumbs up -->
+    <g transform="translate(46 130)">
+      <animateTransform attributeName="transform" type="rotate" values="0 0 0; -8 0 0; 0 0 0" dur="3s" repeatCount="indefinite" additive="sum"/>
+      <rect x="-3" y="0" width="6" height="20" rx="3" fill="url(#face)"/>
+      <circle cx="0" cy="22" r="8" fill="url(#face)"/>
+      <rect x="-1.5" y="14" width="3" height="6" rx="1.5" fill="url(#face)"/>
+    </g>
+
+    <!-- body / coat -->
+    <path d="M60 198 Q60 142 110 142 Q160 142 160 198 Z" fill="#FFFFFF"/>
+    <path d="M75 198 L77 188 L84 198 L88 188 L94 198 L98 188 L104 198 L108 188 L114 198 L118 188 L124 198 L128 188 L134 198 L138 188 L144 198"
+          stroke="#E2E8F0" stroke-width="1.6" fill="none"/>
+    <!-- name badge -->
+    <rect x="96" y="158" width="28" height="14" rx="4" fill="#0D9488"/>
+    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">LUMI</text>
+
+    <!-- head -->
+    <circle cx="110" cy="100" r="42" fill="url(#face)"/>
+    <ellipse cx="84"  cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+    <ellipse cx="136" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
+
+    <!-- big friendly eyes with periodic blink + look-around -->
+    <g>
+      <ellipse cx="93" cy="100" rx="6" ry="7.5" fill="#0F172A">
+        <animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/>
+        <animate attributeName="cx" values="93;94.5;91.5;93" dur="6s" repeatCount="indefinite"/>
+      </ellipse>
+      <ellipse cx="127" cy="100" rx="6" ry="7.5" fill="#0F172A">
+        <animate attributeName="ry" values="7.5;7.5;0.6;7.5;7.5" dur="4.5s" keyTimes="0;0.45;0.5;0.55;1" repeatCount="indefinite"/>
+        <animate attributeName="cx" values="127;128.5;125.5;127" dur="6s" repeatCount="indefinite"/>
+      </ellipse>
+      <!-- shiny highlights -->
+      <circle cx="95" cy="97" r="2" fill="#FFFFFF"/>
+      <circle cx="129" cy="97" r="2" fill="#FFFFFF"/>
+      <circle cx="91" cy="103" r="1" fill="#FFFFFF" opacity="0.7"/>
+      <circle cx="125" cy="103" r="1" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+
+    <!-- happy mouth -->
+    <path d="M92 122 Q110 138 128 122" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <path d="M104 128 L116 128" stroke="#FB7185" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- service-cap -->
+    <path d="M70 86 Q70 60 110 60 Q150 60 150 86 Q150 76 142 70 Q126 56 110 56 Q94 56 78 70 Q70 76 70 86 Z" fill="url(#cap)"/>
+    <path d="M70 86 Q110 76 150 86" stroke="#CBD5E1" stroke-width="1.4" fill="none" opacity="0.7"/>
+    <!-- cap logo "L" -->
+    <text x="110" y="78" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="13" fill="#0D9488">✦</text>
+
+    <!-- twinkle on cap -->
+    <g transform="translate(82 70)">
+      <path d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z" fill="#F59E0B">
+        <animateTransform attributeName="transform" type="rotate" values="0;360" dur="6s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+</svg>

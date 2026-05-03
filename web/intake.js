@@ -153,6 +153,46 @@
 
   function service() { return currentSvc; }
 
+  // Strip [[choices: ...]] marker from any bot text and parse into clickable choices.
+  function parseBotText(text) {
+    const choices = [];
+    const cleaned = (text || "").replace(/\[\[\s*choices?\s*:\s*([^\]]+)\]\]/gi, (_, body) => {
+      body.split(/\s*;\s*/).forEach(pair => {
+        const m = pair.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/);
+        if (m) choices.push({ label: m[1], send: m[2] });
+        else if (pair.trim()) choices.push({ label: pair.trim(), send: pair.trim() });
+      });
+      return "";
+    }).replace(/\n{3,}/g, "\n\n").trim();
+    return { text: cleaned, choices };
+  }
+
+  // Apply a chosen value to the best matching intake field (auto-fill from chips).
+  function applyChoiceToBestField(send) {
+    if (!rendered.length) return false;
+    for (const f of rendered) {
+      if (f.input.tagName === "SELECT") {
+        for (const opt of f.input.options) {
+          if (opt.value && opt.value.toLowerCase() === send.toLowerCase()) {
+            f.input.value = opt.value;
+            f.input.dispatchEvent(new Event("change", { bubbles: true }));
+            return true;
+          }
+        }
+      }
+    }
+    if (/^\d+(\.\d+)?$/.test(send)) {
+      for (const f of rendered) {
+        if (f.input.type === "number" && !f.input.value) {
+          f.input.value = send;
+          f.input.dispatchEvent(new Event("change", { bubbles: true }));
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Attach a small style block once
   if (!document.getElementById("intake-style")) {
     const style = document.createElement("style");
@@ -176,5 +216,5 @@
     document.head.appendChild(style);
   }
 
-  window.LumoraIntake = { render, values, summary, service };
+  window.LumoraIntake = { render, values, summary, service, parseBotText, applyChoiceToBestField };
 })();

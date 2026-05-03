@@ -6,7 +6,10 @@ import os
 import secrets
 from fastapi import Header, HTTPException
 
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN") or "lumora-admin-" + secrets.token_urlsafe(8)
+ADMIN_TOKEN_AUTOGEN = not os.getenv("ADMIN_TOKEN")
+# Default to a stable test token if env var unset, so the owner can sign in to
+# /admin.html without env-var setup. Override by setting ADMIN_TOKEN in Railway.
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN") or "lumora-admin-test"
 
 
 def require_admin(authorization: str = Header(default="")) -> str:

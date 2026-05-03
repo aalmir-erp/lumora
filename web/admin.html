@@ -7,9 +7,21 @@
   <div class="card">
     <img src="/logo.svg" height="40" style="margin:0 auto 16px"><br>
     <h2>Admin</h2>
-    <p style="color:var(--muted)">Enter your admin token. Set <code>ADMIN_TOKEN</code> as a Railway env var. For local dev, hit <code>/__admin_token__</code>.</p>
-    <input id="tok" placeholder="bearer token" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px"><br><br>
+    <p style="color:var(--muted)">Enter your admin token. Set <code>ADMIN_TOKEN</code> in Railway env to override the default.</p>
+    <input id="tok" placeholder="bearer token" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px"><br>
+    <div id="default-tok-hint" style="margin:10px 0;font-size:12px;color:var(--muted);display:none">
+      Default test token: <code id="default-tok-val" style="background:var(--bg);padding:2px 6px;border-radius:4px;user-select:all">lumora-admin-test</code>
+      <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;margin-inline-start:6px" onclick="document.getElementById('tok').value=document.getElementById('default-tok-val').textContent.trim()">Use this</button>
+    </div>
     <button id="login-btn" class="btn btn-primary btn-block">Sign in</button>
+    <script>
+      fetch("/__admin_token__").then(r => r.ok ? r.json() : null).then(j => {
+        if (j && j.admin_token) {
+          document.getElementById("default-tok-val").textContent = j.admin_token;
+          document.getElementById("default-tok-hint").style.display = "";
+        }
+      }).catch(()=>{});
+    </script>
   </div>
 </div>
 

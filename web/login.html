@@ -27,6 +27,18 @@
       <button id="tab-a" class="btn btn-ghost"   style="flex:1;font-size:13px" onclick="setTab('a')">🛠 Admin</button>
     </div>
 
+    <!-- ADMIN FLOW -->
+    <div id="adm" style="display:none">
+      <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px">
+        <b>🛠 Admin access</b><br>
+        Sign in to <a href="/admin.html">/admin.html</a> with the bearer token.<br><br>
+        <b>Default test token (until you set <code>ADMIN_TOKEN</code> in Railway):</b><br>
+        <code style="background:#fff;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;user-select:all">lumora-admin-test</code>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;margin-inline-start:6px" onclick="navigator.clipboard.writeText('lumora-admin-test');this.textContent='✓ copied'">Copy</button>
+      </div>
+      <a class="btn btn-primary btn-block" href="/admin.html" style="text-align:center">Open admin panel →</a>
+    </div>
+
     <!-- CUSTOMER FLOW -->
     <div id="cust">
       <label>Phone (with country code)</label>
@@ -52,6 +64,11 @@
         <label>Email</label><input id="vemail" type="email">
         <label>Password</label><input id="vpw" type="password">
         <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="vendorLogin()">Sign in</button>
+        <div style="margin-top:14px;padding:10px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;font-size:12px">
+          <b>🧪 Test partner login</b> — any seeded vendor works. Try:<br>
+          <code style="user-select:all">ops@justmop.lumora</code> / <code>lumora-vendor-default</code>
+          <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;margin-inline-start:6px" onclick="document.getElementById('vemail').value='ops@justmop.lumora';document.getElementById('vpw').value='lumora-vendor-default';">Fill</button>
+        </div>
       </div>
 
       <div id="v-register" style="display:none">
@@ -103,6 +120,12 @@ function setTab(t) {
   document.getElementById("adm").style.display  = t==="a" ? "" : "none";
   if (t==="v" && !pickedServices.size) loadServices();
 }
+
+(function(){
+  const q = new URLSearchParams(location.search).get("as");
+  if (q === "partner" || q === "vendor") setTab("v");
+  else if (q === "admin") setTab("a");
+})();
 
 // Honor ?as=partner / ?as=admin query so cross-page links land on the right tab
 (function(){

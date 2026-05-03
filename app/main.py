@@ -329,18 +329,26 @@ def sitemap_xml():
     base = f"https://{settings.BRAND_DOMAIN}"
     today = _dt.date.today().isoformat()
     services = kb.services()["services"]
-    urls = ["/", "/services.html", "/book.html", "/account.html", "/login.html"]
+    urls = [("/", "1.0", "daily"),
+            ("/services.html", "0.9", "weekly"),
+            ("/book.html", "0.9", "weekly"),
+            ("/login.html", "0.7", "monthly")]
     for s in services:
-        urls.append(f"/services.html?service={s['id']}")
-    for area in ("dubai", "sharjah", "ajman", "abu-dhabi"):
-        urls.append(f"/services.html?area={area}")
+        urls.append((f"/service.html?id={s['id']}", "0.85", "weekly"))
+    for area in ("dubai", "sharjah", "ajman", "abu-dhabi", "ras-al-khaimah"):
+        urls.append((f"/services.html?area={area}", "0.7", "weekly"))
+    langs = ("en", "ar", "hi", "tl")
     body = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    body += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    for u in urls:
-        priority = "1.0" if u == "/" else "0.8"
-        body += (f"  <url><loc>{base}{u}</loc>"
-                 f"<lastmod>{today}</lastmod><changefreq>weekly</changefreq>"
-                 f"<priority>{priority}</priority></url>\n")
+    body += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+    body += 'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+    for u, prio, freq in urls:
+        sep = "&amp;" if "?" in u else "?"
+        body += f"  <url><loc>{base}{u}</loc>"
+        body += f"<lastmod>{today}</lastmod><changefreq>{freq}</changefreq><priority>{prio}</priority>"
+        for lg in langs:
+            body += (f'<xhtml:link rel="alternate" hreflang="{lg}" '
+                     f'href="{base}{u}{sep}lang={lg}"/>')
+        body += "</url>\n"
     body += "</urlset>\n"
     from fastapi.responses import Response
     return Response(content=body, media_type="application/xml")
@@ -413,13 +421,12 @@ Open endpoints for integration:
 
 @app.get("/__admin_token__")
 def show_admin_token_in_dev(request: Request):
-    """Only available when ADMIN_TOKEN env var is unset (auto-generated random)."""
-    import os
-    if os.getenv("ADMIN_TOKEN"):
+    """Returns the admin token if env var is unset (uses default 'lumora-admin-test')."""
+    from .auth import ADMIN_TOKEN_AUTOGEN
+    if not ADMIN_TOKEN_AUTOGEN:
         raise HTTPException(403, "ADMIN_TOKEN is set in env; use that instead.")
-    if request.client.host not in ("127.0.0.1", "localhost", "::1"):
-        raise HTTPException(403, "local-only")
-    return {"admin_token": ADMIN_TOKEN}
+    return {"admin_token": ADMIN_TOKEN,
+            "note": "Default test token. Set ADMIN_TOKEN in Railway for production."}
 
 
 @app.on_event("startup")

@@ -95,12 +95,27 @@ document.getElementById("quote-btn").addEventListener("click", async () => {
   out.innerHTML = "Fetching…";
   try {
     const sid = document.getElementById("service").value;
-    const v = LumoraIntake.values();
+    const svc = LumoraIntake.service();
     const ftext = LumoraIntake.summary();
-    const msg = `Quote for ${sid}` + (ftext ? ` — ${ftext}` : "") +
-      (document.getElementById("first_time").value ? " (first-time customer)" : "");
+    if (!ftext) { out.innerHTML = `<div style="color:var(--muted)">Fill at least one field above to get a precise quote.</div>`; return; }
+    const msg = `Get a price quote for the service "${svc?.name || sid}" (id=${sid}). ${ftext}.` +
+                (document.getElementById("first_time").value ? " First-time customer." : "");
     const r = await api("/api/chat", { method:"POST", body:{ message: msg }});
-    out.innerHTML = `<div style="background:var(--bg);border-radius:10px;padding:14px;white-space:pre-wrap">${escapeHtml(r.text)}</div>`;
+    const parsed = LumoraIntake.parseBotText(r.text);
+    let html = `<div style="background:var(--bg);border-radius:10px;padding:14px;white-space:pre-wrap">${escapeHtml(parsed.text)}</div>`;
+    if (parsed.choices.length) {
+      html += `<div class="us-actions" style="margin-top:8px;flex-wrap:wrap">` +
+        parsed.choices.map((c,i) => `<button type="button" class="btn btn-ghost" data-c="${i}" style="font-size:13px">${escapeHtml(c.label)}</button>`).join("") + `</div>`;
+    }
+    out.innerHTML = html;
+    out.querySelectorAll("button[data-c]").forEach(btn => {
+      btn.onclick = () => {
+        const c = parsed.choices[+btn.dataset.c];
+        if (LumoraIntake.applyChoiceToBestField(c.send)) {
+          document.getElementById("quote-btn").click();
+        }
+      };
+    });
   } catch (e) { out.innerHTML = "Error: " + e.message; }
 });
 
@@ -138,8 +153,8 @@ document.getElementById("book-btn").addEventListener("click", async () => {
 
 function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 </script>
-<script src="/widget.js"></script>
-<script src="/theme.js"></script>
+<script src="/widget.js" defer></script>
+<script src="/theme.js" defer></script>
 
 <nav class="mobile-nav" aria-label="Primary mobile">
   <div class="mobile-nav-inner">
