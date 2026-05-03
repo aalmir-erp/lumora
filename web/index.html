@@ -461,11 +461,33 @@
       <h2 class="reveal" style="margin:0 0 8px">What do you need today?</h2>
       <p class="sub reveal" style="margin:0">Tap any service below — get an instant price and book in seconds.</p>
     </div>
+    <!-- Static SSR-style fallback so the tiles area has content on first paint
+         (no LCP wait, no CLS). JS upgrades them with live data on idle. -->
     <div class="svc-tiles" id="svc-tiles">
-      <div class="skel-card"><div class="skel" style="width:60px;height:60px;border-radius:50%;margin:auto"></div><div class="skel skel-line" style="width:60%;margin:10px auto"></div></div>
-      <div class="skel-card"><div class="skel" style="width:60px;height:60px;border-radius:50%;margin:auto"></div><div class="skel skel-line" style="width:60%;margin:10px auto"></div></div>
-      <div class="skel-card"><div class="skel" style="width:60px;height:60px;border-radius:50%;margin:auto"></div><div class="skel skel-line" style="width:60%;margin:10px auto"></div></div>
-      <div class="skel-card"><div class="skel" style="width:60px;height:60px;border-radius:50%;margin:auto"></div><div class="skel skel-line" style="width:60%;margin:10px auto"></div></div>
+      <a class="svc-tile" href="/service.html?id=deep_cleaning">
+        <div class="e" aria-hidden="true">✨</div><h3>Deep Cleaning</h3>
+        <small>Residential</small><div class="price">from 350 AED</div></a>
+      <a class="svc-tile" href="/service.html?id=general_cleaning">
+        <div class="e" aria-hidden="true">🧹</div><h3>General Cleaning</h3>
+        <small>Residential</small><div class="price">from 75 AED</div></a>
+      <a class="svc-tile" href="/service.html?id=ac_cleaning">
+        <div class="e" aria-hidden="true">❄️</div><h3>AC Cleaning</h3>
+        <small>Maintenance</small><div class="price">from 75 AED</div></a>
+      <a class="svc-tile" href="/service.html?id=maid_service">
+        <div class="e" aria-hidden="true">👤</div><h3>Maid Service</h3>
+        <small>Residential</small><div class="price">from 25 AED</div></a>
+      <a class="svc-tile" href="/service.html?id=pest_control">
+        <div class="e" aria-hidden="true">🪲</div><h3>Pest Control</h3>
+        <small>Maintenance</small><div class="price">from 200 AED</div></a>
+      <a class="svc-tile" href="/service.html?id=handyman">
+        <div class="e" aria-hidden="true">🔧</div><h3>Handyman</h3>
+        <small>Maintenance</small><div class="price">from 100 AED</div></a>
+      <a class="svc-tile" href="/service.html?id=sofa_carpet">
+        <div class="e" aria-hidden="true">🛋️</div><h3>Sofa &amp; Carpet</h3>
+        <small>Residential</small><div class="price">from 120 AED</div></a>
+      <a class="svc-tile" href="/service.html?id=window_cleaning">
+        <div class="e" aria-hidden="true">🪟</div><h3>Window Cleaning</h3>
+        <small>Residential</small><div class="price">from 80 AED</div></a>
     </div>
     <div style="text-align:center;margin-top:24px">
       <a class="btn btn-ghost" href="/services.html">See all 23 services →</a>
