@@ -412,7 +412,7 @@ def main():
     print(f"=== Running {len(funcs)} scenarios against {BASE} ===\n")
     for f in funcs:
         f()
-        time.sleep(0.5)
+        time.sleep(2.0)
 
     # Summary
     passed = sum(1 for r in results if r["passed"])

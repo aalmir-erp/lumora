@@ -14,12 +14,12 @@ class Settings:
     BRAND_TAGLINE = os.getenv("BRAND_TAGLINE", "UAE's smart home services platform")
     BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "sales.mir.ae")
 
-    APP_VERSION = "0.7.0"
+    APP_VERSION = "0.7.1"
 
     # Anthropic
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     MODEL = os.getenv("CLAUDE_MODEL", "claude-opus-4-7")
-    MAX_TOKENS = int(os.getenv("CLAUDE_MAX_TOKENS", "4096"))
+    MAX_TOKENS = int(os.getenv("CLAUDE_MAX_TOKENS", "1500"))
 
     DEMO_MODE = os.getenv("DEMO_MODE", "auto").lower()  # auto | on | off
 

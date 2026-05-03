@@ -86,7 +86,11 @@ def chat(messages: list[dict], *, session_id: str | None = None,
     if not settings.use_llm:
         raise RuntimeError("LLM disabled (set ANTHROPIC_API_KEY or DEMO_MODE=off).")
 
-    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+    client = anthropic.Anthropic(
+        api_key=settings.ANTHROPIC_API_KEY,
+        timeout=14.0,           # cap so Railway proxy never 502s before our fallback
+        max_retries=1,          # one quick retry, then fallback
+    )
     convo = list(messages)
     tool_calls: list[dict] = []
     usage_total = {"input_tokens": 0, "output_tokens": 0,
