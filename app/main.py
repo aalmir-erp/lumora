@@ -463,7 +463,7 @@ Open endpoints for integration:
 - GET /api/services — services catalogue
 - GET /api/pricing — pricing rules
 - GET /api/health — service status
-- POST /api/chat — Lumi the AI concierge (Claude-powered)
+- POST /api/chat — Servia the AI concierge (Claude-powered)
 """
 
 

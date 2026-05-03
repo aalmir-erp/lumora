@@ -158,11 +158,11 @@
 
     <div id="t-prompts" class="tab" style="display:none">
       <h2>Bot prompts</h2>
-      <p class="sub" style="color:var(--muted)">Edit how Lumi (customer bot) and Sara (vendor onboarding bot) behave. Changes apply on the next chat turn — no deploy needed. Use the variables <code>{brand}</code>, <code>{domain}</code>, <code>{tagline}</code>, <code>{language}</code>.</p>
+      <p class="sub" style="color:var(--muted)">Edit how Servia (customer bot) and Sara (vendor onboarding bot) behave. Changes apply on the next chat turn — no deploy needed. Use the variables <code>{brand}</code>, <code>{domain}</code>, <code>{tagline}</code>, <code>{language}</code>.</p>
       <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:10px 14px;border-radius:8px;margin:14px 0;font-size:13px">⚠ Leave empty to use the built-in default. Bad prompts can produce strange replies — Save makes the change live instantly.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
-          <h3 style="margin:0 0 8px;font-size:15px">👤 Customer concierge — "Lumi"</h3>
+          <h3 style="margin:0 0 8px;font-size:15px">👤 Customer concierge — "Servia"</h3>
           <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Used on website chat, /api/chat, and inbound WhatsApp from non-vendor numbers.</p>
           <textarea id="prompt-customer" rows="22" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5"></textarea>
           <button class="btn btn-primary" style="margin-top:10px" onclick="savePrompt('customer')">Save customer prompt</button>

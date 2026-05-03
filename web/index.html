@@ -116,6 +116,32 @@
     align-items:center; gap:10px; min-height:48px; }
   .wa-fab { min-width:56px !important; min-height:56px !important; }
 
+  /* Animated rotating service keyword in hero H1 — SEO-friendly: all keywords stay in DOM */
+  .rotator { display:inline-block; height:1.05em; overflow:hidden; vertical-align:bottom;
+    position:relative; min-width:280px; }
+  .rotator > span { display:block; opacity:0; line-height:1.05;
+    background:linear-gradient(90deg,#FCD34D 30%,#fff 50%,#FCD34D 70%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    background-size:200% auto; animation: rotKey 28.8s linear infinite; }
+  .rotator > span:nth-child(1)  { animation-delay:0s }
+  .rotator > span:nth-child(2)  { animation-delay:-26.4s }
+  .rotator > span:nth-child(3)  { animation-delay:-24s }
+  .rotator > span:nth-child(4)  { animation-delay:-21.6s }
+  .rotator > span:nth-child(5)  { animation-delay:-19.2s }
+  .rotator > span:nth-child(6)  { animation-delay:-16.8s }
+  .rotator > span:nth-child(7)  { animation-delay:-14.4s }
+  .rotator > span:nth-child(8)  { animation-delay:-12s }
+  .rotator > span:nth-child(9)  { animation-delay:-9.6s }
+  .rotator > span:nth-child(10) { animation-delay:-7.2s }
+  .rotator > span:nth-child(11) { animation-delay:-4.8s }
+  .rotator > span:nth-child(12) { animation-delay:-2.4s }
+  @keyframes rotKey {
+    0%, 7.5%   { opacity:0; transform: translateY(20px) }
+    8%, 16.66% { opacity:1; transform: translateY(-100%) }
+    17%, 100%  { opacity:0; transform: translateY(-200%) }
+  }
+  @media (max-width:720px) { .rotator { min-width:220px; } }
+
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
   }
@@ -431,11 +457,12 @@
   </div>
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️</button>
-    <div class="lang-flags" role="group" aria-label="Language">
-      <button data-lang="en" title="English" onclick="window.lumoraSetLang&&lumoraSetLang('en')">🇬🇧</button>
-      <button data-lang="ar" title="العربية" onclick="window.lumoraSetLang&&lumoraSetLang('ar')">🇦🇪</button>
-      <button data-lang="hi" title="हिन्दी" onclick="window.lumoraSetLang&&lumoraSetLang('hi')">🇮🇳</button>
-      <button data-lang="tl" title="Filipino" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">🇵🇭</button>
+    <div class="lang-list" role="group" aria-label="Language">
+      <button data-lang="en" onclick="window.lumoraSetLang&&lumoraSetLang('en')">English</button>
+      <button data-lang="ar" onclick="window.lumoraSetLang&&lumoraSetLang('ar')" lang="ar">العربية</button>
+      <button data-lang="ur" onclick="window.lumoraSetLang&&lumoraSetLang('ur')" lang="ur">اردو</button>
+      <button data-lang="hi" onclick="window.lumoraSetLang&&lumoraSetLang('hi')" lang="hi">हिन्दी</button>
+      <button data-lang="tl" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">Filipino</button>
     </div>
     <select class="lang-pick" hidden></select>
     <a class="btn btn-ghost" href="/login.html" style="font-weight:600">Sign in</a>
@@ -454,8 +481,25 @@
   <div class="hero-grid">
     <div class="reveal in" style="animation:slideUp .8s ease both">
       <div class="hero-pill" data-cms-key="home.hero.pill">🇦🇪 4.9★ from 2,400+ UAE families</div>
-      <h1 class="hero-h1" data-cms-key="home.hero.h1">Trusted help <b>at home</b><br>in 60 seconds.</h1>
-      <p class="hero-sub">Cleaning, AC, maid, handyman, painting & more — across Dubai, Sharjah, Ajman & Abu Dhabi. Verified, insured, fixed price. Advance payment confirms your slot — instant Apple Pay / card / WhatsApp link.</p>
+      <h1 class="hero-h1" data-cms-key="home.hero.h1">
+        UAE's smart app for<br>
+        <span class="rotator">
+          <span>home cleaning</span>
+          <span>AC service</span>
+          <span>maid &amp; nanny</span>
+          <span>handyman repair</span>
+          <span>pest control</span>
+          <span>swimming pool</span>
+          <span>mobile &amp; laptop repair</span>
+          <span>chauffeur driver</span>
+          <span>car wash at home</span>
+          <span>painting &amp; gardening</span>
+          <span>office cleaning</span>
+          <span>smart-home install</span>
+        </span><br>
+        <span style="font-size:0.62em;font-weight:600;color:#FCD34D">in 60 seconds.</span>
+      </h1>
+      <p class="hero-sub">Servia handles it all — booked in your language, paid securely in advance via Apple Pay / Google Pay / card or WhatsApp link, dispatched same-day across Dubai, Sharjah, Ajman, Abu Dhabi, RAK, UAQ &amp; Fujairah.</p>
       <div class="hero-cta-row">
         <a class="btn-bigwa" id="hero-wa" href="https://wa.me/971564020087?text=Hi+Servia%2C+I+need+help+with+a+service" target="_blank">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3.5A11.95 11.95 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.8 1.4 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3z"/></svg>
@@ -473,19 +517,20 @@
     <div style="text-align:center" class="reveal in">
       <div class="mascot-frame" id="mascot-cycler">
         <!-- LCP image is the first one — others stack on top with opacity 0 and cross-fade -->
-        <img id="mascot-0" src="/mascot.svg" width="280" height="280" alt="Lumi waving — Servia UAE home services"
+        <img id="mascot-0" src="/mascot.svg" width="280" height="280" alt="Servia waving — Servia UAE home services"
              loading="eager" decoding="async" fetchpriority="high"
              style="position:absolute;inset:0;width:100%;height:100%;opacity:1;transition:opacity .8s ease">
-        <img class="mascot-alt" data-src="/mascots/cleaning.svg" width="280" height="280" alt="Lumi cleaning"
+        <img class="mascot-alt" data-src="/mascots/cleaning.svg" width="280" height="280" alt="Servia cleaning"
              loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
-        <img class="mascot-alt" data-src="/mascots/ac.svg" width="280" height="280" alt="Lumi AC service"
+        <img class="mascot-alt" data-src="/mascots/ac.svg" width="280" height="280" alt="Servia AC service"
              loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
-        <img class="mascot-alt" data-src="/mascots/handyman.svg" width="280" height="280" alt="Lumi handyman"
+        <img class="mascot-alt" data-src="/mascots/handyman.svg" width="280" height="280" alt="Servia handyman"
              loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
-        <img class="mascot-alt" data-src="/mascots/pool.svg" width="280" height="280" alt="Lumi pool service"
+        <img class="mascot-alt" data-src="/mascots/pool.svg" width="280" height="280" alt="Servia pool service"
              loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
-        <img class="mascot-alt" data-src="/mascots/garden.svg" width="280" height="280" alt="Lumi gardening"
+        <img class="mascot-alt" data-src="/mascots/garden.svg" width="280" height="280" alt="Servia gardening"
              loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .8s ease">
+        <div id="mascot-title" style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#0F172A;padding:7px 18px;border-radius:999px;font-weight:800;font-size:13px;white-space:nowrap;box-shadow:0 8px 18px rgba(15,23,42,.22);letter-spacing:0.4px">Servia</div>
       </div>
     </div>
   </div>
@@ -564,7 +609,7 @@
     </div>
     <div class="steps-row">
       <div class="step reveal"><div class="step-num">1</div><div class="ico">💬</div><h3>Tell us what you need</h3>
-        <p>Chat with Lumi or pick from the list. Type or speak in your language.</p></div>
+        <p>Chat with Servia or pick from the list. Type or speak in your language.</p></div>
       <div class="step reveal"><div class="step-num">2</div><div class="ico">💰</div><h3>See the price upfront</h3>
         <p>Instant quote with full breakdown. No surprises, no hidden fees.</p></div>
       <div class="step reveal"><div class="step-num">3</div><div class="ico">🚪</div><h3>Welcome our team</h3>
@@ -792,16 +837,19 @@ const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefca
 (function cycleMascot(){
   const all = [document.getElementById("mascot-0"), ...document.querySelectorAll(".mascot-alt")];
   if (all.length < 2) return;
+  // Creative role names per variant (synced with order in DOM)
+  const TITLES = ["Servia waving","Servia the Cleaner","Servia the AC Pro",
+                  "Servia the Handyman","Servia the Pool Pro","Servia the Gardener"];
+  const titleEl = document.getElementById("mascot-title");
   let i = 0;
   function step(){
     const next = (i + 1) % all.length;
-    // Promote data-src → src for the next image so it loads only when needed.
     const el = all[next];
     if (el.dataset.src && !el.src) el.src = el.dataset.src;
     all.forEach((m, k) => m.style.opacity = (k === next ? "1" : "0"));
+    if (titleEl) titleEl.textContent = TITLES[next] || "Servia";
     i = next;
   }
-  // Start cycling 5s after LCP, every 4s. Pause when tab hidden.
   let t = null;
   const start = () => { stop(); t = setInterval(step, 4000); };
   const stop  = () => { if (t) { clearInterval(t); t = null; } };

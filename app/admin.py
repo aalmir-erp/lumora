@@ -903,6 +903,6 @@ def send_followup(bid: str):
     msg = (
         f"Hi {b['customer_name']}, hope everything's still great after your Servia "
         f"{b['service_id'].replace('_',' ')} last week. Want to book the same crew "
-        f"again? Reply with the day + time and we'll lock it in. — Lumi"
+        f"again? Reply with the day + time and we'll lock it in. — Servia"
     )
     return _t.send_whatsapp(b["phone"], msg)

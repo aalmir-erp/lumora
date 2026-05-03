@@ -158,11 +158,12 @@ window.LUMORA_PIXELS = {
   </div>
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
-    <div class="lang-flags" role="group" aria-label="Language">
-      <button data-lang="en" title="English" onclick="window.lumoraSetLang&&lumoraSetLang('en')">🇬🇧</button>
-      <button data-lang="ar" title="العربية" onclick="window.lumoraSetLang&&lumoraSetLang('ar')">🇦🇪</button>
-      <button data-lang="hi" title="हिन्दी" onclick="window.lumoraSetLang&&lumoraSetLang('hi')">🇮🇳</button>
-      <button data-lang="tl" title="Filipino" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">🇵🇭</button>
+    <div class="lang-list" role="group" aria-label="Language">
+      <button data-lang="en" onclick="window.lumoraSetLang&&lumoraSetLang('en')">English</button>
+      <button data-lang="ar" onclick="window.lumoraSetLang&&lumoraSetLang('ar')" lang="ar">العربية</button>
+      <button data-lang="ur" onclick="window.lumoraSetLang&&lumoraSetLang('ur')" lang="ur">اردو</button>
+      <button data-lang="hi" onclick="window.lumoraSetLang&&lumoraSetLang('hi')" lang="hi">हिन्दी</button>
+      <button data-lang="tl" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">Filipino</button>
     </div>
     <select class="lang-pick" hidden  aria-label="Language"></select>
     <a class="btn btn-primary" href="#book" onclick="document.getElementById('book-form').scrollIntoView({behavior:'smooth'});return false">Book now</a>
@@ -200,13 +201,14 @@ window.LUMORA_PIXELS = {
 
     <div class="reveal" style="text-align:center">
       <div class="mascot-wrap">
-        <img id="mascot-img" src="/mascot.svg" width="240" height="240" alt="Lumi mascot" loading="eager" decoding="async" fetchpriority="high">
+        <img id="mascot-img" src="/mascot.svg" width="240" height="240" alt="Servia mascot" loading="eager" decoding="async" fetchpriority="high">
         <div class="svc-icon-emoji" id="svc-emoji">✨</div>
+        <div id="mascot-title" style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff;padding:6px 16px;border-radius:999px;font-weight:700;font-size:13px;white-space:nowrap;box-shadow:0 6px 16px rgba(15,23,42,.18);letter-spacing:0.3px">Servia</div>
       </div>
       <div style="margin-top:32px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <span style="background:var(--primary);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px">L</span>
-          <b>Hi, I'm Lumi 👋</b>
+          <b>Hi, I'm Servia 👋</b>
         </div>
         <div style="color:var(--muted);font-size:14px">Tell me your size + location and I'll quote in 5 seconds.</div>
         <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="conv('chat_click');document.querySelector('.us-launcher').click()">💬 Chat with me</button>
@@ -422,7 +424,15 @@ function render() {
   };
   const variant = MASCOT_BY_SVC[SVC.id] || "cleaning";
   document.getElementById("mascot-img").src = "/mascots/" + variant + ".svg";
-  document.getElementById("mascot-img").alt = "Lumi performing " + SVC.name;
+  const MASCOT_TITLES = {
+    cleaning:"Servia the Cleaner", ac:"Servia the AC Pro",
+    handyman:"Servia the Handyman", pool:"Servia the Pool Pro",
+    car:"Servia the Detailer", garden:"Servia the Gardener",
+    maid:"Servia the Maid", pest:"Servia the Pest Hunter"
+  };
+  const titleEl = document.getElementById("mascot-title");
+  if (titleEl) titleEl.textContent = MASCOT_TITLES[variant] || ("Servia · " + SVC.name);
+  document.getElementById("mascot-img").alt = (MASCOT_TITLES[variant] || "Servia") + " — " + SVC.name;
 
   // Badges
   const badges = document.getElementById("badges");
@@ -479,7 +489,7 @@ function render() {
     <details style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:8px">
       <summary style="font-weight:600;cursor:pointer">${f.q}</summary>
       <p style="margin:10px 0 0;color:var(--muted);line-height:1.6">${f.a}</p>
-    </details>`).join("") || `<p style="color:var(--muted)">No FAQs yet — ask Lumi anything in chat.</p>`;
+    </details>`).join("") || `<p style="color:var(--muted)">No FAQs yet — ask Servia anything in chat.</p>`;
 
   // CTAs
   const waMsg = encodeURIComponent(`Hi Servia! I want to book ${SVC.name}. Can you help?`);
@@ -521,7 +531,7 @@ async function getQuote() {
           <div style="font-size:11px;color:var(--muted);margin-top:6px">Includes 5% VAT • indicative</div>
         </div>`;
     } else {
-      const parsed = LumoraIntake.parseBotText(r.text || "Couldn't compute. Tell Lumi in chat.");
+      const parsed = LumoraIntake.parseBotText(r.text || "Couldn't compute. Tell Servia in chat.");
       let html = `<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:12px;font-size:14px">${parsed.text}</div>`;
       if (parsed.choices.length) {
         html += `<div class="us-actions" style="margin-top:8px;flex-wrap:wrap">` +

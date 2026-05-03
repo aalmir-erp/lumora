@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Lumi mascot waving">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Servia mascot waving">
   <defs>
     <radialGradient id="bg" cx="0.45" cy="0.4" r="0.7">
       <stop offset="0%" stop-color="#14B8A6"/><stop offset="60%" stop-color="#0D9488"/><stop offset="100%" stop-color="#0F766E"/>
@@ -41,20 +41,25 @@
       <animateTransform attributeName="transform" type="translate" values="160 50; 162 46; 160 50" dur="2.2s" repeatCount="indefinite"/>
       <path d="M-22 -16 Q-22 -28 -10 -28 L18 -28 Q30 -28 30 -16 Q30 -4 18 -4 L4 -4 L0 4 L-2 -4 Q-22 -4 -22 -16 Z"
             fill="url(#bubble)" stroke="#CBD5E1" stroke-width="1.4"/>
+      <!-- 5-language cycle, 15s total (3s per language) -->
       <text x="4" y="-12" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="13" fill="#0F766E">
-        <animate attributeName="opacity" values="1;1;0;0;1;1;0;0;1;1;0;0;1" keyTimes="0;0.22;0.25;0.27;0.3;0.5;0.52;0.55;0.57;0.78;0.8;0.83;1" dur="12s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;1;0;0;0;0;0;0;0;0;1" keyTimes="0;0.18;0.20;0.38;0.40;0.58;0.60;0.78;0.80;0.98;1" dur="15s" repeatCount="indefinite"/>
         Hi!
       </text>
       <text x="4" y="-12" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="11" fill="#0F766E">
-        <animate attributeName="opacity" values="0;0;0;1;1;0;0;0;0;0;0;0;0" keyTimes="0;0.22;0.25;0.27;0.3;0.5;0.52;0.55;0.57;0.78;0.8;0.83;1" dur="12s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0;1;1;0;0;0;0;0;0;0" keyTimes="0;0.18;0.20;0.38;0.40;0.58;0.60;0.78;0.80;0.98;1" dur="15s" repeatCount="indefinite"/>
         مرحبا
       </text>
       <text x="4" y="-12" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="11" fill="#0F766E">
-        <animate attributeName="opacity" values="0;0;0;0;0;0;0;1;1;0;0;0;0" keyTimes="0;0.22;0.25;0.27;0.3;0.5;0.52;0.55;0.57;0.78;0.8;0.83;1" dur="12s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0;0;0;1;1;0;0;0;0;0" keyTimes="0;0.18;0.20;0.38;0.40;0.58;0.60;0.78;0.80;0.98;1" dur="15s" repeatCount="indefinite"/>
+        السلام
+      </text>
+      <text x="4" y="-12" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="11" fill="#0F766E">
+        <animate attributeName="opacity" values="0;0;0;0;0;0;1;1;0;0;0" keyTimes="0;0.18;0.20;0.38;0.40;0.58;0.60;0.78;0.80;0.98;1" dur="15s" repeatCount="indefinite"/>
         नमस्ते
       </text>
       <text x="4" y="-12" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="10" fill="#0F766E">
-        <animate attributeName="opacity" values="0;0;0;0;0;0;0;0;0;0;0;1;0" keyTimes="0;0.22;0.25;0.27;0.3;0.5;0.52;0.55;0.57;0.78;0.8;0.83;1" dur="12s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0;0;0;0;0;0;0;1;1;0" keyTimes="0;0.18;0.20;0.38;0.40;0.58;0.60;0.78;0.80;0.98;1" dur="15s" repeatCount="indefinite"/>
         Kumusta
       </text>
     </g>
@@ -81,7 +86,7 @@
           stroke="#E2E8F0" stroke-width="1.6" fill="none"/>
     <!-- name badge -->
     <rect x="96" y="158" width="28" height="14" rx="4" fill="#0D9488"/>
-    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">LUMI</text>
+    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">SERVIA</text>
 
     <!-- head -->
     <circle cx="110" cy="100" r="42" fill="url(#face)"/>

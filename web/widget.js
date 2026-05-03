@@ -89,7 +89,7 @@
   }
   function greet() {
     const t = window.lumoraT ? window.lumoraT("bot_greeting") : null;
-    addMsg("bot", t || "Hi! I'm Lumi, your home services concierge. What do you need today?");
+    addMsg("bot", t || "Hi! I'm Servia, your home services concierge. What do you need today?");
     fetch(API_BASE + "/api/health").then(r => r.json())
       .then(j => {
         modeBadge.textContent = j.mode === "llm"

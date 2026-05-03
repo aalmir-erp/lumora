@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Lumi handyman">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="Servia handyman">
   <defs>
     <radialGradient id="bg" cx="0.45" cy="0.4" r="0.7"><stop offset="0%" stop-color="#F59E0B"/><stop offset="60%" stop-color="#D97706"/><stop offset="100%" stop-color="#92400E"/></radialGradient>
     <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FB7185" stop-opacity="0.55"/><stop offset="100%" stop-color="#FB7185" stop-opacity="0"/></radialGradient>
@@ -27,7 +27,7 @@
     <rect x="78" y="170" width="6" height="6" fill="#FCD34D"/>
     <rect x="88" y="170" width="6" height="6" fill="#FCD34D"/>
     <rect x="96" y="158" width="28" height="14" rx="4" fill="#92400E"/>
-    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">LUMI</text>
+    <text x="110" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="9" fill="#FFFFFF">SERVIA</text>
     <circle cx="110" cy="100" r="42" fill="url(#face)"/>
     <ellipse cx="84" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
     <ellipse cx="136" cy="115" rx="10" ry="7" fill="url(#cheek)"/>
