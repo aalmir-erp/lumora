@@ -5,7 +5,14 @@
 </head><body>
 <nav class="nav"><div class="nav-inner">
   <a href="/"><img src="/logo.svg" height="36"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
-  <div class="nav-cta"><a class="btn btn-ghost" href="/account.html">My account</a></div>
+  <div class="nav-cta">
+    <div class="lang-flags" role="group" aria-label="Language">
+      <button data-lang="en" title="English" onclick="window.lumoraSetLang&&lumoraSetLang('en')">🇬🇧</button>
+      <button data-lang="ar" title="العربية" onclick="window.lumoraSetLang&&lumoraSetLang('ar')">🇦🇪</button>
+      <button data-lang="hi" title="हिन्दी" onclick="window.lumoraSetLang&&lumoraSetLang('hi')">🇮🇳</button>
+      <button data-lang="tl" title="Filipino" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">🇵🇭</button>
+    </div>
+<a class="btn btn-ghost" href="/account.html">My account</a></div>
 </div></nav>
 
 <section><div class="container" style="max-width:720px">

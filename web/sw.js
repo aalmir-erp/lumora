@@ -35,3 +35,23 @@ self.addEventListener("fetch", (e) => {
     )
   );
 });
+
+// ---- Push notifications ----
+self.addEventListener("push", (event) => {
+  const data = event.data ? event.data.json() : { title: "Lumora", body: "You have a new update" };
+  event.waitUntil(self.registration.showNotification(data.title || "Lumora", {
+    body: data.body || "",
+    icon: "/icon-192.svg",
+    badge: "/icon-192.svg",
+    data: data.url || "/me.html",
+    tag: data.tag || "lumora-notif",
+  }));
+});
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data || "/me.html";
+  event.waitUntil(clients.matchAll({type:"window"}).then(list => {
+    for (const c of list) { if (c.url.includes(url) && "focus" in c) return c.focus(); }
+    if (clients.openWindow) return clients.openWindow(url);
+  }));
+});

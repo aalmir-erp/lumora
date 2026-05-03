@@ -107,10 +107,13 @@ def s2():
     tools = get_or_default(r, "data", "tool_calls") or []
     quote_call = next((t for t in tools if t.get("name") == "get_quote"), None)
     total = get_or_default(quote_call, "result", "total") if quote_call else None
+    err = ""
+    if not r["ok"]:
+        err = json.dumps(r["data"])[:200]
     return [{"step": "POST /api/chat (with addons)", "ok": r["ok"] and total is not None,
              "ms": r["ms"], "code": r["code"],
-             "summary": f"total: {total} AED",
-             "data": text[:200]}]
+             "summary": f"total: {total} AED" + (f" — err: {err}" if err else ""),
+             "data": (text or "")[:200]}]
 
 
 # ============================================================
@@ -125,7 +128,7 @@ def s3():
     return [{"step": "POST /api/chat (coverage)", "ok": r["ok"] and covered is True,
              "ms": r["ms"], "code": r["code"],
              "summary": f"Sharjah covered: {covered}",
-             "data": get_or_default(r, "data", "text")[:200] if r.get("data") else ""}]
+             "data": (get_or_default(r, "data", "text") or "")[:200]}]
 
 
 # ============================================================
@@ -165,7 +168,7 @@ def s5():
     return [{"step": "POST /api/chat (book)", "ok": r["ok"] and bool(bid),
              "ms": r["ms"], "code": r["code"],
              "summary": f"booking_id: {bid}",
-             "data": get_or_default(r, "data", "text")[:200] if r.get("data") else ""}]
+             "data": (get_or_default(r, "data", "text") or "")[:200]}]
 
 
 # ============================================================

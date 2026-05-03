@@ -119,27 +119,23 @@
     window.dispatchEvent(new CustomEvent("lumora:brand", { detail: b }));
   }).catch(() => {});
 
-
-  // Flag-picker quick-switch
-  document.addEventListener("click", (e) => {
-    const t = e.target.closest(".lang-flags [data-lang]");
-    if (!t) return;
-    e.preventDefault();
-    if (window.lumoraSetLang) lumoraSetLang(t.dataset.lang);
-  });
-  function refreshFlagActive() {
-    const cur = window.lumoraLang ? lumoraLang() : "en";
+  // Version stamp from /api/health
+  function _setVersion() {
+    fetch("/api/health").then(r => r.json()).then(j => {
+      window.LUMORA_VERSION = j.version;
+      document.querySelectorAll("#lumora-version").forEach(el => el.textContent = "v" + j.version);
+    }).catch(e => console.warn("[lumora] /api/health failed", e));
+  }
+  function _refreshFlagActive() {
+    const cur = (window.lumoraLang ? lumoraLang() : (localStorage.getItem("lumora.lang") || "en"));
     document.querySelectorAll(".lang-flags [data-lang]").forEach(b =>
       b.classList.toggle("active", b.dataset.lang === cur));
   }
-  window.addEventListener("lumora:lang", refreshFlagActive);
-  setTimeout(refreshFlagActive, 100);
-
-
-  // Version stamp from /api/health (also exposes window.LUMORA_VERSION)
-  fetch("/api/health").then(r => r.json()).then(j => {
-    window.LUMORA_VERSION = j.version;
-    document.querySelectorAll("#lumora-version").forEach(el => el.textContent = "v" + j.version);
-  }).catch(() => {});
+  if (document.readyState !== "loading") {
+    _setVersion(); _refreshFlagActive();
+  } else {
+    document.addEventListener("DOMContentLoaded", () => { _setVersion(); _refreshFlagActive(); });
+  }
+  window.addEventListener("lumora:lang", _refreshFlagActive);
 
 })();

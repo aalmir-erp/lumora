@@ -101,9 +101,23 @@ def chat(req: ChatRequest):
     if settings.use_llm:
         try:
             result = llm.chat(history, session_id=sid, language=lang)
+            mode = "llm"
         except Exception as e:  # noqa: BLE001
-            raise HTTPException(status_code=502, detail=f"LLM error: {e}") from e
-        mode = "llm"
+            # Fall back to the rule-based brain so the UX never 502s on a transient LLM blip
+            print(f"[chat] LLM error, falling back to demo: {e}", flush=True)
+            try:
+                result = demo_brain.respond(req.message, history)
+                result["text"] = (
+                    "I'm having a brief hiccup with my AI brain — let me try a quick reply: "
+                    + (result.get("text") or "")
+                )
+                mode = "fallback"
+            except Exception as e2:  # noqa: BLE001
+                result = {"text": f"Sorry, I'm having technical trouble. WhatsApp us at +971 56 4020087.",
+                          "tool_calls": [], "usage": {}}
+                mode = "error"
+                db.log_event("chat", sid, "llm_error", actor="system",
+                             details={"err": str(e), "fallback_err": str(e2)})
     else:
         result = demo_brain.respond(req.message, history)
         mode = "demo"

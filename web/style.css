@@ -323,3 +323,7 @@ footer a { color: #cbd5e1; font-size: 13px; }
   .lang-flags button { width: 28px; height: 28px; font-size: 14px; }
   .nav-cta a.btn-primary { display: inline-flex; }  /* keep "Book now" prominent */
 }
+
+/* Force flag picker to stay one row */
+.lang-flags { flex-wrap: nowrap !important; flex-direction: row !important; }
+.lang-flags button { flex-shrink: 0; }

@@ -16,10 +16,10 @@
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
     <div class="lang-flags" role="group" aria-label="Language">
-      <button data-lang="en" title="English">🇬🇧</button>
-      <button data-lang="ar" title="العربية">🇦🇪</button>
-      <button data-lang="hi" title="हिन्दी">🇮🇳</button>
-      <button data-lang="tl" title="Filipino">🇵🇭</button>
+      <button data-lang="en" title="English" onclick="window.lumoraSetLang&&lumoraSetLang('en')">🇬🇧</button>
+      <button data-lang="ar" title="العربية" onclick="window.lumoraSetLang&&lumoraSetLang('ar')">🇦🇪</button>
+      <button data-lang="hi" title="हिन्दी" onclick="window.lumoraSetLang&&lumoraSetLang('hi')">🇮🇳</button>
+      <button data-lang="tl" title="Filipino" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">🇵🇭</button>
     </div>
     <select class="lang-pick" hidden></select>
     <span id="who" style="font-size:13px;color:var(--muted)"></span>
@@ -133,6 +133,12 @@ let _user = null;
     document.getElementById("who").textContent = _user.phone || "";
   } catch (e) { logout(); return; }
   loadBookings();
+  // First-sign-in profile prompt
+  if (!_user.name) {
+    setTimeout(() => {
+      if (confirm("Welcome! Complete your profile so cleaners know who to look for?")) setTab("profile");
+    }, 800);
+  }
   // Live polling every 20s
   setInterval(loadBookings, 20000);
 })();

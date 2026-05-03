@@ -159,10 +159,10 @@ window.LUMORA_PIXELS = {
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
     <div class="lang-flags" role="group" aria-label="Language">
-      <button data-lang="en" title="English">🇬🇧</button>
-      <button data-lang="ar" title="العربية">🇦🇪</button>
-      <button data-lang="hi" title="हिन्दी">🇮🇳</button>
-      <button data-lang="tl" title="Filipino">🇵🇭</button>
+      <button data-lang="en" title="English" onclick="window.lumoraSetLang&&lumoraSetLang('en')">🇬🇧</button>
+      <button data-lang="ar" title="العربية" onclick="window.lumoraSetLang&&lumoraSetLang('ar')">🇦🇪</button>
+      <button data-lang="hi" title="हिन्दी" onclick="window.lumoraSetLang&&lumoraSetLang('hi')">🇮🇳</button>
+      <button data-lang="tl" title="Filipino" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">🇵🇭</button>
     </div>
     <select class="lang-pick" hidden  aria-label="Language"></select>
     <a class="btn btn-primary" href="#book" onclick="document.getElementById('book-form').scrollIntoView({behavior:'smooth'});return false">Book now</a>
@@ -519,7 +519,7 @@ async function confirmBooking() {
     (document.getElementById("f-br").value ? `, ${document.getElementById("f-br").value} bedrooms` : "") +
     (document.getElementById("f-hrs").value ? `, ${document.getElementById("f-hrs").value} hours` : "") +
     (document.getElementById("f-units").value ? `, ${document.getElementById("f-units").value} units` : "") +
-    (pickedAddons.size ? `, addons: ${[...pickedAddons].join(",")}` : "");
+    (pickedAddons.size ? `, addons: ${[...pickedAddons].join(",")}` : "") + ((document.getElementById("f-recurring")||{value:""}).value ? `, recurring: ${document.getElementById("f-recurring").value}` : "");
   document.getElementById("book-result").innerHTML = "<i style='color:var(--muted)'>Booking…</i>";
   try {
     const r = await fetch("/api/chat", { method:"POST", headers:{"content-type":"application/json"},

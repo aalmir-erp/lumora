@@ -31,7 +31,10 @@ def get_quote(service_id: str, bedrooms: int | None = None,
               hours: int | None = None, units: int | None = None,
               area: str | None = None, first_time: bool = False,
               recurring: str | None = None,
-              addons: list[str] | None = None) -> dict:
+              addons: list[str] | str | None = None) -> dict:
+    # Defensive: accept comma-separated string from naive callers
+    if isinstance(addons, str):
+        addons = [a.strip() for a in addons.split(",") if a.strip()]
     p = kb.pricing()
     rules = p["rules"]
     if service_id not in rules:
@@ -287,11 +290,13 @@ TOOL_SCHEMAS: list[dict] = [
     {"name": "get_quote",
      "description": "Compute an indicative price quote. Use whenever the customer asks 'how much' or wants pricing.",
      "input_schema": {"type": "object", "properties": {
-         "service_id": {"type": "string", "description": "deep_cleaning, general_cleaning, maid_service, move_in_out, office_cleaning, post_construction, sofa_carpet, ac_cleaning, disinfection, window_cleaning, pest_control, laundry, babysitting, gardening, handyman, kitchen_deep, villa_deep"},
+         "service_id": {"type": "string", "description": "deep_cleaning, general_cleaning, maid_service, move_in_out, office_cleaning, post_construction, sofa_carpet, ac_cleaning, disinfection, window_cleaning, pest_control, laundry, babysitting, gardening, handyman, kitchen_deep, villa_deep, car_wash, swimming_pool, marble_polish, curtain_cleaning, smart_home, painting"},
          "bedrooms": {"type": "integer"}, "hours": {"type": "integer"},
          "units": {"type": "integer"}, "area": {"type": "string"},
          "first_time": {"type": "boolean"},
-         "recurring": {"type": "string", "enum": ["weekly", "biweekly"]}},
+         "recurring": {"type": "string", "enum": ["weekly", "biweekly", "monthly"]},
+         "addons": {"type": "array", "items": {"type": "string"},
+                    "description": "Addon ids from the service's addons list (e.g. 'oven', 'fridge', 'sofa3'). Look up valid ids in the KB before passing."}},
          "required": ["service_id"]}},
     {"name": "check_coverage",
      "description": "Check whether we cover a given area or emirate.",

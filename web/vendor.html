@@ -12,6 +12,13 @@
     <a href="#profile" onclick="setTab('profile');return false">Profile</a>
   </div>
   <div class="nav-cta">
+    <div class="lang-flags" role="group" aria-label="Language">
+      <button data-lang="en" title="English" onclick="window.lumoraSetLang&&lumoraSetLang('en')">🇬🇧</button>
+      <button data-lang="ar" title="العربية" onclick="window.lumoraSetLang&&lumoraSetLang('ar')">🇦🇪</button>
+      <button data-lang="hi" title="हिन्दी" onclick="window.lumoraSetLang&&lumoraSetLang('hi')">🇮🇳</button>
+      <button data-lang="tl" title="Filipino" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">🇵🇭</button>
+    </div>
+
     <span id="who" style="font-size:13px;color:var(--muted)"></span>
     <button class="btn btn-ghost" onclick="logout()">Sign out</button>
   </div>

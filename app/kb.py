@@ -72,6 +72,9 @@ def kb_blob(language: str = "en") -> str:
             lines.append(f"  Includes: {'; '.join(svc['includes'])}")
         if svc.get("excludes"):
             lines.append(f"  Excludes: {'; '.join(svc['excludes'])}")
+        # Addon ids LLM can pass to get_quote(addons=[...])
+        for a in (svc.get("addons") or []):
+            lines.append(f"  Addon[id={a['id']}]: {a['name']} (+{a['price']} AED)")
     lines.append("")
     lines.append("## PRICING (AED, 5% VAT included)")
     for sid, rule in p["rules"].items():
