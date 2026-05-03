@@ -133,11 +133,14 @@ let _user = null;
     document.getElementById("who").textContent = _user.phone || "";
   } catch (e) { logout(); return; }
   loadBookings();
-  // First-sign-in profile prompt
-  if (!_user.name) {
+  // First-sign-in nudge — only if profile is empty AND user hasn't dismissed
+  const PROMPT_KEY = "lumora.profile.dismissed";
+  if (!_user.name && !_user.email && !localStorage.getItem(PROMPT_KEY)) {
+    localStorage.setItem(PROMPT_KEY, "1");
     setTimeout(() => {
-      if (confirm("Welcome! Complete your profile so cleaners know who to look for?")) setTab("profile");
-    }, 800);
+      const want = confirm("Welcome to Lumora! Add your name and preferred language to your profile? (You can do this later from the Profile tab.)");
+      if (want) setTab("profile");
+    }, 1200);
   }
   // Live polling every 20s
   setInterval(loadBookings, 20000);

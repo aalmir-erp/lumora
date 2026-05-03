@@ -110,6 +110,14 @@
           "q": "What if something gets damaged?",
           "a": "All Lumora vendors are insured. Report within 24 hrs and we cover repair or replacement."
         }
+      ],
+      "intake": [
+        "bedrooms",
+        "bathrooms",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "area_or_building"
       ]
     },
     {
@@ -192,6 +200,14 @@
           "q": "Difference vs deep cleaning?",
           "a": "General is the maintenance clean. Deep is for after months without cleaning, or first-time visit. Start with deep, then maintain with general."
         }
+      ],
+      "intake": [
+        "bedrooms",
+        "bathrooms",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "area_or_building"
       ]
     },
     {
@@ -267,7 +283,16 @@
       ],
       "duration_label": "2+ hours",
       "team_label": "1 trained maid",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "hours_needed",
+        "frequency (one-time/weekly/biweekly)",
+        "supplies_required (yes/no)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "area_or_building"
+      ]
     },
     {
       "id": "move_in_out",
@@ -342,7 +367,15 @@
       ],
       "duration_label": "4–8 hours",
       "team_label": "2 cleaners",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "bedrooms",
+        "move_type (move-in/move-out)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ]
     },
     {
       "id": "office_cleaning",
@@ -411,7 +444,15 @@
       ],
       "duration_label": "3+ hours per visit",
       "team_label": "1-3 cleaners (size-based)",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "office_size_sqft",
+        "frequency (daily/weekly/monthly)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "building_address"
+      ]
     },
     {
       "id": "post_construction",
@@ -478,7 +519,16 @@
       ],
       "duration_label": "4-12 hours",
       "team_label": "3 specialists",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "property_type (apartment/villa)",
+        "property_size",
+        "debris_haul_needed (yes/no)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ]
     },
     {
       "id": "sofa_carpet",
@@ -550,7 +600,16 @@
       ],
       "duration_label": "1-3 hours",
       "team_label": "1-2 specialists",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "sofa_seats_count",
+        "carpet_sqft (if any)",
+        "mattress_count (if any)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "area_or_building"
+      ]
     },
     {
       "id": "ac_cleaning",
@@ -630,6 +689,14 @@
           "q": "Do you handle central AC?",
           "a": "Yes — per outlet rate. We handle ducting, fan-coils, and evaporator coils."
         }
+      ],
+      "intake": [
+        "ac_units_count",
+        "ac_type (split/window/ducted/central)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "building_address"
       ]
     },
     {
@@ -689,7 +756,15 @@
       ],
       "duration_label": "45 min",
       "team_label": "1-2 PPE-trained",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "property_size_sqft",
+        "certificate_required (yes/no)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ]
     },
     {
       "id": "window_cleaning",
@@ -728,7 +803,17 @@
       "process_steps": [],
       "duration_label": "1-2 hours",
       "team_label": "1-2 cleaners",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "property_type (apartment/villa)",
+        "floor_number",
+        "exterior_required (yes/no)",
+        "windows_count_estimate",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "building_address"
+      ]
     },
     {
       "id": "pest_control",
@@ -801,7 +886,15 @@
       ],
       "duration_label": "1-2 hours",
       "team_label": "1 certified technician",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "pest_type (ants/cockroaches/bedbugs/rodents/termites/general)",
+        "property_size_sqft",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ]
     },
     {
       "id": "laundry",
@@ -840,7 +933,16 @@
       "process_steps": [],
       "duration_label": "24 hrs (or 4 hrs express)",
       "team_label": "-",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "wash_kg_or_items_count",
+        "wash_only_or_with_iron",
+        "pickup_required (yes/no)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "pickup_address"
+      ]
     },
     {
       "id": "babysitting",
@@ -878,7 +980,16 @@
       "process_steps": [],
       "duration_label": "3+ hours",
       "team_label": "1 nanny",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "children_count",
+        "children_ages",
+        "hours_needed",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "home_address"
+      ]
     },
     {
       "id": "gardening",
@@ -917,7 +1028,15 @@
       "process_steps": [],
       "duration_label": "2-4 hours",
       "team_label": "1-2 gardeners",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "garden_size_sqm",
+        "tasks (mowing/pruning/landscaping/irrigation)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "villa_address"
+      ]
     },
     {
       "id": "handyman",
@@ -989,6 +1108,15 @@
           "q": "What if it's a major job?",
           "a": "For anything over 4 hours we send a fixed quote first — no surprises."
         }
+      ],
+      "intake": [
+        "task_type (electrical/plumbing/carpentry/painting/general)",
+        "task_description",
+        "urgency (today/this_week/flexible)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
       ]
     },
     {
@@ -1050,7 +1178,14 @@
       ],
       "duration_label": "2-4 hours",
       "team_label": "1-2 specialists",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "kitchen_size (small/medium/large)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "area_or_building"
+      ]
     },
     {
       "id": "villa_deep",
@@ -1122,7 +1257,15 @@
       ],
       "duration_label": "6-10 hours",
       "team_label": "4 cleaners",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "villa_bedrooms",
+        "floors",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "villa_address"
+      ]
     },
     {
       "id": "car_wash",
@@ -1174,7 +1317,16 @@
       ],
       "duration_label": "45 min - 2 hrs",
       "team_label": "1 detailer",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "car_size (sedan/SUV/4x4/pickup/luxury)",
+        "wash_type (exterior_only/interior+exterior/full_detail)",
+        "car_location (home/parking/office)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "car_location_address"
+      ]
     },
     {
       "id": "swimming_pool",
@@ -1213,7 +1365,17 @@
       ],
       "duration_label": "1 hour",
       "team_label": "1 pool tech",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "pool_size_sqm",
+        "pool_type (residential_villa/community/commercial)",
+        "frequency (one-time/weekly/biweekly/monthly)",
+        "chemicals_included (yes/no)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "villa_or_building_address"
+      ]
     },
     {
       "id": "marble_polish",
@@ -1250,7 +1412,16 @@
       ],
       "duration_label": "4-8 hours",
       "team_label": "2 specialists",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "floor_area_sqft",
+        "floor_type (marble/granite/terrazzo)",
+        "scope (polish_only/grind_and_polish)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ]
     },
     {
       "id": "curtain_cleaning",
@@ -1287,7 +1458,16 @@
       ],
       "duration_label": "1-2 hours",
       "team_label": "1 specialist",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "curtain_panels_count",
+        "fabric_type (cotton/silk/blackout/sheer)",
+        "takedown_required (yes/no)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ]
     },
     {
       "id": "smart_home",
@@ -1331,7 +1511,15 @@
       ],
       "duration_label": "2-4 hours",
       "team_label": "1 IT specialist",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "device_types (lighting/CCTV/locks/thermostat/audio)",
+        "scope (install/configure/troubleshoot)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ]
     },
     {
       "id": "painting",
@@ -1376,7 +1564,16 @@
       ],
       "duration_label": "4-8 hrs per room",
       "team_label": "1-2 painters",
-      "faqs": []
+      "faqs": [],
+      "intake": [
+        "rooms_count",
+        "walls_or_full_room",
+        "color_brand_preference (Jotun/Asian/no_preference)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ]
     }
   ],
   "areas_served": [

@@ -72,6 +72,11 @@ def kb_blob(language: str = "en") -> str:
             lines.append(f"  Includes: {'; '.join(svc['includes'])}")
         if svc.get("excludes"):
             lines.append(f"  Excludes: {'; '.join(svc['excludes'])}")
+        # INTAKE — the ONLY questions to ask the customer for booking this service.
+        # Ask in order. Skip anything not in this list.
+        if svc.get("intake"):
+            lines.append(f"  ASK_FOR_BOOKING (only these — never ask others): "
+                         f"{' | '.join(svc['intake'])}")
         # Addon ids LLM can pass to get_quote(addons=[...])
         for a in (svc.get("addons") or []):
             lines.append(f"  Addon[id={a['id']}]: {a['name']} (+{a['price']} AED)")

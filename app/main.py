@@ -85,12 +85,65 @@ def _is_taken_over(session_id: str) -> bool:
     return bool(r)
 
 
+
+
+# ---------- Booking fast-path — bypass LLM for direct form-style commands ----------
+import re as _re
+_BOOK_RX = _re.compile(
+    r"^Book\s+(\w+)\s+on\s+(\d{4}-\d{2}-\d{2})\s+at\s+(\d{1,2}:\d{2})\s+for\s+([^,]+),\s+phone\s+([+0-9 ]+),\s+address:?\s*['\"]?([^,'\"]+)['\"]?",
+    _re.I)
+
+
+def _try_fast_book(message: str) -> dict | None:
+    m = _BOOK_RX.match(message.strip())
+    if not m: return None
+    svc, date, time_, name, phone, addr = m.groups()
+    # Optional fields after address
+    rest = message[m.end():]
+    bedrooms = next((int(x) for x in _re.findall(r"(\d+)\s*bedroom", rest, _re.I)), None)
+    hours = next((int(x) for x in _re.findall(r"(\d+)\s*hour", rest, _re.I)), None)
+    units = next((int(x) for x in _re.findall(r"(\d+)\s*unit", rest, _re.I)), None)
+    rec = (_re.findall(r"recurring:\s*(\w+)", rest) or [None])[0]
+    addons_match = _re.search(r"addons?:\s*([\w,]+)", rest)
+    addons = [a.strip() for a in (addons_match.group(1).split(",") if addons_match else []) if a.strip()]
+    res = tools.create_booking(
+        service_id=svc, target_date=date, time_slot=time_,
+        customer_name=name.strip(), phone=phone.strip(),
+        address=addr.strip(),
+        bedrooms=bedrooms, hours=hours, units=units,
+        notes=("recurring=" + rec if rec else None),
+    )
+    if not res.get("ok"):
+        return None
+    booking = res["booking"]
+    return {
+        "text": (f"✅ All set! Your booking **{booking['id']}** is confirmed for "
+                 f"{date} at {time_}. Estimated total: {booking.get('estimated_total','—')} {booking.get('currency','AED')}. "
+                 f"We'll WhatsApp you a confirmation. Track at /me.html?b={booking['id']}"),
+        "tool_calls": [{"name": "create_booking", "input": {
+            "service_id": svc, "target_date": date, "time_slot": time_,
+            "customer_name": name, "phone": phone, "address": addr,
+            "bedrooms": bedrooms, "hours": hours, "units": units, "addons": addons,
+        }, "result": res}],
+        "usage": {}, "stop_reason": "end_turn",
+    }
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     sid = req.session_id or _new_sid()
     lang = (req.language or "en").lower()[:2]
 
     _persist(sid, "user", req.message, phone=req.phone)
+
+    # Fast-path for explicit booking commands — saves a 10-15s LLM round-trip
+    fast = _try_fast_book(req.message)
+    if fast:
+        text = fast.get("text") or "(no response)"
+        _persist(sid, "assistant", text, phone=req.phone, tool_calls=fast.get("tool_calls"))
+        return ChatResponse(session_id=sid, text=text,
+                            tool_calls=fast.get("tool_calls", []),
+                            mode="fast", usage={})
 
     if _is_taken_over(sid):
         # Don't auto-reply. The agent's next message will appear via /api/chat/poll.

@@ -5,6 +5,7 @@
                    (window.LUMORA_API_BASE || window.location.origin);
   const SESSION_KEY = "lumora.chat.sid";
   const SINCE_KEY = "lumora.chat.since";
+  const STARTED_KEY = "lumora.chat.started";   // sticky: once true, never show chips again
 
   const QR_FALLBACK = [
     "How much for deep cleaning a 2-bedroom?",
@@ -45,22 +46,27 @@
   let busy = false;
   let pollT = null;
   let agentMode = false;
-  let userMsgCount = 0;
+  // Treat as "already started" if a previous session exists OR sticky flag set.
+  let chatStarted = !!localStorage.getItem(STARTED_KEY) || !!sessionId;
+  let userMsgCount = chatStarted ? 1 : 0;
 
   // i18n integration
   function applyI18n() {
     const t = (k, d) => (window.lumoraT ? window.lumoraT(k, d) : d);
     input.placeholder = t("bot_placeholder", "Type your message…");
     sendBtn.textContent = t("bot_send", "Send");
-    if (userMsgCount === 0) {
+    if (chatStarted || userMsgCount > 0) {
       quickWrap.innerHTML = "";
-      quickWrap.style.display = "";
-      QR_FALLBACK.forEach((q) => {
-        const b = el("button", { type: "button" }, q);
-        b.onclick = () => { input.value = q; form.requestSubmit(); };
-        quickWrap.appendChild(b);
-      });
+      quickWrap.style.display = "none";
+      return;
     }
+    quickWrap.innerHTML = "";
+    quickWrap.style.display = "";
+    QR_FALLBACK.forEach((q) => {
+      const b = el("button", { type: "button" }, q);
+      b.onclick = () => { input.value = q; form.requestSubmit(); };
+      quickWrap.appendChild(b);
+    });
   }
   window.addEventListener("lumora:lang", applyI18n);
   applyI18n();
@@ -81,7 +87,9 @@
     input.value = "";
     addMsg("user", text);
     userMsgCount++;
-    if (userMsgCount === 1) hideQuickReplies();   // hide suggestions after first user msg
+    chatStarted = true;
+    localStorage.setItem(STARTED_KEY, "1");
+    hideQuickReplies();
     await send(text);
   });
 
