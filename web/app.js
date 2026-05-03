@@ -111,10 +111,8 @@
     });
   });
 
-  // ---------- live brand binding ----------
-  // Fetch /api/brand once, then sync any element with class .lumora-phone / .lumora-whatsapp / .lumora-email
-  // and rewrite any wa.me / tel: anchor href to use the live number.
-  fetch("/api/brand").then(r => r.json()).then((b) => {
+  // ---------- live brand binding (deferred to idle so it doesn't compete with LCP) ----------
+  const _brandFetch = () => fetch("/api/brand").then(r => r.json()).then((b) => {
     window.LUMORA_BRAND = b;
     document.querySelectorAll(".lumora-phone").forEach(el => el.textContent = b.phone || el.textContent);
     document.querySelectorAll(".lumora-whatsapp").forEach(el => el.textContent = b.phone || el.textContent);
@@ -132,6 +130,8 @@
     document.querySelectorAll("a[href^='tel:']").forEach(a => { a.href = "tel:" + tel; });
     window.dispatchEvent(new CustomEvent("lumora:brand", { detail: b }));
   }).catch(() => {});
+  if ("requestIdleCallback" in window) requestIdleCallback(_brandFetch, { timeout: 2000 });
+  else setTimeout(_brandFetch, 600);
 
   // Version stamp from /api/health
   function _setVersion() {

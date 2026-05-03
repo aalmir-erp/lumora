@@ -703,6 +703,29 @@ const POPULAR = ["deep_cleaning","general_cleaning","ac_cleaning","maid_service"
 const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
   hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
   tshirt:"👕", baby:"👶", leaf:"🌿", wrench:"🔧", chef:"👨‍🍳", home:"🏠" };
+// Pause continuously-running animations when their host element is off-screen.
+// Big TBT win: composite/paint costs vanish for animations the user can't see.
+(function pauseAnimsOffscreen() {
+  const targets = document.querySelectorAll(
+    ".live-strip,.hero-shell .float-icon,.mascot-frame,.wa-fab"
+  );
+  if (!targets.length || !("IntersectionObserver" in window)) return;
+  const obs = new IntersectionObserver(es => es.forEach(e => {
+    e.target.style.animationPlayState = e.isIntersecting ? "running" : "paused";
+    e.target.querySelectorAll("*").forEach(c => {
+      c.style.animationPlayState = e.isIntersecting ? "running" : "paused";
+    });
+  }), { rootMargin: "20px 0px" });
+  targets.forEach(t => obs.observe(t));
+})();
+
+// Calm down the WhatsApp FAB ring after 8 seconds — it's already gotten
+// the user's attention by then, no reason to keep painting forever.
+setTimeout(() => {
+  const fab = document.querySelector(".wa-fab");
+  if (fab) fab.style.animation = "none";
+}, 8000);
+
 // Lazy-render service tiles only when they near the viewport — keeps TBT low.
 function _renderTiles(d) {
   const map = Object.fromEntries(d.services.map(s => [s.id, s]));
