@@ -1,4 +1,4 @@
-# Lumora — Railway deploy guide
+# Servia — Railway deploy guide
 
 This folder is a **completely standalone application**. It has no dependency on
 the parent `aalmir_git_new` repo or on `sales.mir.ae`. Deploy it as its own
@@ -34,7 +34,7 @@ cd ~/lumora
 rm -rf .pytest_cache __pycache__
 git init -b main
 git add .
-git commit -m "Initial commit — Lumora v0.2"
+git commit -m "Initial commit — Servia v0.2"
 gh repo create aalmir-erp/lumora --private --source=. --push   # or via web UI
 ```
 
@@ -82,7 +82,7 @@ The bridge runs separately and pairs your personal WhatsApp via QR scan.
 
 ```bash
 curl https://<your-lumora>.up.railway.app/api/health
-# {"ok":true,"service":"Lumora","mode":"llm","model":"claude-opus-4-7", ...}
+# {"ok":true,"service":"Servia","mode":"llm","model":"claude-opus-4-7", ...}
 ```
 
 Open the public URL in a browser → modern landing page.

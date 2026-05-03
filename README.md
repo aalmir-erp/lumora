@@ -1,4 +1,4 @@
-# Lumora — UAE smart home services platform
+# Servia — UAE smart home services platform
 
 Modern, installable PWA + admin panel + AI concierge bot, all in one self-contained app.
 Deploys on Railway from this folder. Brand name and colors configurable.

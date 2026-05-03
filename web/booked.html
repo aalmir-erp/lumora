@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Booking confirmed • Lumora</title><meta name="theme-color" content="#0D9488">
+<title>Booking confirmed • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/widget.css">
 <style>
@@ -20,7 +20,7 @@
 </style>
 </head><body>
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="40" alt="Lumora"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
+  <a href="/"><img src="/logo.svg" height="40" alt="Servia"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-cta">
     <div class="lang-flags" role="group" aria-label="Language">
       <button data-lang="en" title="English" onclick="window.lumoraSetLang&&lumoraSetLang('en')">🇬🇧</button>
@@ -63,7 +63,7 @@
         </div>
         <div class="tl-step now">
           <b>Cleaner being assigned</b>
-          <div style="color:var(--muted);font-size:13px">A trained, background-checked Lumora cleaner is being matched to your job (~30 min).</div>
+          <div style="color:var(--muted);font-size:13px">A trained, background-checked Servia cleaner is being matched to your job (~30 min).</div>
         </div>
         <div class="tl-step">
           <b>WhatsApp confirmation</b>
@@ -129,7 +129,7 @@ else {
     document.getElementById("cal-link").href = `/api/booking/${bid}/calendar.ics`;
     const waBrand = (window.LUMORA_BRAND && window.LUMORA_BRAND.whatsapp) || "971564020087";
     const waPhone = waBrand.replace(/[^0-9]/g, "");
-    const text = encodeURIComponent(`I just booked ${b.service_id.replace(/_/g,' ')} with Lumora on ${b.target_date} at ${b.time_slot}. Booking ${bid}. https://${(window.LUMORA_BRAND||{}).domain||'lumora.ae'}/me.html?b=${bid}`);
+    const text = encodeURIComponent(`I just booked ${b.service_id.replace(/_/g,' ')} with Servia on ${b.target_date} at ${b.time_slot}. Booking ${bid}. https://${(window.LUMORA_BRAND||{}).domain||'servia.ae'}/me.html?b=${bid}`);
     document.getElementById("wa-share").href = `https://wa.me/?text=${text}`;
     document.getElementById("wa-help").href = `https://wa.me/${waPhone}?text=${encodeURIComponent("Hi, I need to update my booking " + bid)}`;
   }).catch(e => { document.getElementById("info").innerHTML = "<p>Booking not found.</p>"; });

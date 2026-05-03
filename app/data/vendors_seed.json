@@ -1,5 +1,5 @@
 {
-  "_note": "Market-research seed dataset for UAE home-services vendors (May 2026). Pricing reflects competitive market rates. Vendors are based on real UAE brands but configured as Lumora partners. Idempotent — re-seeding updates rather than duplicates.",
+  "_note": "Market-research seed dataset for UAE home-services vendors (May 2026). Pricing reflects competitive market rates. Vendors are based on real UAE brands but configured as Servia partners. Idempotent — re-seeding updates rather than duplicates.",
   "vendors": [
     {
       "email": "ops@justmop.lumora",

@@ -1,6 +1,6 @@
-# Lumora WhatsApp QR Bridge
+# Servia WhatsApp QR Bridge
 
-Pairs a personal WhatsApp number to the Lumora bot via QR scan (same flow as
+Pairs a personal WhatsApp number to the Servia bot via QR scan (same flow as
 WhatsApp Web). Forwards inbound messages to the FastAPI backend, and exposes
 `/send` so the bot can reply.
 

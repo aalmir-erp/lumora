@@ -23,13 +23,13 @@ def test_health():
     r = client.get("/api/health")
     assert r.status_code == 200
     assert r.json()["mode"] == "demo"
-    assert r.json()["service"] == "Lumora"
+    assert r.json()["service"] == "Servia"
 
 
 def test_brand_endpoint():
     r = client.get("/api/brand")
     assert r.status_code == 200
-    assert r.json()["name"] == "Lumora"
+    assert r.json()["name"] == "Servia"
 
 
 def test_i18n_loads():

@@ -1,4 +1,4 @@
-/* Lumora dynamic intake form renderer.
+/* Servia dynamic intake form renderer.
  *
  * Reads the per-service `intake` array from /api/services and renders
  * service-appropriate inputs only. NEVER asks bedrooms for car_wash etc.

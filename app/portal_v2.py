@@ -32,7 +32,7 @@ def customer_start(req: a.OtpStartReq):
     delivered_via = None
     if settings.WA_BRIDGE_URL:
         try:
-            tools.send_whatsapp(req.phone, f"Your Lumora login code: {code} (valid 10 min)")
+            tools.send_whatsapp(req.phone, f"Your Servia login code: {code} (valid 10 min)")
             delivered_via = "whatsapp"
         except Exception:  # noqa: BLE001
             pass

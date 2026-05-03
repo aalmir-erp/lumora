@@ -1,4 +1,4 @@
-"""20-scenario end-to-end smoke test against the live Lumora deployment.
+"""20-scenario end-to-end smoke test against the live Servia deployment.
 
 Runs from a GitHub Actions runner (or any host with internet). Records every
 HTTP call + result + assertion, prints a markdown report, exits 0 always so the
@@ -419,7 +419,7 @@ def main():
     print(f"\n=== {passed}/{len(results)} scenarios passed ===")
 
     # Markdown report
-    out = ["# Lumora E2E Test Report",
+    out = ["# Servia E2E Test Report",
            f"\n**URL:** {BASE}",
            f"**Run at:** {datetime.utcnow().isoformat()}Z",
            f"**Result:** **{passed}/{len(results)} scenarios passed**",

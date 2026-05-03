@@ -1,4 +1,4 @@
-/* Lumora service worker — network-first for HTML/JS so deploys are seen instantly. */
+/* Servia service worker — network-first for HTML/JS so deploys are seen instantly. */
 const CACHE = "lumora-v0.8.0";
 const SHELL = [
   "/logo.svg", "/avatar.svg", "/icon-192.svg", "/icon-512.svg",
@@ -53,8 +53,8 @@ self.addEventListener("fetch", (e) => {
 
 // ---- Push notifications ----
 self.addEventListener("push", (event) => {
-  const data = event.data ? event.data.json() : { title: "Lumora", body: "You have a new update" };
-  event.waitUntil(self.registration.showNotification(data.title || "Lumora", {
+  const data = event.data ? event.data.json() : { title: "Servia", body: "You have a new update" };
+  event.waitUntil(self.registration.showNotification(data.title || "Servia", {
     body: data.body || "",
     icon: "/icon-192.svg",
     badge: "/icon-192.svg",

@@ -96,13 +96,13 @@ def _make_payment_link(invoice_id: str, amount: float, currency: str) -> str:
             line_items=[{
                 "price_data": {
                     "currency": currency.lower(),
-                    "product_data": {"name": f"Lumora invoice {invoice_id}"},
+                    "product_data": {"name": f"Servia invoice {invoice_id}"},
                     "unit_amount": int(round(amount * 100)),
                 },
                 "quantity": 1,
             }],
-            success_url=os.getenv("PAYMENT_SUCCESS_URL", "https://lumora.ae/account.html"),
-            cancel_url=os.getenv("PAYMENT_CANCEL_URL", "https://lumora.ae/account.html"),
+            success_url=os.getenv("PAYMENT_SUCCESS_URL", "https://servia.ae/account.html"),
+            cancel_url=os.getenv("PAYMENT_CANCEL_URL", "https://servia.ae/account.html"),
             metadata={"invoice_id": invoice_id},
         )
         return sess.url

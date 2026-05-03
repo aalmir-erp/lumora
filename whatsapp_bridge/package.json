@@ -1,7 +1,7 @@
 {
   "name": "lumora-wa-bridge",
   "version": "0.1.0",
-  "description": "WhatsApp Web QR bridge for Lumora — pairs your personal WhatsApp via QR scan and forwards messages to the bot backend.",
+  "description": "WhatsApp Web QR bridge for Servia — pairs your personal WhatsApp via QR scan and forwards messages to the bot backend.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

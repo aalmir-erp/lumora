@@ -10,11 +10,11 @@ class Settings:
     WEB_DIR = BASE_DIR.parent / "web"
 
     # Brand (env can override)
-    BRAND_NAME = os.getenv("BRAND_NAME", "Lumora")
+    BRAND_NAME = os.getenv("BRAND_NAME", "Servia")
     BRAND_TAGLINE = os.getenv("BRAND_TAGLINE", "UAE's smart home services platform")
-    BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "lumora.ae")
+    BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "servia.ae")
 
-    APP_VERSION = "0.19.0"
+    APP_VERSION = "1.0.0"
 
     # Anthropic
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
@@ -26,14 +26,14 @@ class Settings:
     ALLOWED_ORIGINS = [
         o.strip() for o in os.getenv(
             "ALLOWED_ORIGINS",
-            "https://lumora.ae,https://www.lumora.ae,"
+            "https://servia.ae,https://www.servia.ae,"
             "https://urbanservices.ae,https://www.urbanservices.ae,"
             "http://localhost:8000,http://127.0.0.1:8000,http://127.0.0.1:8788"
         ).split(",") if o.strip()
     ]
 
     HANDOFF_WHATSAPP = os.getenv("HANDOFF_WHATSAPP", "+971564020087")
-    HANDOFF_EMAIL = os.getenv("HANDOFF_EMAIL", "hello@lumora.ae")
+    HANDOFF_EMAIL = os.getenv("HANDOFF_EMAIL", "hello@servia.ae")
 
     # WhatsApp bridge endpoint (Node service URL where the QR-paired bridge lives).
     WA_BRIDGE_URL = os.getenv("WA_BRIDGE_URL", "")

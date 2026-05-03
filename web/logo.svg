@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80" role="img" aria-label="Lumora logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80" role="img" aria-label="Servia logo">
   <defs>
     <linearGradient id="lm-grad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%"  stop-color="#0F766E"/>
@@ -15,18 +15,21 @@
     <rect x="8" y="8" width="64" height="64" rx="18" fill="url(#lm-grad)"/>
     <rect x="12" y="12" width="56" height="20" rx="14" fill="#fff" opacity="0.10"/>
     <circle cx="40" cy="42" r="22" fill="url(#lm-glow)"/>
-    <path d="M28 24 L28 52 L52 52" stroke="#FFFFFF" stroke-width="6"
+    <!-- Stylised "S" — service curve, on rounded gradient square -->
+    <path d="M52 24 Q28 24 28 36 Q28 44 38 46 L48 48 Q56 50 56 56 Q56 64 38 64"
+          stroke="#FFFFFF" stroke-width="6"
           stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <g transform="translate(54 25)">
+    <!-- spark above S -->
+    <g transform="translate(56 22)">
       <path d="M0 -8 L1.6 -1.6 L8 0 L1.6 1.6 L0 8 L-1.6 1.6 L-8 0 L-1.6 -1.6 Z" fill="#FCD34D"/>
     </g>
-    <circle cx="56" cy="56" r="3.5" fill="#FCD34D"/>
+    <circle cx="58" cy="58" r="3.5" fill="#FCD34D"/>
   </g>
   <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
      font-weight="800" letter-spacing="-0.5">
-    <text x="92" y="50" font-size="38" fill="#0F172A">Lum</text>
-    <text x="170" y="50" font-size="38" fill="url(#lm-grad)">ora</text>
-    <path d="M92 60 Q180 70 250 56" stroke="url(#lm-grad)" stroke-width="2.5"
+    <text x="92" y="50" font-size="38" fill="#0F172A">Serv</text>
+    <text x="184" y="50" font-size="38" fill="url(#lm-grad)">ia</text>
+    <path d="M92 60 Q160 70 230 56" stroke="url(#lm-grad)" stroke-width="2.5"
           stroke-linecap="round" fill="none" opacity="0.85"/>
     <text x="92" y="74" font-size="10" font-weight="600" letter-spacing="2.6"
           fill="#475569">UAE HOME &amp; BUSINESS SERVICES</text>

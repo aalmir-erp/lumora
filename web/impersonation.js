@@ -1,4 +1,4 @@
-/* Lumora impersonation banner — shown when admin is "viewing as" another user.
+/* Servia impersonation banner — shown when admin is "viewing as" another user.
  *
  * Storage flags written by /admin.html when admin clicks "View as":
  *   lumora.user.tok               — the impersonated session token

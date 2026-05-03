@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin • Lumora</title><meta name="theme-color" content="#0D9488">
+<title>Admin • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="stylesheet" href="/style.css">
 </head><body>
 <div id="login" class="paystub" style="display:none">
@@ -35,6 +35,8 @@
     <a href="#pricing"   data-tab="pricing">💰 Services & Pricing</a>
     <a href="#vendors"   data-tab="vendors">🤝 Vendors</a>
     <a href="#outreach"  data-tab="outreach">📨 Vendor outreach</a>
+    <a href="#prompts"   data-tab="prompts">🤖 Bot prompts</a>
+    <a href="#payments"  data-tab="payments">💳 Payments</a>
     <a href="#brand"     data-tab="brand">🎨 Brand &amp; Contact</a>
     <a href="#whatsapp"  data-tab="whatsapp">📲 WhatsApp</a>
     <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
@@ -113,7 +115,7 @@
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
         <div>
           <h2 style="margin:0">Vendor outreach</h2>
-          <p style="margin:4px 0 0;color:var(--muted)">Invite UAE service providers to join Lumora. We send a personalised WhatsApp invite with a one-click signup link that pre-fills their name + services. Onboard in minutes.</p>
+          <p style="margin:4px 0 0;color:var(--muted)">Invite UAE service providers to join Servia. We send a personalised WhatsApp invite with a one-click signup link that pre-fills their name + services. Onboard in minutes.</p>
         </div>
         <button class="btn btn-ghost" id="ou-refresh">Refresh</button>
       </div>
@@ -146,11 +148,48 @@
         <!-- Right: leads + status -->
         <div>
           <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:13px">
-            <b>📡 WhatsApp bridge required.</b> The actual message is delivered via the Lumora WhatsApp bridge (Node service). Set <code>WA_BRIDGE_URL</code> in Railway env. Without it, leads are still recorded with their signup URL — you can manually copy/paste-send for now. <a href="https://wa.me/971564020087?text=Hi%20Lumora%2C%20guide%20me%20on%20the%20WhatsApp%20bridge%20setup" target="_blank">Need help setting it up?</a>
+            <b>📡 WhatsApp bridge required.</b> The actual message is delivered via the Servia WhatsApp bridge (Node service). Set <code>WA_BRIDGE_URL</code> in Railway env. Without it, leads are still recorded with their signup URL — you can manually copy/paste-send for now. <a href="https://wa.me/971564020087?text=Hi%20Servia%2C%20guide%20me%20on%20the%20WhatsApp%20bridge%20setup" target="_blank">Need help setting it up?</a>
           </div>
           <h3 style="margin:0 0 12px;font-size:15px">Recent leads (top 50)</h3>
           <div id="ou-leads"></div>
         </div>
+      </div>
+    </div>
+
+    <div id="t-prompts" class="tab" style="display:none">
+      <h2>Bot prompts</h2>
+      <p class="sub" style="color:var(--muted)">Edit how Lumi (customer bot) and Sara (vendor onboarding bot) behave. Changes apply on the next chat turn — no deploy needed. Use the variables <code>{brand}</code>, <code>{domain}</code>, <code>{tagline}</code>, <code>{language}</code>.</p>
+      <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:10px 14px;border-radius:8px;margin:14px 0;font-size:13px">⚠ Leave empty to use the built-in default. Bad prompts can produce strange replies — Save makes the change live instantly.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+          <h3 style="margin:0 0 8px;font-size:15px">👤 Customer concierge — "Lumi"</h3>
+          <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Used on website chat, /api/chat, and inbound WhatsApp from non-vendor numbers.</p>
+          <textarea id="prompt-customer" rows="22" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5"></textarea>
+          <button class="btn btn-primary" style="margin-top:10px" onclick="savePrompt('customer')">Save customer prompt</button>
+          <button class="btn btn-ghost" style="margin-top:10px" onclick="document.getElementById('prompt-customer').value='';savePrompt('customer')">Reset to default</button>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px">
+          <h3 style="margin:0 0 8px;font-size:15px">🤝 Vendor onboarding — "Sara"</h3>
+          <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Triggered when an inbound WhatsApp number matches an outreach lead. Negotiates rates and sends signup link.</p>
+          <textarea id="prompt-vendor" rows="22" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5"></textarea>
+          <button class="btn btn-primary" style="margin-top:10px" onclick="savePrompt('vendor')">Save vendor prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="t-payments" class="tab" style="display:none">
+      <h2>Payments</h2>
+      <p class="sub" style="color:var(--muted)">Configure payment providers. Set the env vars in Railway, then refresh this page. We support Stripe (global), and UAE-local providers Telr, PayTabs, and Tap.</p>
+      <div id="pay-status" style="margin-top:18px"></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:20px">
+        <h3 style="margin:0 0 12px;font-size:15px">How it works (advance-payment policy)</h3>
+        <ol style="font-size:14px;line-height:1.7;color:var(--text)">
+          <li>Customer books → bot calls <code>create_booking()</code> → status <code>pending_payment</code>.</li>
+          <li>System auto-issues invoice + Payment Link via the configured provider.</li>
+          <li>Customer pays via card / Apple Pay / Google Pay / WhatsApp link.</li>
+          <li>Provider webhook hits <code>/api/webhooks/stripe</code> → invoice marked paid → booking auto-confirmed → crew dispatched.</li>
+          <li>If unpaid in 30 minutes, automatic reminder; in 2 hours, slot auto-released.</li>
+        </ol>
       </div>
     </div>
 
@@ -193,6 +232,8 @@ function show(tab) {
   if (tab==="pricing")   loadPricing();
   if (tab==="vendors")   loadVendors();
   if (tab==="outreach")  loadOutreach();
+  if (tab==="prompts")   loadPrompts();
+  if (tab==="payments")  loadPayments();
   if (tab==="brand")     loadBrand();
   if (tab==="whatsapp")  loadWA();
 }
@@ -650,7 +691,7 @@ function renderOutreachLeads(leads) {
         <td>${l.wa_sent ? '📲' : '<span style="color:#DC2626">✗</span>'}</td>
         <td style="text-align:end">
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="copyToClipboard(${JSON.stringify(l.signup_url || '').replace(/"/g,'&quot;')})">📋 Copy link</button>
-          <a class="btn btn-ghost" style="font-size:11px;padding:4px 10px" target="_blank" href="https://wa.me/${(l.phone||'').replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Hi ' + (l.name||'') + ', here is your Lumora partner signup link: ' + (l.signup_url || ''))}">WA again</a>
+          <a class="btn btn-ghost" style="font-size:11px;padding:4px 10px" target="_blank" href="https://wa.me/${(l.phone||'').replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Hi ' + (l.name||'') + ', here is your Servia partner signup link: ' + (l.signup_url || ''))}">WA again</a>
         </td>
       </tr>`).join("")}</tbody></table>`;
 }
@@ -1004,3 +1045,37 @@ async function saveBrand() {
 }
 </script>
 </body></html>
+<script>
+async function loadPrompts() {
+  try {
+    const r = await adm("/api/admin/prompts");
+    document.getElementById("prompt-customer").value = r.customer || "";
+    document.getElementById("prompt-customer").placeholder = r.customer_default_note;
+    document.getElementById("prompt-vendor").value = r.vendor || "";
+  } catch (e) { toast("Failed to load prompts: " + e.message, true); }
+}
+window.savePrompt = async function(which) {
+  const txt = document.getElementById("prompt-" + which).value;
+  try {
+    await adm("/api/admin/prompts", { method: "POST", body: { [which]: txt }});
+    toast("✓ " + which + " prompt saved — applies to next message");
+  } catch (e) { toast("Save failed: " + e.message, true); }
+};
+async function loadPayments() {
+  try {
+    const r = await adm("/api/admin/payments/status");
+    const rows = Object.entries(r).map(([prov, info]) => `
+      <tr>
+        <td><b>${prov}</b>${info.note ? ` <small style="color:var(--muted)">(${info.note})</small>` : ''}</td>
+        <td>${info.enabled ? '<span class="badge confirmed">enabled</span>' : '<span class="badge pending">disabled</span>'}</td>
+        <td><small style="color:var(--muted);font-family:ui-monospace,monospace">${prov === 'stripe' ? 'STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET' : prov === 'telr' ? 'TELR_STORE_ID + TELR_AUTH_KEY' : prov === 'paytabs' ? 'PAYTABS_PROFILE_ID + PAYTABS_SERVER_KEY' : 'TAP_API_KEY'}</small></td>
+        ${info.webhook_endpoint ? `<td><code style="font-size:11px;background:var(--bg);padding:2px 6px;border-radius:4px">${info.webhook_endpoint}</code></td>` : '<td>—</td>'}
+      </tr>`).join("");
+    document.getElementById("pay-status").innerHTML = `
+      <table class="list">
+        <thead><tr><th>Provider</th><th>Status</th><th>Required env</th><th>Webhook URL</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch (e) { document.getElementById("pay-status").innerHTML = '<div style="color:#DC2626">Error: ' + e.message + '</div>'; }
+}
+</script>

@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D9488">
 <!-- Per-service SEO: filled in dynamically by JS at boot -->
-<title>Service • Lumora</title>
+<title>Service • Servia</title>
 <meta name="description" content="">
 <link rel="canonical" href="">
 
@@ -151,7 +151,7 @@ window.LUMORA_PIXELS = {
 <body>
 
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="40" alt="Lumora"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
+  <a href="/"><img src="/logo.svg" height="40" alt="Servia"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
     <a href="/services.html">All services</a>
     <a href="/me.html">My account</a>
@@ -218,7 +218,7 @@ window.LUMORA_PIXELS = {
 <!-- Benefits -->
 <section>
   <div class="container">
-    <h2 class="reveal">Why book with Lumora?</h2>
+    <h2 class="reveal">Why book with Servia?</h2>
     <div class="benefits-grid" id="benefits"></div>
   </div>
 </section>
@@ -314,10 +314,10 @@ window.LUMORA_PIXELS = {
 </section>
 
 <footer><div class="container">
-  <div><img src="/logo.svg" height="36" alt="Lumora" style="filter:brightness(0) invert(1)"></div>
+  <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
   <div><h3>Product</h3><a href="/services.html">All services</a><br><a href="/book.html">Book</a><br><a href="/me.html">My account</a></div>
   <div><h3>Partners</h3><a href="/login.html">Partner portal</a></div>
-  <div><h3>Contact</h3><a href="https://wa.me/971564020087">WhatsApp</a><br><a href="mailto:hello@lumora.ae">Email</a></div>
+  <div><h3>Contact</h3><a href="https://wa.me/971564020087">WhatsApp</a><br><a href="mailto:hello@servia.ae">Email</a></div>
 </div></footer>
 
 <!-- STICKY CTA BAR -->
@@ -356,7 +356,7 @@ const sid = params.get("id") || "deep_cleaning";
 
 function render() {
   // SEO
-  const title = `${SVC.name} in UAE — from ${SVC.starting_price} AED | Lumora`;
+  const title = `${SVC.name} in UAE — from ${SVC.starting_price} AED | Servia`;
   document.title = title;
   document.querySelector("meta[name='description']").content = SVC.description;
   document.querySelector("link[rel='canonical']").href = location.href;
@@ -367,7 +367,7 @@ function render() {
   sld.textContent = JSON.stringify({
     "@context":"https://schema.org","@type":"Service",
     name: SVC.name, description: SVC.description, serviceType: SVC.category,
-    provider: {"@type":"LocalBusiness","name":"Lumora","url":location.origin,
+    provider: {"@type":"LocalBusiness","name":"Servia","url":location.origin,
                telephone:"+971564020087", priceRange:"AED 35-1500",
                address:{"@type":"PostalAddress",addressCountry:"AE",addressLocality:"Dubai"},
                aggregateRating:{"@type":"AggregateRating",ratingValue:"4.9",reviewCount:"2412"}},
@@ -482,7 +482,7 @@ function render() {
     </details>`).join("") || `<p style="color:var(--muted)">No FAQs yet — ask Lumi anything in chat.</p>`;
 
   // CTAs
-  const waMsg = encodeURIComponent(`Hi Lumora! I want to book ${SVC.name}. Can you help?`);
+  const waMsg = encodeURIComponent(`Hi Servia! I want to book ${SVC.name}. Can you help?`);
   document.getElementById("cta-wa").href = `https://wa.me/971564020087?text=${waMsg}`;
   document.getElementById("sticky-wa").href = `https://wa.me/971564020087?text=${waMsg}`;
   document.getElementById("sticky-price").textContent = `from ${SVC.starting_price} AED`;
@@ -610,4 +610,5 @@ function conv(name) {
   </div>
 </nav>
 
+<script src="/cms.js" defer></script>
 </body></html>

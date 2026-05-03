@@ -170,11 +170,31 @@ def create_booking(service_id: str, target_date: str, time_slot: str,
     db.log_event("booking", bid, "created", actor=source, details={"phone": phone})
 
     # Auto-create a sent quote linked to the booking.
+    inv_payment_url = None
     if quote.get("ok"):
-        quotes.create_quote_record(
+        q = quotes.create_quote_record(
             booking_id=bid, service_id=service_id, breakdown=quote["breakdown"],
             subtotal=quote["subtotal"], discount=quote["discount"], total=quote["total"])
-    return {"ok": True, "booking": _booking_dict(bid), "track_url": f"/account.html?b={bid}"}
+        # Auto-issue invoice + payment link so customer pays NOW (advance-payment policy)
+        try:
+            inv = quotes.create_invoice(quote_id=q["quote_id"], booking_id=bid,
+                                        amount=total, currency="AED")
+            inv_payment_url = inv.get("payment_url")
+            # Move booking to pending_payment until webhook marks paid
+            with db.connect() as c:
+                c.execute("UPDATE bookings SET status='pending_payment' WHERE id=?", (bid,))
+        except Exception as e:  # noqa: BLE001
+            db.log_event("booking", bid, "invoice_create_failed", details={"err": str(e)})
+
+    booking = _booking_dict(bid)
+    if inv_payment_url:
+        booking["payment_url"] = inv_payment_url
+    return {"ok": True, "booking": booking, "track_url": f"/account.html?b={bid}",
+            "payment_url": inv_payment_url,
+            "payment_required_message": (
+                "✅ Booking received. Please pay AED " + str(total) +
+                " to confirm your slot: " + (inv_payment_url or "(payment link pending)")
+            )}
 
 
 def _booking_dict(bid: str) -> dict | None:

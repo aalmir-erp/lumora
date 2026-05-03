@@ -1,4 +1,4 @@
-# Lumora E2E Test Report
+# Servia E2E Test Report
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Run at:** 2026-05-03T19:18:17.922058Z

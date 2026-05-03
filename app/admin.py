@@ -737,3 +737,84 @@ def bulk_invite(body: BulkLeadsBody, request: Request):
             failed += 1
             results.append({"phone": lead.phone, "ok": False, "error": str(e)})
     return {"ok": True, "sent": sent, "failed": failed, "results": results}
+
+
+# ---------- bot prompts (admin-editable) ----------
+@router.get("/prompts", dependencies=[Depends(require_admin)])
+def get_prompts():
+    """Return current prompts (overrides or defaults) for both personas."""
+    from .llm import VENDOR_PERSONA_DEFAULT
+    p = db.cfg_get("llm_prompts", {}) or {}
+    # The customer default is rendered inside _system_blocks; for admin display
+    # we just show the override and the default-template note.
+    return {
+        "customer": p.get("customer", ""),
+        "customer_default_note": "If empty, the built-in customer concierge prompt is used.",
+        "vendor": p.get("vendor", VENDOR_PERSONA_DEFAULT),
+        "vendor_default": VENDOR_PERSONA_DEFAULT,
+        "available_vars": ["{brand}", "{domain}", "{legal_owner}", "{tagline}", "{language}"],
+    }
+
+
+class PromptsBody(BaseModel):
+    customer: str | None = None
+    vendor: str | None = None
+
+
+@router.post("/prompts", dependencies=[Depends(require_admin)])
+def save_prompts(body: PromptsBody):
+    cur = db.cfg_get("llm_prompts", {}) or {}
+    if body.customer is not None: cur["customer"] = body.customer
+    if body.vendor is not None: cur["vendor"] = body.vendor
+    db.cfg_set("llm_prompts", cur)
+    db.log_event("admin", "prompts", "saved", actor="admin",
+                 details={"customer_len": len(cur.get("customer", "")),
+                          "vendor_len": len(cur.get("vendor", ""))})
+    return {"ok": True, "saved": list(cur.keys())}
+
+
+# ---------- in-place CMS overrides (page content overrides) ----------
+@router.get("/cms")
+def cms_get_all():
+    """Return all CMS overrides — public (no auth) so each page can apply them on load."""
+    return db.cfg_get("cms_overrides", {}) or {}
+
+
+class CmsBody(BaseModel):
+    key: str          # data-cms-key value
+    html: str         # new innerHTML
+    page: str | None = None  # optional page path for organisation
+
+
+@router.post("/cms", dependencies=[Depends(require_admin)])
+def cms_save(body: CmsBody):
+    cur = db.cfg_get("cms_overrides", {}) or {}
+    cur[body.key] = body.html
+    db.cfg_set("cms_overrides", cur)
+    db.log_event("admin", "cms", "saved", actor="admin",
+                 details={"key": body.key, "page": body.page})
+    return {"ok": True}
+
+
+@router.delete("/cms/{key}", dependencies=[Depends(require_admin)])
+def cms_delete(key: str):
+    cur = db.cfg_get("cms_overrides", {}) or {}
+    cur.pop(key, None)
+    db.cfg_set("cms_overrides", cur)
+    return {"ok": True}
+
+
+# ---------- payment provider config ----------
+@router.get("/payments/status", dependencies=[Depends(require_admin)])
+def payments_status():
+    import os
+    return {
+        "stripe": {
+            "enabled": bool(os.getenv("STRIPE_SECRET_KEY")),
+            "webhook_secret": bool(os.getenv("STRIPE_WEBHOOK_SECRET")),
+            "webhook_endpoint": "/api/webhooks/stripe",
+        },
+        "telr": {"enabled": bool(os.getenv("TELR_STORE_ID")), "note": "UAE-local"},
+        "paytabs": {"enabled": bool(os.getenv("PAYTABS_PROFILE_ID")), "note": "UAE-local"},
+        "tap": {"enabled": bool(os.getenv("TAP_API_KEY")), "note": "GCC"},
+    }

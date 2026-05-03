@@ -74,9 +74,21 @@ def inbound(msg: InboundMsg):
     history = [{"role": r["role"], "content": r["content"]} for r in reversed(hist_rows)]
     history.append({"role": "user", "content": msg.text})
 
+    # If this number is a known outreach lead (prospective vendor), use the
+    # vendor onboarding persona ("Sara") instead of the customer concierge.
+    persona = "customer"
+    try:
+        with db.connect() as c:
+            r = c.execute("SELECT id FROM outreach_leads WHERE phone=?",
+                          (msg.from_number,)).fetchone()
+        if r:
+            persona = "vendor"
+    except Exception:  # noqa: BLE001
+        pass
+
     if settings.use_llm:
         try:
-            result = llm.chat(history, session_id=sid, language="en")
+            result = llm.chat(history, session_id=sid, language="en", persona=persona)
         except Exception as e:  # noqa: BLE001
             result = {"text": f"(bot temporarily unavailable) — {e}",
                       "tool_calls": [], "usage": {}}

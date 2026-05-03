@@ -1,4 +1,4 @@
-/* Lumora WhatsApp QR Bridge.
+/* Servia WhatsApp QR Bridge.
  *
  * Pairs your personal WhatsApp number to this service via QR scan, then:
  *   - forwards inbound messages to BOT_WEBHOOK (the FastAPI /api/wa/webhook)

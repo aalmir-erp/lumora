@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>My account • Lumora</title><meta name="theme-color" content="#0D9488">
+<title>My account • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/widget.css">
 </head><body>
 <script src="/impersonation.js"></script>
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36" alt="Lumora"></a>
+  <a href="/"><img src="/logo.svg" height="36" alt="Servia"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
     <a href="/services.html">Services</a>
@@ -139,7 +139,7 @@ let _user = null;
   if (!_user.name && !_user.email && !localStorage.getItem(PROMPT_KEY)) {
     localStorage.setItem(PROMPT_KEY, "1");
     setTimeout(() => {
-      const want = confirm("Welcome to Lumora! Add your name and preferred language to your profile? (You can do this later from the Profile tab.)");
+      const want = confirm("Welcome to Servia! Add your name and preferred language to your profile? (You can do this later from the Profile tab.)");
       if (want) setTab("profile");
     }, 1200);
   }
@@ -188,7 +188,7 @@ function renderBooking(b) {
 
   const cleanerLine = a.vendor_id
     ? `<p style="margin:10px 0 0;font-size:13px;color:var(--muted)">
-         <b>Your Lumora cleaner is assigned</b> (${(a.vendor_rating||5).toFixed(1)} ★ rated)
+         <b>Your Servia cleaner is assigned</b> (${(a.vendor_rating||5).toFixed(1)} ★ rated)
          • Status: <span class="badge ${a.status||'assigned'}">${a.status||'assigned'}</span>
        </p>`
     : `<p style="margin:10px 0 0;font-size:13px;color:#92400E">⏳ Confirming your booking — your cleaner will be assigned shortly</p>`;
@@ -366,4 +366,5 @@ window.closeModal = () => { document.getElementById("modal-bg").style.display = 
 function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 </script>
 <script src="/widget.js"></script>
+<script src="/cms.js" defer></script>
 </body></html>

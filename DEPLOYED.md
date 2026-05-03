@@ -1,8 +1,8 @@
-# Lumora deploy
+# Servia deploy
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"ok":true,"service":"Lumora","version":"0.19.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
+**Health:** `{"ok":true,"service":"Servia","version":"0.19.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
 
 ## Build logs
 ```

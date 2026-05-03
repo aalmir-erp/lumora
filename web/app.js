@@ -1,4 +1,4 @@
-/* Lumora shared frontend utils.
+/* Servia shared frontend utils.
  *
  * - i18n loader + helpers (window.t, window.setLang)
  * - PWA service-worker registration

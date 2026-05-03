@@ -1,4 +1,4 @@
-/* Lumora theme + font picker. Stores choice in localStorage; applied via data-theme + data-font on <html>. */
+/* Servia theme + font picker. Stores choice in localStorage; applied via data-theme + data-font on <html>. */
 (function () {
   const LS_THEME = "lumora.theme";
   const LS_FONT  = "lumora.font";

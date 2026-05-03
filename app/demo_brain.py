@@ -38,7 +38,7 @@ def respond(user_message: str, history: list[dict]) -> dict:
     tool_calls: list[dict] = []
 
     if any(g in low for g in ("hi", "hello", "hey", "salam", "marhaba")) and len(low) < 30:
-        return {"text": "Hi! I'm Lumi from Lumora. I can quote prices, check coverage, "
+        return {"text": "Hi! I'm Lumi from Servia. I can quote prices, check coverage, "
                         "show open slots, book a cleaner, and connect you with a human. "
                         "What do you need today?",
                 "tool_calls": [], "usage": {}, "stop_reason": "end_turn"}

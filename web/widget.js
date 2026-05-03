@@ -18,7 +18,7 @@
       el("img", { src: "/avatar.svg", width: "36", height: "36",
         style: "border-radius:50%;background:rgba(255,255,255,.18)" }),
       el("div", {},
-        el("h3", {}, "Lumora"),
+        el("h3", {}, "Servia"),
         el("p", { class: "us-mode-line" }, "your home services concierge")),
       el("button", { class: "us-close", "aria-label": "Close" }, "×")),
     el("div", { class: "us-body" }),

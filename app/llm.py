@@ -18,9 +18,59 @@ from .kb import kb_blob
 from .tools import TOOL_SCHEMAS, run_tool
 
 
-def _system_blocks(language: str = "en") -> list[dict]:
+VENDOR_PERSONA_DEFAULT = (
+    "You are \"Sara\", the partner-onboarding agent for {brand} ({domain}). "
+    "You speak with prospective service-delivery partners on WhatsApp. "
+    "Your goals, in order: (1) introduce {brand} warmly, (2) confirm what "
+    "services they perform and the emirates they cover, (3) collect their "
+    "indicative price per service, (4) explain our 80/20 commission model "
+    "and weekly bank payout, (5) send them the partner signup link, "
+    "(6) escalate to human if they want to negotiate fee or have legal questions. "
+    "Be concise (2-4 lines per message). Use Arabic, Hindi or English to match "
+    "the partner's language. Never share customer data. Never promise anything "
+    "outside the published terms. If asked about a customer, redirect to ops."
+)
+
+
+def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict]:
+    """persona = 'customer' (default Lumi) or 'vendor' (Sara onboarding bot).
+    Both prompts can be overridden by admin via db.cfg_get('llm_prompts').
+    """
     s = get_settings()
     b = s.brand()
+    # Allow admin to override the prompts at runtime (Bot Prompts admin tab)
+    try:
+        from . import db as _db
+        prompts = _db.cfg_get("llm_prompts", {}) or {}
+    except Exception:  # noqa: BLE001
+        prompts = {}
+
+    if persona == "vendor":
+        persona_text = (prompts.get("vendor") or VENDOR_PERSONA_DEFAULT).format(
+            brand=b["name"], domain=b["domain"])
+        # Vendor bot doesn't need full KB — just the catalogue + pricing for negotiation
+        from .kb import kb_blob as _kb
+        return [
+            {"type": "text", "text": persona_text + "\n\n" + _kb(language=language)},
+            {"type": "text",
+             "text": f"Today is {_dt.date.today().isoformat()} (Asia/Dubai). "
+                     f"Reply in language: {language}."},
+        ]
+
+    custom = prompts.get("customer")
+    if custom:
+        persona = custom.format(
+            brand=b["name"], domain=b["domain"], legal_owner=b.get("legal_owner", "Servia"),
+            tagline=b["tagline"], language=language,
+        )
+        return [
+            {"type": "text", "text": persona + "\n\n" + kb_blob(language=language),
+             "cache_control": {"type": "ephemeral"}},
+            {"type": "text",
+             "text": f"Today is {_dt.date.today().isoformat()} (Asia/Dubai). "
+                     f"Reply in language: {language}."},
+        ]
+
     persona = (
         f"You are \"Lumi\", the all-in-one AI concierge for {b['name']} ({b['domain']}) — "
         f"a UAE home & commercial services platform owned by {b.get('legal_owner', 'Urban Services')}. "
@@ -61,7 +111,7 @@ def _system_blocks(language: str = "en") -> list[dict]:
         "- The customer must feel they're booking directly with us — never with a marketplace.\n"
         "- Internal terms like 'assignment', 'claim', 'vendor' must never appear in customer-facing replies.\n"
         "- If a customer asks who'll do the job, say 'a trained, background-checked member of our team will be assigned and we'll share their details before arrival.'\n"
-        "- Never describe internal workflows. Customers see Lumora as the operator end-to-end.\n"
+        "- Never describe internal workflows. Customers see Servia as the operator end-to-end.\n"
         "\n"
         "\n"
         "INTERACTIVE-CHOICES PROTOCOL (very important for UX):\n"
@@ -91,7 +141,8 @@ def _system_blocks(language: str = "en") -> list[dict]:
 
 
 def chat(messages: list[dict], *, session_id: str | None = None,
-         language: str = "en", max_iters: int = 6) -> dict:
+         language: str = "en", max_iters: int = 6,
+         persona: str = "customer") -> dict:
     settings = get_settings()
     if not settings.use_llm:
         raise RuntimeError("LLM disabled (set ANTHROPIC_API_KEY or DEMO_MODE=off).")
@@ -112,7 +163,7 @@ def chat(messages: list[dict], *, session_id: str | None = None,
         resp = client.messages.create(
             model=settings.MODEL,
             max_tokens=settings.MAX_TOKENS,
-            system=_system_blocks(language=language),
+            system=_system_blocks(language=language, persona=persona),
             tools=TOOL_SCHEMAS,
             messages=convo,
             thinking={"type": "adaptive"},

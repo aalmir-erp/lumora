@@ -231,6 +231,43 @@ def get_pricing_pub():
 
 
 # ---------- payment stub ----------
+@app.post("/api/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    """Receive Stripe checkout.session.completed events and mark invoices paid.
+
+    Configure STRIPE_WEBHOOK_SECRET in env for signature verification.
+    Endpoint URL to register in Stripe Dashboard:
+        https://<your-domain>/api/webhooks/stripe
+    """
+    import os, json as _json
+    body = await request.body()
+    sig = request.headers.get("stripe-signature", "")
+    secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+    try:
+        if secret:
+            import stripe  # type: ignore
+            event = stripe.Webhook.construct_event(body, sig, secret)
+        else:
+            event = _json.loads(body)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(400, f"Invalid signature: {e}")
+
+    etype = event.get("type") if isinstance(event, dict) else event["type"]
+    obj = (event.get("data") or {}).get("object") if isinstance(event, dict) else event["data"]["object"]
+    if etype == "checkout.session.completed":
+        invoice_id = (obj.get("metadata") or {}).get("invoice_id")
+        if invoice_id:
+            from . import quotes as _q
+            _q.mark_invoice_paid(invoice_id, source="stripe")
+            # Confirm the booking now that payment is in
+            with db.connect() as c:
+                r = c.execute("SELECT booking_id FROM invoices WHERE id=?", (invoice_id,)).fetchone()
+                if r and r["booking_id"]:
+                    c.execute("UPDATE bookings SET status='confirmed' WHERE id=?", (r["booking_id"],))
+                    db.log_event("booking", r["booking_id"], "payment_confirmed", actor="stripe")
+    return {"ok": True}
+
+
 @app.get("/pay/{invoice_id}", response_class=HTMLResponse)
 def pay_stub_page(invoice_id: str):
     """Tiny stub payment page when no real gateway is configured."""
