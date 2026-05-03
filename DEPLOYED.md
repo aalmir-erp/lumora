@@ -2,39 +2,39 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"ok":true,"service":"Lumora","version":"1.9.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
+**Health:** `{"ok":true,"service":"Lumora","version":"1.10.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":true,"admin_token_hint":null}`
 
 ## Build logs
 ```
-[internal] load .dockerignore
-[internal] load .dockerignore
-[7/7] RUN mkdir -p /data
-[6/7] COPY web ./web
-[5/7] COPY app ./app
-[4/7] RUN pip install -r requirements.txt
-[3/7] COPY requirements.txt ./
-[internal] load build context
-[2/6] WORKDIR /app
-[1/6] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[1/6] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[1/6] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[internal] load build context
-[internal] load build context
-[internal] load build context
-[2/6] WORKDIR /app
-[3/7] COPY requirements.txt ./
-[4/7] RUN pip install -r requirements.txt
-[5/7] COPY app ./app
-[5/7] COPY app ./app
-[6/7] COPY web ./web
-[6/7] COPY web ./web
-[7/7] RUN mkdir -p /data
-[7/7] RUN mkdir -p /data
+[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+npm warn deprecated fluent-ffmpeg@2.1.3: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+
+
+added 301 packages in 9s
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.13.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.13.0
+npm notice To update run: npm install -g npm@11.13.0
+npm notice
+
+[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+[ 8/11] COPY app ./app
+[ 8/11] COPY app ./app
+[ 9/11] COPY web ./web
+[ 9/11] COPY web ./web
+[10/11] COPY start.sh /app/start.sh
+[10/11] COPY start.sh /app/start.sh
+[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
+[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NzE5NGJjNzAzOGVlYzRhMzUyZjA1MWVmMWVhYzM0YjcwMTg0NGVkZGQwYmEzNjE3MTBmODJiMTk4NTgxMTIzMCIsInNpemUiOjIxOTEsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wM1QyMjoxNzoxNVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:1506ec3463afe3baf7b59dec1568e059b7bdffb569f29bb754ad201b064b3d32
-containerimage.digest: sha256:7194bc7038eec4a352f051ef1eac34b701844eddd0ba361710f82b1985811230
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MmEzMzY5N2ZjOTFkY2M4ZGMzYTBkMjJlMzEyMWUwMzBkNjRjZDYxNjZkMjY5NzU3YjlkYWI2NGQwMTEwMGU3NyIsInNpemUiOjI5NTYsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wM1QyMjozMTo0NloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:dfbac449203e63426869fd1562c60db38644fe9f8c2aec689d42b95a9a78d761
+containerimage.digest: sha256:2a33697fc91dcc8dc3a0d22e3121e030d64cd6166d269757b9dab64d01100e77
+image push
 image push
 image push
 
@@ -50,13 +50,17 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/133cb370-c413-431c-95d3-26103c7c5381/vol_onr647rhdeir9di9
+[start] launching whatsapp_bridge
+[wa-bridge] listening on :3001
 Starting Container
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Started server process [2]
+INFO:     Started server process [1]
 INFO:     Waiting for application startup.
-[autoblog-seed] launching background thread to generate 10 articles
+[autoblog-seed] launching background thread to generate 1 articles
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:54353 - "GET /api/health HTTP/1.1" 200 OK
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/637df584-e424-47a0-86ba-41727dcc15e6/vol_onr647rhdeir9di9
+INFO:     100.64.0.2:38039 - "GET /api/health HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.4:30550 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
 ```
