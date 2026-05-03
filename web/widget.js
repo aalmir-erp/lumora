@@ -33,6 +33,19 @@
     ru: "ru-RU", fa: "fa-IR", fr: "fr-FR", zh: "zh-CN", es: "es-ES",
   };
 
+  // Persistent action chips that stay above messages forever (not hidden after first reply)
+  const QUICK_ACTIONS = [
+    { icon: "🛠", label: "Book service", send: "I want to book a service" },
+    { icon: "💰", label: "Get quote", send: "Get me a quick price quote" },
+    { icon: "📋", label: "My bookings", send: "Show me my bookings" },
+    { icon: "🚐", label: "Track pro", send: "Where is my pro right now?" },
+    { icon: "📍", label: "Areas covered", send: "Which areas do you cover?" },
+    { icon: "💎", label: "Rewards", send: "How do I earn ambassador rewards?" },
+    { icon: "🔁", label: "Repeat last", send: "Repeat my last booking" },
+    { icon: "🎬", label: "Submit video", send: "I want to submit a video for creator points" },
+    { icon: "👤", label: "Talk to human", send: "Talk to a human" },
+  ];
+
   const launcher = el("button", { class: "us-launcher", "aria-label": "Open chat" }, "💬");
   const panel = el("div", { class: "us-panel", role: "dialog" },
     el("div", { class: "us-header" },
@@ -40,16 +53,17 @@
         style: "border-radius:50%;background:rgba(255,255,255,.18)" }),
       el("div", {},
         el("h3", {}, "Servia"),
-        el("p", { class: "us-mode-line" }, "your home services concierge")),
+        el("p", { class: "us-mode-line" }, "Concierge · 24×7 · 15 languages")),
       el("button", { class: "us-close", "aria-label": "Close" }, "×")),
+    el("div", { class: "us-actions-bar" }),  // persistent action toolbar
     el("div", { class: "us-body" }),
     el("div", { class: "us-quickreplies" }),
     el("div", { class: "us-attach-preview", style: "display:none" }),
     el("form", { class: "us-input", autocomplete: "off" },
-      el("button", { type: "button", class: "us-attach", "aria-label": "Attach photo" }, "📎"),
-      el("button", { type: "button", class: "us-mic", "aria-label": "Voice input" }, "🎤"),
-      el("input", { type: "text", placeholder: "Type your message…", maxlength: "1000" }),
-      el("button", { type: "submit", class: "us-send" }, "Send")),
+      el("button", { type: "button", class: "us-attach", "aria-label": "Attach photo", title: "Attach photo" }, "📎"),
+      el("button", { type: "button", class: "us-mic", "aria-label": "Voice input", title: "Voice input" }, "🎤"),
+      el("input", { type: "text", placeholder: "Type message, send a voice note 🎤 or photo 📎…", maxlength: "1000" }),
+      el("button", { type: "submit", class: "us-send", "aria-label": "Send", title: "Send" }, "↑")),
     el("div", { class: "us-mode" }, ""));
   // Hidden file input for image attachment
   const fileInput = el("input", { type: "file", accept: "image/*",
@@ -60,6 +74,7 @@
   document.body.appendChild(panel);
 
   const body = panel.querySelector(".us-body");
+  const actionsBar = panel.querySelector(".us-actions-bar");
   const quickWrap = panel.querySelector(".us-quickreplies");
   const form = panel.querySelector(".us-input");
   const input = form.querySelector('input[type="text"]');
@@ -69,6 +84,18 @@
   const previewWrap = panel.querySelector(".us-attach-preview");
   const modeBadge = panel.querySelector(".us-mode");
   const subtitle = panel.querySelector(".us-mode-line");
+
+  // Build persistent action toolbar
+  QUICK_ACTIONS.forEach(a => {
+    const b = el("button", { type: "button", title: a.label },
+      el("span", { style: "font-size:14px" }, a.icon),
+      el("span", {}, a.label));
+    b.onclick = () => {
+      input.value = a.send;
+      form.requestSubmit();
+    };
+    actionsBar.appendChild(b);
+  });
 
   let sessionId = localStorage.getItem(SESSION_KEY);
   let since = +localStorage.getItem(SINCE_KEY) || 0;
@@ -81,8 +108,8 @@
 
   function applyI18n() {
     const t = (k, d) => (window.lumoraT ? window.lumoraT(k, d) : d);
-    input.placeholder = t("bot_placeholder", "Type your message…");
-    sendBtn.textContent = t("bot_send", "Send");
+    input.placeholder = t("bot_placeholder", "Type message, send a voice note 🎤 or photo 📎…");
+    // Send is an icon now — never set to text
     if (chatStarted || userMsgCount > 0) {
       quickWrap.innerHTML = "";
       quickWrap.style.display = "none";
@@ -137,13 +164,12 @@
 
   function greet() {
     const t = window.lumoraT ? window.lumoraT("bot_greeting") : null;
-    addMsg("bot", t || "Hi! I'm Servia, your home services concierge. What do you need today? You can type, send a voice note 🎤 or attach a photo 📎.");
-    fetch(API_BASE + "/api/health").then(r => r.json())
-      .then(j => {
-        modeBadge.textContent = j.mode === "llm"
-          ? (window.lumoraT ? window.lumoraT("bot_powered") : "powered by Claude")
-          : (window.lumoraT ? window.lumoraT("bot_demo") : "demo mode");
-      }).catch(() => {});
+    addMsg("bot", t ||
+      "Hi! I'm your Servia concierge. I can quote, book, track your pro, " +
+      "show your bookings, handle reschedules, find areas, set up rewards, and " +
+      "switch you to a human anytime. Type, voice note 🎤, or send a photo 📎 — " +
+      "I speak 15 languages.");
+    // intentionally do NOT set the mode badge — kept .us-mode hidden via CSS
   }
 
   async function send(text, attachment) {

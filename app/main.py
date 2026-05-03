@@ -371,9 +371,10 @@ async def _smart_cache(request, call_next):
         resp.headers["Cache-Control"] = "public, max-age=2592000, stale-while-revalidate=604800"
     return resp
 
-if settings.WEB_DIR.exists():
-    app.mount("/widget", StaticFiles(directory=str(settings.WEB_DIR), html=False), name="widget")
-    app.mount("/", StaticFiles(directory=str(settings.WEB_DIR), html=True), name="site")
+# Static mounts MOVED to end-of-file. Registering Mount("/", StaticFiles)
+# at this point would shadow every route registered later (live activity feed,
+# blog index, blog post, contact, app-install, etc.) because Starlette's
+# router matches in registration order and Mount("/") matches everything.
 
 
 # ---------- SEO / GEO endpoints ----------
@@ -453,7 +454,23 @@ def blog_post(slug: str):
 
 @app.get("/blog", response_class=HTMLResponse)
 def blog_index():
-    """Index of all published autoblog posts."""
+    """Index of all published autoblog posts. Self-heals if the DB is
+    empty by triggering the same template seed inline."""
+    with db.connect() as c:
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS autoblog_posts(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT UNIQUE,
+                emirate TEXT, topic TEXT, body_md TEXT,
+                published_at TEXT, view_count INTEGER DEFAULT 0)""")
+        except Exception: pass
+        try:
+            n = c.execute("SELECT COUNT(*) AS n FROM autoblog_posts").fetchone()["n"]
+        except Exception:
+            n = 0
+    if n < 4:
+        try: _auto_seed_blog_articles_if_empty()
+        except Exception: pass
     with db.connect() as c:
         try:
             rows = c.execute(
@@ -462,11 +479,15 @@ def blog_index():
             ).fetchall()
         except Exception:
             rows = []
+    def _r(row, key, default=""):
+        try: v = row[key] if key in row.keys() else None
+        except Exception: v = None
+        return v or default
     items = "".join(
-        f'<li style="margin-bottom:14px"><a href="/blog/{r["slug"]}" style="font-size:17px;font-weight:600">{r["topic"]}</a><br>'
-        f'<small style="color:var(--muted)">📍 {r["emirate"].replace("-"," ").title()} · {r["published_at"][:10]}</small></li>'
+        f'<li style="margin-bottom:14px"><a href="/blog/{_r(r,"slug","x")}" style="font-size:17px;font-weight:600">{_r(r,"topic","Article")}</a><br>'
+        f'<small style="color:var(--muted)">📍 {_r(r,"emirate","uae").replace("-"," ").title()} · {_r(r,"published_at","")[:10]}</small></li>'
         for r in rows
-    ) or "<p>No posts yet — Claude is drafting the first batch.</p>"
+    ) or "<p>No posts yet — articles publish daily at 06:00 UAE time.</p>"
     return f"""<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Servia Blog — UAE home services insights</title>
@@ -1330,3 +1351,12 @@ def _generate_seed_articles(target_count: int):
             f"🚀 Servia just seeded {written} starter articles. Check /blog and homepage.",
             kind="batch_seed", meta={"written": written})
     except Exception: pass
+
+
+# ---------- STATIC FILES MOUNT — must be LAST so all routes above are reachable ----------
+# Mount("/") is a catch-all that captures every request. Registered here so all
+# explicit @app.get/@app.post routes above (especially /api/activity/live,
+# /api/chat/upload, /blog, /sitemap.xml etc.) are matched first.
+if settings.WEB_DIR.exists():
+    app.mount("/widget", StaticFiles(directory=str(settings.WEB_DIR), html=False), name="widget")
+    app.mount("/", StaticFiles(directory=str(settings.WEB_DIR), html=True), name="site")

@@ -214,6 +214,107 @@ def _booking_dict(bid: str) -> dict | None:
 
 
 # ---------------------------------------------------------------------------
+def repeat_last_booking(phone: str, target_date: str | None = None,
+                         time_slot: str | None = None) -> dict:
+    """Re-creates the customer's most recent booking with a fresh date/time
+    so they can rebook with one tap. If date/slot omitted, uses tomorrow 10:00."""
+    import datetime as _dt
+    with db.connect() as c:
+        r = c.execute(
+            "SELECT * FROM bookings WHERE phone=? ORDER BY id DESC LIMIT 1",
+            (phone,)).fetchone()
+    if not r:
+        return {"ok": False, "error": "No previous bookings found for this phone."}
+    last = db.row_to_dict(r)
+    if not target_date:
+        target_date = (_dt.date.today() + _dt.timedelta(days=1)).isoformat()
+    if not time_slot:
+        time_slot = "10:00"
+    return create_booking(
+        service_id=last.get("service_id"),
+        target_date=target_date, time_slot=time_slot,
+        customer_name=last.get("customer_name") or "Customer",
+        phone=phone, address=last.get("address") or "",
+        bedrooms=last.get("bedrooms"), hours=last.get("hours"),
+        units=last.get("units"), notes=last.get("notes"),
+        language=last.get("language", "en"), source="bot_repeat",
+    )
+
+
+def get_live_status(booking_id: str) -> dict:
+    """Customer-friendly tracker view: stage, ETA, next-update.
+    Maps internal status → human-readable journey stage."""
+    with db.connect() as c:
+        r = c.execute("SELECT * FROM bookings WHERE id=?", (booking_id,)).fetchone()
+    if not r:
+        return {"ok": False, "error": f"No booking with id {booking_id}"}
+    b = db.row_to_dict(r)
+    status = (b.get("status") or "").lower()
+    stage_map = {
+        "confirmed":         {"stage": "✅ Confirmed", "next": "Pro will be assigned shortly."},
+        "pending_payment":   {"stage": "💳 Payment pending", "next": "Pay to lock the slot."},
+        "paid":              {"stage": "💎 Slot locked", "next": "Pro assignment within 30 min."},
+        "assigned":          {"stage": "👨‍🔧 Pro assigned", "next": "ETA on WhatsApp 30 min before arrival."},
+        "en_route":          {"stage": "🚐 On the way", "next": "Live ETA every 5 min."},
+        "in_progress":       {"stage": "✨ Service in progress", "next": "Photo updates as work happens."},
+        "completed":         {"stage": "⭐ Done", "next": "Photos + invoice + review request."},
+        "cancelled":         {"stage": "❌ Cancelled", "next": "Refund 1-3 business days."},
+    }
+    info = stage_map.get(status, {"stage": status or "Unknown", "next": ""})
+    return {"ok": True, "booking_id": booking_id, "stage": info["stage"],
+            "next_update": info["next"], "service": b.get("service_id"),
+            "date": b.get("target_date"), "slot": b.get("time_slot")}
+
+
+def get_my_tier(phone: str) -> dict:
+    """Returns the customer's current Ambassador tier + discount % they get
+    on every booking. Driven by the referrals + reviews counts."""
+    counts = {"refs": 0, "reviews": 0, "videos": 0}
+    with db.connect() as c:
+        try:
+            counts["refs"] = c.execute(
+                "SELECT COUNT(*) AS n FROM referrals WHERE referrer_phone=? AND status='converted'",
+                (phone,)).fetchone()["n"]
+        except Exception: pass
+        try:
+            counts["reviews"] = c.execute(
+                "SELECT COUNT(*) AS n FROM reviews WHERE phone=? AND rating>=4",
+                (phone,)).fetchone()["n"]
+        except Exception: pass
+    refs = counts["refs"]
+    if refs >= 11: tier, pct = "💎 Platinum", 20
+    elif refs >= 6: tier, pct = "🥇 Gold", 15
+    elif refs >= 3: tier, pct = "🥈 Silver", 10
+    else:           tier, pct = "🥉 Bronze", 5
+    boost = (counts["reviews"] // 2) * 1
+    pct = min(20, pct + boost)
+    return {"ok": True, "tier": tier, "discount_pct": pct,
+            "referrals": refs, "reviews": counts["reviews"],
+            "next_step": (
+                f"Refer {3 - refs} more friends to reach Silver (10%)." if refs < 3 else
+                f"Refer {6 - refs} more friends to reach Gold (15%)." if refs < 6 else
+                f"Refer {11 - refs} more friends to reach Platinum (20%)." if refs < 11 else
+                "You're at the top tier — keep referring for Creator-Elite perks."
+            )}
+
+
+def list_areas_in_emirate(emirate: str) -> dict:
+    """Returns the recognized neighbourhoods we serve in that emirate."""
+    AREAS = {
+        "dubai": ["Marina","JBR","Downtown","Business Bay","JLT","JVC","Jumeirah","Al Barsha","DIFC","Palm Jumeirah","Arabian Ranches","Mirdif","Al Quoz","Deira","Bur Dubai","Damac Hills","Dubai Hills","Dubai Creek Harbour","Discovery Gardens","International City","Silicon Oasis","Sports City","Motor City","Al Furjan","City Walk","MBR City"],
+        "abu-dhabi": ["Khalifa City","Reem Island","Yas Island","Saadiyat","Al Reef","Al Raha","Mohammed Bin Zayed City","Corniche","Mussafah","Al Bateen","Al Mushrif","Khalidiyah"],
+        "sharjah": ["Al Khan","Al Majaz","Al Nahda","Al Taawun","Al Qasimia","Al Mamzar Sharjah","Muweilah"],
+        "ajman": ["Al Nuaimiya","Al Rashidiya","Al Rumaila","Ajman Corniche"],
+        "ras-al-khaimah": ["RAK Old Town","Al Hamra","Mina Al Arab","Al Marjan Island"],
+        "umm-al-quwain": ["UAQ Marina","Al Salamah","Al Aahad"],
+        "fujairah": ["Fujairah City","Dibba","Al Faseel"],
+    }
+    em = emirate.lower().replace(" ", "-")
+    return {"ok": True, "emirate": em.replace("-", " ").title(),
+            "areas": AREAS.get(em, []),
+            "count": len(AREAS.get(em, []))}
+
+
 def lookup_booking(booking_id: str) -> dict:
     rec = _booking_dict(booking_id.strip().upper())
     if not rec:
@@ -364,6 +465,22 @@ TOOL_SCHEMAS: list[dict] = [
     {"name": "list_my_bookings",
      "description": "Find all bookings linked to a phone number.",
      "input_schema": {"type": "object", "properties": {"phone": {"type": "string"}}, "required": ["phone"]}},
+    {"name": "repeat_last_booking",
+     "description": "One-tap re-book of the customer's most recent service. Use when the customer says 'rebook', 'same as last time', 'repeat my last', etc. If date/slot omitted defaults to tomorrow 10:00.",
+     "input_schema": {"type": "object", "properties": {
+         "phone": {"type": "string"},
+         "target_date": {"type": "string"},
+         "time_slot": {"type": "string"}},
+         "required": ["phone"]}},
+    {"name": "get_live_status",
+     "description": "Customer-friendly tracker for an in-flight booking — current stage (confirmed / pro assigned / on the way / in progress / done) plus next update.",
+     "input_schema": {"type": "object", "properties": {"booking_id": {"type": "string"}}, "required": ["booking_id"]}},
+    {"name": "get_my_tier",
+     "description": "Returns the customer's current Ambassador tier + discount % on every booking, with next-step suggestions to climb.",
+     "input_schema": {"type": "object", "properties": {"phone": {"type": "string"}}, "required": ["phone"]}},
+    {"name": "list_areas_in_emirate",
+     "description": "Returns the neighbourhoods we serve in a given emirate (dubai/abu-dhabi/sharjah/ajman/ras-al-khaimah/umm-al-quwain/fujairah).",
+     "input_schema": {"type": "object", "properties": {"emirate": {"type": "string"}}, "required": ["emirate"]}},
     {"name": "create_invoice_for_booking",
      "description": "Create an invoice + payment link for a confirmed booking.",
      "input_schema": {"type": "object", "properties": {"booking_id": {"type": "string"}}, "required": ["booking_id"]}},
@@ -385,6 +502,10 @@ TOOL_DISPATCH = {
     "get_quote": get_quote, "check_coverage": check_coverage,
     "list_slots": list_slots, "create_booking": create_booking,
     "lookup_booking": lookup_booking, "list_my_bookings": list_my_bookings,
+    "repeat_last_booking": repeat_last_booking,
+    "get_live_status": get_live_status,
+    "get_my_tier": get_my_tier,
+    "list_areas_in_emirate": list_areas_in_emirate,
     "create_invoice_for_booking": create_invoice_for_booking,
     "send_whatsapp": send_whatsapp, "handoff_to_human": handoff_to_human,
 }
