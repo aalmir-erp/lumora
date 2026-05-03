@@ -264,7 +264,7 @@
     <a href="/me.html" data-i18n="track">My account</a>
   </div>
   <div class="nav-cta">
-    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Theme &amp; font" aria-label="Settings">⚙️</button>
+    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
     <div class="lang-flags" role="group" aria-label="Language">
       <button data-lang="en" title="English">🇬🇧</button>
       <button data-lang="ar" title="العربية">🇦🇪</button>
@@ -291,6 +291,16 @@
         Cleaning, deep cleaning, AC, maid, pest, handyman & more — booked in seconds with an AI concierge.
         Live tracking, digital invoices, and a marketplace of trained professionals competing for your job.
       </p>
+      
+      <div class="reveal" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        <span style="font-size:12px;color:var(--muted)">Try a theme:</span>
+        <button class="theme-chip" onclick="lumoraSetTheme('light')" style="background:#0D9488;color:#fff;font-size:12px;padding:4px 12px;border-radius:999px;border:0;cursor:pointer">☀️ Light</button>
+        <button class="theme-chip" onclick="lumoraSetTheme('emirati')" style="background:#0E5C3A;color:#fff;font-size:12px;padding:4px 12px;border-radius:999px;border:0;cursor:pointer">🇦🇪 Emirati</button>
+        <button class="theme-chip" onclick="lumoraSetTheme('dark')" style="background:#0F172A;color:#fff;font-size:12px;padding:4px 12px;border-radius:999px;border:0;cursor:pointer">🌙 Dark</button>
+        <button class="theme-chip" onclick="lumoraSetTheme('royal')" style="background:#1A2440;color:#C5A572;font-size:12px;padding:4px 12px;border-radius:999px;border:0;cursor:pointer">👑 Royal</button>
+        <button class="theme-chip" onclick="lumoraSetTheme('midnight')" style="background:#020617;color:#A78BFA;font-size:12px;padding:4px 12px;border-radius:999px;border:0;cursor:pointer">🌌 Midnight</button>
+      </div>
+
       <div class="hero-cta">
         <a class="btn btn-primary" href="/book.html">Book a service →</a>
         <a class="btn btn-ghost" href="#" onclick="document.querySelector('.us-launcher').click(); return false;">💬 Chat with Lumi</a>
@@ -359,7 +369,7 @@
     <h2 class="reveal">17 services. One platform.</h2>
     <p class="sub reveal">Pricing is competitive UAE-market and configurable from admin. All include 5% VAT.</p>
     <div class="services-grid" id="svc-grid"><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel-card"><div class="skel" style="width:44px;height:44px;border-radius:12px"></div><div class="skel skel-line" style="width:60%;height:18px;margin-top:10px"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:40%"></div></div></div>
-    <p style="text-align:center;margin-top:32px"><a class="btn btn-primary" href="/services.html">See all services →</a></p>
+    <p style="text-align:center;margin-top:32px"><a class="btn btn-primary" href="/services.html">See all 23 services →</a> <small style="display:block;margin-top:8px;color:var(--muted)">Each service has its own detail page with addons, pricing, FAQs, and reviews</small></p>
   </div>
 </section>
 

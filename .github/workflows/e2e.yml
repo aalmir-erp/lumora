@@ -1,0 +1,37 @@
+name: E2E test against live deploy
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'  # every 6 hours
+  push:
+    paths: ['tests/e2e_test.py', '.github/workflows/e2e.yml']
+
+permissions: { contents: write }
+concurrency: { group: e2e, cancel-in-progress: true }
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+
+      - name: Run 20-scenario E2E
+        env:
+          BASE_URL: https://lumora-production-4071.up.railway.app
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          python tests/e2e_test.py | tee /tmp/e2e.log
+          mv TEST_RESULTS.md /tmp/TEST_RESULTS.md
+
+      - name: Commit results
+        run: |
+          mv /tmp/TEST_RESULTS.md TEST_RESULTS.md
+          git config user.email "e2e@github-actions"
+          git config user.name "E2E test bot"
+          git add TEST_RESULTS.md
+          git commit -m "e2e: $(grep -oE '[0-9]+/[0-9]+ scenarios passed' /tmp/e2e.log | head -1)" || echo "no changes"
+          git pull --rebase --autostash origin main || true
+          git push origin HEAD:main || true

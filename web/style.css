@@ -313,3 +313,13 @@ footer a { color: #cbd5e1; font-size: 13px; }
   transform: scale(1.1);
 }
 @media (max-width:520px) { .lang-flags button { width: 28px; height: 28px; font-size: 14px; } }
+
+/* Always show settings + flag picker on mobile (nav-cta stays visible even when nav-links hide) */
+@media (max-width: 880px) {
+  .nav-inner { gap: 8px; flex-wrap: wrap; }
+  .nav-cta { display: flex !important; flex-wrap: wrap; gap: 4px; }
+  .nav-cta .btn { font-size: 12px; padding: 8px 12px; }
+  .lang-flags { padding: 2px; }
+  .lang-flags button { width: 28px; height: 28px; font-size: 14px; }
+  .nav-cta a.btn-primary { display: inline-flex; }  /* keep "Book now" prominent */
+}

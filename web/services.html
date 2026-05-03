@@ -13,7 +13,7 @@
     <a href="/account.html" data-i18n="track">Track</a>
   </div>
   <div class="nav-cta">
-    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Theme &amp; font" aria-label="Settings">⚙️</button>
+    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
     <div class="lang-flags" role="group" aria-label="Language">
       <button data-lang="en" title="English">🇬🇧</button>
       <button data-lang="ar" title="العربية">🇦🇪</button>
@@ -66,7 +66,7 @@ function render() {
       <p>${s.description}</p>
       <div class="svc-price"><span data-i18n="starting_from">starting from</span>
         <span style="font-size:18px;font-weight:700;color:var(--text)"> ${s.starting_price} AED</span></div>
-      <a class="btn btn-ghost" style="margin-top:12px" href="/service.html?id=${s.id}">Book</a>
+      <div style="display:flex;gap:6px;margin-top:12px"><a class="btn btn-ghost" style="flex:1;text-align:center" href="/service.html?id=${s.id}">📖 Details</a><a class="btn btn-primary" style="flex:1;text-align:center" href="/book.html?service=${s.id}">Book →</a></div>
     </div>`).join("");
 }
 
