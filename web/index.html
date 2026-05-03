@@ -564,6 +564,100 @@
     </div>
   </div>
 </header>
+<!-- 🎯 POPULAR SERVICES — visible above the fold, the moment hero ends -->
+<section style="padding:36px 16px 28px;background:linear-gradient(180deg,#FFFFFF 0%,#F8FAFC 100%);border-top:1px solid var(--border)">
+  <div class="container" style="max-width:1180px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:20px">
+      <div>
+        <p style="margin:0 0 4px;font-size:11px;font-weight:800;color:#0F766E;letter-spacing:.1em;text-transform:uppercase">⚡ Most-booked this week</p>
+        <h2 class="reveal" style="margin:0 0 4px;font-size:26px;letter-spacing:-.02em">What do you need today?</h2>
+        <p style="margin:0;color:var(--muted);font-size:14px">Tap any service — instant price, slot lock-in, same-day across UAE.</p>
+      </div>
+      <a class="btn btn-ghost" href="/services.html" style="font-size:13px;padding:8px 14px">All 32 services →</a>
+    </div>
+    <!-- Bigger, more colourful service tiles - more eye-candy, easier to grok -->
+    <div class="svc-grid-hero" id="svc-tiles">
+      <a class="svc-tile-hero c-teal" href="/book.html?service=deep_cleaning">
+        <span class="popular">★ Most booked</span>
+        <div class="e">✨</div><h3>Deep Cleaning</h3>
+        <small>Top-to-bottom · 4-6h</small><div class="price">from <b>AED 350</b></div></a>
+      <a class="svc-tile-hero c-amber" href="/book.html?service=ac_cleaning">
+        <div class="e">❄️</div><h3>AC Service</h3>
+        <small>Pre-summer urgent · 90 min</small><div class="price">from <b>AED 75</b>/unit</div></a>
+      <a class="svc-tile-hero c-purple" href="/book.html?service=maid_service">
+        <span class="popular">⏱ Hourly</span>
+        <div class="e">👤</div><h3>Maid Service</h3>
+        <small>By the hour · same-day</small><div class="price">from <b>AED 25</b>/hr</div></a>
+      <a class="svc-tile-hero c-rose" href="/book.html?service=handyman">
+        <div class="e">🔧</div><h3>Handyman</h3>
+        <small>Plumbing · electric · paint</small><div class="price">from <b>AED 100</b></div></a>
+      <a class="svc-tile-hero c-green" href="/book.html?service=pest_control">
+        <div class="e">🪲</div><h3>Pest Control</h3>
+        <small>Cockroach · bed bugs · ants</small><div class="price">from <b>AED 200</b></div></a>
+      <a class="svc-tile-hero c-blue" href="/book.html?service=sofa_carpet">
+        <div class="e">🛋️</div><h3>Sofa &amp; Carpet</h3>
+        <small>Steam shampoo · 2-3h</small><div class="price">from <b>AED 120</b></div></a>
+      <a class="svc-tile-hero c-indigo" href="/book.html?service=move_in_out">
+        <div class="e">📦</div><h3>Move-in / Move-out</h3>
+        <small>Deposit-saving deep clean</small><div class="price">from <b>AED 400</b></div></a>
+      <a class="svc-tile-hero c-orange" href="/book.html?service=window_cleaning">
+        <div class="e">🪟</div><h3>Window Cleaning</h3>
+        <small>Inside + balcony glass</small><div class="price">from <b>AED 80</b></div></a>
+    </div>
+    <div style="text-align:center;margin-top:18px">
+      <a class="btn btn-primary" href="/services.html" style="padding:11px 22px;font-weight:700">Browse all 32 services →</a>
+    </div>
+  </div>
+
+  <style>
+    .svc-grid-hero { display:grid; gap:12px;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
+    .svc-tile-hero {
+      position:relative; background:#fff; border:1px solid var(--border);
+      border-radius:18px; padding:18px 16px 16px; text-decoration:none;
+      color:var(--text); transition: transform .18s ease, box-shadow .18s ease, border-color .18s;
+      overflow:hidden;
+    }
+    .svc-tile-hero::before {
+      content:""; position:absolute; inset:0;
+      background:var(--svc-tone, linear-gradient(135deg,#0F766E,#14B8A6));
+      opacity:0; transition: opacity .25s; pointer-events:none;
+    }
+    .svc-tile-hero:hover { transform: translateY(-4px);
+      box-shadow:0 14px 32px rgba(15,23,42,.10); border-color:transparent }
+    .svc-tile-hero:hover::before { opacity:.06 }
+    .svc-tile-hero .e { font-size:42px; line-height:1; margin-bottom:8px;
+      transition: transform .18s ease; display:inline-block; }
+    .svc-tile-hero:hover .e { transform: scale(1.15) rotate(-5deg) }
+    .svc-tile-hero h3 { margin:4px 0 2px; font-size:16px; font-weight:800; letter-spacing:-.01em }
+    .svc-tile-hero small { color:var(--muted); font-size:12px; display:block; line-height:1.4 }
+    .svc-tile-hero .price { color:#0F766E; font-weight:600; font-size:13px; margin-top:8px }
+    .svc-tile-hero .price b { font-weight:800; font-size:15px; color:#0F172A }
+    .svc-tile-hero .popular {
+      position:absolute; top:8px; right:8px;
+      background:linear-gradient(135deg,#FCD34D,#F59E0B); color:#7C2D12;
+      padding:3px 8px; border-radius:999px; font-size:10px; font-weight:800;
+      letter-spacing:.04em; box-shadow:0 2px 6px rgba(245,158,11,.3);
+    }
+    /* Tone variants */
+    .c-teal   { --svc-tone:linear-gradient(135deg,#0F766E,#14B8A6) }
+    .c-amber  { --svc-tone:linear-gradient(135deg,#B45309,#F59E0B) }
+    .c-purple { --svc-tone:linear-gradient(135deg,#5B21B6,#7C3AED) }
+    .c-rose   { --svc-tone:linear-gradient(135deg,#9F1239,#E11D48) }
+    .c-green  { --svc-tone:linear-gradient(135deg,#065F46,#15803D) }
+    .c-blue   { --svc-tone:linear-gradient(135deg,#1E40AF,#3B82F6) }
+    .c-indigo { --svc-tone:linear-gradient(135deg,#312E81,#6366F1) }
+    .c-orange { --svc-tone:linear-gradient(135deg,#7C2D12,#F97316) }
+    @media (max-width:560px) {
+      .svc-grid-hero { grid-template-columns:repeat(2,1fr); gap:10px }
+      .svc-tile-hero { padding:14px 12px 12px }
+      .svc-tile-hero h3 { font-size:14px }
+      .svc-tile-hero .e { font-size:34px }
+    }
+  </style>
+</section>
+
+
 
 <!-- 🚀 HOW SERVIA WORKS — animated 6-stage journey with live tracker visual -->
 <section id="how-it-works" style="padding:48px 16px;background:linear-gradient(180deg,#F8FAFC 0%,#FFFFFF 100%);border-bottom:1px solid var(--border)">
@@ -779,47 +873,6 @@
     <div class="stat reveal"><div class="num" data-count="4.9" data-suffix="★" data-decimals="1">0</div><div class="lab">Average rating</div></div>
     <div class="stat reveal"><div class="num" data-count="60" data-suffix="s">0</div><div class="lab">To book online</div></div>
     <div class="stat reveal"><div class="num" data-count="7" data-suffix="-day">0</div><div class="lab">Re-do guarantee</div></div>
-  </div>
-</section>
-
-<!-- POPULAR SERVICES — visual tiles -->
-<section style="padding:48px 24px">
-  <div class="container">
-    <div style="text-align:center;margin-bottom:32px">
-      <h2 class="reveal" style="margin:0 0 8px">What do you need today?</h2>
-      <p class="sub reveal" style="margin:0">Tap any service below — get an instant price and book in seconds.</p>
-    </div>
-    <!-- Static SSR-style fallback so the tiles area has content on first paint
-         (no LCP wait, no CLS). JS upgrades them with live data on idle. -->
-    <div class="svc-tiles" id="svc-tiles">
-      <a class="svc-tile" href="/service.html?id=deep_cleaning">
-        <div class="e" aria-hidden="true">✨</div><h3>Deep Cleaning</h3>
-        <small>Residential</small><div class="price">from 350 AED</div></a>
-      <a class="svc-tile" href="/service.html?id=general_cleaning">
-        <div class="e" aria-hidden="true">🧹</div><h3>General Cleaning</h3>
-        <small>Residential</small><div class="price">from 75 AED</div></a>
-      <a class="svc-tile" href="/service.html?id=ac_cleaning">
-        <div class="e" aria-hidden="true">❄️</div><h3>AC Cleaning</h3>
-        <small>Maintenance</small><div class="price">from 75 AED</div></a>
-      <a class="svc-tile" href="/service.html?id=maid_service">
-        <div class="e" aria-hidden="true">👤</div><h3>Maid Service</h3>
-        <small>Residential</small><div class="price">from 25 AED</div></a>
-      <a class="svc-tile" href="/service.html?id=pest_control">
-        <div class="e" aria-hidden="true">🪲</div><h3>Pest Control</h3>
-        <small>Maintenance</small><div class="price">from 200 AED</div></a>
-      <a class="svc-tile" href="/service.html?id=handyman">
-        <div class="e" aria-hidden="true">🔧</div><h3>Handyman</h3>
-        <small>Maintenance</small><div class="price">from 100 AED</div></a>
-      <a class="svc-tile" href="/service.html?id=sofa_carpet">
-        <div class="e" aria-hidden="true">🛋️</div><h3>Sofa &amp; Carpet</h3>
-        <small>Residential</small><div class="price">from 120 AED</div></a>
-      <a class="svc-tile" href="/service.html?id=window_cleaning">
-        <div class="e" aria-hidden="true">🪟</div><h3>Window Cleaning</h3>
-        <small>Residential</small><div class="price">from 80 AED</div></a>
-    </div>
-    <div style="text-align:center;margin-top:24px">
-      <a class="btn btn-ghost" href="/services.html">See all 23 services →</a>
-    </div>
   </div>
 </section>
 
@@ -1170,24 +1223,8 @@ setTimeout(() => {
   if (fab) fab.style.animation = "none";
 }, 8000);
 
-// Lazy-render service tiles only when they near the viewport — keeps TBT low.
-function _renderTiles(d) {
-  const map = Object.fromEntries(d.services.map(s => [s.id, s]));
-  const featured = POPULAR.map(id => map[id]).filter(Boolean);
-  document.getElementById("svc-tiles").innerHTML = featured.map(s => `
-    <a class="svc-tile reveal in" href="/service.html?id=${s.id}">
-      <div class="e" aria-hidden="true">${ICONS[s.icon] || "🧽"}</div>
-      <h3>${s.name}</h3>
-      <small>${s.category}</small>
-      <div class="price">from ${s.starting_price} AED</div>
-    </a>`).join("");
-}
-const _tilesObs = new IntersectionObserver(es => {
-  if (!es.some(e => e.isIntersecting)) return;
-  _tilesObs.disconnect();
-  fetch("/api/services").then(r => r.json()).then(_renderTiles).catch(() => {});
-}, { rootMargin: "200px 0px" });
-_tilesObs.observe(document.getElementById("svc-tiles"));
+// Service tiles are now rich static markup (above-the-fold, see .svc-tile-hero).
+// No lazy upgrade — keeps the colourful design intact and saves an API round-trip.
 </script>
 <!-- Lazy-load chat widget so it doesn't block first paint or count toward TBT -->
 <script>
