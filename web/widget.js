@@ -46,7 +46,17 @@
     { icon: "👤", label: "Talk to human", send: "Talk to a human" },
   ];
 
-  const launcher = el("button", { class: "us-launcher", "aria-label": "Open chat" }, "💬");
+  // Eye-catching launcher: brand mascot avatar inside a pulsing ring with a
+  // periodic "Need help?" tooltip that nudges the user.
+  const launcher = el("button", { class: "us-launcher", "aria-label": "Open chat with Servia concierge" });
+  launcher.innerHTML =
+    '<img src="/avatar.svg" width="38" height="38" alt="" ' +
+    'style="display:block;margin:auto;border-radius:50%;background:rgba(255,255,255,.16)">' +
+    '<span class="us-launcher-pulse" aria-hidden="true"></span>' +
+    '<span class="us-launcher-bubble" aria-hidden="true">💬</span>';
+  // Floating tooltip — rotates messages, gently re-appears every ~25s
+  const tip = el("div", { class: "us-launcher-tip", "aria-hidden": "true" }, "");
+  document.body.appendChild(tip);
   const panel = el("div", { class: "us-panel", role: "dialog" },
     el("div", { class: "us-header" },
       el("img", { src: "/avatar.svg", width: "36", height: "36",
@@ -72,6 +82,29 @@
 
   document.body.appendChild(launcher);
   document.body.appendChild(panel);
+
+  // Periodic tooltip — gentle "Need a hand?" prompts. Only shows when chat
+  // is closed and the user hasn't dismissed via interaction.
+  const TIPS = [
+    "👋 Need a hand? Ask me anything",
+    "💰 Want a quick price?",
+    "📲 Book a service in 60s",
+    "🚐 Track your pro live",
+    "🎬 Earn creator points",
+  ];
+  let tipIdx = 0, tipTimer = null;
+  function showTip() {
+    if (panel.classList.contains("open")) return;
+    tip.textContent = TIPS[tipIdx % TIPS.length];
+    tip.classList.add("show");
+    tipIdx++;
+    setTimeout(() => tip.classList.remove("show"), 4500);
+  }
+  // First tip 6s after page load, then every 25s
+  setTimeout(() => { showTip(); tipTimer = setInterval(showTip, 25000); }, 6000);
+  // Hide tooltip permanently if user clicks/dismisses
+  tip.addEventListener("click", () => { tip.classList.remove("show"); if (tipTimer) clearInterval(tipTimer); launcher.click(); });
+  launcher.addEventListener("click", () => { tip.classList.remove("show"); if (tipTimer) clearInterval(tipTimer); });
 
   const body = panel.querySelector(".us-body");
   const actionsBar = panel.querySelector(".us-actions-bar");

@@ -397,113 +397,30 @@ def robots_txt():
 
 @app.get("/blog/{slug}", response_class=HTMLResponse)
 def blog_post(slug: str):
-    """Public blog post — Claude-generated, SEO-friendly, server-rendered."""
-    with db.connect() as c:
-        try:
-            r = c.execute(
-                "SELECT * FROM autoblog_posts WHERE slug=?", (slug,)
-            ).fetchone()
-        except Exception:
-            r = None
-    if not r:
-        raise HTTPException(404, "Post not found")
-    post = db.row_to_dict(r) or {}
-    with db.connect() as c:
-        try: c.execute("UPDATE autoblog_posts SET view_count=view_count+1 WHERE slug=?", (slug,))
-        except Exception: pass
-    # Defensive defaults — every field can be missing from very old DB rows
-    body = post.get("body_md") or ""
-    title = post.get("topic") or "Servia article"
-    emirate = (post.get("emirate") or "uae").replace("-", " ").title()
-    pub = (post.get("published_at") or "")[:10] or "—"
-    # Convert lightweight markdown to HTML (just headings + paragraphs + CTAs)
-    import re as _re, html as _html
-    body_h = _html.escape(body)
-    body_h = _re.sub(r"^## (.+)$", r"<h2>\1</h2>", body_h, flags=_re.M)
-    body_h = _re.sub(r"^# (.+)$", r"<h1>\1</h1>", body_h, flags=_re.M)
-    body_h = _re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", body_h)
-    body_h = _re.sub(r"\n\n+", "</p><p>", body_h)
-    body_h = "<p>" + body_h + "</p>"
-    return f"""<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{_html.escape(title)} | Servia Blog</title>
-<meta name="description" content="{_html.escape(title)} — Servia UAE home services insights for {emirate}.">
-<link rel="canonical" href="https://servia.ae/blog/{slug}">
-<link rel="stylesheet" href="/style.css">
-</head><body>
-<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
-<nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36" alt="Servia"></a>
-  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book.html">Book now</a></div>
-</div></nav>
-<article style="max-width:760px;margin:32px auto 80px;padding:0 16px">
-  <a href="/area.html?city={post.get('emirate') or 'dubai'}" style="font-size:13px;color:var(--muted);text-decoration:none">📍 {emirate}</a>
-  <h1 style="font-size:32px;letter-spacing:-.02em;margin:8px 0 18px">{_html.escape(title)}</h1>
-  <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Published {pub}</p>
-  <div style="font-size:16px;line-height:1.7">{body_h}</div>
-  <div data-share="blog-{slug}" data-share-key="blog-{slug}" data-share-text="Servia: {_html.escape(title)}" style="margin-top:32px"></div>
-  <div style="margin-top:32px;padding:24px;background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#78350F;border-radius:18px;text-align:center">
-    <h3 style="margin:0 0 6px">Ready to book?</h3>
-    <p style="margin:0 0 14px">Servia covers all 7 UAE emirates. Get a quote in 60 seconds.</p>
-    <a class="btn btn-primary" href="/book.html">Book your service →</a>
-  </div>
-</article>
-<script src="/share.js" defer></script>
-</body></html>"""
+    """Public blog post — Claude-generated, SEO-friendly, server-rendered.
+    Includes hero illustration, stats chart, demographics, internal +
+    external backlinks, BlogPosting JSON-LD, related posts."""
+    from . import blog_render
+    return blog_render.render_post(slug)
+
+
+@app.get("/api/blog/hero/{slug}.svg")
+def blog_hero_svg(slug: str):
+    """Generates a service+emirate-specific hero illustration as SVG.
+    Used as the article hero image on /blog/{slug}."""
+    from . import blog_render
+    from fastapi.responses import Response
+    svg = blog_render.hero_svg_for_slug(slug)
+    return Response(svg, media_type="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/blog", response_class=HTMLResponse)
 def blog_index():
-    """Index of all published autoblog posts. Self-heals if the DB is
-    empty by triggering the same template seed inline."""
-    with db.connect() as c:
-        try:
-            c.execute("""
-              CREATE TABLE IF NOT EXISTS autoblog_posts(
-                id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT UNIQUE,
-                emirate TEXT, topic TEXT, body_md TEXT,
-                published_at TEXT, view_count INTEGER DEFAULT 0)""")
-        except Exception: pass
-        try:
-            n = c.execute("SELECT COUNT(*) AS n FROM autoblog_posts").fetchone()["n"]
-        except Exception:
-            n = 0
-    if n < 4:
-        try: _auto_seed_blog_articles_if_empty()
-        except Exception: pass
-    with db.connect() as c:
-        try:
-            rows = c.execute(
-                "SELECT slug, emirate, topic, published_at FROM autoblog_posts "
-                "ORDER BY id DESC LIMIT 100"
-            ).fetchall()
-        except Exception:
-            rows = []
-    def _r(row, key, default=""):
-        try: v = row[key] if key in row.keys() else None
-        except Exception: v = None
-        return v or default
-    items = "".join(
-        f'<li style="margin-bottom:14px"><a href="/blog/{_r(r,"slug","x")}" style="font-size:17px;font-weight:600">{_r(r,"topic","Article")}</a><br>'
-        f'<small style="color:var(--muted)">📍 {_r(r,"emirate","uae").replace("-"," ").title()} · {_r(r,"published_at","")[:10]}</small></li>'
-        for r in rows
-    ) or "<p>No posts yet — articles publish daily at 06:00 UAE time.</p>"
-    return f"""<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Servia Blog — UAE home services insights</title>
-<link rel="canonical" href="https://servia.ae/blog"><link rel="stylesheet" href="/style.css">
-</head><body>
-<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
-<nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36" alt="Servia"></a>
-  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book.html">Book now</a></div>
-</div></nav>
-<section style="max-width:760px;margin:32px auto 80px;padding:0 16px">
-<h1 style="font-size:32px;letter-spacing:-.02em">Servia Blog</h1>
-<p style="color:var(--muted)">Locally-informed home-services tips, written for UAE residents — fresh content every day.</p>
-<ul style="list-style:none;padding:0;margin-top:24px">{items}</ul>
-</section>
-</body></html>"""
+    """Rich blog index — search, filter chips, card grid with hero images,
+    BlogPosting list schema. Self-heals if DB is empty."""
+    from . import blog_render
+    return blog_render.render_index()
 
 
 @app.get("/sitemap.xml")
@@ -1012,10 +929,12 @@ try:
                     slug TEXT UNIQUE, emirate TEXT, topic TEXT, body_md TEXT,
                     published_at TEXT, view_count INTEGER DEFAULT 0)""")
             except Exception: pass
+            try: c.execute("ALTER TABLE autoblog_posts ADD COLUMN service_id TEXT")
+            except Exception: pass
             c.execute(
-                "INSERT OR REPLACE INTO autoblog_posts(slug, emirate, topic, body_md, published_at) "
-                "VALUES(?,?,?,?,?)",
-                (slug, em, topic, body, _d.datetime.utcnow().isoformat() + "Z"))
+                "INSERT OR REPLACE INTO autoblog_posts(slug, emirate, topic, body_md, published_at, service_id) "
+                "VALUES(?,?,?,?,?,?)",
+                (slug, em, topic, body, _d.datetime.utcnow().isoformat() + "Z", sv))
         _db.log_event("autoblog", slug, "published", actor="cron",
                       details={"emirate": em, "service": sv, "slant": slant, "len": len(body)})
         print(f"[autoblog] published {slug}", flush=True)
@@ -1160,10 +1079,15 @@ def _auto_seed_blog_articles_if_empty():
             body = _seed_template_article(em, sv, slant, topic)
             try:
                 with _db.connect() as c:
+                    # Best-effort migration so older deploys upgrade the schema in place
+                    try: c.execute("ALTER TABLE autoblog_posts ADD COLUMN service_id TEXT")
+                    except Exception: pass
+                    try: c.execute("ALTER TABLE autoblog_posts ADD COLUMN reading_minutes INTEGER")
+                    except Exception: pass
                     c.execute(
-                        "INSERT OR IGNORE INTO autoblog_posts(slug, emirate, topic, body_md, published_at) "
-                        "VALUES(?,?,?,?,?)",
-                        (slug, em, topic, body, published.isoformat() + "Z"))
+                        "INSERT OR IGNORE INTO autoblog_posts(slug, emirate, topic, body_md, published_at, service_id) "
+                        "VALUES(?,?,?,?,?,?)",
+                        (slug, em, topic, body, published.isoformat() + "Z", sv))
                 wrote += 1
             except Exception as e:
                 print(f"[autoblog-seed] template insert failed for {slug}: {e}", flush=True)
@@ -1331,10 +1255,12 @@ def _generate_seed_articles(target_count: int):
         slug = (em + "-" + "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-"))[:90]
         try:
             with _db.connect() as c:
+                try: c.execute("ALTER TABLE autoblog_posts ADD COLUMN service_id TEXT")
+                except Exception: pass
                 c.execute(
-                    "INSERT OR REPLACE INTO autoblog_posts(slug, emirate, topic, body_md, published_at) "
-                    "VALUES(?,?,?,?,?)",
-                    (slug, em, topic, body, published.isoformat() + "Z"))
+                    "INSERT OR REPLACE INTO autoblog_posts(slug, emirate, topic, body_md, published_at, service_id) "
+                    "VALUES(?,?,?,?,?,?)",
+                    (slug, em, topic, body, published.isoformat() + "Z", sv))
             _db.log_event("autoblog", slug, "seeded", actor="startup",
                           details={"emirate": em, "service": sv, "slant": slant,
                                    "len": len(body), "published_at": published.isoformat()})

@@ -5,12 +5,49 @@
   --us-text:#0F172A; --us-muted:#64748B; --us-border:#E2E8F0;
 }
 
-.us-launcher{position:fixed;right:24px;bottom:24px;width:60px;height:60px;border-radius:50%;
+.us-launcher{position:fixed;right:24px;bottom:24px;width:64px;height:64px;border-radius:50%;
   background:linear-gradient(135deg,var(--us-primary),var(--us-primary-dark));color:#fff;
   border:0;box-shadow:0 12px 32px rgba(13,148,136,.45);cursor:pointer;font-size:26px;
-  z-index:99998;transition:transform .18s ease}
-.us-launcher:hover{transform:scale(1.07)}
+  z-index:99998;transition:transform .18s ease;
+  display:flex;align-items:center;justify-content:center;padding:0;overflow:visible}
+.us-launcher:hover{transform:scale(1.08)}
 [dir="rtl"] .us-launcher{right:auto;left:24px}
+
+/* Pulsing ring around the launcher — attracts attention without nagging */
+.us-launcher-pulse{position:absolute;inset:-4px;border-radius:50%;
+  border:3px solid var(--us-primary);opacity:0;
+  animation:us-launcher-ring 2.4s ease-out infinite;pointer-events:none}
+@keyframes us-launcher-ring{
+  0%   {opacity:.85; transform:scale(.8)}
+  60%  {opacity:0;   transform:scale(1.45)}
+  100% {opacity:0;   transform:scale(1.45)}
+}
+/* Tiny chat-bubble badge in the corner, blinks softly */
+.us-launcher-bubble{position:absolute;top:-2px;right:-2px;
+  width:22px;height:22px;background:#F59E0B;border:2px solid #fff;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;animation:us-bubble-blink 2.6s ease-in-out infinite;
+  box-shadow:0 2px 6px rgba(245,158,11,.4)}
+@keyframes us-bubble-blink{
+  0%, 70%, 100% {transform:scale(1)}
+  85%           {transform:scale(1.18)}
+}
+
+/* Floating "Need a hand?" tooltip beside the launcher */
+.us-launcher-tip{position:fixed;right:96px;bottom:36px;z-index:99997;
+  background:#fff;color:#0F172A;padding:9px 14px;border-radius:14px;
+  border:1px solid var(--us-border);font-size:13px;font-weight:600;
+  box-shadow:0 12px 28px rgba(15,23,42,.18);
+  opacity:0;transform:translateX(8px) scale(.96);
+  transition:opacity .35s ease, transform .35s ease;
+  pointer-events:none;max-width:240px;cursor:pointer}
+.us-launcher-tip::after{content:"";position:absolute;right:-7px;top:50%;
+  transform:translateY(-50%);border:7px solid transparent;
+  border-left-color:#fff;border-right:0}
+.us-launcher-tip.show{opacity:1;transform:translateX(0) scale(1);pointer-events:auto}
+[dir="rtl"] .us-launcher-tip{right:auto;left:96px}
+[dir="rtl"] .us-launcher-tip::after{right:auto;left:-7px;border-right-color:#fff;border-left:0}
+@media(max-width:480px){.us-launcher-tip{display:none}}
 
 .us-panel{position:fixed;right:24px;bottom:96px;width:400px;max-width:calc(100vw - 32px);
   height:620px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;
