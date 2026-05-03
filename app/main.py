@@ -452,7 +452,7 @@ Vendors can self-register at https://{b['domain']}/login.html (Vendor tab) — s
 
 ## Pricing
 
-Transparent, AED, includes 5% VAT. See https://{b['domain']}/services.html or ask Lumi (our AI assistant).
+Transparent, AED, includes 5% VAT. See https://{b['domain']}/services.html or ask Servia (our AI assistant).
 
 ## Contact
 

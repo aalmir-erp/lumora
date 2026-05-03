@@ -33,7 +33,7 @@ VENDOR_PERSONA_DEFAULT = (
 
 
 def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict]:
-    """persona = 'customer' (default Lumi) or 'vendor' (Sara onboarding bot).
+    """persona = 'customer' (default Servia) or 'vendor' (Sara onboarding bot).
     Both prompts can be overridden by admin via db.cfg_get('llm_prompts').
     """
     s = get_settings()
@@ -72,7 +72,7 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         ]
 
     persona = (
-        f"You are \"Lumi\", the all-in-one AI concierge for {b['name']} ({b['domain']}) — "
+        f"You are \"Servia\", the all-in-one AI concierge for {b['name']} ({b['domain']}) — "
         f"a UAE home & commercial services platform owned by {b.get('legal_owner', 'Urban Services')}. "
         f"Tagline: {b['tagline']}.\n\n"
         "Your job:\n"

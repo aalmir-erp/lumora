@@ -628,3 +628,82 @@ def public_market_signal(body: MarketSignalPublic, request: Request):
              request.headers.get("referer",""),
              _dt.datetime.utcnow().isoformat() + "Z"))
     return {"ok": True}
+
+
+# ---------- referral / rewards system ----------
+@public_router.get("/referral/{code}")
+def referral_landing(code: str):
+    """Public referral lookup — track click + return basic info for the landing page."""
+    with db.connect() as c:
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS referrals(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                referrer_phone TEXT, referrer_name TEXT,
+                code TEXT UNIQUE, click_count INTEGER DEFAULT 0,
+                signup_count INTEGER DEFAULT 0, completed_count INTEGER DEFAULT 0,
+                total_earned_aed REAL DEFAULT 0, created_at TEXT)""")
+        except Exception: pass
+        r = c.execute("SELECT * FROM referrals WHERE code=?", (code,)).fetchone()
+        if r:
+            c.execute("UPDATE referrals SET click_count=click_count+1 WHERE code=?", (code,))
+            return {"valid": True, "referrer_name": r["referrer_name"]}
+    return {"valid": False}
+
+
+class ReferralCreate(BaseModel):
+    referrer_phone: str
+    referrer_name: str | None = None
+
+
+@router.post("/me/referral", dependencies=[Depends(a.current_customer)])
+def create_referral_code(body: ReferralCreate):
+    """Generate a unique referral code for this customer."""
+    import secrets
+    code = secrets.token_urlsafe(5).replace("_","").replace("-","")[:7].upper()
+    now = _dt.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS referrals(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                referrer_phone TEXT, referrer_name TEXT,
+                code TEXT UNIQUE, click_count INTEGER DEFAULT 0,
+                signup_count INTEGER DEFAULT 0, completed_count INTEGER DEFAULT 0,
+                total_earned_aed REAL DEFAULT 0, created_at TEXT)""")
+        except Exception: pass
+        c.execute("INSERT OR IGNORE INTO referrals(referrer_phone, referrer_name, code, created_at) "
+                  "VALUES(?,?,?,?)", (body.referrer_phone, body.referrer_name, code, now))
+    return {"code": code, "share_url": f"https://servia.ae/r/{code}"}
+
+
+# ---------- 5-star Google review reward ----------
+class ReviewProofBody(BaseModel):
+    booking_id: str
+    google_review_url: str | None = None       # link to their Google review
+    social_post_url: str | None = None         # link to Instagram/TikTok/Twitter post
+    platform: str | None = None                # 'google' | 'instagram' | 'tiktok' | 'facebook'
+    screenshot_data_url: str | None = None     # optional screenshot upload (base64)
+
+
+@public_router.post("/review-reward")
+def claim_review_reward(body: ReviewProofBody, request: Request):
+    """Customer submits proof of 5-star review or social-share post; admin
+    approves to release cashback / discount coupon."""
+    with db.connect() as c:
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS review_rewards(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                booking_id TEXT, platform TEXT,
+                google_review_url TEXT, social_post_url TEXT,
+                screenshot_data_url TEXT, status TEXT DEFAULT 'pending',
+                reward_aed REAL DEFAULT 25, payout_method TEXT,
+                approved_by TEXT, created_at TEXT)""")
+        except Exception: pass
+        c.execute("INSERT INTO review_rewards(booking_id, platform, google_review_url, "
+                  "social_post_url, screenshot_data_url, created_at) VALUES(?,?,?,?,?,?)",
+                  (body.booking_id, body.platform, body.google_review_url,
+                   body.social_post_url, body.screenshot_data_url,
+                   _dt.datetime.utcnow().isoformat() + "Z"))
+    return {"ok": True, "message": "Thanks! We'll verify and send your reward via WhatsApp within 24h."}

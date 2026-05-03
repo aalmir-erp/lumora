@@ -7,13 +7,23 @@
 <nav class="nav"><div class="nav-inner">
   <a href="/"><img src="/logo.svg" height="36"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-cta">
-    <div class="lang-list" role="group" aria-label="Language">
-      <button data-lang="en" onclick="window.lumoraSetLang&&lumoraSetLang('en')">English</button>
-      <button data-lang="ar" onclick="window.lumoraSetLang&&lumoraSetLang('ar')" lang="ar">العربية</button>
-      <button data-lang="ur" onclick="window.lumoraSetLang&&lumoraSetLang('ur')" lang="ur">اردو</button>
-      <button data-lang="hi" onclick="window.lumoraSetLang&&lumoraSetLang('hi')" lang="hi">हिन्दी</button>
-      <button data-lang="tl" onclick="window.lumoraSetLang&&lumoraSetLang('tl')">Filipino</button>
-    </div>
+    <select class="lang-dropdown" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
+      <option value="en">🇬🇧 English</option>
+      <option value="ar">🇦🇪 العربية</option>
+      <option value="ur">🇵🇰 اردو</option>
+      <option value="hi">🇮🇳 हिन्दी</option>
+      <option value="bn">🇧🇩 বাংলা</option>
+      <option value="ta">தமிழ்</option>
+      <option value="ml">മലയാളം</option>
+      <option value="tl">🇵🇭 Filipino</option>
+      <option value="ps">🇦🇫 پښتو</option>
+      <option value="ne">🇳🇵 नेपाली</option>
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="fa">🇮🇷 فارسی</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="zh">🇨🇳 中文</option>
+      <option value="es">🇪🇸 Español</option>
+    </select>
 <a class="btn btn-ghost" href="/account.html">My account</a></div>
 </div></nav>
 
