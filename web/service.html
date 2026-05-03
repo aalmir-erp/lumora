@@ -268,20 +268,12 @@ window.LUMORA_PIXELS = {
     <h2 class="reveal" style="text-align:center">Book your service</h2>
     <p class="sub reveal" style="text-align:center">Get a confirmed price + slot in under 60 seconds.</p>
     <div id="book-form" class="form reveal">
-      <div class="row">
-        <div><label>Bedrooms <small style="color:var(--muted)">(if applicable)</small></label>
-          <input id="f-br" type="number" min="0" max="10"></div>
-        <div><label>Hours <small style="color:var(--muted)">(if hourly)</small></label>
-          <input id="f-hrs" type="number" min="0" max="24"></div>
-      </div>
-      <div class="row">
-        <div><label>Units <small style="color:var(--muted)">(AC/sofa/etc)</small></label>
-          <input id="f-units" type="number" min="0"></div>
+      <!-- Dynamic per-service intake form (only the questions that apply to this service) -->
+      <div id="intake-mount"></div>
+
+      <div class="row" style="margin-top:14px">
         <div><label>First-time customer?</label>
           <select id="f-first"><option value="">No</option><option value="1">Yes — apply 15% off</option></select></div>
-      </div>
-      
-      <div class="row">
         <div><label>Recurring</label>
           <select id="f-recurring">
             <option value="">One-time</option>
@@ -289,25 +281,15 @@ window.LUMORA_PIXELS = {
             <option value="biweekly">Bi-weekly (save 10%)</option>
             <option value="monthly">Monthly</option>
           </select></div>
-        <div></div>
       </div>
 
-      <button class="btn btn-ghost btn-block" type="button" onclick="getQuote()" style="margin-top:6px">Calculate price</button>
+      <button class="btn btn-ghost btn-block" type="button" onclick="getQuote()" style="margin-top:10px">Calculate price</button>
       <div id="quote-box" style="margin-top:14px"></div>
 
       <hr style="margin:24px 0;border:0;border-top:1px solid var(--border)">
 
-      <div class="row">
-        <div><label>Date</label><input id="f-date" type="date" required></div>
-        <div><label>Time</label>
-          <select id="f-time"><option>10:00</option><option>12:00</option><option>14:00</option><option>16:00</option></select></div>
-      </div>
       <label>Full name</label><input id="f-name">
-      <div class="row">
-        <div><label>Phone (with country code)</label><input id="f-phone" placeholder="+971501234567"></div>
-        <div><label>Area / Emirate</label><input id="f-area" placeholder="Dubai Marina"></div>
-      </div>
-      <label>Address</label><textarea id="f-addr" placeholder="Tower / villa, apartment no, street, area"></textarea>
+      <label>Phone (with country code)</label><input id="f-phone" placeholder="+971501234567">
       <button class="btn btn-primary btn-block" type="button" onclick="confirmBooking()" style="margin-top:14px;font-size:16px">Confirm booking →</button>
       <div id="book-result" style="margin-top:14px"></div>
     </div>
@@ -347,6 +329,7 @@ window.LUMORA_PIXELS = {
 
 <script src="/theme.js"></script>
 <script src="/app.js"></script>
+<script src="/intake.js"></script>
 <script>
 const ICONS = { sparkles:"✨", broom:"🧹", user:"👤", truck:"🚚", briefcase:"💼",
   hardhat:"🦺", sofa:"🛋️", wind:"❄️", shield:"🛡️", window:"🪟", bug:"🪲",
@@ -363,6 +346,8 @@ const sid = params.get("id") || "deep_cleaning";
   if (!found) { document.body.innerHTML = "<p style='padding:40px;text-align:center'>Service not found.</p>"; return; }
   SVC = found;
   render();
+  // Render dynamic per-service intake form
+  if (window.LumoraIntake) LumoraIntake.render(sid, { mount: "intake-mount" });
   // Reveal pass
   const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); }),
     { threshold: 0.12 });
@@ -461,28 +446,16 @@ function render() {
 function toggleAddon(aid, el) {
   if (pickedAddons.has(aid)) { pickedAddons.delete(aid); el.classList.remove("picked"); }
   else { pickedAddons.add(aid); el.classList.add("picked"); }
-  // Live recompute the quote if user already filled the basic fields
-  if (document.getElementById("f-br").value || document.getElementById("f-hrs").value || document.getElementById("f-units").value) {
-    getQuote();
-  }
+  // Live recompute the quote if user already filled at least one intake field
+  if (Object.keys(LumoraIntake.values()).length) getQuote();
 }
 
 async function getQuote() {
-  const args = {
-    service_id: sid,
-    bedrooms: parseInt(document.getElementById("f-br").value) || null,
-    hours: parseInt(document.getElementById("f-hrs").value) || null,
-    units: parseInt(document.getElementById("f-units").value) || null,
-    first_time: !!document.getElementById("f-first").value,
-    addons: [...pickedAddons],
-  };
-  // Construct natural-language query for Lumi (which calls get_quote with addons)
-  const cmd = `quote for ${args.service_id}` +
-    (args.bedrooms ? ` ${args.bedrooms} bedroom` : "") +
-    (args.hours ? ` ${args.hours} hours` : "") +
-    (args.units ? ` ${args.units} units` : "") +
-    (args.first_time ? " first time" : "") +
-    (pickedAddons.size ? " with addons " + [...pickedAddons].join(",") : "");
+  const ftext = LumoraIntake.summary();
+  const firstTime = !!document.getElementById("f-first").value;
+  const cmd = `quote for ${sid}` + (ftext ? ` — ${ftext}` : "") +
+    (firstTime ? " (first-time customer)" : "") +
+    (pickedAddons.size ? `, addons: ${[...pickedAddons].join(",")}` : "");
   document.getElementById("quote-box").innerHTML = "<i style='color:var(--muted)'>Calculating…</i>";
   try {
     const r = await fetch("/api/chat", { method:"POST", headers:{"content-type":"application/json"},
@@ -505,21 +478,20 @@ async function getQuote() {
 }
 
 async function confirmBooking() {
-  const date = document.getElementById("f-date").value;
-  const time = document.getElementById("f-time").value;
-  const name = document.getElementById("f-name").value;
-  const phone = document.getElementById("f-phone").value;
-  const address = document.getElementById("f-addr").value;
-  if (!date || !name || !phone || !address) {
-    document.getElementById("book-result").innerHTML = '<div style="color:#DC2626">Please complete date, name, phone, address.</div>';
+  const name = document.getElementById("f-name").value.trim();
+  const phone = document.getElementById("f-phone").value.trim();
+  const ftext = LumoraIntake.summary();
+  if (!name || !phone) {
+    document.getElementById("book-result").innerHTML = '<div style="color:#DC2626">Please add your name and phone.</div>';
     return;
   }
   conv("booking_submit");
-  const cmd = `Book ${sid} on ${date} at ${time} for ${name}, phone ${phone}, address: ${address}` +
-    (document.getElementById("f-br").value ? `, ${document.getElementById("f-br").value} bedrooms` : "") +
-    (document.getElementById("f-hrs").value ? `, ${document.getElementById("f-hrs").value} hours` : "") +
-    (document.getElementById("f-units").value ? `, ${document.getElementById("f-units").value} units` : "") +
-    (pickedAddons.size ? `, addons: ${[...pickedAddons].join(",")}` : "") + ((document.getElementById("f-recurring")||{value:""}).value ? `, recurring: ${document.getElementById("f-recurring").value}` : "");
+  let cmd = `Book ${sid} for ${name}, phone ${phone}`;
+  if (ftext) cmd += `. Details: ${ftext}`;
+  if (pickedAddons.size) cmd += `. Addons: ${[...pickedAddons].join(",")}`;
+  if (document.getElementById("f-first").value) cmd += ". First-time customer.";
+  const recur = (document.getElementById("f-recurring")||{value:""}).value;
+  if (recur) cmd += `. Frequency: ${recur}.`;
   document.getElementById("book-result").innerHTML = "<i style='color:var(--muted)'>Booking…</i>";
   try {
     const r = await fetch("/api/chat", { method:"POST", headers:{"content-type":"application/json"},

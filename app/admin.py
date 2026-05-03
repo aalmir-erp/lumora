@@ -380,6 +380,7 @@ class ServiceInfoBody(BaseModel):
     starting_price: float | None = None
     includes: list[str] | None = None
     excludes: list[str] | None = None
+    intake: list[str] | None = None
 
 
 @router.post("/service/{sid}/info")

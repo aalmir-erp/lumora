@@ -40,17 +40,9 @@
     <label>Service</label>
     <select id="service" required></select>
 
-    <div class="row">
-      <div><label>Bedrooms</label><input id="bedrooms" type="number" min="0" max="10" placeholder="2"></div>
-      <div><label>Hours (if hourly)</label><input id="hours" type="number" min="0" max="24" placeholder=""></div>
-    </div>
-    <div class="row">
-      <div><label>Units (AC/sofa/etc)</label><input id="units" type="number" min="0" placeholder=""></div>
-      <div><label>First-time customer</label>
-        <select id="first_time"><option value="">No</option><option value="1">Yes</option></select></div>
-    </div>
+    <!-- Dynamic per-service intake form (questions specific to chosen service) -->
+    <div id="intake-mount" style="margin:18px 0"></div>
 
-    
     <label>Recurring schedule</label>
     <select id="f-recurring">
       <option value="">One-time only</option>
@@ -59,67 +51,55 @@
       <option value="monthly">Monthly</option>
     </select>
 
-    <button class="btn btn-ghost" type="button" id="quote-btn">Get instant quote</button>
+    <button class="btn btn-ghost btn-block" type="button" id="quote-btn" style="margin-top:12px">Get instant quote</button>
     <div id="quote-out" style="margin-top:12px;color:var(--muted)"></div>
 
     <hr style="margin:24px 0;border:0;border-top:1px solid var(--border)">
 
-    <div class="row">
-      <div><label>Date</label><input id="date" type="date" required></div>
-      <div><label>Time slot</label>
-        <select id="time" required><option value="">Pick a date first…</option></select></div>
-    </div>
     <label>Full name</label><input id="name" required>
     <div class="row">
       <div><label>Phone</label><input id="phone" required placeholder="+971501234567"></div>
-      <div><label>Area</label><input id="area" placeholder="Dubai Marina"></div>
+      <div><label>First-time customer?</label>
+        <select id="first_time"><option value="">No</option><option value="1">Yes — apply 15% off</option></select></div>
     </div>
-    <label>Address</label><textarea id="address" required placeholder="Tower, apt no, area, emirate"></textarea>
     <label>Notes (optional)</label><textarea id="notes"></textarea>
 
-    <button class="btn btn-primary btn-block" type="button" id="book-btn" style="margin-top:18px">Confirm booking</button>
+    <button class="btn btn-primary btn-block" type="button" id="book-btn" style="margin-top:18px;font-size:16px">Confirm booking →</button>
     <div id="result" style="margin-top:18px"></div>
   </div>
 </div></section>
 
 <script src="/app.js"></script>
+<script src="/intake.js"></script>
 <script>
 const params = new URLSearchParams(location.search);
 let services = [];
 
 fetch("/api/services").then(r=>r.json()).then(d=>{
   services = d.services;
-  document.getElementById("service").innerHTML =
-    services.map(s => `<option value="${s.id}">${s.name} (from ${s.starting_price} AED)</option>`).join("");
-  if (params.get("service")) document.getElementById("service").value = params.get("service");
+  const sel = document.getElementById("service");
+  sel.innerHTML = services.map(s =>
+    `<option value="${s.id}">${s.name} (from ${s.starting_price} AED)</option>`).join("");
+  if (params.get("service")) sel.value = params.get("service");
+  renderIntake();
+  sel.addEventListener("change", renderIntake);
 });
 
-async function getSlots() {
-  const date = document.getElementById("date").value;
-  if (!date) return;
-  const r = await fetch(`/api/services`); // not the slots endpoint — slots come via /api/chat tool
-  // Use a small helper endpoint via the bot? we've exposed list_slots only via tool. Use a direct call:
-  try {
-    const j = await api("/api/chat", { method:"POST", body:{ message: `slots for ${date}` }});
-    // demo brain returns text — we just probe directly from the slot generator via list_slots tool route? add ad-hoc endpoint
-  } catch {}
-  // Simpler: call portal endpoint we'll add — for now derive locally
-  const dt = new Date(date);
-  const slots = dt.getDay()===5 ? ["09:00","11:00","13:00","15:00"] : ["08:00","10:00","12:00","14:00","16:00","18:00"];
-  document.getElementById("time").innerHTML = slots.map(s=>`<option>${s}</option>`).join("");
+function renderIntake() {
+  const id = document.getElementById("service").value;
+  if (id) LumoraIntake.render(id, { mount: "intake-mount" });
 }
-document.getElementById("date").addEventListener("change", getSlots);
 
 document.getElementById("quote-btn").addEventListener("click", async () => {
   const out = document.getElementById("quote-out");
   out.innerHTML = "Fetching…";
   try {
-    const msg = `quote for ${document.getElementById("service").value} ` +
-      (document.getElementById("bedrooms").value ? `${document.getElementById("bedrooms").value} bedroom ` : "") +
-      (document.getElementById("hours").value ? `${document.getElementById("hours").value} hours ` : "") +
-      (document.getElementById("units").value ? `${document.getElementById("units").value} units ` : "") +
-      (document.getElementById("first_time").value ? "first-time" : "");
-    const r = await api("/api/chat", { method:"POST", body:{ message: "How much for: " + msg }});
+    const sid = document.getElementById("service").value;
+    const v = LumoraIntake.values();
+    const ftext = LumoraIntake.summary();
+    const msg = `Quote for ${sid}` + (ftext ? ` — ${ftext}` : "") +
+      (document.getElementById("first_time").value ? " (first-time customer)" : "");
+    const r = await api("/api/chat", { method:"POST", body:{ message: msg }});
     out.innerHTML = `<div style="background:var(--bg);border-radius:10px;padding:14px;white-space:pre-wrap">${escapeHtml(r.text)}</div>`;
   } catch (e) { out.innerHTML = "Error: " + e.message; }
 });
@@ -128,31 +108,29 @@ document.getElementById("book-btn").addEventListener("click", async () => {
   const out = document.getElementById("result");
   out.innerHTML = "Booking…";
   try {
-    const date = document.getElementById("date").value;
-    const time = document.getElementById("time").value;
-    const name = document.getElementById("name").value;
-    const phone = document.getElementById("phone").value;
-    const address = document.getElementById("address").value;
-    const service = document.getElementById("service").value;
-    if (!date || !time || !name || !phone || !address) {
-      out.innerHTML = "Please complete the form."; return;
-    }
-    // Fast path: ask the bot to book — uses create_booking tool.
-    const cmd = `Book ${service} on ${date} at ${time} for ${name}, phone ${phone}, address: ${address}` +
-      (document.getElementById("bedrooms").value ? `, ${document.getElementById("bedrooms").value} bedrooms` : "") +
-      (document.getElementById("hours").value ? `, ${document.getElementById("hours").value} hours` : "") +
-      (document.getElementById("units").value ? `, ${document.getElementById("units").value} units` : "") +
-      (document.getElementById("notes").value ? `, notes: ${document.getElementById("notes").value}` : "");
+    const sid = document.getElementById("service").value;
+    const v = LumoraIntake.values();
+    const ftext = LumoraIntake.summary();
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    if (!name || !phone) { out.innerHTML = "Name and phone are required."; return; }
+
+    // Build a natural-language booking command — the chat agent's create_booking tool will parse it
+    let cmd = `Book ${sid} for ${name}, phone ${phone}`;
+    if (ftext) cmd += `. Details: ${ftext}`;
+    if (document.getElementById("notes").value) cmd += `. Notes: ${document.getElementById("notes").value}`;
+    if (document.getElementById("first_time").value) cmd += ". First-time customer.";
+    if (document.getElementById("f-recurring").value) cmd += `. Frequency: ${document.getElementById("f-recurring").value}.`;
+
     const r = await api("/api/chat", { method:"POST", body:{ message: cmd, phone, language: window.lumoraLang() }});
     let bid = null;
     for (const tc of (r.tool_calls || [])) {
       if (tc.name === "create_booking" && tc.result && tc.result.ok) bid = tc.result.booking.id;
     }
-    if (bid) {
-      location.href = '/booked.html?id=' + bid;
-    } else {
+    if (bid) location.href = "/booked.html?id=" + bid;
+    else {
       out.innerHTML = `<div class="form" style="background:#FFFBEB;border-color:#FDE68A">
-        <p>${escapeHtml(r.text || "Couldn't auto-book. Please call us at +971 56 4020087.")}</p>
+        <p>${escapeHtml(r.text || "Couldn't auto-book. Please continue in chat or WhatsApp +971 56 4020087.")}</p>
       </div>`;
     }
   } catch (e) { out.innerHTML = "Error: " + e.message; }

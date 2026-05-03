@@ -370,6 +370,13 @@ function renderServiceDetail(sid, d) {
         </div>
         <button class="btn btn-ghost" style="margin-top:10px;font-size:13px" onclick="saveInfo('${sid}')">Save info</button>
 
+        <h4 style="margin:24px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking intake fields</h4>
+        <p style="margin:0 0 8px;font-size:12px;color:var(--muted)">One field per line. The booking form + chatbot will ONLY ask these. Use <code>(opt1/opt2)</code> for select dropdowns. Examples:<br>
+          <code>bedrooms</code>, <code>pool_size_sqm</code>, <code>preferred_date</code>, <code>time_slot</code>,
+          <code>emirate</code>, <code>property_address</code>, <code>frequency (one-time/weekly/monthly)</code></p>
+        <textarea id="info-intake-${sid}" rows="6" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px">${escapeHtml((s.intake||[]).join("\n"))}</textarea>
+        <button class="btn btn-ghost" style="margin-top:8px;font-size:13px" onclick="saveIntake('${sid}')">Save intake fields</button>
+
         <h4 style="margin:24px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Includes</h4>
         <div>${includes||'<span style="color:var(--muted);font-size:12px">—</span>'}</div>
         <h4 style="margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Excludes</h4>
@@ -420,6 +427,12 @@ window.saveInfo = async function(sid) {
   toast("✓ Info saved");
   // Refresh card list to show updated starting_price
   loadPricing();
+};
+window.saveIntake = async function(sid) {
+  const txt = document.getElementById("info-intake-"+sid).value;
+  const intake = txt.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  await adm("/api/admin/service/"+sid+"/info", { method:"POST", body:{ intake }});
+  toast("✓ Intake fields saved — bot + booking form will use these immediately");
 };
 window.saveVendorPricing = async function(sid, vid) {
   const exp = document.getElementById("exp-"+sid);
