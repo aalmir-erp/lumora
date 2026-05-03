@@ -159,7 +159,7 @@ window.LUMORA_PIXELS = {
   </div>
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
-    <select class="lang-dropdown" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
+    <select class="lang-dropdown notranslate" translate="no" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
       <option value="en">🇬🇧 English</option>
       <option value="ar">🇦🇪 العربية</option>
       <option value="ur">🇵🇰 اردو</option>
@@ -330,7 +330,7 @@ window.LUMORA_PIXELS = {
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
   <div><h3>Product</h3><a href="/services.html">All services</a><br><a href="/book.html">Book</a><br><a href="/me.html">My account</a></div>
   <div><h3>Partners</h3><a href="/login.html">Partner portal</a></div>
-  <div><h3>Contact</h3><a href="https://wa.me/971564020087">WhatsApp</a><br><a href="mailto:hello@servia.ae">Email</a></div>
+  <div><h3>Contact</h3><a href="/contact.html">WhatsApp</a><br><a href="mailto:hello@servia.ae">Email</a></div>
 </div></footer>
 
 <!-- STICKY CTA BAR -->
@@ -381,7 +381,7 @@ function render() {
     "@context":"https://schema.org","@type":"Service",
     name: SVC.name, description: SVC.description, serviceType: SVC.category,
     provider: {"@type":"LocalBusiness","name":"Servia","url":location.origin,
-               telephone:"+971564020087", priceRange:"AED 35-1500",
+               telephone:"via our website", priceRange:"AED 35-1500",
                address:{"@type":"PostalAddress",addressCountry:"AE",addressLocality:"Dubai"},
                aggregateRating:{"@type":"AggregateRating",ratingValue:"4.9",reviewCount:"2412"}},
     areaServed:[{"@type":"City",name:"Dubai"},{"@type":"City",name:"Sharjah"},
@@ -504,8 +504,8 @@ function render() {
 
   // CTAs
   const waMsg = encodeURIComponent(`Hi Servia! I want to book ${SVC.name}. Can you help?`);
-  document.getElementById("cta-wa").href = `https://wa.me/971564020087?text=${waMsg}`;
-  document.getElementById("sticky-wa").href = `https://wa.me/971564020087?text=${waMsg}`;
+  document.getElementById("cta-wa").href = `/contact.html
+  document.getElementById("sticky-wa").href = `/contact.html
   document.getElementById("sticky-price").textContent = `from ${SVC.starting_price} AED`;
 }
 

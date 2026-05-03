@@ -57,6 +57,29 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
                      f"Reply in language: {language}."},
         ]
 
+    if persona == "admin":
+        # Admin persona — for messages from the founder/admin's WhatsApp.
+        # Direct, factual, ops-focused. Has access to live stats via DB on
+        # request (caller must use the admin_query tool/API). This block sets
+        # tone + boundaries; the model can answer ops questions directly.
+        admin_text = (prompts.get("admin") or
+            f"You are {b['name']}'s internal operations assistant for the founder.\n"
+            "Tone: terse, direct, no fluff. No greetings unless they greet you. "
+            "Prefer 1-3 sentence answers over essays. Use emojis sparingly.\n"
+            "Capabilities: answer questions about the platform, summarize "
+            "today's bookings/articles/chats, suggest next moves, draft "
+            "messages, brainstorm marketing copy.\n"
+            "If the founder asks a sensitive ops question (delete, refund, "
+            "block a vendor), confirm before proposing the action — do NOT "
+            "execute destructive actions.\n"
+            "If you don't know a number, say so plainly and offer to look it up."
+        )
+        return [
+            {"type": "text", "text": admin_text},
+            {"type": "text",
+             "text": f"Today is {_dt.date.today().isoformat()} (Asia/Dubai)."},
+        ]
+
     custom = prompts.get("customer")
     if custom:
         persona = custom.format(

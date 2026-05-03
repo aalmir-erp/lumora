@@ -151,7 +151,7 @@
         <!-- Right: leads + status -->
         <div>
           <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:13px">
-            <b>📡 WhatsApp bridge required.</b> The actual message is delivered via the Servia WhatsApp bridge (Node service). Set <code>WA_BRIDGE_URL</code> in Railway env. Without it, leads are still recorded with their signup URL — you can manually copy/paste-send for now. <a href="https://wa.me/971564020087?text=Hi%20Servia%2C%20guide%20me%20on%20the%20WhatsApp%20bridge%20setup" target="_blank">Need help setting it up?</a>
+            <b>📡 WhatsApp bridge required.</b> The actual message is delivered via the Servia WhatsApp bridge (Node service). Set <code>WA_BRIDGE_URL</code> in Railway env. Without it, leads are still recorded with their signup URL — you can manually copy/paste-send for now. <a href="/contact.html" target="_blank">Need help setting it up?</a>
           </div>
           <h3 style="margin:0 0 12px;font-size:15px">Recent leads (top 50)</h3>
           <div id="ou-leads"></div>
@@ -235,8 +235,39 @@
     </div>
 
     <div id="t-whatsapp" class="tab" style="display:none">
-      <h2>WhatsApp Bridge</h2>
-      <div id="wa-status">Checking…</div>
+      <h2>📲 WhatsApp Admin</h2>
+      <p style="color:var(--muted);margin-top:0;font-size:14px">Pair your personal WhatsApp by scanning a QR. Once paired, this becomes the channel for all admin alerts (new bookings, articles published, urgent issues, daily summary) AND the bot replies to you when you message it from any device.</p>
+
+      <div id="wa-grid" style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-bottom:18px">
+        <!-- QR pairing -->
+        <div class="card" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h3 style="margin:0 0 6px;font-size:15px">📱 Pair this WhatsApp</h3>
+          <div id="wa-status" style="font-size:13px;color:var(--muted);margin-bottom:8px">Checking…</div>
+          <div id="wa-qr"></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5">
+            On your phone: WhatsApp → <b>Settings</b> → <b>Linked devices</b> → <b>Link a device</b> → scan the QR above. Persists across redeploys when bridge volume is mounted.
+          </div>
+        </div>
+        <!-- Send test -->
+        <div class="card" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h3 style="margin:0 0 6px;font-size:15px">✉️ Send test message</h3>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 10px">Sends to your admin number. Confirms the bridge is paired and reachable.</p>
+          <textarea id="wa-test-text" style="width:100%;min-height:80px;border:1px solid var(--border);border-radius:8px;padding:10px;font-family:inherit" placeholder="Test message…">Test from Servia admin panel ✅</textarea>
+          <button class="btn btn-primary btn-block" onclick="sendWaTest()" style="margin-top:8px">Send to admin</button>
+          <div id="wa-test-result" style="font-size:12px;margin-top:8px"></div>
+        </div>
+        <!-- Daily summary trigger -->
+        <div class="card" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h3 style="margin:0 0 6px;font-size:15px">📊 Daily summary</h3>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 10px">Auto-fires every day at 21:00 Asia/Dubai. Click to fire now (Claude-written summary of today's bookings/chats/articles).</p>
+          <button class="btn btn-ghost btn-block" onclick="fireDailySummary()">Fire now</button>
+          <div id="wa-summary-result" style="font-size:12px;margin-top:8px"></div>
+        </div>
+      </div>
+
+      <h3 style="margin:24px 0 8px">📜 Recent admin alerts</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 8px">Every event the system would WhatsApp you about — even if the bridge wasn't paired at that moment.</p>
+      <div id="wa-alerts" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:0;max-height:480px;overflow:auto"></div>
     </div>
   </main>
 </div>
@@ -1007,15 +1038,84 @@ window.confirmCreateVendor = async function() {
 };
 
 async function loadWA() {
+  // Status + QR
+  const statusEl = document.getElementById("wa-status");
+  const qrEl = document.getElementById("wa-qr");
   try {
-    const s = await api("/api/wa/status");
-    document.getElementById("wa-status").innerHTML = `
-      <div class="form">
-        <p>Configured: <b>${s.configured?'yes':'no'}</b></p>
-        ${s.bridge ? `<pre style="background:var(--bg);padding:12px;border-radius:8px">${escapeHtml(JSON.stringify(s.bridge,null,2))}</pre>` : ''}
-        <p style="color:var(--muted);font-size:13px">Set <code>WA_BRIDGE_URL</code> + <code>WA_BRIDGE_TOKEN</code> on the bot service. Run <code>whatsapp_bridge/</code> as a separate Railway service and visit its <code>/qr</code> page to pair.</p>
+    const s = await adm("/api/admin/whatsapp/qr");
+    if (!s.configured) {
+      statusEl.innerHTML = `<span style="color:#B91C1C">⚠️ Bridge not configured</span> — ${escapeHtml(s.error||'')}`;
+      qrEl.innerHTML = '<div style="background:#FEF3C7;padding:12px;border-radius:8px;font-size:12px;color:#78350F">Deploy the <code>whatsapp_bridge/</code> Node service on Railway, set <code>WA_BRIDGE_URL</code> + <code>WA_BRIDGE_TOKEN</code> env vars, then refresh.</div>';
+    } else if (s.ready) {
+      statusEl.innerHTML = `<span style="color:#15803D;font-weight:700">✅ Paired</span> · ${escapeHtml(s.paired_number||'(unknown number)')}`;
+      qrEl.innerHTML = '<div style="background:#ECFDF5;padding:12px;border-radius:8px;font-size:12px;color:#065F46">Already linked. To re-pair, log out from your phone first (WhatsApp → Linked devices → tap device → Log out).</div>';
+    } else {
+      statusEl.innerHTML = `<span style="color:#B45309">🔄 Waiting for scan…</span>`;
+      // The bridge HTML contains a QR data-URL — extract and render it inline.
+      let qrSrc = '';
+      if (s.qr_html) {
+        const m = s.qr_html.match(/src="(data:image\/png;base64,[^"]+)"/);
+        if (m) qrSrc = m[1];
+      }
+      qrEl.innerHTML = qrSrc
+        ? `<img src="${qrSrc}" alt="WhatsApp QR" style="width:240px;height:240px;border:6px solid #fff;border-radius:12px;box-shadow:0 8px 24px rgba(15,23,42,.14);background:#fff;display:block;margin:8px auto">
+           <small style="display:block;text-align:center;color:var(--muted)">Refreshing every 8 seconds…</small>`
+        : `<div style="background:#FEF3C7;padding:12px;border-radius:8px;font-size:12px;color:#78350F">QR not yet generated — bridge is starting up. Auto-retrying…</div>`;
+      // Auto-refresh every 8s while not ready
+      setTimeout(loadWA, 8000);
+    }
+  } catch (e) {
+    statusEl.innerHTML = "Error: " + escapeHtml(e.message);
+  }
+  // Alerts log
+  try {
+    const a = await adm("/api/admin/alerts?limit=80");
+    const wa = document.getElementById("wa-alerts");
+    if (!a.alerts || !a.alerts.length) {
+      wa.innerHTML = '<div style="padding:14px;text-align:center;color:var(--muted);font-size:13px">No alerts yet.</div>';
+      return;
+    }
+    wa.innerHTML = a.alerts.map(x => {
+      const tone = x.urgency === "urgent" ? "#B91C1C" : (x.delivered ? "#15803D" : "#94A3B8");
+      const badge = x.urgency === "urgent" ? "🚨 URGENT" : (x.delivered ? "✅ Sent" : "📥 Pending");
+      const ts = (x.created_at||'').slice(0,19).replace('T',' ');
+      return `<div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+          <div style="font-weight:700;color:${tone}">${escapeHtml(x.kind)}</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:10px;color:${tone};font-weight:800;letter-spacing:.04em">${badge}</span>
+            <span style="font-size:11px;color:var(--muted)">${ts}</span>
+          </div>
+        </div>
+        <div style="white-space:pre-wrap;color:var(--text)">${escapeHtml(x.text||'')}</div>
+        ${x.delivery_error ? `<div style="margin-top:4px;font-size:11px;color:#B91C1C">⚠ ${escapeHtml(x.delivery_error)}</div>`:''}
       </div>`;
-  } catch (e) { document.getElementById("wa-status").innerHTML = "Error: "+e.message; }
+    }).join("");
+  } catch (e) { /* ignore */ }
+}
+
+async function sendWaTest() {
+  const txt = document.getElementById("wa-test-text").value.trim();
+  if (!txt) return;
+  const r = document.getElementById("wa-test-result");
+  r.textContent = "Sending…";
+  try {
+    const res = await adm("/api/admin/whatsapp/send", {method:"POST", body:{text: txt}});
+    if (res.ok) r.innerHTML = '<span style="color:#15803D;font-weight:700">✅ Sent</span>';
+    else r.innerHTML = '<span style="color:#B91C1C">❌ ' + escapeHtml(res.error||'failed') + '</span>';
+    setTimeout(loadWA, 800);
+  } catch (e) { r.innerHTML = '<span style="color:#B91C1C">❌ '+escapeHtml(e.message)+'</span>'; }
+}
+
+async function fireDailySummary() {
+  const r = document.getElementById("wa-summary-result");
+  r.textContent = "Generating + sending…";
+  try {
+    const res = await adm("/api/admin/alerts/daily-summary", {method:"POST"});
+    if (res.ok) r.innerHTML = '<span style="color:#15803D;font-weight:700">✅ Summary pushed</span>';
+    else r.innerHTML = '<span style="color:#B91C1C">❌ '+escapeHtml(res.error||'failed')+'</span>';
+    setTimeout(loadWA, 800);
+  } catch (e) { r.innerHTML = '<span style="color:#B91C1C">❌ '+escapeHtml(e.message)+'</span>'; }
 }
 
 let es = null;
@@ -1046,7 +1146,7 @@ async function loadBrand() {
   const fields = [
     ["name","Brand name","text"],
     ["tagline","Tagline (shown in hero, footer, search results)","text"],
-    ["phone","Phone (display format, e.g. +971 56 4020087)","text"],
+    ["phone","Phone (display format, e.g. via our website)","text"],
     ["whatsapp","WhatsApp (digits only, no spaces — for wa.me links)","text"],
     ["email","Email","email"],
     ["address","Address (footer + invoices)","text"],

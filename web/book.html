@@ -15,7 +15,7 @@
   </div>
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
-    <select class="lang-dropdown" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
+    <select class="lang-dropdown notranslate" translate="no" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
       <option value="en">🇬🇧 English</option>
       <option value="ar">🇦🇪 العربية</option>
       <option value="ur">🇵🇰 اردو</option>
@@ -158,7 +158,7 @@ document.getElementById("book-btn").addEventListener("click", async () => {
     if (bid) location.href = "/booked.html?id=" + bid;
     else {
       out.innerHTML = `<div class="form" style="background:#FFFBEB;border-color:#FDE68A">
-        <p>${escapeHtml(r.text || "Couldn't auto-book. Please continue in chat or WhatsApp +971 56 4020087.")}</p>
+        <p>${escapeHtml(r.text || "Couldn't auto-book. Please continue in chat or WhatsApp via our website.")}</p>
       </div>`;
     }
   } catch (e) { out.innerHTML = "Error: " + e.message; }

@@ -568,6 +568,45 @@ Open endpoints for integration:
 """
 
 
+# ---------- contact form (replaces public WhatsApp links) ----------
+@app.post("/api/contact")
+async def submit_contact(request: Request):
+    """Captures a contact-form message and pings the admin via WhatsApp.
+    Stored in admin_alerts for visibility even if the bridge isn't paired."""
+    from . import db, admin_alerts
+    import datetime as _dt
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    if not isinstance(payload, dict): payload = {}
+    name = (payload.get("name") or "").strip()[:80]
+    email = (payload.get("email") or "").strip()[:120]
+    topic = (payload.get("topic") or "General").strip()[:80]
+    message = (payload.get("message") or "").strip()[:3000]
+    if not (name and email and message):
+        raise HTTPException(400, "name, email, message required")
+    with db.connect() as c:
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS contact_messages(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT,
+                topic TEXT, message TEXT, ip TEXT, created_at TEXT)""")
+        except Exception: pass
+        ip = (request.client.host if request.client else "")[:64]
+        c.execute(
+            "INSERT INTO contact_messages(name,email,topic,message,ip,created_at) "
+            "VALUES(?,?,?,?,?,?)",
+            (name, email, topic, message, ip, _dt.datetime.utcnow().isoformat()+"Z"))
+    is_urgent = topic.lower() == "urgent"
+    admin_alerts.notify_admin(
+        f"{'🚨 URGENT ' if is_urgent else '📨 New '}contact from {name} ({email})\n"
+        f"Topic: {topic}\n\n{message[:600]}",
+        kind="contact_form", urgency="urgent" if is_urgent else "normal",
+        meta={"email": email, "topic": topic})
+    return {"ok": True}
+
+
 # ---------- PWA install tracking (called by /web/install.js) ----------
 @app.post("/api/app-install")
 async def track_app_install(request: Request):
@@ -838,11 +877,30 @@ try:
         _db.log_event("autoblog", slug, "published", actor="cron",
                       details={"emirate": em, "service": sv, "slant": slant, "len": len(body)})
         print(f"[autoblog] published {slug}", flush=True)
+        try:
+            from . import admin_alerts as _aa
+            _aa.notify_admin(
+                f"📝 New Servia article published\n\n*{topic}*\n\n"
+                f"https://servia.ae/blog/{slug}",
+                kind="article_published",
+                meta={"slug": slug, "emirate": em, "service": sv})
+        except Exception: pass
 
     @_scheduler.scheduled_job("cron", hour=6, minute=0, id="autoblog_daily",
                               max_instances=1, coalesce=True, replace_existing=True)
     def _job_autoblog():
         _autoblog_tick()
+
+    # Daily summary push at 21:00 Asia/Dubai
+    @_scheduler.scheduled_job("cron", hour=21, minute=0, id="daily_summary",
+                              max_instances=1, coalesce=True, replace_existing=True)
+    def _job_daily_summary():
+        try:
+            from . import admin_alerts as _aa
+            _aa.push_daily_summary()
+            print("[scheduler] daily summary pushed", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[scheduler] daily summary failed: {e}", flush=True)
 
     @app.on_event("startup")
     def _start_scheduler():
@@ -1047,3 +1105,9 @@ def _generate_seed_articles(target_count: int):
         time.sleep(1.5)  # gentle pacing — not hammering Claude
 
     print(f"[autoblog-seed] DONE — wrote {written} articles", flush=True)
+    try:
+        from . import admin_alerts as _aa
+        _aa.notify_admin(
+            f"🚀 Servia just seeded {written} starter articles. Check /blog and homepage.",
+            kind="batch_seed", meta={"written": written})
+    except Exception: pass

@@ -17,7 +17,7 @@
   </div>
   <div class="nav-cta">
     <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
-    <select class="lang-dropdown" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
+    <select class="lang-dropdown notranslate" translate="no" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
       <option value="en">🇬🇧 English</option>
       <option value="ar">🇦🇪 العربية</option>
       <option value="ur">🇵🇰 اردو</option>
@@ -112,7 +112,7 @@
   <!-- Referral / Refer & earn tab -->
   <div id="t-referral" style="display:none">
     <h2>🎁 Ambassador</h2>
-    <p class="sub">Three ways to earn AED cashback. Share your link, post reviews, tag us on socials.</p>
+    <p class="sub">Three ways to climb the tier ladder and earn a bigger % discount on every Servia booking. Share your link, post reviews, tag us on socials.</p>
 
     <div style="background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#78350F;padding:22px;border-radius:18px;margin-bottom:20px">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:6px">Your referral link</div>
@@ -125,13 +125,13 @@
       <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap;font-size:13px;font-weight:700">
         <div>Clicks: <span id="ref-clicks">0</span></div>
         <div>Signups: <span id="ref-signups">0</span></div>
-        <div>Earned: <span id="ref-earned">AED 0</span></div>
+        <div>Tier: <span id="ref-tier">🥉 Bronze (5%)</span></div>
       </div>
     </div>
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px">
-      <h3 style="margin:0 0 8px;font-size:17px">⭐ 5-star Google review = AED 25</h3>
-      <p style="font-size:14px;color:var(--muted);margin:0 0 12px">Did your last service deserve 5 stars? Post the review and we send AED 25 cashback within 24h.</p>
+      <h3 style="margin:0 0 8px;font-size:17px">⭐ 5-star Google review = +1 tier boost</h3>
+      <p style="font-size:14px;color:var(--muted);margin:0 0 12px">Did your last service deserve 5 stars? Post the review — we bump you up one ambassador tier (bigger % off your next booking).</p>
       <a class="btn btn-primary" href="https://g.page/r/REPLACE-WITH-GOOGLE-PLACE-ID/review" target="_blank">Open Google review →</a>
       <button class="btn btn-ghost" onclick="document.getElementById('rev-proof').style.display=''">I posted — submit proof</button>
       <div id="rev-proof" style="display:none;margin-top:14px">
@@ -139,13 +139,13 @@
         <input id="rev-bid" placeholder="LM-XXXXXX">
         <label style="font-size:12px;color:var(--muted)">Google review URL or screenshot link</label>
         <input id="rev-url" placeholder="https://maps.google.com/...">
-        <button class="btn btn-primary btn-block" onclick="submitReviewProof('google')" style="margin-top:10px">Submit for AED 25 reward</button>
+        <button class="btn btn-primary btn-block" onclick="submitReviewProof('google')" style="margin-top:10px">Submit for tier boost</button>
       </div>
     </div>
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px">
-      <h3 style="margin:0 0 8px;font-size:17px">📲 Tag us on socials = AED 25</h3>
-      <p style="font-size:14px;color:var(--muted);margin:0 0 12px">Post a before/after of your Servia service on Instagram / TikTok / X / Facebook tagged @servia.ae and we send AED 25.</p>
+      <h3 style="margin:0 0 8px;font-size:17px">📲 Tag us on socials = +1 tier boost</h3>
+      <p style="font-size:14px;color:var(--muted);margin:0 0 12px">Post a before/after of your Servia service on Instagram / TikTok / X / Facebook tagged @servia.ae — we bump you up one tier.</p>
       <button class="btn btn-primary" onclick="document.getElementById('soc-proof').style.display=''">Submit my post URL</button>
       <div id="soc-proof" style="display:none;margin-top:14px">
         <label style="font-size:12px;color:var(--muted)">Booking ID</label>
@@ -154,7 +154,7 @@
         <select id="soc-platform"><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="facebook">Facebook</option><option value="twitter">X / Twitter</option></select>
         <label style="font-size:12px;color:var(--muted)">Post URL</label>
         <input id="soc-url" placeholder="https://www.instagram.com/p/...">
-        <button class="btn btn-primary btn-block" onclick="submitReviewProof('social')" style="margin-top:10px">Submit for AED 25 reward</button>
+        <button class="btn btn-primary btn-block" onclick="submitReviewProof('social')" style="margin-top:10px">Submit for tier boost</button>
       </div>
     </div>
 
@@ -290,7 +290,7 @@ function renderBooking(b) {
         ${canReschedule ? `<button class="btn btn-ghost" style="font-size:12px" onclick="openReschedule('${b.id}', '${b.target_date}', '${b.time_slot}')">📆 Reschedule</button>` : ''}
         ${canCancel ? `<button class="btn btn-ghost" style="font-size:12px;color:#DC2626" onclick="openCancel('${b.id}')">✕ Cancel</button>` : ''}
         ${canReview ? `<button class="btn btn-primary" style="font-size:12px" onclick="openReview('${b.id}')">⭐ Leave review</button>` : ''}
-        <a class="btn btn-ghost" style="font-size:12px;color:#25D366" href="https://wa.me/${(window.LUMORA_BRAND&&window.LUMORA_BRAND.whatsapp||'971564020087').replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Hi, regarding my booking '+b.id)}" target="_blank">📲 WhatsApp us</a>
+        <a class="btn btn-ghost" style="font-size:12px;color:#25D366" href="https://wa.me/${(window.LUMORA_BRAND&&window.LUMORA_BRAND.whatsapp||'via our website').replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Hi, regarding my booking '+b.id)}" target="_blank">📲 WhatsApp us</a>
       </div>
     </div>`;
 }

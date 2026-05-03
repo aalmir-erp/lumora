@@ -168,6 +168,16 @@ def create_booking(service_id: str, target_date: str, time_slot: str,
              language, source, session_id, _now(), _now()),
         )
     db.log_event("booking", bid, "created", actor=source, details={"phone": phone})
+    try:
+        from . import admin_alerts as _aa
+        _aa.notify_admin(
+            f"🛎 New booking *{bid}*\n"
+            f"Service: {service_id}\nCustomer: {customer_name} ({phone})\n"
+            f"Slot: {target_date} {time_slot}\nAddress: {address[:120]}\n"
+            f"Total: AED {total}",
+            kind="new_booking", urgency="normal",
+            meta={"booking_id": bid, "service_id": service_id, "total": total})
+    except Exception: pass
 
     # Auto-create a sent quote linked to the booking.
     inv_payment_url = None
@@ -277,6 +287,17 @@ def handoff_to_human(reason: str, customer_name: str | None = None,
                 "VALUES(?,?,?)", (session_id, "queued", _now()))
         db.log_event("conversation", session_id, "handoff_requested",
                      actor="bot", details={"reason": reason, "summary": summary})
+    try:
+        from . import admin_alerts as _aa
+        _aa.notify_admin(
+            f"🚨 URGENT — bot escalation\n"
+            f"Customer: {customer_name or '(unknown)'} {phone or ''}\n"
+            f"Reason: {reason}\n"
+            f"Summary: {summary or '(none)'}\n"
+            f"Session: {session_id or '?'}",
+            kind="urgent_handoff", urgency="urgent",
+            meta={"session_id": session_id, "phone": phone})
+    except Exception: pass
     return {
         "ok": True, "channel": "whatsapp",
         "whatsapp": s.HANDOFF_WHATSAPP, "email": s.HANDOFF_EMAIL,

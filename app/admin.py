@@ -1093,3 +1093,82 @@ def autoblog_list():
             ).fetchall()
         except Exception: rows = []
     return {"posts": [db.row_to_dict(r) for r in rows]}
+
+
+# ---------- WhatsApp admin pairing + alerts ----------
+@router.get("/whatsapp/qr")
+def whatsapp_qr():
+    """Proxies the bridge's /qr page so admin can scan inline. Returns
+    {ready, paired_number, qr_data_url} JSON for the admin UI to render."""
+    from .config import get_settings
+    s = get_settings()
+    if not s.WA_BRIDGE_URL:
+        return {"configured": False, "error":
+                "WA_BRIDGE_URL not set. Deploy whatsapp_bridge/ as a separate "
+                "Railway service and set WA_BRIDGE_URL + WA_BRIDGE_TOKEN."}
+    import httpx, base64
+    try:
+        # Status check
+        r = httpx.get(s.WA_BRIDGE_URL.rstrip("/") + "/status",
+                      headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
+                      timeout=5)
+        info = r.json() if r.ok else {"error": r.text}
+        if info.get("ready"):
+            return {"configured": True, "ready": True,
+                    "paired_number": info.get("paired_number")}
+        # Fetch QR page
+        rq = httpx.get(s.WA_BRIDGE_URL.rstrip("/") + "/qr",
+                       headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
+                       timeout=8)
+        return {"configured": True, "ready": False,
+                "qr_html": rq.text if rq.ok else None,
+                "bridge_url": s.WA_BRIDGE_URL.rstrip("/")}
+    except Exception as e:
+        return {"configured": True, "ready": False, "error": str(e)}
+
+
+class WaSendBody(BaseModel):
+    to: str | None = None  # default: admin number
+    text: str
+
+
+@router.post("/whatsapp/send")
+def whatsapp_send(body: WaSendBody):
+    from . import admin_alerts
+    # If `to` is omitted, send to admin
+    if body.to:
+        # Direct send via bridge
+        from .config import get_settings
+        import httpx
+        s = get_settings()
+        if not s.WA_BRIDGE_URL:
+            return {"ok": False, "error": "bridge not configured"}
+        try:
+            r = httpx.post(
+                s.WA_BRIDGE_URL.rstrip("/") + "/send",
+                headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}",
+                         "content-type": "application/json"},
+                json={"to": body.to, "text": body.text}, timeout=8)
+            return r.json() if r.ok else {"ok": False, "error": r.text}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+    return admin_alerts.notify_admin_sync(body.text, kind="manual_test")
+
+
+@router.get("/alerts")
+def list_alerts(limit: int = 50):
+    """Last N admin alerts — for visibility even when WA bridge not paired."""
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT id, kind, urgency, text, delivered, delivery_error, created_at "
+                "FROM admin_alerts ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+        except Exception:
+            rows = []
+    return {"alerts": [db.row_to_dict(r) for r in rows]}
+
+
+@router.post("/alerts/daily-summary")
+def fire_daily_summary():
+    from . import admin_alerts
+    return admin_alerts.push_daily_summary()

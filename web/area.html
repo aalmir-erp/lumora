@@ -109,7 +109,7 @@
         <div class="s">7-day<small>re-do guarantee</small></div>
       </div>
       <div class="area-cta-row">
-        <a class="btn-bigwa" id="hero-wa" href="https://wa.me/971564020087" target="_blank"
+        <a class="btn-bigwa" id="hero-wa" href="/contact.html" target="_blank"
            style="background:#25D366;color:#fff;padding:14px 24px;border-radius:999px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px">📱 Book on WhatsApp</a>
         <a class="btn btn-primary" href="/book.html" style="font-size:15px;padding:14px 24px">Book online →</a>
       </div>
@@ -178,7 +178,7 @@
     <p class="sub reveal" id="cta-sub">Pick a service, get an instant quote, lock in the slot. We do the rest.</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px">
       <a class="btn btn-primary" href="/book.html" style="font-size:16px;padding:14px 28px">Book now</a>
-      <a class="btn btn-ghost" id="cta-wa" href="https://wa.me/971564020087" target="_blank" style="font-size:16px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366">📱 WhatsApp</a>
+      <a class="btn btn-ghost" id="cta-wa" href="/contact.html" target="_blank" style="font-size:16px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366">📱 WhatsApp</a>
     </div>
   </div>
 </section>
@@ -205,7 +205,7 @@
     <a href="/area.html?city=ajman">Ajman</a><br>
     <a href="/area.html?city=ras-al-khaimah">Ras Al Khaimah</a></div>
   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a><br><a href="/faq.html">FAQ</a></div>
-  <div><h3>Contact</h3><a href="https://wa.me/971564020087">WhatsApp</a><br><a href="mailto:hello@servia.ae">Email</a></div>
+  <div><h3>Contact</h3><a href="/contact.html">WhatsApp</a><br><a href="mailto:hello@servia.ae">Email</a></div>
 </div></footer>
 
 <nav class="mobile-nav"><div class="mobile-nav-inner">
@@ -424,7 +424,7 @@ document.getElementById("stat-areas").innerHTML = `${C.areaCount}+<small>neighbo
 document.getElementById("reason-slots").textContent = C.slots;
 document.getElementById("cta-sub").textContent = `Book a Servia professional in ${C.name} in under 60 seconds.`;
 document.getElementById("hero-wa").href =
-  `https://wa.me/971564020087?text=${encodeURIComponent("Hi Servia, I'd like a service in " + C.name)}`;
+  `/contact.html"Hi Servia, I'd like a service in " + C.name)}`;
 document.getElementById("cta-wa").href = document.getElementById("hero-wa").href;
 
 document.getElementById("sec-services-h").textContent = `Most-booked services in ${C.name}`;
@@ -468,7 +468,7 @@ ld1.textContent = JSON.stringify({
   name:`Servia — ${C.name}`,
   description: document.querySelector('meta[name="description"]').content,
   url: location.href,
-  telephone:"+971564020087",
+  telephone:"via our website",
   priceRange:"AED 35-1500",
   areaServed:{"@type":"City",name:C.name,addressCountry:"AE"},
   address:{"@type":"PostalAddress",addressLocality:C.name,addressCountry:"AE"},

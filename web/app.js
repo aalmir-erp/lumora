@@ -31,25 +31,45 @@
     document.documentElement.dir = i18n[lang].dir || "ltr";
     document.body && (document.body.dataset.lang = lang);  // mascot dress hook
 
-    // Full-page translation via Google Translate cookie.
+    // Sync dropdown UI so it shows the actually-active language. Without this
+    // the selector keeps showing the default option even after a translate.
+    document.querySelectorAll("select.lang-dropdown").forEach(s => {
+      try { s.value = lang; } catch (_) {}
+    });
+
+    // Full-page translation via Google Translate cookie. Clearing has to nuke
+    // multiple domain scopes because GT stores it on root + host + parent.
     try {
       const host = location.hostname;
-      const dom = host.includes(".") ? "." + host.split(".").slice(-2).join(".") : host;
+      const parts = host.split(".");
+      const candidates = [host];
+      for (let i = 1; i < parts.length; i++) {
+        candidates.push("." + parts.slice(i).join("."));
+      }
+      function killCookie(name) {
+        document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+        candidates.forEach(d => {
+          document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=" + d;
+        });
+      }
+      function setCookie(name, val) {
+        document.cookie = name + "=" + val + "; path=/";
+        candidates.forEach(d => {
+          document.cookie = name + "=" + val + "; path=/; domain=" + d;
+        });
+      }
       if (lang === "en") {
-        document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-        document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=" + dom;
+        killCookie("googtrans");
+        killCookie("GOOGLE_GTRANSLATE");
       } else {
-        const v = "/en/" + lang;
-        document.cookie = "googtrans=" + v + "; path=/";
-        document.cookie = "googtrans=" + v + "; path=/; domain=" + dom;
+        setCookie("googtrans", "/en/" + lang);
       }
       const prev = sessionStorage.getItem("servia.last.applied.lang");
-      if (prev && prev !== lang) {
+      if (prev !== lang) {
         sessionStorage.setItem("servia.last.applied.lang", lang);
         location.reload();
         return;
       }
-      sessionStorage.setItem("servia.last.applied.lang", lang);
     } catch (e) { console.warn(e); }
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");

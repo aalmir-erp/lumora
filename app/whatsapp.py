@@ -74,17 +74,24 @@ def inbound(msg: InboundMsg):
     history = [{"role": r["role"], "content": r["content"]} for r in reversed(hist_rows)]
     history.append({"role": "user", "content": msg.text})
 
-    # If this number is a known outreach lead (prospective vendor), use the
-    # vendor onboarding persona ("Sara") instead of the customer concierge.
+    # Persona routing:
+    #   - admin number → 'admin' (operations Q&A, stats, control)
+    #   - known outreach lead → 'vendor' (Sara onboarding)
+    #   - everyone else → 'customer'
     persona = "customer"
-    try:
-        with db.connect() as c:
-            r = c.execute("SELECT id FROM outreach_leads WHERE phone=?",
-                          (msg.from_number,)).fetchone()
-        if r:
-            persona = "vendor"
-    except Exception:  # noqa: BLE001
-        pass
+    import os as _os
+    admin_num = _os.getenv("ADMIN_WA_NUMBER", "971564020087").strip().lstrip("+")
+    if msg.from_number.lstrip("+").replace(" ", "") == admin_num:
+        persona = "admin"
+    else:
+        try:
+            with db.connect() as c:
+                r = c.execute("SELECT id FROM outreach_leads WHERE phone=?",
+                              (msg.from_number,)).fetchone()
+            if r:
+                persona = "vendor"
+        except Exception:  # noqa: BLE001
+            pass
 
     if settings.use_llm:
         try:

@@ -23,7 +23,7 @@
 <nav class="nav"><div class="nav-inner">
   <a href="/"><img src="/logo.svg" height="40" alt="Servia"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-cta">
-    <select class="lang-dropdown" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
+    <select class="lang-dropdown notranslate" translate="no" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
       <option value="en">🇬🇧 English</option>
       <option value="ar">🇦🇪 العربية</option>
       <option value="ur">🇵🇰 اردو</option>
@@ -139,7 +139,7 @@ else {
         </div>
       </div>`;
     document.getElementById("cal-link").href = `/api/booking/${bid}/calendar.ics`;
-    const waBrand = (window.LUMORA_BRAND && window.LUMORA_BRAND.whatsapp) || "971564020087";
+    const waBrand = (window.LUMORA_BRAND && window.LUMORA_BRAND.whatsapp) || "via our website";
     const waPhone = waBrand.replace(/[^0-9]/g, "");
     const text = encodeURIComponent(`I just booked ${b.service_id.replace(/_/g,' ')} with Servia on ${b.target_date} at ${b.time_slot}. Booking ${bid}. https://${(window.LUMORA_BRAND||{}).domain||'servia.ae'}/me.html?b=${bid}`);
     document.getElementById("wa-share").href = `https://wa.me/?text=${text}`;

@@ -3,8 +3,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D9488">
-<title>Become a Servia Ambassador — earn AED | Referral & review rewards</title>
-<meta name="description" content="Refer friends and earn AED 50 each. Post a 5★ Google review and get AED 25 instant cashback. Multiple ways to earn — full guide.">
+<title>Become a Servia Ambassador — earn % discounts | Referral & review rewards</title>
+<meta name="description" content="Refer friends and you both get a percentage off your bookings. Post a 5★ Google review or social post and earn a higher tier discount on your next service.">
 <link rel="canonical" href="https://servia.ae/share-rewards.html">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
@@ -28,15 +28,23 @@
   .way ol li { margin-bottom:6px; }
   .way .cta { margin-top:auto; padding-top:14px; }
   .way .btn { width:100%; }
-  .pillset { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  .pillset span { background:var(--bg); border:1px solid var(--border); padding:5px 11px;
-    border-radius:999px; font-size:12px; color:var(--muted); }
   .qa { background:#fff; border:1px solid var(--border); border-radius:14px;
     padding:18px 20px; margin:8px 0; }
   .qa summary { font-weight:700; font-size:15px; cursor:pointer; }
   .qa p { margin:10px 0 0; color:var(--muted); font-size:14px; line-height:1.6; }
-  .lead-form { max-width:480px; margin:0 auto; background:#fff; border:1px solid var(--border);
-    border-radius:18px; padding:24px; box-shadow:0 4px 14px rgba(15,23,42,.06); }
+  .tier-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    margin:18px 0 8px }
+  .tier-card { background:#fff; border:1px solid var(--border); border-radius:14px;
+    padding:16px; text-align:center }
+  .tier-card .tn { font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    font-weight:800; color:var(--muted); margin-bottom:4px }
+  .tier-card .tv { font-size:26px; font-weight:800; letter-spacing:-.02em; color:#0F766E }
+  .tier-card .tp { font-size:11.5px; color:var(--muted); margin-top:6px; line-height:1.4 }
+  .tier-card.bronze { background:linear-gradient(135deg,#FEF3C7,#FDE68A) }
+  .tier-card.silver { background:linear-gradient(135deg,#F1F5F9,#E2E8F0) }
+  .tier-card.gold   { background:linear-gradient(135deg,#FEF3C7,#FCD34D) }
+  .tier-card.plat   { background:linear-gradient(135deg,#EDE9FE,#C4B5FD); color:#312E81 }
+  .tier-card.plat .tv { color:#5B21B6 }
 </style>
 </head><body>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
@@ -50,48 +58,76 @@
 
 <section class="hero">
   <div style="font-size:64px;line-height:1">🎁</div>
-  <h1>Become a Servia Ambassador — earn AED</h1>
-  <p>Three ways to put real AED back in your pocket — refer friends, post reviews, share on socials. No catches.</p>
+  <h1>Become a Servia Ambassador</h1>
+  <p>Three ways to earn percentage discounts on every Servia service — refer friends, post reviews, share on socials. Every action moves you up a tier with a bigger lifetime discount.</p>
+</section>
+
+<!-- TIER LADDER -->
+<section style="max-width:1100px;margin:0 auto;padding:0 16px 16px">
+  <h2 style="font-size:22px;margin:0 0 4px">Tier ladder</h2>
+  <p style="color:var(--muted);font-size:14px;margin:0 0 8px">The more you refer or review, the higher your tier and the bigger your discount on every booking.</p>
+  <div class="tier-grid">
+    <div class="tier-card bronze">
+      <div class="tn">🥉 Bronze</div>
+      <div class="tv">5%</div>
+      <div class="tp">off every booking · 0–2 referrals</div>
+    </div>
+    <div class="tier-card silver">
+      <div class="tn">🥈 Silver</div>
+      <div class="tv">10%</div>
+      <div class="tp">off every booking · 3–5 referrals</div>
+    </div>
+    <div class="tier-card gold">
+      <div class="tn">🥇 Gold</div>
+      <div class="tv">15%</div>
+      <div class="tp">off every booking · 6–10 referrals</div>
+    </div>
+    <div class="tier-card plat">
+      <div class="tn">💎 Platinum</div>
+      <div class="tv">20%</div>
+      <div class="tp">off every booking · 11+ referrals</div>
+    </div>
+  </div>
 </section>
 
 <section class="ways">
   <!-- WAY 1: REFERRAL -->
   <div class="way">
-    <span class="reward gold">AED 50 + AED 50</span>
-    <h2>Ambassador rewards</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.55;margin:0">You and your friend BOTH get AED 50 off when they book their first Servia service.</p>
+    <span class="reward gold">% off both sides</span>
+    <h2>Ambassador referral</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.55;margin:0">You and your friend both earn a percentage discount on your next Servia service when they book through your link.</p>
     <ol>
       <li>Sign in to <a href="/me.html">your account</a> and copy your referral link.</li>
-      <li>Send it via WhatsApp / SMS / social to friends in UAE.</li>
-      <li>When they book + pay (any service), AED 50 lands in both accounts within 24 hours.</li>
+      <li>Send it to friends in UAE via any channel you like.</li>
+      <li>When they book + pay (any service), the discount is applied automatically — instant on their booking, banked to yours.</li>
     </ol>
     <div class="cta"><a class="btn btn-primary btn-block" href="/me.html?tab=referral">Get my referral link →</a></div>
   </div>
 
   <!-- WAY 2: GOOGLE REVIEW -->
   <div class="way">
-    <span class="reward green">AED 25 cashback</span>
+    <span class="reward green">+1 tier boost</span>
     <h2>5★ Google review</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.55;margin:0">After your service is complete, leave a 5★ review on Google Maps. We send AED 25 cashback within 24h via WhatsApp.</p>
+    <p style="color:var(--muted);font-size:14px;line-height:1.55;margin:0">After your service is complete, leave a 5★ review on Google Maps — we'll bump you up one tier for an extra % off your next booking.</p>
     <ol>
       <li>Complete a Servia booking (any service).</li>
-      <li>Open <a href="https://g.page/r/REPLACE-WITH-GOOGLE-PLACE-ID/review" target="_blank">Google Maps review link</a>.</li>
-      <li>Write a short genuine review + 5 stars + photos help.</li>
-      <li>Reply to your booking WhatsApp with the review link or screenshot. Done — AED 25 lands in 24h.</li>
+      <li>Open <a href="https://g.page/r/REPLACE-WITH-GOOGLE-PLACE-ID/review" target="_blank">our Google Maps review link</a>.</li>
+      <li>Write a short genuine review + 5 stars (photos help).</li>
+      <li>Submit the link/screenshot in your account → tier upgraded automatically.</li>
     </ol>
     <div class="cta"><a class="btn btn-primary btn-block" href="https://g.page/r/REPLACE-WITH-GOOGLE-PLACE-ID/review" target="_blank">Open Google review →</a></div>
   </div>
 
   <!-- WAY 3: SOCIAL POST -->
   <div class="way">
-    <span class="reward purple">AED 25 cashback</span>
+    <span class="reward purple">+1 tier boost</span>
     <h2>Post about us on socials</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.55;margin:0">Tag <b>@servia.ae</b> on Instagram / TikTok / X / Facebook with a story of your Servia service. Cashback = AED 25.</p>
+    <p style="color:var(--muted);font-size:14px;line-height:1.55;margin:0">Tag <b>@servia.ae</b> on Instagram / TikTok / X / Facebook with a story of your Servia service — counts as a tier boost.</p>
     <ol>
       <li>Take a before-and-after photo or short reel of your Servia service.</li>
-      <li>Post on Instagram / TikTok / X / Facebook with caption: "@servia.ae +971 56 4020087" and your unique referral link.</li>
-      <li>Send the post URL via WhatsApp to <a href="https://wa.me/971564020087">+971 56 4020087</a>.</li>
-      <li>We verify the post is public + tagged → AED 25 in 24h.</li>
+      <li>Post on Instagram / TikTok / X / Facebook tagging <b>@servia.ae</b> with your unique referral link.</li>
+      <li>Submit the post URL in your account.</li>
+      <li>We verify the post is public + tagged → tier upgraded.</li>
     </ol>
     <div class="cta"><a class="btn btn-primary btn-block" href="/me.html?tab=referral">Submit my post →</a></div>
   </div>
@@ -103,32 +139,31 @@
     <h2 style="margin:0 0 6px;font-size:22px">Quick-share Servia right now</h2>
     <p style="color:var(--muted);font-size:14px;margin:0 0 14px">No login needed. Tap any button below to share with your network.</p>
     <div data-share="share-rewards" data-share-key="rewards-page" data-share-url="https://servia.ae"
-         data-share-text="Servia — UAE's smart home services in 60 seconds. AED 50 off with my link:"></div>
+         data-share-text="Servia — UAE's smart home services in 60 seconds. Use my link for a discount:"></div>
   </div>
 </section>
 
 <!-- FAQ -->
 <section style="max-width:760px;margin:0 auto;padding:0 16px 80px">
   <h2 style="font-size:22px;margin:0 0 12px">Common questions</h2>
-  <details class="qa" open><summary>How fast does the cashback land?</summary><p>Within 24 hours via WhatsApp coupon — usable on any future Servia booking. Never expires.</p></details>
-  <details class="qa"><summary>Can I stack rewards (refer + review + post)?</summary><p>Yes. They're independent — earn all three for a single booking if you do all three.</p></details>
-  <details class="qa"><summary>Is there a maximum?</summary><p>No cap. Some customers have referred 10+ friends and earned AED 500+ in coupons.</p></details>
+  <details class="qa" open><summary>How is my discount applied?</summary><p>Your tier % is automatically deducted at checkout on every Servia booking. No coupon to copy. Discount stacks once per booking.</p></details>
+  <details class="qa"><summary>Can I stack rewards (refer + review + post)?</summary><p>Yes. Each genuine action earns a tier boost or referral count. Higher tier = bigger % off every booking.</p></details>
+  <details class="qa"><summary>Is there a maximum tier?</summary><p>Platinum is the highest, capped at 20% off. We may launch surprise pop-up tiers for power-ambassadors with bigger perks.</p></details>
   <details class="qa"><summary>What counts as a 'genuine' review?</summary><p>At least 1 sentence in your own words + a star rating. We don't dictate content — only honest reviews qualify.</p></details>
-  <details class="qa"><summary>Can businesses / corporates participate?</summary><p>Yes, especially on the Google review side. Corporate referrals (e.g. office-cleaning contracts) get higher cashback — message us.</p></details>
-  <details class="qa"><summary>What if I haven't booked yet but want to share?</summary><p>You can still share from this page. After your friend books, your own first booking will trigger the AED 50 reward retroactively.</p></details>
+  <details class="qa"><summary>Can businesses / corporates participate?</summary><p>Yes. Corporate referrals (e.g. office-cleaning contracts) get bigger % discount on volume — submit through your account and we'll set up a custom tier.</p></details>
+  <details class="qa"><summary>What if I haven't booked yet but want to share?</summary><p>You can still share from this page. Once your friend books, your discount activates retroactively on your first booking.</p></details>
 </section>
 
 <footer><div class="container">
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
-  <div><h3>Contact</h3><a href="https://wa.me/971564020087">WhatsApp</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
+  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
 </div></footer>
 
 <script src="/theme.js" defer></script>
 <script src="/app.js" defer></script>
 <script src="/share.js" defer></script>
 <script src="/install.js" defer></script>
-
 <script src="/cms.js" defer></script>
 </body></html>
