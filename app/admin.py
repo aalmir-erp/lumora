@@ -951,3 +951,145 @@ def list_market_signals(limit: int = 200):
             }
         except Exception: stats = {}
     return {"signals": [db.row_to_dict(r) for r in rows], "stats": stats}
+
+
+# ---------- analytics deep-dive ----------
+@router.get("/analytics", dependencies=[Depends(require_admin)])
+def analytics_overview():
+    """One-shot analytics endpoint that aggregates funnel + sources + sentiment."""
+    with db.connect() as c:
+        # Booking funnel
+        funnel = {
+            "visited": c.execute("SELECT COUNT(*) AS n FROM conversations WHERE role='user'").fetchone()["n"] or 0,
+            "quoted": c.execute("SELECT COUNT(DISTINCT booking_id) AS n FROM quotes").fetchone()["n"] or 0,
+            "booked": c.execute("SELECT COUNT(*) AS n FROM bookings").fetchone()["n"] or 0,
+            "paid": c.execute("SELECT COUNT(*) AS n FROM invoices WHERE payment_status='paid'").fetchone()["n"] or 0,
+            "completed": c.execute("SELECT COUNT(*) AS n FROM bookings WHERE status='completed'").fetchone()["n"] or 0,
+            "reviewed": c.execute("SELECT COUNT(*) AS n FROM reviews").fetchone()["n"] or 0,
+        }
+        # Top sources (from booking source field)
+        try:
+            sources = [dict(r) for r in c.execute(
+                "SELECT source, COUNT(*) AS n FROM bookings GROUP BY source ORDER BY n DESC LIMIT 10"
+            ).fetchall()]
+        except Exception: sources = []
+        # Top services
+        try:
+            services = [dict(r) for r in c.execute(
+                "SELECT service_id, COUNT(*) AS n, AVG(estimated_total) AS avg "
+                "FROM bookings GROUP BY service_id ORDER BY n DESC LIMIT 15"
+            ).fetchall()]
+        except Exception: services = []
+        # Sentiment from review stars
+        try:
+            sentiment = dict(c.execute(
+                "SELECT AVG(stars) AS avg_stars, COUNT(*) AS total, "
+                "SUM(CASE WHEN stars=5 THEN 1 ELSE 0 END) AS five_star, "
+                "SUM(CASE WHEN stars<=2 THEN 1 ELSE 0 END) AS low_star "
+                "FROM reviews"
+            ).fetchone() or {})
+        except Exception: sentiment = {}
+        # Vendor performance leaderboard
+        try:
+            vendors = [dict(r) for r in c.execute(
+                "SELECT v.id, v.name, v.rating, v.completed_jobs, "
+                "COUNT(a.id) AS active_jobs FROM vendors v "
+                "LEFT JOIN assignments a ON a.vendor_id=v.id "
+                "GROUP BY v.id ORDER BY v.rating DESC, v.completed_jobs DESC LIMIT 15"
+            ).fetchall()]
+        except Exception: vendors = []
+        # Recent market signals (gate captures)
+        try:
+            signals_count = c.execute("SELECT COUNT(*) AS n FROM market_signals").fetchone()["n"] or 0
+            referrals_count = c.execute("SELECT COUNT(*) AS n FROM referrals").fetchone()["n"] or 0
+        except Exception:
+            signals_count = 0; referrals_count = 0
+    return {
+        "funnel": funnel, "sources": sources, "services": services,
+        "sentiment": sentiment, "vendors": vendors,
+        "market_signals_count": signals_count,
+        "referrals_count": referrals_count,
+    }
+
+
+# ---------- auto-blog (Claude-generated daily article per emirate) ----------
+@router.post("/autoblog/run", dependencies=[Depends(require_admin)])
+def autoblog_run(emirate: str = "dubai", topic: str | None = None):
+    """Generate one Servia-branded article for the given emirate using Claude.
+    Cron-friendly: schedule a daily POST with a different emirate to maintain
+    fresh content for SEO + AI engines. Articles stored in 'autoblog_posts'
+    table with slug + content + metadata."""
+    import os as _os
+    from .config import get_settings
+    s = get_settings()
+    if not s.use_llm:
+        return {"ok": False, "error": "LLM disabled (set ANTHROPIC_API_KEY)"}
+
+    # Topic rotation if not specified
+    DEFAULT_TOPICS = [
+        "Best deep cleaning checklist for {emirate} apartments",
+        "How to choose AC service in {emirate} — what to ask",
+        "Seasonal maintenance tips for {emirate} villas",
+        "Pest control done right in {emirate}",
+        "Move-in / move-out cleaning guide for {emirate}",
+        "Top 5 home services every {emirate} family needs",
+        "Why pre-paid bookings beat cash-on-completion in {emirate}",
+        "Same-day handyman in {emirate} — how Servia delivers in hours",
+    ]
+    if not topic:
+        import random
+        topic = random.choice(DEFAULT_TOPICS).format(emirate=emirate.replace("-"," ").title())
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=s.ANTHROPIC_API_KEY, timeout=30, max_retries=1)
+        msg = client.messages.create(
+            model=s.MODEL,
+            max_tokens=2000,
+            messages=[{"role":"user","content":(
+                f"Write a 600-word SEO-optimized article for Servia (UAE home services platform).\n\n"
+                f"Title: {topic}\n"
+                f"Emirate: {emirate.replace('-',' ').title()}\n\n"
+                "Style: Helpful, locally-informed, mention specific neighborhoods, include 1-2 actionable tips, "
+                "include a clear CTA at the end pointing to https://servia.ae/book.html. "
+                "Use H2 subheadings (markdown ##) for structure. Mention Servia naturally 2-3 times — "
+                "not spammy. End with a short FAQ (2-3 Qs).")}],
+        )
+        body = msg.content[0].text if msg.content else ""
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": f"Claude call failed: {e}"}
+
+    import datetime as _dtm
+    slug = (
+        emirate + "-" +
+        "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-")
+    )[:80]
+    with db.connect() as c:
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS autoblog_posts(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                slug TEXT UNIQUE, emirate TEXT, topic TEXT, body_md TEXT,
+                published_at TEXT, view_count INTEGER DEFAULT 0)""")
+        except Exception: pass
+        c.execute(
+            "INSERT OR REPLACE INTO autoblog_posts(slug, emirate, topic, body_md, published_at) "
+            "VALUES(?,?,?,?,?)",
+            (slug, emirate, topic, body,
+             _dtm.datetime.utcnow().isoformat() + "Z"))
+    db.log_event("autoblog", slug, "published", actor="admin",
+                 details={"emirate": emirate, "topic": topic, "len": len(body)})
+    return {"ok": True, "slug": slug, "topic": topic, "len": len(body),
+            "url": f"/blog/{slug}"}
+
+
+@router.get("/autoblog", dependencies=[Depends(require_admin)])
+def autoblog_list():
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT slug, emirate, topic, published_at, view_count "
+                "FROM autoblog_posts ORDER BY id DESC LIMIT 200"
+            ).fetchall()
+        except Exception: rows = []
+    return {"posts": [db.row_to_dict(r) for r in rows]}

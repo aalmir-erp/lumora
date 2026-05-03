@@ -46,6 +46,7 @@
     <button class="btn btn-primary" id="t-bookings-btn" onclick="setTab('bookings')">📋 My bookings</button>
     <button class="btn btn-ghost" id="t-addresses-btn" onclick="setTab('addresses')">📍 Saved addresses</button>
     <button class="btn btn-ghost" id="t-profile-btn" onclick="setTab('profile')">👤 Profile</button>
+    <button class="btn btn-ghost" id="t-referral-btn" onclick="setTab('referral')">🎁 Refer &amp; earn</button>
   </div>
 
   <!-- Bookings tab -->
@@ -108,6 +109,58 @@
   </div>
 </div></section>
 
+  <!-- Referral / Refer & earn tab -->
+  <div id="t-referral" style="display:none">
+    <h2>🎁 Refer &amp; earn</h2>
+    <p class="sub">Three ways to earn AED cashback. Share your link, post reviews, tag us on socials.</p>
+
+    <div style="background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#78350F;padding:22px;border-radius:18px;margin-bottom:20px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:6px">Your referral link</div>
+      <div id="ref-link-box" style="background:#fff;padding:14px 16px;border-radius:12px;font-family:ui-monospace,monospace;font-size:14px;font-weight:600;color:var(--primary-dark);word-break:break-all">Loading…</div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn" id="ref-copy" style="background:#fff;color:#78350F;font-weight:700">📋 Copy link</button>
+        <a class="btn" id="ref-wa" target="_blank" style="background:#25D366;color:#fff;font-weight:700">💬 Share on WhatsApp</a>
+      </div>
+      <div id="ref-share-bar" data-share="referral" data-share-key="my-referral" style="margin-top:14px"></div>
+      <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap;font-size:13px;font-weight:700">
+        <div>Clicks: <span id="ref-clicks">0</span></div>
+        <div>Signups: <span id="ref-signups">0</span></div>
+        <div>Earned: <span id="ref-earned">AED 0</span></div>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px">
+      <h3 style="margin:0 0 8px;font-size:17px">⭐ 5-star Google review = AED 25</h3>
+      <p style="font-size:14px;color:var(--muted);margin:0 0 12px">Did your last service deserve 5 stars? Post the review and we send AED 25 cashback within 24h.</p>
+      <a class="btn btn-primary" href="https://g.page/r/REPLACE-WITH-GOOGLE-PLACE-ID/review" target="_blank">Open Google review →</a>
+      <button class="btn btn-ghost" onclick="document.getElementById('rev-proof').style.display=''">I posted — submit proof</button>
+      <div id="rev-proof" style="display:none;margin-top:14px">
+        <label style="font-size:12px;color:var(--muted)">Booking ID</label>
+        <input id="rev-bid" placeholder="LM-XXXXXX">
+        <label style="font-size:12px;color:var(--muted)">Google review URL or screenshot link</label>
+        <input id="rev-url" placeholder="https://maps.google.com/...">
+        <button class="btn btn-primary btn-block" onclick="submitReviewProof('google')" style="margin-top:10px">Submit for AED 25 reward</button>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px">
+      <h3 style="margin:0 0 8px;font-size:17px">📲 Tag us on socials = AED 25</h3>
+      <p style="font-size:14px;color:var(--muted);margin:0 0 12px">Post a before/after of your Servia service on Instagram / TikTok / X / Facebook tagged @servia.ae and we send AED 25.</p>
+      <button class="btn btn-primary" onclick="document.getElementById('soc-proof').style.display=''">Submit my post URL</button>
+      <div id="soc-proof" style="display:none;margin-top:14px">
+        <label style="font-size:12px;color:var(--muted)">Booking ID</label>
+        <input id="soc-bid" placeholder="LM-XXXXXX">
+        <label style="font-size:12px;color:var(--muted)">Platform</label>
+        <select id="soc-platform"><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="facebook">Facebook</option><option value="twitter">X / Twitter</option></select>
+        <label style="font-size:12px;color:var(--muted)">Post URL</label>
+        <input id="soc-url" placeholder="https://www.instagram.com/p/...">
+        <button class="btn btn-primary btn-block" onclick="submitReviewProof('social')" style="margin-top:10px">Submit for AED 25 reward</button>
+      </div>
+    </div>
+
+    <p style="text-align:center;margin-top:20px"><a href="/share-rewards.html">Full rewards guide →</a></p>
+  </div>
+
 <!-- Modal for cancel + reschedule + review -->
 <div id="modal-bg" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)closeModal()">
   <div id="modal" style="background:var(--surface);color:var(--text);border-radius:16px;padding:24px;max-width:480px;width:90%;max-height:90vh;overflow:auto"></div>
@@ -160,6 +213,14 @@ let _user = null;
 })();
 
 function setTab(t) {
+  for (const k of ["bookings","addresses","profile","referral"]) {
+    const el = document.getElementById("t-"+k);
+    const btn = document.getElementById("t-"+k+"-btn");
+    if (el) el.style.display = t===k ? "" : "none";
+    if (btn) { btn.className = "btn " + (t===k ? "btn-primary" : "btn-ghost"); }
+  }
+  if (t==="referral") loadReferral();
+  return;
   for (const x of ["bookings","addresses","profile"]) {
     document.getElementById("t-"+x).style.display = (x===t ? "" : "none");
     document.getElementById("t-"+x+"-btn").className = "btn " + (x===t ? "btn-primary" : "btn-ghost");
@@ -379,4 +440,5 @@ function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<"
 </script>
 <script src="/widget.js"></script>
 <script src="/cms.js" defer></script>
+<script src="/share.js" defer></script>
 </body></html>

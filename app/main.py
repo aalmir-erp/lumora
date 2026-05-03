@@ -386,6 +386,93 @@ def robots_txt():
     )
 
 
+@app.get("/blog/{slug}", response_class=HTMLResponse)
+def blog_post(slug: str):
+    """Public blog post — Claude-generated, SEO-friendly, server-rendered."""
+    with db.connect() as c:
+        try:
+            r = c.execute(
+                "SELECT * FROM autoblog_posts WHERE slug=?", (slug,)
+            ).fetchone()
+        except Exception:
+            r = None
+    if not r:
+        raise HTTPException(404, "Post not found")
+    post = db.row_to_dict(r)
+    with db.connect() as c:
+        c.execute("UPDATE autoblog_posts SET view_count=view_count+1 WHERE slug=?", (slug,))
+    body = post["body_md"]
+    # Convert lightweight markdown to HTML (just headings + paragraphs + CTAs)
+    import re as _re, html as _html
+    body_h = _html.escape(body)
+    body_h = _re.sub(r"^## (.+)$", r"<h2>\1</h2>", body_h, flags=_re.M)
+    body_h = _re.sub(r"^# (.+)$", r"<h1>\1</h1>", body_h, flags=_re.M)
+    body_h = _re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", body_h)
+    body_h = _re.sub(r"\n\n+", "</p><p>", body_h)
+    body_h = "<p>" + body_h + "</p>"
+    title = post["topic"]
+    return f"""<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{_html.escape(title)} | Servia Blog</title>
+<meta name="description" content="{_html.escape(title)} — Servia UAE home services insights for {post['emirate'].replace('-',' ').title()}.">
+<link rel="canonical" href="https://servia.ae/blog/{slug}">
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36" alt="Servia"></a>
+  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book.html">Book now</a></div>
+</div></nav>
+<article style="max-width:760px;margin:32px auto 80px;padding:0 16px">
+  <a href="/area.html?city={post['emirate']}" style="font-size:13px;color:var(--muted);text-decoration:none">📍 {post['emirate'].replace('-',' ').title()}</a>
+  <h1 style="font-size:32px;letter-spacing:-.02em;margin:8px 0 18px">{_html.escape(title)}</h1>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Published {post['published_at'][:10]}</p>
+  <div style="font-size:16px;line-height:1.7">{body_h}</div>
+  <div data-share="blog-{slug}" data-share-key="blog-{slug}" data-share-text="Servia: {_html.escape(title)}" style="margin-top:32px"></div>
+  <div style="margin-top:32px;padding:24px;background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#78350F;border-radius:18px;text-align:center">
+    <h3 style="margin:0 0 6px">Ready to book?</h3>
+    <p style="margin:0 0 14px">Servia covers all 7 UAE emirates. Get a quote in 60 seconds.</p>
+    <a class="btn btn-primary" href="/book.html">Book your service →</a>
+  </div>
+</article>
+<script src="/share.js" defer></script>
+</body></html>"""
+
+
+@app.get("/blog", response_class=HTMLResponse)
+def blog_index():
+    """Index of all published autoblog posts."""
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT slug, emirate, topic, published_at FROM autoblog_posts "
+                "ORDER BY id DESC LIMIT 100"
+            ).fetchall()
+        except Exception:
+            rows = []
+    items = "".join(
+        f'<li style="margin-bottom:14px"><a href="/blog/{r["slug"]}" style="font-size:17px;font-weight:600">{r["topic"]}</a><br>'
+        f'<small style="color:var(--muted)">📍 {r["emirate"].replace("-"," ").title()} · {r["published_at"][:10]}</small></li>'
+        for r in rows
+    ) or "<p>No posts yet — Claude is drafting the first batch.</p>"
+    return f"""<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Servia Blog — UAE home services insights</title>
+<link rel="canonical" href="https://servia.ae/blog"><link rel="stylesheet" href="/style.css">
+</head><body>
+<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36" alt="Servia"></a>
+  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book.html">Book now</a></div>
+</div></nav>
+<section style="max-width:760px;margin:32px auto 80px;padding:0 16px">
+<h1 style="font-size:32px;letter-spacing:-.02em">Servia Blog</h1>
+<p style="color:var(--muted)">Locally-informed home-services tips, written for UAE residents — fresh content every day.</p>
+<ul style="list-style:none;padding:0;margin-top:24px">{items}</ul>
+</section>
+</body></html>"""
+
+
 @app.get("/sitemap.xml")
 def sitemap_xml():
     base = f"https://{settings.BRAND_DOMAIN}"

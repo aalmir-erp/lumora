@@ -90,7 +90,7 @@
   // ---------- service worker ----------
   // One-time purge: existing visitors are stuck on the old cache-first SW
   // (lumora-v0.2.0). Force a clean re-register so they pick up new deploys.
-  const SW_RESET_KEY = "servia.sw.reset.v1.5.0";
+  const SW_RESET_KEY = "servia.sw.reset.v1.6.0";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {

@@ -38,6 +38,8 @@
     <a href="#outreach"  data-tab="outreach">📨 Vendor outreach</a>
     <a href="#prompts"   data-tab="prompts">🤖 Bot prompts</a>
     <a href="#payments"  data-tab="payments">💳 Payments</a>
+    <a href="#analytics" data-tab="analytics">📊 Analytics</a>
+    <a href="#autoblog"  data-tab="autoblog">📝 Auto-blog</a>
     <a href="#brand"     data-tab="brand">🎨 Brand &amp; Contact</a>
     <a href="#whatsapp"  data-tab="whatsapp">📲 WhatsApp</a>
     <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
@@ -194,6 +196,33 @@
       </div>
     </div>
 
+    <div id="t-analytics" class="tab" style="display:none">
+      <h2>📊 Analytics</h2>
+      <p class="sub" style="color:var(--muted)">Conversion funnel, top sources, services, sentiment, vendors, and growth signals.</p>
+      <div id="analytics-body" style="margin-top:18px"></div>
+    </div>
+
+    <div id="t-autoblog" class="tab" style="display:none">
+      <h2>📝 Auto-blog</h2>
+      <p class="sub" style="color:var(--muted)">Generate one Claude-written article per emirate to keep SEO content fresh. Schedule a daily POST <code>/api/admin/autoblog/run?emirate=dubai</code> via Railway cron, or run manually below.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0">
+        <select id="ab-emirate" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px">
+          <option value="dubai">Dubai</option>
+          <option value="sharjah">Sharjah</option>
+          <option value="abu-dhabi">Abu Dhabi</option>
+          <option value="ajman">Ajman</option>
+          <option value="ras-al-khaimah">Ras Al Khaimah</option>
+          <option value="umm-al-quwain">Umm Al Quwain</option>
+          <option value="fujairah">Fujairah</option>
+        </select>
+        <input id="ab-topic" placeholder="Topic (optional — leave blank for auto)" style="flex:1;min-width:240px;padding:8px 12px;border:1px solid var(--border);border-radius:8px">
+        <button class="btn btn-primary" onclick="runAutoblog()">Generate now</button>
+      </div>
+      <div id="ab-result" style="font-size:13px;color:var(--muted);margin:8px 0"></div>
+      <h3 style="margin:24px 0 12px;font-size:15px">Recent posts</h3>
+      <div id="ab-list"></div>
+    </div>
+
     <div id="t-brand" class="tab" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
         <div>
@@ -235,6 +264,8 @@ function show(tab) {
   if (tab==="outreach")  loadOutreach();
   if (tab==="prompts")   loadPrompts();
   if (tab==="payments")  loadPayments();
+  if (tab==="analytics") loadAnalytics();
+  if (tab==="autoblog")  loadAutoblog();
   if (tab==="brand")     loadBrand();
   if (tab==="whatsapp")  loadWA();
 }

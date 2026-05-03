@@ -201,7 +201,10 @@ async function render() {
     <div class="pay-methods">
       <div class="pm" onclick="location.href='${escapeHtml(inv.payment_url||'#')}'"><span class="ico">🍎</span>Apple Pay</div>
       <div class="pm" onclick="location.href='${escapeHtml(inv.payment_url||'#')}'"><span class="ico">🟢</span>Google Pay</div>
+      <div class="pm" onclick="location.href='${escapeHtml(inv.payment_url||'#')}'"><span class="ico">📱</span>Samsung Pay</div>
       <div class="pm" onclick="location.href='${escapeHtml(inv.payment_url||'#')}'"><span class="ico">💳</span>Card</div>
+      <div class="pm" onclick="alert('Tabby — split into 4 interest-free payments. Coming soon.')"><span class="ico">📅</span>Tabby (4×)</div>
+      <div class="pm" onclick="alert('Bank transfer: IBAN AE07 0331 2345 6789 0123 456 — Servia Home Services LLC. Reference your booking ID.')"><span class="ico">🏦</span>Bank transfer</div>
       <div class="pm" onclick="navigator.clipboard.writeText(location.href);alert('Payment link copied — paste in your bank app or WhatsApp')"><span class="ico">🔗</span>Copy link</div>
     </div>
     <p style="font-size:12px;color:var(--muted);margin-top:14px;text-align:center">🔒 Secure payment via PCI-compliant gateway. Servia never sees your card number.</p>`}
@@ -231,4 +234,5 @@ render().then(() => {
   document.getElementById("email-share").href = "mailto:?subject=" + encodeURIComponent("Servia Invoice " + (id||"")) + "&body=" + encodeURIComponent(url);
 });
 </script>
+<script src="/share.js" defer></script>
 </body></html>
