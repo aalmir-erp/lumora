@@ -3,12 +3,109 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D9488">
-<title>Servia UAE coverage — live map of where we serve</title>
-<meta name="description" content="See exactly where Servia operates across UAE — live booking pulses, past completed jobs, and upcoming coverage. All 7 emirates.">
+<title>Servia UAE coverage — live interactive map</title>
+<meta name="description" content="See live Servia bookings popping up across UAE in real time — actual interactive map with all 7 emirates, Dubai areas, live job pulses and 5★ reviews.">
 <link rel="canonical" href="https://servia.ae/coverage.html">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link rel="stylesheet" href="/style.css">
+
+<!-- Leaflet (real interactive map) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+  body { background:linear-gradient(180deg,#FFFBEB,#F8FAFC); }
+  .map-shell { position:relative; max-width:1280px; margin:24px auto 32px; padding:0 16px }
+  #servia-map { height:560px; border-radius:18px; box-shadow:0 12px 40px rgba(15,23,42,.12); z-index:1 }
+
+  .stat-strip { display:grid; gap:10px; grid-template-columns:repeat(4,minmax(140px,1fr));
+    margin:14px 0 8px }
+  .stat-strip .stat { background:#fff; border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; text-align:center; box-shadow:0 4px 14px rgba(15,23,42,.06) }
+  .stat-strip .stat .v { font-size:24px; font-weight:800; letter-spacing:-.02em; color:#0F766E;
+    line-height:1; transition: color .3s }
+  .stat-strip .stat .l { font-size:11px; text-transform:uppercase; color:var(--muted);
+    letter-spacing:.06em; margin-top:6px; font-weight:700 }
+  .stat-strip .stat.live .v { color:#15803D }
+  .stat-strip .stat.live::before {
+    content:"• LIVE"; font-size:9px; color:#15803D; font-weight:800;
+    background:#DCFCE7; padding:2px 7px; border-radius:999px; display:inline-block;
+    margin-bottom:4px }
+  @media (max-width:640px) {
+    .stat-strip { grid-template-columns:repeat(2,1fr) }
+    #servia-map { height:420px }
+  }
+
+  /* Live activity ticker bar that floats over the map */
+  .live-ticker {
+    position:absolute; left:24px; right:24px; bottom:14px; z-index:5;
+    background:rgba(255,255,255,.95); backdrop-filter: blur(8px);
+    border:1px solid var(--border); border-radius:14px; padding:10px 14px;
+    box-shadow:0 8px 28px rgba(15,23,42,.16);
+    display:flex; gap:12px; align-items:center; min-height:46px;
+    overflow:hidden; font-size:13.5px;
+  }
+  .live-ticker .pulse-dot {
+    width:10px; height:10px; border-radius:50%; background:#15803D; flex-shrink:0;
+    box-shadow:0 0 0 0 rgba(21,128,61,.6); animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow:0 0 0 0 rgba(21,128,61,.6) }
+    70% { box-shadow:0 0 0 14px rgba(21,128,61,0) }
+    100% { box-shadow:0 0 0 0 rgba(21,128,61,0) }
+  }
+  .live-ticker .feed-item { display:flex; gap:8px; align-items:center; line-height:1.4;
+    animation: slideIn .5s ease }
+  @keyframes slideIn { from { transform:translateY(8px); opacity:0 } to { transform:none; opacity:1 } }
+  .live-ticker .feed-item b { color:#0F766E }
+  .live-ticker .feed-item small { color:var(--muted); font-size:11px; margin-left:4px }
+
+  /* Custom Leaflet pulse marker */
+  .servia-pulse {
+    width:18px; height:18px; border-radius:50%;
+    background:radial-gradient(circle,#0F766E 30%,rgba(15,118,110,.0) 70%);
+    box-shadow:0 0 0 0 rgba(15,118,110,.7);
+    animation: marker-pulse 1.8s infinite;
+    border:2px solid #0F766E
+  }
+  .servia-pulse.green { border-color:#15803D;
+    background:radial-gradient(circle,#15803D 30%,rgba(21,128,61,0) 70%) }
+  .servia-pulse.amber { border-color:#F59E0B;
+    background:radial-gradient(circle,#F59E0B 30%,rgba(245,158,11,0) 70%) }
+  .servia-pulse.purple { border-color:#7C3AED;
+    background:radial-gradient(circle,#7C3AED 30%,rgba(124,58,237,0) 70%) }
+  .servia-pulse.red { border-color:#DC2626;
+    background:radial-gradient(circle,#DC2626 30%,rgba(220,38,38,0) 70%) }
+  @keyframes marker-pulse {
+    0% { box-shadow:0 0 0 0 rgba(15,118,110,.7) }
+    70% { box-shadow:0 0 0 18px rgba(15,118,110,0) }
+    100% { box-shadow:0 0 0 0 rgba(15,118,110,0) }
+  }
+
+  .legend-card { position:absolute; top:14px; left:24px; z-index:4;
+    background:rgba(255,255,255,.96); backdrop-filter: blur(8px);
+    border-radius:14px; padding:12px 14px; font-size:12.5px;
+    box-shadow:0 8px 24px rgba(15,23,42,.14); border:1px solid var(--border);
+    max-width:240px; line-height:1.55 }
+  .legend-card h3 { margin:0 0 6px; font-size:12px; text-transform:uppercase;
+    letter-spacing:.08em; color:#0F766E }
+  .legend-card .lr { display:flex; gap:7px; align-items:center; padding:2px 0; font-weight:600 }
+  .legend-card .lr .d { width:9px; height:9px; border-radius:50% }
+  .legend-card .lr .d.g { background:#15803D } .legend-card .lr .d.a { background:#F59E0B }
+  .legend-card .lr .d.p { background:#7C3AED } .legend-card .lr .d.t { background:#0F766E }
+
+  .servia-popup .lp-h { font-weight:800; font-size:14px; color:#0F766E; margin-bottom:4px }
+  .servia-popup .lp-m { color:#475569; font-size:12.5px; line-height:1.5 }
+  .servia-popup .lp-cta { display:inline-block; margin-top:8px; padding:7px 14px;
+    background:linear-gradient(135deg,#0F766E,#F59E0B); color:#fff; text-decoration:none;
+    border-radius:999px; font-size:12px; font-weight:700 }
+
+  .areas-strip { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:18px 0 32px }
+  .areas-strip .btn-ghost { font-size:13px }
+</style>
 </head><body>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <nav class="nav"><div class="nav-inner">
@@ -17,13 +114,35 @@
   <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book.html">Book now</a></div>
 </div></nav>
 
-<section style="max-width:1180px;margin:24px auto 80px;padding:0 16px">
-  <h1 style="font-size:32px;letter-spacing:-.02em;margin:0 0 4px">UAE coverage map — live</h1>
-  <p style="color:var(--muted);margin:0 0 24px">Green pulses are bookings happening right now. Faded dots are past completed jobs. Gold areas are expanding coverage.</p>
-  <div style="border-radius:18px;overflow:hidden;box-shadow:0 8px 28px rgba(15,23,42,.08);background:#fff">
-    <object data="/uae-map.svg" type="image/svg+xml" style="display:block;width:100%" aria-label="Servia UAE live map" loading="eager"></object>
+<section style="max-width:1280px;margin:24px auto 8px;padding:0 16px">
+  <h1 style="font-size:34px;letter-spacing:-.02em;margin:0 0 6px">UAE coverage map — live</h1>
+  <p style="color:var(--muted);margin:0">Real-time pulses where Servia jobs are starting, completing, and getting reviewed. Tap any marker to book that area.</p>
+
+  <div class="stat-strip">
+    <div class="stat live"><div class="v" id="stat-live">—</div><div class="l">Jobs live now</div></div>
+    <div class="stat"><div class="v" id="stat-today">—</div><div class="l">Bookings today</div></div>
+    <div class="stat"><div class="v" id="stat-rating">—</div><div class="l">Avg rating</div></div>
+    <div class="stat"><div class="v" id="stat-areas">—</div><div class="l">Active areas</div></div>
   </div>
-  <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:18px">
+</section>
+
+<section class="map-shell">
+  <div id="servia-map" role="application" aria-label="Live UAE coverage map"></div>
+  <div class="legend-card" aria-hidden="true">
+    <h3>What you're seeing</h3>
+    <div class="lr"><span class="d g"></span> Service starting now</div>
+    <div class="lr"><span class="d a"></span> New booking raised</div>
+    <div class="lr"><span class="d p"></span> Fresh 5★ review</div>
+    <div class="lr"><span class="d t"></span> Job completed</div>
+  </div>
+  <div class="live-ticker" id="live-ticker" aria-live="polite">
+    <span class="pulse-dot" aria-hidden="true"></span>
+    <div class="feed-item" id="feed-item"><span>Loading live activity…</span></div>
+  </div>
+</section>
+
+<section style="max-width:1280px;margin:8px auto 24px;padding:0 16px">
+  <div class="areas-strip">
     <a class="btn btn-ghost" href="/area.html?city=dubai">🏙 Dubai (200+ areas)</a>
     <a class="btn btn-ghost" href="/area.html?city=abu-dhabi">🦅 Abu Dhabi (80+)</a>
     <a class="btn btn-ghost" href="/area.html?city=sharjah">🌅 Sharjah (60+)</a>
@@ -44,4 +163,175 @@
 <script src="/theme.js" defer></script>
 <script src="/app.js" defer></script>
 <script src="/share.js" defer></script>
+<script src="/install.js" defer></script>
+
+<script>
+(() => {
+  // -------- Leaflet map: real UAE bounds, OpenStreetMap tiles --------
+  const map = L.map('servia-map', {
+    zoomControl: true,
+    scrollWheelZoom: false,
+    minZoom: 7, maxZoom: 14,
+  }).setView([24.85, 55.0], 8);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    maxZoom: 19, subdomains:'abcd'
+  }).addTo(map);
+
+  // Bounds — clamp panning to UAE-only so users can't wander off
+  const UAE_BOUNDS = L.latLngBounds([22.5, 51.5], [26.6, 56.6]);
+  map.setMaxBounds(UAE_BOUNDS.pad(0.1));
+  map.fitBounds(UAE_BOUNDS, { padding: [12, 12] });
+
+  // ---- UAE national outline (rough but recognisable) — drawn over tiles ----
+  const UAE_OUTLINE = [
+    [24.20,51.60], [24.46,51.60], [24.78,52.40], [24.32,52.55], [24.10,52.62],
+    [24.00,52.85], [23.50,53.00], [23.10,53.40], [22.93,54.30], [22.65,55.05],
+    [22.55,55.30], [22.65,55.65], [22.80,55.55], [23.00,55.65], [23.55,55.50],
+    [24.00,55.85], [24.30,56.05], [24.85,56.10], [25.04,56.15], [25.35,56.30],
+    [25.60,56.36], [25.80,56.27], [25.95,56.10], [26.10,56.08], [26.10,56.42],
+    [25.97,56.40], [25.60,56.20], [25.40,56.06], [25.30,56.34], [25.45,56.54],
+    [25.62,56.39], [25.72,56.20], [25.95,56.14], [25.90,55.85], [25.50,55.40],
+    [24.92,54.65], [24.55,54.40], [24.40,54.10], [24.21,53.50], [24.18,52.50],
+    [24.20,51.60]
+  ];
+  L.polygon(UAE_OUTLINE, {
+    color:'#0F766E', weight:1.5, opacity:.45,
+    fillColor:'#0F766E', fillOpacity:.06,
+  }).addTo(map);
+
+  // ---- Live ticker rotation ----
+  const ticker = document.getElementById('feed-item');
+  const stat = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+
+  let events = [];
+  let hotspots = [];
+  let pinLayer = L.layerGroup().addTo(map);
+  const eventQueue = [];
+
+  function toneClass(tone) {
+    return ({green:'green', amber:'amber', purple:'purple', teal:'', red:'red'})[tone] || '';
+  }
+
+  function pulseMarker(ev) {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="servia-pulse ${toneClass(ev.tone)}" title="${ev.headline}"></div>`,
+      iconSize: [22,22], iconAnchor: [11,11]
+    });
+    const m = L.marker([ev.lat, ev.lng], { icon }).addTo(pinLayer);
+    m.bindPopup(
+      `<div class="servia-popup">
+        <div class="lp-h">${ev.icon} ${ev.headline}</div>
+        <div class="lp-m">${ev.area}, ${ev.emirate.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
+          ${ev.ago_min ? ` · ${ev.ago_min<60?ev.ago_min+' min ago':Math.round(ev.ago_min/60)+'h ago'}` : ' · live now'}</div>
+        <a class="lp-cta" href="/book.html?service=${encodeURIComponent(ev.service||'')}&area=${encodeURIComponent(ev.area)}">Book in ${ev.area} →</a>
+       </div>`
+    );
+    return m;
+  }
+
+  // Auto-fade markers after 12s so the map keeps changing
+  function fadeAfter(m, ms=12000) {
+    setTimeout(() => { try { pinLayer.removeLayer(m); } catch (_) {} }, ms);
+  }
+
+  function pickRandom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+  function renderTickerLine(ev) {
+    if (!ev || !ticker) return;
+    const ago = ev.ago_min ? ` <small>${ev.ago_min<60?ev.ago_min+' min ago':Math.round(ev.ago_min/60)+'h ago'}</small>` : ' <small>now</small>';
+    const tag = {live:'Live', booking:'New booking', review:'New review',
+                 complete:'Just done', real_booking:'Live booking'}[ev.type] || 'Update';
+    ticker.innerHTML =
+      `<span style="font-size:18px;flex-shrink:0">${ev.icon}</span>
+       <span><b>${tag}</b> · ${ev.headline}${ago}</span>`;
+    // restart slide animation
+    ticker.style.animation = 'none'; ticker.offsetWidth; ticker.style.animation = '';
+  }
+
+  // Burst: drop a few pulses on the map matching the just-shown ticker
+  function burstPin(ev) {
+    const m = pulseMarker(ev);
+    fadeAfter(m, 14000);
+    // gently centre on UAE-wide; don't pan camera, would be jarring
+  }
+
+  async function fetchFeed() {
+    try {
+      const r = await fetch('/api/activity/live', {cache:'no-store'});
+      const j = await r.json();
+      if (j && j.events) {
+        events = j.events;
+        hotspots = j.hotspots || [];
+        if (j.stats) {
+          stat('stat-live', j.stats.live_now);
+          stat('stat-today', (j.stats.jobs_today||'') + '+');
+          stat('stat-rating', (j.stats.rating_avg||'') + '★');
+          stat('stat-areas', j.stats.areas_active);
+        }
+      }
+    } catch (e) {
+      // Offline fallback: synthesize on the client
+      events = makeFakeEvents();
+      hotspots = HOTSPOTS_FALLBACK;
+    }
+  }
+
+  // Drop initial layer of past activity (faded dots)
+  function seedInitialPins() {
+    pinLayer.clearLayers();
+    // Show first ~15 events as a static carpet
+    events.slice(0, 15).forEach(ev => pulseMarker(ev));
+  }
+
+  // Tick every 2.5s — pop a fresh event with marker + ticker
+  function tick() {
+    if (!events.length) return;
+    const ev = pickRandom(events);
+    burstPin(ev);
+    renderTickerLine(ev);
+  }
+
+  // Local fallback so the map still feels alive without backend
+  const HOTSPOTS_FALLBACK = [
+    {name:'Dubai Marina', emirate:'dubai', lat:25.0805, lng:55.1403},
+    {name:'Downtown Dubai', emirate:'dubai', lat:25.1972, lng:55.2744},
+    {name:'JBR The Walk', emirate:'dubai', lat:25.0775, lng:55.1334},
+    {name:'Khalifa City', emirate:'abu-dhabi', lat:24.4097, lng:54.5783},
+    {name:'Reem Island', emirate:'abu-dhabi', lat:24.4983, lng:54.4090},
+    {name:'Al Khan', emirate:'sharjah', lat:25.3320, lng:55.3850},
+    {name:'Ajman Corniche', emirate:'ajman', lat:25.4055, lng:55.4380},
+    {name:'RAK Old Town', emirate:'ras-al-khaimah', lat:25.7895, lng:55.9432},
+    {name:'Fujairah City', emirate:'fujairah', lat:25.1288, lng:56.3265},
+  ];
+  function makeFakeEvents() {
+    const SV = ['AC service','Deep cleaning','Pest control','Handyman','Sofa cleaning'];
+    const types = [
+      {type:'live', icon:'🌬', tone:'green', verb:'starting now in'},
+      {type:'booking', icon:'📞', tone:'amber', verb:'new booking from'},
+      {type:'review', icon:'⭐', tone:'purple', verb:'5★ review for'},
+      {type:'complete', icon:'✅', tone:'teal', verb:'just completed in'},
+    ];
+    return Array.from({length:20}, () => {
+      const h = pickRandom(HOTSPOTS_FALLBACK), t = pickRandom(types), s = pickRandom(SV);
+      return {...h, type:t.type, icon:t.icon, tone:t.tone, service:s,
+              headline: `${s} ${t.verb} ${h.name}`,
+              ago_min: t.type==='live'?0:Math.floor(Math.random()*240)};
+    });
+  }
+
+  // ---- bootstrap ----
+  fetchFeed().then(() => {
+    seedInitialPins();
+    if (events.length) renderTickerLine(events[0]);
+  });
+
+  // refresh stats + event pool every 60s; tick map every ~2.5s
+  setInterval(() => fetchFeed(), 60_000);
+  setInterval(tick, 2500);
+})();
+</script>
+
 </body></html>

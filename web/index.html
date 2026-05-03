@@ -116,35 +116,40 @@
     align-items:center; gap:10px; min-height:48px; }
   .wa-fab { min-width:56px !important; min-height:56px !important; }
 
-  /* Animated rotating service keyword in hero H1 — SEO-friendly: all keywords stay in DOM */
+  /* JS-driven rotator: exactly one .active span visible at any time, no overlap.
+     SEO-friendly: all keywords stay in DOM, hidden via opacity (not display:none). */
   .rotator { display:inline-block; height:1.05em; overflow:hidden; vertical-align:bottom;
-    position:relative; min-width:280px; }
-  .rotator > span { display:block; opacity:0; line-height:1.05;
+    position:relative; min-width:280px; line-height:1.05; }
+  .rotator > span {
+    display:block; line-height:1.05;
     background:linear-gradient(90deg,#FCD34D 30%,#fff 50%,#FCD34D 70%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
-    background-size:200% auto; animation: rotKey 28.8s linear infinite; }
-  .rotator > span:nth-child(1)  { animation-delay:0s }
-  .rotator > span:nth-child(2)  { animation-delay:-26.4s }
-  .rotator > span:nth-child(3)  { animation-delay:-24s }
-  .rotator > span:nth-child(4)  { animation-delay:-21.6s }
-  .rotator > span:nth-child(5)  { animation-delay:-19.2s }
-  .rotator > span:nth-child(6)  { animation-delay:-16.8s }
-  .rotator > span:nth-child(7)  { animation-delay:-14.4s }
-  .rotator > span:nth-child(8)  { animation-delay:-12s }
-  .rotator > span:nth-child(9)  { animation-delay:-9.6s }
-  .rotator > span:nth-child(10) { animation-delay:-7.2s }
-  .rotator > span:nth-child(11) { animation-delay:-4.8s }
-  .rotator > span:nth-child(12) { animation-delay:-2.4s }
-  /* Simple visible-window rotator: each child is absolutely-positioned and
-     visible for ~2.4s of the 28.8s cycle. Use opacity + translateY together,
-     but keep child INSIDE the parent (translateY 0 when visible). */
-  .rotator > span { position:absolute; left:0; right:0; top:0; }
-  @keyframes rotKey {
-    0%, 7%       { opacity:0; transform: translateY(20px) }
-    8%, 17%      { opacity:1; transform: translateY(0) }
-    18%, 100%    { opacity:0; transform: translateY(-20px) }
+    background-size:200% auto;
+    position:absolute; left:0; right:0; top:0;
+    opacity:0; transform:translateY(20px);
+    transition: opacity .45s ease, transform .45s ease;
+    pointer-events:none;
+  }
+  .rotator > span.active {
+    opacity:1; transform:translateY(0);
+  }
+  .rotator > span.exiting {
+    opacity:0; transform:translateY(-20px);
   }
   @media (max-width:720px) { .rotator { min-width:220px; } }
+  @media (prefers-reduced-motion: reduce) {
+    .rotator > span { transition:none }
+  }
+
+  /* Service-chip strip under the rotator — instantly tells users what we do */
+  .svc-chips { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start;
+    margin:14px 0 8px }
+  .svc-chips span { display:inline-flex; gap:4px; align-items:center;
+    background:rgba(255,255,255,.18); color:#fff; backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.28); border-radius:999px;
+    padding:5px 10px; font-size:11.5px; font-weight:600; line-height:1;
+    text-shadow:0 1px 0 rgba(0,0,0,.18) }
+  .svc-chips span b { font-weight:800; color:#FCD34D }
 
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
@@ -496,24 +501,32 @@
     <div class="reveal in" style="animation:slideUp .8s ease both">
       <div class="hero-pill" data-cms-key="home.hero.pill" data-i18n="hero_pill">🇦🇪 4.9★ from 2,400+ UAE families</div>
       <h1 class="hero-h1" data-cms-key="home.hero.h1">
-        UAE's smart app for<br>
-        <span class="rotator">
-          <span>home cleaning</span>
-          <span>AC service</span>
+        Book your trusted UAE pro for<br>
+        <span class="rotator" id="hero-rotator" aria-live="polite">
+          <span class="active">home cleaning</span>
+          <span>AC service &amp; repair</span>
           <span>maid &amp; nanny</span>
-          <span>handyman repair</span>
+          <span>handyman fixes</span>
           <span>pest control</span>
-          <span>swimming pool</span>
+          <span>swimming pool care</span>
           <span>mobile &amp; laptop repair</span>
-          <span>chauffeur driver</span>
+          <span>chauffeur on demand</span>
           <span>car wash at home</span>
           <span>painting &amp; gardening</span>
-          <span>office cleaning</span>
+          <span>office &amp; villa cleaning</span>
           <span>smart-home install</span>
         </span><br>
-        <span style="font-size:0.62em;font-weight:600;color:#FCD34D" data-i18n="hero_h1_post">in 60 seconds.</span>
+        <span style="font-size:0.62em;font-weight:600;color:#FCD34D" data-i18n="hero_h1_post">in 60 seconds — same day.</span>
       </h1>
-      <p class="hero-sub" data-i18n="hero_sub">Servia handles it all — booked in your language, paid securely in advance via Apple Pay / Google Pay / card or WhatsApp link, dispatched same-day across Dubai, Sharjah, Ajman, Abu Dhabi, RAK, UAQ &amp; Fujairah.</p>
+      <p class="hero-sub" data-i18n="hero_sub">One app for your home, business and life across all 7 emirates. Vetted pros · transparent prices · pay securely in advance · arrival ETA on WhatsApp.</p>
+      <div class="svc-chips" aria-hidden="true">
+        <span>🏠 <b>Home</b></span>
+        <span>🏢 <b>Business</b></span>
+        <span>🚗 <b>On-the-road</b></span>
+        <span>📱 <b>Tech repair</b></span>
+        <span>👨‍🔧 32 services</span>
+        <span>📍 7 emirates</span>
+      </div>
       <div class="hero-cta-row">
         <a class="btn-bigwa" id="hero-wa" href="https://wa.me/971564020087?text=Hi+Servia%2C+I+need+help+with+a+service" target="_blank">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3.5A11.95 11.95 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.8 1.4 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3z"/></svg>
@@ -856,6 +869,8 @@
 
 <script src="/theme.js" defer></script>
 <script src="/app.js" defer></script>
+<script src="/install.js" defer></script>
+
 <script>
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); }), {threshold: 0.12});
 document.querySelectorAll(".reveal").forEach(el => io.observe(el));
@@ -1039,6 +1054,32 @@ fetch("/api/blog/latest?limit=4").then(r => r.ok ? r.json() : null).then(d => {
       <div style="font-size:11px;color:var(--muted)">${(p.published_at||'').slice(0,10)}</div>
     </a>`).join("");
 });
+</script>
+
+<!-- JS-driven hero rotator: replaces brittle CSS keyframe rotator (which had race
+     conditions causing two services to flash overlapped). Exactly one .active
+     span at a time, smooth slide+fade. -->
+<script>
+(() => {
+  const root = document.getElementById('hero-rotator');
+  if (!root) return;
+  const items = Array.from(root.children);
+  if (items.length < 2) return;
+  let i = 0;
+  // Make sure only the first one is active at startup
+  items.forEach((el, idx) => el.classList.toggle('active', idx === 0));
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cycle = reduced ? 6000 : 2400;
+  setInterval(() => {
+    const cur = items[i];
+    const next = items[(i + 1) % items.length];
+    cur.classList.remove('active');
+    cur.classList.add('exiting');
+    next.classList.add('active');
+    setTimeout(() => cur.classList.remove('exiting'), 500);
+    i = (i + 1) % items.length;
+  }, cycle);
+})();
 </script>
 </body>
 </html>

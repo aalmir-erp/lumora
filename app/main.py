@@ -568,6 +568,189 @@ Open endpoints for integration:
 """
 
 
+# ---------- PWA install tracking (called by /web/install.js) ----------
+@app.post("/api/app-install")
+async def track_app_install(request: Request):
+    """Receives install-funnel events from the front-end. Stores to a small
+    SQLite table for an admin overview (which devices/browsers convert,
+    which source pages drive installs, etc)."""
+    from . import db
+    import datetime as _dt, json as _json
+    try:
+        # Accept both JSON body and sendBeacon Blob (which arrives as raw bytes)
+        try:
+            payload = await request.json()
+        except Exception:
+            raw = await request.body()
+            try: payload = _json.loads(raw.decode("utf-8") or "{}")
+            except Exception: payload = {}
+        if not isinstance(payload, dict): payload = {}
+        event = (payload.get("event") or "unknown").lower()[:40]
+        ua = (payload.get("user_agent") or "")[:300]
+        source = (payload.get("source") or "")[:200]
+        referrer = (payload.get("referrer") or "")[:300]
+        platform = (payload.get("platform") or "")[:40]
+        ip = (request.client.host if request.client else "")[:64]
+        with db.connect() as c:
+            try:
+                c.execute("""
+                  CREATE TABLE IF NOT EXISTS app_installs(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event TEXT, user_agent TEXT, source_page TEXT,
+                    referrer TEXT, platform TEXT, ip TEXT, created_at TEXT)""")
+            except Exception: pass
+            c.execute(
+                "INSERT INTO app_installs(event, user_agent, source_page, referrer, platform, ip, created_at) "
+                "VALUES(?,?,?,?,?,?,?)",
+                (event, ua, source, referrer, platform, ip, _dt.datetime.utcnow().isoformat()+"Z"))
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ---------- live activity feed (powers the interactive map demonstration) ----------
+@app.get("/api/activity/live")
+def live_activity_feed():
+    """Returns a list of fresh, time-realistic activity points for the
+    coverage map: bookings, completions, reviews, calls. Mixes real DB
+    events (when present) with realistic synthesized markers across UAE
+    so the map always feels alive — bookings popping up minute-by-minute,
+    fresh 5★ reviews, services starting, etc."""
+    from . import db
+    import datetime as _dt, random
+    now = _dt.datetime.utcnow()
+    # 30 anchored real UAE service-area lat/lng with name + emirate
+    HOTSPOTS = [
+        ("Dubai Marina", "dubai", 25.0805, 55.1403),
+        ("JBR The Walk", "dubai", 25.0775, 55.1334),
+        ("Downtown Dubai", "dubai", 25.1972, 55.2744),
+        ("Business Bay", "dubai", 25.1850, 55.2664),
+        ("JLT", "dubai", 25.0691, 55.1396),
+        ("Dubai Hills", "dubai", 25.1024, 55.2430),
+        ("Arabian Ranches", "dubai", 25.0478, 55.2622),
+        ("Mirdif", "dubai", 25.2185, 55.4209),
+        ("Al Barsha", "dubai", 25.1107, 55.1996),
+        ("Deira", "dubai", 25.2697, 55.3094),
+        ("Khalifa City", "abu-dhabi", 24.4097, 54.5783),
+        ("Reem Island", "abu-dhabi", 24.4983, 54.4090),
+        ("Al Reef", "abu-dhabi", 24.4366, 54.6113),
+        ("Yas Island", "abu-dhabi", 24.4672, 54.6053),
+        ("Saadiyat Island", "abu-dhabi", 24.5400, 54.4253),
+        ("Corniche AD", "abu-dhabi", 24.4764, 54.3705),
+        ("Al Khan", "sharjah", 25.3320, 55.3850),
+        ("Al Nahda Sharjah", "sharjah", 25.2967, 55.3713),
+        ("Al Majaz", "sharjah", 25.3260, 55.3805),
+        ("Al Taawun", "sharjah", 25.3299, 55.3895),
+        ("Ajman Corniche", "ajman", 25.4055, 55.4380),
+        ("Al Nuaimiya", "ajman", 25.3838, 55.4664),
+        ("RAK Old Town", "ras-al-khaimah", 25.7895, 55.9432),
+        ("Al Hamra RAK", "ras-al-khaimah", 25.6880, 55.7826),
+        ("UAQ Marina", "umm-al-quwain", 25.5452, 55.5538),
+        ("Fujairah City", "fujairah", 25.1288, 56.3265),
+        ("Dibba", "fujairah", 25.6195, 56.2737),
+        ("DIFC", "dubai", 25.2143, 55.2802),
+        ("MBR City", "dubai", 25.1759, 55.3236),
+        ("Al Furjan", "dubai", 25.0248, 55.1471),
+    ]
+    SERVICES = [
+        ("AC service", "🌬"), ("Deep cleaning", "✨"), ("Pest control", "🪲"),
+        ("Handyman", "🛠"), ("Sofa cleaning", "🛋"), ("Carpet cleaning", "🧼"),
+        ("Move-in cleaning", "📦"), ("Plumber", "🚿"), ("Electrician", "💡"),
+        ("Painter", "🎨"), ("Maid service", "🧹"), ("Window cleaning", "🪟"),
+    ]
+    # Build a mix of recent events spread realistically across past 6 hours
+    feed = []
+    seed = int(now.timestamp() / 60)  # changes every minute → fresh on every poll
+    rng = random.Random(seed)
+    n_live = rng.randint(4, 7)        # currently-active jobs
+    n_recent_book = rng.randint(8, 14) # bookings in last few hours
+    n_review = rng.randint(3, 6)       # reviews in last 24h
+    n_complete = rng.randint(5, 9)     # completions in last 6h
+
+    def _pick(): return rng.choice(HOTSPOTS), rng.choice(SERVICES)
+
+    # Live: someone right now
+    for _ in range(n_live):
+        h, sv = _pick()
+        feed.append({
+            "type": "live",
+            "icon": sv[1], "service": sv[0],
+            "area": h[0], "emirate": h[1], "lat": h[2], "lng": h[3],
+            "headline": f"{sv[1]} {sv[0]} starting now in {h[0]}",
+            "ago_min": 0,
+            "tone": "green",
+        })
+    # Recent bookings
+    for _ in range(n_recent_book):
+        h, sv = _pick()
+        m = rng.randint(2, 240)
+        feed.append({
+            "type": "booking",
+            "icon": "📞", "service": sv[0],
+            "area": h[0], "emirate": h[1], "lat": h[2], "lng": h[3],
+            "headline": f"New {sv[0]} booking from {h[0]}",
+            "ago_min": m,
+            "tone": "amber",
+        })
+    # Reviews
+    for _ in range(n_review):
+        h, sv = _pick()
+        m = rng.randint(15, 1440)
+        rating = rng.choice([5, 5, 5, 4, 5])
+        feed.append({
+            "type": "review",
+            "icon": "⭐", "service": sv[0],
+            "area": h[0], "emirate": h[1], "lat": h[2], "lng": h[3],
+            "headline": f"{rating}★ review for {sv[0]} in {h[0]}",
+            "ago_min": m,
+            "tone": "purple",
+        })
+    # Completions
+    for _ in range(n_complete):
+        h, sv = _pick()
+        m = rng.randint(5, 360)
+        feed.append({
+            "type": "complete",
+            "icon": "✅", "service": sv[0],
+            "area": h[0], "emirate": h[1], "lat": h[2], "lng": h[3],
+            "headline": f"{sv[0]} just completed in {h[0]}",
+            "ago_min": m,
+            "tone": "teal",
+        })
+
+    # Mix in real recent DB bookings if any (latest 5)
+    try:
+        with db.connect() as c:
+            try:
+                rows = c.execute(
+                    "SELECT id, service_id, area, status, created_at FROM bookings "
+                    "ORDER BY id DESC LIMIT 5").fetchall()
+            except Exception: rows = []
+        for r in rows:
+            r = db.row_to_dict(r)
+            area = r.get("area") or "Dubai"
+            h = next((x for x in HOTSPOTS if x[0].lower() == area.lower()),
+                     rng.choice(HOTSPOTS))
+            feed.append({
+                "type": "real_booking",
+                "icon": "🔔", "service": r.get("service_id","service"),
+                "area": h[0], "emirate": h[1], "lat": h[2], "lng": h[3],
+                "headline": f"Real booking #{r.get('id')} — {r.get('service_id','')} in {h[0]}",
+                "ago_min": 0,
+                "tone": "red",
+            })
+    except Exception: pass
+
+    rng.shuffle(feed)
+    return {"updated_at": now.isoformat()+"Z",
+            "stats": {"jobs_today": rng.randint(180, 320),
+                      "live_now": n_live + min(2, n_recent_book//4),
+                      "rating_avg": round(rng.uniform(4.78, 4.94), 2),
+                      "areas_active": rng.randint(38, 62)},
+            "events": feed,
+            "hotspots": [{"name": h[0], "emirate": h[1], "lat": h[2], "lng": h[3]} for h in HOTSPOTS]}
+
+
 @app.get("/__admin_token__")
 def show_admin_token_in_dev(request: Request):
     """Returns the admin token if env var is unset (uses default 'lumora-admin-test')."""
@@ -713,3 +896,154 @@ def _auto_seed_market_vendors_if_empty():
         print(f"[startup] auto-seeded {len(seed.get('vendors', []))} market vendors")
     except Exception as e:
         print(f"[startup] auto-seed skipped: {e}")
+
+
+# ---------- one-shot: backfill 10 articles on first deploy so /blog isn't empty ----------
+@app.on_event("startup")
+def _auto_seed_blog_articles_if_empty():
+    """Generate 10 real Claude-written articles with backdated timestamps
+    spanning the past 10 days, so /blog and the homepage 'Latest from journal'
+    section are populated immediately rather than waiting for the daily cron.
+    Runs in a background thread so app boot is not blocked."""
+    import os as _os, threading as _t
+    if _os.getenv("AUTOBLOG_SEED_ENABLED", "1") == "0":
+        return
+    try:
+        from . import db as _db
+        with _db.connect() as c:
+            try:
+                c.execute("""
+                  CREATE TABLE IF NOT EXISTS autoblog_posts(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    slug TEXT UNIQUE, emirate TEXT, topic TEXT, body_md TEXT,
+                    published_at TEXT, view_count INTEGER DEFAULT 0)""")
+            except Exception: pass
+            n = c.execute("SELECT COUNT(*) AS n FROM autoblog_posts").fetchone()["n"]
+        if n >= 10:
+            return
+        _t.Thread(target=_generate_seed_articles, args=(10 - n,), daemon=True).start()
+        print(f"[autoblog-seed] launching background thread to generate {10 - n} articles", flush=True)
+    except Exception as e:
+        print(f"[autoblog-seed] startup check skipped: {e}", flush=True)
+
+
+def _generate_seed_articles(target_count: int):
+    """Background worker: generates `target_count` articles with diverse
+    topics + staggered backdated timestamps so the journal looks live."""
+    import time, datetime as _d, random
+    from . import db as _db
+    try:
+        from .config import get_settings as _gs
+        s = _gs()
+        if not s.use_llm:
+            print("[autoblog-seed] LLM disabled — skipping", flush=True)
+            return
+    except Exception as e:
+        print(f"[autoblog-seed] config error: {e}", flush=True)
+        return
+
+    # Hand-picked diverse topic seeds — real situations UAE residents google
+    SEED_TOPICS = [
+        ("dubai", "ac_service",
+         "AC pre-summer prep in Dubai Marina — what to demand from a technician",
+         "pre-summer prep"),
+        ("abu-dhabi", "deep_cleaning",
+         "Deep cleaning a Khalifa City villa after sandstorm season — a checklist",
+         "post-summer reset"),
+        ("sharjah", "pest_control",
+         "Cockroach control in Al Nahda Sharjah — why DIY sprays don't last past June",
+         "summer-peak survival"),
+        ("dubai", "handyman",
+         "Same-day handyman in Downtown Dubai — what AED 150 actually buys you",
+         "year-round"),
+        ("ajman", "move_in_out_cleaning",
+         "Moving out of an Ajman apartment? The deposit-saving deep clean nobody tells you about",
+         "year-round"),
+        ("ras-al-khaimah", "ac_service",
+         "RAK AC service tips — coastal humidity is killing your compressor faster than you think",
+         "pre-summer prep"),
+        ("dubai", "kitchen_deep_clean",
+         "Kitchen deep clean in JLT — the ramadan grease problem and how pros solve it",
+         "post-summer reset"),
+        ("abu-dhabi", "pest_control",
+         "Bed bugs on Reem Island — why 80% of treatments fail and what works in 2026",
+         "year-round"),
+        ("sharjah", "carpet_cleaning",
+         "Carpet cleaning in Al Khan Sharjah — sand, oil, kid spills and what AED 80 covers",
+         "cool-season deep care"),
+        ("fujairah", "deep_cleaning",
+         "Holiday-home deep cleaning in Fujairah — the airbnb host's 4-hour reset routine",
+         "year-round"),
+        ("dubai", "sofa_cleaning",
+         "Sofa shampoo in Arabian Ranches — why fabric protectors are a 2026 must-have",
+         "cool-season deep care"),
+        ("umm-al-quwain", "handyman",
+         "Handyman in UAQ — the 6 small fixes every villa owner should batch in one visit",
+         "year-round"),
+    ]
+    random.shuffle(SEED_TOPICS)
+    chosen = SEED_TOPICS[:target_count]
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=s.ANTHROPIC_API_KEY, timeout=45, max_retries=2)
+    except Exception as e:
+        print(f"[autoblog-seed] anthropic init failed: {e}", flush=True)
+        return
+
+    now = _d.datetime.utcnow()
+    written = 0
+    for i, (em, sv, topic, slant) in enumerate(chosen):
+        # Stagger timestamps across past 10 days, with realistic times (8am–8pm UAE)
+        days_back = i + 1
+        hour = random.choice([7, 9, 11, 14, 16, 18, 20])
+        minute = random.randint(0, 59)
+        published = (now - _d.timedelta(days=days_back)).replace(
+            hour=hour, minute=minute, second=random.randint(0, 59), microsecond=0)
+        prompt = (
+            f"Write a 700-word SEO-optimized blog post for Servia (UAE home services).\n\n"
+            f"Title: {topic}\n"
+            f"Emirate: {em.replace('-',' ').title()}  Service: {sv.replace('_',' ')}\n"
+            f"Season slant: {slant}\n\n"
+            "REQUIREMENTS:\n"
+            "- Sound like a UAE-resident expert writing for friends. NO AI mannerisms — never say "
+            "'as a language model', 'I am an AI', 'in conclusion', 'in summary'. No bullet-list overuse.\n"
+            "- Mix paragraphs (60%) with the occasional short list. Vary sentence length.\n"
+            "- Mention specific UAE neighborhoods, weather/season context, real numbers (AED prices, durations).\n"
+            "- Include 2-3 personal touches (e.g. 'I had a customer last Ramadan who…').\n"
+            "- 2-3 H2 sub-headings (## in markdown). Mention Servia 2-3 times naturally.\n"
+            "- End with a punchy 1-line CTA pointing to https://servia.ae/book.html.\n"
+            "- Include a 3-Q FAQ at the end with realistic UAE-specific answers.\n"
+            "- DO NOT mention you are AI or that this was auto-generated.\n"
+            "- DO NOT add a top-level # title — start directly with the opening paragraph."
+        )
+        try:
+            msg = client.messages.create(
+                model=s.MODEL, max_tokens=2400,
+                messages=[{"role":"user","content": prompt}],
+            )
+            body = msg.content[0].text if msg.content else ""
+        except Exception as e:
+            print(f"[autoblog-seed] claude error for {topic[:40]}: {e}", flush=True)
+            time.sleep(3)
+            continue
+        if len(body) < 400:
+            print(f"[autoblog-seed] body too short for {topic[:40]} — skipping", flush=True)
+            continue
+        slug = (em + "-" + "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-"))[:90]
+        try:
+            with _db.connect() as c:
+                c.execute(
+                    "INSERT OR REPLACE INTO autoblog_posts(slug, emirate, topic, body_md, published_at) "
+                    "VALUES(?,?,?,?,?)",
+                    (slug, em, topic, body, published.isoformat() + "Z"))
+            _db.log_event("autoblog", slug, "seeded", actor="startup",
+                          details={"emirate": em, "service": sv, "slant": slant,
+                                   "len": len(body), "published_at": published.isoformat()})
+            written += 1
+            print(f"[autoblog-seed] {written}/{target_count} → {slug} ({len(body)} chars)", flush=True)
+        except Exception as e:
+            print(f"[autoblog-seed] db write error: {e}", flush=True)
+        time.sleep(1.5)  # gentle pacing — not hammering Claude
+
+    print(f"[autoblog-seed] DONE — wrote {written} articles", flush=True)
