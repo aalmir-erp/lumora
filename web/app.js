@@ -30,6 +30,27 @@
     document.documentElement.lang = lang;
     document.documentElement.dir = i18n[lang].dir || "ltr";
     document.body && (document.body.dataset.lang = lang);  // mascot dress hook
+
+    // Full-page translation via Google Translate cookie.
+    try {
+      const host = location.hostname;
+      const dom = host.includes(".") ? "." + host.split(".").slice(-2).join(".") : host;
+      if (lang === "en") {
+        document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+        document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=" + dom;
+      } else {
+        const v = "/en/" + lang;
+        document.cookie = "googtrans=" + v + "; path=/";
+        document.cookie = "googtrans=" + v + "; path=/; domain=" + dom;
+      }
+      const prev = sessionStorage.getItem("servia.last.applied.lang");
+      if (prev && prev !== lang) {
+        sessionStorage.setItem("servia.last.applied.lang", lang);
+        location.reload();
+        return;
+      }
+      sessionStorage.setItem("servia.last.applied.lang", lang);
+    } catch (e) { console.warn(e); }
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       const val = i18n[lang][key];
@@ -90,7 +111,7 @@
   // ---------- service worker ----------
   // One-time purge: existing visitors are stuck on the old cache-first SW
   // (lumora-v0.2.0). Force a clean re-register so they pick up new deploys.
-  const SW_RESET_KEY = "servia.sw.reset.v1.6.0";
+  const SW_RESET_KEY = "servia.sw.reset.v1.7.0";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {
@@ -127,6 +148,31 @@
     const t = e.target.closest(".lang-pick");
     if (t) applyLang(t.value);
   });
+
+  // ---------- Google Translate widget (full-page translation) ----------
+  (function injectGT() {
+    if (document.getElementById("google_translate_element")) return;
+    const el = document.createElement("div");
+    el.id = "google_translate_element";
+    el.style.cssText = "position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden";
+    document.body && document.body.appendChild(el);
+    window.googleTranslateElementInit = function () {
+      try {
+        new google.translate.TranslateElement({
+          pageLanguage: "en",
+          includedLanguages: "en,ar,ur,hi,bn,ta,ml,tl,ps,ne,ru,fa,fr,zh,es",
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false
+        }, "google_translate_element");
+      } catch (e) { console.warn("[gt]", e); }
+    };
+    const s = document.createElement("script");
+    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    s.async = true; document.head.appendChild(s);
+    const css = document.createElement("style");
+    css.textContent = ".goog-te-banner-frame, .skiptranslate { display:none !important } body { top:0 !important } .goog-te-gadget { font-size:0 } .goog-te-gadget > span { display:none }";
+    document.head.appendChild(css);
+  })();
 
   // ---------- bootstrap ----------
   loadI18n().then(() => {

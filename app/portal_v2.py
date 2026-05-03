@@ -707,3 +707,16 @@ def claim_review_reward(body: ReviewProofBody, request: Request):
                    body.social_post_url, body.screenshot_data_url,
                    _dt.datetime.utcnow().isoformat() + "Z"))
     return {"ok": True, "message": "Thanks! We'll verify and send your reward via WhatsApp within 24h."}
+
+
+# ---------- public latest-blog endpoint (homepage cards) ----------
+@public_router.get("/blog/latest")
+def latest_blog(limit: int = 4):
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT slug, emirate, topic, published_at FROM autoblog_posts "
+                "ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+        except Exception:
+            rows = []
+    return {"posts": [db.row_to_dict(r) for r in rows]}

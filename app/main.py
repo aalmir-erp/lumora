@@ -578,6 +578,101 @@ def show_admin_token_in_dev(request: Request):
             "note": "Default test token. Set ADMIN_TOKEN in Railway for production."}
 
 
+# APScheduler for daily auto-blog. Rotates topic across emirates + services
+# + seasonal context so articles never repeat. Disabled by AUTOBLOG_ENABLED=0.
+try:
+    from apscheduler.schedulers.background import BackgroundScheduler
+    _scheduler = BackgroundScheduler(timezone="Asia/Dubai")
+
+    def _autoblog_tick():
+        """Daily 06:00 UAE — generate one article. Topic rotates by day-of-year
+        through (emirate, service, slant) tuples so we get fresh, situational
+        content (e.g. 'AC pre-summer prep in Dubai Marina May 2026')."""
+        import os, datetime as _d, random
+        from . import db as _db, kb as _kb
+        if os.getenv("AUTOBLOG_ENABLED", "1") == "0": return
+        try:
+            from .config import get_settings as _gs
+            if not _gs().use_llm: return
+        except Exception: return
+
+        emirates = ["dubai","abu-dhabi","sharjah","ajman","ras-al-khaimah","umm-al-quwain","fujairah"]
+        services = [s["id"] for s in _kb.services()["services"]]
+        # Seasonal slant — UAE-aware
+        m = _d.datetime.now().month
+        season_slant = {
+            (3,4,5): "pre-summer prep",
+            (6,7,8,9): "summer-peak survival",
+            (10,11): "post-summer reset",
+            (12,1,2): "cool-season deep care",
+        }
+        slant = next((v for k,v in season_slant.items() if m in k), "year-round")
+        ts = int(_d.datetime.now().timestamp() / 86400)
+        em = emirates[ts % len(emirates)]
+        sv = services[(ts // len(emirates)) % len(services)]
+        topic = f"{slant.title()} — best {sv.replace('_',' ')} in {em.replace('-',' ').title()} ({_d.datetime.now().strftime('%B %Y')})"
+
+        # Reuse the admin endpoint helper inline (avoid import loop)
+        try:
+            import anthropic
+            client = anthropic.Anthropic(api_key=_gs().ANTHROPIC_API_KEY, timeout=30, max_retries=1)
+            prompt = (
+                f"Write a 700-word SEO-optimized blog post for Servia (UAE home services).\n\n"
+                f"Title: {topic}\nEmirate: {em.replace('-',' ').title()}  Service: {sv.replace('_',' ')}\n"
+                f"Season: {slant}\n\n"
+                "REQUIREMENTS:\n"
+                "- Sound like a UAE-resident expert writing for friends. NO AI mannerisms — never say 'as a language "
+                "model', 'I am an AI', 'in conclusion', 'in summary'. No bullet-list overuse.\n"
+                "- Mix paragraphs (60%) with the occasional short list. Vary sentence length.\n"
+                "- Mention specific UAE neighborhoods, weather context, real numbers (AED prices, durations).\n"
+                "- Include 2-3 personal touches (e.g. 'I had a customer last Ramadan who…').\n"
+                "- 2-3 H2 sub-headings (## in markdown). Servia mentioned 2-3 times naturally.\n"
+                "- End with a punchy 1-line CTA pointing to https://servia.ae/book.html.\n"
+                "- Include a 3-Q FAQ at the end with realistic UAE-specific answers.\n"
+                "- DO NOT mention you are AI or that this was auto-generated."
+            )
+            msg = client.messages.create(
+                model=_gs().MODEL, max_tokens=2400,
+                messages=[{"role":"user","content":prompt}],
+            )
+            body = msg.content[0].text if msg.content else ""
+        except Exception as e:  # noqa: BLE001
+            print(f"[autoblog] error: {e}", flush=True); return
+
+        slug = (em + "-" + "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-"))[:90]
+        with _db.connect() as c:
+            try:
+                c.execute("""
+                  CREATE TABLE IF NOT EXISTS autoblog_posts(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    slug TEXT UNIQUE, emirate TEXT, topic TEXT, body_md TEXT,
+                    published_at TEXT, view_count INTEGER DEFAULT 0)""")
+            except Exception: pass
+            c.execute(
+                "INSERT OR REPLACE INTO autoblog_posts(slug, emirate, topic, body_md, published_at) "
+                "VALUES(?,?,?,?,?)",
+                (slug, em, topic, body, _d.datetime.utcnow().isoformat() + "Z"))
+        _db.log_event("autoblog", slug, "published", actor="cron",
+                      details={"emirate": em, "service": sv, "slant": slant, "len": len(body)})
+        print(f"[autoblog] published {slug}", flush=True)
+
+    @_scheduler.scheduled_job("cron", hour=6, minute=0, id="autoblog_daily",
+                              max_instances=1, coalesce=True, replace_existing=True)
+    def _job_autoblog():
+        _autoblog_tick()
+
+    @app.on_event("startup")
+    def _start_scheduler():
+        try:
+            if not _scheduler.running:
+                _scheduler.start()
+                print("[scheduler] started — autoblog runs daily at 06:00 Asia/Dubai", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[scheduler] failed: {e}", flush=True)
+except Exception as _se:  # noqa: BLE001
+    print(f"[scheduler] not loaded: {_se}", flush=True)
+
+
 @app.on_event("startup")
 def _auto_seed_market_vendors_if_empty():
     """One-shot: if vendors table is empty, auto-load market seed so the admin

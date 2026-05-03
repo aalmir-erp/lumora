@@ -135,10 +135,14 @@
   .rotator > span:nth-child(10) { animation-delay:-7.2s }
   .rotator > span:nth-child(11) { animation-delay:-4.8s }
   .rotator > span:nth-child(12) { animation-delay:-2.4s }
+  /* Simple visible-window rotator: each child is absolutely-positioned and
+     visible for ~2.4s of the 28.8s cycle. Use opacity + translateY together,
+     but keep child INSIDE the parent (translateY 0 when visible). */
+  .rotator > span { position:absolute; left:0; right:0; top:0; }
   @keyframes rotKey {
-    0%, 7.5%   { opacity:0; transform: translateY(20px) }
-    8%, 16.66% { opacity:1; transform: translateY(-100%) }
-    17%, 100%  { opacity:0; transform: translateY(-200%) }
+    0%, 7%       { opacity:0; transform: translateY(20px) }
+    8%, 17%      { opacity:1; transform: translateY(0) }
+    18%, 100%    { opacity:0; transform: translateY(-20px) }
   }
   @media (max-width:720px) { .rotator { min-width:220px; } }
 
@@ -562,25 +566,22 @@
   </div>
 </section>
 
-<!-- 🇦🇪 INTERACTIVE UAE COVERAGE MAP — animated live bookings + past + planned -->
-<section style="padding:36px 16px;background:#F8FAFC;border-bottom:1px solid var(--border)">
-  <div style="max-width:1180px;margin:0 auto">
-    <div style="text-align:center;margin-bottom:18px">
-      <h2 data-i18n="map_h" style="margin:0 0 6px;font-size:28px;letter-spacing:-.02em">Live across all 7 UAE emirates</h2>
-      <p data-i18n="map_sub" style="margin:0;color:var(--muted);font-size:15px">Green pulses = bookings happening right now · faded dots = past completed jobs · gold areas = expanding coverage</p>
+<!-- COMPACT LIVE-COVERAGE STRIP (replaces the heavy blob map; full map at /coverage.html) -->
+<section style="padding:18px 16px;background:#F0FDFA;border-bottom:1px solid var(--border)">
+  <div style="max-width:1180px;margin:0 auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--primary-dark)">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22C55E;animation:pulseDot 1.6s infinite"></span>
+      <span><b id="live-count">5</b> live bookings happening right now across UAE</span>
     </div>
-    <div style="border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,.08);background:#fff">
-      <object data="/uae-map.svg" type="image/svg+xml" style="display:block;width:100%;max-width:100%" aria-label="Servia UAE coverage map" loading="lazy"></object>
+    <span style="color:var(--muted)">·</span>
+    <div style="font-size:13px;color:var(--muted)">
+      <b style="color:var(--text)">2,412+</b> jobs completed UAE-wide this year
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px;font-size:12px;color:var(--muted)">
-      <span>📍 200+ Dubai areas</span><span>·</span>
-      <span>80+ Abu Dhabi</span><span>·</span>
-      <span>60+ Sharjah</span><span>·</span>
-      <span>25+ Ajman</span><span>·</span>
-      <span>RAK · UAQ · Fujairah</span>
-    </div>
+    <span style="color:var(--muted)">·</span>
+    <a href="/coverage.html" style="font-size:13px;color:var(--primary-dark);text-decoration:underline;font-weight:600">See full live coverage map →</a>
   </div>
 </section>
+<style>@keyframes pulseDot { 50% { transform: scale(1.6); opacity: .35 } }</style>
 
 <!-- LIVE BOOKING TICKER (social proof) -->
 <div class="live-strip" aria-label="Live activity">
@@ -791,6 +792,20 @@
     <div data-share="home" data-share-key="home-page" data-share-url="https://servia.ae"
          style="display:flex;justify-content:center"></div>
     <a href="/share-rewards.html" class="btn btn-primary" style="margin-top:12px;display:inline-block">See full rewards guide →</a>
+  </div>
+</section>
+
+<!-- 📰 LATEST FROM SERVIA BLOG (auto-generated daily) -->
+<section style="padding:36px 16px;background:#F8FAFC;border-top:1px solid var(--border)">
+  <div style="max-width:1180px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 style="margin:0 0 4px;font-size:24px;letter-spacing:-.02em">Latest from the Servia journal</h2>
+        <p style="margin:0;color:var(--muted);font-size:14px">Local guides, tips, and seasonal advice — fresh content daily.</p>
+      </div>
+      <a href="/blog" style="font-size:13px;font-weight:600;color:var(--primary-dark)">All posts →</a>
+    </div>
+    <div id="latest-blog" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;min-height:140px"></div>
   </div>
 </section>
 <footer><div class="container">
@@ -1009,6 +1024,21 @@ _tilesObs.observe(document.getElementById("svc-tiles"));
 })();
 </script>
 <script src="/cms.js" defer></script>
-<script src="/share.js" defer></script>
+<script src="/share.js" defer>
+// Latest blog cards (uses /api/blog/latest public endpoint)
+fetch("/api/blog/latest?limit=4").then(r => r.ok ? r.json() : null).then(d => {
+  if (!d || !d.posts || !d.posts.length) {
+    const el = document.getElementById("latest-blog");
+    if (el) el.innerHTML = '<div style="grid-column:1/-1;padding:24px;background:#fff;border:1px dashed var(--border);border-radius:14px;color:var(--muted);text-align:center;font-size:14px">First articles publish daily at 06:00 UAE time. Check back soon.</div>';
+    return;
+  }
+  document.getElementById("latest-blog").innerHTML = d.posts.map(p => `
+    <a href="/blog/${p.slug}" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;text-decoration:none;color:var(--text);transition:.15s;display:block;box-shadow:0 2px 8px rgba(15,23,42,.04)" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 22px rgba(15,23,42,.08)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(15,23,42,.04)'">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-dark);font-weight:700;margin-bottom:6px">📍 ${(p.emirate||'').replace(/-/g,' ').toUpperCase()}</div>
+      <div style="font-size:15px;font-weight:700;line-height:1.35;margin-bottom:6px">${(p.topic||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>
+      <div style="font-size:11px;color:var(--muted)">${(p.published_at||'').slice(0,10)}</div>
+    </a>`).join("");
+});
+</script>
 </body>
 </html>
