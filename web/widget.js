@@ -1,19 +1,17 @@
-/* Lumora chatbot widget — multi-language, live-agent aware, click-to-act. */
+
 (function () {
   const script = document.currentScript || document.querySelector("script[data-api-base]");
   const API_BASE = (script && script.dataset.apiBase) ||
                    (window.LUMORA_API_BASE || window.location.origin);
   const SESSION_KEY = "lumora.chat.sid";
   const SINCE_KEY = "lumora.chat.since";
-  const STARTED_KEY = "lumora.chat.started";   // sticky: once true, never show chips again
-
+  const STARTED_KEY = "lumora.chat.started";
   const QR_FALLBACK = [
     "How much for deep cleaning a 2-bedroom?",
     "Do you cover Sharjah?",
     "What's available tomorrow?",
     "Talk to a human",
   ];
-
   const launcher = el("button", { class: "us-launcher", "aria-label": "Open chat" }, "💬");
   const panel = el("div", { class: "us-panel", role: "dialog" },
     el("div", { class: "us-header" },
@@ -32,7 +30,6 @@
     el("div", { class: "us-mode" }, ""));
   document.body.appendChild(launcher);
   document.body.appendChild(panel);
-
   const body = panel.querySelector(".us-body");
   const quickWrap = panel.querySelector(".us-quickreplies");
   const form = panel.querySelector(".us-input");
@@ -40,17 +37,13 @@
   const sendBtn = form.querySelector("button");
   const modeBadge = panel.querySelector(".us-mode");
   const subtitle = panel.querySelector(".us-mode-line");
-
   let sessionId = localStorage.getItem(SESSION_KEY);
   let since = +localStorage.getItem(SINCE_KEY) || 0;
   let busy = false;
   let pollT = null;
   let agentMode = false;
-  // Treat as "already started" if a previous session exists OR sticky flag set.
   let chatStarted = !!localStorage.getItem(STARTED_KEY) || !!sessionId;
   let userMsgCount = chatStarted ? 1 : 0;
-
-  // i18n integration
   function applyI18n() {
     const t = (k, d) => (window.lumoraT ? window.lumoraT(k, d) : d);
     input.placeholder = t("bot_placeholder", "Type your message…");
@@ -70,7 +63,6 @@
   }
   window.addEventListener("lumora:lang", applyI18n);
   applyI18n();
-
   launcher.onclick = () => {
     panel.classList.add("open");
     if (!body.children.length) greet();
@@ -78,7 +70,6 @@
     startPolling();
   };
   panel.querySelector(".us-close").onclick = () => panel.classList.remove("open");
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (busy) return;
@@ -92,14 +83,10 @@
     hideQuickReplies();
     await send(text);
   });
-
-  // Auto-open if URL has ?chat=1
   if (new URLSearchParams(location.search).get("chat") === "1") setTimeout(() => launcher.click(), 400);
-
   function hideQuickReplies() {
     quickWrap.style.display = "none";
   }
-
   function greet() {
     const t = window.lumoraT ? window.lumoraT("bot_greeting") : null;
     addMsg("bot", t || "Hi! I'm Lumi, your home services concierge. What do you need today?");
@@ -110,7 +97,6 @@
           : (window.lumoraT ? window.lumoraT("bot_demo") : "demo mode");
       }).catch(() => {});
   }
-
   async function send(text) {
     busy = true; sendBtn.disabled = true;
     const typing = showTyping();
@@ -142,7 +128,6 @@
       input.focus();
     }
   }
-
   function startPolling() {
     if (pollT || !sessionId) return;
     pollT = setInterval(async () => {
@@ -164,14 +149,9 @@
       } catch {}
     }, 3500);
   }
-
-  // -------- click-to-act extraction --------
-  // Returns { cleanText, actions[] } where cleanText has any [[choices:...]] marker stripped.
   function extractActions(text, toolCalls) {
     const out = [];
     let cleanText = text || "";
-
-    // 1) Bot-emitted [[choices: Label=reply; Label=reply]] marker
     cleanText = cleanText.replace(/\[\[\s*choices?\s*:\s*([^\]]+)\]\]/gi, (_, body) => {
       body.split(/\s*;\s*/).forEach(pair => {
         const m = pair.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/);
@@ -180,8 +160,6 @@
       });
       return "";
     }).replace(/\n{3,}/g, "\n\n").trim();
-
-    // 2) Tool-driven actions (always added in addition to LLM choices)
     for (const tc of toolCalls || []) {
       const r = tc.result || {};
       if (tc.name === "list_slots" && r.ok && Array.isArray(r.slots) && !out.length) {
@@ -192,36 +170,28 @@
         out.push({ label: "💳 View invoice", send: `Show me the invoice for ${r.booking.id}` });
       }
     }
-
-    // 3) Text-pattern fallback when bot didn't emit choices
     if (out.length === 0 && cleanText) {
       const seen = new Set();
-      // Time slots: "HH:MM" bullets
       const reTime = /(?:^|\n)\s*(?:[•\-\*]\s+)?(?:🕒\s*)?(\d{1,2}:\d{2})(?:\s*(?:AM|PM|am|pm))?\b/g;
       let m;
       while ((m = reTime.exec(cleanText))) {
         if (seen.has(m[1])) continue; seen.add(m[1]);
         out.push({ label: "🕒 " + m[1], send: `Book at ${m[1]}` });
       }
-      // "How many bedrooms?" — offer 1..5
       if (!out.length && /how\s+many\s+(bed)?room/i.test(cleanText)) {
         for (const n of [1, 2, 3, 4, 5]) out.push({ label: `${n} BR`, send: String(n) });
         out.push({ label: "Studio", send: "1" });
       }
-      // "Which area / where do you live?"
       if (!out.length && /(which area|where|emirate)/i.test(cleanText)) {
         for (const a of ["Dubai", "Sharjah", "Ajman", "Abu Dhabi"]) out.push({ label: a, send: a });
       }
-      // Yes/no questions
       if (!out.length && /\?\s*$/.test(cleanText) && /\b(confirm|proceed|continue|right|correct|sound good)\b/i.test(cleanText)) {
         out.push({ label: "✅ Yes", send: "Yes" });
         out.push({ label: "❌ No", send: "No" });
       }
     }
-
     return { cleanText, actions: out };
   }
-
   function addMsg(who, text, toolCalls, isAgent) {
     let cleanText = text;
     let actions = [];
@@ -241,13 +211,11 @@
       div.appendChild(tag);
     }
     body.appendChild(div);
-
     if (who === "bot" && actions.length) {
       const wrap = el("div", { class: "us-actions" });
       actions.forEach(a => {
         const b = el("button", { type: "button" }, a.label);
         b.onclick = () => {
-          // Disable all buttons in this group once one is tapped
           [...wrap.querySelectorAll("button")].forEach(x => x.disabled = true);
           b.classList.add("us-action-picked");
           input.value = a.send;
@@ -259,14 +227,12 @@
     }
     body.scrollTop = body.scrollHeight;
   }
-
   function showTyping() {
     const t = el("div", { class: "us-typing" }, el("span"), el("span"), el("span"));
     body.appendChild(t);
     body.scrollTop = body.scrollHeight;
     return t;
   }
-
   function formatMd(s) {
     const escaped = (s || "").replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     return escaped
@@ -275,7 +241,6 @@
       .replace(/^[•\-\*]\s+(.+)$/gm, "&nbsp;&nbsp;• $1")
       .replace(/\n/g, "<br>");
   }
-
   function el(tag, attrs, ...kids) {
     const e = document.createElement(tag);
     if (attrs) for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
@@ -285,8 +250,6 @@
     }
     return e;
   }
-
-  // ---- Voice input (Web Speech API; free; degrades gracefully) ----
   const micBtn = panel.querySelector(".us-mic");
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) micBtn.style.display = "none";
@@ -308,5 +271,4 @@
       try { rec.start(); } catch {}
     };
   }
-
 })();

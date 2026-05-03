@@ -49,10 +49,12 @@
   .nav-links { display:flex; gap:18px; margin-inline-start:auto; }
   .nav-links a { color:var(--text); font-weight:600; font-size:14px; text-decoration:none; }
   .nav-cta { display:flex; gap:8px; align-items:center; }
-  .btn { padding:9px 16px; border-radius:999px; border:1px solid var(--border);
+  .btn { padding:11px 18px; min-height:44px; border-radius:999px; border:1px solid var(--border);
     font-weight:600; font-size:14px; cursor:pointer; text-decoration:none;
-    background:var(--surface); color:var(--text); display:inline-block; }
-  .btn-primary { background:var(--primary); color:#fff; border-color:var(--primary); }
+    background:var(--surface); color:var(--text); display:inline-flex;
+    align-items:center; justify-content:center; line-height:1.2; }
+  /* Use primary-dark on buttons so foreground/background contrast passes WCAG AA (≥4.5:1). */
+  .btn-primary { background:var(--primary-dark); color:#fff; border-color:var(--primary-dark); }
   .btn-ghost { background:transparent; }
   .container { max-width:1180px; margin:0 auto; padding:0 20px; }
   .hero-shell { position:relative; padding:56px 24px 80px; overflow:hidden; color:#fff;
@@ -90,18 +92,29 @@
   .mobile-nav { position:fixed; bottom:0; left:0; right:0; z-index:50;
     background:#fff; border-top:1px solid var(--border); display:none; }
   .mobile-nav-inner { display:flex; max-width:540px; margin:0 auto; }
-  .mobile-nav a { flex:1; text-align:center; padding:8px 4px; text-decoration:none;
-    color:var(--text); font-size:11px; }
+  .mobile-nav a { flex:1; text-align:center; padding:10px 6px; min-height:56px; text-decoration:none;
+    color:var(--text); font-size:11px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .mobile-nav .ico { display:block; font-size:22px; margin-bottom:2px; }
-  @media (max-width:720px){ .mobile-nav { display:block; } body { padding-bottom:60px; } }
+  @media (max-width:720px){ .mobile-nav { display:block; } body { padding-bottom:64px; } }
   /* Reserve nav version pill width so it doesn't expand on JS load */
   #lumora-version { display:inline-block; min-width:48px; text-align:center; }
+  /* Floating chat launcher must hit 48x48 minimum for accessibility */
+  .us-launcher { min-width:56px !important; min-height:56px !important; }
   /* Footer reservation */
   footer { background:#0F172A; color:#fff; padding:48px 24px; min-height:240px; }
   footer .container { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
     gap:32px; max-width:1180px; margin:0 auto; }
-  footer h4 { color:#fff; font-size:13px; margin:0 0 12px; }
-  footer a { color:#CBD5E1; font-size:13px; text-decoration:none; line-height:1.9; }
+  footer h3 { color:#fff; font-size:13px; margin:0 0 12px; font-weight:700; }
+  footer a { color:#CBD5E1; font-size:13px; text-decoration:none; line-height:2; }
+  footer a:hover { color:#fff; }
+  /* WhatsApp button — darken to pass WCAG contrast */
+  .btn-bigwa { background:#1FB855 !important; color:#fff !important;
+    min-height:48px; padding:14px 24px; border-radius:999px; font-weight:700;
+    text-decoration:none; display:inline-flex; align-items:center; gap:10px; }
+  .btn-bigbook { background:#fff; color:var(--primary-dark); padding:14px 24px;
+    border-radius:999px; font-weight:700; text-decoration:none; display:inline-flex;
+    align-items:center; gap:10px; min-height:48px; }
+  .wa-fab { min-width:56px !important; min-height:56px !important; }
 
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
@@ -432,6 +445,7 @@
   </div>
 </div></nav>
 
+<main id="main">
 <!-- HERO -->
 <header class="hero-shell">
   <span class="float-icon f1" aria-hidden="true">✨</span>
@@ -684,6 +698,7 @@
     </div>
   </div>
 </section>
+</main>
 
 <footer><div class="container">
   <div>
@@ -692,26 +707,26 @@
     <p style="font-size:12px;opacity:0.6">© 2026 Lumora. All rights reserved.</p>
   </div>
   <div>
-    <h4>For customers</h4>
+    <h3>For customers</h3>
     <a href="/services.html">All services</a><br>
     <a href="/book.html">Book online</a><br>
     <a href="/me.html">My account</a><br>
     <a href="/login.html">Sign in</a>
   </div>
   <div>
-    <h4>Partners &amp; admin</h4>
+    <h3>Partners &amp; admin</h3>
     <a href="/login.html?as=partner">Partner portal</a><br>
     <a href="/login.html?as=partner">Become a partner</a><br>
     <a href="/admin.html">Admin</a>
   </div>
   <div>
-    <h4>Legal</h4>
+    <h3>Legal</h3>
     <a href="/terms.html">Terms of Service</a><br>
     <a href="/privacy.html">Privacy Policy</a><br>
     <a href="/refund.html">Cancellation &amp; Refund</a>
   </div>
   <div>
-    <h4>Get in touch</h4>
+    <h3>Get in touch</h3>
     <a href="https://wa.me/971564020087">WhatsApp +971 56 4020087</a><br>
     <a href="mailto:hello@lumora.ae">hello@lumora.ae</a><br>
     <a href="/faq.html">FAQ</a>

@@ -8,6 +8,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -25,6 +26,10 @@ app.add_middleware(
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_methods=["*"], allow_headers=["*"],
 )
+# GZip every response > 500 bytes — biggest single PageSpeed win.
+# Railway / proxy doesn't compress for us; PSI flagged "No compression applied"
+# with 30 KiB of saving on the document request alone.
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Routers
 app.include_router(admin.router)
@@ -303,7 +308,8 @@ async def _smart_cache(request, call_next):
     # Icons / images / fonts — long cache + stale-while-revalidate so PageSpeed
     # gives full marks on repeat visits without blocking new deploys.
     elif p.endswith((".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico", ".woff", ".woff2", ".ttf")):
-        resp.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=604800"
+        # 30 days + 7 days stale-while-revalidate for branding/icon assets.
+        resp.headers["Cache-Control"] = "public, max-age=2592000, stale-while-revalidate=604800"
     return resp
 
 if settings.WEB_DIR.exists():
