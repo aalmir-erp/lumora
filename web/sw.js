@@ -59,7 +59,7 @@ self.addEventListener("push", (event) => {
     icon: "/icon-192.svg",
     badge: "/icon-192.svg",
     data: data.url || "/me.html",
-    tag: data.tag || "lumora-notif",
+    tag: data.tag || "servia-notif",
   }));
 });
 self.addEventListener("notificationclick", (event) => {
