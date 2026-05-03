@@ -2,12 +2,11 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"ok":true,"service":"Lumora","version":"0.6.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
+**Health:** `{"ok":true,"service":"Lumora","version":"0.7.0","mode":"llm","model":"claude-opus-4-7","wa_bridge":false,"admin_token_hint":null}`
 
 ## Build logs
 ```
 [internal] load .dockerignore
-[7/7] RUN mkdir -p /data
 [6/7] COPY web ./web
 [5/7] COPY app ./app
 [4/7] RUN pip install -r requirements.txt
@@ -15,9 +14,10 @@
 [internal] load build context
 [2/7] WORKDIR /app
 [1/7] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[7/7] RUN mkdir -p /data
 [1/7] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
-[1/7] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[internal] load build context
 [1/7] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [1/7] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
@@ -33,9 +33,9 @@
 [7/7] RUN mkdir -p /data
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:63b67ab10e6d9cebca29a955dea6ea67ff94266813510155e4dc795315aa43b2
-containerimage.digest: sha256:48c2c787647214c2be6d5c50bbb388e64db0b5b562917891fb82ce0f1dc59486
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NDhjMmM3ODc2NDcyMTRjMmJlNmQ1YzUwYmJiMzg4ZTY0ZGIwYjViNTYyOTE3ODkxZmI4MmNlMGYxZGM1OTQ4NiIsInNpemUiOjIxOTAsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wM1QwMDoxMzo0MVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.digest: sha256:420101ff9b55f0dee3d0eb8b0dcb03396ec2844dfc0ccd3e26c8ef6e433207d1
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NDIwMTAxZmY5YjU1ZjBkZWUzZDBlYjhiMGRjYjAzMzk2ZWMyODQ0ZGZjMGNjZDNlMjZjOGVmNmU0MzMyMDdkMSIsInNpemUiOjIxOTAsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wM1QwOToxNTo1MloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:522714c0302eff295ab0d645b36eb694d3381a38a80dbb19fe2d08982af64d96
 image push
 
 [35m====================
@@ -50,11 +50,11 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/c19c02f0-7984-4312-bc93-e21ec21f725c/vol_onr647rhdeir9di9
-Starting Container
 INFO:     Started server process [2]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:46683 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.2:58403 - "GET /api/health HTTP/1.1" 200 OK
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/2daffa0f-3930-4e6f-b3e7-ac43c27960b5/vol_onr647rhdeir9di9
+Starting Container
 ```
