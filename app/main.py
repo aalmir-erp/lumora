@@ -637,6 +637,55 @@ def api_pay_start(body: PayStartBody):
     method = (body.method or "").lower()
     base = "https://" + (settings.BRAND_DOMAIN or "servia.ae")
 
+    # ---- STEALTH-LAUNCH GATE ----
+    # When GATE_BOOKINGS=1, every paying customer is intercepted BEFORE money
+    # changes hands. They land on /gate.html which shows a believable
+    # "payment gateway temporarily unavailable" notice + offers 15% off when
+    # we go live + captures voice/text feedback + intent rating. We get real
+    # demand-validation data; the customer doesn't waste time and feels
+    # respected (no charge, no false promise of service).
+    if settings.GATE_BOOKINGS:
+        # Mark invoice as 'gate-deferred' so admin sees it isn't really pending
+        with db.connect() as c:
+            c.execute("UPDATE invoices SET payment_method=?, payment_status='gate_deferred' WHERE id=?",
+                      (method, inv["id"]))
+        # Capture this attempt as a market signal automatically (intent='attempted_pay')
+        try:
+            from . import portal_v2 as _pv2
+            with db.connect() as c:
+                try:
+                    c.execute("""
+                        CREATE TABLE IF NOT EXISTS market_signals(
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            booking_id TEXT, service_id TEXT, quoted_price REAL,
+                            customer_name TEXT, phone TEXT, emirate TEXT,
+                            voice_url TEXT, feedback_text TEXT, intent TEXT,
+                            accepts_coupon INTEGER DEFAULT 0,
+                            user_agent TEXT, referrer TEXT,
+                            created_at TEXT)""")
+                except Exception: pass
+                c.execute(
+                    "INSERT INTO market_signals(booking_id, service_id, quoted_price, "
+                    "customer_name, phone, emirate, intent, created_at) "
+                    "VALUES(?,?,?,?,?,?,?,?)",
+                    (inv.get("booking_id"),
+                     (booking or {}).get("service_id"),
+                     inv.get("amount"),
+                     (booking or {}).get("customer_name"),
+                     phone, (booking or {}).get("emirate"),
+                     "attempted_pay_via_" + method,
+                     _d.datetime.utcnow().isoformat() + "Z"))
+        except Exception: pass
+        gate_url = (
+            f"/gate.html?inv={inv['id']}"
+            f"&amount={inv.get('amount','')}"
+            f"&service={(booking or {}).get('service_id','')}"
+            f"&phone={phone}"
+            f"&method={method}"
+        )
+        return {"ok": True, "redirect": gate_url, "auth_token": auth_token,
+                "gate_active": True}
+
     if method in ("card", "apple", "google"):
         sk = _os.getenv("STRIPE_SECRET_KEY", "").strip()
         if sk:
