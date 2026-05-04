@@ -74,15 +74,33 @@ def _send_via_bridge(text: str) -> tuple[bool, str | None]:
 
 def notify_admin(text: str, *, kind: str = "general",
                  urgency: str = "normal", meta: dict | None = None) -> int:
-    """Fire-and-forget: send a WhatsApp alert to the admin number.
+    """Fire-and-forget: send a WhatsApp alert to the admin number AND push
+    a notification to every registered admin PWA subscription.
 
     Returns the admin_alerts row id. Always records the alert; bridge delivery
-    is a best-effort overlay. Off-thread so callers (e.g. webhook handlers) are
-    never blocked on network.
+    + web push are best-effort overlays. Off-thread so callers (e.g. webhook
+    handlers) are never blocked on network.
     """
     def _worker():
+        # WhatsApp bridge (existing path)
         ok, err = _send_via_bridge(text)
         _store(kind, urgency, text, meta, ok, err)
+        # Web Push (NEW) — fires per-device sound + vibration via SW
+        try:
+            from . import push_notifications as _pn
+            # First line of text is the title, rest is the body
+            lines = (text or "").strip().split("\n", 1)
+            title = lines[0] if lines else "Servia alert"
+            body = lines[1].strip() if len(lines) > 1 else ""
+            _pn.send_to_all({
+                "title": title[:60],
+                "body": body[:240],
+                "kind": kind,
+                "url": "/admin.html#dashboard" if kind != "new_visitor" else "/admin.html#live",
+                "tag": f"servia-{kind}",
+            })
+        except Exception:
+            pass
     threading.Thread(target=_worker, daemon=True).start()
     return 0
 
