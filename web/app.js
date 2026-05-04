@@ -71,21 +71,28 @@
         return;
       }
     } catch (e) { console.warn(e); }
-    document.querySelectorAll("[data-i18n]").forEach((el) => {
-      const key = el.getAttribute("data-i18n");
-      const val = i18n[lang][key];
-      if (val) el.textContent = val;
-    });
-    document.querySelectorAll("[data-i18n-html]").forEach((el) => {
-      const key = el.getAttribute("data-i18n-html");
-      const val = i18n[lang][key];
-      if (val) el.innerHTML = val;
-    });
-    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-      const key = el.getAttribute("data-i18n-placeholder");
-      const val = i18n[lang][key];
-      if (val) el.placeholder = val;
-    });
+    // Skip i18n mutation entirely for English — the HTML is already English,
+    // re-applying the same text triggers a paint + (when widths differ) a CLS
+    // hit. Saves ~0.05 CLS on the hero pill specifically.
+    if (lang !== "en") {
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        const val = i18n[lang][key];
+        if (val) el.textContent = val;
+      });
+    }
+    if (lang !== "en") {
+      document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-html");
+        const val = i18n[lang][key];
+        if (val) el.innerHTML = val;
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-placeholder");
+        const val = i18n[lang][key];
+        if (val) el.placeholder = val;
+      });
+    }
     document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
       const key = el.getAttribute("data-i18n-aria");
       const val = i18n[lang][key];
