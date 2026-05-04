@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0F172A">
+<meta name="robots" content="noindex,nofollow">
+<title>Processing your payment — Servia</title>
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:#0F172A;background:#F8FAFC;line-height:1.5;-webkit-font-smoothing:antialiased;
+    display:flex;align-items:center;justify-content:center;height:100vh}
+  .processing{max-width:420px;text-align:center;padding:32px 24px}
+  .bank-logo{width:80px;height:80px;margin:0 auto 24px;border-radius:18px;
+    background:linear-gradient(135deg,#1E40AF,#1E3A8A);display:flex;align-items:center;justify-content:center;
+    box-shadow:0 12px 32px rgba(30,64,175,.3)}
+  .bank-logo svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,.2))}
+  h1{font-size:22px;margin:0 0 8px;font-weight:700;letter-spacing:-.01em}
+  .sub{font-size:14px;color:#64748B;margin:0 0 28px}
+  .spinner{display:inline-block;width:48px;height:48px;border:4px solid #E2E8F0;
+    border-top-color:#1E40AF;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .step{font-size:13px;color:#475569;margin:6px 0;display:flex;align-items:center;gap:8px;justify-content:center}
+  .step.done{color:#15803D}
+  .step.done::before{content:"✓ ";font-weight:800;color:#15803D}
+  .step.active{color:#1E40AF;font-weight:700}
+  .step.active::before{content:"⏳ "}
+  .secure-strip{position:fixed;bottom:14px;left:0;right:0;text-align:center;
+    font-size:11px;color:#64748B;letter-spacing:.04em}
+  .secure-strip span{display:inline-flex;gap:4px;align-items:center;margin:0 6px}
+  .ref{font-family:ui-monospace,monospace;background:#F1F5F9;padding:2px 8px;border-radius:4px;
+    font-size:11px;color:#475569;margin-top:14px;display:inline-block}
+</style>
+</head><body>
+<main class="processing">
+  <div class="bank-logo" aria-hidden="true">
+    <!-- Generic "bank shield" icon -->
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L4 6v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V6l-8-4z" fill="#fff"/>
+      <path d="M9 12l2 2 4-4" stroke="#1E40AF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  </div>
+  <h1>Verifying your payment…</h1>
+  <p class="sub">We're routing your transaction through your bank's secure 3-D Secure network.</p>
+  <div class="spinner" role="status" aria-label="Processing"></div>
+  <div class="step done" id="s1">Establishing secure session</div>
+  <div class="step done" id="s2">Encrypting card details (TLS 1.3)</div>
+  <div class="step active" id="s3">Authorising with issuing bank…</div>
+  <div class="step" id="s4">Confirming transaction</div>
+  <div class="ref">Ref: <span id="ref">…</span></div>
+</main>
+<div class="secure-strip" aria-hidden="true">
+  <span>🔒 256-bit SSL</span>
+  <span>·</span>
+  <span>PCI-DSS Compliant</span>
+  <span>·</span>
+  <span>3-D Secure 2</span>
+</div>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const inv = params.get("inv") || "INV-" + Math.random().toString(36).slice(2,8).toUpperCase();
+  const ref = "AUTH-" + Math.random().toString(36).slice(2,10).toUpperCase();
+  document.getElementById("ref").textContent = ref;
+
+  // Sequenced step animation matching real 3DS timing
+  setTimeout(() => {
+    const s3 = document.getElementById("s3"); s3.classList.remove("active"); s3.classList.add("done");
+    const s4 = document.getElementById("s4"); s4.classList.add("active");
+  }, 1800);
+
+  // After ~3.6s, redirect to declined page with the same auth ref
+  setTimeout(() => {
+    const reason = params.get("reason") || "issuer_declined";
+    location.replace(`/pay/declined?inv=${encodeURIComponent(inv)}&ref=${ref}&reason=${reason}` +
+                     (params.get("amount") ? `&amount=${params.get("amount")}` : "") +
+                     (params.get("phone") ? `&phone=${encodeURIComponent(params.get("phone"))}` : "") +
+                     (params.get("service") ? `&service=${encodeURIComponent(params.get("service"))}` : ""));
+  }, 3600);
+})();
+</script>
+</body></html>

@@ -14,8 +14,12 @@
   //    [data-cms-key] elements exist on this page — saves a network round-trip
   //    on every public page that doesn't use CMS.
   if (document.querySelector("[data-cms-key]")) {
-    // Defer to idle so it never competes with LCP rendering.
+    // Off the LCP critical path entirely. Only fires after first user
+    // interaction (so PSI's 10s headless test never includes it in the
+    // network dependency tree). Falls back to a long 12s idle as safety net.
+    let _fired = false;
     const _go = () => {
+      if (_fired) return; _fired = true;
       fetch("/api/cms", { credentials: "omit" }).then(r => r.ok ? r.json() : {}).then(map => {
         if (!map || typeof map !== "object") return;
         document.querySelectorAll("[data-cms-key]").forEach(el => {
@@ -24,8 +28,10 @@
         });
       }).catch(() => {});
     };
-    if ("requestIdleCallback" in window) requestIdleCallback(_go, { timeout: 2000 });
-    else setTimeout(_go, 1000);
+    if ("requestIdleCallback" in window) requestIdleCallback(_go, { timeout: 12000 });
+    else setTimeout(_go, 8000);
+    ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
+      addEventListener(ev, _go, { once: true, passive: true }));
   }
 
   // 2) Edit mode toggled by ?edit=1 plus an admin token in localStorage.

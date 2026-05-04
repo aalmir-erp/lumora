@@ -99,6 +99,32 @@ def save_snippets(body: SnippetsBody):
     return {"ok": True, "saved": cur}
 
 
+# ---------- stealth-launch gate toggle (admin-controlled) ----------
+@router.get("/gate-mode")
+def get_gate_mode():
+    """Returns current state of the demand-validation gate.
+    When ON, customers attempting card/Apple/Google pay land on a believable
+    'transaction declined' page instead of being charged."""
+    cfg_val = db.cfg_get("gate_bookings_enabled", None)
+    from .config import get_settings as _gs
+    return {
+        "enabled": bool(cfg_val) if cfg_val is not None else _gs().GATE_BOOKINGS,
+        "source": "admin_toggle" if cfg_val is not None else "env_fallback",
+    }
+
+
+class GateModeBody(BaseModel):
+    enabled: bool
+
+
+@router.post("/gate-mode")
+def set_gate_mode(body: GateModeBody):
+    db.cfg_set("gate_bookings_enabled", bool(body.enabled))
+    db.log_event("admin", "launch", "gate_mode_set", actor="admin",
+                 details={"enabled": bool(body.enabled)})
+    return {"ok": True, "enabled": bool(body.enabled)}
+
+
 # ---------- public snippets renderer ----------
 
 def public_snippets_js() -> str:

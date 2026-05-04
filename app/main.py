@@ -638,20 +638,22 @@ def api_pay_start(body: PayStartBody):
     base = "https://" + (settings.BRAND_DOMAIN or "servia.ae")
 
     # ---- STEALTH-LAUNCH GATE ----
-    # When GATE_BOOKINGS=1, every paying customer is intercepted BEFORE money
-    # changes hands. They land on /gate.html which shows a believable
-    # "payment gateway temporarily unavailable" notice + offers 15% off when
-    # we go live + captures voice/text feedback + intent rating. We get real
-    # demand-validation data; the customer doesn't waste time and feels
-    # respected (no charge, no false promise of service).
-    if settings.GATE_BOOKINGS:
+    # Toggle is admin-controlled via db.cfg('gate_bookings_enabled', bool).
+    # Falls back to GATE_BOOKINGS env var only if the cfg key is unset.
+    # When ON, every paying customer is intercepted BEFORE money changes hands.
+    # Card/Apple/Google → routes to /pay-processing.html (3DS-style spinner)
+    # → /pay-declined.html (believable bank-decline page with goodwill credit
+    # + voice/text feedback capture). WhatsApp/Bank/COD methods are accepted
+    # normally because they don't auto-charge anyway.
+    gate_cfg = db.cfg_get("gate_bookings_enabled", None)
+    gate_active = bool(gate_cfg) if gate_cfg is not None else settings.GATE_BOOKINGS
+    if gate_active:
         # Mark invoice as 'gate-deferred' so admin sees it isn't really pending
         with db.connect() as c:
             c.execute("UPDATE invoices SET payment_method=?, payment_status='gate_deferred' WHERE id=?",
                       (method, inv["id"]))
         # Capture this attempt as a market signal automatically (intent='attempted_pay')
         try:
-            from . import portal_v2 as _pv2
             with db.connect() as c:
                 try:
                     c.execute("""
@@ -676,15 +678,20 @@ def api_pay_start(body: PayStartBody):
                      "attempted_pay_via_" + method,
                      _d.datetime.utcnow().isoformat() + "Z"))
         except Exception: pass
-        gate_url = (
-            f"/gate.html?inv={inv['id']}"
-            f"&amount={inv.get('amount','')}"
-            f"&service={(booking or {}).get('service_id','')}"
-            f"&phone={phone}"
-            f"&method={method}"
-        )
-        return {"ok": True, "redirect": gate_url, "auth_token": auth_token,
-                "gate_active": True}
+
+        # CARD / APPLE / GOOGLE → realistic 3DS spinner + decline flow
+        if method in ("card", "apple", "google"):
+            params = (
+                f"?inv={inv['id']}"
+                f"&amount={inv.get('amount','')}"
+                f"&service={(booking or {}).get('service_id','')}"
+                f"&phone={phone}"
+                f"&method={method}"
+            )
+            return {"ok": True, "redirect": "/pay-processing.html" + params,
+                    "auth_token": auth_token, "gate_active": True}
+        # Other methods (WA / Bank / COD) — fall through to normal handlers below.
+        # Their nature (admin-mediated, no auto-charge) makes the gate moot for them.
 
     if method in ("card", "apple", "google"):
         sk = _os.getenv("STRIPE_SECRET_KEY", "").strip()
