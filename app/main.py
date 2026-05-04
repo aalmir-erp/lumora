@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -145,11 +146,29 @@ def _history(session_id: str, limit: int = 20) -> list[dict]:
 
 
 def _is_taken_over(session_id: str) -> bool:
+    """Returns True if a live agent has taken over this session AND the takeover
+    is fresh (< STALE_TAKEOVER_MIN minutes). Stale takeovers auto-release so a
+    forgotten admin click can never silence the bot forever."""
+    STALE_MIN = int(os.getenv("STALE_TAKEOVER_MIN", "30") or "30")
     with db.connect() as c:
         r = c.execute(
-            "SELECT 1 FROM agent_takeovers WHERE session_id=? AND ended_at IS NULL",
+            "SELECT started_at FROM agent_takeovers "
+            "WHERE session_id=? AND ended_at IS NULL",
             (session_id,)).fetchone()
-    return bool(r)
+        if not r: return False
+        try:
+            started = _dt.datetime.fromisoformat(r["started_at"].rstrip("Z"))
+            age_min = (_dt.datetime.utcnow() - started).total_seconds() / 60
+        except Exception:
+            age_min = 0
+        if age_min > STALE_MIN:
+            # Auto-release stale takeover so the bot resumes
+            c.execute(
+                "UPDATE agent_takeovers SET ended_at=? "
+                "WHERE session_id=? AND ended_at IS NULL",
+                (_dt.datetime.utcnow().isoformat() + "Z", session_id))
+            return False
+    return True
 
 
 
@@ -225,8 +244,10 @@ def chat(req: ChatRequest, request: Request):
                             mode="fast", usage={})
 
     if _is_taken_over(sid):
-        # Don't auto-reply. The agent's next message will appear via /api/chat/poll.
-        return ChatResponse(session_id=sid, text="", tool_calls=[],
+        # Live agent has joined — return friendly text so the customer sees SOMETHING
+        # instead of total silence. Their next bubble will arrive via /api/chat/poll.
+        msg_text = "👋 Hi! A team member has joined this chat — they'll reply to you shortly."
+        return ChatResponse(session_id=sid, text=msg_text, tool_calls=[],
                             mode="agent_handling", usage={}, agent_handled=True)
 
     history = _history(sid)
@@ -254,7 +275,12 @@ def chat(req: ChatRequest, request: Request):
         result = demo_brain.respond(req.message, history)
         mode = "demo"
 
-    text = result.get("text") or "(no response)"
+    text = (result.get("text") or "").strip()
+    if not text:
+        # Defence-in-depth: never return silence. If the LLM looped on tool calls
+        # without producing final text, give the user a clear "I'm here" reply.
+        text = ("Got it — I've noted your message. Could you give me one more detail "
+                "(service, area, or date) so I can help? Or use /contact.html for direct support.")
     usage = result.get("usage") or {}
     tin  = usage.get("input_tokens") or usage.get("prompt_tokens") or None
     tout = usage.get("output_tokens") or usage.get("completion_tokens") or None
