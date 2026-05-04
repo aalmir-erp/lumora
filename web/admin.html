@@ -55,10 +55,12 @@
         <h2 style="margin:0">📊 Dashboard</h2>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-ghost" onclick="loadDashboard()" style="font-size:12px;padding:5px 12px">↻ Refresh</button>
+          <button class="btn" onclick="runSelfTest()" style="font-size:12px;padding:5px 12px;background:#FCD34D;color:#7C2D12;font-weight:700">🧪 Run self-test</button>
           <a class="btn btn-ghost" href="/" target="_blank" style="font-size:12px;padding:5px 12px">↗ View site</a>
         </div>
       </div>
       <p style="margin:0 0 16px;color:var(--muted);font-size:13px">Real-time pulse of bookings, revenue, conversions, system health and content.</p>
+      <div id="selftest-report" style="display:none;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px"></div>
 
       <!-- Top KPI strip -->
       <div class="kpis" id="kpis"></div>
@@ -855,6 +857,47 @@ async function loadDash() {
 
 
 // ============== RICH DASHBOARD (extends loadDash with health + funnel + top services + latest + attention) ==============
+async function runSelfTest() {
+  const wrap = document.getElementById("selftest-report");
+  wrap.style.display = "block";
+  wrap.innerHTML = '<div style="text-align:center;color:#7C3AED;font-size:14px;padding:24px">🧪 Running ~30 checks across pages, APIs, LLM, WhatsApp, DB, AI router, bot visibility… (10-30s)</div>';
+  try {
+    const r = await adm("/api/admin/selftest");
+    const summary = r.summary || {};
+    const score = summary.score_pct || 0;
+    const colour = score >= 90 ? "#15803D" : score >= 60 ? "#B45309" : "#B91C1C";
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <div>
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Self-test report</div>
+        <div style="font-size:32px;font-weight:900;color:${colour}">${summary.passed||0} / ${summary.total||0} groups passed (${score}%)</div>
+        <div style="font-size:11px;color:var(--muted)">Origin: <code>${escapeHtml(r.origin||'')}</code> · ${(r.summary?.finished_at||'').slice(0,19).replace('T',' ')}</div>
+      </div>
+      <button onclick="document.getElementById('selftest-report').style.display='none'" style="background:#F1F5F9;border:0;color:#475569;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px">✕</button>
+    </div>`;
+    Object.entries(r.groups || {}).forEach(([gname, g]) => {
+      const ok = g.ok;
+      const items = (g.items || []).map(it => {
+        if (it.url) {
+          // probe item
+          return `<div style="display:flex;justify-content:space-between;gap:6px;padding:3px 0;font-size:12px;font-family:ui-monospace,monospace">
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.ok?'✅':'❌'} ${escapeHtml(it.url.replace(r.origin||'',''))}</span>
+            <span style="color:var(--muted)">${it.status||'ERR'} · ${it.latency_ms||0}ms ${it.size_kb?'· '+it.size_kb+'KB':''}</span>
+          </div>`;
+        }
+        // generic dict
+        return '<pre style="font-size:11px;background:#F1F5F9;padding:6px 8px;border-radius:6px;overflow:auto;margin:0">' + escapeHtml(JSON.stringify(it, null, 2)) + '</pre>';
+      }).join("");
+      html += `<details ${ok?'':'open'} style="border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:6px;background:${ok?'#F0FDF4':'#FEF2F2'}">
+        <summary style="cursor:pointer;font-weight:700;font-size:13px;color:${ok?'#15803D':'#B91C1C'}">${ok?'✅':'❌'} ${escapeHtml(gname.replace(/_/g,' '))}</summary>
+        <div style="margin-top:6px">${items}</div>
+      </details>`;
+    });
+    wrap.innerHTML = html;
+  } catch (e) {
+    wrap.innerHTML = `<div style="color:#B91C1C;padding:14px">Self-test failed: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
 async function loadDashboard() {
   loadDash();           // existing kpis + activity log
   loadHealth();
