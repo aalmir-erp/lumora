@@ -369,18 +369,57 @@ async def admin_stream(request: Request):
 # ---------- Vendors ----------
 @router.get("/vendors")
 def list_vendors():
+    """Vendor list including the source ('real' = scraped + AI-validated,
+    'fake' = synthetic seed) and contact + AI-score metadata so admin can
+    sort/filter by trust level."""
     with db.connect() as c:
+        # Defensive: which scraper-tracking columns actually exist?
+        try:
+            cols = {r["name"] for r in c.execute("PRAGMA table_info(vendors)").fetchall()}
+        except Exception: cols = set()
+        extra_cols = []
+        for col in ("source", "source_url", "address", "emirate", "website",
+                    "ai_score", "ai_notes", "validated_at", "contacted_at",
+                    "contact_method", "reviews_count", "is_synthetic"):
+            if col in cols: extra_cols.append(col)
+        select_cols = ("id, email, name, phone, company, rating, completed_jobs, "
+                       "is_active, is_approved, created_at"
+                       + ("," + ",".join(extra_cols) if extra_cols else ""))
         rows = c.execute(
-            "SELECT id, email, name, phone, company, rating, completed_jobs, "
-            "is_active, is_approved, created_at FROM vendors ORDER BY created_at DESC"
+            f"SELECT {select_cols} FROM vendors ORDER BY created_at DESC"
         ).fetchall()
         for_each = []
         for r in rows:
             d = dict(r)
-            svcs = [x["service_id"] for x in c.execute(
-                "SELECT service_id FROM vendor_services WHERE vendor_id=?",
-                (r["id"],)).fetchall()]
-            d["services"] = svcs
+            svcs = c.execute(
+                "SELECT service_id, area FROM vendor_services WHERE vendor_id=?",
+                (r["id"],)).fetchall()
+            d["services"] = [x["service_id"] for x in svcs]
+            d["service_areas"] = [{"service_id": x["service_id"], "area": x["area"]}
+                                  for x in svcs]
+            # Look up per-service prices if the vendor_pricing table exists
+            try:
+                prices = c.execute(
+                    "SELECT service_id, price_aed FROM vendor_pricing WHERE vendor_id=?",
+                    (r["id"],)).fetchall()
+                d["service_prices"] = {p["service_id"]: p["price_aed"] for p in prices}
+            except Exception: d["service_prices"] = {}
+            # Compute the trust tag
+            validated = d.get("validated_at") or ""
+            ai_score = d.get("ai_score")
+            source = d.get("source") or ""
+            if validated and ai_score and float(ai_score) >= 0.6:
+                d["trust_tag"] = "real_validated"     # ✓ AI-validated scraped vendor
+                d["trust_label"] = "✓ REAL (verified)"
+            elif validated:
+                d["trust_tag"] = "real_unscored"
+                d["trust_label"] = "REAL (low score)"
+            elif source in ("manual", "seed", "") and not validated:
+                d["trust_tag"] = "fake_seed"
+                d["trust_label"] = "⚠ FAKE (seed)"
+            else:
+                d["trust_tag"] = "unknown"
+                d["trust_label"] = "?"
             for_each.append(d)
     return {"vendors": for_each}
 
