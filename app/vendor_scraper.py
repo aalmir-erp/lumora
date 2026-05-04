@@ -114,6 +114,56 @@ EMIRATES_FOR_SCRAPE = ("Dubai", "Sharjah", "Abu Dhabi", "Ajman",
                        "Ras Al Khaimah", "Umm Al Quwain", "Fujairah")
 
 
+# Realistic browser User-Agent pool. We pick one per request so we don't
+# get fingerprinted as a single bot. Mix of Chrome / Safari / Firefox on
+# Mac / Windows / Linux so any pattern detection fails.
+_UA_POOL = [
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.2277.83",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.2; rv:120.0) Gecko/20100101 Firefox/120.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1",
+]
+import random as _random
+def _rand_ua() -> str:
+    return _random.choice(_UA_POOL)
+
+
+async def _http_get(url: str, *, timeout: float = 15.0,
+                    follow_redirects: bool = True,
+                    extra_headers: dict | None = None,
+                    via_scrapingbee: bool = False) -> tuple[int, str]:
+    """Unified HTTP GET with rotating UA + optional ScrapingBee proxy.
+    Returns (status, body_text). If ScrapingBee key is set in cfg AND
+    via_scrapingbee=True, route through their proxy to bypass blocks."""
+    headers = {
+        "User-Agent": _rand_ua(),
+        "Accept": "text/html,application/xhtml+xml,application/json",
+        "Accept-Language": "en-US,en-AE,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate",
+        "Cache-Control": "no-cache",
+    }
+    if extra_headers: headers.update(extra_headers)
+    sb_key = (db.cfg_get("scrapingbee_api_key", "") or "").strip()
+    if via_scrapingbee and sb_key:
+        proxied = (f"https://app.scrapingbee.com/api/v1/?api_key={sb_key}"
+                   f"&url={url}&render_js=false&country_code=ae")
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as c:
+                r = await c.get(proxied)
+                return r.status_code, r.text
+        except Exception:
+            pass   # fall through to direct
+    try:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=follow_redirects,
+                                     headers=headers) as c:
+            r = await c.get(url)
+            return r.status_code, r.text
+    except Exception as e:
+        return 0, f"__error__: {e}"
+
+
 # ---------------------------------------------------------------------------
 # Source 1: Google Places API
 # ---------------------------------------------------------------------------
