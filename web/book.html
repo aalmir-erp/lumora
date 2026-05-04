@@ -127,7 +127,26 @@ fetch("/api/services").then(r=>r.json()).then(d=>{
 
 function renderIntake() {
   const id = document.getElementById("service").value;
-  if (id) LumoraIntake.render(id, { mount: "intake-mount" });
+  if (id) {
+    LumoraIntake.render(id, { mount: "intake-mount" });
+    // Pre-fill intake values from URL params (when arriving from service.html
+    // with bedrooms/units/hours already chosen — saves the customer re-entering)
+    setTimeout(() => {
+      ["bedrooms","hours","units","ac_units","ac_count"].forEach(k => {
+        const v = params.get(k);
+        if (v) {
+          const inp = document.querySelector(`[name="${k}"], #${k}, [data-intake-field="${k}"]`);
+          if (inp) inp.value = v;
+        }
+      });
+      // Pre-fill name/phone from a previous booking if we know them
+      try {
+        const last = JSON.parse(localStorage.getItem("servia.last_contact") || "{}");
+        if (last.name && !document.getElementById("name").value) document.getElementById("name").value = last.name;
+        if (last.phone && !document.getElementById("phone").value) document.getElementById("phone").value = last.phone;
+      } catch(_){}
+    }, 50);
+  }
 }
 
 // Build the cart payload that /api/cart/quote and /api/cart/checkout expect
@@ -217,6 +236,12 @@ document.getElementById("book-btn").addEventListener("click", async () => {
       out.innerHTML = `<div style="background:#FEE2E2;color:#B91C1C;padding:14px;border-radius:10px">⚠ ${escapeHtml(errMsg)}</div>`;
       return;
     }
+    // Save contact to localStorage so the next booking is pre-filled (no re-typing)
+    try {
+      localStorage.setItem("servia.last_contact",
+        JSON.stringify({ name, phone, address: address.trim(),
+                         saved_at: new Date().toISOString() }));
+    } catch(_){}
     // Successful checkout → redirect to pay page (uses real /pay/INV-... flow)
     if (d.invoice_id) {
       location.href = "/pay/" + encodeURIComponent(d.invoice_id);
