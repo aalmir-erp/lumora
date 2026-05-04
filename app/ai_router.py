@@ -70,8 +70,8 @@ MODEL_CATALOG = {
         "modality": "text",
         "models": [
             {"id": "gemini-2.5-pro",            "tier": "premium",  "modality": "text", "label": "Gemini 2.5 Pro (latest, smartest)", "price_per_1m": "$1.25 in / $10 out"},
-            {"id": "gemini-2.5-flash",          "tier": "balanced", "modality": "text", "label": "Gemini 2.5 Flash (FREE tier)",      "price_per_1m": "FREE / $0.30 in"},
-            {"id": "gemini-2.0-flash",          "tier": "fast",     "modality": "text", "label": "Gemini 2.0 Flash",                  "price_per_1m": "$0.10 in / $0.40 out"},
+            {"id": "gemini-2.5-flash",          "tier": "free",     "modality": "text", "label": "Gemini 2.5 Flash (FREE tier)",      "price_per_1m": "FREE / $0.30 in"},
+            {"id": "gemini-2.5-flash-lite",     "tier": "fast",     "modality": "text", "label": "Gemini 2.5 Flash Lite",             "price_per_1m": "$0.10 in / $0.40 out"},
             {"id": "gemini-1.5-pro",            "tier": "premium",  "modality": "text", "label": "Gemini 1.5 Pro",                    "price_per_1m": "$1.25 in / $5 out"},
             {"id": "gemini-1.5-flash",          "tier": "fast",     "modality": "text", "label": "Gemini 1.5 Flash (FREE)",           "price_per_1m": "FREE up to 1.5K req/day"},
             {"id": "gemini-1.5-flash-8b",       "tier": "fast",     "modality": "text", "label": "Gemini 1.5 Flash-8B (cheapest)",    "price_per_1m": "$0.04 in / $0.15 out"},
@@ -172,9 +172,8 @@ MODEL_CATALOG = {
             {"id": "llama-3.3-70b-versatile",       "tier": "free",    "modality": "text", "label": "Llama 3.3 70B (FREE)",       "price_per_1m": "$0.59 in / $0.79 out"},
             {"id": "llama-3.1-8b-instant",          "tier": "free",    "modality": "text", "label": "Llama 3.1 8B Instant (FREE)","price_per_1m": "$0.05 in / $0.08 out"},
             {"id": "llama-3.2-90b-vision-preview",  "tier": "premium", "modality": "text", "label": "Llama 3.2 90B Vision",       "price_per_1m": "$0.90 in / $0.90 out"},
-            {"id": "mixtral-8x7b-32768",            "tier": "free",    "modality": "text", "label": "Mixtral 8x7B (FREE)",        "price_per_1m": "$0.24 in / $0.24 out"},
             {"id": "gemma2-9b-it",                  "tier": "free",    "modality": "text", "label": "Gemma 2 9B (FREE)",          "price_per_1m": "$0.20 in / $0.20 out"},
-            {"id": "qwen-2.5-32b",                  "tier": "balanced","modality": "text", "label": "Qwen 2.5 32B",               "price_per_1m": "$0.79 in / $0.79 out"},
+            {"id": "deepseek-r1-distill-llama-70b", "tier": "free",    "modality": "text", "label": "DeepSeek R1 Distill 70B",    "price_per_1m": "$0.75 in / $0.99 out"},
         ],
     },
     "together": {
@@ -201,15 +200,15 @@ MODEL_CATALOG = {
         "free_tier": "FREE tier on selected models (rate-limited)",
         "modality": "text",
         "models": [
+            {"id": "meta-llama/llama-3.3-70b-instruct:free",       "tier": "free",     "modality": "text", "label": "Llama 3.3 70B (FREE)",     "price_per_1m": "FREE"},
+            {"id": "google/gemini-2.0-flash-exp:free",             "tier": "free",     "modality": "text", "label": "Gemini 2.0 Flash (FREE)",  "price_per_1m": "FREE"},
             {"id": "anthropic/claude-opus-4",                      "tier": "premium",  "modality": "text", "label": "Claude Opus 4 (via OR)",   "price_per_1m": "$15 in / $75 out"},
             {"id": "anthropic/claude-sonnet-4",                    "tier": "balanced", "modality": "text", "label": "Claude Sonnet 4 (via OR)", "price_per_1m": "$3 in / $15 out"},
             {"id": "openai/gpt-4o",                                "tier": "premium",  "modality": "text", "label": "GPT-4o (via OR)",          "price_per_1m": "$2.50 in / $10 out"},
             {"id": "openai/o1",                                    "tier": "premium",  "modality": "text", "label": "o1 (via OR)",              "price_per_1m": "$15 in / $60 out"},
             {"id": "google/gemini-2.5-pro",                        "tier": "premium",  "modality": "text", "label": "Gemini 2.5 Pro (via OR)",  "price_per_1m": "$1.25 in / $10 out"},
             {"id": "x-ai/grok-4",                                  "tier": "premium",  "modality": "text", "label": "Grok 4 (via OR)",          "price_per_1m": "$5 in / $15 out"},
-            {"id": "meta-llama/llama-3.3-70b-instruct:free",       "tier": "free",     "modality": "text", "label": "Llama 3.3 70B (FREE)",     "price_per_1m": "FREE"},
             {"id": "deepseek/deepseek-chat",                       "tier": "balanced", "modality": "text", "label": "DeepSeek Chat (via OR)",   "price_per_1m": "$0.27 in / $1.10 out"},
-            {"id": "deepseek/deepseek-r1:free",                    "tier": "free",     "modality": "text", "label": "DeepSeek R1 (FREE)",       "price_per_1m": "FREE"},
         ],
     },
 }
@@ -289,8 +288,9 @@ async def test_provider(provider: str):
     models = info.get("models") or []
     if not models:
         return {"ok": False, "provider": provider, "error": "No models defined for provider."}
-    test_model = next((m["id"] for m in models if m.get("tier") in ("lite", "fast", "small")),
-                      models[-1]["id"])
+    test_model = next(
+        (m["id"] for m in models if m.get("tier") in ("free", "lite", "fast", "small")),
+        next((m["id"] for m in models if m.get("tier") == "balanced"), models[0]["id"]))
     is_image = (info.get("modality") == "image")
     if is_image:
         res = await call_image_model(provider, test_model,
@@ -312,6 +312,16 @@ async def test_provider(provider: str):
         return {"ok": True, "provider": provider, "model": test_model,
                 "latency_ms": res.get("latency_ms"), "sample": sample,
                 "msg": f"✅ Working — replied in {res.get('latency_ms')}ms with: \"{sample}\""}
+    err = (res.get("error") or "").lower()
+    # Special-case "key works but billing depleted" — this is NOT a key issue
+    if any(s in err for s in ("insufficient balance", "insufficient_quota",
+                              "balance is too low", "exceeded your current quota",
+                              "billing", "402")):
+        return {"ok": False, "provider": provider, "model": test_model,
+                "latency_ms": res.get("latency_ms"),
+                "key_valid": True,    # tells the UI to show yellow not red
+                "error": res.get("error") or "unknown error",
+                "msg": "🟡 Key valid — but provider account has $0 balance. Top up to use this provider."}
     return {"ok": False, "provider": provider, "model": test_model,
             "latency_ms": res.get("latency_ms"),
             "error": res.get("error") or "unknown error"}
