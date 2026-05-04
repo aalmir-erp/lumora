@@ -206,6 +206,11 @@ window.LUMORA_PIXELS = {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3.5A11.95 11.95 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.8 1.4 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3zM12 22c-1.9 0-3.7-.5-5.3-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.96 9.96 0 012 12c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10zm5.5-7.5c-.3-.2-1.8-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.6.1-.2.2-.3.3-.5.1-.2.1-.4 0-.5-.1-.2-.7-1.7-1-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1 2.9 1.2 3.1c.2.2 2 3.1 4.9 4.4.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.4z"/></svg>
           WhatsApp us
         </a>
+        <button type="button" id="cta-bundle"
+                onclick="window.serviaAddToBundle && serviaAddToBundle({service_id: sid})"
+                style="font-size:15px;padding:13px 20px;background:#FEF3C7;color:#7C2D12;border:1px solid #FCD34D;border-radius:999px;font-weight:800;cursor:pointer">
+          🛒 Add to bundle
+        </button>
       </div>
 
       <div class="social-proof reveal">
@@ -472,26 +477,38 @@ function render() {
       <div style="font-size:14px;line-height:1.5">${t}</div></div>`).join("") ||
     `<div style="color:var(--muted)">Benefits coming soon.</div>`;
 
-  // Steps
+  // Steps — use real data or smart default tailored to this service
   const stepsWrap = document.getElementById("steps");
-  stepsWrap.innerHTML = (SVC.process_steps||[]).map((s,i) => `
+  const defaultSteps = [
+    {icon:"📲", title:"1 · Tell us about it",  desc:"Pick size + date in 30s. Fixed price quoted instantly."},
+    {icon:"💳", title:"2 · Pay to confirm",     desc:"Apple Pay · Google Pay · Card · Tabby. Slot locked."},
+    {icon:"👨‍🔧", title:"3 · Vetted pro assigned", desc:"You get the pro's photo + name on WhatsApp."},
+    {icon:"🚐", title:"4 · Live ETA on arrival", desc:"Track them in real time. Updates every 5 min."},
+    {icon:"✨", title:"5 · Service done right",  desc:"Photos · invoice · 7-day re-do guarantee."},
+  ];
+  const stepsToUse = (SVC.process_steps && SVC.process_steps.length) ? SVC.process_steps : defaultSteps;
+  stepsWrap.innerHTML = stepsToUse.map((s,i) => `
     <div class="step-card reveal in"><div class="step-num">${i+1}</div>
       <div class="step-ico">${s.icon}</div>
       <h3 style="margin:6px 0 4px;font-size:15px">${s.title}</h3>
-      <div style="color:var(--muted);font-size:13px">${s.desc}</div></div>`).join("") ||
-    `<div style="color:var(--muted)">Process: book → arrive → deliver → pay.</div>`;
+      <div style="color:var(--muted);font-size:13px">${s.desc}</div></div>`).join("");
 
-  // Addons
+  // Addons — supports both schemas: {id, name, price, icon} OR {id, label, price}
   const ag = document.getElementById("addons-grid");
-  ag.innerHTML = (SVC.addons||[]).map(a => `
+  const addonItems = SVC.addons || [];
+  ag.innerHTML = addonItems.length ? addonItems.map(a => {
+    const name = a.name || a.label || a.id;
+    const ico  = a.icon || "➕";
+    return `
     <div class="addon-card" data-aid="${a.id}" onclick="toggleAddon('${a.id}', this)">
-      <div class="a-ico">${a.icon||"➕"}</div>
+      <div class="a-ico">${ico}</div>
       <div class="a-body">
-        <div class="a-name">${a.name}</div>
+        <div class="a-name">${name}</div>
         <div class="a-price">+ ${a.price} AED</div>
       </div>
       <div class="a-check">✓</div>
-    </div>`).join("") || `<div style="color:var(--muted)">No add-ons for this service.</div>`;
+    </div>`;
+  }).join("") : `<div style="color:var(--muted);padding:18px;text-align:center;background:#fff;border:1px dashed var(--border);border-radius:12px">No add-ons configured for this service yet.</div>`;
 
   // Includes / Excludes
   document.getElementById("includes").innerHTML = (SVC.includes||[]).map(x =>
