@@ -8,10 +8,23 @@
 .us-launcher{position:fixed;right:24px;bottom:24px;width:64px;height:64px;border-radius:50%;
   background:linear-gradient(135deg,var(--us-primary),var(--us-primary-dark));color:#fff;
   border:0;box-shadow:0 12px 32px rgba(13,148,136,.45);cursor:pointer;font-size:26px;
-  z-index:99998;transition:transform .18s ease;
+  z-index:99998;transition:transform .18s ease, bottom .25s ease;
   display:flex;align-items:center;justify-content:center;padding:0;overflow:visible}
 .us-launcher:hover{transform:scale(1.08)}
 [dir="rtl"] .us-launcher{right:auto;left:24px}
+
+/* Lift launcher above sticky bottom bars (service.html .sticky-cta, mobile-nav etc.)
+   so it doesn't overlap the Book/WhatsApp buttons. Uses :has() — supported in
+   Chrome 105+ / Safari 15.4+ / Firefox 121+ (covers ~96% of UAE traffic). */
+body:has(.sticky-cta) .us-launcher,
+body:has(.mobile-nav) .us-launcher { bottom: 92px; }
+body:has(.sticky-cta) .us-launcher-tip,
+body:has(.mobile-nav) .us-launcher-tip { bottom: 104px; }
+body:has(.sticky-cta.show) .us-launcher,
+body:has(.mobile-nav) .us-launcher { right: 16px; }
+@media (max-width:720px) {
+  body:has(.mobile-nav) .us-launcher { bottom: 80px; }  /* mobile-nav is 64px tall */
+}
 
 /* Pulsing ring around the launcher — attracts attention without nagging */
 .us-launcher-pulse{position:absolute;inset:-4px;border-radius:50%;
