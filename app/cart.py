@@ -178,7 +178,7 @@ def checkout(cart: CartPayload):
             discount=quote_resp["bundle_discount"],
             total=grand_total)
         inv = _q.create_invoice(
-            quote_id=qr["quote_id"], booking_id=anchor_bid,
+            quote_id=qr.get("id") or qr.get("quote_id"), booking_id=anchor_bid,
             amount=grand_total, currency="AED")
         return {"ok": True, "bundle_anchor": anchor_bid,
                 "booking_ids": bid_list, "grand_total": grand_total,
