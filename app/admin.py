@@ -907,9 +907,21 @@ def save_prompts(body: PromptsBody):
 
 
 # ---------- in-place CMS overrides (page content overrides) ----------
+# NB: GET is registered separately as a PUBLIC route (no admin auth) so
+# every visitor's cms.js can fetch the override map on load. The router-level
+# auth dependency would otherwise force 401 on every public page hit.
+public_cms_router = APIRouter()
+
+
+@public_cms_router.get("/api/cms")
+def cms_get_all_public():
+    """Public — every page's cms.js fetches this on load (no auth)."""
+    return db.cfg_get("cms_overrides", {}) or {}
+
+
 @router.get("/cms")
 def cms_get_all():
-    """Return all CMS overrides — public (no auth) so each page can apply them on load."""
+    """Admin-side mirror (kept for legacy admin UI calls)."""
     return db.cfg_get("cms_overrides", {}) or {}
 
 

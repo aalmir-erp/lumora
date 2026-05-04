@@ -10,14 +10,23 @@
 (function () {
   const KEY_TOK = "lumora.admin.tok";
 
-  // 1) Apply overrides to every [data-cms-key] element on every page load.
-  fetch("/api/admin/cms").then(r => r.ok ? r.json() : {}).then(map => {
-    if (!map || typeof map !== "object") return;
-    document.querySelectorAll("[data-cms-key]").forEach(el => {
-      const k = el.dataset.cmsKey;
-      if (k && map[k] != null) el.innerHTML = map[k];
-    });
-  }).catch(() => {});
+  // 1) Apply overrides to every [data-cms-key] element. Skip entirely if no
+  //    [data-cms-key] elements exist on this page — saves a network round-trip
+  //    on every public page that doesn't use CMS.
+  if (document.querySelector("[data-cms-key]")) {
+    // Defer to idle so it never competes with LCP rendering.
+    const _go = () => {
+      fetch("/api/cms", { credentials: "omit" }).then(r => r.ok ? r.json() : {}).then(map => {
+        if (!map || typeof map !== "object") return;
+        document.querySelectorAll("[data-cms-key]").forEach(el => {
+          const k = el.dataset.cmsKey;
+          if (k && map[k] != null) el.innerHTML = map[k];
+        });
+      }).catch(() => {});
+    };
+    if ("requestIdleCallback" in window) requestIdleCallback(_go, { timeout: 2000 });
+    else setTimeout(_go, 1000);
+  }
 
   // 2) Edit mode toggled by ?edit=1 plus an admin token in localStorage.
   const params = new URLSearchParams(location.search);
