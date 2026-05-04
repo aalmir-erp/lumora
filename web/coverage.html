@@ -89,6 +89,22 @@
 
 <script>
 (() => {
+  // Wait for Leaflet (loaded via defer) to be ready before initializing.
+  // Without this guard, the inline script can run BEFORE leaflet.js because
+  // inline scripts run when parsed, but defer scripts run after parsing.
+  function whenLeafletReady(cb, tries = 80) {
+    if (typeof window.L !== "undefined" && window.L.map) { cb(); return; }
+    if (tries <= 0) {
+      // Hard failure — show a clear message so the page isn't silently blank
+      const el = document.getElementById('servia-map');
+      if (el) el.innerHTML = '<div style="padding:48px;text-align:center;color:#B91C1C;background:#fff;border-radius:18px"><b>Leaflet failed to load</b><br><small>Check internet, ad-blocker, or refresh. Falling back to static UAE map.</small><br><br><img src="/uae-map.svg" alt="UAE" style="max-width:600px;width:100%"></div>';
+      return;
+    }
+    setTimeout(() => whenLeafletReady(cb, tries - 1), 100);
+  }
+  whenLeafletReady(initMap);
+
+  function initMap() {
   // -------- Leaflet map: real UAE bounds, OpenStreetMap tiles --------
   const map = L.map('servia-map', {
     zoomControl: true,
@@ -253,6 +269,7 @@
   // refresh stats + event pool every 60s; tick map every ~2.5s
   setInterval(() => fetchFeed(), 60_000);
   setInterval(tick, 2500);
+  } // end initMap
 })();
 </script>
 
