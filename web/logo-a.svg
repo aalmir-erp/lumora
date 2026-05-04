@@ -1,36 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Variant A — Minimal: 'ia' in gold + small underline curl evoking Arabic kashida.
-     Subtle, brief, scales to favicon size cleanly. -->
+<!-- Variant A — UAE flag mark + minimal wordmark flourish.
+     'ia' in gold + kashida-style curl underneath (Arabic calligrapher's elongation
+     stroke). Subtle 'Serv inshallah' nod that scales clean to favicon size. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80" role="img" aria-label="Servia logo">
   <defs>
-    <linearGradient id="lA-grad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%"  stop-color="#0F766E"/>
-      <stop offset="55%" stop-color="#14B8A6"/>
-      <stop offset="100%" stop-color="#F59E0B"/>
-    </linearGradient>
-    <radialGradient id="lA-glow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#FCD34D" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#FCD34D" stop-opacity="0"/>
+    <clipPath id="lA-mark"><rect x="8" y="8" width="64" height="64" rx="14"/></clipPath>
+    <radialGradient id="lA-disc" cx="0.5" cy="0.4" r="0.7">
+      <stop offset="0%" stop-color="#14B8A6"/><stop offset="60%" stop-color="#0D9488"/>
+      <stop offset="100%" stop-color="#0F766E"/>
     </radialGradient>
+    <filter id="lA-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-opacity="0.25"/>
+    </filter>
   </defs>
-  <!-- Mark -->
-  <g>
-    <rect x="8" y="8" width="64" height="64" rx="18" fill="url(#lA-grad)"/>
-    <rect x="12" y="12" width="56" height="20" rx="14" fill="#fff" opacity="0.10"/>
-    <circle cx="40" cy="42" r="22" fill="url(#lA-glow)"/>
-    <path d="M52 24 Q28 24 28 36 Q28 44 38 46 L48 48 Q56 50 56 56 Q56 64 38 64"
-          stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <g transform="translate(56 22)">
-      <path d="M0 -8 L1.6 -1.6 L8 0 L1.6 1.6 L0 8 L-1.6 1.6 L-8 0 L-1.6 -1.6 Z" fill="#FCD34D"/>
-    </g>
+  <!-- UAE flag inside the rounded square mark -->
+  <g clip-path="url(#lA-mark)">
+    <rect x="8"  y="8"  width="16" height="64" fill="#EF3340"/>
+    <rect x="24" y="8"  width="48" height="21.33" fill="#00732F"/>
+    <rect x="24" y="29.33" width="48" height="21.33" fill="#FFFFFF"/>
+    <rect x="24" y="50.67" width="48" height="21.33" fill="#000000"/>
   </g>
-  <!-- Wordmark: Serv (teal) + ia (gold) with kashida-style curl underneath 'ia' -->
+  <!-- Centered teal disc with stylised 'S' so the brand reads at any size -->
+  <g filter="url(#lA-shadow)">
+    <circle cx="40" cy="40" r="18" fill="url(#lA-disc)"/>
+    <circle cx="40" cy="40" r="18" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-opacity="0.85"/>
+  </g>
+  <path d="M48 32 Q32 32 32 38 Q32 42 38 43 L42 44 Q48 45 48 48 Q48 52 36 52"
+        stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Tiny gold sparkle (UAE-themed accent, top-right of the disc) -->
+  <g fill="#FCD34D" transform="translate(56 26)">
+    <circle cx="0" cy="0" r="2.4"/>
+    <path d="M0 -6 v3 M0 4 v3 M-6 0 h3 M4 0 h3" stroke="#FCD34D" stroke-width="1.4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Wordmark: Serv (teal) + ia (gold) with kashida-style curl -->
   <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
      font-weight="800" letter-spacing="-0.5">
     <text x="92" y="50" font-size="38" fill="#0F766E">Serv</text>
     <text x="172" y="50" font-size="38" fill="#F59E0B">ia</text>
-    <!-- kashida curl: long horizontal stroke with subtle upward hook on the right
-         (mimics Arabic calligrapher's elongation under the last letters) -->
     <path d="M172 60 Q200 67 222 60 Q226 58 224 54" stroke="#F59E0B" stroke-width="2.6"
           stroke-linecap="round" fill="none"/>
     <text x="92" y="74" font-size="10" font-weight="600" letter-spacing="2.6"

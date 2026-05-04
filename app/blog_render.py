@@ -11,7 +11,7 @@ from __future__ import annotations
 import datetime as _dt
 import html as _html
 import re as _re
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse
 
 from . import db
@@ -271,7 +271,7 @@ def demographics_block(emirate: str) -> str:
 </div>"""
 
 
-def render_post(slug: str) -> HTMLResponse:
+def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
     _ensure_columns()
     with db.connect() as c:
         try:
@@ -281,8 +281,46 @@ def render_post(slug: str) -> HTMLResponse:
     if not r:
         raise HTTPException(404, "Post not found")
     post = db.row_to_dict(r) or {}
+    # Record the view + per-article traffic source. Cheap: one row per hit
+    # capturing referer host (where visitor came from) so admin can see whether
+    # traffic is from Google, Twitter, direct, or another article.
+    referer = ""
+    ua = ""
+    src = "direct"
+    if request is not None:
+        referer = (request.headers.get("referer") or "")[:300]
+        ua = (request.headers.get("user-agent") or "")[:300]
+        try:
+            from urllib.parse import urlparse
+            host = (urlparse(referer).netloc or "").lower()
+            if not host: src = "direct"
+            elif "google." in host: src = "google"
+            elif "bing." in host: src = "bing"
+            elif "duckduckgo." in host: src = "duckduckgo"
+            elif "yandex." in host: src = "yandex"
+            elif "twitter." in host or "t.co" in host or "x.com" in host: src = "twitter/x"
+            elif "facebook." in host or "fb.com" in host: src = "facebook"
+            elif "instagram." in host: src = "instagram"
+            elif "linkedin." in host: src = "linkedin"
+            elif "tiktok." in host: src = "tiktok"
+            elif "reddit." in host: src = "reddit"
+            elif "whatsapp." in host or "wa.me" in host: src = "whatsapp"
+            elif "servia.ae" in host or "lumora" in host: src = "internal"
+            else: src = host
+        except Exception: pass
     with db.connect() as c:
         try: c.execute("UPDATE autoblog_posts SET view_count=view_count+1 WHERE slug=?", (slug,))
+        except Exception: pass
+        try:
+            c.execute("""
+              CREATE TABLE IF NOT EXISTS autoblog_views(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                slug TEXT, ts TEXT, referer TEXT, source TEXT, user_agent TEXT)""")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_avw_slug ON autoblog_views(slug)")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_avw_ts ON autoblog_views(ts)")
+            c.execute(
+                "INSERT INTO autoblog_views(slug, ts, referer, source, user_agent) VALUES(?,?,?,?,?)",
+                (slug, _dt.datetime.utcnow().isoformat() + "Z", referer, src, ua))
         except Exception: pass
 
     body = post.get("body_md") or ""

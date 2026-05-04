@@ -941,12 +941,13 @@ def robots_txt():
 
 
 @app.get("/blog/{slug}", response_class=HTMLResponse)
-def blog_post(slug: str):
+def blog_post(slug: str, request: Request):
     """Public blog post — Claude-generated, SEO-friendly, server-rendered.
     Includes hero illustration, stats chart, demographics, internal +
-    external backlinks, BlogPosting JSON-LD, related posts."""
+    external backlinks, BlogPosting JSON-LD, related posts. Records the
+    visit (referer + UA) so admin can see traffic sources per article."""
     from . import blog_render
-    return blog_render.render_post(slug)
+    return blog_render.render_post(slug, request=request)
 
 
 @app.get("/api/blog/hero/{slug}.svg")

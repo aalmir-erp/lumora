@@ -74,6 +74,21 @@ def track(request: Request) -> bool:
         from . import visibility as _viz
         if _viz.detect_bot(ua):
             return False
+        # Skip the admin themselves: any request carrying a valid admin Bearer
+        # token (or the admin session cookie) shouldn't count as a public visit
+        try:
+            from .auth import ADMIN_TOKEN, RECOVERY_ADMIN_TOKEN
+            auth = (request.headers.get("authorization") or "").lower()
+            if auth.startswith("bearer "):
+                tok = auth.split(None, 1)[1].strip()
+                if tok in (ADMIN_TOKEN, RECOVERY_ADMIN_TOKEN):
+                    return False
+        except Exception: pass
+        # Also skip if the cookie 'lumora.admin.tok' is set client-side and
+        # exposed via a custom 'X-Admin-Cookie' header (frontend sends this on
+        # every fetch to flag itself)
+        if request.headers.get("x-admin-cookie") == "1":
+            return False
         ip = (request.client.host if request.client else "")[:64]
         country = (request.headers.get("cf-ipcountry") or
                    request.headers.get("x-vercel-ip-country") or "")[:8]
