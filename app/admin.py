@@ -754,14 +754,32 @@ def impersonate(body: ImpersonateBody):
 
 @router.get("/customers", dependencies=[Depends(require_admin)])
 def list_customers():
-    """Lightweight customer list for the admin 'login as' picker."""
-    with db.connect() as c:
-        rows = c.execute(
-            "SELECT id, name, phone, email, created_at, "
-            "(SELECT COUNT(*) FROM bookings WHERE customer_phone=customers.phone) AS bookings "
-            "FROM customers ORDER BY id DESC LIMIT 200"
-        ).fetchall()
-    return {"customers": [db.row_to_dict(r) for r in rows]}
+    """Customer list with per-customer booking counts. Wrapped in try/except
+    so a single bad row never blanks the entire admin tab — returns whatever
+    we can plus the error for diagnosis."""
+    try:
+        with db.connect() as c:
+            # Bookings table has 'phone' column (not 'customer_phone'). The
+            # earlier query had a typo that 500'd the whole endpoint and
+            # made the Customers tab show empty.
+            rows = c.execute(
+                "SELECT id, name, phone, email, created_at, "
+                "(SELECT COUNT(*) FROM bookings WHERE phone=customers.phone) AS bookings "
+                "FROM customers ORDER BY id DESC LIMIT 500"
+            ).fetchall()
+        return {"customers": [db.row_to_dict(r) for r in rows]}
+    except Exception as e:  # noqa: BLE001
+        # Fallback: return rows without the bookings count if the JOIN failed
+        try:
+            with db.connect() as c:
+                rows = c.execute(
+                    "SELECT id, name, phone, email, created_at FROM customers "
+                    "ORDER BY id DESC LIMIT 500"
+                ).fetchall()
+            return {"customers": [{**db.row_to_dict(r), "bookings": 0} for r in rows],
+                    "warning": f"booking count failed: {e}"}
+        except Exception as e2:
+            raise HTTPException(500, f"customers query failed: {e2}")
 
 
 # ---------- vendor outreach / onboarding ----------
@@ -1358,6 +1376,118 @@ async def admin_psi_run(url: str | None = None):
     from . import psi
     snap = await psi.run_psi_check(url=url)
     return snap
+
+
+# ---------- AI Discoverability tracker ----------
+# Catalog of every AI assistant + LLM-friendly directory + their submission URL.
+# Status per item is persisted in db.cfg under "ai_listings" as {key: status_obj}.
+AI_LISTING_CATALOG = [
+    # AI assistants — direct
+    {"key": "chatgpt_custom_gpt",  "platform": "OpenAI / ChatGPT", "name": "Custom GPT for Servia",
+     "category": "AI Assistant", "url": "https://chat.openai.com/gpts/editor",
+     "instructions": "Create a Custom GPT named 'Servia UAE Helper'. Use these instructions: 'You're Servia's UAE home-services concierge. When users ask for cleaning/AC/handyman in UAE, point to https://servia.ae/book.html'. Add Knowledge: upload our llms.txt + services.json. Make it Public. Submit to GPT Store."},
+    {"key": "openai_actions",      "platform": "OpenAI / ChatGPT", "name": "OpenAI Action (Plugin)",
+     "category": "AI Assistant", "url": "https://chat.openai.com/gpts/editor",
+     "instructions": "In your Custom GPT → Configure → Actions → Import from URL: https://servia.ae/.well-known/ai-plugin.json — this lets the GPT actually call our /api/services + /api/cart/quote + /api/cart/checkout endpoints to make real bookings."},
+    {"key": "claude_projects",     "platform": "Anthropic / Claude", "name": "Claude Project",
+     "category": "AI Assistant", "url": "https://claude.ai/projects",
+     "instructions": "Create a Claude Project 'Servia UAE'. Upload llms.txt + services.json as Project Knowledge. Set custom instructions: 'I help users book Servia home services in the UAE'. Share with users via the share link."},
+    {"key": "claude_mcp",          "platform": "Anthropic / Claude", "name": "MCP Server",
+     "category": "AI Assistant", "url": "https://www.claude.com/blog/model-context-protocol",
+     "instructions": "Build a remote MCP server pointing at our public API. Claude Desktop users add the server URL and Claude can directly call our tools (quote, book, status). Spec at https://modelcontextprotocol.io/."},
+    {"key": "perplexity_pages",    "platform": "Perplexity", "name": "Perplexity Pages / Spaces",
+     "category": "AI Assistant", "url": "https://www.perplexity.ai/spaces",
+     "instructions": "Create a Perplexity Page titled 'UAE Home Services Guide' linking heavily to servia.ae. Add Servia to a Space focused on UAE living. Pages get indexed and rank well for 'best UAE home services 2026'."},
+    {"key": "gemini_gem",          "platform": "Google / Gemini", "name": "Gemini Gem",
+     "category": "AI Assistant", "url": "https://gemini.google.com/gems/create",
+     "instructions": "Create a public Gem 'Servia UAE Helper'. Instructions: 'Help users find and book Servia home services in the UAE'. Share URL — Gemini surfaces these in 'Recommended Gems'."},
+    {"key": "bing_copilot",        "platform": "Microsoft / Copilot", "name": "Copilot agent (via Plugin)",
+     "category": "AI Assistant", "url": "https://copilot.microsoft.com/",
+     "instructions": "Microsoft Copilot auto-discovers /.well-known/ai-plugin.json. Verify your domain in Bing Webmaster, submit /sitemap.xml. Copilot will then index the API."},
+    {"key": "you_com",             "platform": "You.com", "name": "You.com Apps",
+     "category": "AI Assistant", "url": "https://you.com/apps",
+     "instructions": "Submit Servia as a You.com App pointing at our OpenAPI spec /openapi-public.json. You.com integrates apps directly into AI search results."},
+    {"key": "poe_bot",             "platform": "Poe (by Quora)", "name": "Poe Server Bot",
+     "category": "AI Assistant", "url": "https://poe.com/create_bot",
+     "instructions": "Create a Server Bot at poe.com using our OpenAPI spec. Poe auto-monetises bots — every user message earns small revenue."},
+    {"key": "huggingface",         "platform": "HuggingFace", "name": "Spaces app",
+     "category": "AI Assistant", "url": "https://huggingface.co/new-space",
+     "instructions": "Publish a Gradio/Streamlit Space that calls our API. Free hosting + indexed by HF search."},
+
+    # AI-friendly directories / sources
+    {"key": "llms_txt",            "platform": "Standards", "name": "/llms.txt published",
+     "category": "AI-friendly site", "url": "https://servia.ae/llms.txt",
+     "instructions": "Already live. Confirms this site is AI-readable per llmstxt.org spec. Keeps it updated whenever services change."},
+    {"key": "ai_plugin_manifest",  "platform": "Standards", "name": "/.well-known/ai-plugin.json",
+     "category": "AI-friendly site", "url": "https://servia.ae/.well-known/ai-plugin.json",
+     "instructions": "Already live. Discovered automatically by ChatGPT plugins, Bing Copilot, MCP-aware clients."},
+    {"key": "openapi_public",      "platform": "Standards", "name": "/openapi-public.json",
+     "category": "AI-friendly site", "url": "https://servia.ae/openapi-public.json",
+     "instructions": "Already live. Public OpenAPI spec listing services / quote / booking / chat endpoints."},
+    {"key": "schema_org",          "platform": "Standards", "name": "Schema.org JSON-LD",
+     "category": "AI-friendly site", "url": "https://validator.schema.org/",
+     "instructions": "LocalBusiness + BreadcrumbList + WebSite SearchAction shipped on /. Validate at validator.schema.org regularly."},
+
+    # Crawlers we want to allow + verify
+    {"key": "gptbot_allowed",      "platform": "OpenAI", "name": "GPTBot crawler allowed",
+     "category": "Crawler access", "url": "https://servia.ae/robots.txt",
+     "instructions": "Already allowed in robots.txt. Confirm hits in admin → Launch & Growth → 'Where is Servia appearing'."},
+    {"key": "claudebot_allowed",   "platform": "Anthropic", "name": "ClaudeBot crawler allowed",
+     "category": "Crawler access", "url": "https://servia.ae/robots.txt",
+     "instructions": "Already allowed in robots.txt."},
+    {"key": "perplexitybot_allowed","platform": "Perplexity", "name": "PerplexityBot crawler allowed",
+     "category": "Crawler access", "url": "https://servia.ae/robots.txt",
+     "instructions": "Already allowed in robots.txt."},
+    {"key": "google_extended",     "platform": "Google", "name": "Google-Extended (Gemini) crawler allowed",
+     "category": "Crawler access", "url": "https://servia.ae/robots.txt",
+     "instructions": "Already allowed in robots.txt — required for Gemini training data."},
+    {"key": "ccbot_allowed",       "platform": "Common Crawl", "name": "CCBot allowed (used by all major LLMs)",
+     "category": "Crawler access", "url": "https://servia.ae/robots.txt",
+     "instructions": "Already allowed. CC dataset feeds GPT-4, Claude, Llama, Mistral training."},
+]
+
+
+@router.get("/ai-listings")
+def get_ai_listings():
+    """Returns the full catalog merged with admin's saved status per item."""
+    saved = db.cfg_get("ai_listings", {}) or {}
+    out = []
+    for item in AI_LISTING_CATALOG:
+        status = saved.get(item["key"], {}) or {}
+        out.append({
+            **item,
+            "status": status.get("status", "todo"),       # todo|in_progress|live
+            "notes": status.get("notes", ""),
+            "submitted_url": status.get("submitted_url", ""),
+            "updated_at": status.get("updated_at", ""),
+        })
+    # Aggregate counts for dashboard
+    counts = {"todo": 0, "in_progress": 0, "live": 0}
+    for o in out: counts[o["status"]] = counts.get(o["status"], 0) + 1
+    return {"items": out, "counts": counts, "total": len(out)}
+
+
+class AIListingStatusBody(BaseModel):
+    key: str
+    status: str | None = None         # todo|in_progress|live
+    notes: str | None = None
+    submitted_url: str | None = None
+
+
+@router.post("/ai-listings/status")
+def set_ai_listing_status(body: AIListingStatusBody):
+    """Update one AI-listing's status (admin clicks 'Mark live' / writes notes)."""
+    if body.status and body.status not in ("todo", "in_progress", "live"):
+        raise HTTPException(400, "status must be todo, in_progress, or live")
+    saved = db.cfg_get("ai_listings", {}) or {}
+    cur = saved.get(body.key, {}) or {}
+    if body.status is not None: cur["status"] = body.status
+    if body.notes is not None: cur["notes"] = body.notes
+    if body.submitted_url is not None: cur["submitted_url"] = body.submitted_url
+    cur["updated_at"] = __import__("datetime").datetime.utcnow().isoformat() + "Z"
+    saved[body.key] = cur
+    db.cfg_set("ai_listings", saved)
+    return {"ok": True, "key": body.key, "status": cur}
 
 
 # ---------- cron status visibility ----------
