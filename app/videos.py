@@ -607,28 +607,75 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
   <a class="cta" href="{cta_href}">{cta_text} →</a>
   <div class="progress"></div>
 </div>
-<!-- Optional ambient chime via Web Audio (free, generated, no external file).
-     Triggered ONLY on user interaction to comply with autoplay policies. -->
+<!-- Continuous ambient music via Web Audio (free, fully generated, no external file).
+     Loops forever once user enables sound. Sound toggle in top-right of video. -->
+<button id="vid-sound-btn" type="button"
+        style="position:absolute;top:14px;right:90px;z-index:5;background:rgba(0,0,0,.42);border:0;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)"
+        title="Toggle ambient music">🔇</button>
 <script>
 (function(){{
-  let played=false;
-  function chime(){{
-    if(played)return;played=true;
+  let ctx=null, nodes=[], running=false, chimeTimer=null;
+  const btn=document.getElementById("vid-sound-btn");
+  // C-major chord pad: C3, E3, G3, C4 — soft sine pad
+  const PAD_NOTES=[130.81,164.81,196.00,261.63];
+  // Gentle melody chime every 5s
+  const MELODY=[523.25,659.25,783.99,987.77,783.99,659.25];
+
+  function start(){{
+    if(running) return;
     try{{
-      const ctx=new(window.AudioContext||window.webkitAudioContext)();
-      const notes=[523.25,659.25,783.99]; // C5 E5 G5 — bright major chord
-      const now=ctx.currentTime;
-      notes.forEach((f,i)=>{{
-        const o=ctx.createOscillator(),g=ctx.createGain();
-        o.type="sine";o.frequency.value=f;
-        g.gain.setValueAtTime(0,now+i*0.1);g.gain.linearRampToValueAtTime(0.08,now+i*0.1+0.05);
-        g.gain.exponentialRampToValueAtTime(0.001,now+i*0.1+0.6);
-        o.connect(g);g.connect(ctx.destination);o.start(now+i*0.1);o.stop(now+i*0.1+0.7);
+      ctx=new(window.AudioContext||window.webkitAudioContext)();
+      const master=ctx.createGain();
+      master.gain.value=0.05;  // quiet ambient
+      master.connect(ctx.destination);
+      // Pad oscillators
+      PAD_NOTES.forEach((f,i)=>{{
+        const o=ctx.createOscillator();
+        o.type="sine"; o.frequency.value=f;
+        const g=ctx.createGain(); g.gain.value=0.18;
+        // LFO for gentle volume swell
+        const lfo=ctx.createOscillator(); lfo.type="sine"; lfo.frequency.value=0.08+i*0.03;
+        const lfoGain=ctx.createGain(); lfoGain.gain.value=0.08;
+        lfo.connect(lfoGain); lfoGain.connect(g.gain);
+        o.connect(g); g.connect(master);
+        o.start(); lfo.start();
+        nodes.push(o, lfo);
       }});
-    }}catch(_){{}}
+      // Periodic melody chime
+      let mi=0;
+      function chime(){{
+        if(!running||!ctx) return;
+        const f=MELODY[mi%MELODY.length]; mi++;
+        const t=ctx.currentTime;
+        const o=ctx.createOscillator(); o.type="sine"; o.frequency.value=f;
+        const g=ctx.createGain();
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.10,t+0.04);
+        g.gain.exponentialRampToValueAtTime(0.001,t+1.2);
+        o.connect(g); g.connect(master);
+        o.start(t); o.stop(t+1.2);
+      }}
+      chimeTimer=setInterval(chime, 4500);
+      running=true; btn.textContent="🔊"; btn.title="Mute";
+    }}catch(_){{ running=false; btn.textContent="🔇"; }}
   }}
-  document.addEventListener("click",chime,{{once:true}});
-  document.addEventListener("touchstart",chime,{{once:true,passive:true}});
+  function stop(){{
+    if(!running) return;
+    running=false;
+    try{{
+      nodes.forEach(n=>{{ try{{n.stop()}}catch(_){{}} }});
+      nodes=[];
+      if(chimeTimer){{ clearInterval(chimeTimer); chimeTimer=null; }}
+      if(ctx){{ ctx.close(); ctx=null; }}
+    }}catch(_){{}}
+    btn.textContent="🔇"; btn.title="Play ambient music";
+  }}
+  btn.addEventListener("click",()=>{{ running?stop():start(); }});
+  // Auto-start ambient ONLY if user enabled it on a previous video this session
+  if(sessionStorage.getItem("servia.video.sound")==="1") {{
+    document.addEventListener("click",function _f(){{ start(); document.removeEventListener("click",_f); }},{{once:true}});
+  }}
+  // Remember preference
+  btn.addEventListener("click",()=>{{ try{{sessionStorage.setItem("servia.video.sound",running?"1":"0")}}catch(_){{}} }});
 }})();
 </script>
 </body></html>"""

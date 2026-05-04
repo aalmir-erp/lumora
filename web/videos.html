@@ -70,9 +70,30 @@
   <button class="v-chip" data-a="1x1">⬜ 1:1 (Instagram feed)</button>
 </div>
 
+<div style="max-width:560px;margin:0 auto;padding:0 16px 16px;position:relative">
+  <input id="v-search" type="search" placeholder="🔎 Search videos — 'AC', 'sharjah', 'pest control'…"
+         style="width:100%;padding:11px 16px;border:0;border-radius:999px;font-size:14px;background:#fff;color:#0F172A;box-shadow:0 4px 12px rgba(0,0,0,.18)">
+</div>
+
+<p style="text-align:center;color:#94A3B8;font-size:12px;margin:0 0 8px"><span id="v-count">…</span> videos in library</p>
+
 <section>
   <div class="v-grid" id="v-grid"></div>
 </section>
+
+<!-- LIGHTBOX -->
+<div id="v-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;padding:20px;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+  <button id="v-lb-close" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:0;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px">✕</button>
+  <iframe id="v-lb-frame" style="width:100%;max-width:900px;aspect-ratio:16/9;border:0;border-radius:14px;background:#0F172A"></iframe>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center" id="v-lb-controls">
+    <button class="v-chip lb-aspect active" data-a="16x9">▭ 16:9</button>
+    <button class="v-chip lb-aspect" data-a="9x16">▯ 9:16</button>
+    <button class="v-chip lb-aspect" data-a="1x1">⬜ 1:1</button>
+    <a id="v-lb-open" target="_blank" rel="noopener" class="v-chip" style="background:#FCD34D;color:#7C2D12;border-color:#FCD34D">↗ Open standalone</a>
+    <a id="v-lb-share" class="v-chip">📤 Copy share link</a>
+  </div>
+  <div id="v-lb-meta" style="color:#CBD5E1;font-size:13px;text-align:center;max-width:720px"></div>
+</div>
 
 <footer><div class="container">
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"></div>
@@ -85,34 +106,92 @@
 (() => {
   const grid = document.getElementById('v-grid');
   const chips = document.querySelectorAll('#v-filters .v-chip');
-  let all = [], filter = 'all', aspect = '16x9';
+  const search = document.getElementById('v-search');
+  const lb = document.getElementById('v-lightbox');
+  const lbFrame = document.getElementById('v-lb-frame');
+  const lbOpen = document.getElementById('v-lb-open');
+  const lbShare = document.getElementById('v-lb-share');
+  const lbMeta = document.getElementById('v-lb-meta');
+  let all = [], filter = 'all', aspect = '16x9', q = '', currentSlug = null, currentAspect = '16x9';
+
+  function esc(s){return (s||'').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}
 
   function render() {
     let list = all;
     if (filter !== 'all' && filter.startsWith('kind:')) {
       const k = filter.slice(5);
-      list = all.filter(v => v.kind === k);
+      list = list.filter(v => v.kind === k);
     }
+    if (q) {
+      const ql = q.toLowerCase();
+      list = list.filter(v => (v.title||'').toLowerCase().includes(ql) ||
+                              (v.service_id||'').toLowerCase().includes(ql) ||
+                              (v.emirate||'').toLowerCase().includes(ql) ||
+                              (v.kind||'').toLowerCase().includes(ql));
+    }
+    document.getElementById('v-count').textContent = `${list.length} of ${all.length}`;
     grid.innerHTML = list.length ? list.map(v => {
       const tag = v.service_id ? '🛠 ' + (v.service_id.replace(/_/g,' ')) :
                   v.emirate    ? '📍 ' + (v.emirate.replace(/-/g,' ')) :
-                  v.kind === 'starter' ? '⭐ Featured' : '💡 ' + (v.kind || 'tip');
+                  v.kind === 'starter' ? '⭐ Featured' :
+                  v.kind === 'long'    ? '🎞 60s explainer' :
+                  '💡 ' + (v.kind || 'tip');
       const ifH = aspect === '9x16' ? '356px' : aspect === '1x1' ? '300px' : '200px';
       return `
-        <div class="v-card">
+        <div class="v-card" style="cursor:pointer" onclick="window.openLightbox('${v.slug}','${aspect}','${esc(v.title).replace(/'/g,"&#39;")}','${tag.replace(/'/g,"&#39;")}',${v.duration_sec||18})">
           <iframe loading="lazy" src="/api/videos/play/${v.slug}?aspect=${aspect}" title="${(v.title||'').replace(/"/g,'&quot;')}" style="height:${ifH}"></iframe>
           <div class="v-body">
-            <h3>${(v.title||'').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</h3>
+            <h3>${esc(v.title)}</h3>
             <div class="v-meta">
               <span class="v-tag">${tag}</span>
               <span>${v.duration_sec||18}s</span>
               <span>${v.view_count||0} views</span>
               <span style="background:#FCD34D;color:#7C2D12;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800">${aspect}</span>
             </div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap" onclick="event.stopPropagation()">
+              <a class="v-chip" style="font-size:10px;padding:4px 8px" href="/api/videos/play/${v.slug}?aspect=16x9" target="_blank" rel="noopener">▭ Open 16:9</a>
+              <a class="v-chip" style="font-size:10px;padding:4px 8px" href="/api/videos/play/${v.slug}?aspect=9x16" target="_blank" rel="noopener">▯ Open 9:16</a>
+              <a class="v-chip" style="font-size:10px;padding:4px 8px" href="/api/videos/play/${v.slug}?aspect=1x1" target="_blank" rel="noopener">⬜ Open 1:1</a>
+            </div>
           </div>
         </div>`;
-    }).join("") : '<div class="v-empty">No videos in this filter — try another.</div>';
+    }).join("") : '<div class="v-empty">No videos match. Try another search or clear filters.</div>';
   }
+
+  window.openLightbox = function(slug, aspect, title, tag, dur) {
+    currentSlug = slug; currentAspect = aspect;
+    document.querySelectorAll('.lb-aspect').forEach(b => b.classList.toggle('active', b.dataset.a === aspect));
+    lbFrame.src = `/api/videos/play/${slug}?aspect=${aspect}`;
+    lbFrame.style.aspectRatio = aspect === '9x16' ? '9/16' : aspect === '1x1' ? '1/1' : '16/9';
+    lbFrame.style.maxHeight = aspect === '9x16' ? '78vh' : '70vh';
+    lbFrame.style.maxWidth = aspect === '9x16' ? '440px' : aspect === '1x1' ? '600px' : '900px';
+    lbOpen.href = `/api/videos/play/${slug}?aspect=${aspect}`;
+    lbShare.href = '#';
+    lbShare.onclick = e => {
+      e.preventDefault();
+      const url = location.origin + `/api/videos/play/${slug}?aspect=${aspect}`;
+      navigator.clipboard.writeText(url).then(() => lbShare.textContent='✅ Copied!');
+      setTimeout(() => lbShare.textContent='📤 Copy share link', 1800);
+    };
+    lbMeta.innerHTML = `<b>${title}</b><br>${tag} · ${dur}s · aspect ${aspect}`;
+    lb.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  };
+  function closeLB() { lb.style.display = 'none'; lbFrame.src = ''; document.body.style.overflow = ''; currentSlug = null; }
+  document.getElementById('v-lb-close').onclick = closeLB;
+  lb.addEventListener('click', e => { if (e.target === lb) closeLB(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && lb.style.display === 'flex') closeLB(); });
+  document.querySelectorAll('.lb-aspect').forEach(b => b.onclick = () => {
+    if (!currentSlug) return;
+    document.querySelectorAll('.lb-aspect').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    currentAspect = b.dataset.a;
+    lbFrame.src = `/api/videos/play/${currentSlug}?aspect=${currentAspect}`;
+    lbFrame.style.aspectRatio = currentAspect === '9x16' ? '9/16' : currentAspect === '1x1' ? '1/1' : '16/9';
+    lbFrame.style.maxHeight = currentAspect === '9x16' ? '78vh' : '70vh';
+    lbFrame.style.maxWidth = currentAspect === '9x16' ? '440px' : currentAspect === '1x1' ? '600px' : '900px';
+    lbOpen.href = `/api/videos/play/${currentSlug}?aspect=${currentAspect}`;
+  });
 
   chips.forEach(c => c.onclick = () => {
     chips.forEach(x => x.classList.remove('active'));
@@ -126,8 +205,9 @@
     aspect = c.dataset.a;
     render();
   });
+  search.addEventListener('input', () => { q = search.value.trim(); render(); });
 
-  fetch("/api/videos/list?limit=200").then(r => r.ok ? r.json() : null).then(d => {
+  fetch("/api/videos/list?limit=500").then(r => r.ok ? r.json() : null).then(d => {
     all = (d && d.videos) || [];
     render();
   }).catch(() => render());
