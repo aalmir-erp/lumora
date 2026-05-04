@@ -83,7 +83,7 @@
 
     <label>Full name</label><input id="name" required>
     <div class="row">
-      <div><label>Phone</label><input id="phone" required placeholder="+971501234567"></div>
+      <div><label>Phone <span style="color:#0F766E;font-size:11px">(UAE mobile only)</span></label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="+971501234567"></div>
       <div><label>First-time customer?</label>
         <select id="first_time"><option value="">No</option><option value="1">Yes — apply 15% off</option></select></div>
     </div>
@@ -112,7 +112,14 @@
 </div></section>
 
 <script src="/app.js"></script>
+<script src="/uae-phone.js"></script>
 <script src="/intake.js"></script>
+<script>
+  // Bind UAE-only validation + hint to the phone field as soon as the page is interactive
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.UAEPhone) UAEPhone.bind(document.getElementById("phone"));
+  });
+</script>
 <script>
 const params = new URLSearchParams(location.search);
 let services = [];

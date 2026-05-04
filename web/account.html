@@ -42,7 +42,7 @@
 
   <div class="form" style="margin-bottom:24px">
     <div class="row">
-      <div><label data-i18n="track_phone">Phone</label><input id="phone" placeholder="+971501234567"></div>
+      <div><label data-i18n="track_phone">Phone <span style="color:#0F766E;font-size:11px">🇦🇪 (UAE mobile only)</span></label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971501234567"></div>
       <div><label data-i18n="track_booking">Booking ID</label><input id="bid" placeholder="LM-A1B2C3"></div>
     </div>
     <button class="btn btn-primary" type="button" id="track-btn" style="margin-top:14px" data-i18n="track_submit">Track</button>
@@ -52,6 +52,8 @@
 </div></section>
 
 <script src="/app.js"></script>
+<script src="/uae-phone.js"></script>
+<script>document.addEventListener("DOMContentLoaded",()=>{if(window.UAEPhone)UAEPhone.bind(document.getElementById("phone"));});</script>
 <script>
 const params = new URLSearchParams(location.search);
 if (params.get("b")) document.getElementById("bid").value = params.get("b");
