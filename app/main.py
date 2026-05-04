@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, ai_router, cart, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, selftest, social_publisher, staff_portraits, tools, videos, visibility, whatsapp
+from . import admin, ai_router, cart, db, demo_brain, kb, launch, live_visitors, llm, portal, portal_v2, psi as _psi_mod, quotes, selftest, social_publisher, staff_portraits, tools, videos, visibility, whatsapp
 from .auth import ADMIN_TOKEN
 from .config import get_settings
 
@@ -37,6 +37,7 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)
+app.include_router(live_visitors.admin_router)
 app.include_router(portal.router)
 app.include_router(portal_v2.router)
 app.include_router(portal_v2.public_router)
@@ -58,7 +59,25 @@ app.include_router(selftest.router)
 async def _log_bot_visit_mw(request: Request, call_next):
     try: visibility.log_bot_visit(request)
     except Exception: pass
-    return await call_next(request)
+    # Live visitor tracker — records human visitors only (skips API/admin/SW)
+    is_new_visitor = False
+    try: is_new_visitor = live_visitors.track(request)
+    except Exception: pass
+    resp = await call_next(request)
+    # Push admin alert when a brand-new visitor lands (rate-limited via cfg)
+    if is_new_visitor:
+        try:
+            from . import admin_alerts as _aa
+            ua = (request.headers.get("user-agent") or "")[:120]
+            path = str(request.url.path)
+            ref = (request.headers.get("referer") or "(direct)")[:120]
+            ipc = request.headers.get("cf-ipcountry") or ""
+            _aa.notify_admin(
+                f"👋 New visitor on Servia\n\n"
+                f"Page: {path}\nReferrer: {ref}\nCountry: {ipc or '?'}\nUA: {ua}",
+                kind="new_visitor", urgency="low")
+        except Exception: pass
+    return resp
 
 
 @app.on_event("startup")
@@ -838,6 +857,16 @@ app.add_middleware(GZipMiddleware, minimum_size=500, compresslevel=6)
 async def _smart_cache(request, call_next):
     resp = await call_next(request)
     p = request.url.path
+    # Block admin/private surfaces from search engines & AI crawlers — both
+    # via response header (defense-in-depth alongside robots.txt + meta tag).
+    PRIVATE_PREFIXES = ("/admin", "/admin.html", "/admin-login.html",
+                        "/api/admin/", "/api/portal/", "/api/wa/",
+                        "/pay/", "/pay-processing.html", "/pay-declined.html",
+                        "/gate.html", "/me.html", "/vendor", "/portal-vendor")
+    if any(p == x or p.startswith(x) for x in PRIVATE_PREFIXES):
+        resp.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive, nosnippet"
+        resp.headers["Cache-Control"] = "private, no-store, max-age=0"
+        return resp
     # HTML — short cache + long SWR so deploys land in <1 min
     if p.endswith(".html") or p == "/" or p.endswith("/"):
         resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
@@ -864,16 +893,33 @@ async def _smart_cache(request, call_next):
 def robots_txt():
     base = f"https://{settings.BRAND_DOMAIN}"
     return (
-        "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin.html\n\n"
-        # Allow major AI crawlers explicitly
-        "User-agent: GPTBot\nAllow: /\n"
-        "User-agent: ClaudeBot\nAllow: /\n"
-        "User-agent: PerplexityBot\nAllow: /\n"
-        "User-agent: Google-Extended\nAllow: /\n"
-        "User-agent: anthropic-ai\nAllow: /\n"
-        "User-agent: cohere-ai\nAllow: /\n"
-        "User-agent: CCBot\nAllow: /\n"
-        f"\nSitemap: {base}/sitemap.xml\n"
+        "User-agent: *\n"
+        "Allow: /\n"
+        # Block admin / private surfaces from EVERY crawler (SEO + AI)
+        "Disallow: /admin\n"
+        "Disallow: /admin.html\n"
+        "Disallow: /admin-login.html\n"
+        "Disallow: /api/admin/\n"
+        "Disallow: /api/portal/\n"
+        "Disallow: /api/wa/\n"
+        "Disallow: /api/cms\n"
+        "Disallow: /pay/\n"
+        "Disallow: /pay-processing.html\n"
+        "Disallow: /pay-declined.html\n"
+        "Disallow: /gate.html\n"
+        "Disallow: /me.html\n"
+        "Disallow: /vendor\n"
+        "Disallow: /portal-vendor\n"
+        "\n"
+        # AI crawlers also blocked from admin/private
+        "User-agent: GPTBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
+        "User-agent: ClaudeBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
+        "User-agent: PerplexityBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
+        "User-agent: Google-Extended\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
+        "User-agent: anthropic-ai\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
+        "User-agent: cohere-ai\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
+        "User-agent: CCBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
+        f"Sitemap: {base}/sitemap.xml\n"
     )
 
 
@@ -977,18 +1023,59 @@ def sitemap_xml():
     langs = ("en", "ar", "hi", "tl")
     body = '<?xml version="1.0" encoding="UTF-8"?>\n'
     body += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
-    body += 'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+    body += 'xmlns:xhtml="http://www.w3.org/1999/xhtml" '
+    body += 'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" '
+    body += 'xmlns:video="http://www.google.com/schemas/sitemap-video/1.1" '
+    body += 'xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n'
+    # Helper: html-encode a string for XML attributes
+    def _x(s: str) -> str:
+        return (s or "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
     for u, prio, freq, lastmod in urls:
         sep = "&amp;" if "?" in u else "?"
-        body += f"  <url><loc>{base}{u}</loc>"
-        body += f"<lastmod>{lastmod or today}</lastmod>"
-        body += f"<changefreq>{freq}</changefreq><priority>{prio}</priority>"
-        # hreflang only on UI pages, not on api/video deep links
-        if u.startswith(("/api/", "/blog/")) is False:
+        body += f"  <url>\n    <loc>{base}{u}</loc>\n"
+        body += f"    <lastmod>{lastmod or today}</lastmod>\n"
+        body += f"    <changefreq>{freq}</changefreq>\n    <priority>{prio}</priority>\n"
+        # hreflang on UI pages, not API/video deep-links
+        if not u.startswith(("/api/",)):
             for lg in langs:
-                body += (f'<xhtml:link rel="alternate" hreflang="{lg}" '
-                         f'href="{base}{u}{sep}lang={lg}"/>')
-        body += "</url>\n"
+                body += (f'    <xhtml:link rel="alternate" hreflang="{lg}" '
+                         f'href="{base}{u}{sep}lang={lg}"/>\n')
+        # Add an image entry for every blog post (auto-generated hero) and
+        # for the homepage / coverage / videos page (using the mascot icon).
+        if u.startswith("/blog/"):
+            slug = u.split("/blog/", 1)[1]
+            img_url = f"{base}/api/blog/hero/{slug}.svg"
+            body += "    <image:image>\n"
+            body += f"      <image:loc>{img_url}</image:loc>\n"
+            body += f"      <image:title>Servia: {_x(slug.replace('-',' ').title())}</image:title>\n"
+            body += "    </image:image>\n"
+            # News tag: only for posts in the last 48h
+            try:
+                lm_dt = _dt.datetime.fromisoformat((lastmod or today)[:10])
+                if (_dt.datetime.utcnow() - lm_dt).total_seconds() < 172800:
+                    body += "    <news:news>\n"
+                    body += "      <news:publication><news:name>Servia Blog</news:name>"
+                    body += "<news:language>en</news:language></news:publication>\n"
+                    body += f"      <news:publication_date>{lastmod or today}</news:publication_date>\n"
+                    body += f"      <news:title>{_x(slug.replace('-',' ').title())}</news:title>\n"
+                    body += "    </news:news>\n"
+            except Exception: pass
+        elif u.startswith("/api/videos/play/"):
+            # Video sitemap entry — helps Google Video Search index our SVG videos
+            slug = u.split("/play/", 1)[1].split("?", 1)[0]
+            body += "    <video:video>\n"
+            body += f"      <video:thumbnail_loc>{base}/mascot.svg</video:thumbnail_loc>\n"
+            body += f"      <video:title>Servia: {_x(slug.replace('-',' ').title())}</video:title>\n"
+            body += "      <video:description>Servia animated explainer for UAE home services.</video:description>\n"
+            body += f"      <video:player_loc>{base}{u}</video:player_loc>\n"
+            body += "      <video:duration>30</video:duration>\n"
+            body += "    </video:video>\n"
+        elif u in ("/", "/services.html", "/coverage.html", "/videos.html"):
+            body += "    <image:image>\n"
+            body += f"      <image:loc>{base}/mascot.svg</image:loc>\n"
+            body += f"      <image:title>Servia mascot — UAE home services concierge</image:title>\n"
+            body += "    </image:image>\n"
+        body += "  </url>\n"
     body += "</urlset>\n"
     from fastapi.responses import Response
     return Response(content=body, media_type="application/xml",
@@ -1520,14 +1607,41 @@ try:
         except Exception as e:  # noqa: BLE001
             print(f"[scheduler] daily summary failed: {e}", flush=True)
 
+    # PSI auto-check: 03:00 daily (low-traffic window) so admin sees fresh
+    # score by morning. Also runs once on startup (5 min after boot).
+    @_scheduler.scheduled_job("cron", hour=3, minute=0, id="psi_daily",
+                              max_instances=1, coalesce=True, replace_existing=True)
+    def _job_psi_daily():
+        try:
+            import asyncio as _aio
+            _aio.run(_psi_mod.run_psi_check())
+            print("[scheduler] PSI daily checked", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[scheduler] PSI daily failed: {e}", flush=True)
+
     @app.on_event("startup")
     def _start_scheduler():
         try:
             if not _scheduler.running:
                 _scheduler.start()
-                print("[scheduler] started — autoblog runs daily at 06:00 Asia/Dubai", flush=True)
+                print("[scheduler] started — autoblog 06:00, PSI 03:00, summary 21:00 (Asia/Dubai)", flush=True)
         except Exception as e:  # noqa: BLE001
             print(f"[scheduler] failed: {e}", flush=True)
+
+    @app.on_event("startup")
+    def _psi_after_deploy():
+        """Run PSI 5 min after each container start so admin sees the score
+        of every fresh deploy. Won't block startup — fire-and-forget thread."""
+        import threading, time
+        def _later():
+            try:
+                time.sleep(300)
+                import asyncio as _aio
+                _aio.run(_psi_mod.run_psi_check())
+                print("[psi] post-deploy check done", flush=True)
+            except Exception as e:  # noqa: BLE001
+                print(f"[psi] post-deploy failed: {e}", flush=True)
+        threading.Thread(target=_later, daemon=True).start()
 except Exception as _se:  # noqa: BLE001
     print(f"[scheduler] not loaded: {_se}", flush=True)
 

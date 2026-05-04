@@ -974,6 +974,31 @@ def admin_2fa_disable():
     return {"ok": True, "enabled": False}
 
 
+# ---------- PSI auto-checker (PageSpeed Insights) ----------
+@router.get("/psi/latest")
+def admin_psi_latest():
+    """Returns the most recent PSI snapshot (mobile + desktop scores, metrics,
+    top opportunities). Empty if never run."""
+    from . import psi
+    snap = psi.latest()
+    return {"snap": snap, "history_count": len(psi.history(50))}
+
+
+@router.get("/psi/history")
+def admin_psi_history(limit: int = 14):
+    from . import psi
+    return {"history": psi.history(limit)}
+
+
+@router.post("/psi/run")
+async def admin_psi_run(url: str | None = None):
+    """Force-run a PSI check now (admin-triggered). Same path runs daily +
+    after each deploy automatically."""
+    from . import psi
+    snap = await psi.run_psi_check(url=url)
+    return snap
+
+
 # ---------- cron status visibility ----------
 @router.get("/cron/status")
 def admin_cron_status():
