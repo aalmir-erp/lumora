@@ -36,11 +36,58 @@ def _ensure_table() -> None:
         c.execute("CREATE INDEX IF NOT EXISTS idx_live_last ON live_visitors(last_seen)")
 
 
+def _is_private_ip(ip: str) -> bool:
+    """RFC 1918 (10/8, 172.16/12, 192.168/16), CGNAT (100.64/10, RFC 6598),
+    loopback (127/8), link-local (169.254/16), or IPv6 private/loopback. These
+    show up on Railway/Vercel/Fly because the proxy/load-balancer hop is what
+    request.client.host reports. They are NOT real visitors and must be skipped."""
+    if not ip: return True
+    ip = ip.strip()
+    if ip in ("", "0.0.0.0", "::", "::1", "127.0.0.1", "localhost"): return True
+    try:
+        import ipaddress
+        # Strip IPv4-mapped IPv6 prefix
+        if ip.startswith("::ffff:"): ip = ip[7:]
+        addr = ipaddress.ip_address(ip)
+        if addr.is_loopback or addr.is_link_local or addr.is_multicast or addr.is_unspecified:
+            return True
+        if addr.is_private:
+            return True
+        # CGNAT 100.64.0.0/10 — Python's is_private covers this in 3.12+, older
+        # versions don't, so add an explicit check.
+        if isinstance(addr, ipaddress.IPv4Address):
+            if addr in ipaddress.ip_network("100.64.0.0/10"): return True
+    except Exception:
+        return False
+    return False
+
+
+def real_client_ip(request: Request) -> str:
+    """Extract the actual visitor IP, walking forwarded-for chain past private
+    proxies. On Railway, request.client.host is always 100.64.x.x (their CGNAT
+    edge); the real IP comes from one of the forwarded headers below."""
+    # CDN/proxy headers carry the real IP. Cloudflare > Vercel > generic.
+    for h in ("cf-connecting-ip", "true-client-ip", "x-real-ip", "fly-client-ip",
+              "x-vercel-forwarded-for", "x-forwarded-for"):
+        v = (request.headers.get(h) or "").strip()
+        if not v: continue
+        # x-forwarded-for is a comma-separated chain "client, proxy1, proxy2".
+        # Walk left to right and take the first PUBLIC address — that's the
+        # original client; everything after is internal hops.
+        for hop in v.split(","):
+            ip = hop.strip()
+            if ip and not _is_private_ip(ip):
+                return ip
+    # Last resort: direct connection (always private on PaaS — that's why we
+    # check headers first).
+    return (request.client.host if request.client else "")
+
+
 def visitor_id_for(request: Request) -> str:
     """Stable ID per visitor: prefers Servia session cookie, falls back to ip+ua hash."""
     cookie = request.cookies.get("servia_vid", "")
     if cookie: return cookie
-    raw = (request.client.host if request.client else "") + "|" + request.headers.get("user-agent", "")
+    raw = real_client_ip(request) + "|" + request.headers.get("user-agent", "")
     return "h_" + hashlib.sha1(raw.encode()).hexdigest()[:16]
 
 
@@ -89,7 +136,21 @@ def track(request: Request) -> bool:
         # every fetch to flag itself)
         if request.headers.get("x-admin-cookie") == "1":
             return False
-        ip = (request.client.host if request.client else "")[:64]
+        # Real client IP (walks past Railway/Vercel/CF proxies). If we can't
+        # find a real public IP, this hit came from internal infra (health
+        # check, uptime monitor, container probe) and must NOT be tracked.
+        ip = (real_client_ip(request) or "")[:64]
+        if not ip or _is_private_ip(ip):
+            return False
+        # Detect headless / automation that survives basic UA filtering. These
+        # are uptime monitors and synthetic testers: HeadlessChrome, PhantomJS,
+        # Puppeteer, Playwright, Selenium, Lighthouse, etc. Mark and skip.
+        ua_lower = ua.lower()
+        if any(t in ua_lower for t in ("headless", "phantomjs", "puppeteer", "playwright",
+                                       "selenium", "webdriver", "lighthouse", "chrome-lighthouse",
+                                       "pingdom", "uptime", "monitor", "synthetic",
+                                       "preview", "prerender", "speedcurve")):
+            return False
         country = (request.headers.get("cf-ipcountry") or
                    request.headers.get("x-vercel-ip-country") or "")[:8]
         ref = (request.headers.get("referer") or "")[:300]
@@ -173,6 +234,18 @@ def get_live_visitors(active_minutes: int = 5):
     now = _dt.datetime.utcnow()
     for r in rows:
         d = dict(r)
+        # Filter out private/CGNAT IPs (Railway proxy hops) and headless UAs —
+        # legacy rows from before the track-side filter shipped. Stops the
+        # widget showing 100.64.x.x "users" forever.
+        ip_clean = (d.get("ip","") or "")
+        if ip_clean.startswith("::ffff:"): ip_clean = ip_clean[7:]
+        if not ip_clean or _is_private_ip(ip_clean):
+            continue
+        ua_l = (d.get("user_agent","") or "").lower()
+        if any(t in ua_l for t in ("headless","phantomjs","puppeteer","playwright",
+                                    "selenium","webdriver","lighthouse",
+                                    "pingdom","uptime","monitor","synthetic")):
+            continue
         d.update(parse_ua(d.get("user_agent","")))
         # Bot detection
         bot_name = _viz.detect_bot(d.get("user_agent",""))
@@ -212,30 +285,75 @@ def clear_test_visitors():
     return {"ok": True, "deleted": n}
 
 
+@admin_router.post("/visitors/purge-junk")
+def purge_junk_visitors():
+    """Wipes Railway-internal / private-IP / headless rows that slipped into
+    the live_visitors table before the new filter shipped. Run once after
+    deploying v1.22.8+ to get the widget showing only real visitors."""
+    _ensure_table()
+    with db.connect() as c:
+        # Private + CGNAT IPs
+        n_priv = c.execute("""
+            DELETE FROM live_visitors
+            WHERE ip LIKE '10.%' OR ip LIKE '192.168.%' OR ip LIKE '127.%'
+               OR ip LIKE '169.254.%' OR ip LIKE '::1' OR ip = '0.0.0.0'
+               OR ip GLOB '172.[123][0-9].*'
+               OR ip GLOB '100.[6-9][0-9].*' OR ip GLOB '100.1[01][0-9].*'
+               OR ip GLOB '100.12[0-7].*'
+               OR ip IS NULL OR ip = ''""").rowcount
+        # Headless / synthetic UAs
+        n_bot = c.execute("""
+            DELETE FROM live_visitors
+            WHERE LOWER(user_agent) LIKE '%headless%'
+               OR LOWER(user_agent) LIKE '%phantomjs%'
+               OR LOWER(user_agent) LIKE '%puppeteer%'
+               OR LOWER(user_agent) LIKE '%playwright%'
+               OR LOWER(user_agent) LIKE '%selenium%'
+               OR LOWER(user_agent) LIKE '%webdriver%'
+               OR LOWER(user_agent) LIKE '%lighthouse%'
+               OR LOWER(user_agent) LIKE '%pingdom%'
+               OR LOWER(user_agent) LIKE '%uptime%'
+               OR LOWER(user_agent) LIKE '%monitor%'
+               OR LOWER(user_agent) LIKE '%synthetic%'""").rowcount
+    return {"ok": True, "deleted_private": n_priv, "deleted_headless": n_bot,
+            "total": n_priv + n_bot}
+
+
 @admin_router.get("/stats")
 def live_stats():
     """Quick dashboard counters: active now, today, this week, plus a 24h
     hourly breakdown so the home-screen widget can sparkline-chart it."""
     _ensure_table()
     now = _dt.datetime.utcnow()
+    # SQL-side filter: skip rows whose IP is in the private/CGNAT space we
+    # can detect via prefix (10., 192.168., 172.16.-31., 100.64.-127., 127.,
+    # 169.254., loopback IPv6). Cheaper than re-running ipaddress for every
+    # row from Python on the dashboard hot-path.
+    JUNK = (
+        "AND ip NOT LIKE '10.%' AND ip NOT LIKE '192.168.%' "
+        "AND ip NOT LIKE '127.%' AND ip NOT LIKE '169.254.%' "
+        "AND ip NOT LIKE '::1' AND ip NOT LIKE '0.0.0.0' "
+        "AND ip NOT GLOB '172.[123][0-9].*' "
+        "AND ip NOT GLOB '100.[6-9][0-9].*' AND ip NOT GLOB '100.1[01][0-9].*' "
+        "AND ip NOT GLOB '100.12[0-7].*' "
+        "AND ip NOT NULL AND ip != ''"
+    )
     with db.connect() as c:
         n_now = c.execute(
-            "SELECT COUNT(*) AS n FROM live_visitors WHERE last_seen > ?",
+            "SELECT COUNT(*) AS n FROM live_visitors WHERE last_seen > ? " + JUNK,
             ((now - _dt.timedelta(minutes=5)).isoformat() + "Z",)).fetchone()["n"]
         n_today = c.execute(
-            "SELECT COUNT(*) AS n FROM live_visitors WHERE first_seen > ?",
+            "SELECT COUNT(*) AS n FROM live_visitors WHERE first_seen > ? " + JUNK,
             ((now - _dt.timedelta(hours=24)).isoformat() + "Z",)).fetchone()["n"]
         n_week = c.execute(
-            "SELECT COUNT(*) AS n FROM live_visitors WHERE first_seen > ?",
+            "SELECT COUNT(*) AS n FROM live_visitors WHERE first_seen > ? " + JUNK,
             ((now - _dt.timedelta(days=7)).isoformat() + "Z",)).fetchone()["n"]
-        # Top pages right now
         pages = c.execute(
             "SELECT last_path, COUNT(*) AS n FROM live_visitors "
-            "WHERE last_seen > ? GROUP BY last_path ORDER BY n DESC LIMIT 5",
+            "WHERE last_seen > ? " + JUNK + " GROUP BY last_path ORDER BY n DESC LIMIT 5",
             ((now - _dt.timedelta(minutes=15)).isoformat() + "Z",)).fetchall()
-        # Hourly first-seen counts for last 24h (for sparkline chart)
         rows24 = c.execute(
-            "SELECT first_seen FROM live_visitors WHERE first_seen > ?",
+            "SELECT first_seen FROM live_visitors WHERE first_seen > ? " + JUNK,
             ((now - _dt.timedelta(hours=24)).isoformat() + "Z",)).fetchall()
     buckets = [0] * 24
     for r in rows24:

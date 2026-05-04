@@ -108,7 +108,8 @@
   </div>
 
   <div class="w-foot">
-    <a href="/admin.html#live">Tap to open full admin →</a><br>
+    <a href="/admin.html#live">Tap to open full admin →</a> ·
+    <a href="#" onclick="purgeJunk(event)" style="color:#FCA5A5">🧹 Purge proxy/bot rows</a><br>
     auto-refreshes every 15s
   </div>
 </div>
@@ -192,6 +193,16 @@ async function load() {
       </div>
     </div>`;
   }).join("") : '<div style="font-size:11px;color:#64748B;padding:8px 4px;text-align:center">🌙 No active visitors right now. New ones trigger a push.</div>';
+}
+async function purgeJunk(e) {
+  e && e.preventDefault();
+  if (!confirm("Delete all visitor rows from Railway-internal IPs (10.x, 100.64.x, etc) and headless UAs? This is safe — only proxy/bot rows are removed, real visitors stay.")) return;
+  try {
+    const r = await fetch("/api/admin/live/visitors/purge-junk",
+      {method:"POST", headers:{Authorization:"Bearer "+TOK,"X-Admin-Cookie":"1"}}).then(r=>r.json());
+    alert("✓ Purged " + (r.total||0) + " junk rows (" + (r.deleted_private||0) + " private IP, " + (r.deleted_headless||0) + " headless)");
+    load();
+  } catch (e) { alert("⚠ " + e.message); }
 }
 load();
 setInterval(load, 15000);
