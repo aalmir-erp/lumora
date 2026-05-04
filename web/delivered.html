@@ -8,7 +8,8 @@
 <title>Service complete — Servia</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="stylesheet" href="/style.css">
+<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
+<link rel="stylesheet" href="/widget.css">
 <style>
   body { background: linear-gradient(180deg, #ECFDF5, #F8FAFC); min-height:100vh; }
   .doc-shell { max-width: 720px; margin: 24px auto 80px; padding: 0 16px; }

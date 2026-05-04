@@ -50,7 +50,9 @@
     fab.type = "button";
     fab.innerHTML = "📲 <span>Get the Servia app</span>";
     fab.style.cssText =
-      "position:fixed;bottom:78px;left:14px;z-index:998;background:linear-gradient(135deg,#0F766E,#F59E0B);" +
+      // Install FAB lives at bottom-CENTER on mobile / bottom-LEFT-ABOVE-cart on desktop
+      // so it never collides with the cart-badge (left,bottom:78) or chat (right,bottom:24).
+      "position:fixed;bottom:128px;left:14px;z-index:997;background:linear-gradient(135deg,#0F766E,#F59E0B);" +
       "color:#fff;border:0;padding:12px 18px;border-radius:999px;font-weight:700;font-size:14px;" +
       "cursor:pointer;box-shadow:0 8px 24px rgba(15,23,42,.22);display:flex;gap:8px;align-items:center;" +
       "transition:transform .15s";
@@ -59,7 +61,7 @@
     fab.onclick = openModal;
     document.body.appendChild(fab);
     // On mobile bottom-nav pages, raise it so it doesn't collide
-    if (document.querySelector(".mobile-nav")) fab.style.bottom = "84px";
+    if (document.querySelector(".mobile-nav")) fab.style.bottom = "150px";
     track("fab_shown");
   }
 

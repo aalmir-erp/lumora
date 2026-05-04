@@ -77,15 +77,7 @@
     gap:18px; padding:32px 24px; max-width:1100px; margin:0 auto; }
   .stat { text-align:center; padding:20px; min-height:120px; background:var(--surface);
     border:1px solid var(--border); border-radius:18px; }
-  .svc-tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-    gap:14px; min-height:180px; }
-  .svc-tile { background:var(--surface); border:1px solid var(--border);
-    border-radius:16px; padding:24px 16px; text-align:center; text-decoration:none;
-    color:var(--text); min-height:180px; display:block; }
-  .svc-tile .e { font-size:44px; line-height:1; margin-bottom:8px; display:inline-block; }
-  .svc-tile h3 { margin:4px 0; font-size:15px; font-weight:700; }
-  .svc-tile small { color:var(--muted); font-size:12px; display:block; }
-  .svc-tile .price { color:var(--primary); font-weight:700; font-size:13px; margin-top:6px; }
+
   .steps-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; }
   .step { background:var(--surface); border-radius:16px; padding:24px; text-align:center;
     border:1px solid var(--border); min-height:180px; }
@@ -271,25 +263,6 @@
 }
 
 /* SERVICES TILES (big visual cards, customer-focused) */
-.svc-tiles {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;
-}
-.svc-tile {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 24px 16px; text-align: center;
-  text-decoration: none; color: var(--text);
-  transition: all .15s; position: relative; overflow: hidden;
-}
-.svc-tile:hover {
-  transform: translateY(-4px); box-shadow: 0 12px 30px rgba(15,23,42,.12);
-  border-color: var(--primary);
-}
-.svc-tile .e { font-size: 44px; line-height: 1; margin-bottom: 8px;
-  display:inline-block; transition: transform .25s; }
-.svc-tile:hover .e { transform: scale(1.15) rotate(-5deg); }
-.svc-tile h3 { margin: 4px 0; font-size: 15px; font-weight: 700; }
-.svc-tile small { color: var(--muted); font-size: 12px; display: block; }
-.svc-tile .price { color: var(--primary); font-weight: 700; font-size: 13px; margin-top: 6px; }
 
 /* HOW IT WORKS — short and customer-focused */
 .steps-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
@@ -420,12 +393,6 @@
 @media (max-width: 720px) { .wa-fab { bottom: 78px; right: 14px; width: 52px; height: 52px; font-size: 24px } }
 
 /* Glassmorphism tile hover */
-.svc-tile::before {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(135deg, transparent, color-mix(in srgb, var(--primary) 10%, transparent));
-  opacity: 0; transition: opacity .25s;
-}
-.svc-tile:hover::before { opacity: 1; }
 
 /* Step number badges */
 .step { position: relative; }
@@ -670,8 +637,6 @@
   </style>
 </section>
 
-
-
 <!-- 🚀 HOW SERVIA WORKS — animated 6-stage journey with live tracker visual -->
 <section id="how-it-works" style="padding:48px 16px;background:linear-gradient(180deg,#F8FAFC 0%,#FFFFFF 100%);border-bottom:1px solid var(--border)">
   <div style="max-width:1180px;margin:0 auto">
@@ -905,7 +870,6 @@
         <p>Trained, vetted cleaner arrives on time. Pre-paid bookings always take priority over walk-ins.</p></div>
     </div>
 
-    
 </section>
 
 <!-- WHY CHOOSE US — customer benefits, not feature list -->
@@ -1023,7 +987,6 @@
   </div>
 </section>
 </main>
-
 
 <!-- 🎁 SHARE & EARN — multi-platform share toolbar + cashback hint -->
 <section style="padding:32px 16px;background:#FFFBEB;border-top:1px solid #FDE68A;border-bottom:1px solid #FDE68A">
