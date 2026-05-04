@@ -458,6 +458,118 @@ async def _bing_search(query: str, area: str, limit: int = 10) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Source 6: GEMINI GROUNDED SEARCH — the only thing that actually works.
+#
+# Reality check (May 2026): every direct HTML source we tried returns 403:
+#   - Yellow Pages UAE  → Cloudflare 403
+#   - Bing search       → bot protection 403
+#   - DuckDuckGo HTML   → 403
+#   - Connect.ae        → blocked / DNS issues
+#   - Reddit (no OAuth) → empty body
+#
+# The reliable way in 2026 is AI-powered web search. Gemini's
+# `google_search` tool grounds the model in fresh web results and we ask it
+# to return structured vendor data as JSON. Same Google API key as text gen.
+# ---------------------------------------------------------------------------
+async def _gemini_search(query: str, area: str, limit: int = 10) -> list[dict]:
+    """Use Gemini grounded search to find real UAE vendors. Returns
+    structured vendor dicts. Same Google API key the user already pasted
+    in AI Arena for text gen — no extra setup. Bypasses every direct-scrape
+    block because the search runs on Google's infrastructure."""
+    from . import ai_router
+    cfg = ai_router._load_cfg()
+    keys = cfg.get("keys") or {}
+    key = (keys.get("google_image") or keys.get("google") or "").strip()
+    if not key:
+        return [{"_error": "Gemini search needs a Google AI key in admin → AI Arena"}]
+    prompt = (
+        f"Find real, currently-operating UAE businesses that offer '{query}' "
+        f"in {area}, UAE. Use Google Search. Prefer SMALL active vendors "
+        f"(under 200 reviews — we need hungry vendors who quote competitively, "
+        f"not big established brands).\n\n"
+        f"Return EXACTLY a JSON array of up to {limit} vendors. NO commentary, "
+        "NO markdown fences, JUST the JSON array. Each vendor object has:\n"
+        '  {"name": "...", "phone": "+9715XXXXXXXX", "website": "https://...", '
+        '"address": "...", "rating": 4.5, "reviews_count": 75, "summary": "1-line"}\n\n'
+        "Rules:\n"
+        f"- Phone MUST be valid UAE mobile (starts with +9715)\n"
+        "- Skip if no phone or only landline\n"
+        "- Skip enterprise brands with 500+ reviews\n"
+        "- Skip directory aggregators — only direct vendor businesses\n"
+        "- Output ONLY the JSON array."
+    )
+    try:
+        async with httpx.AsyncClient(timeout=45.0) as c:
+            r = await c.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                f"gemini-2.5-pro:generateContent?key={key}",
+                json={
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "tools": [{"google_search": {}}],
+                    "generationConfig": {"temperature": 0.3, "maxOutputTokens": 4000},
+                },
+            )
+            if r.status_code != 200:
+                return [{"_error": f"Gemini search HTTP {r.status_code}: {r.text[:200]}"}]
+            data = r.json()
+            text = ""
+            for cand in data.get("candidates", []):
+                for part in (cand.get("content", {}) or {}).get("parts", []):
+                    text += part.get("text") or ""
+    except Exception as e:
+        return [{"_error": f"Gemini search exception: {e}"}]
+    # Extract JSON array — model sometimes wraps in fences or prose
+    if "```" in text:
+        m = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", text, re.S)
+        if m: text = m.group(1)
+    if "[" in text and "]" in text:
+        text = text[text.index("["): text.rindex("]") + 1]
+    try:
+        items = json.loads(text)
+        if not isinstance(items, list): return []
+    except Exception as e:
+        return [{"_error": f"Gemini search returned unparseable JSON: {str(e)[:100]} · raw: {text[:200]}"}]
+    out: list[dict] = []
+    for it in items[:limit]:
+        if not isinstance(it, dict): continue
+        name = (it.get("name") or "").strip()
+        phone = (it.get("phone") or "").strip()
+        if not (name and phone): continue
+        out.append({
+            "place_id": "gem_" + hashlib.sha1((name+phone).encode()).hexdigest()[:14],
+            "name": name[:100], "phone": phone[:24],
+            "website": (it.get("website") or "").strip()[:200],
+            "address": (it.get("address") or area).strip()[:240],
+            "rating": float(it.get("rating") or 0),
+            "reviews_count": int(it.get("reviews_count") or 0),
+            "source": "gemini_search",
+            "source_url": "https://www.google.com/search?q=" + (name + " " + area).replace(" ", "+"),
+            "emirate": area, "summary": (it.get("summary") or "")[:200],
+        })
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Per-source health check — admin can verify which sources actually respond
+# from production (not sandbox). Returns one row per source with status code.
+# ---------------------------------------------------------------------------
+async def _probe_source(name: str, fn) -> dict:
+    """Run a single tiny test query against one source, return what happened."""
+    try:
+        results = await fn("cleaning service", "Dubai", limit=2)
+        errors = [r for r in results if isinstance(r, dict) and "_error" in r]
+        ok_results = [r for r in results if isinstance(r, dict) and "_error" not in r]
+        return {
+            "source": name,
+            "ok": len(ok_results) > 0,
+            "found": len(ok_results),
+            "error": errors[0]["_error"] if errors else None,
+        }
+    except Exception as e:
+        return {"source": name, "ok": False, "found": 0, "error": str(e)[:200]}
+
+
+# ---------------------------------------------------------------------------
 # AI VALIDATION — cascade through providers (Gemini > OpenAI > Anthropic)
 # ---------------------------------------------------------------------------
 async def _ai_validate_vendor(v: dict, service_query: str) -> dict:
@@ -655,17 +767,24 @@ async def scrape_for_service(service_id: str, *, target_per_area: int = 3,
             # serving junk that day.
             enabled = db.cfg_get("scraper_sources_enabled", None)
             if enabled is None:
-                enabled = {"google_places": True, "yellowpages_ae": True,
-                           "connect_ae": True, "reddit": True, "bing": True}
+                # Default: only sources that actually work without paid proxy.
+                # Direct HTML scrapers (YP / Connect / Bing) are 403'd by
+                # Cloudflare from datacenter IPs — disabled by default.
+                enabled = {"google_places": True, "gemini_search": True,
+                           "reddit": True, "yellowpages_ae": False,
+                           "connect_ae": False, "bing": False}
+            # Gemini grounded search — the most reliable working source in 2026
+            if enabled.get("gemini_search", True):
+                sources.append(("gemini_search", _gemini_search(query, area, limit=target_per_area*2)))
             if google_key and enabled.get("google_places", True):
                 sources.append(("google_places", _google_places_search(query, area, google_key, limit=target_per_area*2)))
-            if enabled.get("yellowpages_ae", True):
+            if enabled.get("yellowpages_ae", False):
                 sources.append(("yellowpages_ae", _yellowpages_search(query, area, limit=target_per_area*2)))
-            if enabled.get("connect_ae", True):
+            if enabled.get("connect_ae", False):
                 sources.append(("connect_ae", _connect_ae_search(query, area, limit=target_per_area*2)))
             if enabled.get("reddit", True):
                 sources.append(("reddit", _reddit_search(query, area, limit=target_per_area*2)))
-            if enabled.get("bing", True):
+            if enabled.get("bing", False):
                 sources.append(("bing", _bing_search(query, area, limit=target_per_area*2)))
             # Run sources in parallel for speed
             results = await asyncio.gather(*(s[1] for s in sources), return_exceptions=True)
@@ -862,33 +981,67 @@ class GoogleKeyBody(BaseModel):
 @router.get("/sources")
 def get_sources():
     """Return the list of available scraper sources + their enabled state.
-    Admin toggles individual ones from the UI."""
+    Direct HTML scrapers (YP / Connect / Bing) are disabled by default
+    because Cloudflare bot protection 403s our datacenter IP. Gemini
+    grounded search + Google Places API are the reliable options."""
     enabled = db.cfg_get("scraper_sources_enabled", None) or {
-        "google_places": True, "yellowpages_ae": True,
-        "connect_ae": True, "reddit": True, "bing": True}
+        "google_places": True, "gemini_search": True, "reddit": True,
+        "yellowpages_ae": False, "connect_ae": False, "bing": False}
+    cfg_keys = {}
+    try:
+        from . import ai_router
+        cfg_keys = (ai_router._load_cfg().get("keys") or {})
+    except Exception: pass
     google_key = (db.cfg_get("google_places_api_key", "") or "").strip()
+    has_gemini_key = bool((cfg_keys.get("google_image") or cfg_keys.get("google") or "").strip())
     return {"sources": [
+        {"key": "gemini_search", "label": "🌟 Gemini grounded search (RECOMMENDED)",
+         "enabled": enabled.get("gemini_search", True),
+         "needs_key": True, "key_set": has_gemini_key,
+         "note": "AI-powered web search via Google. Reuses your Gemini text key. Most reliable in 2026 — bypasses 403 bot blocks because search runs on Google's infra."},
         {"key": "google_places", "label": "Google Places API",
          "enabled": enabled.get("google_places", True),
          "needs_key": True, "key_set": bool(google_key),
-         "note": "Best results. Free tier 10K calls/month."},
-        {"key": "yellowpages_ae", "label": "Yellow Pages UAE",
-         "enabled": enabled.get("yellowpages_ae", True),
-         "needs_key": False,
-         "note": "Free directory scrape. Tries 4 URL patterns."},
-        {"key": "connect_ae", "label": "Connect.ae",
-         "enabled": enabled.get("connect_ae", True),
-         "needs_key": False,
-         "note": "UAE-focused business directory. Free."},
-        {"key": "reddit", "label": "Reddit (r/dubai, r/UAE, r/abudhabi)",
+         "note": "Best structured data. Free tier 10K calls/month. Separate key needed."},
+        {"key": "reddit", "label": "Reddit (r/dubai, r/UAE)",
          "enabled": enabled.get("reddit", True),
          "needs_key": False,
-         "note": "Real resident recommendations. Rate-limited."},
-        {"key": "bing", "label": "Bing Search (generic web)",
-         "enabled": enabled.get("bing", True),
+         "note": "Real resident recommendations. May rate-limit datacenter IPs."},
+        {"key": "yellowpages_ae", "label": "Yellow Pages UAE (off by default)",
+         "enabled": enabled.get("yellowpages_ae", False),
          "needs_key": False,
-         "note": "Searches 'best <service> in <area> UAE phone'. No API key needed."},
+         "note": "⚠ Cloudflare 403s datacenter IPs. Only enable if you have a ScrapingBee key."},
+        {"key": "connect_ae", "label": "Connect.ae (off by default)",
+         "enabled": enabled.get("connect_ae", False),
+         "needs_key": False,
+         "note": "⚠ Same 403 issue as YP. Off by default."},
+        {"key": "bing", "label": "Bing Search (off by default)",
+         "enabled": enabled.get("bing", False),
+         "needs_key": False,
+         "note": "⚠ Bing 403s datacenter IPs. Off by default."},
     ]}
+
+
+@router.get("/health")
+async def sources_health():
+    """Probe every source with one tiny query and report which actually
+    work from THIS server's IP. Helps admin understand why a scrape
+    returned 0 results."""
+    google_key = (db.cfg_get("google_places_api_key", "") or "").strip()
+    probes = [
+        ("gemini_search", lambda q, a, limit: _gemini_search(q, a, limit)),
+        ("reddit",        lambda q, a, limit: _reddit_search(q, a, limit)),
+        ("yellowpages_ae",lambda q, a, limit: _yellowpages_search(q, a, limit)),
+        ("connect_ae",    lambda q, a, limit: _connect_ae_search(q, a, limit)),
+        ("bing",          lambda q, a, limit: _bing_search(q, a, limit)),
+    ]
+    if google_key:
+        probes.insert(1, ("google_places",
+            lambda q, a, limit: _google_places_search(q, a, google_key, limit)))
+    results = []
+    for name, fn in probes:
+        results.append(await _probe_source(name, fn))
+    return {"sources": results}
 
 
 class SourcesBody(BaseModel):
