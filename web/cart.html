@@ -5,13 +5,72 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D9488">
 <title>Your Servia bundle — book multiple services in one go</title>
-<meta name="description" content="Book 2 or more Servia services together and save up to 15% with the automatic bundle discount. Single payment. Single invoice.">
+<meta name="description" content="Book 2 or more Servia services together and save up to 15%. Per-service address with map pin + saved addresses + addons.">
 <link rel="canonical" href="https://servia.ae/cart.html">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
+<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null">
+<noscript><link rel="stylesheet" href="/style.css"></noscript>
 <link rel="stylesheet" href="/widget.css">
-<style>body{background:linear-gradient(180deg,#FFFBEB,#F8FAFC);}.wrap{max-width:1080px;margin:24px auto 80px;padding:0 16px;display:grid;gap:24px;grid-template-columns:1.5fr 1fr;align-items:start}@media(max-width:880px){.wrap{grid-template-columns:1fr}}.panel{background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px 20px;box-shadow:0 4px 14px rgba(15,23,42,.06)}.item{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:start;padding:14px 0;border-bottom:1px solid #F1F5F9}.item:last-child{border-bottom:0}.item .ico{font-size:32px;line-height:1}.item .nm{font-weight:800;font-size:15px;letter-spacing:-.01em}.item .meta{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}.item .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.item .row input,.item .row select{padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:12px;min-height:34px;max-width:140px}.item .price{font-weight:800;font-size:15px;color:#0F766E;white-space:nowrap}.item .rm{background:transparent;border:0;color:#94A3B8;cursor:pointer;font-size:13px;padding:4px 0;margin-top:4px;display:block}.item .rm:hover{color:#DC2626}.empty{text-align:center;padding:48px 16px;color:var(--muted)}.summary-row{display:flex;justify-content:space-between;font-size:14px;padding:6px 0}.summary-row.total{font-size:18px;font-weight:800;padding-top:12px;border-top:2px solid #F1F5F9;margin-top:8px}.summary-row.total .v{color:#0F766E}.summary-row.discount .v{color:#15803D;font-weight:700}.add-more{display:block;padding:12px;text-align:center;background:#F1F5F9;border-radius:12px;color:#0F766E;font-weight:700;text-decoration:none;margin-top:8px;font-size:13.5px}.add-more:hover{background:#E2E8F0}.bundle-savings{background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:14px}.checkout-btn{background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border:0;border-radius:14px;padding:14px 20px;font-weight:800;font-size:15px;cursor:pointer;width:100%;margin-top:14px;box-shadow:0 8px 18px rgba(13,148,136,.32)}.checkout-btn:hover{transform:translateY(-1px)}.checkout-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}.field{margin:10px 0}.field label{display:block;font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.field input,.field select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;min-height:40px;font-family:inherit}</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+body{background:linear-gradient(180deg,#FFFBEB,#F8FAFC)}
+.wrap{max-width:1080px;margin:24px auto 80px;padding:0 16px;display:grid;gap:20px;grid-template-columns:1.6fr 1fr;align-items:start}
+@media(max-width:880px){.wrap{grid-template-columns:1fr}}
+.panel{background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px 20px;box-shadow:0 4px 14px rgba(15,23,42,.06)}
+.item{padding:16px 0;border-bottom:1px solid #F1F5F9}
+.item:last-child{border-bottom:0}
+.item-head{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:start}
+.item-head .ico{font-size:30px;line-height:1}
+.item-head .nm{font-weight:800;font-size:15px;letter-spacing:-.01em}
+.item-head .price{font-weight:800;font-size:15px;color:#0F766E;white-space:nowrap;text-align:right}
+.item-head .rm{background:transparent;border:0;color:#94A3B8;cursor:pointer;font-size:12px;padding:2px 0;display:block;text-align:right;width:100%}
+.item-head .rm:hover{color:#DC2626}
+.item-meta{font-size:12px;color:#64748B;margin-top:2px;line-height:1.4}
+.item-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.item-row label{font-size:11px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:.05em;display:inline-flex;align-items:center;gap:5px}
+.item-row select,.item-row input[type="date"]{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;font-family:inherit;min-height:34px}
+.qty-row{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.qty-row button{width:30px;height:30px;border:0;background:#F1F5F9;color:#0F172A;font-size:16px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.qty-row button:hover{background:#0F766E;color:#fff}
+.qty-row input{width:48px;border:0;text-align:center;font-weight:700;font-size:13px;height:30px;padding:0}
+.addons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.addon-chip{background:#fff;border:1.5px solid var(--border);color:#0F172A;border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:600;cursor:pointer;transition:.12s;display:inline-flex;gap:5px;align-items:center}
+.addon-chip:hover{border-color:#0F766E}
+.addon-chip.active{background:#0F766E;color:#fff;border-color:#0F766E}
+.addon-chip .price{font-weight:800;background:rgba(255,255,255,.18);padding:1px 6px;border-radius:999px;font-size:10.5px}
+.addon-chip:not(.active) .price{background:#FEF3C7;color:#7C2D12}
+.addr-block{margin-top:10px;background:#F0FDFA;border-radius:10px;padding:10px;border:1px solid #99F6E4}
+.addr-block summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#0F766E;display:flex;justify-content:space-between;align-items:center;list-style:none}
+.addr-block summary::-webkit-details-marker{display:none}
+.addr-block summary::after{content:"▾";transition:transform .15s}
+.addr-block[open] summary::after{transform:rotate(180deg)}
+.addr-input{position:relative;margin-top:8px}
+.addr-input input{width:100%;max-width:none;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+.addr-suggestions{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;max-height:180px;overflow:auto;z-index:5;box-shadow:0 8px 18px rgba(15,23,42,.12)}
+.addr-suggestions div{padding:8px 11px;cursor:pointer;font-size:12.5px;border-bottom:1px solid #F1F5F9}
+.addr-suggestions div:hover{background:#F0FDFA}
+.addr-saved{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.addr-saved .a-pill{background:#fff;border:1px solid var(--border);border-radius:999px;padding:4px 10px;font-size:11.5px;cursor:pointer}
+.addr-saved .a-pill:hover{border-color:#0F766E;color:#0F766E}
+.addr-tools{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.addr-tools button{font-size:11px;padding:4px 10px;border:1px solid var(--border);background:#fff;border-radius:999px;cursor:pointer}
+.addr-tools button:hover{background:#0F766E;color:#fff;border-color:#0F766E}
+.addr-map{height:200px;border-radius:8px;margin-top:8px;display:none;overflow:hidden}
+.empty{text-align:center;padding:48px 16px;color:var(--muted)}
+.summary-row{display:flex;justify-content:space-between;font-size:14px;padding:6px 0}
+.summary-row.total{font-size:18px;font-weight:800;padding-top:12px;border-top:2px solid #F1F5F9;margin-top:8px}
+.summary-row.total .v{color:#0F766E}
+.summary-row.discount .v{color:#15803D;font-weight:700}
+.add-more{display:block;padding:12px;text-align:center;background:#F1F5F9;border-radius:12px;color:#0F766E;font-weight:700;text-decoration:none;margin-top:8px;font-size:13.5px}
+.bundle-savings{background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:14px}
+.checkout-btn{background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border:0;border-radius:14px;padding:14px 20px;font-weight:800;font-size:15px;cursor:pointer;width:100%;margin-top:14px;box-shadow:0 8px 18px rgba(13,148,136,.32)}
+.checkout-btn:disabled{opacity:.55;cursor:not-allowed}
+.field{margin:10px 0}
+.field label{display:block;font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.field input,.field select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;min-height:40px;font-family:inherit}
+.apply-all{background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:12.5px;color:#7C2D12;display:flex;align-items:center;gap:8px}
+</style>
 <script src="/banner.js" defer></script>
 <script src="/_snippets.js" async></script>
 <script src="/cart-badge.js" async></script>
@@ -25,277 +84,70 @@
     <a class="btn btn-primary" href="/book.html">Single booking</a>
   </div>
 </div></nav>
-
 <section style="padding:32px 16px 8px;text-align:center">
   <h1 style="font-size:30px;letter-spacing:-.02em;margin:0 0 4px">🛒 Your Servia bundle</h1>
-  <p style="color:var(--muted);margin:0;font-size:14px">Book multiple services together — automatic bundle discount, single invoice, one payment.</p>
+  <p style="color:var(--muted);margin:0;font-size:14px">Book multiple services together — auto bundle discount, single invoice, one payment. Each service can have its own address.</p>
 </section>
-
 <section class="wrap">
-  <!-- Cart items -->
   <div class="panel">
     <h2 style="margin:0 0 8px;font-size:18px">Your services</h2>
     <div id="cart-items"></div>
     <a class="add-more" href="/services.html">+ Add another service</a>
   </div>
-
-  <!-- Order summary + checkout -->
   <div class="panel" style="position:sticky;top:16px">
     <h2 style="margin:0 0 8px;font-size:18px">Order summary</h2>
     <div id="bundle-saving" class="bundle-savings" style="display:none"></div>
     <div id="summary"></div>
-
-    <div id="customer-fields" style="margin-top:18px;padding-top:14px;border-top:1px solid #F1F5F9">
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid #F1F5F9">
       <div class="field"><label>Your name</label><input id="c-name" placeholder="Full name" required></div>
       <div class="field"><label>Phone</label><input id="c-phone" type="tel" placeholder="+971 5X XXX XXXX" required></div>
-      <div class="field"><label>Address</label><input id="c-addr" placeholder="Tower / villa, area, emirate" required></div>
+      <div class="field">
+        <label>Default address</label>
+        <input id="c-addr" placeholder="Tower / villa, area, emirate (used when a service has no own address)" required>
+        <div class="apply-all" id="default-apply" style="display:none">
+          <span>📍 Use this for all <b id="addr-line-count">0</b> services?</span>
+          <button onclick="applyDefaultToAll()" style="background:#0F172A;color:#fff;border:0;padding:5px 12px;border-radius:999px;font-weight:700;cursor:pointer;margin-inline-start:auto;font-size:12px">Apply to all</button>
+        </div>
+      </div>
     </div>
-
     <button id="co-btn" class="checkout-btn" onclick="checkout()" disabled>Loading…</button>
-    <p style="font-size:11px;color:var(--muted);text-align:center;margin:10px 0 0;line-height:1.5">
-      🛡 AED 25,000 damage cover · ↻ 7-day re-do guarantee · 💎 Pay only when slot confirmed
-    </p>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin:10px 0 0;line-height:1.5">🛡 AED 25,000 damage cover · ↻ 7-day re-do guarantee · 💎 Pay only when slot confirmed</p>
   </div>
 </section>
-
 <footer><div class="container">
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"></div>
   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a></div>
   <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
 </div></footer>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-const KEY = "servia.cart.v1";
-const SERVICE_META = {
-  deep_cleaning:        {emoji:"✨", label:"Deep Cleaning"},
-  general_cleaning:     {emoji:"🧹", label:"General Cleaning"},
-  ac_cleaning:          {emoji:"❄️", label:"AC Service"},
-  ac_service:           {emoji:"❄️", label:"AC Service"},
-  maid_service:         {emoji:"👤", label:"Maid Service"},
-  pest_control:         {emoji:"🪲", label:"Pest Control"},
-  handyman:             {emoji:"🔧", label:"Handyman"},
-  sofa_carpet:          {emoji:"🛋️", label:"Sofa & Carpet"},
-  carpet_cleaning:      {emoji:"🧼", label:"Carpet Cleaning"},
-  move_in_out:          {emoji:"📦", label:"Move-in / Move-out"},
-  move_in_out_cleaning: {emoji:"📦", label:"Move-in / Move-out"},
-  window_cleaning:      {emoji:"🪟", label:"Window Cleaning"},
-  kitchen_deep:         {emoji:"👨‍🍳", label:"Kitchen Deep Clean"},
-  kitchen_deep_clean:   {emoji:"👨‍🍳", label:"Kitchen Deep Clean"},
-  villa_deep:           {emoji:"🏡", label:"Villa Deep Clean"},
-  car_wash:             {emoji:"🚗", label:"Car Wash"},
-  swimming_pool:        {emoji:"🏊", label:"Pool Maintenance"},
-  painting:             {emoji:"🎨", label:"Painting"},
-  gardening:            {emoji:"🌿", label:"Gardening"},
-  smart_home:           {emoji:"💡", label:"Smart Home Install"},
-  curtain_cleaning:     {emoji:"🪟", label:"Curtain Cleaning"},
-  marble_polish:        {emoji:"💎", label:"Marble Polishing"},
-  laundry:              {emoji:"👕", label:"Laundry"},
-  babysitting:          {emoji:"👶", label:"Babysitter / Nanny"},
-  office_cleaning:      {emoji:"🏢", label:"Office Cleaning"},
-  post_construction:    {emoji:"🏗", label:"Post-Construction"},
-  disinfection:         {emoji:"🧴", label:"Disinfection"},
-};
-
-function loadCart() {
-  try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
-  catch (_) { return []; }
-}
-function saveCart(c) { localStorage.setItem(KEY, JSON.stringify(c)); render(); }
-function addToCart(svc) {
-  const c = loadCart();
-  c.push({...svc, _ts: Date.now()});
-  saveCart(c);
-}
-function removeAt(i) {
-  const c = loadCart();
-  c.splice(i, 1);
-  saveCart(c);
-}
-function updateField(i, k, v) {
-  const c = loadCart();
-  if (!c[i]) return;
-  if (v === "" || v === null || v === undefined) delete c[i][k];
-  else c[i][k] = (k==='bedrooms'||k==='hours'||k==='units') ? parseInt(v,10) : v;
-  saveCart(c);
-}
-
-let cachedQuote = null;
-
-async function fetchQuote(items) {
-  try {
-    const r = await fetch("/api/cart/quote", {
-      method:"POST", headers:{"content-type":"application/json"},
-      body: JSON.stringify({items}),
-    });
-    if (!r.ok) throw new Error("quote-failed");
-    return await r.json();
-  } catch (e) {
-    return null;
-  }
-}
-
-async function render() {
-  const items = loadCart();
-  const wrap = document.getElementById("cart-items");
-  if (!items.length) {
-    wrap.innerHTML = '<div class="empty">Your bundle is empty.<br><br><a class="btn btn-primary" href="/services.html">Browse services</a></div>';
-    document.getElementById("summary").innerHTML = "";
-    document.getElementById("bundle-saving").style.display = "none";
-    document.getElementById("co-btn").disabled = true;
-    document.getElementById("co-btn").textContent = "Add items to checkout";
-    return;
-  }
-  // Per-service intelligent input schema — only shows the fields that matter
-  const SCHEMA = {
-    deep_cleaning:        {qty:["bedrooms",1,10,2,"BR"], hint:"Studio = 1 BR · adds bathroom + balcony deep clean"},
-    general_cleaning:     {qty:["bedrooms",1,10,2,"BR"], hint:"Routine — surfaces + floors + bathrooms (~3h)"},
-    villa_deep:           {qty:["bedrooms",2,12,4,"BR"], hint:"Bigger crew · 5-7 hours · garden cleared"},
-    kitchen_deep:         {qty:null,                      hint:"Includes oven, hood, cabinets, fridge interior"},
-    kitchen_deep_clean:   {qty:null,                      hint:"Includes oven, hood, cabinets, fridge interior"},
-    move_in_out:          {qty:["bedrooms",1,10,2,"BR"], hint:"Deposit-saving — be present at handover"},
-    move_in_out_cleaning: {qty:["bedrooms",1,10,2,"BR"], hint:"Deposit-saving — be present at handover"},
-    disinfection:         {qty:["units",1,5,1,"areas"],   hint:"Hospital-grade disinfectant"},
-    post_construction:    {qty:["bedrooms",1,12,3,"BR"],  hint:"Paint splatter · sand · debris removal"},
-    office_cleaning:      {qty:["units",100,5000,500,"sqft"], hint:"Per square foot · day or night"},
-    maid_service:         {qty:["hours",1,12,3,"hrs"], hint:"Hourly cleaner · supplies + uniform included"},
-    handyman:             {qty:["hours",1,12,2,"hrs"], hint:"Plumb · electric · paint · IKEA · curtain rods"},
-    babysitting:          {qty:["hours",2,12,4,"hrs"], hint:"Background-checked · references on request"},
-    painting:             {qty:["hours",2,24,6,"hrs"], hint:"Wall paint · prep · cleanup included"},
-    gardening:            {qty:["hours",2,12,3,"hrs"], hint:"Mowing · pruning · weeding · waste haul"},
-    ac_cleaning:          {qty:["units",1,20,3,"AC units"], hint:"Each cassette / wall / split unit"},
-    ac_service:           {qty:["units",1,20,3,"AC units"], hint:"Each cassette / wall / split unit"},
-    sofa_carpet:          {qty:["units",1,15,2,"items"],   hint:"Each sofa-seater OR carpet"},
-    carpet_cleaning:      {qty:["units",1,15,2,"carpets"], hint:"Steam shampoo · per carpet"},
-    window_cleaning:      {qty:["units",1,30,8,"windows"], hint:"Inside + outside per window"},
-    pest_control:         {qty:["bedrooms",1,10,2,"BR"], hint:"Cockroach / bed bugs / ants · 90-day warranty"},
-    swimming_pool:        {qty:null, hint:"Weekly maintenance · chemicals included"},
-    car_wash:             {qty:["units",1,5,1,"cars"], hint:"At-home detail · interior + exterior"},
-    smart_home:           {qty:["hours",2,8,3,"hrs"], hint:"Alexa · Google Home · locks · install + setup"},
-    curtain_cleaning:     {qty:["units",1,15,4,"sets"], hint:"Each curtain set"},
-    marble_polish:        {qty:["units",100,3000,500,"sqft"], hint:"Per square foot of marble"},
-    laundry:              {qty:["units",5,100,20,"items"], hint:"Per garment · pickup + delivery"},
-  };
-
-  wrap.innerHTML = items.map((it, i) => {
-    const m = SERVICE_META[it.service_id] || {emoji:"🧽", label:it.service_id};
-    const sch = SCHEMA[it.service_id] || {};
-    const fields = [];
-    if (sch.qty) {
-      const [field, min, max, def, label] = sch.qty;
-      fields.push(`<label style="font-size:11px;color:var(--muted);font-weight:600">${label} <input type="number" min="${min}" max="${max}" value="${it[field]||def}" oninput="updateField(${i},'${field}',this.value)" style="width:64px"></label>`);
-    }
-    fields.push(`<label style="font-size:11px;color:var(--muted);font-weight:600">When <input type="date" value="${it.target_date||''}" min="${new Date().toISOString().slice(0,10)}" oninput="updateField(${i},'target_date',this.value)" style="width:140px"></label>`);
-    fields.push(`<label style="font-size:11px;color:var(--muted);font-weight:600">Slot <select onchange="updateField(${i},'time_slot',this.value)" style="width:auto">
-      <option value="">Pick</option>
-      ${["08:00","10:00","12:00","14:00","16:00","18:00","20:00"].map(s=>`<option value="${s}" ${it.time_slot===s?'selected':''}>${s}</option>`).join("")}
-    </select></label>`);
-    fields.push(`<label style="font-size:11px;color:var(--muted);font-weight:600;flex:1;min-width:160px">Notes <input type="text" placeholder="Building, gate code, special instructions…" value="${(it.notes||'').replace(/"/g,'&quot;')}" oninput="updateField(${i},'notes',this.value)" style="width:100%;max-width:none"></label>`);
-    return `
-      <div class="item">
-        <div class="ico">${m.emoji}</div>
-        <div>
-          <div class="nm">${m.label}</div>
-          ${sch.hint ? `<div class="meta" style="color:#0F766E;font-style:italic">💡 ${sch.hint}</div>` : ''}
-          <div class="meta" id="line-meta-${i}">Pricing…</div>
-          <div class="row">${fields.join("")}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="price" id="line-price-${i}">…</div>
-          <button class="rm" onclick="removeAt(${i})">Remove</button>
-        </div>
-      </div>`;
-  }).join("");
-
-  // Pull a fresh quote
-  const q = await fetchQuote(items.map(({_ts, ...rest}) => rest));
-  cachedQuote = q;
-  if (!q || !q.ok) {
-    document.getElementById("summary").innerHTML =
-      '<p style="color:#B91C1C;font-size:13px">Pricing unavailable — please refresh.</p>';
-    document.getElementById("co-btn").disabled = true;
-    return;
-  }
-  // Update per-line prices
-  q.lines.forEach((ln, i) => {
-    const pe = document.getElementById("line-price-" + i);
-    const me = document.getElementById("line-meta-" + i);
-    if (pe) pe.textContent = "AED " + ln.total;
-    if (me) {
-      let s = "Base AED " + ln.base;
-      if (ln.discount) s += " · −" + ln.discount + " AED disc";
-      if (ln.addons_total) s += " · +" + ln.addons_total + " AED addons";
-      me.textContent = s;
-    }
-  });
-  // Bundle savings banner
-  if (q.bundle_discount_pct > 0) {
-    document.getElementById("bundle-saving").style.display = "block";
-    document.getElementById("bundle-saving").textContent =
-      `🎁 Bundle discount ${q.bundle_discount_pct}% applied · saving AED ${q.bundle_discount}`;
-  } else {
-    document.getElementById("bundle-saving").style.display = "none";
-  }
-  document.getElementById("summary").innerHTML = `
-    <div class="summary-row"><div>Subtotal</div><div class="v">AED ${q.subtotal}</div></div>
-    ${q.bundle_discount_pct ? `<div class="summary-row discount"><div>Bundle discount (${q.bundle_discount_pct}%)</div><div class="v">−AED ${q.bundle_discount}</div></div>` : ''}
-    <div class="summary-row total"><div>Total</div><div class="v">AED ${q.grand_total}</div></div>
-  `;
-  document.getElementById("co-btn").disabled = false;
-  document.getElementById("co-btn").innerHTML =
-    `Pay AED ${q.grand_total} · book ${items.length} service${items.length>1?'s':''} →`;
-}
-
-async function checkout() {
-  const items = loadCart().map(({_ts, ...rest}) => rest);
-  if (!items.length) return;
-  const name = document.getElementById("c-name").value.trim();
-  const phone = document.getElementById("c-phone").value.trim();
-  const addr = document.getElementById("c-addr").value.trim();
-  if (!name || !phone || !addr) {
-    alert("Please fill in name, phone and address."); return;
-  }
-  // Make sure each item has a date + slot
-  for (const [i, it] of items.entries()) {
-    if (!it.target_date || !it.time_slot) {
-      alert(`Item ${i+1}: please pick a date and time slot.`); return;
-    }
-  }
-  const btn = document.getElementById("co-btn");
-  btn.disabled = true; btn.textContent = "Processing…";
-  try {
-    const r = await fetch("/api/cart/checkout", {
-      method:"POST", headers:{"content-type":"application/json"},
-      body: JSON.stringify({items, customer_name:name, phone, address:addr}),
-    });
-    const j = await r.json();
-    if (!r.ok || !j.ok) throw new Error(j.detail || j.error || "checkout failed");
-    localStorage.removeItem(KEY);
-    if (j.payment_url) location.href = j.payment_url;
-    else location.href = `/booked.html?b=${j.bundle_anchor}`;
-  } catch (e) {
-    btn.disabled = false; btn.textContent = "Try checkout again";
-    alert("Checkout error: " + (e.message || "unknown"));
-  }
-}
-
-// Allow ?add=service_id&bedrooms=2 etc deep-link to add a service then redirect to /cart.html
-const params = new URLSearchParams(location.search);
-if (params.get("add")) {
-  const item = {service_id: params.get("add")};
-  ["bedrooms","hours","units","target_date","time_slot"].forEach(k => {
-    const v = params.get(k);
-    if (v) item[k] = (k==='bedrooms'||k==='hours'||k==='units') ? parseInt(v,10) : v;
-  });
-  addToCart(item);
-  history.replaceState({}, "", "/cart.html");
-} else {
-  render();
-}
-
-window.serviaCart = { add: addToCart, view: loadCart, clear: () => saveCart([]) };
+const KEY="servia.cart.v1";const SAVED_KEY="servia.saved_addresses";
+const SM={deep_cleaning:["✨","Deep Cleaning"],general_cleaning:["🧹","General Cleaning"],ac_cleaning:["❄️","AC Service"],ac_service:["❄️","AC Service"],maid_service:["👤","Maid Service"],pest_control:["🪲","Pest Control"],handyman:["🔧","Handyman"],sofa_carpet:["🛋️","Sofa & Carpet"],carpet_cleaning:["🧼","Carpet"],move_in_out:["📦","Move-in/out"],move_in_out_cleaning:["📦","Move-in/out"],window_cleaning:["🪟","Window"],kitchen_deep:["👨‍🍳","Kitchen Deep"],kitchen_deep_clean:["👨‍🍳","Kitchen Deep"],villa_deep:["🏡","Villa Deep"],car_wash:["🚗","Car Wash"],swimming_pool:["🏊","Pool"],painting:["🎨","Painting"],gardening:["🌿","Gardening"],smart_home:["💡","Smart Home"],curtain_cleaning:["🪟","Curtain"],marble_polish:["💎","Marble"],laundry:["👕","Laundry"],babysitting:["👶","Babysitter"],office_cleaning:["🏢","Office"],post_construction:["🏗","Post-Construction"],disinfection:["🧴","Disinfection"]};
+const SCH={deep_cleaning:[["bedrooms",1,10,2,"BR"],"Studio = 1 BR · adds bathroom + balcony deep clean"],general_cleaning:[["bedrooms",1,10,2,"BR"],"Routine — surfaces + floors + bathrooms (~3h)"],villa_deep:[["bedrooms",2,12,4,"BR"],"Bigger crew · 5-7 hours · garden cleared"],kitchen_deep:[null,"Includes oven, hood, cabinets, fridge interior"],kitchen_deep_clean:[null,"Includes oven, hood, cabinets, fridge interior"],move_in_out:[["bedrooms",1,10,2,"BR"],"Deposit-saving — be present at handover"],move_in_out_cleaning:[["bedrooms",1,10,2,"BR"],"Deposit-saving — be present at handover"],disinfection:[["units",1,5,1,"areas"],"Hospital-grade disinfectant"],post_construction:[["bedrooms",1,12,3,"BR"],"Paint splatter · sand · debris removal"],office_cleaning:[["units",100,5000,500,"sqft"],"Per square foot · day or night"],maid_service:[["hours",1,12,3,"hrs"],"Hourly cleaner · supplies + uniform"],handyman:[["hours",1,12,2,"hrs"],"Plumb · electric · paint · IKEA · curtain rods"],babysitting:[["hours",2,12,4,"hrs"],"Background-checked · references on request"],painting:[["hours",2,24,6,"hrs"],"Wall paint · prep · cleanup included"],gardening:[["hours",2,12,3,"hrs"],"Mowing · pruning · weeding · waste haul"],ac_cleaning:[["units",1,20,3,"AC units"],"Each cassette / wall / split unit"],ac_service:[["units",1,20,3,"AC units"],"Each cassette / wall / split unit"],sofa_carpet:[["units",1,15,2,"items"],"Each sofa-seater OR carpet"],carpet_cleaning:[["units",1,15,2,"carpets"],"Steam shampoo · per carpet"],window_cleaning:[["units",1,30,8,"windows"],"Inside + outside per window"],pest_control:[["bedrooms",1,10,2,"BR"],"Cockroach / bed bugs / ants · 90-day warranty"],swimming_pool:[null,"Weekly maintenance · chemicals included"],car_wash:[["units",1,5,1,"cars"],"At-home detail · interior + exterior"],smart_home:[["hours",2,8,3,"hrs"],"Alexa · Google Home · locks · install + setup"],curtain_cleaning:[["units",1,15,4,"sets"],"Each curtain set"],marble_polish:[["units",100,3000,500,"sqft"],"Per square foot of marble"],laundry:[["units",5,100,20,"items"],"Per garment · pickup + delivery"]};
+let SVC={};const _addrMaps={};
+const get=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch(_){return []}};
+const save=c=>{localStorage.setItem(KEY,JSON.stringify(c));render()};
+const saved=()=>{try{return JSON.parse(localStorage.getItem(SAVED_KEY)||"[]")}catch(_){return []}};
+const saveSaved=a=>{const s=new Set();const d=a.filter(x=>{if(!x.address||s.has(x.address))return false;s.add(x.address);return true});localStorage.setItem(SAVED_KEY,JSON.stringify(d.slice(-8)))};
+window.updateField=(i,k,v)=>{const c=get();if(!c[i])return;if(v===""||v==null)delete c[i][k];else c[i][k]=(["bedrooms","hours","units"].includes(k))?parseInt(v,10):v;save(c)};
+window.bumpQty=(i,f,d,mn,mx)=>{const c=get();if(!c[i])return;c[i][f]=Math.max(mn,Math.min(mx,(parseInt(c[i][f]||1,10))+d));save(c)};
+window.toggleAddon=(i,id)=>{const c=get();if(!c[i])return;const a=c[i].addons||[];const ix=a.indexOf(id);if(ix>=0)a.splice(ix,1);else a.push(id);c[i].addons=a;save(c)};
+window.removeAt=i=>{const c=get();c.splice(i,1);save(c)};
+function setAddr(i,addr,lat,lng){const c=get();if(!c[i])return;c[i].address=addr;if(lat!=null)c[i].lat=lat;if(lng!=null)c[i].lng=lng;save(c);if(addr&&addr.length>5){const sa=saved();sa.push({address:addr,lat,lng});saveSaved(sa)}}
+async function fq(items){try{const r=await fetch("/api/cart/quote",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({items})});if(!r.ok)return null;return await r.json()}catch(_){return null}}
+let _t=null;
+async function srch(q,cb){if(_t)clearTimeout(_t);if(!q||q.length<3){cb([]);return}_t=setTimeout(async()=>{try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=ae&limit=6&q=${encodeURIComponent(q)}`);const j=await r.json();cb((j||[]).map(x=>({label:x.display_name,lat:parseFloat(x.lat),lng:parseFloat(x.lon)})))}catch(_){cb([])}},350)}
+function attach(input,sug,onPick){input.addEventListener("input",e=>{srch(e.target.value,r=>{if(!r.length){sug.innerHTML="";sug.style.display="none";return}sug.style.display="block";sug.innerHTML=r.map((x,i)=>`<div data-i="${i}">📍 ${x.label.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))}</div>`).join("");[...sug.children].forEach(d=>d.onclick=()=>{const x=r[+d.dataset.i];input.value=x.label;sug.style.display="none";onPick(x.label,x.lat,x.lng)})})});input.addEventListener("blur",()=>setTimeout(()=>{sug.style.display="none"},220))}
+window.initLineMap=i=>{if(_addrMaps[i])return;const el=document.getElementById(`addr-map-${i}`);if(!el||!window.L)return;const c=get()[i]||{};const init=[c.lat||25.2048,c.lng||55.2708];el.style.display="block";const map=L.map(el).setView(init,c.lat?14:11);L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OSM &copy; CARTO',subdomains:'abcd',maxZoom:18}).addTo(map);const m=L.marker(init,{draggable:true}).addTo(map);async function commit(ll){try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${ll.lat}&lon=${ll.lng}`);const j=await r.json();const lab=j.display_name||`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`;const inp=document.getElementById(`addr-input-${i}`);if(inp)inp.value=lab;setAddr(i,lab,ll.lat,ll.lng)}catch(_){}}m.on("dragend",()=>commit(m.getLatLng()));map.on("click",e=>{m.setLatLng(e.latlng);commit(e.latlng)});_addrMaps[i]={map,m};setTimeout(()=>map.invalidateSize(),200)};
+window.applyDefaultToAll=()=>{const def=document.getElementById("c-addr").value.trim();if(!def)return;const c=get();c.forEach(it=>{if(!it.address)it.address=def});save(c)};
+window.useDefaultAddr=i=>{const def=document.getElementById("c-addr").value.trim();if(!def){alert("Set a default address first");return}const c=get();if(c[i]){c[i].address=def;save(c)}};
+window.useSavedAddr=(i,si)=>{const s=saved()[si];if(!s)return;const c=get();if(c[i]){c[i].address=s.address;c[i].lat=s.lat;c[i].lng=s.lng;save(c)}};
+async function render(){const items=get();const wrap=document.getElementById("cart-items");if(!items.length){wrap.innerHTML='<div class="empty">Your bundle is empty.<br><br><a class="btn btn-primary" href="/services.html">Browse services</a></div>';document.getElementById("summary").innerHTML="";document.getElementById("bundle-saving").style.display="none";document.getElementById("co-btn").disabled=true;document.getElementById("co-btn").textContent="Add items to checkout";document.getElementById("default-apply").style.display="none";return}const sa=saved();wrap.innerHTML=items.map((it,i)=>{const m=SM[it.service_id]||["🧽",it.service_id];const sch=SCH[it.service_id]||[null,""];const svc=SVC[it.service_id]||{};const ad=svc.addons||[];let qH="";if(sch[0]){const [f,mn,mx,df,lb]=sch[0];const v=it[f]||df;qH=`<label>${lb}</label><div class="qty-row"><button onclick="bumpQty(${i},'${f}',-1,${mn},${mx})">−</button><input type="number" value="${v}" min="${mn}" max="${mx}" oninput="updateField(${i},'${f}',this.value)"><button onclick="bumpQty(${i},'${f}',+1,${mn},${mx})">+</button></div>`}const aH=ad.length?`<div class="addons">${ad.map(a=>{const on=(it.addons||[]).includes(a.id);const lab=a.label||a.name||a.id;return `<button class="addon-chip ${on?'active':''}" onclick="toggleAddon(${i},'${a.id}')">${on?'✓':'+'} ${lab} <span class="price">+${a.price} AED</span></button>`}).join("")}</div>`:'';const sP=sa.length?`<div class="addr-saved">${sa.map((s,si)=>`<button type="button" class="a-pill" onclick="useSavedAddr(${i},${si})">⭐ ${(s.address||'').slice(0,30)}${(s.address||'').length>30?'…':''}</button>`).join("")}</div>`:'';return `<div class="item"><div class="item-head"><div class="ico">${m[0]}</div><div><div class="nm">${m[1]}</div>${sch[1]?`<div class="item-meta" style="color:#0F766E;font-style:italic">💡 ${sch[1]}</div>`:''}<div class="item-meta" id="lm-${i}">Pricing…</div></div><div><div class="price" id="lp-${i}">…</div><button class="rm" onclick="removeAt(${i})">Remove</button></div></div><div class="item-row">${qH}<label>When <input type="date" min="${new Date().toISOString().slice(0,10)}" value="${it.target_date||''}" oninput="updateField(${i},'target_date',this.value)"></label><label>Slot <select onchange="updateField(${i},'time_slot',this.value)"><option value="">Pick</option>${["08:00","10:00","12:00","14:00","16:00","18:00","20:00"].map(s=>`<option value="${s}" ${it.time_slot===s?'selected':''}>${s}</option>`).join("")}</select></label></div>${aH}<details class="addr-block" ${it.address?'open':''}><summary>📍 ${it.address?'<span style="color:#0F172A">'+it.address.slice(0,60)+(it.address.length>60?'…':'')+'</span>':'Set address (defaults to your main address)'}</summary><div class="addr-input"><input id="addr-input-${i}" type="text" placeholder="Search UAE address (Marina, Khalifa City, Al Khan…)" value="${(it.address||'').replace(/"/g,'&quot;')}"><div class="addr-suggestions" id="addr-sug-${i}" style="display:none"></div></div>${sP}<div class="addr-tools"><button onclick="initLineMap(${i})">📌 Pick on map</button><button onclick="useDefaultAddr(${i})">Use default address</button></div><div class="addr-map" id="addr-map-${i}"></div></details></div>`}).join("");items.forEach((it,i)=>{const ip=document.getElementById(`addr-input-${i}`);const sg=document.getElementById(`addr-sug-${i}`);if(ip&&sg)attach(ip,sg,(l,la,ln)=>setAddr(i,l,la,ln))});const q=await fq(items.map(({_ts,lat,lng,address,...r})=>r));if(!q||!q.ok){document.getElementById("summary").innerHTML='<p style="color:#B91C1C;font-size:13px">Pricing unavailable — refresh.</p>';document.getElementById("co-btn").disabled=true;return}q.lines.forEach((ln,i)=>{const pe=document.getElementById("lp-"+i);const me=document.getElementById("lm-"+i);if(pe)pe.textContent="AED "+ln.total;if(me){let s="Base AED "+ln.base;if(ln.discount)s+=" · −"+ln.discount;if(ln.addons_total)s+=" · +"+ln.addons_total+" addons";me.textContent=s}});if(q.bundle_discount_pct>0){document.getElementById("bundle-saving").style.display="block";document.getElementById("bundle-saving").textContent=`🎁 Bundle discount ${q.bundle_discount_pct}% applied · saving AED ${q.bundle_discount}`}else document.getElementById("bundle-saving").style.display="none";document.getElementById("summary").innerHTML=`<div class="summary-row"><div>Subtotal</div><div class="v">AED ${q.subtotal}</div></div>${q.bundle_discount_pct?`<div class="summary-row discount"><div>Bundle discount (${q.bundle_discount_pct}%)</div><div class="v">−AED ${q.bundle_discount}</div></div>`:''}<div class="summary-row total"><div>Total</div><div class="v">AED ${q.grand_total}</div></div>`;document.getElementById("co-btn").disabled=false;document.getElementById("co-btn").innerHTML=`Pay AED ${q.grand_total} · book ${items.length} service${items.length>1?'s':''} →`;const lk=items.filter(x=>!x.address).length;document.getElementById("addr-line-count").textContent=lk;document.getElementById("default-apply").style.display=lk?'flex':'none'}
+async function checkout(){const items=get().map(({_ts,...r})=>r);if(!items.length)return;const n=document.getElementById("c-name").value.trim();const p=document.getElementById("c-phone").value.trim();const a=document.getElementById("c-addr").value.trim();if(!n||!p||!a){alert("Please fill in name, phone and default address.");return}for(const [i,it] of items.entries()){if(!it.target_date||!it.time_slot){alert(`Service ${i+1}: pick a date and time slot.`);return}if(!it.address)it.address=a;if(it.address&&it.address!==a)it.notes=(it.notes?it.notes+" · ":"")+"At: "+it.address}const btn=document.getElementById("co-btn");btn.disabled=true;btn.textContent="Processing…";try{const r=await fetch("/api/cart/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({items,customer_name:n,phone:p,address:a})});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.detail||j.error||"checkout failed");localStorage.removeItem(KEY);if(j.payment_url)location.href=j.payment_url;else location.href=`/booked.html?b=${j.bundle_anchor}`}catch(e){btn.disabled=false;btn.textContent="Try checkout again";alert("Checkout error: "+(e.message||"unknown"))}}
+fetch("/api/services").then(r=>r.json()).then(d=>{(d.services||[]).forEach(s=>SVC[s.id]=s);const p=new URLSearchParams(location.search);if(p.get("add")){const it={service_id:p.get("add")};["bedrooms","hours","units","target_date","time_slot"].forEach(k=>{const v=p.get(k);if(v)it[k]=(["bedrooms","hours","units"].includes(k))?parseInt(v,10):v});const c=get();c.push({...it,_ts:Date.now()});save(c);history.replaceState({},"","/cart.html")}else render()}).catch(()=>render());
+window.serviaCart={add:i=>{const c=get();c.push({...i,_ts:Date.now()});save(c)},view:get,clear:()=>save([])};
 </script>
-
 <script src="/theme.js" defer></script>
 <script src="/app.js" defer></script>
 <script src="/install.js" defer></script>
