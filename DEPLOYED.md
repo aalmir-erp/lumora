@@ -2,16 +2,15 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"ok":true,"service":"Lumora","version":"1.18.1","mode":"llm","model":"claude-opus-4-7","wa_bridge":true,"admin_token_hint":null}`
+**Health:** `{"ok":true,"service":"Lumora","version":"1.18.2","mode":"llm","model":"claude-opus-4-7","wa_bridge":true,"admin_token_hint":null}`
 
 ## Build logs
 ```
-[internal] load build context
-[ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 2/11] WORKDIR /app
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
@@ -33,11 +32,12 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:6311cdf14b5a480af7cacd17f170dfcb23bf33648772f14dacd9268ed6f51560
-containerimage.digest: sha256:90c24aee93823b3b193dbd465953dd17a08e2c2cce5c649c4189f7d61266a04b
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OTBjMjRhZWU5MzgyM2IzYjE5M2RiZDQ2NTk1M2RkMTdhMDhlMmMyY2NlNWM2NDljNDE4OWY3ZDYxMjY2YTA0YiIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQwNDoxOTo0MFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:d1d5dba77ec0dc7b92c9c8c7aeef57f49f93d10a596dcf27aa55abe39e868c5e
+containerimage.digest: sha256:4d517444a05e7efddbf12ff883d9a5901096f641c81a39e658bbfeb8f02b53ef
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NGQ1MTc0NDRhMDVlN2VmZGRiZjEyZmY4ODNkOWE1OTAxMDk2ZjY0MWM4MWEzOWU2NThiYmZlYjhmMDJiNTNlZiIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQwNTowOToxOFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 image push
+
 [35m====================
 Starting Healthcheck
 ====================
@@ -50,13 +50,16 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/11ea619a-f266-46cf-b5af-61a44c3ca5e6/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/2a176e21-8a93-4821-9f5c-6dc77f0befa4/vol_onr647rhdeir9di9
 Starting Container
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
 INFO:     Started server process [1]
 INFO:     Waiting for application startup.
-INFO:     100.64.0.2:48605 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:62942 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.2:59249 - "GET /api/health HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.3:49900 - "GET /api/health HTTP/1.1" 200 OK
 ```
