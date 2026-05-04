@@ -38,9 +38,16 @@ app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)
 app.include_router(admin.public_reviews_router)
-from . import vendor_scraper as _vs, vendor_outreach as _vo
+from . import vendor_scraper as _vs, vendor_outreach as _vo, social_images as _si
 app.include_router(_vs.router)
 app.include_router(_vo.router)
+app.include_router(_si.admin_router)
+app.include_router(_si.public_router)
+
+
+@app.get("/image/{slug}", response_class=HTMLResponse)
+def public_image_page(slug: str):
+    return _si.render_image_page(slug)
 app.include_router(live_visitors.admin_router)
 app.include_router(push_notifications.router)
 app.include_router(push_notifications.public_router)
@@ -2160,6 +2167,23 @@ try:
             print("[scheduler] PSI daily checked", flush=True)
         except Exception as e:  # noqa: BLE001
             print(f"[scheduler] PSI daily failed: {e}", flush=True)
+
+    # Daily social-image generation — 10 images at 09:00 Asia/Dubai
+    # (overridable via admin: cfg key social_image_cron_daily, _hour, _enabled)
+    @_scheduler.scheduled_job("cron", hour=9, minute=0, id="social_images_daily",
+                              max_instances=1, coalesce=True, replace_existing=True)
+    def _job_social_images_daily():
+        try:
+            from . import db as _db, social_images as _sim
+            if not _db.cfg_get("social_image_cron_enabled", True):
+                print("[scheduler] social-images cron disabled by admin", flush=True); return
+            count = int(_db.cfg_get("social_image_cron_daily", 10) or 10)
+            import asyncio as _aio
+            r = _aio.run(_sim.generate_bulk(target=count, mix_aspects=True))
+            print(f"[scheduler] social-images daily: made {r.get('made',0)}/{count}",
+                  flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[scheduler] social-images daily failed: {e}", flush=True)
 
     @app.on_event("startup")
     def _start_scheduler():
