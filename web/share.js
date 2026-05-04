@@ -40,7 +40,7 @@
           color:var(--text);cursor:pointer;font-size:14px">⋯</button>` : ''}
       </div>
       <div class="servia-share-hint" style="margin-top:8px;font-size:12px;color:var(--muted)">
-        💰 Share Servia + post a 5★ Google review and earn <b style="color:var(--primary-dark)">AED 25 cashback</b>.
+        🎁 Share Servia + post a 5★ Google review to <b style="color:var(--primary-dark)">climb your Ambassador tier</b> (more % off every booking).
         <a href="/share-rewards.html" style="color:var(--primary-dark);text-decoration:underline">How →</a>
       </div>
     `;
