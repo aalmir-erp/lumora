@@ -226,6 +226,31 @@
       // Pre-fill phone/email if booking has them
       if (b.phone) $("pay-phone").value = b.phone;
       if (b.email) $("pay-email").value = b.email;
+      // ---- Single-source-of-truth contact: if the booking ALREADY has phone,
+      // skip Step 1 (don't ask again). Show a compact 'Paying as' badge instead
+      // with a small Edit link in case they want to use a different phone for
+      // this charge.
+      if (b.phone) {
+        $("step-id").style.display = "none";
+        // Inject a 'Paying as' badge above Step 2
+        const badge = document.createElement("div");
+        badge.id = "pay-as-badge";
+        badge.style.cssText = "background:#F0FDF4;border:1px solid #86EFAC;color:#14532D;padding:10px 14px;border-radius:10px;margin:8px 0 14px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap";
+        badge.innerHTML =
+          `<span>✅ <b>Paying as ${esc(b.customer_name || "you")}</b> · ${esc(b.phone)}` +
+          `${b.email ? " · " + esc(b.email) : ""}</span>` +
+          `<a href="#" id="pay-as-edit" style="color:#0F766E;font-weight:700;text-decoration:underline;font-size:12.5px">Use different contact</a>`;
+        const stepMethod = $("step-method");
+        if (stepMethod && stepMethod.parentNode) stepMethod.parentNode.insertBefore(badge, stepMethod);
+        document.getElementById("pay-as-edit").onclick = (e) => {
+          e.preventDefault();
+          $("step-id").style.display = "";
+          badge.remove();
+        };
+        // Auto-enable the pay button now that contact is satisfied (still
+        // needs a method picked; canPay() handles the AND).
+        $("btn-pay").disabled = !canPay();
+      }
       // Already paid?
       if (d.payment_status === "paid") {
         $("pay-paid-banner").style.display = "block";
@@ -240,7 +265,17 @@
         $("step-pay").style.display = "none";
       }
     } catch (e) {
-      $("pay-summary").innerHTML = `<span style="color:#B91C1C">⚠ ${esc(e.message)}</span>`;
+      $("pay-summary").innerHTML =
+        `<div style="background:#FEE2E2;color:#B91C1C;padding:12px;border-radius:10px;font-size:13.5px;line-height:1.55">` +
+        `⚠ ${esc(e.message)}<br>` +
+        `<small>This payment link looks invalid or expired. ` +
+        `<a href='/me.html' style='color:#7F1D1D;font-weight:700'>Go to my bookings</a> · ` +
+        `<a href='/contact.html' style='color:#7F1D1D;font-weight:700'>WhatsApp us</a> for help.</small></div>`;
+      // Hide everything below the error so the user isn't tempted to enter
+      // info into a broken page
+      ["step-id", "step-method", "step-pay"].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = "none";
+      });
     }
   }
   function esc(s){ return (s||"").toString().replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
