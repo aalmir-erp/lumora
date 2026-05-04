@@ -1189,6 +1189,25 @@ def video_poster_svg(slug: str):
                     headers={"Cache-Control": "public, max-age=86400"})
 
 
+@public_router.get("/embed/{slug}", response_class=HTMLResponse)
+def embed_video(slug: str, aspect: str = "16x9"):
+    """Minimal embeddable player. Same SVG video as /play/{slug} but at a
+    DIFFERENT URL so Google's video sitemap spec is satisfied
+    (<video:player_loc> must differ from <loc>). Used as <video:player_loc>
+    in sitemap-videos.xml."""
+    seed_videos_if_empty()
+    with db.connect() as c:
+        try:
+            r = c.execute("SELECT * FROM videos WHERE slug=?", (slug,)).fetchone()
+        except Exception: r = None
+    if not r:
+        raise HTTPException(404, "Video not found")
+    v = db.row_to_dict(r) or {}
+    v["aspect"] = aspect if aspect in ("16x9", "9x16", "1x1") else "16x9"
+    v["_embed"] = True   # tells render_video_html to drop nav/footer/related
+    return HTMLResponse(render_video_html(v))
+
+
 @public_router.get("/play/{slug}", response_class=HTMLResponse)
 def play_video(slug: str, aspect: str = "16x9"):
     """`?aspect=` accepts 16x9 (default · landscape · YouTube/Insta feed),
