@@ -1039,36 +1039,57 @@ def admin_bulk_delete(entity: str, body: BulkDeleteBody):
 
 @router.post("/{entity}/delete-all")
 def admin_delete_all(entity: str, confirm: str = ""):
-    """DELETE ALL rows in a table. Requires ?confirm=yes-i-mean-it.
-    Surfaces the actual SQL/FK error in the response so admin sees WHY."""
+    """DELETE ALL rows in a table + cascade-clean every dependent table.
+    For bookings: also wipes quotes / invoices / assignments / reviews
+    that reference them. Disables FK enforcement during the wipe so
+    SQLite doesn't trip even when our manual cascade order misses one."""
     if confirm != "yes-i-mean-it":
         raise HTTPException(400, "Add ?confirm=yes-i-mean-it to confirm")
     if entity not in _DELETE_MAP:
         raise HTTPException(400, f"unsupported entity '{entity}'")
     info = _DELETE_MAP[entity]
+
+    # Cascade map: which dependent tables to wipe BEFORE deleting the parent.
+    # Order matters — leaves first, parent last.
+    CASCADES = {
+        "vendor":   ["vendor_services", "assignments"],
+        "booking":  ["assignments", "reviews", "quotes", "invoices"],
+        "customer": [],
+        "blog":     ["autoblog_views"],
+        "session":  [],
+        "message":  [],
+        "lead":     [],
+        "alert":    [],
+        "event":    [],
+        "video":    [],
+        "visitor":  [],
+        "invoice":  [],
+    }
     n = 0
+    cascade_counts = {}
     try:
         with db.connect() as c:
-            # Cascade: clean up dependent FK rows first so SQLite FK enforcement
-            # (when enabled) doesn't reject the wipe.
-            if entity == "vendor":
-                try: c.execute("DELETE FROM vendor_services")
-                except Exception: pass
-            elif entity == "booking":
-                # Detach invoices that reference these bookings — don't delete
-                # the invoices themselves (admin may want them for accounting).
-                try: c.execute("UPDATE invoices SET booking_id=NULL")
-                except Exception: pass
-            elif entity == "blog":
-                try: c.execute("DELETE FROM autoblog_views")
-                except Exception: pass
+            # Defence-in-depth: turn FK enforcement off for this transaction
+            # so a single forgotten dependent table doesn't reject the wipe.
+            try: c.execute("PRAGMA foreign_keys = OFF")
+            except Exception: pass
+            # Wipe every dependent table first (best-effort, table may not exist)
+            for dep_table in CASCADES.get(entity, []):
+                try:
+                    cascade_counts[dep_table] = c.execute(
+                        f"DELETE FROM {dep_table}").rowcount
+                except Exception as ce:
+                    cascade_counts[dep_table] = f"skip: {type(ce).__name__}"
+            # Now wipe the parent
             n = c.execute(f"DELETE FROM {info['table']}").rowcount
+            try: c.execute("PRAGMA foreign_keys = ON")
+            except Exception: pass
     except Exception as e:  # noqa: BLE001
-        # Surface the real error so the admin toast says WHY (FK violation,
-        # missing table, locked db, etc) instead of a generic "Error".
         raise HTTPException(500, f"delete-all {entity} failed: {type(e).__name__}: {e}")
-    db.log_event("admin", entity, "delete_all", actor="admin", details={"count": n})
-    return {"ok": True, "entity": entity, "deleted": n}
+    db.log_event("admin", entity, "delete_all", actor="admin",
+                 details={"count": n, "cascades": cascade_counts})
+    return {"ok": True, "entity": entity, "deleted": n,
+            "cascades": cascade_counts}
 
 
 # ---------- Logo variant picker ----------
