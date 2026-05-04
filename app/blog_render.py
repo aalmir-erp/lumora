@@ -520,7 +520,7 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
-  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
+  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:support@servia.ae">support@servia.ae</a></div>
 </div></footer>
 
 <script src="/theme.js" defer></script>
@@ -726,7 +726,7 @@ def render_index() -> HTMLResponse:
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
-  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
+  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:support@servia.ae">support@servia.ae</a></div>
 </div></footer>
 
 <script>

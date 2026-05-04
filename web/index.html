@@ -52,12 +52,39 @@
   "url": "https://servia.ae/",
   "logo": "https://servia.ae/logo.svg",
   "telephone": "via our website",
-  "email": "hello@servia.ae",
+  "email": "support@servia.ae",
   "priceRange": "AED 35 - AED 1500",
   "address": {"@type": "PostalAddress", "addressLocality": "Dubai", "addressCountry": "AE"},
   "areaServed": [{"@type":"City","name":"Dubai"},{"@type":"City","name":"Sharjah"},{"@type":"City","name":"Ajman"},{"@type":"City","name":"Abu Dhabi"}],
   "aggregateRating": {"@type":"AggregateRating","ratingValue":"4.9","reviewCount":"2412"},
   "sameAs": ["/contact.html"]
+}
+</script>
+<!-- BreadcrumbList schema — Google uses this to show breadcrumb trails in
+     search results, lifts CTR by 5–15% and helps the site rank higher
+     for category-style queries. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type":"ListItem","position":1,"name":"Home","item":"https://servia.ae/"}
+  ]
+}
+</script>
+<!-- WebSite schema with SearchAction so Google can offer a sitelinks search
+     box for the brand query. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Servia",
+  "url": "https://servia.ae/",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://servia.ae/services.html?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
 }
 </script>
 
@@ -445,7 +472,7 @@
   <div>
     <h3>Get in touch</h3>
     <a href="/contact.html">WhatsApp via our website</a><br>
-    <a href="mailto:hello@servia.ae">hello@servia.ae</a><br>
+    <a href="mailto:support@servia.ae">support@servia.ae</a><br>
     <a href="/faq.html">FAQ</a>
   </div>
 </div></footer>

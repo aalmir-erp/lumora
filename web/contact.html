@@ -23,9 +23,15 @@
     width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:12px;
     font-size:15px; font-family:inherit; min-height:46px }
   .field textarea { min-height:120px; resize:vertical }
+  /* Honeypot — hidden from real users, bots will auto-fill it */
+  .hp { position:absolute; left:-10000px; top:auto; width:1px; height:1px;
+    overflow:hidden; opacity:0 }
+  .cap-row { display:flex; gap:8px; align-items:center }
+  .cap-row .cap-q { background:#F1F5F9; padding:10px 14px; border-radius:10px;
+    font-weight:700; font-family:ui-monospace,monospace }
+  .cap-row input { flex:1 }
 </style>
 <script src="/banner.js" defer></script>
-<!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
   {src:"/_snippets.js",id:"snippets"},
   {src:"/cart-badge.js",id:"cart-badge"},
@@ -42,12 +48,12 @@
 
 <section class="wrap">
   <h1 style="font-size:30px;letter-spacing:-.02em;margin:0 0 6px">Contact Servia</h1>
-  <p style="color:var(--muted);margin:0 0 24px">Send a message and we'll respond on email or via the bot here.</p>
+  <p style="color:var(--muted);margin:0 0 24px">Send a message and we'll respond within minutes — bookings, billing, partnerships, anything.</p>
 
   <div class="card">
     <form id="contact-form" onsubmit="return submitContact(event)">
-      <div class="field"><label>Your name</label><input name="name" required></div>
-      <div class="field"><label>Email</label><input type="email" name="email" required></div>
+      <div class="field"><label>Your name</label><input name="name" required maxlength="80"></div>
+      <div class="field"><label>Email</label><input type="email" name="email" required maxlength="120"></div>
       <div class="field"><label>Topic</label>
         <select name="topic">
           <option>General question</option>
@@ -57,16 +63,30 @@
           <option>Press / media</option>
           <option>Urgent</option>
         </select></div>
-      <div class="field"><label>Your message</label><textarea name="message" required></textarea></div>
-      <button class="btn btn-primary btn-block" type="submit">Send message →</button>
+      <div class="field"><label>Your message</label><textarea name="message" required maxlength="3000"></textarea></div>
+
+      <!-- Honeypot: invisible to humans, bots auto-fill it -->
+      <div class="hp" aria-hidden="true"><label>Website (leave empty)</label>
+        <input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+
+      <!-- Math captcha — server validates a+b=answer -->
+      <div class="field"><label>Quick check</label>
+        <div class="cap-row">
+          <span class="cap-q" id="cap-q">…</span>
+          <input type="number" name="cap_answer" id="cap-answer" required min="0" max="50" placeholder="?" inputmode="numeric">
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit" id="cf-submit">Send message →</button>
+      <div id="cf-err" style="color:#B91C1C;font-size:13px;margin-top:8px;display:none"></div>
     </form>
     <div id="contact-ok" style="display:none;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:12px;padding:14px;margin-top:14px;color:#065F46;font-weight:600">
-      ✅ Message sent. We'll get back to you within minutes.
+      ✅ Message sent. We'll reply within minutes.
     </div>
   </div>
 
   <p style="text-align:center;margin-top:24px;color:var(--muted);font-size:13px">
-    Or email us: <a href="mailto:hello@servia.ae" style="color:#0F766E">hello@servia.ae</a>
+    Or email us: <a href="mailto:support@servia.ae" style="color:#0F766E">support@servia.ae</a>
   </p>
 </section>
 
@@ -74,16 +94,26 @@
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"></div>
   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
-  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
+  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:support@servia.ae">support@servia.ae</a></div>
 </div></footer>
 
 <script>
+// Generate fresh captcha numbers on every page load
+const _capA = Math.floor(Math.random()*9)+1;
+const _capB = Math.floor(Math.random()*9)+1;
+document.getElementById("cap-q").textContent = _capA + " + " + _capB + " =";
+
 async function submitContact(e) {
   e.preventDefault();
   const f = e.target;
+  const err = document.getElementById("cf-err");
+  err.style.display = "none";
   const data = {
     name: f.name.value, email: f.email.value,
     topic: f.topic.value, message: f.message.value,
+    website: f.website.value,                              // honeypot
+    cap_a: _capA, cap_b: _capB,
+    cap_answer: parseInt(document.getElementById("cap-answer").value, 10),
   };
   try {
     const r = await fetch("/api/contact", {
@@ -94,9 +124,14 @@ async function submitContact(e) {
       f.style.display = "none";
       document.getElementById("contact-ok").style.display = "block";
     } else {
-      alert("Could not send — please try email instead.");
+      const j = await r.json().catch(()=>({}));
+      err.textContent = "✗ " + (j.detail || "Could not send — please try email instead");
+      err.style.display = "block";
     }
-  } catch (err) { alert("Network error — " + err.message); }
+  } catch (er2) {
+    err.textContent = "Network error — " + er2.message;
+    err.style.display = "block";
+  }
   return false;
 }
 </script>
