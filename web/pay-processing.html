@@ -74,7 +74,7 @@
   // After ~3.6s, redirect to declined page with the same auth ref
   setTimeout(() => {
     const reason = params.get("reason") || "issuer_declined";
-    location.replace(`/pay/declined?inv=${encodeURIComponent(inv)}&ref=${ref}&reason=${reason}` +
+    location.replace(`/pay-declined.html?inv=${encodeURIComponent(inv)}&ref=${ref}&reason=${reason}` +
                      (params.get("amount") ? `&amount=${params.get("amount")}` : "") +
                      (params.get("phone") ? `&phone=${encodeURIComponent(params.get("phone"))}` : "") +
                      (params.get("service") ? `&service=${encodeURIComponent(params.get("service"))}` : ""));
