@@ -251,8 +251,14 @@
     document.querySelectorAll("a[href^='tel:']").forEach(a => { a.href = "tel:" + tel; });
     window.dispatchEvent(new CustomEvent("lumora:brand", { detail: b }));
   }).catch(() => {});
-  if ("requestIdleCallback" in window) requestIdleCallback(_brandFetch, { timeout: 2000 });
-  else setTimeout(_brandFetch, 600);
+  // Heavily deferred: only after first user interaction OR 4s idle. The brand
+  // fetch is purely for swapping placeholder phone/email text → never needed
+  // before the user actually engages.
+  let _bf=false; const _runBF = () => { if(_bf)return; _bf=true; _brandFetch(); };
+  if ("requestIdleCallback" in window) requestIdleCallback(_runBF, { timeout: 4000 });
+  else setTimeout(_runBF, 2500);
+  ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
+    addEventListener(ev, _runBF, { once: true, passive: true }));
 
   // Version stamp from /api/health
   function _setVersion() {
