@@ -368,8 +368,9 @@ window.LUMORA_PIXELS = {
 
       <hr style="margin:24px 0;border:0;border-top:1px solid var(--border)">
 
-      <label>Full name</label><input id="f-name">
-      <label>Phone (with country code)</label><input id="f-phone" placeholder="+971501234567">
+      <label>Full name</label><input id="f-name" placeholder="e.g. Sarah Khan">
+      <label>Phone (with country code)</label><input id="f-phone" placeholder="+971501234567" inputmode="tel">
+      <label>Building / villa address</label><input id="f-address" placeholder="Tower name, apt no, area, emirate">
       <button class="btn btn-primary btn-block" type="button" onclick="confirmBooking()" style="margin-top:14px;font-size:16px">Confirm booking →</button>
       <div id="book-result" style="margin-top:14px"></div>
     </div>
@@ -595,78 +596,102 @@ function toggleAddon(aid, el) {
   if (Object.keys(LumoraIntake.values()).length) getQuote();
 }
 
+// Build a cart-shape item from the intake form + addons for /api/cart endpoints
+function _buildItem() {
+  const v = LumoraIntake.values() || {};
+  const item = { service_id: sid };
+  if (v.bedrooms != null) item.bedrooms = parseInt(v.bedrooms, 10) || null;
+  if (v.hours    != null) item.hours    = parseInt(v.hours, 10) || null;
+  if (v.units    != null) item.units    = parseInt(v.units, 10) || null;
+  if (v.ac_units != null && !item.units) item.units = parseInt(v.ac_units, 10) || null;
+  if (v.ac_count != null && !item.units) item.units = parseInt(v.ac_count, 10) || null;
+  if (pickedAddons && pickedAddons.size) item.addons = [...pickedAddons];
+  return item;
+}
+
 async function getQuote() {
-  const ftext = LumoraIntake.summary();
-  const firstTime = !!document.getElementById("f-first").value;
-  if (!ftext) {
+  const v = LumoraIntake.values() || {};
+  if (!Object.keys(v).length && !pickedAddons.size) {
     document.getElementById("quote-box").innerHTML = '<div style="color:var(--muted);font-size:13px">Fill at least one field above to calculate.</div>';
     return;
   }
-  const cmd = `Get a price quote for the service "${SVC.name}" (id=${sid}). ${ftext}.` +
-    (firstTime ? " First-time customer." : "") +
-    (pickedAddons.size ? ` Addons: ${[...pickedAddons].join(",")}.` : "");
-  document.getElementById("quote-box").innerHTML = "<i style='color:var(--muted)'>Calculating…</i>";
+  document.getElementById("quote-box").innerHTML = '<div style="color:var(--muted);font-size:13px">⏳ Calculating…</div>';
   try {
-    const r = await fetch("/api/chat", { method:"POST", headers:{"content-type":"application/json"},
-      body: JSON.stringify({message: cmd}) }).then(x=>x.json());
-    // Find quote tool call in response
-    let quote = null;
-    for (const t of (r.tool_calls||[])) if (t.name === "get_quote" && t.result && t.result.ok) quote = t.result;
-    if (quote) {
-      document.getElementById("sticky-price").textContent = quote.total + " AED";
-      document.getElementById("quote-box").innerHTML = `
-        <div style="background:color-mix(in srgb, var(--primary) 8%, var(--surface));border:1px solid var(--primary);border-radius:12px;padding:16px">
-          ${quote.breakdown.map(b => `<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span>${b.label}</span><span><b>${b.amount} AED</b></span></div>`).join("")}
-          <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:800;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><span>Total</span><span>${quote.total} AED</span></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px">Includes 5% VAT • indicative</div>
-        </div>`;
-    } else {
-      const parsed = LumoraIntake.parseBotText(r.text || "Couldn't compute. Tell Servia in chat.");
-      let html = `<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:12px;font-size:14px">${parsed.text}</div>`;
-      if (parsed.choices.length) {
-        html += `<div class="us-actions" style="margin-top:8px;flex-wrap:wrap">` +
-          parsed.choices.map((c,i) => `<button type="button" class="btn btn-ghost" data-c="${i}" style="font-size:13px">${c.label}</button>`).join("") + `</div>`;
-      }
-      const box = document.getElementById("quote-box");
-      box.innerHTML = html;
-      box.querySelectorAll("button[data-c]").forEach(b => {
-        b.onclick = () => {
-          const c = parsed.choices[+b.dataset.c];
-          if (LumoraIntake.applyChoiceToBestField(c.send)) getQuote();
-        };
-      });
+    const r = await fetch("/api/cart/quote", {
+      method: "POST", headers: {"content-type":"application/json"},
+      body: JSON.stringify({ items: [_buildItem()] }),
+    }).then(x => x.json());
+    if (!r.ok || !r.lines || !r.lines.length) {
+      document.getElementById("quote-box").innerHTML = '<div style="background:#FEF3C7;border:1px solid #FDE68A;color:#78350F;padding:12px;border-radius:10px;font-size:13.5px">⚠ Couldn\'t calculate — please add bedroom/unit/hour count above.</div>';
+      return;
     }
-  } catch(e) { document.getElementById("quote-box").innerHTML = "Error: " + e.message; }
+    const line = r.lines[0];
+    document.getElementById("sticky-price").textContent = line.total + " AED";
+    let breakdownHtml = `<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span>${SVC.name}</span><span><b>${line.base} AED</b></span></div>`;
+    if (line.addons && line.addons.length) {
+      for (const a of line.addons) {
+        breakdownHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>+ ${a.label}</span><span>${a.price} AED</span></div>`;
+      }
+    }
+    if (line.discount) {
+      breakdownHtml += `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;color:#15803D"><span>First-time discount</span><span>−${line.discount} AED</span></div>`;
+    }
+    document.getElementById("quote-box").innerHTML = `
+      <div style="background:color-mix(in srgb, var(--primary) 8%, var(--surface));border:1px solid var(--primary);border-radius:12px;padding:16px">
+        ${breakdownHtml}
+        <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:800;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><span>Total</span><span>${line.total} AED</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Includes 5% VAT · final · cancel free 12h before</div>
+      </div>`;
+  } catch (e) {
+    document.getElementById("quote-box").innerHTML = `<div style="background:#FEE2E2;color:#B91C1C;padding:12px;border-radius:10px">⚠ Quote failed: ${e.message}</div>`;
+  }
 }
 
 async function confirmBooking() {
   const name = document.getElementById("f-name").value.trim();
   const phone = document.getElementById("f-phone").value.trim();
-  const ftext = LumoraIntake.summary();
-  if (!name || !phone) {
-    document.getElementById("book-result").innerHTML = '<div style="color:#DC2626">Please add your name and phone.</div>';
+  const addressEl = document.getElementById("f-address");
+  const address = (addressEl ? addressEl.value : "").trim();
+  if (!name)  { document.getElementById("book-result").innerHTML = '<div style="color:#DC2626;padding:8px">⚠ Please enter your full name.</div>'; return; }
+  if (!phone) { document.getElementById("book-result").innerHTML = '<div style="color:#DC2626;padding:8px">⚠ Please enter your phone number with country code.</div>'; return; }
+  if (!address || address.length < 5) {
+    document.getElementById("book-result").innerHTML = '<div style="color:#DC2626;padding:8px">⚠ Please enter your building / villa address (e.g. tower name + apt no, or villa + community).</div>';
     return;
   }
   conv("booking_submit");
-  let cmd = `Book ${sid} for ${name}, phone ${phone}`;
-  if (ftext) cmd += `. Details: ${ftext}`;
-  if (pickedAddons.size) cmd += `. Addons: ${[...pickedAddons].join(",")}`;
-  if (document.getElementById("f-first").value) cmd += ". First-time customer.";
-  const recur = (document.getElementById("f-recurring")||{value:""}).value;
-  if (recur) cmd += `. Frequency: ${recur}.`;
-  document.getElementById("book-result").innerHTML = "<i style='color:var(--muted)'>Booking…</i>";
+  document.getElementById("book-result").innerHTML = '<div style="color:var(--muted);padding:8px">⏳ Confirming booking…</div>';
   try {
-    const r = await fetch("/api/chat", { method:"POST", headers:{"content-type":"application/json"},
-      body: JSON.stringify({message: cmd, phone, language: window.lumoraLang ? lumoraLang() : "en"})}).then(x=>x.json());
-    let bid = null;
-    for (const t of (r.tool_calls||[])) if (t.name === "create_booking" && t.result && t.result.ok) bid = t.result.booking.id;
-    if (bid) {
-      conv("booking_success");
-      location.href = "/booked.html?id=" + bid;
-    } else {
-      document.getElementById("book-result").innerHTML = `<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:12px">${r.text || "Couldn't auto-book. Try chat or WhatsApp."}</div>`;
+    const item = _buildItem();
+    const dateEl = document.querySelector('input[type="date"]');
+    const timeEl = document.querySelector('select[id*="time"], select[id*="slot"]');
+    if (dateEl && dateEl.value) item.target_date = dateEl.value;
+    if (timeEl && timeEl.value) item.time_slot   = timeEl.value;
+    const recur = (document.getElementById("f-recurring") || {value:""}).value;
+    if (recur) item.notes = (item.notes || "") + " Frequency: " + recur;
+    const payload = {
+      items: [item],
+      customer_name: name,
+      phone: phone,
+      address: address,
+      language: (window.lumoraLang && window.lumoraLang()) || "en",
+    };
+    const r = await fetch("/api/cart/checkout", {
+      method: "POST", headers: {"content-type":"application/json"},
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) {
+      const errMsg = d.detail || d.error || "Booking didn't go through. Please WhatsApp us via /contact.html.";
+      document.getElementById("book-result").innerHTML = `<div style="background:#FEE2E2;color:#B91C1C;padding:12px;border-radius:10px">⚠ ${errMsg}</div>`;
+      return;
     }
-  } catch(e) { document.getElementById("book-result").innerHTML = "Error: " + e.message; }
+    conv("booking_success");
+    if (d.invoice_id) location.href = "/pay/" + encodeURIComponent(d.invoice_id);
+    else if (d.bookings && d.bookings.length) location.href = "/booked.html?id=" + d.bookings[0].id;
+    else document.getElementById("book-result").innerHTML = '<div style="background:#DCFCE7;color:#15803D;padding:12px;border-radius:10px">✅ Booking received! We\'ll WhatsApp confirmation shortly.</div>';
+  } catch (e) {
+    document.getElementById("book-result").innerHTML = `<div style="background:#FEE2E2;color:#B91C1C;padding:12px;border-radius:10px">⚠ ${e.message}</div>`;
+  }
 }
 
 
