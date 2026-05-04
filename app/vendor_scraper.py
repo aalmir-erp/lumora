@@ -172,44 +172,101 @@ async def _google_places_search(query: str, area: str, key: str,
 # ---------------------------------------------------------------------------
 async def _yellowpages_search(query: str, area: str,
                               limit: int = 10) -> list[dict]:
-    """Scrape https://www.yellowpages.ae search results. Returns best-effort
-    vendor dicts. NB: tolerates HTML changes via permissive regexes — if YP
-    redesigns, this returns [] gracefully and Google Places becomes the only
-    source."""
+    """Scrape https://www.yellowpages.ae search results. Two-pass parse:
+    first try the structured JSON-LD blocks (most reliable), then fall
+    back to permissive regex for older/cached HTML."""
     out: list[dict] = []
     try:
         url = (f"https://www.yellowpages.ae/category-search.html"
                f"?searchKey={query.replace(' ','+')}&loc={area.replace(' ','+')}")
-        async with httpx.AsyncClient(timeout=15.0,
-                                     headers={"User-Agent": "Mozilla/5.0 (Servia VendorScraper)"}) as client:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True,
+                headers={"User-Agent":
+                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept-Language": "en-US,en;q=0.9"}) as client:
             r = await client.get(url)
             if r.status_code != 200:
-                return []
+                return [{"_error": f"YP HTTP {r.status_code}"}]
+            html = r.text
+    except Exception as e:
+        return [{"_error": f"YP fetch failed: {e}"}]
+    # Pass 1: JSON-LD LocalBusiness blocks (Yellow Pages embeds these for SEO)
+    for ld in re.findall(r'<script type="application/ld\+json">(.*?)</script>',
+                         html, re.S | re.I):
+        try:
+            data = json.loads(ld)
+            if not isinstance(data, dict): continue
+            if data.get("@type") not in ("LocalBusiness", "Organization"):
+                continue
+            phone = (data.get("telephone") or "").strip()
+            name = (data.get("name") or "").strip()
+            if not phone or not name: continue
+            out.append({
+                "place_id": "yp_" + hashlib.sha1((name+phone).encode()).hexdigest()[:14],
+                "name": name, "phone": phone,
+                "website": (data.get("url") or "").strip(),
+                "address": (data.get("address", {}) or {}).get("addressLocality", area) + ", UAE",
+                "rating": float((data.get("aggregateRating", {}) or {}).get("ratingValue", 0)),
+                "reviews_count": int((data.get("aggregateRating", {}) or {}).get("reviewCount", 0)),
+                "source": "yellowpages_ae",
+                "source_url": (data.get("url") or url),
+                "emirate": area,
+            })
+        except Exception: pass
+    if out: return out[:limit]
+    # Pass 2: regex fallback when JSON-LD wasn't present
+    cards = re.findall(
+        r'<h[23][^>]*>\s*<a[^>]*href="([^"]*)"[^>]*>([^<]+)</a>(?:.{0,500}?)'
+        r'(?:tel:|>)([+\d][\d\s()-]{6,18})',
+        html, re.S | re.I,
+    )
+    for href, name, phone in cards[:limit]:
+        out.append({
+            "place_id": "yp_" + hashlib.sha1((name+phone).encode()).hexdigest()[:14],
+            "name": name.strip(), "phone": phone.strip(),
+            "website": "",
+            "address": area + ", UAE",
+            "rating": 0, "reviews_count": 0,
+            "source": "yellowpages_ae",
+            "source_url": href if href.startswith("http") else f"https://www.yellowpages.ae{href}",
+            "emirate": area,
+        })
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Source 4: Connect.ae directory (UAE businesses) — free
+# ---------------------------------------------------------------------------
+async def _connect_ae_search(query: str, area: str,
+                             limit: int = 10) -> list[dict]:
+    """Scrape connect.ae search. Connect is a UAE-focused business directory
+    with reasonable HTML structure. Returns best-effort results."""
+    out: list[dict] = []
+    try:
+        url = (f"https://www.connect.ae/search/{query.replace(' ','-')}"
+               f"-{area.lower().replace(' ','-')}.html")
+        async with httpx.AsyncClient(timeout=12.0, follow_redirects=True,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; ServiaScraper/1.0)"}) as client:
+            r = await client.get(url)
+            if r.status_code != 200: return []
             html = r.text
     except Exception:
         return []
-    # Permissive parse — extract business cards. Yellow Pages varies its
-    # markup; we look for h3 / h2 with business names + nearby tel: links.
+    # Connect.ae lists businesses with class="biz-name" + phone in a sibling
     cards = re.findall(
-        r'<h[23][^>]*>\s*<a[^>]*href="([^"]*)"[^>]*>([^<]+)</a>.*?'
-        r'(?:tel:([\+\d\-\s]+)|"telephone"\s*:\s*"([^"]+)").*?'
-        r'(?:<a[^>]*href="(https?://[^"]+)"[^>]*>(?:Visit|Website))?',
+        r'<a[^>]*class="biz-name[^"]*"[^>]*href="([^"]+)"[^>]*>([^<]+)</a>'
+        r'(?:.{0,500}?)(\+?971[\d\s-]{6,15})',
         html, re.S | re.I,
     )
-    for href, name, tel1, tel2, site in cards[:limit]:
-        phone = (tel1 or tel2 or "").strip()
-        if not phone or not name.strip():
-            continue
+    for href, name, phone in cards[:limit]:
         out.append({
-            "place_id": "yp_" + hashlib.sha1((name+phone).encode()).hexdigest()[:14],
-            "name": name.strip(),
-            "phone": phone,
-            "website": (site or "").strip(),
+            "place_id": "ca_" + hashlib.sha1((name+phone).encode()).hexdigest()[:14],
+            "name": name.strip(), "phone": phone.strip(),
+            "website": "",
             "address": area + ", UAE",
-            "rating": 0,
-            "reviews_count": 0,
-            "source": "yellowpages_ae",
-            "source_url": href if href.startswith("http") else f"https://www.yellowpages.ae{href}",
+            "rating": 0, "reviews_count": 0,
+            "source": "connect_ae",
+            "source_url": href if href.startswith("http") else f"https://www.connect.ae{href}",
             "emirate": area,
         })
     return out
@@ -482,6 +539,7 @@ async def scrape_for_service(service_id: str, *, target_per_area: int = 3,
             if google_key:
                 sources.append(("google_places", _google_places_search(query, area, google_key, limit=target_per_area*2)))
             sources.append(("yellowpages_ae", _yellowpages_search(query, area, limit=target_per_area*2)))
+            sources.append(("connect_ae", _connect_ae_search(query, area, limit=target_per_area*2)))
             sources.append(("reddit", _reddit_search(query, area, limit=target_per_area*2)))
             # Run sources in parallel for speed
             results = await asyncio.gather(*(s[1] for s in sources), return_exceptions=True)
@@ -625,26 +683,47 @@ async def scrape_run_all(target_per_area: int = 2):
 
 @router.post("/wipe-synthetic")
 def wipe_synthetic():
-    """Delete every vendor that was loaded from the synthetic seed
-    (is_synthetic=1) — the original 100-vendor demo data. Real scraped
-    vendors (is_synthetic=0) are untouched."""
-    _ensure_columns()
-    with db.connect() as c:
-        # First mark legacy seed rows: any vendor created BEFORE the scraper
-        # column existed AND with the seed phone pattern (+9715X) is synthetic
-        try:
-            c.execute("UPDATE vendors SET is_synthetic=1 "
-                      "WHERE source IS NULL OR source IN ('manual','seed')")
-        except Exception: pass
-        ids = [r["id"] for r in c.execute(
-            "SELECT id FROM vendors WHERE is_synthetic=1").fetchall()]
-        for vid in ids:
-            try: c.execute("DELETE FROM vendor_services WHERE vendor_id=?", (vid,))
-            except Exception: pass
-        n = c.execute("DELETE FROM vendors WHERE is_synthetic=1").rowcount
+    """Delete every vendor flagged as synthetic / seed / non-scraped.
+    Real scraped vendors (validated_at IS NOT NULL) are untouched.
+    Surfaces the actual SQL error if anything fails so admin sees why
+    instead of a generic 'Error' toast."""
+    try:
+        _ensure_columns()    # idempotent — adds columns if missing
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"migration failed: {e}")
+    deleted = 0
+    try:
+        with db.connect() as c:
+            # Defensive: figure out if the column exists at all (older DBs may
+            # have the migration silently failed in another container).
+            cols = [r["name"] for r in c.execute("PRAGMA table_info(vendors)").fetchall()]
+            has_synth = "is_synthetic" in cols
+            has_validated = "validated_at" in cols
+            # Strategy: wipe every vendor that DOES NOT have validated_at set.
+            # Any vendor imported by the scraper has validated_at populated;
+            # everything else is the original seed (or admin-added test data).
+            if has_validated:
+                ids = [r["id"] for r in c.execute(
+                    "SELECT id FROM vendors WHERE validated_at IS NULL OR validated_at = ''"
+                ).fetchall()]
+            elif has_synth:
+                ids = [r["id"] for r in c.execute(
+                    "SELECT id FROM vendors WHERE is_synthetic=1 OR is_synthetic IS NULL"
+                ).fetchall()]
+            else:
+                # No migration columns at all — wipe everything (rare)
+                ids = [r["id"] for r in c.execute(
+                    "SELECT id FROM vendors").fetchall()]
+            for vid in ids:
+                try: c.execute("DELETE FROM vendor_services WHERE vendor_id=?", (vid,))
+                except Exception: pass
+                try: deleted += c.execute("DELETE FROM vendors WHERE id=?", (vid,)).rowcount
+                except Exception: pass
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"wipe failed: {type(e).__name__}: {e}")
     db.log_event("scraper", "all", "wipe_synthetic", actor="admin",
-                 details={"deleted": n})
-    return {"ok": True, "deleted": n}
+                 details={"deleted": deleted})
+    return {"ok": True, "deleted": deleted}
 
 
 # ---------------------------------------------------------------------------

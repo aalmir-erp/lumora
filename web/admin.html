@@ -50,6 +50,7 @@
     <a href="#aiarena"   data-tab="aiarena">🤖 AI Arena</a>
     <a href="#videos"    data-tab="videos">🎬 Videos</a>
     <a href="#autopost"  data-tab="autopost">🌐 Social Auto-post</a>
+    <a href="#ailisting" data-tab="ailisting">🧠 AI Discoverability</a>
     <a href="/admin-widget.html" target="_blank" style="margin-top:14px;color:#7DD3FC;border-top:1px solid #1E293B;padding-top:14px">📲 Home-screen widget ↗</a>
     <a href="/?edit=1" target="_blank" style="color:#FCD34D" title="Opens the public site with every editable text block highlighted in dashed purple. Click any block to type, then 'Save all'.">✏️ Edit pages inline ↗</a>
     <a href="#" id="logout" style="margin-top:14px;color:#FCA5A5">Logout</a>
@@ -882,6 +883,36 @@
       </div>
     </div>
 
+    <!-- ====== AI DISCOVERABILITY ====== -->
+    <div id="t-ailisting" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0">🧠 AI Discoverability</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13.5px">Track every place we've listed Servia for AI search engines + assistants. Each item has a one-click link to the submission page + a notes field. Updates persist.</p>
+        </div>
+        <div style="font-size:13px;color:var(--muted)">
+          <b id="ai-count-live" style="color:#15803D">0</b> live ·
+          <b id="ai-count-prog" style="color:#B45309">0</b> in progress ·
+          <b id="ai-count-todo" style="color:#94A3B8">0</b> to-do
+        </div>
+      </div>
+
+      <!-- Self-test card — live status of AI-friendly endpoints we publish -->
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:14px;margin-bottom:14px">
+        <h3 style="margin:0 0 8px;font-size:14px;color:#15803D">✅ Already published on this site</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;font-size:12.5px">
+          <div>📄 <a href="/llms.txt" target="_blank" style="color:#0F766E;font-weight:600">/llms.txt</a> — AI-readable site spec</div>
+          <div>🔌 <a href="/.well-known/ai-plugin.json" target="_blank" style="color:#0F766E;font-weight:600">/.well-known/ai-plugin.json</a> — ChatGPT/Bing plugin manifest</div>
+          <div>📋 <a href="/openapi-public.json" target="_blank" style="color:#0F766E;font-weight:600">/openapi-public.json</a> — OpenAPI spec</div>
+          <div>🗺 <a href="/sitemap.xml" target="_blank" style="color:#0F766E;font-weight:600">/sitemap.xml</a> — sitemap-index</div>
+          <div>🤖 <a href="/robots.txt" target="_blank" style="color:#0F766E;font-weight:600">/robots.txt</a> — GPTBot/ClaudeBot/etc allowed</div>
+          <div>🏷 <a href="https://validator.schema.org/?url=https://servia.ae/" target="_blank" style="color:#0F766E;font-weight:600">Schema.org validator</a> — verify JSON-LD on /</div>
+        </div>
+      </div>
+
+      <div id="ai-list"></div>
+    </div>
+
     <!-- ====== SOCIAL AUTO-POST ====== -->
     <div id="t-autopost" class="tab" style="display:none">
       <h2>🌐 Social Auto-post</h2>
@@ -1027,6 +1058,7 @@ function show(tab) {
   if (tab==="aiarena")   loadAIArena();
   if (tab==="videos")    loadVideos();
   if (tab==="autopost")  loadAutopost();
+  if (tab==="ailisting") loadAIListings();
 }
 async function adm(path, opts={}) {
   try {
@@ -1086,7 +1118,7 @@ async function boot() {
   // (#dashboard, #live, #bookings, #analytics, etc.) and fall back to dashboard.
   const validTabs = ["dashboard","live","bookings","customers","convos","pricing",
                      "vendors","outreach","prompts","payments","analytics",
-                     "autoblog","brand","whatsapp","launch","aiarena","videos","autopost"];
+                     "autoblog","brand","whatsapp","launch","aiarena","videos","autopost","ailisting"];
   let initialTab = (location.hash || "").replace(/^#/, "").trim().toLowerCase();
   if (!validTabs.includes(initialTab)) initialTab = "dashboard";
   show(initialTab);
@@ -3620,6 +3652,108 @@ function useBrainstormIdea(json) {
   document.getElementById("vid-dur").value = String(i.duration_sec || 18);
   window.scrollTo({top:0, behavior:'smooth'});
   setTimeout(() => genVideo(), 600);
+}
+
+// ============== AI DISCOVERABILITY ==============
+async function loadAIListings() {
+  const wrap = document.getElementById("ai-list");
+  wrap.innerHTML = '<div style="color:var(--muted);text-align:center;padding:18px">Loading…</div>';
+  let d;
+  try { d = await adm("/api/admin/ai-listings"); }
+  catch (e) { wrap.innerHTML = '<div style="color:#B91C1C">Error: ' + escapeHtml(e.message) + '</div>'; return; }
+
+  const c = d.counts || {};
+  document.getElementById("ai-count-live").textContent = c.live || 0;
+  document.getElementById("ai-count-prog").textContent = c.in_progress || 0;
+  document.getElementById("ai-count-todo").textContent = c.todo || 0;
+
+  // Group by category
+  const byCat = {};
+  for (const item of (d.items || [])) {
+    (byCat[item.category] = byCat[item.category] || []).push(item);
+  }
+  const STATUS_COLOR = {todo:"#94A3B8", in_progress:"#B45309", live:"#15803D"};
+  const STATUS_BG    = {todo:"#F1F5F9", in_progress:"#FEF3C7", live:"#ECFDF5"};
+  const STATUS_LABEL = {todo:"To-do", in_progress:"In progress", live:"✓ Live"};
+
+  let html = "";
+  for (const [cat, items] of Object.entries(byCat)) {
+    html += `<h3 style="margin:18px 0 8px;font-size:14px;color:#0F172A">${escapeHtml(cat)} <span style="font-size:11px;color:var(--muted);font-weight:500">(${items.length})</span></h3>`;
+    for (const it of items) {
+      const color = STATUS_COLOR[it.status] || "#94A3B8";
+      const bg = STATUS_BG[it.status] || "#F8FAFC";
+      const updated = it.updated_at ? uaeDt(it.updated_at) : "";
+      html += `<div style="background:#fff;border:1px solid var(--border);border-left:4px solid ${color};border-radius:10px;padding:14px;margin-bottom:8px" data-key="${escapeHtml(it.key)}">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:240px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <b style="font-size:14px">${escapeHtml(it.name)}</b>
+              <span style="font-size:11px;color:var(--muted)">${escapeHtml(it.platform)}</span>
+              <span style="font-size:11px;color:${color};background:${bg};padding:2px 8px;border-radius:999px;font-weight:700">${STATUS_LABEL[it.status]}</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.55">${escapeHtml(it.instructions)}</div>
+            ${it.submitted_url ? `<div style="font-size:11.5px;margin-top:5px"><b>Submitted URL:</b> <a href="${escapeHtml(it.submitted_url)}" target="_blank" style="color:#0F766E">${escapeHtml(it.submitted_url)}</a></div>` : ''}
+            ${updated ? `<div style="font-size:10.5px;color:#94A3B8;margin-top:4px">last updated ${escapeHtml(updated)}</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:140px">
+            <a class="btn btn-ghost" href="${escapeHtml(it.url)}" target="_blank" style="font-size:11.5px;padding:5px 10px;text-align:center;background:#F0F9FF;color:#0369A1;font-weight:700">↗ Open submission page</a>
+            <select onchange="setAIListingStatus('${escapeHtml(it.key)}', this.value)" style="font-size:11.5px;padding:5px;border:1px solid var(--border);border-radius:6px">
+              <option value="todo"        ${it.status==='todo'?'selected':''}>📋 To-do</option>
+              <option value="in_progress" ${it.status==='in_progress'?'selected':''}>⏳ In progress</option>
+              <option value="live"        ${it.status==='live'?'selected':''}>✓ Live</option>
+            </select>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="editAIListing('${escapeHtml(it.key)}')">📝 Notes / URL</button>
+          </div>
+        </div>
+        ${it.notes ? `<div style="background:#FFFBEB;border-left:3px solid #FCD34D;padding:8px 10px;font-size:12px;margin-top:8px;border-radius:6px"><b>Notes:</b> ${escapeHtml(it.notes)}</div>` : ''}
+      </div>`;
+    }
+  }
+  wrap.innerHTML = html;
+}
+
+async function setAIListingStatus(key, status) {
+  try {
+    await adm("/api/admin/ai-listings/status", {method:"POST", body: JSON.stringify({key, status})});
+    toast("✓ Status updated");
+    loadAIListings();
+  } catch (e) { /* adm() toasts */ }
+}
+
+async function editAIListing(key) {
+  const items = (await adm("/api/admin/ai-listings")).items || [];
+  const it = items.find(x => x.key === key);
+  if (!it) return;
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:600px;width:100%">
+      <h3 style="margin:0 0 4px;font-size:15px">📝 ${escapeHtml(it.name)}</h3>
+      <p style="margin:0 0 12px;font-size:12px;color:var(--muted)">${escapeHtml(it.platform)}</p>
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Submitted URL (optional)</label>
+      <input id="ai-url" placeholder="https://..." value="${escapeHtml(it.submitted_url||'')}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-family:ui-monospace,monospace;font-size:13px">
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Notes (private, admin-only)</label>
+      <textarea id="ai-notes" style="width:100%;min-height:120px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-size:13px;line-height:1.5">${escapeHtml(it.notes||'')}</textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAIListingDetails('${escapeHtml(key)}', this)">💾 Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function saveAIListingDetails(key, btn) {
+  const submitted_url = document.getElementById("ai-url").value.trim();
+  const notes = document.getElementById("ai-notes").value;
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    await adm("/api/admin/ai-listings/status", {method:"POST", body: JSON.stringify({key, submitted_url, notes})});
+    toast("✓ Saved");
+    btn.closest('div[style*=fixed]').remove();
+    loadAIListings();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "💾 Save";
+  }
 }
 
 // ============== AUTO-POST ==============

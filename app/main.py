@@ -1172,6 +1172,7 @@ def sitemap_pages():
             (f"{base}/faq.html",            today, "monthly", "0.6"),
             (f"{base}/login.html",          today, "monthly", "0.5"),
             (f"{base}/me.html",             today, "monthly", "0.5"),
+            (f"{base}/account.html",        today, "monthly", "0.5"),
             (f"{base}/privacy.html",        today, "yearly",  "0.4"),
             (f"{base}/terms.html",          today, "yearly",  "0.4"),
             (f"{base}/refund.html",         today, "yearly",  "0.4"),
@@ -1473,6 +1474,88 @@ def _sitemap_xml_inner():
             "Cache-Control": "no-cache, must-revalidate",
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# AI / LLM discoverability manifests
+# ---------------------------------------------------------------------------
+@app.get("/.well-known/ai-plugin.json")
+def ai_plugin_manifest():
+    """Plugin manifest discovered by ChatGPT (legacy plugins), Bing Copilot,
+    and various MCP-aware assistants. Tells the AI 'this site offers a
+    bookable home-services API' and points at the OpenAPI spec."""
+    from fastapi.responses import JSONResponse
+    domain = settings.BRAND_DOMAIN or "servia.ae"
+    return JSONResponse({
+        "schema_version": "v1",
+        "name_for_human": "Servia",
+        "name_for_model": "servia",
+        "description_for_human": "Book vetted UAE home services in 60 seconds.",
+        "description_for_model": (
+            "Use this plugin to find and book home services across the UAE: "
+            "cleaning, AC, maid, handyman, pest control, gardening, mobile "
+            "repair, chauffeur, and more. Get prices in AED, available time "
+            "slots, and confirm bookings with phone + address. Coverage: "
+            "Dubai, Abu Dhabi, Sharjah, Ajman, RAK, UAQ, Fujairah."
+        ),
+        "auth": {"type": "none"},
+        "api": {
+            "type": "openapi",
+            "url": f"https://{domain}/openapi-public.json",
+            "is_user_authenticated": False
+        },
+        "logo_url": f"https://{domain}/icon-512.svg",
+        "contact_email": "support@servia.ae",
+        "legal_info_url": f"https://{domain}/terms.html"
+    })
+
+
+@app.get("/openapi-public.json")
+def openapi_public():
+    """Trimmed OpenAPI spec exposing only the customer-facing booking +
+    services endpoints. AI plugins read this to know what they can call.
+    Keeps admin / vendor / payment internals out of the spec."""
+    from fastapi.responses import JSONResponse
+    domain = settings.BRAND_DOMAIN or "servia.ae"
+    return JSONResponse({
+        "openapi": "3.1.0",
+        "info": {
+            "title": "Servia Public API",
+            "version": "1.0.0",
+            "description": "Public booking + services API for Servia, the UAE home-services platform.",
+        },
+        "servers": [{"url": f"https://{domain}"}],
+        "paths": {
+            "/api/services": {
+                "get": {
+                    "operationId": "listServices",
+                    "summary": "List all home services with starting prices",
+                    "responses": {"200": {"description": "Service catalog"}},
+                }
+            },
+            "/api/cart/quote": {
+                "post": {
+                    "operationId": "getQuote",
+                    "summary": "Get an instant AED quote for a service in a given emirate",
+                    "responses": {"200": {"description": "Price quote"}},
+                }
+            },
+            "/api/cart/checkout": {
+                "post": {
+                    "operationId": "createBooking",
+                    "summary": "Create a booking — name, phone, address, service, date, time",
+                    "responses": {"200": {"description": "Booking confirmation"}},
+                }
+            },
+            "/api/chat": {
+                "post": {
+                    "operationId": "chatWithServia",
+                    "summary": "Talk to the Servia AI concierge (multi-language)",
+                    "responses": {"200": {"description": "Assistant reply"}},
+                }
+            },
+        }
+    })
 
 
 @app.get("/llms.txt", response_class=HTMLResponse)
