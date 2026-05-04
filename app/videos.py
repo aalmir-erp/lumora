@@ -370,9 +370,15 @@ def _ensure_extra_columns():
         except Exception: pass
 
 
+_SEEDED = False
+
+
 def seed_videos_if_empty():
-    """Bulk seed: 5 hand-crafted starter + 20 generic + 1 per service + 1 per
-    emirate. Idempotent via INSERT OR IGNORE."""
+    """Bulk seed: 5 hand-crafted starter + 8 long-form + 20 generic + 1 per
+    service + 1 per emirate. Idempotent via INSERT OR IGNORE. Cached after
+    first run so /list calls don't re-walk 67 inserts every request."""
+    global _SEEDED
+    if _SEEDED: return
     _ensure_table()
     _ensure_extra_columns()
     now = _dt.datetime.utcnow().isoformat() + "Z"
@@ -407,6 +413,7 @@ def seed_videos_if_empty():
                     "duration_sec, created_at, service_id, emirate, kind) "
                     "VALUES(?,?,?,?,?,?,?,?,?,?)", row)
             except Exception: pass
+    _SEEDED = True
 
 
 # ---------- HTML/SVG video player ----------

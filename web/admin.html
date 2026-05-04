@@ -380,11 +380,16 @@
       <button class="btn btn-primary" onclick="saveAIKeys()" style="margin-top:14px">💾 Save keys + defaults</button>
       <span id="ai-msg" style="margin-inline-start:10px;font-size:12.5px;color:#15803D;font-weight:600"></span>
 
-      <h3 style="margin:32px 0 8px;font-size:16px">🥊 Run an arena</h3>
-      <p style="font-size:13px;color:var(--muted);margin:0 0 8px">Pick 2-4 models, type one prompt, hit Compare. Responses arrive side-by-side with latency.</p>
-      <textarea id="arena-prompt" placeholder="e.g. 'Write a 2-line tagline for an AC service in Dubai Marina, summer ready.'" style="width:100%;min-height:80px;padding:10px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px"></textarea>
+      <h3 style="margin:32px 0 8px;font-size:16px">🥊 Arena chat (multi-model side-by-side)</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 8px">Pick 2-4 models, then chat. Each new message includes the full conversation so far — every selected model sees the same history. Hit "Reset" to start over.</p>
       <div id="arena-targets" style="margin:10px 0;display:flex;flex-wrap:wrap;gap:8px"></div>
-      <button class="btn btn-primary" onclick="runArena()">⚡ Compare selected</button>
+      <div id="arena-history" style="display:none;background:#FAFBFD;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:200px;overflow:auto;margin:10px 0;font-size:13px"></div>
+      <textarea id="arena-prompt" placeholder="e.g. 'Write a 2-line tagline for an AC service in Dubai Marina, summer ready.' (Try a follow-up after the response.)" style="width:100%;min-height:80px;padding:10px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="runArena()">⚡ Send</button>
+        <button class="btn btn-ghost" onclick="resetArena()">🗑 Reset chat</button>
+        <small style="color:var(--muted);align-self:center;font-size:12px"><span id="arena-turn-count">0</span> messages in context</small>
+      </div>
       <div id="arena-results" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:18px"></div>
     </div>
 
@@ -1546,18 +1551,21 @@ async function loadAIArena() {
   }
   const provHtml = _aiCatalog.providers.map(p => {
     const status = p.key_set ? '<span style="color:#15803D">●</span> key set' : '<span style="color:#94A3B8">○</span> no key';
+    const getKey = p.get_key_url ? `<a href="${p.get_key_url}" target="_blank" rel="noopener" style="background:#0F766E;color:#fff;padding:5px 12px;border-radius:999px;font-size:11.5px;font-weight:800;text-decoration:none;display:inline-block">🔑 Get key (opens ${escapeHtml(new URL(p.get_key_url).hostname)})</a>` : '';
+    const pricing = p.pricing_url ? `<a href="${p.pricing_url}" target="_blank" rel="noopener" style="font-size:11px;color:#7C3AED;font-weight:600;text-decoration:none;margin-inline-start:8px">💰 Pricing →</a>` : '';
+    const free = p.free_tier ? `<span style="background:#FEF3C7;color:#7C2D12;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;margin-inline-start:6px">🎁 ${escapeHtml(p.free_tier)}</span>` : '';
     return `<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:6px">
-        <div>
-          <div style="font-weight:800;font-size:14px">${escapeHtml(p.label)}</div>
-          <div style="font-size:11.5px;color:var(--muted)">${status} · env: <code>${escapeHtml(p.key_env)}</code></div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:800;font-size:14px">${escapeHtml(p.label)}${free}</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${status} · env: <code>${escapeHtml(p.key_env)}</code>${pricing}</div>
         </div>
-        <div style="font-size:11px;color:var(--muted)">${p.models.length} models</div>
+        <div style="display:flex;gap:6px;flex-shrink:0">${getKey}</div>
       </div>
       <input id="aikey-${p.provider}" type="password" placeholder="Paste API key (leave blank to keep)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px">
-      <details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--muted)">Available models</summary>
-        <div style="margin-top:6px;font-size:12px;line-height:1.6">
-          ${p.models.map(m => `<div>• <code>${m.id}</code> <span style="color:var(--muted)">— ${m.label} <small style="color:#0F766E">(${m.tier})</small></span></div>`).join("")}
+      <details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--muted)">Available models &amp; pricing</summary>
+        <div style="margin-top:6px;font-size:12px;line-height:1.7">
+          ${p.models.map(m => `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed #F1F5F9"><div>• <code>${m.id}</code> <span style="color:var(--muted)">— ${m.label} <small style="color:#0F766E">(${m.tier})</small></span></div><div style="color:#7C3AED;font-weight:600;font-size:11px">${escapeHtml(m.price_per_1m||'—')}</div></div>`).join("")}
         </div>
       </details>
     </div>`;
@@ -1600,15 +1608,47 @@ async function saveAIKeys() {
   setTimeout(() => { document.getElementById("ai-msg").textContent = ""; loadAIArena(); }, 1500);
 }
 
+// Per-model chat history kept in-memory until reset
+let _arenaHistory = [];   // shared user/assistant turns (assistant = first model's reply)
+let _arenaPerModelTexts = {};  // {target: [responses]} — for full per-model thread
+
+function _renderArenaHistory() {
+  const h = document.getElementById("arena-history");
+  if (!h) return;
+  if (!_arenaHistory.length) { h.style.display = "none"; document.getElementById("arena-turn-count").textContent = "0"; return; }
+  h.style.display = "block";
+  h.innerHTML = _arenaHistory.map(m =>
+    `<div style="margin-bottom:6px"><b style="color:${m.role==='user'?'#0F766E':'#7C3AED'}">${m.role==='user'?'You':'Models'}:</b> ${escapeHtml(m.content).slice(0,400)}${m.content.length>400?'…':''}</div>`
+  ).join("");
+  document.getElementById("arena-turn-count").textContent = _arenaHistory.length;
+}
+
+function resetArena() {
+  _arenaHistory = []; _arenaPerModelTexts = {};
+  _renderArenaHistory();
+  document.getElementById("arena-results").innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:14px">Chat reset. Type a new prompt to start.</div>';
+}
+
 async function runArena() {
   const prompt = document.getElementById("arena-prompt").value.trim();
   if (!prompt) { alert("Enter a prompt"); return; }
   const targets = [...document.querySelectorAll("#arena-targets input:checked")].map(x => x.value);
   if (!targets.length) { alert("Pick at least one model"); return; }
+
+  // Use a single shared history for context (each model sees same conversation)
+  const history = [..._arenaHistory];
   const wrap = document.getElementById("arena-results");
-  wrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:24px">⏳ Running ' + targets.length + ' models in parallel…</div>';
+  wrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:24px">⏳ Asking ' + targets.length + ' model' + (targets.length>1?'s':'') + '…</div>';
+
   try {
-    const r = await adm("/api/admin/ai/arena", {method:"POST", body:{prompt, targets}});
+    const r = await adm("/api/admin/ai/arena", {method:"POST", body:{prompt, targets, history}});
+    // Append user msg + a representative assistant msg (first OK result) to shared history
+    _arenaHistory.push({role:"user", content: prompt});
+    const firstOk = (r.results||[]).find(x => x.ok);
+    if (firstOk) _arenaHistory.push({role:"assistant", content: firstOk.text||""});
+    _renderArenaHistory();
+    document.getElementById("arena-prompt").value = "";
+
     wrap.innerHTML = (r.results || []).map(res => {
       const tone = res.ok ? "#15803D" : "#B91C1C";
       return `<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px">
