@@ -471,11 +471,6 @@ def render_video_html(v: dict) -> str:
             f'</div>')
     mascot_src = "/mascot.svg" if v.get("mascot","default") == "default" else f"/mascots/{v['mascot']}.svg"
     title = v.get("title", "Servia")
-    import json as _json_v
-    scenes_json_for_voice = _json_v.dumps(
-        [{"text": s.get("text",""), "sub": s.get("sub","")} for s in scenes]
-    )
-    scenes_per = per
     return f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -612,107 +607,125 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
   <a class="cta" href="{cta_href}">{cta_text} →</a>
   <div class="progress"></div>
 </div>
-<!-- Continuous scene-aware music + female voice-over via Web Audio + speechSynthesis.
-     Music: chord progression with bass+pad+melody that swells/dips per scene.
-     Voice: female narrator reads each scene's headline+sub aloud.
-     All free, browser-native, no external files. -->
+<!-- Loud, energetic music bed via Web Audio API.
+     120 BPM beat: kick on 1+3, snap-hat on 2+4, walking bass + bright lead melody +
+     chord pad. No voice-over — pure music. Browser-native, no external files. -->
 <button id="vid-sound-btn" type="button"
         style="position:absolute;top:14px;right:90px;z-index:5;background:rgba(0,0,0,.42);border:0;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)"
-        title="Toggle voice-over + music">🔇</button>
-<script type="application/json" id="vid-scenes-data">{scenes_json_for_voice}</script>
+        title="Toggle music">🔇</button>
 <script>
 (function(){{
-  let ctx=null, nodes=[], running=false, schedTimer=null, voiceTimer=null;
+  let ctx=null, running=false, schedTimer=null;
   const btn=document.getElementById("vid-sound-btn");
-  const SCENES = (function(){{
-    try {{ return JSON.parse(document.getElementById("vid-scenes-data").textContent); }}
-    catch(_) {{ return []; }}
-  }})();
-  const PER = {scenes_per:.2f};
-  // 4-chord progression (Cmaj-Am-Fmaj-Gmaj) — modern pop bed
-  const CHORDS = [
-    [130.81, 164.81, 196.00],   // C-E-G   (scene 1)
-    [110.00, 130.81, 164.81],   // A-C-E   (scene 2)
-    [87.31, 130.81, 174.61],    // F-C-F   (scene 3)
-    [98.00, 123.47, 146.83],    // G-B-D   (scene 4)
-    [130.81, 164.81, 196.00],   // C-E-G   (back to home)
+
+  // 120 BPM → 0.5s per beat, 8 beats per bar (4 sec/bar). Loop 4 bars per progression.
+  const BPM = 120;
+  const SPB = 60 / BPM;   // seconds per beat
+  // 4-chord progression Cmaj-Am-Fmaj-Gmaj (one bar each, 4 beats per bar)
+  const PROG = [
+    {{root:65.41,  pad:[130.81,164.81,196.00], lead:[523.25,659.25,783.99,659.25]}}, // C
+    {{root:55.00,  pad:[110.00,130.81,164.81], lead:[440.00,523.25,659.25,523.25]}}, // Am
+    {{root:43.65,  pad:[87.31, 130.81,174.61], lead:[523.25,698.46,880.00,698.46]}}, // F
+    {{root:49.00,  pad:[98.00, 123.47,146.83], lead:[587.33,698.46,880.00,987.77]}}, // G
   ];
-  // Bright melody played on top each scene
-  const MELODY_PER_SCENE = [
-    [523.25, 659.25, 783.99],
-    [880.00, 698.46, 587.33],
-    [523.25, 698.46, 880.00],
-    [880.00, 783.99, 659.25],
-    [987.77, 783.99, 659.25],
-  ];
+
+  function kick(t, master){{
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(45, t+0.16);
+    g.gain.setValueAtTime(0.95, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.22);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+0.25);
+  }}
+  function snap(t, master){{
+    const buf = ctx.createBuffer(1, 0.08*ctx.sampleRate, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const hp = ctx.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=2400;
+    const g = ctx.createGain(); g.gain.value = 0.55;
+    src.connect(hp); hp.connect(g); g.connect(master); src.start(t);
+  }}
+  function hihat(t, master){{
+    const buf = ctx.createBuffer(1, 0.04*ctx.sampleRate, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const hp = ctx.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=6000;
+    const g = ctx.createGain(); g.gain.value = 0.22;
+    src.connect(hp); hp.connect(g); g.connect(master); src.start(t);
+  }}
+  function bass(t, dur, freq, master){{
+    const o = ctx.createOscillator(); o.type = "square"; o.frequency.value = freq;
+    const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=600; lp.Q.value=2;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.42, t+0.02);
+    g.gain.linearRampToValueAtTime(0.32, t+dur*0.7);
+    g.gain.linearRampToValueAtTime(0, t+dur);
+    o.connect(lp); lp.connect(g); g.connect(master);
+    o.start(t); o.stop(t+dur+0.05);
+  }}
+  function pad(t, dur, freqs, master){{
+    freqs.forEach(f => {{
+      const o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.12, t+0.4);
+      g.gain.linearRampToValueAtTime(0.08, t+dur-0.4);
+      g.gain.linearRampToValueAtTime(0, t+dur);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t+dur);
+    }});
+  }}
+  function lead(t, freq, master){{
+    const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = freq;
+    const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=3500; lp.Q.value=1;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.22, t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t+SPB*0.95);
+    o.connect(lp); lp.connect(g); g.connect(master);
+    o.start(t); o.stop(t+SPB);
+  }}
 
   function start(){{
     if(running) return;
     try {{
       ctx = new (window.AudioContext||window.webkitAudioContext)();
-      const master = ctx.createGain(); master.gain.value=0.06; master.connect(ctx.destination);
-      // Compressor so peaks don't clip
+      // Loud master + compressor so peaks don't clip
+      const master = ctx.createGain(); master.gain.value = 0.45;
       const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value=-18; comp.knee.value=20; comp.ratio.value=4;
-      comp.attack.value=0.005; comp.release.value=0.1;
+      comp.threshold.value = -14; comp.knee.value = 18; comp.ratio.value = 5;
+      comp.attack.value = 0.003; comp.release.value = 0.12;
       master.connect(comp); comp.connect(ctx.destination);
-      let scene = 0;
-      function playScene(){{
+
+      let bar = 0;
+      function playBar(){{
         if(!running||!ctx) return;
-        const ch = CHORDS[scene % CHORDS.length];
-        const mel = MELODY_PER_SCENE[scene % MELODY_PER_SCENE.length];
-        const t0 = ctx.currentTime;
-        const dur = PER;
-        // Bass note
-        const bass = ctx.createOscillator(); bass.type="sine"; bass.frequency.value = ch[0]/2;
-        const bg = ctx.createGain(); bg.gain.setValueAtTime(0, t0);
-        bg.gain.linearRampToValueAtTime(0.18, t0+0.3);
-        bg.gain.linearRampToValueAtTime(0.12, t0+dur-0.4);
-        bg.gain.linearRampToValueAtTime(0, t0+dur);
-        bass.connect(bg); bg.connect(master); bass.start(t0); bass.stop(t0+dur);
-        // Pad chord (3 sine voices)
-        ch.forEach(f => {{
-          const o = ctx.createOscillator(); o.type="triangle"; o.frequency.value=f;
-          const g = ctx.createGain();
-          g.gain.setValueAtTime(0, t0);
-          g.gain.linearRampToValueAtTime(0.07, t0+0.5);
-          g.gain.linearRampToValueAtTime(0.05, t0+dur-0.5);
-          g.gain.linearRampToValueAtTime(0, t0+dur);
-          o.connect(g); g.connect(master); o.start(t0); o.stop(t0+dur);
-        }});
-        // Melody arpeggio over the scene
-        mel.forEach((f, i) => {{
-          const at = t0 + 0.5 + i*(dur-0.5)/mel.length;
-          const o = ctx.createOscillator(); o.type="sine"; o.frequency.value=f;
-          const g = ctx.createGain();
-          g.gain.setValueAtTime(0, at);
-          g.gain.linearRampToValueAtTime(0.09, at+0.05);
-          g.gain.exponentialRampToValueAtTime(0.001, at+0.7);
-          o.connect(g); g.connect(master); o.start(at); o.stop(at+0.8);
-        }});
-        // Female voice-over for this scene
-        try {{
-          const sc = SCENES[scene];
-          if (sc && window.speechSynthesis) {{
-            const u = new SpeechSynthesisUtterance(sc.text + ". " + (sc.sub||""));
-            const voices = window.speechSynthesis.getVoices() || [];
-            // Prefer female English voice
-            const female = voices.find(v => /female/i.test(v.name)) ||
-                           voices.find(v => /Samantha|Karen|Tessa|Moira|Zira|Susan|Microsoft Aria|Google.*Female|Google US English/i.test(v.name)) ||
-                           voices.find(v => v.lang && v.lang.toLowerCase().startsWith("en") && !/male/i.test(v.name)) ||
-                           voices[0];
-            if (female) u.voice = female;
-            u.rate = 1.05; u.pitch = 1.15; u.volume = 0.85;
-            // Cancel any ongoing speech then queue this scene's narration
-            try {{ window.speechSynthesis.cancel(); }} catch(_) {{}}
-            window.speechSynthesis.speak(u);
-          }}
-        }} catch(_) {{}}
-        scene = (scene + 1) % Math.max(SCENES.length || 1, CHORDS.length);
+        const t0 = ctx.currentTime + 0.05;
+        const ch = PROG[bar % PROG.length];
+        const barDur = SPB * 4;          // 4 beats / bar
+        // Pad chord across the bar
+        pad(t0, barDur, ch.pad, master);
+        // Walking bass: root on 1, fifth on 3 (for energy)
+        bass(t0,            SPB*1.9, ch.root,    master);
+        bass(t0 + SPB*2,    SPB*1.9, ch.root*1.5, master);
+        // Drum + lead on every beat
+        for(let b=0; b<4; b++) {{
+          const tb = t0 + b*SPB;
+          if (b === 0 || b === 2) kick(tb, master);          // 1 + 3
+          if (b === 1 || b === 3) snap(tb, master);          // 2 + 4
+          // hi-hat on every off-beat for energy
+          hihat(tb + SPB*0.5, master);
+          // Lead arpeggio
+          lead(tb, ch.lead[b], master);
+        }}
+        bar++;
       }}
-      playScene();
-      schedTimer = setInterval(playScene, PER * 1000);
-      running = true; btn.textContent="🔊"; btn.title="Mute voice-over + music";
+      playBar();
+      const barMs = SPB * 4 * 1000;
+      schedTimer = setInterval(playBar, barMs);
+      running = true; btn.textContent="🔊"; btn.title="Mute music";
     }} catch(_) {{
       running=false; btn.textContent="🔇";
     }}
@@ -722,22 +735,17 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
     running=false;
     try {{
       if(schedTimer) {{ clearInterval(schedTimer); schedTimer=null; }}
-      if(window.speechSynthesis) {{ try {{ window.speechSynthesis.cancel(); }} catch(_) {{}} }}
       if(ctx) {{ ctx.close(); ctx=null; }}
     }} catch(_) {{}}
-    btn.textContent="🔇"; btn.title="Play voice-over + music";
+    btn.textContent="🔇"; btn.title="Play music";
   }}
   btn.addEventListener("click",()=>{{
     running?stop():start();
     try {{ sessionStorage.setItem("servia.video.sound", running?"1":"0"); }} catch(_) {{}}
   }});
-  // Auto-resume if user enabled sound earlier
+  // Auto-resume on first user gesture if previously enabled
   if(sessionStorage.getItem("servia.video.sound")==="1") {{
     document.addEventListener("click",function _f(){{ start(); document.removeEventListener("click",_f); }},{{once:true}});
-  }}
-  // Some browsers populate voices async — re-trigger getVoices once they arrive
-  if (window.speechSynthesis && typeof window.speechSynthesis.onvoiceschanged !== "undefined") {{
-    window.speechSynthesis.onvoiceschanged = ()=>{{}};  // ensures voice list is populated
   }}
 }})();
 </script>
