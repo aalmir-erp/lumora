@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<title>Pay your booking — Servia</title>
+<link rel="canonical" href="https://servia.ae/pay">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
+<link rel="preload" as="style" href="/widget.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css"></noscript>
+<style>
+  body{background:linear-gradient(180deg,#FFFBEB 0%,#F0FDFA 100%);min-height:100vh;}
+  .pay-shell{max-width:640px;margin:0 auto;padding:24px 16px 80px}
+  .pay-card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 12px 40px rgba(15,23,42,.08);border:1px solid var(--border)}
+  .pay-card h1{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
+  .pay-amount{font-size:42px;font-weight:900;color:#0F766E;letter-spacing:-.02em;margin:8px 0 4px}
+  .pay-amount small{font-size:14px;font-weight:700;color:var(--muted);margin-inline-start:6px}
+  .pay-summary{background:#F8FAFC;border:1px solid var(--border);border-radius:14px;padding:14px;margin:16px 0;font-size:13.5px;line-height:1.7}
+  .pay-summary .row{display:flex;justify-content:space-between;gap:6px}
+  .pay-summary .row b{color:#0F172A;text-align:right}
+  .pay-step{margin:18px 0;padding:14px;border:1px solid var(--border);border-radius:14px;background:#fff}
+  .pay-step h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .pay-step .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#0F766E;color:#fff;font-weight:800;font-size:13px;flex-shrink:0}
+  .pay-step.done{background:#F0FDF4;border-color:#86EFAC}
+  .pay-step.done .num{background:#15803D}
+  .pay-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:10px;font-size:15px;margin-top:6px}
+  .pay-input:focus{outline:none;border-color:#0F766E;box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+  .pay-row{display:flex;gap:8px;align-items:stretch;margin-top:6px}
+  .pay-row .pay-input{flex:1}
+  .pay-row .btn{padding:11px 18px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;border:0}
+  .pay-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:8px}
+  .pay-opt{background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:center;transition:.15s;font-weight:700;font-size:13.5px;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;min-height:88px}
+  .pay-opt:hover{border-color:#0F766E;background:#F0FDFA;transform:translateY(-2px);box-shadow:0 6px 14px rgba(15,118,110,.10)}
+  .pay-opt.selected{border-color:#0F766E;background:#0F766E;color:#fff}
+  .pay-opt .ico{font-size:28px;line-height:1}
+  .pay-opt small{font-weight:500;font-size:11px;opacity:.85}
+  .btn-pay{width:100%;background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border:0;padding:16px 24px;border-radius:14px;font-weight:800;font-size:16px;cursor:pointer;letter-spacing:.01em;box-shadow:0 8px 22px rgba(15,118,110,.32);transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
+  .btn-pay:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(15,118,110,.4)}
+  .btn-pay:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+  .pay-status{padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;font-weight:600}
+  .pay-status.ok{background:#DCFCE7;color:#15803D}
+  .pay-status.err{background:#FEE2E2;color:#B91C1C}
+  .pay-trust{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:18px;font-size:12px;color:var(--muted)}
+  .pay-trust span{display:inline-flex;gap:4px;align-items:center}
+  .pay-back{display:inline-flex;gap:4px;align-items:center;color:var(--primary-dark);text-decoration:none;font-size:13px;font-weight:600;margin-top:14px}
+  .paid-banner{background:linear-gradient(135deg,#22C55E,#15803D);color:#fff;padding:24px;border-radius:16px;text-align:center;margin-bottom:14px}
+  .paid-banner h2{margin:0 0 4px;font-size:24px}
+  .paid-banner p{margin:0;opacity:.9;font-size:14px}
+  .pay-saved{background:#FEF3C7;border:1px solid #FDE68A;color:#78350F;padding:10px 12px;border-radius:10px;font-size:12.5px;margin-top:8px;line-height:1.5}
+</style>
+<script src="/banner.js" defer></script>
+<script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
+  {src:"/_snippets.js",id:"snippets"},
+  {src:"/cart-badge.js",id:"cart-badge"}
+]);</script>
+<script src="/lazy-loaders.js" defer></script>
+</head><body>
+<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav"><div class="nav-inner">
+  <a href="/" aria-label="Home"><img src="/logo.svg" width="124" height="40" alt="Servia" decoding="async"></a>
+  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-ghost" href="/me.html">My account</a></div>
+</div></nav>
+
+<main class="pay-shell">
+  <div id="pay-paid-banner" style="display:none"></div>
+
+  <div class="pay-card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div>
+        <h1>Confirm &amp; pay</h1>
+        <small style="color:var(--muted);font-size:12.5px">Invoice <code id="pay-inv-id">…</code></small>
+      </div>
+      <div style="text-align:right">
+        <div class="pay-amount"><span id="pay-amt">…</span><small id="pay-cur">AED</small></div>
+        <small style="color:var(--muted);font-size:11.5px">Tax included</small>
+      </div>
+    </div>
+    <div class="pay-summary" id="pay-summary"><span style="color:var(--muted)">Loading booking details…</span></div>
+
+    <!-- Step 1: identify customer -->
+    <div class="pay-step" id="step-id">
+      <h3><span class="num">1</span> Confirm it's you</h3>
+      <p style="margin:0 0 6px;font-size:13px;color:var(--muted)">Enter your phone or email so we can attach this booking to your account, send updates, and let you re-book in one tap.</p>
+      <div class="pay-row">
+        <input id="pay-phone" type="tel" inputmode="tel" placeholder="Phone (e.g. +9715...)" class="pay-input" autocomplete="tel">
+      </div>
+      <input id="pay-email" type="email" placeholder="Email (optional, for receipts)" class="pay-input" autocomplete="email" style="margin-top:8px">
+      <small style="color:var(--muted);font-size:11.5px;display:block;margin-top:6px">No password needed. We'll create your account or sign you in automatically. <a href="/login.html" style="color:#0F766E;font-weight:700">Already have one?</a></small>
+      <div id="pay-id-msg" class="pay-status" style="display:none"></div>
+    </div>
+
+    <!-- Step 2: choose method -->
+    <div class="pay-step" id="step-method">
+      <h3><span class="num">2</span> Choose how to pay</h3>
+      <div class="pay-options" id="pay-methods">
+        <button type="button" class="pay-opt" data-m="card"><span class="ico">💳</span>Credit/Debit Card<small>Visa · Mastercard · Amex</small></button>
+        <button type="button" class="pay-opt" data-m="apple"><span class="ico">🍎</span>Apple Pay<small>Touch / Face ID</small></button>
+        <button type="button" class="pay-opt" data-m="google"><span class="ico">🔷</span>Google Pay<small>1-tap on Android</small></button>
+        <button type="button" class="pay-opt" data-m="wa"><span class="ico">💬</span>Pay via WhatsApp<small>We send a payment link</small></button>
+        <button type="button" class="pay-opt" data-m="bank"><span class="ico">🏦</span>Bank Transfer<small>UAE banks</small></button>
+        <button type="button" class="pay-opt" data-m="cod"><span class="ico">💵</span>Cash on Service<small>Pay the technician</small></button>
+      </div>
+    </div>
+
+    <!-- Step 3: pay -->
+    <div class="pay-step" id="step-pay">
+      <h3><span class="num">3</span> Complete payment</h3>
+      <div id="pay-method-form" style="font-size:13.5px;color:var(--muted)">Pick a method above first.</div>
+      <button id="btn-pay" class="btn-pay" disabled>🔒 Confirm &amp; pay <span id="btn-pay-amt"></span></button>
+      <div id="pay-result" class="pay-status" style="display:none"></div>
+    </div>
+
+    <div class="pay-trust">
+      <span>🔒 256-bit SSL</span>
+      <span>✅ PCI-DSS compliant gateway</span>
+      <span>🇦🇪 AED billed</span>
+      <span>↩ Refund on no-show</span>
+    </div>
+    <a href="/me.html" class="pay-back">← Back to my account</a>
+  </div>
+</main>
+
+<script src="/theme.js" defer></script>
+<script src="/app.js" defer></script>
+<script>
+(() => {
+  const inv = location.pathname.split("/").filter(Boolean).pop();
+  const $ = id => document.getElementById(id);
+  let invoiceData = null;
+  let chosenMethod = null;
+
+  // ---- Load invoice + booking details
+  async function loadInvoice() {
+    try {
+      const r = await fetch("/api/pay/invoice/" + encodeURIComponent(inv));
+      if (!r.ok) throw new Error("Invoice not found");
+      const d = await r.json();
+      invoiceData = d;
+      $("pay-inv-id").textContent = d.id;
+      $("pay-amt").textContent = (d.amount || 0).toFixed(0);
+      $("pay-cur").textContent = " " + (d.currency || "AED");
+      $("btn-pay-amt").textContent = " " + (d.amount || 0).toFixed(0) + " " + (d.currency || "AED");
+      // Build summary card
+      const b = d.booking || {};
+      $("pay-summary").innerHTML = b.id ? `
+        <div class="row"><span>Service</span><b>${esc(b.service_name || b.service_id || "Service")}</b></div>
+        <div class="row"><span>Date &amp; time</span><b>${esc(b.target_date || "")} ${b.time_slot ? "· "+esc(b.time_slot) : ""}</b></div>
+        ${b.address ? `<div class="row"><span>Address</span><b style="max-width:60%">${esc(b.address)}</b></div>` : ""}
+        ${b.customer_name ? `<div class="row"><span>Customer</span><b>${esc(b.customer_name)}</b></div>` : ""}
+        <div class="row" style="border-top:1px dashed #CBD5E1;padding-top:6px;margin-top:6px"><span>Total</span><b>${(d.amount || 0).toFixed(0)} ${esc(d.currency || "AED")}</b></div>
+      ` : `<span style="color:var(--muted)">Invoice ${esc(d.id)}</span>`;
+      // Pre-fill phone/email if booking has them
+      if (b.phone) $("pay-phone").value = b.phone;
+      if (b.email) $("pay-email").value = b.email;
+      // Already paid?
+      if (d.payment_status === "paid") {
+        $("pay-paid-banner").style.display = "block";
+        $("pay-paid-banner").innerHTML = `
+          <div class="paid-banner">
+            <h2>✅ Already paid</h2>
+            <p>Booking ${esc(b.id || "")} is confirmed.</p>
+            <p style="margin-top:10px"><a href="/me.html?b=${esc(b.id || "")}" style="background:#fff;color:#15803D;padding:10px 18px;border-radius:999px;font-weight:800;text-decoration:none;display:inline-block">View booking →</a></p>
+          </div>`;
+        $("step-id").style.display = "none";
+        $("step-method").style.display = "none";
+        $("step-pay").style.display = "none";
+      }
+    } catch (e) {
+      $("pay-summary").innerHTML = `<span style="color:#B91C1C">⚠ ${esc(e.message)}</span>`;
+    }
+  }
+  function esc(s){ return (s||"").toString().replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+  // ---- Method picker
+  document.querySelectorAll(".pay-opt").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".pay-opt").forEach(x => x.classList.remove("selected"));
+    b.classList.add("selected");
+    chosenMethod = b.dataset.m;
+    renderMethodForm();
+    $("btn-pay").disabled = !canPay();
+  });
+  function renderMethodForm() {
+    const wraps = {
+      card: '<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.6">💳 You\'ll be redirected to our PCI-DSS gateway to enter card details. <b>No card data ever touches our servers.</b></div>',
+      apple:'<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.6">🍎 Apple Pay sheet will open on tap. Authenticate with Face ID / Touch ID.</div>',
+      google:'<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.6">🔷 Google Pay sheet will open on tap. Confirm on your device.</div>',
+      wa:   '<div style="background:#F0FDF4;border:1px dashed #86EFAC;color:#14532D;border-radius:10px;padding:14px;font-size:13px;line-height:1.6">💬 We\'ll WhatsApp you a secure 1-tap payment link from <b>Servia Pay</b>. Open it on your phone, tap Apple Pay / card / GPay, and you\'re done.</div>',
+      bank: '<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.7">🏦 IBAN: <code style="background:#fff;padding:2px 6px;border-radius:4px">AE12 3456 7890 1234 5678 901</code><br>Bank: Emirates NBD · Account: Servia FZ-LLC<br>Reference: <code id="bank-ref">'+(inv||"INV-XXXX")+'</code><br><small style="color:var(--muted)">After transfer, tap Confirm — we\'ll match it within 30 min on UAE banking days.</small></div>',
+      cod:  '<div style="background:#FEF3C7;border:1px dashed #FDE68A;color:#78350F;border-radius:10px;padding:14px;font-size:13px;line-height:1.6">💵 Pay the technician directly when service is done. <b>Cash or card-machine</b>. We\'ll send a digital receipt after.</div>',
+    };
+    $("pay-method-form").innerHTML = wraps[chosenMethod] || "";
+  }
+  function canPay() {
+    const phone = $("pay-phone").value.trim();
+    return chosenMethod && (phone.length >= 7);
+  }
+  ["pay-phone","pay-email"].forEach(id => $(id).oninput = () => $("btn-pay").disabled = !canPay());
+
+  // ---- Pay button
+  $("btn-pay").onclick = async () => {
+    const phone = $("pay-phone").value.trim();
+    const email = $("pay-email").value.trim();
+    const btn = $("btn-pay"), result = $("pay-result");
+    btn.disabled = true; btn.innerHTML = '⏳ Processing…';
+    result.style.display = "none";
+    try {
+      const r = await fetch("/api/pay/start", {
+        method: "POST", headers: {"content-type":"application/json"},
+        body: JSON.stringify({invoice_id: inv, phone, email, method: chosenMethod})
+      });
+      const d = await r.json();
+      if (!r.ok || !d.ok) throw new Error(d.error || d.detail || "Payment failed");
+      // Save the auto-token if returned (auto-login)
+      if (d.auth_token) try { localStorage.setItem("lumora.customer.tok", d.auth_token); } catch(_){}
+      // Redirect or show success
+      if (d.redirect) { location.href = d.redirect; return; }
+      result.className = "pay-status ok";
+      result.style.display = "block";
+      result.innerHTML = `✅ ${esc(d.message || "Payment recorded")} ${d.booking_id ? `<br><a href="/me.html?b=${esc(d.booking_id)}" style="color:#15803D;font-weight:700">View booking →</a>` : ""}`;
+      $("step-id").classList.add("done");
+      $("step-method").classList.add("done");
+      $("step-pay").classList.add("done");
+      btn.innerHTML = '✅ Done';
+    } catch (e) {
+      result.className = "pay-status err";
+      result.style.display = "block";
+      result.textContent = "⚠ " + e.message;
+      btn.disabled = false;
+      btn.innerHTML = '🔒 Try again';
+    }
+  };
+
+  loadInvoice();
+})();
+</script>
+<script>(function(){var l=false;function ld(){if(l)return;l=true;var s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(function(ev){addEventListener(ev,ld,{once:true,passive:true})});})();</script>
+</body></html>

@@ -522,25 +522,194 @@ async def stripe_webhook(request: Request):
     return {"ok": True}
 
 
+# Idempotent migration: add payment_method column to invoices on startup.
+def _ensure_invoice_payment_method():
+    try:
+        with db.connect() as c:
+            try: c.execute("ALTER TABLE invoices ADD COLUMN payment_method TEXT")
+            except Exception: pass
+    except Exception: pass
+_ensure_invoice_payment_method()
+
+
 @app.get("/pay/{invoice_id}", response_class=HTMLResponse)
-def pay_stub_page(invoice_id: str):
-    """Tiny stub payment page when no real gateway is configured."""
+def pay_page(invoice_id: str):
+    """Serves /web/pay.html — the rich multi-method checkout page that handles
+    auto-account creation + login + payment selection."""
+    p = pathlib.Path("web/pay.html")
+    if not p.exists(): raise HTTPException(500, "pay.html missing")
+    return HTMLResponse(p.read_text(encoding="utf-8"))
+
+
+@app.get("/api/pay/invoice/{invoice_id}")
+def api_get_invoice(invoice_id: str):
+    """Returns invoice + booking details for the payment page to render summary."""
+    from . import quotes as _q
     with db.connect() as c:
         r = c.execute("SELECT * FROM invoices WHERE id=?", (invoice_id,)).fetchone()
     if not r:
         raise HTTPException(404, "invoice not found")
     inv = db.row_to_dict(r)
-    paid = inv["payment_status"] == "paid"
-    return f"""<!DOCTYPE html><html><head><meta charset='utf-8'><title>Pay {invoice_id}</title>
-<link rel='stylesheet' href='/widget/style.css'></head><body class='paystub'>
-<div class='card'><h1>{settings.BRAND_NAME} • Invoice {invoice_id}</h1>
-<p>Amount: <b>{inv['amount']} {inv['currency']}</b></p>
-<p>Status: <b>{'PAID' if paid else 'UNPAID'}</b></p>
-{'' if paid else f'''<form method='post' action='/api/portal/pay-stub'
-onsubmit='event.preventDefault(); fetch("/api/portal/pay-stub",{{method:"POST",headers:{{"content-type":"application/json"}},body:JSON.stringify({{invoice_id:"{invoice_id}"}})}}).then(r=>r.json()).then(j=>{{document.body.innerHTML+="<p>"+JSON.stringify(j)+"</p>";location.reload();}});'>
-<button type='submit' class='btn-primary'>Mark as paid (stub)</button></form>
-<p style='color:#64748b'>Configure STRIPE_SECRET_KEY for live payments.</p>'''}
-<p><a href='/account.html'>← Back to my account</a></p></div></body></html>"""
+    booking = None
+    if inv.get("booking_id"):
+        with db.connect() as c:
+            br = c.execute("SELECT * FROM bookings WHERE id=?", (inv["booking_id"],)).fetchone()
+        if br:
+            booking = db.row_to_dict(br)
+            # Resolve service name for display
+            try:
+                sr = c.execute("SELECT name FROM services WHERE id=?", (booking.get("service_id"),)).fetchone()
+                if sr: booking["service_name"] = sr["name"]
+            except Exception: pass
+    return {**inv, "booking": booking}
+
+
+class PayStartBody(BaseModel):
+    invoice_id: str
+    phone: str
+    email: Optional[str] = None
+    method: str   # card | apple | google | wa | bank | cod
+
+
+@app.post("/api/pay/start")
+def api_pay_start(body: PayStartBody):
+    """Auto-account + payment kickoff:
+    1. Find or create customer by phone (fall back to email match)
+    2. Issue an auth token so the browser is logged in immediately
+    3. Branch by method:
+       - card/apple/google → create Stripe Checkout Session, redirect
+       - wa  → record intent, queue WhatsApp pay-link send (admin alert)
+       - bank → record intent + return reference number to display
+       - cod  → mark booking as 'cash on service', confirm immediately
+    4. Persist payment intent to invoices table for admin tracking
+    """
+    from . import quotes as _q, auth_users as _au, admin_alerts as _aa
+    import os as _os, datetime as _d
+    phone = (body.phone or "").strip()
+    email = (body.email or "").strip().lower() or None
+    if not phone or len(phone) < 7:
+        raise HTTPException(400, "valid phone required")
+
+    # 1) Look up invoice + booking
+    with db.connect() as c:
+        ir = c.execute("SELECT * FROM invoices WHERE id=?", (body.invoice_id,)).fetchone()
+        if not ir: raise HTTPException(404, "invoice not found")
+        inv = db.row_to_dict(ir)
+        if inv.get("payment_status") == "paid":
+            return {"ok": True, "message": "Already paid", "booking_id": inv.get("booking_id")}
+        booking = None
+        if inv.get("booking_id"):
+            br = c.execute("SELECT * FROM bookings WHERE id=?", (inv["booking_id"],)).fetchone()
+            booking = db.row_to_dict(br) if br else None
+
+    # 2) Auto-account: phone-first match, email fallback, else create
+    cid = None
+    with db.connect() as c:
+        r = c.execute("SELECT id FROM customers WHERE phone=?", (phone,)).fetchone()
+        if r: cid = r["id"]
+        elif email:
+            r2 = c.execute("SELECT id FROM customers WHERE lower(email)=?", (email,)).fetchone()
+            if r2:
+                cid = r2["id"]
+                c.execute("UPDATE customers SET phone=? WHERE id=? AND (phone IS NULL OR phone='')",
+                          (phone, cid))
+        if not cid:
+            # Create new customer
+            name = (booking or {}).get("customer_name") or (email or phone)
+            cur = c.execute(
+                "INSERT INTO customers(name, phone, email, created_at) VALUES(?,?,?,?)",
+                (name, phone, email, _d.datetime.utcnow().isoformat() + "Z"))
+            cid = cur.lastrowid
+        # Attach booking to customer if not yet attached
+        if booking and inv.get("booking_id"):
+            try:
+                c.execute("UPDATE bookings SET customer_id=? WHERE id=? AND (customer_id IS NULL OR customer_id='')",
+                          (cid, inv["booking_id"]))
+            except Exception: pass
+
+    # 3) Issue auth token for instant log-in on success
+    auth_token = None
+    try:
+        auth_token = _au.create_session("customer", cid)
+    except Exception: pass
+
+    # 4) Branch by method
+    method = (body.method or "").lower()
+    base = "https://" + (settings.BRAND_DOMAIN or "servia.ae")
+
+    if method in ("card", "apple", "google"):
+        sk = _os.getenv("STRIPE_SECRET_KEY", "").strip()
+        if sk:
+            try:
+                import stripe as _stripe
+                _stripe.api_key = sk
+                pmt = ["card"]
+                if method == "apple": pmt = ["card"]   # Apple Pay rides on Stripe card automatically when domain verified
+                if method == "google": pmt = ["card"]
+                cs = _stripe.checkout.Session.create(
+                    mode="payment", payment_method_types=pmt,
+                    line_items=[{"price_data": {
+                        "currency": (inv.get("currency") or "AED").lower(),
+                        "unit_amount": int(float(inv["amount"]) * 100),
+                        "product_data": {"name": f"Servia booking {inv.get('booking_id') or inv['id']}"},
+                    }, "quantity": 1}],
+                    success_url=f"{base}/me.html?b={inv.get('booking_id','')}&paid=1",
+                    cancel_url=f"{base}/pay/{inv['id']}",
+                    metadata={"invoice_id": inv["id"], "booking_id": inv.get("booking_id") or "",
+                              "customer_id": str(cid), "method": method},
+                )
+                # Mark invoice 'awaiting'
+                with db.connect() as c:
+                    c.execute("UPDATE invoices SET payment_method=?, payment_status='awaiting' WHERE id=?",
+                              (method, inv["id"]))
+                return {"ok": True, "redirect": cs.url, "auth_token": auth_token}
+            except Exception as e:  # noqa: BLE001
+                _aa.notify_admin(f"Stripe checkout failed for {inv['id']}: {e}",
+                                 kind="payment", urgency="high")
+                # Fall through to WhatsApp fallback
+                method = "wa"
+        else:
+            method = "wa"  # No Stripe configured, fall through to WhatsApp
+
+    if method == "wa":
+        with db.connect() as c:
+            c.execute("UPDATE invoices SET payment_method='whatsapp_link', payment_status='awaiting' WHERE id=?", (inv["id"],))
+        _aa.notify_admin(
+            f"💳 WhatsApp pay link requested\n\nInvoice {inv['id']} ({inv['amount']} {inv['currency']})\n"
+            f"Customer: {phone}{' / '+email if email else ''}\nBooking: {inv.get('booking_id') or '?'}\n\n"
+            f"Send pay link to {phone} via the bridge.",
+            kind="payment_request", urgency="normal")
+        return {"ok": True, "auth_token": auth_token,
+                "message": f"We'll WhatsApp you a payment link at {phone} within 1 min.",
+                "booking_id": inv.get("booking_id")}
+
+    if method == "bank":
+        with db.connect() as c:
+            c.execute("UPDATE invoices SET payment_method='bank_transfer', payment_status='awaiting' WHERE id=?", (inv["id"],))
+        _aa.notify_admin(
+            f"🏦 Bank-transfer intent\n\nInvoice {inv['id']} ({inv['amount']} {inv['currency']})\n"
+            f"Customer: {phone}{' / '+email if email else ''}\n"
+            f"Reference: {inv['id']}\n\nMatch incoming wire by reference.",
+            kind="payment_request", urgency="normal")
+        return {"ok": True, "auth_token": auth_token,
+                "message": f"Bank details shown above. Use reference {inv['id']}. We'll confirm within 30 min on UAE banking days.",
+                "booking_id": inv.get("booking_id")}
+
+    if method == "cod":
+        with db.connect() as c:
+            c.execute("UPDATE invoices SET payment_method='cash_on_service', payment_status='awaiting' WHERE id=?", (inv["id"],))
+            if inv.get("booking_id"):
+                try: c.execute("UPDATE bookings SET status='confirmed' WHERE id=?", (inv["booking_id"],))
+                except Exception: pass
+        _aa.notify_admin(
+            f"💵 Cash-on-service confirmed\n\nBooking {inv.get('booking_id')} · Customer {phone}\n"
+            f"Tech collects {inv['amount']} {inv['currency']} on arrival.",
+            kind="booking_confirmed", urgency="normal")
+        return {"ok": True, "auth_token": auth_token,
+                "message": "Booking confirmed. Pay the technician on arrival (cash or their card-machine).",
+                "booking_id": inv.get("booking_id")}
+
+    return {"ok": False, "error": f"unknown payment method '{body.method}'"}
 
 
 
