@@ -2,14 +2,12 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"mapiVwO7QG6k_O58-_9nXA"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"3Lkyf9VxT2CelO9JCx5-qw"}`
 
 ## Build logs
 ```
-[ 9/11] COPY web ./web
+[internal] load build context
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[internal] load build context
-[internal] load build context
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
@@ -23,6 +21,8 @@
 [ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/11] COPY app ./app
+[ 2/11] WORKDIR /app
+[ 2/11] WORKDIR /app
 [ 8/11] COPY app ./app
 [ 9/11] COPY web ./web
 [ 9/11] COPY web ./web
@@ -32,9 +32,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OGM2YjQxNjdlNDQ5NmUyMTc1M2YxYTk3Y2VmOGNhYWI3ZWFjZmVkYmMwYzA2ZjRiMTMwMzhlMWUxZGUwODExYyIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQyMToyNzowMloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:92df94dcd4658d3337f008a3a00a08926d0a59a688c65912426444e743f6b99f
-containerimage.digest: sha256:8c6b4167e4496e21753f1a97cef8caab7eacfedbc0c06f4b13038e1e1de0811c
+containerimage.digest: sha256:ab3539dbcc0cd07f03ee478fc9fa357ed01ac10910b35e7696efa01d30d7f067
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6YWIzNTM5ZGJjYzBjZDA3ZjAzZWU0NzhmYzlmYTM1N2VkMDFhYzEwOTEwYjM1ZTc2OTZlZmEwMWQzMGQ3ZjA2NyIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQyMTozMjowMFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:964a6efed1a642af594b687404c55c3adbef29f3af1f7599f34b2b8657dbb742
 image push
 image push
 
@@ -50,34 +50,17 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.3:23016 - "GET /api/admin/services-summary HTTP/1.1" 200 OK
-INFO:     100.64.0.3:23016 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:22992 - "POST /api/admin/social-images/generate HTTP/1.1" 200 OK
-INFO:     100.64.0.3:22992 - "GET /api/admin/social-images/list?limit=200 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:22992 - "GET /api/social-images/img/deep_cleaning-al-khan-1x1-adb64f.png HTTP/1.1" 307 Temporary Redirect
-INFO:     100.64.0.3:23016 - "GET /api/social-images/img/deep_cleaning-downtown-1x1-501bfd.png HTTP/1.1" 307 Temporary Redirect
-INFO:     100.64.0.3:23016 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:23016 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:48832 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+[wa-bridge] listening on :3001
+[start] launching whatsapp_bridge
+[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/7dd66891-eddd-4565-b74e-ee97bf64ae68/vol_onr647rhdeir9di9
+Starting Container
+INFO:     100.64.0.2:41921 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:27950 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:23016 - "POST /api/admin/social-images/generate HTTP/1.1" 200 OK
-INFO:     100.64.0.3:23016 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "GET /api/admin/social-images/list?limit=200 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:27950 - "GET /api/social-images/img/deep_cleaning-jumeirah-4x5-9b5ce1.png HTTP/1.1" 307 Temporary Redirect
-INFO:     100.64.0.3:27950 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "DELETE /api/admin/social-images/deep_cleaning-jumeirah-4x5-9b5ce1 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "GET /api/admin/social-images/list?limit=200 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27950 - "DELETE /api/admin/social-images/deep_cleaning-downtown-1x1-501bfd HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27864 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27864 - "GET /api/admin/social-images/list?limit=200 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27864 - "DELETE /api/admin/social-images/deep_cleaning-al-khan-1x1-adb64f HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27864 - "GET /api/admin/social-images/list?limit=200 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
