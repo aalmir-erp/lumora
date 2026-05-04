@@ -88,7 +88,7 @@ def me_tier(user: a.AuthedUser = Depends(a.current_customer)):
 class MagicLinkReq(BaseModel):
     email: str
 
-@public_router.post("/auth/magic-link")
+@router.post("/auth/magic-link")
 def request_magic_link(req: MagicLinkReq):
     """Send the customer a 1-time login token by email. Same OTP plumbing
     re-used: token = sha256(email + secret + 5-min bucket). Customer clicks
@@ -128,7 +128,7 @@ class MagicLinkVerifyReq(BaseModel):
     email: str
     token: str
 
-@public_router.post("/auth/magic-link/verify")
+@router.post("/auth/magic-link/verify")
 def verify_magic_link(req: MagicLinkVerifyReq):
     import datetime as _dt, hashlib, os as _os
     email = (req.email or "").strip().lower()
@@ -152,7 +152,7 @@ class SetPasswordReq(BaseModel):
     phone: str
     password: str
 
-@public_router.post("/auth/customer/set-password")
+@router.post("/auth/customer/set-password")
 def set_customer_password(req: SetPasswordReq):
     """Allows a customer who just placed an order to set a password so they
     can log in directly next time (OTP no longer required)."""
