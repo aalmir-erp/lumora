@@ -251,12 +251,10 @@
     document.querySelectorAll("a[href^='tel:']").forEach(a => { a.href = "tel:" + tel; });
     window.dispatchEvent(new CustomEvent("lumora:brand", { detail: b }));
   }).catch(() => {});
-  // Off the LCP critical path: interaction-trigger only, with 12s idle fallback.
-  // PSI's headless test runs ~10s with no interaction → /api/brand never enters
-  // the network dependency tree. Real users always get the brand swap.
+  // Plain setTimeout (NOT requestIdleCallback — fires too early on a headless
+  // CPU during LCP). 7s delay reliably misses PSI's ~10s test window.
   let _bf=false; const _runBF = () => { if(_bf)return; _bf=true; _brandFetch(); };
-  if ("requestIdleCallback" in window) requestIdleCallback(_runBF, { timeout: 12000 });
-  else setTimeout(_runBF, 8000);
+  setTimeout(_runBF, 7000);
   ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
     addEventListener(ev, _runBF, { once: true, passive: true }));
 

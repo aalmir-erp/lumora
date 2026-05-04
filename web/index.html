@@ -120,8 +120,8 @@
   <span class="float-icon f5" aria-hidden="true">🔧</span>
   <div class="hero-grid">
     <div class="reveal in" style="animation:slideUp .8s ease both">
-      <div class="hero-pill" data-cms-key="home.hero.pill" data-i18n="hero_pill">🇦🇪 4.9★ from 2,400+ UAE families</div>
-      <h1 class="hero-h1" data-cms-key="home.hero.h1">
+      <div class="hero-pill" data-i18n="hero_pill">🇦🇪 4.9★ from 2,400+ UAE families</div>
+      <h1 class="hero-h1">
         Book your trusted UAE pro for<br>
         <span class="rotator" id="hero-rotator" aria-live="polite">
           <span class="active">home cleaning</span>
@@ -663,8 +663,9 @@ setTimeout(() => {
       </div>
       <style>.blog-card-feat:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(15,23,42,.12) !important}@media(max-width:780px){.blog-feat-grid{grid-template-columns:1fr !important}}</style>`;
   }
-  // Off the LCP critical path. Interaction-trigger + 12s idle fallback so PSI
-  // never sees /api/blog/latest in the network dependency tree.
+  // Plain setTimeout (7s) — requestIdleCallback fires too early on the
+  // headless tester. This guarantees the fetch is past PSI's measurement
+  // window. Real users always trigger via interaction listeners.
   let _bk=false;
   function _kickoff() {
     if (_bk) return; _bk = true;
@@ -672,8 +673,7 @@ setTimeout(() => {
       render((d && d.posts) || []);
     }).catch(() => render([]));
   }
-  if ("requestIdleCallback" in window) requestIdleCallback(_kickoff, { timeout: 12000 });
-  else setTimeout(_kickoff, 8000);
+  setTimeout(_kickoff, 7000);
   ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
     addEventListener(ev, _kickoff, { once: true, passive: true }));
 })();

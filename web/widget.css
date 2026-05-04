@@ -13,17 +13,14 @@
 .us-launcher:hover{transform:scale(1.08)}
 [dir="rtl"] .us-launcher{right:auto;left:24px}
 
-/* Lift launcher above sticky bottom bars (service.html .sticky-cta, mobile-nav etc.)
-   so it doesn't overlap the Book/WhatsApp buttons. Uses :has() — supported in
-   Chrome 105+ / Safari 15.4+ / Firefox 121+ (covers ~96% of UAE traffic). */
-body:has(.sticky-cta) .us-launcher,
-body:has(.mobile-nav) .us-launcher { bottom: 92px; }
-body:has(.sticky-cta) .us-launcher-tip,
-body:has(.mobile-nav) .us-launcher-tip { bottom: 104px; }
-body:has(.sticky-cta.show) .us-launcher,
-body:has(.mobile-nav) .us-launcher { right: 16px; }
+/* Lift launcher above sticky bottom bars (service.html .sticky-cta, mobile-nav etc.).
+   Uses class-based selectors instead of :has() — :has() forces expensive style
+   recalc on every DOM mutation (PSI flagged 6s+ Style & Layout work).
+   widget.js adds .us-lift-bar class on <body> when sticky-cta or mobile-nav exists. */
+body.us-lift-bar .us-launcher { bottom: 92px; right: 16px; }
+body.us-lift-bar .us-launcher-tip { bottom: 104px; }
 @media (max-width:720px) {
-  body:has(.mobile-nav) .us-launcher { bottom: 80px; }  /* mobile-nav is 64px tall */
+  body.us-lift-bar .us-launcher { bottom: 80px; }
 }
 
 /* Pulsing ring around the launcher — attracts attention without nagging */

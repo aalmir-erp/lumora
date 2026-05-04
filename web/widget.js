@@ -83,6 +83,11 @@
   document.body.appendChild(launcher);
   document.body.appendChild(panel);
 
+  // Lift launcher above sticky bottom bars (replaces heavy CSS :has() rule).
+  if (document.querySelector(".sticky-cta, .mobile-nav")) {
+    document.body.classList.add("us-lift-bar");
+  }
+
   // Periodic tooltip — gentle "Need a hand?" prompts. Only shows when chat
   // is closed and the user hasn't dismissed via interaction.
   const TIPS = [

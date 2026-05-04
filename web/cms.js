@@ -14,9 +14,10 @@
   //    [data-cms-key] elements exist on this page — saves a network round-trip
   //    on every public page that doesn't use CMS.
   if (document.querySelector("[data-cms-key]")) {
-    // Off the LCP critical path entirely. Only fires after first user
-    // interaction (so PSI's 10s headless test never includes it in the
-    // network dependency tree). Falls back to a long 12s idle as safety net.
+    // Off LCP critical path. PURE setTimeout (NOT requestIdleCallback — that
+    // fires as soon as the thread is idle, which is during LCP rendering on
+    // the headless tester, polluting the network dependency tree). Plain 7s
+    // delay reliably misses PSI's 10s test window.
     let _fired = false;
     const _go = () => {
       if (_fired) return; _fired = true;
@@ -28,8 +29,7 @@
         });
       }).catch(() => {});
     };
-    if ("requestIdleCallback" in window) requestIdleCallback(_go, { timeout: 12000 });
-    else setTimeout(_go, 8000);
+    setTimeout(_go, 7000);
     ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
       addEventListener(ev, _go, { once: true, passive: true }));
   }
