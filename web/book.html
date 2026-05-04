@@ -130,65 +130,104 @@ function renderIntake() {
   if (id) LumoraIntake.render(id, { mount: "intake-mount" });
 }
 
+// Build the cart payload that /api/cart/quote and /api/cart/checkout expect
+function buildCartItem() {
+  const sid = document.getElementById("service").value;
+  const v = LumoraIntake.values() || {};
+  const item = { service_id: sid };
+  // Form fields → cart shape
+  if (v.bedrooms != null) item.bedrooms = parseInt(v.bedrooms, 10) || null;
+  if (v.hours    != null) item.hours    = parseInt(v.hours, 10) || null;
+  if (v.units    != null) item.units    = parseInt(v.units, 10) || null;
+  // AC-specific 'ac_units' / 'ac_count' → units
+  if (v.ac_units != null && !item.units) item.units = parseInt(v.ac_units, 10) || null;
+  if (v.ac_count != null && !item.units) item.units = parseInt(v.ac_count, 10) || null;
+  // Date/time inputs (whichever the intake module exposes)
+  const dateEl = document.querySelector('input[type="date"]');
+  const timeEl = document.querySelector('select[id*="time"], select[id*="slot"]');
+  if (dateEl && dateEl.value) item.target_date = dateEl.value;
+  if (timeEl && timeEl.value) item.time_slot = timeEl.value;
+  const notesEl = document.getElementById("notes");
+  if (notesEl && notesEl.value.trim()) item.notes = notesEl.value.trim();
+  return item;
+}
+
 document.getElementById("quote-btn").addEventListener("click", async () => {
   const out = document.getElementById("quote-out");
-  out.innerHTML = "Fetching…";
+  out.innerHTML = '<div style="background:var(--bg);border-radius:10px;padding:14px">⏳ Calculating your price…</div>';
   try {
-    const sid = document.getElementById("service").value;
-    const svc = LumoraIntake.service();
-    const ftext = LumoraIntake.summary();
-    if (!ftext) { out.innerHTML = `<div style="color:var(--muted)">Fill at least one field above to get a precise quote.</div>`; return; }
-    const msg = `Get a price quote for the service "${svc?.name || sid}" (id=${sid}). ${ftext}.` +
-                (document.getElementById("first_time").value ? " First-time customer." : "");
-    const r = await api("/api/chat", { method:"POST", body:{ message: msg }});
-    const parsed = LumoraIntake.parseBotText(r.text);
-    let html = `<div style="background:var(--bg);border-radius:10px;padding:14px;white-space:pre-wrap">${escapeHtml(parsed.text)}</div>`;
-    if (parsed.choices.length) {
-      html += `<div class="us-actions" style="margin-top:8px;flex-wrap:wrap">` +
-        parsed.choices.map((c,i) => `<button type="button" class="btn btn-ghost" data-c="${i}" style="font-size:13px">${escapeHtml(c.label)}</button>`).join("") + `</div>`;
+    const item = buildCartItem();
+    const r = await fetch("/api/cart/quote", {
+      method: "POST", headers: {"content-type":"application/json"},
+      body: JSON.stringify({ items: [item] }),
+    }).then(r => r.json());
+    if (!r.ok || !r.lines || !r.lines.length) {
+      out.innerHTML = `<div style="background:#FEF3C7;border:1px solid #FDE68A;color:#78350F;padding:14px;border-radius:10px">⚠ Couldn't calculate. Please fill bedroom/unit/hour count and try again.</div>`;
+      return;
     }
-    out.innerHTML = html;
-    out.querySelectorAll("button[data-c]").forEach(btn => {
-      btn.onclick = () => {
-        const c = parsed.choices[+btn.dataset.c];
-        if (LumoraIntake.applyChoiceToBestField(c.send)) {
-          document.getElementById("quote-btn").click();
-        }
-      };
-    });
-  } catch (e) { out.innerHTML = "Error: " + e.message; }
+    const line = r.lines[0];
+    const svcName = line.service_name || item.service_id.replace(/_/g," ");
+    out.innerHTML = `
+      <div style="background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border-radius:14px;padding:18px;text-align:left">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.06em;opacity:.8;text-transform:uppercase">Your instant quote</div>
+        <div style="font-size:32px;font-weight:900;margin:6px 0;letter-spacing:-.02em">${line.total.toFixed(0)} <span style="font-size:14px;font-weight:600;opacity:.85">AED</span></div>
+        <div style="font-size:13px;line-height:1.6;color:#A7F3D0">
+          <b>${escapeHtml(svcName)}</b>
+          ${line.discount ? ` · ${line.discount}% off applied` : ""}
+          ${item.bedrooms ? ` · ${item.bedrooms} bedroom${item.bedrooms>1?"s":""}` : ""}
+          ${item.units ? ` · ${item.units} unit${item.units>1?"s":""}` : ""}
+          ${item.hours ? ` · ${item.hours} hour${item.hours>1?"s":""}` : ""}
+        </div>
+        <div style="font-size:11px;color:#A7F3D0;margin-top:8px;opacity:.75">All-inclusive · 5% VAT · No hidden fees · Cancel free up to 12h before</div>
+      </div>`;
+  } catch (e) {
+    out.innerHTML = `<div style="background:#FEE2E2;color:#B91C1C;padding:14px;border-radius:10px">⚠ Quote failed: ${escapeHtml(e.message)}. Please retry, or chat with our concierge.</div>`;
+  }
 });
 
 document.getElementById("book-btn").addEventListener("click", async () => {
   const out = document.getElementById("result");
-  out.innerHTML = "Booking…";
+  out.innerHTML = '<div style="background:var(--bg);padding:14px;border-radius:10px">⏳ Confirming your booking…</div>';
   try {
-    const sid = document.getElementById("service").value;
-    const v = LumoraIntake.values();
-    const ftext = LumoraIntake.summary();
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
-    if (!name || !phone) { out.innerHTML = "Name and phone are required."; return; }
-
-    // Build a natural-language booking command — the chat agent's create_booking tool will parse it
-    let cmd = `Book ${sid} for ${name}, phone ${phone}`;
-    if (ftext) cmd += `. Details: ${ftext}`;
-    if (document.getElementById("notes").value) cmd += `. Notes: ${document.getElementById("notes").value}`;
-    if (document.getElementById("first_time").value) cmd += ". First-time customer.";
-    if (document.getElementById("f-recurring").value) cmd += `. Frequency: ${document.getElementById("f-recurring").value}.`;
-
-    const r = await api("/api/chat", { method:"POST", body:{ message: cmd, phone, language: window.lumoraLang() }});
-    let bid = null;
-    for (const tc of (r.tool_calls || [])) {
-      if (tc.name === "create_booking" && tc.result && tc.result.ok) bid = tc.result.booking.id;
+    const address = (document.querySelector('[id*="address"], textarea[name*="address"]') || {}).value || "";
+    if (!name) { out.innerHTML = '<div style="color:#B91C1C;padding:8px">⚠ Please enter your full name.</div>'; return; }
+    if (!phone) { out.innerHTML = '<div style="color:#B91C1C;padding:8px">⚠ Please enter your phone number.</div>'; return; }
+    if (!address || address.trim().length < 5) {
+      out.innerHTML = '<div style="color:#B91C1C;padding:8px">⚠ Please enter your building/villa address (e.g. tower name + apartment number).</div>';
+      return;
     }
-    if (bid) location.href = "/booked.html?id=" + bid;
-    else {
-      out.innerHTML = `<div class="form" style="background:#FFFBEB;border-color:#FDE68A">
-        <p>${escapeHtml(r.text || "Couldn't auto-book. Please continue in chat or WhatsApp via our website.")}</p>
-      </div>`;
+
+    const item = buildCartItem();
+    const payload = {
+      items: [item],
+      customer_name: name,
+      phone: phone,
+      address: address.trim(),
+      language: (window.lumoraLang && window.lumoraLang()) || "en",
+    };
+    const r = await fetch("/api/cart/checkout", {
+      method: "POST", headers: {"content-type":"application/json"},
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) {
+      const errMsg = d.detail || d.error || "Booking didn't go through. Please WhatsApp us via /contact.html so we can fix it.";
+      out.innerHTML = `<div style="background:#FEE2E2;color:#B91C1C;padding:14px;border-radius:10px">⚠ ${escapeHtml(errMsg)}</div>`;
+      return;
     }
-  } catch (e) { out.innerHTML = "Error: " + e.message; }
+    // Successful checkout → redirect to pay page (uses real /pay/INV-... flow)
+    if (d.invoice_id) {
+      location.href = "/pay/" + encodeURIComponent(d.invoice_id);
+    } else if (d.bookings && d.bookings.length) {
+      location.href = "/booked.html?id=" + d.bookings[0].id;
+    } else {
+      out.innerHTML = '<div style="background:#DCFCE7;color:#15803D;padding:14px;border-radius:10px">✅ Booking received! We\'ll WhatsApp you the confirmation in 1 minute.</div>';
+    }
+  } catch (e) {
+    out.innerHTML = `<div style="background:#FEE2E2;color:#B91C1C;padding:14px;border-radius:10px">⚠ ${escapeHtml(e.message)}. Please try again or message us.</div>`;
+  }
 });
 
 function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
