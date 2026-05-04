@@ -120,6 +120,11 @@ def checkout(cart: CartPayload):
     setting a password or requesting a magic-link via email."""
     if not (cart.customer_name and cart.phone and cart.address):
         raise HTTPException(400, "customer_name, phone, address required")
+    # Strict UAE-only phone validation. We auto-normalise +971 / 971 / 0X / 5X
+    # forms so customers can type whichever form they're comfortable with —
+    # but anything outside the UAE +971 5X mobile range is rejected up-front.
+    from . import uae_phone
+    cart.phone = uae_phone.normalize_or_raise(cart.phone)
 
     # ---- Auto-account: attach to existing OR auto-create -----------
     customer_id = None

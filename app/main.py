@@ -282,6 +282,13 @@ def _try_fast_book(message: str) -> dict | None:
     m = _BOOK_RX.match(message.strip())
     if not m: return None
     svc, date, time_, name, phone, addr = m.groups()
+    # Reject the fast-book if the phone isn't a valid UAE mobile so the LLM
+    # cascade can ask the customer for one in their next bot turn.
+    from . import uae_phone as _uae
+    norm_phone = _uae.normalize(phone)
+    if not norm_phone:
+        return None
+    phone = norm_phone
     # Optional fields after address
     rest = message[m.end():]
     bedrooms = next((int(x) for x in _re.findall(r"(\d+)\s*bedroom", rest, _re.I)), None)
@@ -378,6 +385,9 @@ async def _cascade_via_router(prompt: str, history: list[dict], lang: str) -> di
         "## Booking flow\n"
         "If the customer wants to book, ask for: service id, emirate (Dubai / Sharjah / "
         "Abu Dhabi / Ajman / RAK / UAQ / Fujairah), date+time, address, name + phone. "
+        "ALWAYS clarify that we need a valid UAE mobile number — must start with +971 or 05 "
+        "(e.g. +971501234567 or 0501234567). If the customer gives a non-UAE number, ask "
+        "again politely and explain we only operate in the UAE. "
         "Then confirm with a [Book now](https://" + domain + "/book.html?service=<id>&area=<emirate>) "
         "deep link.\n\n"
         "## Out of scope\n"
@@ -660,12 +670,14 @@ def api_pay_start(body: PayStartBody):
        - cod  → mark booking as 'cash on service', confirm immediately
     4. Persist payment intent to invoices table for admin tracking
     """
-    from . import quotes as _q, auth_users as _au, admin_alerts as _aa
+    from . import quotes as _q, auth_users as _au, admin_alerts as _aa, uae_phone
     import os as _os, datetime as _d
-    phone = (body.phone or "").strip()
+    # Strict UAE mobile only — auto-normalised so 0501234567 / 971501234567 /
+    # +971501234567 all become +971501234567. Anything else returns the
+    # user-friendly error (shown in the customer's pay screen alert).
+    phone = uae_phone.normalize_or_raise(body.phone)
+    body.phone = phone   # propagate the normalised form to downstream code
     email = (body.email or "").strip().lower() or None
-    if not phone or len(phone) < 7:
-        raise HTTPException(400, "valid phone required")
 
     # 1) Look up invoice + booking
     with db.connect() as c:

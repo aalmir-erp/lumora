@@ -107,7 +107,7 @@ body{background:linear-gradient(180deg,#FFFBEB,#F8FAFC)}
     <div id="summary"></div>
     <div style="margin-top:18px;padding-top:14px;border-top:1px solid #F1F5F9">
       <div class="field"><label>Your name</label><input id="c-name" placeholder="Full name" required></div>
-      <div class="field"><label>Phone</label><input id="c-phone" type="tel" placeholder="+971 5X XXX XXXX" required></div>
+      <div class="field"><label>Phone <span style="color:#0F766E;font-size:11px">🇦🇪 (UAE mobile only)</span></label><input id="c-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971501234567" required></div>
       <div class="field"><label>Email <span style="color:#94A3B8;font-weight:500;text-transform:none;letter-spacing:0">(for receipt + magic-link login)</span></label><input id="c-email" type="email" placeholder="you@example.com"></div>
       <div class="field">
         <label>Default address</label>
@@ -272,12 +272,18 @@ async function render(){
   document.getElementById("addr-line-count").textContent=lk;
   document.getElementById("default-apply").style.display=lk?'flex':'none';
 }
-async function checkout(){const items=get().map(({_ts,...r})=>r);if(!items.length)return;const n=document.getElementById("c-name").value.trim();const p=document.getElementById("c-phone").value.trim();const em=(document.getElementById("c-email")||{}).value?.trim()||"";const a=document.getElementById("c-addr").value.trim();if(!n||!p||!a){alert("Please fill in name, phone and default address.");return}for(const [i,it] of items.entries()){if(!it.target_date||!it.time_slot){alert(`Service ${i+1}: pick a date and time slot.`);return}if(!it.address)it.address=a;if(it.address&&it.address!==a)it.notes=(it.notes?it.notes+" · ":"")+"At: "+it.address}const btn=document.getElementById("co-btn");btn.disabled=true;btn.textContent="Processing…";try{const r=await fetch("/api/cart/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({items,customer_name:n,phone:p,email:em,address:a})});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.detail||j.error||"checkout failed");localStorage.removeItem(KEY);if(j.payment_url)location.href=j.payment_url;else location.href=`/booked.html?b=${j.bundle_anchor}&claim=1`}catch(e){btn.disabled=false;btn.textContent="Try checkout again";alert("Checkout error: "+(e.message||"unknown"))}}
+async function checkout(){const items=get().map(({_ts,...r})=>r);if(!items.length)return;const n=document.getElementById("c-name").value.trim();const phoneInput=document.getElementById("c-phone");const p=window.UAEPhone?UAEPhone.readOrAlert(phoneInput):phoneInput.value.trim();if(!p)return;const em=(document.getElementById("c-email")||{}).value?.trim()||"";const a=document.getElementById("c-addr").value.trim();if(!n||!a){alert("Please fill in name and default address.");return}for(const [i,it] of items.entries()){if(!it.target_date||!it.time_slot){alert(`Service ${i+1}: pick a date and time slot.`);return}if(!it.address)it.address=a;if(it.address&&it.address!==a)it.notes=(it.notes?it.notes+" · ":"")+"At: "+it.address}const btn=document.getElementById("co-btn");btn.disabled=true;btn.textContent="Processing…";try{const r=await fetch("/api/cart/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({items,customer_name:n,phone:p,email:em,address:a})});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.detail||j.error||"checkout failed");localStorage.removeItem(KEY);if(j.payment_url)location.href=j.payment_url;else location.href=`/booked.html?b=${j.bundle_anchor}&claim=1`}catch(e){btn.disabled=false;btn.textContent="Try checkout again";alert("Checkout error: "+(e.message||"unknown"))}}
 fetch("/api/services").then(r=>r.json()).then(d=>{(d.services||[]).forEach(s=>SVC[s.id]=s);const p=new URLSearchParams(location.search);if(p.get("add")){const it={service_id:p.get("add")};["bedrooms","hours","units","target_date","time_slot"].forEach(k=>{const v=p.get(k);if(v)it[k]=(["bedrooms","hours","units"].includes(k))?parseInt(v,10):v});const c=get();c.push({...it,_ts:Date.now()});save(c);history.replaceState({},"","/cart.html")}else render()}).catch(()=>render());
 window.serviaCart={add:i=>{const c=get();c.push({...i,_ts:Date.now()});save(c)},view:get,clear:()=>save([])};
 </script>
 <script src="/theme.js" defer></script>
 <script src="/app.js" defer></script>
+<script src="/uae-phone.js" defer></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.UAEPhone) UAEPhone.bind(document.getElementById("c-phone"));
+  });
+</script>
 <script src="/install.js" defer></script>
 <script>(function(){var l=false;function ld(){if(l)return;l=true;var s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(function(ev){addEventListener(ev,ld,{once:true,passive:true})});})();</script>
 </body></html>

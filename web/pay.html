@@ -99,7 +99,7 @@
       <h3><span class="num">1</span> Where should we send updates?</h3>
       <p style="margin:0 0 6px;font-size:13px;color:var(--muted)">We'll text you the technician's name + ETA, plus your receipt and booking link. No password to remember — your phone is your account.</p>
       <div class="pay-row">
-        <input id="pay-phone" type="tel" inputmode="tel" placeholder="📱 Mobile number (e.g. +9715...)" class="pay-input" autocomplete="tel">
+        <input id="pay-phone" type="tel" inputmode="tel" placeholder="📱 +971501234567 (UAE mobile only)" class="pay-input" autocomplete="tel">
       </div>
       <input id="pay-email" type="email" placeholder="📧 Email (optional, for tax-receipt PDF)" class="pay-input" autocomplete="email" style="margin-top:8px">
       <small style="color:var(--muted);font-size:11.5px;display:block;margin-top:6px">Already have a Servia account? <a href="/login.html" style="color:#0F766E;font-weight:700">Sign in here</a> instead.</small>
@@ -196,6 +196,8 @@
 
 <script src="/theme.js" defer></script>
 <script src="/app.js" defer></script>
+<script src="/uae-phone.js" defer></script>
+<script>document.addEventListener("DOMContentLoaded",()=>{if(window.UAEPhone)UAEPhone.bind(document.getElementById("pay-phone"));});</script>
 <script>
 (() => {
   const inv = location.pathname.split("/").filter(Boolean).pop();
@@ -300,14 +302,18 @@
     $("pay-method-form").innerHTML = wraps[chosenMethod] || "";
   }
   function canPay() {
+    // Strict UAE mobile validation — pay button stays disabled until the
+    // entered phone is a valid +971 5X XXXXXXX format.
     const phone = $("pay-phone").value.trim();
-    return chosenMethod && (phone.length >= 7);
+    return chosenMethod && (window.UAEPhone ? UAEPhone.isValid(phone) : phone.length >= 9);
   }
   ["pay-phone","pay-email"].forEach(id => $(id).oninput = () => $("btn-pay").disabled = !canPay());
 
   // ---- Pay button
   $("btn-pay").onclick = async () => {
-    const phone = $("pay-phone").value.trim();
+    // readOrAlert auto-normalises to +971XXXXXXXXX or shows error and returns null
+    const phone = window.UAEPhone ? UAEPhone.readOrAlert($("pay-phone")) : $("pay-phone").value.trim();
+    if (!phone) return;
     const email = $("pay-email").value.trim();
     const btn = $("btn-pay"), result = $("pay-result");
     btn.disabled = true; btn.innerHTML = '⏳ Processing…';
