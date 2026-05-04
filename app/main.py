@@ -38,6 +38,9 @@ app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)
 app.include_router(admin.public_reviews_router)
+from . import vendor_scraper as _vs, vendor_outreach as _vo
+app.include_router(_vs.router)
+app.include_router(_vo.router)
 app.include_router(live_visitors.admin_router)
 app.include_router(push_notifications.router)
 app.include_router(push_notifications.public_router)
@@ -1448,15 +1451,41 @@ async def submit_video_reward(request: Request):
 # ---------- contact form (replaces public WhatsApp links) ----------
 @app.post("/api/contact")
 async def submit_contact(request: Request):
-    """Captures a contact-form message and pings the admin via WhatsApp.
-    Stored in admin_alerts for visibility even if the bridge isn't paired."""
+    """Bot-protected contact form. Uses three layers:
+      1. Honeypot field 'website' — bots auto-fill it, real users don't see it
+      2. Math challenge (a+b=?) verified server-side
+      3. Per-IP rate limit: max 5 sends per hour
+    Successful submissions are stored + WhatsApp+push the admin."""
     from . import db, admin_alerts
-    import datetime as _dt
+    import datetime as _dt, time as _time
     try:
         payload = await request.json()
     except Exception:
         payload = {}
     if not isinstance(payload, dict): payload = {}
+    # ---- Layer 1: honeypot (bots fill every field; the 'website' field is
+    # hidden from humans via CSS so any value here proves automation) ----
+    if (payload.get("website") or "").strip():
+        return {"ok": True}        # silently accept (don't tell bot we saw it)
+    # ---- Layer 2: math challenge ----
+    try:
+        cap_a = int(payload.get("cap_a", -1))
+        cap_b = int(payload.get("cap_b", -1))
+        cap_ans = int(payload.get("cap_answer", -1))
+        if cap_a < 0 or cap_b < 0 or cap_a + cap_b != cap_ans:
+            raise HTTPException(400, "Captcha failed — refresh and try again")
+    except (ValueError, TypeError):
+        raise HTTPException(400, "Captcha required")
+    # ---- Layer 3: per-IP rate limit ----
+    ip = (request.client.host if request.client else "")[:64]
+    if not hasattr(submit_contact, "_rl"):
+        submit_contact._rl = {}    # type: ignore[attr-defined]
+    bucket = submit_contact._rl.setdefault(ip, [])
+    now_ts = _time.time()
+    bucket[:] = [t for t in bucket if now_ts - t < 3600]
+    if len(bucket) >= 5:
+        raise HTTPException(429, "Too many messages. Try again in an hour.")
+    bucket.append(now_ts)
     name = (payload.get("name") or "").strip()[:80]
     email = (payload.get("email") or "").strip()[:120]
     topic = (payload.get("topic") or "General").strip()[:80]
@@ -1470,7 +1499,6 @@ async def submit_contact(request: Request):
                 id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT,
                 topic TEXT, message TEXT, ip TEXT, created_at TEXT)""")
         except Exception: pass
-        ip = (request.client.host if request.client else "")[:64]
         c.execute(
             "INSERT INTO contact_messages(name,email,topic,message,ip,created_at) "
             "VALUES(?,?,?,?,?,?)",
