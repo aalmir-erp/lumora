@@ -7,13 +7,16 @@
   function init() {
     fetch("/api/site/social").then(r => r.ok ? r.json() : null).then(j => {
       if (!j || !j.profiles || !j.profiles.length) return;
-      // Find a footer to insert before, else append to body
+      // Reuse pre-reserved #servia-social-strip-slot placeholder if present
+      // (kills CLS by claiming layout space ahead of time). Else create new.
+      const slot = document.getElementById("servia-social-strip-slot");
       const footer = document.querySelector("footer");
-      const wrap = document.createElement("section");
+      const wrap = slot || document.createElement("section");
       wrap.id = "servia-social-strip";
       wrap.style.cssText =
         "background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;" +
-        "padding:24px 16px;text-align:center;border-top:3px solid #FCD34D";
+        "padding:24px 16px;text-align:center;border-top:3px solid #FCD34D;" +
+        "min-height:160px;contain:layout";
       const links = j.profiles.map(p =>
         '<a href="' + p.url + '" target="_blank" rel="noopener" style="' +
         'background:rgba(255,255,255,.18);color:#fff;padding:9px 16px;' +
@@ -30,8 +33,11 @@
           '<h3 style="margin:0 0 14px;font-size:22px;letter-spacing:-.02em">Stay in the loop on UAE service deals</h3>' +
           '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">' + links + '</div>' +
         '</div>';
-      if (footer && footer.parentNode) footer.parentNode.insertBefore(wrap, footer);
-      else document.body.appendChild(wrap);
+      // If we used the slot, it's already in the DOM — skip insert
+      if (!slot) {
+        if (footer && footer.parentNode) footer.parentNode.insertBefore(wrap, footer);
+        else document.body.appendChild(wrap);
+      }
     }).catch(() => {});
   }
   if ("requestIdleCallback" in window) requestIdleCallback(init, {timeout: 4000});
