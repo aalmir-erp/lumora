@@ -6,13 +6,15 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Servia · Live</title>
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-192.svg">
+<!-- Widget-specific manifest so "Add to Home screen" launches the widget,
+     not the public site. start_url + scope both point at /admin-widget.html. -->
+<link rel="manifest" href="/admin-widget.webmanifest">
 <style>
   *,*::before,*::after{box-sizing:border-box}
-  html,body{margin:0;padding:0;height:100%;background:#0F172A;color:#fff;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    overflow:hidden}
-  .w-card{padding:18px;height:100vh;display:flex;flex-direction:column;gap:14px}
+  html,body{margin:0;padding:0;min-height:100%;background:#0F172A;color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .w-card{padding:14px 14px 22px;display:flex;flex-direction:column;gap:12px}
   .w-head{display:flex;justify-content:space-between;align-items:center}
   .w-head .title{font-size:11px;font-weight:800;letter-spacing:.08em;
     text-transform:uppercase;opacity:.85}
@@ -20,71 +22,180 @@
   .w-head .pulse::before{content:"";width:8px;height:8px;border-radius:50%;background:#22C55E;
     box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:p 1.4s infinite}
   @keyframes p{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 0 0 14px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-  .w-now{font-size:64px;font-weight:900;letter-spacing:-.04em;line-height:.9;
+
+  .hero{display:flex;align-items:flex-end;gap:14px}
+  .hero .now{font-size:64px;font-weight:900;letter-spacing:-.04em;line-height:.9;
     background:linear-gradient(135deg,#22C55E,#FCD34D);-webkit-background-clip:text;
     background-clip:text;color:transparent}
-  .w-now-lbl{font-size:12px;color:#94A3B8;font-weight:600;margin-top:-4px}
-  .w-mini{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
-  .w-mini-card{background:rgba(255,255,255,.06);border-radius:10px;padding:8px 10px}
+  .hero .lbl{font-size:12px;color:#94A3B8;font-weight:600;padding-bottom:6px}
+
+  /* Hourly chart */
+  .hours{display:flex;align-items:flex-end;gap:2px;height:42px;background:rgba(255,255,255,.03);
+    padding:6px 8px;border-radius:8px}
+  .hours .bar{flex:1;background:linear-gradient(180deg,#22C55E,#0F766E);border-radius:2px 2px 0 0;
+    min-height:2px;opacity:.85}
+  .hours .bar.now{background:linear-gradient(180deg,#FCD34D,#F59E0B);opacity:1}
+  .h-axis{display:flex;justify-content:space-between;font-size:9px;color:#475569;padding:0 2px;margin-top:2px}
+
+  /* Mini stats row */
+  .w-mini{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .w-mini-card{background:rgba(255,255,255,.06);border-radius:10px;padding:8px 10px;text-align:center}
   .w-mini-card .v{font-size:18px;font-weight:800}
-  .w-mini-card .l{font-size:10px;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
-  .w-recent{font-size:11.5px;color:#CBD5E1;line-height:1.5;background:rgba(255,255,255,.04);
-    padding:8px 10px;border-radius:8px;border-left:2px solid #FCD34D;max-height:60px;overflow:hidden}
-  .w-recent code{color:#FCD34D;background:rgba(252,211,77,.08);padding:1px 5px;border-radius:3px}
-  .w-foot{font-size:10px;color:#64748B;text-align:center;margin-top:auto}
+  .w-mini-card .l{font-size:9.5px;color:#94A3B8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+
+  /* Visitor list */
+  .v-section-h{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:#64748B;margin:6px 2px 2px;display:flex;justify-content:space-between;align-items:center}
+  .v-section-h .count{background:rgba(252,211,77,.15);color:#FCD34D;padding:2px 8px;border-radius:999px;font-size:10px}
+  .v-row{background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;border-left:3px solid #22C55E;
+    margin-bottom:5px;font-size:11.5px;line-height:1.45}
+  .v-row.bot{border-left-color:#94A3B8;opacity:.7}
+  .v-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .v-top .who{font-weight:700;color:#FCD34D}
+  .v-top .ago{font-size:10px;color:#94A3B8}
+  .v-meta{font-size:10.5px;color:#CBD5E1;margin-top:3px;line-height:1.4}
+  .v-meta code{color:#7DD3FC;background:rgba(125,211,252,.08);padding:1px 5px;border-radius:3px;font-size:10.5px}
+  .v-flag{font-size:14px;margin-right:4px}
+  .v-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
+  .tag-bot{background:rgba(148,163,184,.15);color:#94A3B8}
+  .tag-human{background:rgba(34,197,94,.15);color:#22C55E}
+
+  /* Top pages */
+  .pg-row{display:flex;justify-content:space-between;font-size:10.5px;color:#CBD5E1;
+    padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.06)}
+  .pg-row code{color:#7DD3FC;font-family:ui-monospace,monospace}
+
+  .w-foot{font-size:10px;color:#64748B;text-align:center;padding-top:6px}
   a{color:inherit;text-decoration:none}
   .w-err{color:#FCA5A5;font-size:12px;text-align:center;padding:24px}
 </style>
 </head><body>
-<div class="w-card">
+<div class="w-card" id="card">
   <div class="w-head">
     <div class="title">📡 Servia Live</div>
     <div class="pulse" id="pulse">live</div>
   </div>
 
-  <div>
-    <div class="w-now" id="now">—</div>
-    <div class="w-now-lbl">visitors right now</div>
+  <div class="hero">
+    <div class="now" id="now">—</div>
+    <div class="lbl">visitors right now<br><span id="last-upd" style="font-size:10px;opacity:.7">…</span></div>
   </div>
 
-  <div class="w-recent" id="recent">…</div>
+  <!-- 24h hourly mini-chart -->
+  <div>
+    <div class="hours" id="hours"></div>
+    <div class="h-axis"><span>24h ago</span><span>12h</span><span>now</span></div>
+  </div>
 
+  <!-- Mini stats -->
   <div class="w-mini">
+    <div class="w-mini-card"><div class="v" id="m-active">—</div><div class="l">Active 5m</div></div>
     <div class="w-mini-card"><div class="v" id="m-today">—</div><div class="l">Today</div></div>
     <div class="w-mini-card"><div class="v" id="m-week">—</div><div class="l">7 days</div></div>
   </div>
 
+  <!-- Top pages right now -->
+  <div>
+    <div class="v-section-h">🔥 Hot pages now</div>
+    <div id="top-pages"></div>
+  </div>
+
+  <!-- Active visitors list -->
+  <div>
+    <div class="v-section-h"><span>👥 Active visitors</span><span class="count" id="vis-count">0</span></div>
+    <div id="vis-list"></div>
+  </div>
+
   <div class="w-foot">
-    <a href="/admin.html#live">Tap to open admin →</a> · auto-refreshes every 20s
+    <a href="/admin.html#live">Tap to open full admin →</a><br>
+    auto-refreshes every 15s
   </div>
 </div>
 
 <script>
 const KEY = "lumora.admin.tok";
 const TOK = localStorage.getItem(KEY) || "";
+function esc(s){ return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function ago(s){
+  s = s|0;
+  if (s<60) return s+"s ago";
+  if (s<3600) return Math.floor(s/60)+"m "+(s%60)+"s ago";
+  return Math.floor(s/3600)+"h ago";
+}
+function dur(s){
+  s = s|0;
+  if (s<60) return s+"s";
+  if (s<3600) return Math.floor(s/60)+"m"+(s%60>0?" "+(s%60)+"s":"");
+  return Math.floor(s/3600)+"h "+Math.floor((s%3600)/60)+"m";
+}
 async function load() {
   if (!TOK) {
-    document.querySelector(".w-card").innerHTML =
+    document.getElementById("card").innerHTML =
       '<div class="w-err">🔒 Sign in once at <a href="/admin-login.html" style="color:#FCD34D;text-decoration:underline">/admin-login.html</a> on this device, then add this widget to your home screen.</div>';
     return;
   }
+  let stats, vis;
   try {
-    const [stats, vis] = await Promise.all([
-      fetch("/api/admin/live/stats", {headers:{Authorization:"Bearer "+TOK}}).then(r=>r.json()),
-      fetch("/api/admin/live/visitors?active_minutes=15", {headers:{Authorization:"Bearer "+TOK}}).then(r=>r.json()),
+    [stats, vis] = await Promise.all([
+      fetch("/api/admin/live/stats", {headers:{Authorization:"Bearer "+TOK,"X-Admin-Cookie":"1"}}).then(r=>r.json()),
+      fetch("/api/admin/live/visitors?active_minutes=15", {headers:{Authorization:"Bearer "+TOK,"X-Admin-Cookie":"1"}}).then(r=>r.json()),
     ]);
-    document.getElementById("now").textContent = stats.active_now || 0;
-    document.getElementById("m-today").textContent = stats.today || 0;
-    document.getElementById("m-week").textContent = stats.week || 0;
-    const recent = (vis.active||[])[0];
-    document.getElementById("recent").innerHTML = recent
-      ? `${recent.device||""} ${recent.os||""} on <code>${recent.last_path||"/"}</code> · ${recent.country||"?"} · ${recent.seconds_ago||0}s ago`
-      : "🌙 No active visitors. New ones trigger a push.";
   } catch (e) {
-    document.querySelector(".w-card").innerHTML = `<div class="w-err">⚠ ${e.message}</div>`;
+    document.getElementById("card").innerHTML = `<div class="w-err">⚠ ${esc(e.message)}</div>`;
+    return;
   }
+
+  // Hero counters
+  document.getElementById("now").textContent = stats.active_now || 0;
+  document.getElementById("m-active").textContent = stats.active_now || 0;
+  document.getElementById("m-today").textContent = stats.today || 0;
+  document.getElementById("m-week").textContent = stats.week || 0;
+  document.getElementById("last-upd").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+
+  // Hourly bar chart (24 buckets, last is current hour)
+  const hr = stats.hourly_24h || new Array(24).fill(0);
+  const peak = Math.max(1, ...hr);
+  document.getElementById("hours").innerHTML = hr.map((n,i) => {
+    const h = Math.max(2, Math.round((n / peak) * 38));
+    const cls = (i === 23) ? "bar now" : "bar";
+    return `<div class="${cls}" style="height:${h}px" title="${n} visitors, ${23-i}h ago"></div>`;
+  }).join("");
+
+  // Top pages
+  const pages = stats.top_pages_now || [];
+  document.getElementById("top-pages").innerHTML = pages.length
+    ? pages.map(p => `<div class="pg-row"><code>${esc(p.path||"/")}</code><span>${p.count}</span></div>`).join("")
+    : '<div style="font-size:10.5px;color:#64748B;padding:4px 0">— no traffic right now —</div>';
+
+  // Active visitors — render EVERY one with full detail
+  const list = vis.active || [];
+  document.getElementById("vis-count").textContent = list.length;
+  document.getElementById("vis-list").innerHTML = list.length ? list.map(v => {
+    const who = (v.is_bot ? '<span class="v-tag tag-bot">BOT</span>' + esc(v.bot_name||"bot") : '<span class="v-tag tag-human">HUMAN</span>' + esc(v.device||""));
+    const flag = v.flag || "🌐";
+    const ip = v.ip || "?";
+    const country = v.country || "??";
+    const browser = (v.browser||"") + " · " + (v.os||"");
+    const path = v.last_path || "/";
+    const prev = v.prev_path && v.prev_path !== path ? '<code>'+esc(v.prev_path)+'</code> → ' : '';
+    const ref = v.referrer ? '<br>↗ ref: <code>'+esc(v.referrer.slice(0,60))+'</code>' : '';
+    return `<div class="v-row${v.is_bot?" bot":""}">
+      <div class="v-top">
+        <div><span class="v-flag">${flag}</span>${who}</div>
+        <div class="ago">${ago(v.seconds_ago)}</div>
+      </div>
+      <div class="v-meta">
+        <b>${esc(browser)}</b> · IP <code>${esc(ip)}</code> · ${esc(country)}<br>
+        ${prev}<code>${esc(path)}</code><br>
+        🕒 on site ${dur(v.session_duration_seconds)} · ${v.hit_count||1} hit${(v.hit_count||1)>1?"s":""}${ref}
+      </div>
+    </div>`;
+  }).join("") : '<div style="font-size:11px;color:#64748B;padding:8px 4px;text-align:center">🌙 No active visitors right now. New ones trigger a push.</div>';
 }
 load();
-setInterval(load, 20000);
+setInterval(load, 15000);
+// Re-load when window comes back into focus (Samsung widget tap)
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
 </script>
 </body></html>

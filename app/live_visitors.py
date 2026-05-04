@@ -214,7 +214,8 @@ def clear_test_visitors():
 
 @admin_router.get("/stats")
 def live_stats():
-    """Quick dashboard counters: active now, today, this week."""
+    """Quick dashboard counters: active now, today, this week, plus a 24h
+    hourly breakdown so the home-screen widget can sparkline-chart it."""
     _ensure_table()
     now = _dt.datetime.utcnow()
     with db.connect() as c:
@@ -232,10 +233,23 @@ def live_stats():
             "SELECT last_path, COUNT(*) AS n FROM live_visitors "
             "WHERE last_seen > ? GROUP BY last_path ORDER BY n DESC LIMIT 5",
             ((now - _dt.timedelta(minutes=15)).isoformat() + "Z",)).fetchall()
+        # Hourly first-seen counts for last 24h (for sparkline chart)
+        rows24 = c.execute(
+            "SELECT first_seen FROM live_visitors WHERE first_seen > ?",
+            ((now - _dt.timedelta(hours=24)).isoformat() + "Z",)).fetchall()
+    buckets = [0] * 24
+    for r in rows24:
+        try:
+            t = _dt.datetime.fromisoformat((r["first_seen"] or "").rstrip("Z"))
+            hours_ago = int((now - t).total_seconds() // 3600)
+            if 0 <= hours_ago < 24:
+                buckets[23 - hours_ago] += 1
+        except Exception: pass
     return {
         "active_now": n_now,
         "today": n_today,
         "week": n_week,
         "top_pages_now": [{"path": p["last_path"], "count": p["n"]} for p in pages],
+        "hourly_24h": buckets,
         "ts": now.isoformat() + "Z",
     }
