@@ -219,12 +219,13 @@ def _load_cfg() -> dict:
     out = {
         "keys": {p: "" for p in MODEL_CATALOG},  # API keys per provider
         "defaults": {                            # default model per persona
-            "customer":  "anthropic/claude-opus-4-7",
+            # Customer chat default is Gemini Pro — Google has a generous free
+            # tier and survives Anthropic credit outages. Cascade still tries
+            # Anthropic + every other configured provider as fallback.
+            "customer":  "google/gemini-2.5-pro",
             "admin":     "anthropic/claude-opus-4-7",
-            "vendor":    "anthropic/claude-sonnet-4-6",
-            # Long-form content prefers OpenAI/Google by default — cheaper for
-            # cron + survives Anthropic credit dips. Cascade still tries
-            # Anthropic later in the chain.
+            "vendor":    "google/gemini-2.5-flash",
+            # Long-form content also prefers OpenAI/Google.
             "blog":      "openai/gpt-4o",
             "video":     "google/gemini-2.5-pro",
         },
