@@ -33,6 +33,7 @@
   <aside class="admin-side">
     <div style="margin-bottom:24px;display:flex;align-items:center;gap:8px"><img src="/logo.svg" height="32" style="filter:brightness(0) invert(1)"><span id="admin-ver" style="font-size:10px;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:6px;font-weight:600">v—</span></div>
     <a href="#dashboard" class="active" data-tab="dashboard">📊 Dashboard</a>
+    <a href="#live"      data-tab="live">👀 Live visitors</a>
     <a href="#bookings"  data-tab="bookings">📋 Bookings</a>
     <a href="#customers" data-tab="customers">👤 Customers</a>
     <a href="#convos"    data-tab="convos">💬 Conversations</a>
@@ -125,6 +126,46 @@
       .ts-row .b{font-weight:700}
       @media(max-width:880px){.dash-grid{grid-template-columns:1fr !important}}
     </style>
+
+    <!-- ===================== LIVE VISITORS ===================== -->
+    <div id="t-live" class="tab" style="display:none">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div>
+          <h2 style="margin:0">👀 Live visitors</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13px">Real-time pulse of who's on Servia right now. Refreshes every 15s.</p>
+        </div>
+        <div style="display:flex;gap:6px">
+          <select id="live-window" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <option value="5">Active in last 5 min</option>
+            <option value="15">Active in last 15 min</option>
+            <option value="60">Active in last 1 hour</option>
+            <option value="1440">Active today</option>
+          </select>
+          <button class="btn btn-ghost" id="live-refresh" style="font-size:12px;padding:5px 12px">↻ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Stats counters -->
+      <div id="live-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px"></div>
+
+      <!-- Top pages right now -->
+      <div id="live-top-pages" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px"></div>
+
+      <!-- Active visitor list -->
+      <div id="live-list-wrap" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:0;overflow:hidden">
+        <div id="live-list" style="max-height:600px;overflow-y:auto"></div>
+        <div id="live-empty" style="padding:36px;text-align:center;color:var(--muted);font-size:14px;display:none">
+          🌙 No visitors active right now. Stay tuned, you'll get a PWA push the moment someone lands.
+        </div>
+      </div>
+
+      <p style="font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6">
+        💡 <b>Pro tip:</b> the Servia admin PWA sends you a push notification every time a brand-new
+        visitor lands. To enable: open this admin page on your Samsung mobile → tap the install
+        prompt → allow notifications when asked. The widget on your home screen will show the
+        latest active count.
+      </p>
+    </div>
 
     <div id="t-bookings" class="tab" style="display:none">
       <h2>Bookings</h2>
@@ -747,6 +788,8 @@ function show(tab) {
   document.getElementById("t-"+tab).style.display = "";
   document.querySelectorAll(".admin-side a").forEach(a => a.classList.toggle("active", a.dataset.tab===tab));
   if (tab==="dashboard") loadDashboard();
+  if (tab==="live")      startLiveVisitors();
+  else                   stopLiveVisitors();
   if (tab==="bookings")  loadBookings();
   if (tab==="customers") loadCustomers();
   if (tab==="convos")    loadSessions();
@@ -871,6 +914,95 @@ async function loadDash() {
 
 
 // ============== RICH DASHBOARD (extends loadDash with health + funnel + top services + latest + attention) ==============
+// ============== LIVE VISITORS ==============
+let _liveTimer = null;
+function _liveAgo(s) {
+  if (s == null) return "";
+  if (s < 60) return s + "s ago";
+  if (s < 3600) return Math.round(s/60) + "m ago";
+  return Math.round(s/3600) + "h ago";
+}
+async function loadLiveVisitors() {
+  const win = parseInt((document.getElementById("live-window")||{}).value || "5", 10);
+  try {
+    const [stats, vis] = await Promise.all([
+      adm("/api/admin/live/stats"),
+      adm("/api/admin/live/visitors?active_minutes=" + win),
+    ]);
+    // Stats row
+    document.getElementById("live-stats-row").innerHTML = `
+      <div style="background:linear-gradient(135deg,#22C55E,#15803D);color:#fff;border-radius:14px;padding:14px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.06em;opacity:.85;text-transform:uppercase">Now (5 min)</div>
+        <div style="font-size:32px;font-weight:900;line-height:1">${stats.active_now||0}</div>
+        <div style="font-size:11px;opacity:.85">live visitors</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);text-transform:uppercase">Today</div>
+        <div style="font-size:32px;font-weight:900;line-height:1;color:#0F766E">${stats.today||0}</div>
+        <div style="font-size:11px;color:var(--muted)">unique visitors</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);text-transform:uppercase">7 days</div>
+        <div style="font-size:32px;font-weight:900;line-height:1;color:#0F766E">${stats.week||0}</div>
+        <div style="font-size:11px;color:var(--muted)">unique visitors</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);text-transform:uppercase">Window</div>
+        <div style="font-size:32px;font-weight:900;line-height:1;color:#0F766E">${vis.count||0}</div>
+        <div style="font-size:11px;color:var(--muted)">in last ${vis.active_minutes||5} min</div>
+      </div>`;
+    // Top pages
+    const topPages = (stats.top_pages_now || []);
+    document.getElementById("live-top-pages").innerHTML =
+      `<h4 style="margin:0 0 10px;font-size:13px;color:#0F766E;text-transform:uppercase;letter-spacing:.06em">🔥 Hot pages right now</h4>` +
+      (topPages.length
+        ? topPages.map(p => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:13px"><code style="color:#0F172A">${escapeHtml(p.path)}</code><b style="color:#0F766E">${p.count} viewer${p.count===1?"":"s"}</b></div>`).join("")
+        : `<div style="color:var(--muted);font-size:13px">No pages active in the last 15 min.</div>`);
+    // Active visitor list
+    const list = document.getElementById("live-list");
+    const empty = document.getElementById("live-empty");
+    const visitors = vis.active || [];
+    if (!visitors.length) {
+      list.innerHTML = "";
+      empty.style.display = "block";
+    } else {
+      empty.style.display = "none";
+      list.innerHTML = visitors.map(v => {
+        const country = v.country ? `🌍 ${escapeHtml(v.country)}` : "";
+        const fresh = (v.seconds_ago||0) < 30 ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22C55E;animation:pulse-dot 1.4s infinite"></span>' : "";
+        const path = escapeHtml(v.last_path || "/");
+        const prev = v.prev_path && v.prev_path !== v.last_path ? `<small style="color:var(--muted)"> ← ${escapeHtml(v.prev_path)}</small>` : "";
+        return `<div style="padding:14px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center">
+          <div style="font-size:18px">${escapeHtml(v.device || "")}</div>
+          <div>
+            <div style="font-weight:700;font-size:13.5px;color:#0F172A">${fresh} <code>${path}</code>${prev}</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:3px">
+              ${escapeHtml(v.os || "?")} · ${escapeHtml(v.browser || "?")} · ${country} · ${v.hit_count} hit${v.hit_count===1?"":"s"} · ${v.referrer ? "from " + escapeHtml((v.referrer || "").slice(0,40)) : "direct"}
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);text-align:right">
+            <div>${_liveAgo(v.seconds_ago)}</div>
+            <code style="font-size:10px">${escapeHtml((v.visitor_id||"").slice(0,10))}</code>
+          </div>
+        </div>`;
+      }).join("");
+    }
+  } catch (e) {
+    document.getElementById("live-list").innerHTML =
+      `<div style="padding:20px;color:#B91C1C;font-size:13px">⚠ ${escapeHtml(e.message)}</div>`;
+  }
+}
+function startLiveVisitors() {
+  loadLiveVisitors();
+  if (_liveTimer) clearInterval(_liveTimer);
+  _liveTimer = setInterval(loadLiveVisitors, 15000);
+}
+function stopLiveVisitors() {
+  if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
+}
+document.getElementById("live-refresh") && (document.getElementById("live-refresh").onclick = loadLiveVisitors);
+document.getElementById("live-window") && (document.getElementById("live-window").onchange = loadLiveVisitors);
+
 async function runSelfTest() {
   const wrap = document.getElementById("selftest-report");
   wrap.style.display = "block";
@@ -1362,7 +1494,7 @@ function renderServiceCards() {
     <div class="svc-row" data-sid="${s.id}" style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden">
       <div onclick="toggleSvc('${s.id}')" style="padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:14px;min-width:0">
-          <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#0D9488,#0F766E);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${ICONS[s.icon]||"🧽"}</div>
+          <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#0D9488,#0F766E);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${s.emoji || ICONS[s.icon] || "🛠️"}</div>
           <div style="min-width:0">
             <div style="font-weight:700;font-size:15px">${escapeHtml(s.name)}
               <span style="background:var(--bg);color:var(--muted);font-size:11px;padding:2px 8px;border-radius:999px;margin-inline-start:6px">${s.category}</span>
