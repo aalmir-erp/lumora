@@ -190,29 +190,57 @@ async function render() {
     document.getElementById("co-btn").textContent = "Add items to checkout";
     return;
   }
+  // Per-service intelligent input schema — only shows the fields that matter
+  const SCHEMA = {
+    deep_cleaning:        {qty:["bedrooms",1,10,2,"BR"], hint:"Studio = 1 BR · adds bathroom + balcony deep clean"},
+    general_cleaning:     {qty:["bedrooms",1,10,2,"BR"], hint:"Routine — surfaces + floors + bathrooms (~3h)"},
+    villa_deep:           {qty:["bedrooms",2,12,4,"BR"], hint:"Bigger crew · 5-7 hours · garden cleared"},
+    kitchen_deep:         {qty:null,                      hint:"Includes oven, hood, cabinets, fridge interior"},
+    kitchen_deep_clean:   {qty:null,                      hint:"Includes oven, hood, cabinets, fridge interior"},
+    move_in_out:          {qty:["bedrooms",1,10,2,"BR"], hint:"Deposit-saving — be present at handover"},
+    move_in_out_cleaning: {qty:["bedrooms",1,10,2,"BR"], hint:"Deposit-saving — be present at handover"},
+    disinfection:         {qty:["units",1,5,1,"areas"],   hint:"Hospital-grade disinfectant"},
+    post_construction:    {qty:["bedrooms",1,12,3,"BR"],  hint:"Paint splatter · sand · debris removal"},
+    office_cleaning:      {qty:["units",100,5000,500,"sqft"], hint:"Per square foot · day or night"},
+    maid_service:         {qty:["hours",1,12,3,"hrs"], hint:"Hourly cleaner · supplies + uniform included"},
+    handyman:             {qty:["hours",1,12,2,"hrs"], hint:"Plumb · electric · paint · IKEA · curtain rods"},
+    babysitting:          {qty:["hours",2,12,4,"hrs"], hint:"Background-checked · references on request"},
+    painting:             {qty:["hours",2,24,6,"hrs"], hint:"Wall paint · prep · cleanup included"},
+    gardening:            {qty:["hours",2,12,3,"hrs"], hint:"Mowing · pruning · weeding · waste haul"},
+    ac_cleaning:          {qty:["units",1,20,3,"AC units"], hint:"Each cassette / wall / split unit"},
+    ac_service:           {qty:["units",1,20,3,"AC units"], hint:"Each cassette / wall / split unit"},
+    sofa_carpet:          {qty:["units",1,15,2,"items"],   hint:"Each sofa-seater OR carpet"},
+    carpet_cleaning:      {qty:["units",1,15,2,"carpets"], hint:"Steam shampoo · per carpet"},
+    window_cleaning:      {qty:["units",1,30,8,"windows"], hint:"Inside + outside per window"},
+    pest_control:         {qty:["bedrooms",1,10,2,"BR"], hint:"Cockroach / bed bugs / ants · 90-day warranty"},
+    swimming_pool:        {qty:null, hint:"Weekly maintenance · chemicals included"},
+    car_wash:             {qty:["units",1,5,1,"cars"], hint:"At-home detail · interior + exterior"},
+    smart_home:           {qty:["hours",2,8,3,"hrs"], hint:"Alexa · Google Home · locks · install + setup"},
+    curtain_cleaning:     {qty:["units",1,15,4,"sets"], hint:"Each curtain set"},
+    marble_polish:        {qty:["units",100,3000,500,"sqft"], hint:"Per square foot of marble"},
+    laundry:              {qty:["units",5,100,20,"items"], hint:"Per garment · pickup + delivery"},
+  };
+
   wrap.innerHTML = items.map((it, i) => {
     const m = SERVICE_META[it.service_id] || {emoji:"🧽", label:it.service_id};
+    const sch = SCHEMA[it.service_id] || {};
     const fields = [];
-    // Show conditional inputs based on service
-    if (["deep_cleaning","general_cleaning","villa_deep","kitchen_deep","kitchen_deep_clean","move_in_out","move_in_out_cleaning","disinfection","post_construction"].includes(it.service_id)) {
-      fields.push(`<label style="font-size:11px;color:var(--muted)">BR <input type="number" min="1" max="10" value="${it.bedrooms||2}" oninput="updateField(${i},'bedrooms',this.value)"></label>`);
+    if (sch.qty) {
+      const [field, min, max, def, label] = sch.qty;
+      fields.push(`<label style="font-size:11px;color:var(--muted);font-weight:600">${label} <input type="number" min="${min}" max="${max}" value="${it[field]||def}" oninput="updateField(${i},'${field}',this.value)" style="width:64px"></label>`);
     }
-    if (["maid_service","handyman","babysitting","painting"].includes(it.service_id)) {
-      fields.push(`<label style="font-size:11px;color:var(--muted)">Hrs <input type="number" min="1" max="24" value="${it.hours||3}" oninput="updateField(${i},'hours',this.value)"></label>`);
-    }
-    if (["ac_cleaning","ac_service","sofa_carpet","carpet_cleaning","window_cleaning"].includes(it.service_id)) {
-      fields.push(`<label style="font-size:11px;color:var(--muted)">Units <input type="number" min="1" max="20" value="${it.units||3}" oninput="updateField(${i},'units',this.value)"></label>`);
-    }
-    fields.push(`<input type="date" value="${it.target_date||''}" min="${new Date().toISOString().slice(0,10)}" oninput="updateField(${i},'target_date',this.value)">`);
-    fields.push(`<select onchange="updateField(${i},'time_slot',this.value)">
-      <option value="">Pick a slot</option>
-      ${["08:00","10:00","12:00","14:00","16:00","18:00"].map(s=>`<option value="${s}" ${it.time_slot===s?'selected':''}>${s}</option>`).join("")}
-    </select>`);
+    fields.push(`<label style="font-size:11px;color:var(--muted);font-weight:600">When <input type="date" value="${it.target_date||''}" min="${new Date().toISOString().slice(0,10)}" oninput="updateField(${i},'target_date',this.value)" style="width:140px"></label>`);
+    fields.push(`<label style="font-size:11px;color:var(--muted);font-weight:600">Slot <select onchange="updateField(${i},'time_slot',this.value)" style="width:auto">
+      <option value="">Pick</option>
+      ${["08:00","10:00","12:00","14:00","16:00","18:00","20:00"].map(s=>`<option value="${s}" ${it.time_slot===s?'selected':''}>${s}</option>`).join("")}
+    </select></label>`);
+    fields.push(`<label style="font-size:11px;color:var(--muted);font-weight:600;flex:1;min-width:160px">Notes <input type="text" placeholder="Building, gate code, special instructions…" value="${(it.notes||'').replace(/"/g,'&quot;')}" oninput="updateField(${i},'notes',this.value)" style="width:100%;max-width:none"></label>`);
     return `
       <div class="item">
         <div class="ico">${m.emoji}</div>
         <div>
           <div class="nm">${m.label}</div>
+          ${sch.hint ? `<div class="meta" style="color:#0F766E;font-style:italic">💡 ${sch.hint}</div>` : ''}
           <div class="meta" id="line-meta-${i}">Pricing…</div>
           <div class="row">${fields.join("")}</div>
         </div>
