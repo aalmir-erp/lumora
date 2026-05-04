@@ -68,19 +68,21 @@ def _ensure_table():
 # Best-of-breed prompt template (admin-overridable via cfg)
 # ---------------------------------------------------------------------------
 _DEFAULT_PROMPT_TEMPLATE = (
-    "Photorealistic social-media post for a UAE home services brand called Servia. "
-    "Subject: {service_pretty} in {area}. "
-    "Style: warm natural light, golden-hour glow, modern minimalist aesthetic, "
-    "shallow depth of field, real Emirati / multicultural lifestyle, NOT stock-photo-looking. "
-    "Composition: clean negative space on the {text_side} third for headline overlay. "
+    "Eye-catching social-media post background for Servia (UAE home services brand). "
+    "Subject: {service_pretty} happening in {area}. "
+    "Style: photorealistic, warm natural light, golden-hour glow, premium-but-relatable. "
     "Show: real-looking UAE home interior or exterior — Dubai Marina apartment, "
-    "Jumeirah villa, Sharjah townhouse, etc. Include subtle UAE cues (kandura silhouette, "
-    "majlis cushions, palm tree out the window) WITHOUT being touristy. "
-    "Color palette: warm whites, sand beige, muted teal accent (Servia teal #0F766E), gold sparkle. "
-    "Mood: trustworthy, premium-but-affordable, family-friendly. "
-    "Avoid: cliched stock-photo handshakes, generic cleaning products, fake smiles, AI-generated faces, "
-    "watermarks, text in image, logo, signature. "
-    "Aspect: {aspect_label}. Output a single high-quality image, no text overlay."
+    "Jumeirah villa, Sharjah townhouse — with subtle UAE cues (palm trees, majlis cushions, "
+    "kandura silhouette in distance). NOT touristy stock photography. "
+    "Color palette: warm whites + sand beige + teal accent (#0F766E) + gold sparkle. "
+    "Composition: KEEP THE {text_side} 35% OF THE FRAME LARGELY EMPTY (clean negative space) "
+    "so a bold headline + CTA button can be overlaid there cleanly. The empty area should "
+    "have a soft uniform tone, no busy details, ready to host text. "
+    "Mood: trustworthy, family-friendly, hopeful, makes the viewer think 'I want this for my home'. "
+    "Avoid: cliched handshakes, fake smiles, awkward AI faces, stock-photo cleaning products, "
+    "watermarks, signatures. "
+    "Aspect: {aspect_label}. The image is a BACKGROUND that will be overlaid with logo + headline "
+    "+ CTA — leave room for them on the {text_side} side."
 )
 
 
@@ -242,6 +244,147 @@ def _meta_fallback(service_name: str, area: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Post-processing: composite the REAL Servia branding onto the AI background.
+# AI image models still mangle text (especially small text), so we render
+# headline + CTA + logo with PIL on top — pixel-perfect, every time.
+# ---------------------------------------------------------------------------
+def _overlay_branding(bg_data_url: str, *, headline: str, cta: str,
+                       service_pretty: str, area: str,
+                       text_side: str = "left") -> str | None:
+    """Take an AI-generated image (base64 data URL), composite a translucent
+    panel + headline + CTA + logo on top, return the new data URL.
+    Returns None if anything fails — caller falls back to the raw image."""
+    if not bg_data_url.startswith("data:image"):
+        return None
+    try:
+        import base64, io
+        from PIL import Image, ImageDraw, ImageFont, ImageFilter
+        # Decode the AI background
+        b64 = bg_data_url.split(",", 1)[1]
+        bg = Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGBA")
+        W, H = bg.size
+
+        # Translucent dark panel on the chosen side so text is always readable
+        # regardless of the underlying photo
+        panel = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        pd = ImageDraw.Draw(panel)
+        if text_side == "right":
+            x0 = int(W * 0.55); x1 = W
+        elif text_side == "bottom":
+            x0 = 0; x1 = W
+        else:                   # left
+            x0 = 0; x1 = int(W * 0.55)
+        if text_side == "bottom":
+            y0 = int(H * 0.55); y1 = H
+        else:
+            y0 = 0; y1 = H
+        # Soft gradient panel — deep at the edge, fading toward content
+        for i in range(40):
+            alpha = int(160 * (1 - i / 40))
+            if text_side == "right":
+                pd.rectangle([x0 - i, y0, x0 - i + 1, y1], fill=(15, 23, 42, alpha))
+            elif text_side == "bottom":
+                pd.rectangle([x0, y0 - i, x1, y0 - i + 1], fill=(15, 23, 42, alpha))
+            else:
+                pd.rectangle([x1 + i, y0, x1 + i + 1, y1], fill=(15, 23, 42, alpha))
+        # Solid panel inside
+        pd.rectangle([x0, y0, x1, y1], fill=(15, 23, 42, 170))
+        bg = Image.alpha_composite(bg, panel)
+
+        # Find the best system font available — fall back gracefully
+        def _font(size: int, bold: bool = False) -> "ImageFont.FreeTypeFont":
+            for fp in (
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold
+                    else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/Library/Fonts/Arial Bold.ttf" if bold else "/Library/Fonts/Arial.ttf",
+                "/System/Library/Fonts/Helvetica.ttc",
+            ):
+                try: return ImageFont.truetype(fp, size)
+                except Exception: pass
+            return ImageFont.load_default()
+
+        draw = ImageDraw.Draw(bg)
+        # Layout boundaries within the panel
+        pad = int(min(W, H) * 0.04)
+        tx0 = x0 + pad; tx1 = x1 - pad
+        ty = y0 + pad
+
+        # 1) Brand wordmark — real Servia teal-to-gold
+        brand_font = _font(int(min(W, H) * 0.045), bold=True)
+        draw.text((tx0, ty), "Servia", font=brand_font, fill=(252, 211, 77, 255))
+        try:
+            bbox = draw.textbbox((tx0, ty), "Servia", font=brand_font)
+            ty = bbox[3] + int(min(W, H) * 0.015)
+        except Exception:
+            ty += int(min(W, H) * 0.06)
+
+        # 2) Service tag
+        tag_font = _font(int(min(W, H) * 0.022), bold=True)
+        tag = service_pretty.upper() + " · " + area
+        draw.text((tx0, ty), tag, font=tag_font, fill=(186, 230, 253, 230))
+        ty += int(min(W, H) * 0.04)
+
+        # 3) Headline — wrap to fit the panel width
+        head_font_size = int(min(W, H) * 0.062)
+        head_font = _font(head_font_size, bold=True)
+        avail_w = tx1 - tx0
+        # Greedy word-wrap
+        words = (headline or "").split()
+        lines, cur = [], ""
+        for w in words:
+            test = (cur + " " + w).strip()
+            try:
+                bbox = draw.textbbox((0, 0), test, font=head_font)
+                if bbox[2] - bbox[0] <= avail_w:
+                    cur = test
+                else:
+                    if cur: lines.append(cur)
+                    cur = w
+            except Exception:
+                if len(test) * head_font_size * 0.55 <= avail_w: cur = test
+                else:
+                    if cur: lines.append(cur); cur = w
+        if cur: lines.append(cur)
+        for line in lines[:4]:
+            draw.text((tx0, ty), line, font=head_font, fill=(255, 255, 255, 255))
+            ty += int(head_font_size * 1.18)
+
+        # 4) CTA button — solid teal pill near the bottom of the panel
+        cta_text = (cta or "Book in 60s").upper()
+        cta_font = _font(int(min(W, H) * 0.028), bold=True)
+        try:
+            ctx_bbox = draw.textbbox((0, 0), cta_text, font=cta_font)
+            ctw = ctx_bbox[2] - ctx_bbox[0]; cth = ctx_bbox[3] - ctx_bbox[1]
+        except Exception:
+            ctw, cth = len(cta_text) * 14, 24
+        cpad_x = int(min(W, H) * 0.025); cpad_y = int(min(W, H) * 0.018)
+        cw = ctw + cpad_x * 2; chh = cth + cpad_y * 2
+        cx0 = tx0
+        cy0 = max(ty + int(min(W, H) * 0.025), y1 - chh - pad)
+        # Pill shape via rectangles + circles
+        try:
+            draw.rounded_rectangle([cx0, cy0, cx0 + cw, cy0 + chh],
+                                   radius=chh // 2, fill=(15, 118, 110, 255))
+        except Exception:
+            draw.rectangle([cx0, cy0, cx0 + cw, cy0 + chh], fill=(15, 118, 110, 255))
+        draw.text((cx0 + cpad_x, cy0 + cpad_y - 2), cta_text,
+                  font=cta_font, fill=(255, 255, 255, 255))
+
+        # 5) Domain stamp under CTA
+        dom_font = _font(int(min(W, H) * 0.022), bold=True)
+        draw.text((cx0 + cw + int(min(W, H) * 0.015), cy0 + cpad_y + 2),
+                  "servia.ae", font=dom_font, fill=(252, 211, 77, 255))
+
+        # Save back as PNG data URL
+        out = io.BytesIO()
+        bg.convert("RGB").save(out, format="PNG", optimize=True)
+        return "data:image/png;base64," + base64.b64encode(out.getvalue()).decode("ascii")
+    except Exception as e:  # noqa: BLE001
+        print(f"[social_images] overlay failed: {e}", flush=True)
+        return None
+
+
+# ---------------------------------------------------------------------------
 # Generate one + save
 # ---------------------------------------------------------------------------
 async def generate_one(service_id: str, *, area: str | None = None,
@@ -276,8 +419,24 @@ async def generate_one(service_id: str, *, area: str | None = None,
         return {"ok": False, "error": res.get("error") or "image gen failed"}
     image_data_url = res.get("image_data_url") or res.get("image_url") or ""
 
-    # Generate SEO meta in parallel-ish
+    # Generate SEO meta first — we use the title as the headline overlay
     meta = await _gen_seo_meta(service_name, area)
+
+    # Headline = the AI-written title minus the brand suffix
+    head = (meta["title"] or service_name).split("|")[0].split(":")[0].strip()
+    if len(head) > 70:
+        head = head[:70].rsplit(" ", 1)[0] + "…"
+    cta = "Book in 60s →"
+    text_side = random.choice(("left", "right", "bottom"))
+
+    # Composite real branding + headline + CTA on top of the AI background.
+    # Fixes 'plain AI image' problem: every post now has Servia logo + service +
+    # area + headline + CTA pill + servia.ae domain stamp baked in pixel-perfect.
+    branded = _overlay_branding(image_data_url, headline=head, cta=cta,
+                                 service_pretty=service_name, area=area,
+                                 text_side=text_side)
+    if branded:
+        image_data_url = branded
     slug = (
         service_id + "-" + area.lower().replace(" ", "-") + "-" + aspect + "-"
         + hashlib.sha1((service_id + area + aspect + str(_dt.datetime.utcnow().timestamp())).encode()).hexdigest()[:6]

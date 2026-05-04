@@ -1032,6 +1032,7 @@ def sitemap_list_all(request: Request):
         ("/sitemap-areas.xml",    "Emirate area pages",   sitemap_areas),
         ("/sitemap-blog.xml",     "Blog posts",           sitemap_blog),
         ("/sitemap-videos.xml",   "Videos",               sitemap_videos_xml),
+        ("/sitemap-images.xml",   "Per-image SEO pages",  sitemap_images_xml),
         ("/sitemap-full.xml",     "Legacy (full, monolithic)", sitemap_full_legacy),
     ]
     out = []
@@ -1192,6 +1193,7 @@ def sitemap_xml(request: Request = None):
             ("sitemap-areas.xml", today),
             ("sitemap-blog.xml", today),
             ("sitemap-videos.xml", today),
+            ("sitemap-images.xml", today),
         ]
         body = ['<?xml version="1.0" encoding="UTF-8"?>',
                 '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -1231,28 +1233,65 @@ def _wrap_urlset(urls: list[tuple[str, str, str, str]], *,
     return "\n".join(parts) + "\n"
 
 
+# Pages that must NEVER appear in the sitemap — internal flows, admin
+# surfaces, payment processing, vendor portal, etc. Anything not in this
+# set IS auto-discovered and added.
+_PRIVATE_PAGES = {
+    "admin.html", "admin-login.html", "admin-widget.html",
+    "gate.html", "pay.html", "pay-declined.html", "pay-processing.html",
+    "vendor.html", "partner-agreement.html",
+    "booked.html", "delivered.html", "invoice.html", "quote.html",
+    "brand-preview.html",
+}
+
+# Per-page priority + change frequency overrides (anything not listed
+# defaults to weekly / 0.7).
+_PAGE_OVERRIDES = {
+    "index.html":         ("daily",   "1.0"),
+    "services.html":      ("weekly",  "0.9"),
+    "book.html":           ("weekly",  "0.9"),
+    "coverage.html":       ("daily",   "0.85"),
+    "videos.html":         ("weekly",  "0.85"),
+    "gallery.html":        ("daily",   "0.85"),
+    "contact.html":        ("monthly", "0.7"),
+    "share-rewards.html":  ("monthly", "0.6"),
+    "faq.html":            ("monthly", "0.6"),
+    "login.html":          ("monthly", "0.5"),
+    "me.html":             ("monthly", "0.5"),
+    "account.html":        ("monthly", "0.5"),
+    "privacy.html":        ("yearly",  "0.4"),
+    "terms.html":          ("yearly",  "0.4"),
+    "refund.html":         ("yearly",  "0.4"),
+}
+
+
 @app.get("/sitemap-pages.xml")
 def sitemap_pages(request: Request = None):
+    """Auto-discover every public .html file in web/ and emit it. Drop a
+    new HTML file in web/ and it's in the sitemap on next deploy — no
+    code edit needed. Private pages stay blacklisted."""
     try:
+        import os as _os
         base = _sitemap_base(request)
         today = _dt.date.today().isoformat()
-        urls = [
-            (f"{base}/",                    today, "daily",   "1.0"),
-            (f"{base}/services.html",       today, "weekly",  "0.9"),
-            (f"{base}/book.html",           today, "weekly",  "0.9"),
-            (f"{base}/coverage.html",       today, "daily",   "0.85"),
-            (f"{base}/videos.html",         today, "weekly",  "0.85"),
-            (f"{base}/blog",                today, "daily",   "0.85"),
-            (f"{base}/contact.html",        today, "monthly", "0.7"),
-            (f"{base}/share-rewards.html",  today, "monthly", "0.6"),
-            (f"{base}/faq.html",            today, "monthly", "0.6"),
-            (f"{base}/login.html",          today, "monthly", "0.5"),
-            (f"{base}/me.html",             today, "monthly", "0.5"),
-            (f"{base}/account.html",        today, "monthly", "0.5"),
-            (f"{base}/privacy.html",        today, "yearly",  "0.4"),
-            (f"{base}/terms.html",          today, "yearly",  "0.4"),
-            (f"{base}/refund.html",         today, "yearly",  "0.4"),
-        ]
+        urls = [(f"{base}/", today, "daily", "1.0")]
+        # Special slug-only paths (not .html files but valid public routes)
+        urls.append((f"{base}/blog", today, "daily", "0.85"))
+
+        web_dir = str(settings.WEB_DIR)
+        if _os.path.isdir(web_dir):
+            for fname in sorted(_os.listdir(web_dir)):
+                if not fname.endswith(".html"): continue
+                if fname == "index.html": continue   # served at /
+                if fname in _PRIVATE_PAGES: continue
+                # Use file mtime for lastmod so admin sees what was edited
+                try:
+                    mtime = _os.path.getmtime(_os.path.join(web_dir, fname))
+                    lastmod = _dt.date.fromtimestamp(mtime).isoformat()
+                except Exception:
+                    lastmod = today
+                freq, prio = _PAGE_OVERRIDES.get(fname, ("weekly", "0.7"))
+                urls.append((f"{base}/{fname}", lastmod, freq, prio))
         return _xml_response(_wrap_urlset(urls))
     except Exception as e:  # noqa: BLE001
         print(f"[sitemap-pages] error: {e}", flush=True)
@@ -1364,6 +1403,51 @@ def sitemap_videos_xml(request: Request = None):
         parts.append('</urlset>')
         return _xml_response("\n".join(parts) + "\n")
     except Exception as e:  # noqa: BLE001
+        return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n',
+            fallback=True)
+
+
+@app.get("/sitemap-images.xml")
+def sitemap_images_xml(request: Request = None):
+    """Per-image SEO pages — one URL per row in the social_images table.
+    Auto-grows as the daily image-gen cron runs at 09:00 Asia/Dubai
+    (default 10/day). Includes <image:image> block per Google's image
+    sitemap spec so they're indexed in Google Images Search."""
+    try:
+        base = _sitemap_base(request)
+        today = _dt.date.today().isoformat()
+        rows = []
+        try:
+            with db.connect() as c:
+                rows = c.execute(
+                    "SELECT slug, title, description, alt_text, created_at "
+                    "FROM social_images ORDER BY id DESC LIMIT 5000"
+                ).fetchall()
+        except Exception: pass
+        parts = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+                 'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">']
+        for r in rows:
+            slug = r["slug"]
+            page = f"{base}/image/{slug}"
+            img = f"{base}/api/social-images/img/{slug}.png"
+            title = (r["title"] or slug.replace("-", " ").title())[:120]
+            caption = (r["alt_text"] or r["description"] or title)[:200]
+            lastmod = (r["created_at"] or today)[:10]
+            parts.append(
+                f'  <url><loc>{_x_url(page)}</loc>'
+                f'<lastmod>{lastmod}</lastmod>'
+                f'<changefreq>monthly</changefreq><priority>0.6</priority>'
+                f'<image:image>'
+                f'<image:loc>{_x_url(img)}</image:loc>'
+                f'<image:title>{_x_url(title)}</image:title>'
+                f'<image:caption>{_x_url(caption)}</image:caption>'
+                f'</image:image></url>')
+        parts.append('</urlset>')
+        return _xml_response("\n".join(parts) + "\n")
+    except Exception as e:  # noqa: BLE001
+        print(f"[sitemap-images] error: {e}", flush=True)
         return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n',
             fallback=True)
