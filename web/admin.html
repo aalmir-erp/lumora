@@ -2453,38 +2453,67 @@ async function loadVendors() {
 
   const totalSvcOfferings = vendors.reduce((a,v) => a + (v.services||[]).length, 0);
   const approved = vendors.filter(v => v.is_approved).length;
+  const realCount = vendors.filter(v => v.trust_tag === "real_validated").length;
+  const fakeCount = vendors.filter(v => v.trust_tag === "fake_seed").length;
+  const TAG_COLOR = {"real_validated": "#15803D", "real_unscored": "#B45309",
+                     "fake_seed": "#B91C1C", "unknown": "#94A3B8"};
+  const TAG_BG    = {"real_validated": "#ECFDF5", "real_unscored": "#FEF3C7",
+                     "fake_seed": "#FEE2E2", "unknown": "#F1F5F9"};
 
   document.getElementById("vendor-table").innerHTML = `
     <div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap">
       <div class="kpi" style="padding:14px"><div class="k">Vendors</div><div class="v" style="font-size:22px">${vendors.length}</div></div>
+      <div class="kpi" style="padding:14px"><div class="k">✓ Real (verified)</div><div class="v" style="font-size:22px;color:#15803D">${realCount}</div></div>
+      <div class="kpi" style="padding:14px"><div class="k">⚠ Fake (seed)</div><div class="v" style="font-size:22px;color:#B91C1C">${fakeCount}</div></div>
       <div class="kpi" style="padding:14px"><div class="k">Approved</div><div class="v" style="font-size:22px">${approved}</div></div>
       <div class="kpi" style="padding:14px"><div class="k">Service offerings</div><div class="v" style="font-size:22px">${totalSvcOfferings}</div></div>
       <div style="margin-inline-start:auto;display:flex;gap:6px;align-items:center">
         <input id="vsearch" placeholder="🔎 Search vendor / email / service…"
           style="padding:8px 14px;border:1px solid var(--border);border-radius:999px;font-size:13px;width:260px">
-        <button class="btn btn-ghost" onclick="seedMarket()" title="Bulk-load 45 UAE market vendors">📥 Seed market vendors</button>
+        <select id="vfilter-trust" onchange="filterVendorTable()" style="padding:8px 14px;border:1px solid var(--border);border-radius:999px;font-size:13px">
+          <option value="">All trust levels</option>
+          <option value="real_validated">✓ Real (verified)</option>
+          <option value="real_unscored">Real (low score)</option>
+          <option value="fake_seed">⚠ Fake (seed)</option>
+        </select>
       </div>
     </div>
     ${_bulkBarHtml("vendors")}
+    <!-- Multi-select email send bar — fires when any vendor checkbox is ticked -->
+    <div id="v-email-bar" style="display:none;background:#0F766E;color:#fff;padding:10px 14px;border-radius:10px;margin-bottom:10px;align-items:center;gap:10px;font-size:13px">
+      <b id="v-email-count">0 vendors selected</b>
+      <button class="btn" style="background:#fff;color:#0F766E;font-weight:700" onclick="openVendorEmailModal()">✉ Send partnership email</button>
+      <span style="margin-inline-start:auto;font-size:11px;opacity:.85">⚠ Make sure SMTP is configured in the Scrape modal</span>
+    </div>
     <table class="list" id="vtable" data-bulk-entity="vendor">
       <thead><tr>
         <th style="width:32px"><input type="checkbox" class="bulk-all" title="Select all"></th>
-        <th>Vendor</th><th>Services offered</th><th>★ Rating</th><th>Jobs</th><th>Status</th><th></th>
+        <th>Vendor</th><th>Trust</th><th>Services offered</th><th>★ / Reviews</th><th>Source</th><th>Status</th><th></th>
       </tr></thead>
       <tbody>${vendors.map(v => `
-        <tr style="cursor:pointer" onclick="if (!event.target.closest('input,button,a')) openVendor(${v.id})">
-          <td onclick="event.stopPropagation()"><input type="checkbox" class="bulk-cb" data-id="${v.id}"></td>
+        <tr style="cursor:pointer" data-trust="${escapeHtml(v.trust_tag||'')}" onclick="if (!event.target.closest('input,button,a,select')) openVendor(${v.id})">
+          <td onclick="event.stopPropagation()"><input type="checkbox" class="bulk-cb v-email-cb" data-id="${v.id}" data-name="${escapeHtml(v.name||'')}" data-phone="${escapeHtml(v.phone||'')}" onchange="updateVEmailBar()"></td>
           <td>
             <div style="font-weight:600">${escapeHtml(v.name)}</div>
             <div style="font-size:11px;color:var(--muted)">${escapeHtml(v.email)}</div>
-            ${v.company?`<div style="font-size:10px;color:var(--muted)">${escapeHtml(v.company)}</div>`:''}
+            ${v.phone?`<div style="font-size:10.5px;color:#0369A1">📞 ${escapeHtml(v.phone)}</div>`:''}
           </td>
-          <td><div style="display:flex;flex-wrap:wrap;gap:4px;max-width:380px">
-            ${(v.services||[]).slice(0,8).map(sid => `<span style="background:color-mix(in srgb,var(--primary) 8%,var(--surface));color:var(--primary-dark);padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid color-mix(in srgb,var(--primary) 22%,transparent)">${escapeHtml((svcMap[sid]||{}).name || sid)}</span>`).join("")}
-            ${v.services && v.services.length>8?`<span style="font-size:11px;color:var(--muted)">+${v.services.length-8}</span>`:''}
+          <td><span style="background:${TAG_BG[v.trust_tag]||'#F1F5F9'};color:${TAG_COLOR[v.trust_tag]||'#94A3B8'};padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:800;white-space:nowrap">${escapeHtml(v.trust_label||'?')}</span>
+            ${v.ai_score?`<div style="font-size:10px;color:var(--muted);margin-top:2px">AI ${parseFloat(v.ai_score).toFixed(2)}</div>`:''}
+            ${v.contacted_at?`<div style="font-size:10px;color:#15803D;margin-top:2px">✉ ${escapeHtml(v.contact_method||'sent')}</div>`:''}
+          </td>
+          <td><div style="display:flex;flex-wrap:wrap;gap:4px;max-width:340px">
+            ${(v.services||[]).slice(0,6).map(sid => {
+              const price = (v.service_prices||{})[sid];
+              return `<span style="background:color-mix(in srgb,var(--primary) 8%,var(--surface));color:var(--primary-dark);padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid color-mix(in srgb,var(--primary) 22%,transparent)">${escapeHtml((svcMap[sid]||{}).name || sid)}${price?`<b style="margin-inline-start:4px">AED ${price}</b>`:''}</span>`;
+            }).join("")}
+            ${v.services && v.services.length>6?`<span style="font-size:11px;color:var(--muted)">+${v.services.length-6}</span>`:''}
           </div></td>
-          <td style="text-align:center">${(v.rating||5).toFixed(1)}</td>
-          <td style="text-align:center">${v.completed_jobs||0}</td>
+          <td style="text-align:center;font-size:12px">${(v.rating||0).toFixed(1)}<br><small style="color:var(--muted)">${v.reviews_count||0} rev</small></td>
+          <td style="font-size:11px;color:var(--muted)">
+            ${v.source ? escapeHtml(v.source.replace('_',' ')) : 'manual'}
+            ${v.source_url?`<br><a href="${escapeHtml(v.source_url)}" target="_blank" onclick="event.stopPropagation()" style="color:#0F766E">↗ source</a>`:''}
+          </td>
           <td>
             ${v.is_approved ? '<span class="badge confirmed">approved</span>' : '<span class="badge pending">pending</span>'}
             ${v.is_active ? '' : '<br><span class="badge cancelled">disabled</span>'}
@@ -2492,7 +2521,6 @@ async function loadVendors() {
           <td style="text-align:end;white-space:nowrap" onclick="event.stopPropagation()">
             ${!v.is_approved ? `<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'approve')">Approve</button>` : ''}
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'${v.is_active?'disable':'enable'}')">${v.is_active?'Disable':'Enable'}</button>
-            ${v.is_approved && v.is_active ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('vendor', ${v.id})" title="Sign in as this vendor">👁 View as</button>` : ''}
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:#B91C1C" onclick="deleteRow('vendor','${v.id}', loadVendors)">🗑</button>
           </td>
         </tr>`).join("")}</tbody>
@@ -2504,11 +2532,73 @@ async function loadVendors() {
 }
 function filterVendorTable() {
   const q = (document.getElementById("vsearch").value||"").toLowerCase();
+  const trust = (document.getElementById("vfilter-trust")||{}).value || "";
   const rows = document.querySelectorAll("#vtable tbody tr");
   rows.forEach(tr => {
     const txt = tr.textContent.toLowerCase();
-    tr.style.display = (!q || txt.includes(q)) ? "" : "none";
+    const tag = tr.dataset.trust || "";
+    const matchQ = !q || txt.includes(q);
+    const matchT = !trust || tag === trust;
+    tr.style.display = (matchQ && matchT) ? "" : "none";
   });
+}
+
+function updateVEmailBar() {
+  const cbs = document.querySelectorAll(".v-email-cb:checked");
+  const bar = document.getElementById("v-email-bar");
+  if (!bar) return;
+  if (cbs.length === 0) { bar.style.display = "none"; return; }
+  bar.style.display = "flex";
+  document.getElementById("v-email-count").textContent = cbs.length + " vendor(s) selected";
+}
+
+async function openVendorEmailModal() {
+  const cbs = Array.from(document.querySelectorAll(".v-email-cb:checked"));
+  if (!cbs.length) return alert("Select at least one vendor (checkbox)");
+  const ids = cbs.map(c => parseInt(c.dataset.id, 10));
+  const names = cbs.map(c => c.dataset.name);
+
+  // Pull preview message for the FIRST vendor so admin can edit + use as template
+  let preview = {};
+  try { preview = await adm("/api/admin/outreach/preview/" + ids[0]); } catch {}
+  const defaultMsg = preview.message_text || "";
+  const defaultSubject = preview.subject || "Partnership invitation from Servia";
+
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:780px;width:100%;max-height:92vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="margin:0;font-size:16px">✉ Send partnership email to ${ids.length} vendor(s)</h3>
+        <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="this.closest('div[style*=fixed]').remove()">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Recipients: ${names.slice(0,5).map(escapeHtml).join(', ')}${names.length>5?` +${names.length-5} more`:''}</p>
+      <p style="font-size:11.5px;color:var(--muted);margin:0 0 10px">Each vendor receives the message via best channel: WhatsApp first if UAE phone is set, then SMTP email. Tracks contacted_at so no double-spam.</p>
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase">Subject (email only)</label>
+      <input id="vmail-subj" value="${escapeHtml(defaultSubject)}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px">
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase">Message (preview from first vendor — edit if needed)</label>
+      <textarea id="vmail-body" style="width:100%;min-height:280px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-family:inherit;font-size:13px;line-height:1.55">${escapeHtml(defaultMsg)}</textarea>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 8px">Note: per-vendor name + service list is auto-personalised by the backend. The template above is a one-vendor preview only.</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="sendVendorEmails(${JSON.stringify(ids)}, this)">📨 Send to ${ids.length}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function sendVendorEmails(ids, btn) {
+  btn.disabled = true; btn.textContent = "Sending…";
+  let sent = 0, failed = 0;
+  for (const vid of ids) {
+    try {
+      const r = await adm("/api/admin/outreach/send-one", {method:"POST", body: JSON.stringify({vendor_id: vid})});
+      if (r.ok) sent++; else failed++;
+    } catch { failed++; }
+  }
+  toast(`✓ Sent ${sent}, failed ${failed}`);
+  btn.closest('div[style*=fixed]').remove();
+  loadVendors();
 }
 
 // ============== LIVE VENDOR SCRAPER ==============

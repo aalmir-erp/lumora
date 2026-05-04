@@ -172,24 +172,40 @@ async def _google_places_search(query: str, area: str, key: str,
 # ---------------------------------------------------------------------------
 async def _yellowpages_search(query: str, area: str,
                               limit: int = 10) -> list[dict]:
-    """Scrape https://www.yellowpages.ae search results. Two-pass parse:
-    first try the structured JSON-LD blocks (most reliable), then fall
-    back to permissive regex for older/cached HTML."""
+    """Scrape Yellow Pages UAE. Tries multiple URL patterns because YP has
+    been redesigned 3x. Returns whatever the first working URL gives back."""
     out: list[dict] = []
+    # Try every known URL pattern in order — first one that returns 200 wins
+    URL_PATTERNS = [
+        # Current (post-2024 redesign): /search-listing/<query>/<area>
+        f"https://www.yellowpages.ae/search-listing/{query.replace(' ','-')}/{area.lower().replace(' ','-')}",
+        # Path-based: /<query>-in-<area>.html
+        f"https://www.yellowpages.ae/{query.replace(' ','-')}-in-{area.lower().replace(' ','-')}.html",
+        # Older query form
+        f"https://www.yellowpages.ae/search?q={query.replace(' ','+')}&loc={area.replace(' ','+')}",
+        # Original (pre-2023)
+        f"https://www.yellowpages.ae/category-search.html?searchKey={query.replace(' ','+')}&loc={area.replace(' ','+')}",
+    ]
+    html = ""
+    used_url = ""
     try:
-        url = (f"https://www.yellowpages.ae/category-search.html"
-               f"?searchKey={query.replace(' ','+')}&loc={area.replace(' ','+')}")
         async with httpx.AsyncClient(timeout=15.0, follow_redirects=True,
                 headers={"User-Agent":
                     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml",
                     "Accept-Language": "en-US,en;q=0.9"}) as client:
-            r = await client.get(url)
-            if r.status_code != 200:
-                return [{"_error": f"YP HTTP {r.status_code}"}]
-            html = r.text
+            for pattern in URL_PATTERNS:
+                try:
+                    r = await client.get(pattern)
+                    if r.status_code == 200 and len(r.text) > 5000:
+                        html = r.text; used_url = pattern; break
+                except Exception: continue
+        if not html:
+            return [{"_error": f"YP no working URL pattern (tried {len(URL_PATTERNS)})"}]
     except Exception as e:
         return [{"_error": f"YP fetch failed: {e}"}]
+    url = used_url
     # Pass 1: JSON-LD LocalBusiness blocks (Yellow Pages embeds these for SEO)
     for ld in re.findall(r'<script type="application/ld\+json">(.*?)</script>',
                          html, re.S | re.I):
@@ -276,70 +292,118 @@ async def _connect_ae_search(query: str, area: str,
 # Source 3: Reddit recommendations (r/dubai, r/UAE, r/abudhabi, r/sharjah)
 # ---------------------------------------------------------------------------
 async def _reddit_search(query: str, area: str, limit: int = 10) -> list[dict]:
-    """Reddit's public JSON API surfaces 'who do you recommend for X' threads
-    where actual residents tag real vendors with phone numbers. Higher-signal
-    than YP because the recommendations are from people who used the service
-    recently. Returns vendor dicts with the source URL pointing back to the
-    thread so admin can verify the recommendation."""
+    """Reddit's public JSON API. Searches r/<sub> with the natural query
+    (no restrict_sr=1, no +recommend) so we get all relevant threads.
+    Tolerates 429 rate limits with backoff. Polite User-Agent."""
     out: list[dict] = []
-    subs = ("dubai", "UAE", "abudhabi", "sharjah")
+    UA = "web:servia-vendor-scraper:v1.0 (by /u/serviaae)"
     sub_for_area = {
         "Dubai": "dubai", "Abu Dhabi": "abudhabi", "Sharjah": "sharjah",
-        "Ajman": "UAE", "Ras Al Khaimah": "UAE", "Umm Al Quwain": "UAE",
-        "Fujairah": "UAE",
+        "Ajman": "dubai", "Ras Al Khaimah": "dubai",
+        "Umm Al Quwain": "dubai", "Fujairah": "dubai",
     }
-    sub = sub_for_area.get(area, "UAE")
-    url = (f"https://www.reddit.com/r/{sub}/search.json"
-           f"?q={query.replace(' ','+')}+recommend&restrict_sr=1&sort=new&t=year&limit=15")
+    primary_sub = sub_for_area.get(area, "dubai")
+    subs = [primary_sub] if primary_sub == "UAE" else [primary_sub, "UAE"]
+
+    async def _fetch_json(url: str):
+        for _ in range(2):
+            try:
+                async with httpx.AsyncClient(timeout=12.0,
+                        headers={"User-Agent": UA}) as client:
+                    r = await client.get(url)
+                    if r.status_code == 429:
+                        await asyncio.sleep(2); continue
+                    if r.status_code != 200: return None
+                    return r.json()
+            except Exception: return None
+        return None
+
+    for sub in subs:
+        if len(out) >= limit: break
+        search_url = (f"https://www.reddit.com/r/{sub}/search.json"
+                      f"?q={query.replace(' ','+')}&sort=relevance&t=year&limit=15")
+        data = await _fetch_json(search_url)
+        if not data: continue
+        posts = (data.get("data") or {}).get("children") or []
+        for post in posts[:5]:
+            if len(out) >= limit: break
+            pd = post.get("data") or {}
+            thread_url = "https://www.reddit.com" + (pd.get("permalink") or "")
+            body_text = (pd.get("selftext") or "") + " " + (pd.get("title") or "")
+            # Pull comments to mine for phone numbers people drop in replies
+            cdata = await _fetch_json(thread_url + ".json?limit=20&depth=1")
+            if cdata and isinstance(cdata, list) and len(cdata) >= 2:
+                comments = (cdata[1].get("data") or {}).get("children") or []
+                for c in comments[:15]:
+                    body_text += " ||| " + ((c.get("data") or {}).get("body") or "")
+            # Extract UAE phone numbers (+9715X XXXXXXX) and nearby names
+            phones = re.findall(r"\+?9715[0-9](?:[\s-]?\d){7}", body_text)
+            for ph in set(phones):
+                ph_clean = re.sub(r"[\s-]", "", ph)
+                if not ph_clean.startswith("+"): ph_clean = "+" + ph_clean
+                idx = body_text.find(ph)
+                window = body_text[max(0, idx-120):idx]
+                name_match = re.findall(r"\b([A-Z][\w&'.-]{2,}(?:\s+[A-Z][\w&'.-]{2,}){0,4})\b", window)
+                name = name_match[-1] if name_match else "Reddit-recommended vendor"
+                out.append({
+                    "place_id": "rd_" + hashlib.sha1((name+ph_clean).encode()).hexdigest()[:14],
+                    "name": name[:80].strip(),
+                    "phone": ph_clean, "website": "",
+                    "address": area + ", UAE (Reddit-recommended)",
+                    "rating": 0, "reviews_count": 1,
+                    "source": "reddit_recommendation",
+                    "source_url": thread_url, "emirate": area,
+                })
+                if len(out) >= limit: break
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Source 5: Bing Search (no API needed, returns business results in HTML)
+# ---------------------------------------------------------------------------
+async def _bing_search(query: str, area: str, limit: int = 10) -> list[dict]:
+    """Generic web fallback — scrape Bing's search-result page for
+    'best <query> in <area> UAE'. Bing surfaces business listings + phone
+    numbers right in SERP. Free, no API key, but parsing is fragile."""
+    out: list[dict] = []
+    full_q = f"best {query} in {area} UAE phone"
+    url = f"https://www.bing.com/search?q={full_q.replace(' ','+')}&cc=AE"
     try:
-        async with httpx.AsyncClient(timeout=12.0,
-                                     headers={"User-Agent": "ServiaVendorScraper/1.0 by /u/serviaae"}) as client:
+        async with httpx.AsyncClient(timeout=12.0, follow_redirects=True,
+                headers={"User-Agent":
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 "
+                    "(KHTML, like Gecko) Version/16.0 Safari/605.1.15",
+                    "Accept-Language": "en-AE,en;q=0.9"}) as client:
             r = await client.get(url)
-            if r.status_code != 200:
-                return []
-            data = r.json()
-    except Exception:
-        return []
-    posts = (data.get("data") or {}).get("children") or []
-    # Crawl post body + top-level comments for phone numbers + business names
-    for post in posts[:5]:
-        pd = post.get("data") or {}
-        thread_url = "https://www.reddit.com" + (pd.get("permalink") or "")
-        body_text = (pd.get("selftext") or "") + " " + (pd.get("title") or "")
-        # Pull the first comment thread
-        try:
-            async with httpx.AsyncClient(timeout=10.0,
-                                         headers={"User-Agent": "ServiaVendorScraper/1.0"}) as client:
-                cr = await client.get(thread_url + ".json?limit=20&depth=1")
-                if cr.status_code == 200:
-                    comments = ((cr.json() or [{}, {}])[1].get("data") or {}).get("children") or []
-                    for c in comments[:15]:
-                        body_text += " ||| " + ((c.get("data") or {}).get("body") or "")
-        except Exception: pass
-        # Extract UAE phone numbers + nearby business names
-        phones = re.findall(r"\+?9715[0-9](?:[\s-]?\d){7}", body_text)
-        for ph in set(phones):
-            ph_clean = re.sub(r"[\s-]", "", ph)
-            if not ph_clean.startswith("+"): ph_clean = "+" + ph_clean
-            # Try to extract a business name in 60 chars before the phone
-            idx = body_text.find(ph)
-            window = body_text[max(0, idx-120):idx]
-            # Heuristic: capitalised words near the phone are likely the name
-            name_match = re.findall(r"\b([A-Z][\w&'.-]{2,}(?:\s+[A-Z][\w&'.-]{2,}){0,4})\b", window)
-            name = name_match[-1] if name_match else "Reddit-recommended vendor"
-            out.append({
-                "place_id": "rd_" + hashlib.sha1((name+ph_clean).encode()).hexdigest()[:14],
-                "name": name[:80].strip(),
-                "phone": ph_clean,
-                "website": "",
-                "address": area + ", UAE (recommended on Reddit)",
-                "rating": 0,
-                "reviews_count": 1,   # one Reddit recommendation = 1 review
-                "source": "reddit_recommendation",
-                "source_url": thread_url,
-                "emirate": area,
-            })
-            if len(out) >= limit: return out
+            if r.status_code != 200: return []
+            html = r.text
+    except Exception: return []
+    # Extract result blocks: <h2><a href=...>Name</a></h2> followed by snippet
+    # containing UAE phone numbers
+    blocks = re.findall(
+        r'<h2><a[^>]*href="(https?://[^"]+)"[^>]*>([^<]+)</a></h2>'
+        r'(.{0,800}?)</li>', html, re.S | re.I)
+    for href, name, snippet in blocks[:limit*2]:
+        # Skip aggregator/listing sites — we want vendor sites themselves
+        if any(d in href for d in ("yellowpages.ae", "connect.ae", "facebook.com",
+                                    "linkedin.com", "tripadvisor", "instagram.com",
+                                    "youtube.com", "twitter.com", "wikipedia",
+                                    "yelp.com", "reddit.com")):
+            continue
+        # Find a UAE phone in the snippet
+        m = re.search(r"\+?9715[0-9](?:[\s-]?\d){7}", snippet)
+        if not m: continue
+        phone = re.sub(r"[\s-]", "", m.group(0))
+        if not phone.startswith("+"): phone = "+" + phone
+        clean_name = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", name)).strip()[:80]
+        out.append({
+            "place_id": "bg_" + hashlib.sha1((clean_name+phone).encode()).hexdigest()[:14],
+            "name": clean_name, "phone": phone,
+            "website": href, "address": area + ", UAE",
+            "rating": 0, "reviews_count": 0,
+            "source": "bing_search", "source_url": href, "emirate": area,
+        })
+        if len(out) >= limit: return out
     return out
 
 
@@ -536,11 +600,23 @@ async def scrape_for_service(service_id: str, *, target_per_area: int = 3,
         candidates: list[dict] = []
         for query in queries[:2]:                                # cap to 2 queries/area to save quota
             sources = []
-            if google_key:
+            # Per-source toggles persisted in db.cfg — admin can disable
+            # individual sources from the UI if one is rate-limited or
+            # serving junk that day.
+            enabled = db.cfg_get("scraper_sources_enabled", None)
+            if enabled is None:
+                enabled = {"google_places": True, "yellowpages_ae": True,
+                           "connect_ae": True, "reddit": True, "bing": True}
+            if google_key and enabled.get("google_places", True):
                 sources.append(("google_places", _google_places_search(query, area, google_key, limit=target_per_area*2)))
-            sources.append(("yellowpages_ae", _yellowpages_search(query, area, limit=target_per_area*2)))
-            sources.append(("connect_ae", _connect_ae_search(query, area, limit=target_per_area*2)))
-            sources.append(("reddit", _reddit_search(query, area, limit=target_per_area*2)))
+            if enabled.get("yellowpages_ae", True):
+                sources.append(("yellowpages_ae", _yellowpages_search(query, area, limit=target_per_area*2)))
+            if enabled.get("connect_ae", True):
+                sources.append(("connect_ae", _connect_ae_search(query, area, limit=target_per_area*2)))
+            if enabled.get("reddit", True):
+                sources.append(("reddit", _reddit_search(query, area, limit=target_per_area*2)))
+            if enabled.get("bing", True):
+                sources.append(("bing", _bing_search(query, area, limit=target_per_area*2)))
             # Run sources in parallel for speed
             results = await asyncio.gather(*(s[1] for s in sources), return_exceptions=True)
             for (src_name, _), cs in zip(sources, results):
@@ -731,6 +807,48 @@ def wipe_synthetic():
 # ---------------------------------------------------------------------------
 class GoogleKeyBody(BaseModel):
     api_key: str
+
+
+@router.get("/sources")
+def get_sources():
+    """Return the list of available scraper sources + their enabled state.
+    Admin toggles individual ones from the UI."""
+    enabled = db.cfg_get("scraper_sources_enabled", None) or {
+        "google_places": True, "yellowpages_ae": True,
+        "connect_ae": True, "reddit": True, "bing": True}
+    google_key = (db.cfg_get("google_places_api_key", "") or "").strip()
+    return {"sources": [
+        {"key": "google_places", "label": "Google Places API",
+         "enabled": enabled.get("google_places", True),
+         "needs_key": True, "key_set": bool(google_key),
+         "note": "Best results. Free tier 10K calls/month."},
+        {"key": "yellowpages_ae", "label": "Yellow Pages UAE",
+         "enabled": enabled.get("yellowpages_ae", True),
+         "needs_key": False,
+         "note": "Free directory scrape. Tries 4 URL patterns."},
+        {"key": "connect_ae", "label": "Connect.ae",
+         "enabled": enabled.get("connect_ae", True),
+         "needs_key": False,
+         "note": "UAE-focused business directory. Free."},
+        {"key": "reddit", "label": "Reddit (r/dubai, r/UAE, r/abudhabi)",
+         "enabled": enabled.get("reddit", True),
+         "needs_key": False,
+         "note": "Real resident recommendations. Rate-limited."},
+        {"key": "bing", "label": "Bing Search (generic web)",
+         "enabled": enabled.get("bing", True),
+         "needs_key": False,
+         "note": "Searches 'best <service> in <area> UAE phone'. No API key needed."},
+    ]}
+
+
+class SourcesBody(BaseModel):
+    enabled: dict[str, bool]
+
+
+@router.post("/sources")
+def set_sources(body: SourcesBody):
+    db.cfg_set("scraper_sources_enabled", body.enabled)
+    return {"ok": True, "enabled": body.enabled}
 
 
 @router.get("/google-key")
