@@ -52,10 +52,28 @@ def track(request: Request) -> bool:
         _ensure_table()
         vid = visitor_id_for(request)
         path = str(request.url.path)
-        if path.startswith(("/api/", "/admin", "/_snippets", "/sw.js",
-                            "/manifest", "/sitemap", "/robots.txt", "/llms.txt")):
-            return False  # don't track API/internal hits
+        # Skip admin / API / private surfaces / static assets / known templates
+        if path.startswith(("/api/", "/admin", "/admin-login", "/admin-widget",
+                            "/_snippets", "/sw.js", "/lazy-loaders",
+                            "/widget.", "/banner.", "/cms.js", "/intake.js",
+                            "/theme.js", "/app.js", "/install.js", "/share.js",
+                            "/cart-badge", "/social-strip", "/social-proof",
+                            "/manifest", "/sitemap", "/robots.txt", "/llms.txt",
+                            "/__admin_token__", "/_debug_token_", "/__")):
+            return False
+        # Skip static asset extensions
+        if path.endswith((".js", ".css", ".svg", ".png", ".jpg", ".jpeg", ".webp",
+                          ".ico", ".woff", ".woff2", ".ttf", ".map", ".json",
+                          ".txt", ".xml", ".webmanifest")):
+            return False
+        # Skip template-string artifacts (unrendered ${...} in URLs)
+        if "${" in path or "{{" in path:
+            return False
         ua = (request.headers.get("user-agent") or "")[:300]
+        # Skip known bots — they're tracked separately by visibility.log_bot_visit
+        from . import visibility as _viz
+        if _viz.detect_bot(ua):
+            return False
         ip = (request.client.host if request.client else "")[:64]
         country = (request.headers.get("cf-ipcountry") or
                    request.headers.get("x-vercel-ip-country") or "")[:8]
@@ -110,10 +128,26 @@ def parse_ua(ua: str) -> dict:
     return {"device": device, "os": os_, "browser": br}
 
 
+def _country_flag(code: str) -> str:
+    if not code or len(code) != 2: return ""
+    base = 0x1F1E6  # 🇦
+    return chr(base + ord(code[0].upper()) - ord("A")) + chr(base + ord(code[1].upper()) - ord("A"))
+
+
 @admin_router.get("/visitors")
 def get_live_visitors(active_minutes: int = 5):
-    """Returns visitors active in last N minutes (default 5)."""
+    """Returns visitors active in last N minutes (default 5).
+
+    Enriched per-row data:
+    - device / os / browser (parsed UA)
+    - seconds_ago (since last hit)
+    - session_duration_seconds (last_seen - first_seen)
+    - flag emoji 🇦🇪 from country code
+    - is_bot flag (matched against bot UA signatures)
+    - looks_human guess (heuristic — UA + hit pattern)
+    """
     _ensure_table()
+    from . import visibility as _viz
     cutoff = (_dt.datetime.utcnow() - _dt.timedelta(minutes=max(1, active_minutes))).isoformat() + "Z"
     with db.connect() as c:
         rows = c.execute(
@@ -121,20 +155,46 @@ def get_live_visitors(active_minutes: int = 5):
             "ORDER BY last_seen DESC LIMIT 100",
             (cutoff,)).fetchall()
     out = []
+    now = _dt.datetime.utcnow()
     for r in rows:
         d = dict(r)
         d.update(parse_ua(d.get("user_agent","")))
-        # Compute seconds-since-active
+        # Bot detection
+        bot_name = _viz.detect_bot(d.get("user_agent",""))
+        d["is_bot"] = bool(bot_name)
+        d["bot_name"] = bot_name or ""
+        # Country flag
+        d["flag"] = _country_flag(d.get("country","") or "")
+        # Timing
         try:
             last = _dt.datetime.fromisoformat(d["last_seen"].rstrip("Z"))
-            d["seconds_ago"] = int((_dt.datetime.utcnow() - last).total_seconds())
+            d["seconds_ago"] = int((now - last).total_seconds())
         except Exception: d["seconds_ago"] = 0
+        try:
+            first = _dt.datetime.fromisoformat(d["first_seen"].rstrip("Z"))
+            d["session_duration_seconds"] = int((last - first).total_seconds())
+        except Exception: d["session_duration_seconds"] = 0
+        # Pretty IP — IPv4 mapped to IPv6 trim
+        ip = d.get("ip","")
+        if ip.startswith("::ffff:"): ip = ip[7:]
+        d["ip"] = ip
         out.append(d)
     return {
         "active": out,
         "count": len(out),
         "active_minutes": active_minutes,
     }
+
+
+# Cleanup endpoint
+@admin_router.post("/visitors/clear-test")
+def clear_test_visitors():
+    """Wipes the live_visitors table — useful when you want to reset after
+    seeing your own admin hits clutter the list."""
+    _ensure_table()
+    with db.connect() as c:
+        n = c.execute("DELETE FROM live_visitors").rowcount
+    return {"ok": True, "deleted": n}
 
 
 @admin_router.get("/stats")
