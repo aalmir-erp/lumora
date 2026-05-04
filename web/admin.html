@@ -51,6 +51,7 @@
     <a href="#videos"    data-tab="videos">🎬 Videos</a>
     <a href="#autopost"  data-tab="autopost">🌐 Social Auto-post</a>
     <a href="#ailisting" data-tab="ailisting">🧠 AI Discoverability</a>
+    <a href="#socimg"    data-tab="socimg">🖼 Social Images</a>
     <a href="/admin-widget.html" target="_blank" style="margin-top:14px;color:#7DD3FC;border-top:1px solid #1E293B;padding-top:14px">📲 Home-screen widget ↗</a>
     <a href="/?edit=1" target="_blank" style="color:#FCD34D" title="Opens the public site with every editable text block highlighted in dashed purple. Click any block to type, then 'Save all'.">✏️ Edit pages inline ↗</a>
     <a href="#" id="logout" style="margin-top:14px;color:#FCA5A5">Logout</a>
@@ -883,6 +884,34 @@
       </div>
     </div>
 
+    <!-- ====== SOCIAL IMAGES ====== -->
+    <div id="t-socimg" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0">🖼 Social Images</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13.5px">Auto-generate appealing social-media images for FB / Instagram / TikTok / Pinterest. Cycles models for visual variety. Each image gets SEO title + description + alt + a public page at <code>/image/{slug}</code>.</p>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="genSocImageOne()">+ Generate one</button>
+          <button class="btn btn-ghost" style="background:#FEF3C7;color:#7C2D12;font-weight:700" onclick="genSocImageBulk()">🎨 Generate 100 starter pack</button>
+          <button class="btn btn-ghost" onclick="openSocImagePrompt()">⚙️ Prompt</button>
+          <button class="btn btn-ghost" onclick="openSocImageSchedule()">⏰ Schedule</button>
+        </div>
+      </div>
+
+      <!-- Live status panel -->
+      <div id="si-status" style="display:none;background:#0F172A;color:#fff;padding:14px;border-radius:12px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div><b>🎨 Generating:</b> <span id="si-step">—</span></div>
+          <div style="font-size:13px;color:#94A3B8" id="si-progress">0/0</div>
+        </div>
+        <div style="background:#0B1220;border-radius:8px;padding:10px;font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.6;max-height:240px;overflow-y:auto" id="si-log"></div>
+      </div>
+
+      <!-- Gallery grid -->
+      <div id="si-gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px"></div>
+    </div>
+
     <!-- ====== AI DISCOVERABILITY ====== -->
     <div id="t-ailisting" class="tab" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
@@ -1059,6 +1088,7 @@ function show(tab) {
   if (tab==="videos")    loadVideos();
   if (tab==="autopost")  loadAutopost();
   if (tab==="ailisting") loadAIListings();
+  if (tab==="socimg")    loadSocImages();
 }
 async function adm(path, opts={}) {
   try {
@@ -1118,7 +1148,7 @@ async function boot() {
   // (#dashboard, #live, #bookings, #analytics, etc.) and fall back to dashboard.
   const validTabs = ["dashboard","live","bookings","customers","convos","pricing",
                      "vendors","outreach","prompts","payments","analytics",
-                     "autoblog","brand","whatsapp","launch","aiarena","videos","autopost","ailisting"];
+                     "autoblog","brand","whatsapp","launch","aiarena","videos","autopost","ailisting","socimg"];
   let initialTab = (location.hash || "").replace(/^#/, "").trim().toLowerCase();
   if (!validTabs.includes(initialTab)) initialTab = "dashboard";
   show(initialTab);
@@ -3844,6 +3874,214 @@ async function saveAIListingDetails(key, btn) {
   } catch (e) {
     btn.disabled = false; btn.textContent = "💾 Save";
   }
+}
+
+// ============== SOCIAL IMAGES ==============
+async function loadSocImages() {
+  const wrap = document.getElementById("si-gallery");
+  wrap.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:24px">Loading…</div>';
+  try {
+    const r = await adm("/api/admin/social-images/list?limit=200");
+    const imgs = r.images || [];
+    if (!imgs.length) {
+      wrap.innerHTML = '<div style="grid-column:1/-1;background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px;padding:18px;color:#7C2D12;text-align:center">No images yet. Hit <b>Generate 100 starter pack</b> above to seed the gallery.</div>';
+      return;
+    }
+    wrap.innerHTML = imgs.map(i => `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+        <a href="/image/${escapeHtml(i.slug)}" target="_blank">
+          <img src="/api/social-images/img/${escapeHtml(i.slug)}.png" alt="${escapeHtml(i.alt_text||i.title||'')}" loading="lazy" style="width:100%;aspect-ratio:1/1;object-fit:cover;background:#F1F5F9;display:block">
+        </a>
+        <div style="padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:12px;font-weight:700;color:#0F172A;line-height:1.3">${escapeHtml((i.title||i.slug||'').slice(0,60))}</div>
+          <div style="font-size:10.5px;color:var(--muted)">${escapeHtml(i.service_id||'')} · ${escapeHtml(i.area||'')} · ${escapeHtml(i.aspect||'')}</div>
+          <div style="font-size:10.5px;color:#0369A1">via ${escapeHtml((i.model||'?').split('/')[0])} · 👁 ${i.view_count||0}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;font-size:10px;margin-top:2px">
+            ${i.posted_facebook?'<span style="background:#1877F2;color:#fff;padding:1px 6px;border-radius:4px">FB</span>':''}
+            ${i.posted_instagram?'<span style="background:#E4405F;color:#fff;padding:1px 6px;border-radius:4px">IG</span>':''}
+            ${i.posted_tiktok?'<span style="background:#0F172A;color:#fff;padding:1px 6px;border-radius:4px">TT</span>':''}
+            ${i.posted_pinterest?'<span style="background:#BD081C;color:#fff;padding:1px 6px;border-radius:4px">P</span>':''}
+          </div>
+          <div style="display:flex;gap:4px;margin-top:auto;padding-top:6px">
+            <a class="btn btn-ghost" href="/image/${escapeHtml(i.slug)}" target="_blank" style="font-size:10.5px;padding:3px 8px">↗ Page</a>
+            <a class="btn btn-ghost" href="/api/social-images/img/${escapeHtml(i.slug)}.png" download style="font-size:10.5px;padding:3px 8px">⬇ PNG</a>
+            <button class="btn btn-ghost" style="font-size:10.5px;padding:3px 8px;color:#B91C1C;margin-inline-start:auto" onclick="delSocImage('${escapeHtml(i.slug)}')">🗑</button>
+          </div>
+        </div>
+      </div>`).join("");
+  } catch (e) {
+    wrap.innerHTML = '<div style="color:#B91C1C">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function delSocImage(slug) {
+  if (!confirm("Delete this image? Removes from gallery + /image/" + slug)) return;
+  try {
+    await adm("/api/admin/social-images/" + encodeURIComponent(slug), {method:"DELETE"});
+    toast("✓ Deleted");
+    loadSocImages();
+  } catch {}
+}
+
+async function genSocImageOne() {
+  const services = await adm("/api/admin/services-summary").catch(()=>({services:[]}));
+  const svcOpts = (services.services||[]).map(s =>
+    `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${s.id})</option>`).join("");
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:520px;width:100%">
+      <h3 style="margin:0 0 10px;font-size:16px">🎨 Generate one social image</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <select id="si-svc" style="padding:8px;border:1px solid var(--border);border-radius:8px;grid-column:1/-1">${svcOpts}</select>
+        <select id="si-aspect" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <option value="1x1">1:1 Square (Instagram / FB)</option>
+          <option value="4x5">4:5 Portrait (Instagram feed)</option>
+          <option value="9x16">9:16 Vertical (TikTok / Stories)</option>
+          <option value="2x3">2:3 Pinterest</option>
+        </select>
+        <select id="si-aest" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <option value="">Auto (cycles models)</option>
+          <option value="vibrant">Vibrant (Gemini Nano Banana)</option>
+          <option value="premium">Premium (DALL-E 3)</option>
+          <option value="artistic">Artistic (Stability XL)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="runGenOne(this)">🎨 Generate</button>
+      </div>
+      <div id="si-one-msg" style="margin-top:10px;font-size:12.5px;color:var(--muted)"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+async function runGenOne(btn) {
+  btn.disabled = true; btn.textContent = "Generating ~10–20s…";
+  const body = {
+    service_id: document.getElementById("si-svc").value,
+    aspect: document.getElementById("si-aspect").value,
+    model: document.getElementById("si-aest").value || null,
+  };
+  try {
+    const r = await adm("/api/admin/social-images/generate", {method:"POST", body: JSON.stringify(body)});
+    if (r.ok) {
+      document.getElementById("si-one-msg").innerHTML = '✓ <a href="'+escapeHtml(r.url)+'" target="_blank" style="color:#0F766E">'+escapeHtml(r.title)+'</a>';
+      btn.closest('div[style*=fixed]').remove();
+      loadSocImages();
+    } else {
+      document.getElementById("si-one-msg").innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(r.error||'failed') + '</span>';
+      btn.disabled = false; btn.textContent = "🎨 Generate";
+    }
+  } catch (e) {
+    document.getElementById("si-one-msg").innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(e.message) + '</span>';
+    btn.disabled = false; btn.textContent = "🎨 Generate";
+  }
+}
+
+async function genSocImageBulk() {
+  const target = parseInt(prompt("How many images? (max 200)", "100") || "0", 10);
+  if (!target || target < 1) return;
+  if (target > 200) return alert("Max 200 to prevent runaway cost");
+  document.getElementById("si-status").style.display = "block";
+  if (window._siPoll) clearInterval(window._siPoll);
+  window._siPoll = setInterval(pollSocImageStatus, 2000);
+  try {
+    await adm("/api/admin/social-images/generate-bulk", {
+      method:"POST", body: JSON.stringify({target, mix_aspects:true})
+    });
+    toast("🎨 Started — watch live log above");
+  } catch (e) { /* adm() toasts */ }
+}
+async function pollSocImageStatus() {
+  try {
+    const s = await adm("/api/admin/social-images/status");
+    document.getElementById("si-step").textContent = s.step || "—";
+    document.getElementById("si-progress").textContent = (s.made||0) + "/" + (s.target||0);
+    document.getElementById("si-log").innerHTML = (s.log||[]).map(e =>
+      `<div>[${e.ts.slice(11,19)}] ${escapeHtml(e.msg)}</div>`).join("");
+    document.getElementById("si-log").scrollTop = document.getElementById("si-log").scrollHeight;
+    if (!s.running) {
+      clearInterval(window._siPoll); window._siPoll = null;
+      loadSocImages();
+    }
+  } catch {}
+}
+
+async function openSocImagePrompt() {
+  let d;
+  try { d = await adm("/api/admin/social-images/prompt"); } catch { return; }
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:840px;width:100%;max-height:92vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="margin:0;font-size:16px">⚙️ Social-image prompts</h3>
+        <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="this.closest('div[style*=fixed]').remove()">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 8px">Image prompt placeholders: <code>{service_pretty}</code> <code>{area}</code> <code>{aspect_label}</code> <code>{text_side}</code>. Leave blank for the built-in default.</p>
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase">Image prompt template</label>
+      <textarea id="si-img-tpl" style="width:100%;min-height:180px;padding:10px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-family:ui-monospace,monospace;font-size:12px">${escapeHtml(d.image_template || d.image_default)}</textarea>
+      <details style="font-size:11.5px;margin-bottom:10px">
+        <summary style="cursor:pointer;color:#0F766E">📖 View default image prompt</summary>
+        <pre style="background:#F8FAFC;padding:10px;border-radius:8px;font-size:11px;white-space:pre-wrap;margin-top:6px">${escapeHtml(d.image_default)}</pre>
+      </details>
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase">SEO title/desc/alt prompt template</label>
+      <textarea id="si-title-tpl" style="width:100%;min-height:120px;padding:10px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-family:ui-monospace,monospace;font-size:12px">${escapeHtml(d.title_template || d.title_default)}</textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSocImagePrompt(this)">💾 Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+async function saveSocImagePrompt(btn) {
+  const body = {
+    image_template: document.getElementById("si-img-tpl").value,
+    title_template: document.getElementById("si-title-tpl").value,
+  };
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    await adm("/api/admin/social-images/prompt", {method:"POST", body: JSON.stringify(body)});
+    toast("✓ Saved");
+    btn.closest('div[style*=fixed]').remove();
+  } catch { btn.disabled = false; btn.textContent = "💾 Save"; }
+}
+
+async function openSocImageSchedule() {
+  let d;
+  try { d = await adm("/api/admin/social-images/schedule"); } catch { return; }
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:480px;width:100%">
+      <h3 style="margin:0 0 10px;font-size:16px">⏰ Daily auto-generation schedule</h3>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Cron fires every day at the chosen Asia/Dubai hour and generates the configured count, mixing aspect ratios + cycling image models for variety.</p>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px">
+        <input type="checkbox" id="si-sch-en" ${d.enabled?'checked':''}> Enable daily auto-generation
+      </label>
+      <label style="display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-top:6px">Images per day</label>
+      <input type="number" id="si-sch-count" min="1" max="50" value="${d.daily_count}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+      <label style="display:block;font-size:11.5px;font-weight:700;color:var(--muted)">Hour (Asia/Dubai, 0-23)</label>
+      <input type="number" id="si-sch-hour" min="0" max="23" value="${d.hour_dubai}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px">
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSocImageSchedule(this)">💾 Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+async function saveSocImageSchedule(btn) {
+  const body = {
+    enabled: document.getElementById("si-sch-en").checked,
+    daily_count: parseInt(document.getElementById("si-sch-count").value, 10),
+    hour_dubai: parseInt(document.getElementById("si-sch-hour").value, 10),
+  };
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    await adm("/api/admin/social-images/schedule", {method:"POST", body: JSON.stringify(body)});
+    toast("✓ Saved");
+    btn.closest('div[style*=fixed]').remove();
+  } catch { btn.disabled = false; btn.textContent = "💾 Save"; }
 }
 
 // ============== AUTO-POST ==============

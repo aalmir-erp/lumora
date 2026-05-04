@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0F766E">
+<title>Servia gallery: UAE home services in pictures</title>
+<meta name="description" content="Real photos of Servia jobs: deep cleaning, AC service, handyman, maid service across Dubai, Sharjah, Ajman, Abu Dhabi. Browse and book.">
+<link rel="canonical" href="https://servia.ae/gallery.html">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
+<style>
+  body { background:#FAFAFA }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:14px; padding:0 16px; max-width:1180px; margin:0 auto }
+  .card { background:#fff; border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; transition:transform .15s, box-shadow .15s }
+  .card:hover { transform:translateY(-2px); box-shadow:0 14px 32px rgba(15,23,42,.1) }
+  .card a { color:inherit; text-decoration:none; display:block }
+  .card img { width:100%; aspect-ratio:1/1; object-fit:cover; background:#F1F5F9; display:block }
+  .card .meta { padding:10px 12px }
+  .card .meta b { display:block; font-size:13px; line-height:1.3; color:#0F172A;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical }
+  .card .meta small { color:var(--muted); font-size:11px }
+  .filter { padding:14px 16px; max-width:1180px; margin:14px auto 0;
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+  .chip { background:#fff; border:1px solid var(--border); padding:6px 12px;
+    border-radius:999px; font-size:12px; font-weight:600; cursor:pointer }
+  .chip.active { background:#0F766E; color:#fff; border-color:#0F766E }
+</style>
+</head><body>
+<div class="uae-flag-strip" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36" alt="Servia" decoding="async"></a>
+  <div class="nav-links" style="margin-inline-start:auto">
+    <a href="/services.html">Services</a>
+    <a href="/videos.html">Videos</a>
+    <a href="/gallery.html"><b style="color:#0F766E">Gallery</b></a>
+    <a href="/book.html">Book</a>
+  </div>
+</div></nav>
+
+<header style="text-align:center;padding:32px 16px 8px;max-width:780px;margin:0 auto">
+  <h1 style="font-size:32px;letter-spacing:-.02em;margin:0 0 6px">Servia gallery</h1>
+  <p style="color:var(--muted);font-size:15px;margin:0">Real-style photos of Servia jobs across the UAE. Tap any image for the booking page.</p>
+</header>
+
+<div class="filter" id="g-filter">
+  <span class="chip active" data-svc="">All services</span>
+</div>
+
+<section class="grid" id="g-grid" style="margin-top:14px;padding-bottom:48px">
+  <div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 0">Loading…</div>
+</section>
+
+<footer style="background:#0F172A;color:#fff;padding:32px 24px;text-align:center;margin-top:32px">
+  <a href="/" style="color:#fff"><img src="/logo.svg" height="32" alt="Servia" style="filter:brightness(0) invert(1)"></a>
+  <p style="margin:12px 0 4px;font-size:13px;color:#CBD5E1">Trusted UAE home services. Booked in 60 seconds.</p>
+  <p style="font-size:12px;color:#94A3B8"><a href="mailto:support@servia.ae" style="color:#94A3B8">support@servia.ae</a></p>
+</footer>
+
+<script>
+(async () => {
+  const grid = document.getElementById("g-grid");
+  const filter = document.getElementById("g-filter");
+  let images = [];
+  try {
+    const r = await fetch("/api/social-images/list?limit=120").then(r=>r.json());
+    images = r.images || [];
+  } catch (e) {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:#B91C1C;text-align:center;padding:32px">Could not load gallery — try again later.</div>';
+    return;
+  }
+  if (!images.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:24px;text-align:center;color:#7C2D12">Gallery is being filled — check back in a few hours.</div>';
+    return;
+  }
+  // Build service chips from data
+  const services = [...new Set(images.map(i => i.service_id))].sort();
+  for (const sv of services) {
+    const c = document.createElement("span");
+    c.className = "chip"; c.dataset.svc = sv;
+    c.textContent = sv.replace(/_/g," ").replace(/\b\w/g, s=>s.toUpperCase());
+    filter.appendChild(c);
+  }
+  function render(svc) {
+    const list = svc ? images.filter(i => i.service_id === svc) : images;
+    grid.innerHTML = list.map(i => `
+      <article class="card">
+        <a href="/image/${i.slug}">
+          <img src="/api/social-images/img/${i.slug}.png" loading="lazy"
+               alt="${(i.alt_text||i.title||'').replace(/"/g,'&quot;')}">
+          <div class="meta">
+            <b>${(i.title||i.slug).replace(/</g,'&lt;')}</b>
+            <small>${i.area} · ${(i.aspect||'1x1')} · 👁 ${i.view_count||0}</small>
+          </div>
+        </a>
+      </article>`).join("");
+  }
+  render("");
+  filter.querySelectorAll(".chip").forEach(c => c.addEventListener("click", e => {
+    filter.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+    e.target.classList.add("active");
+    render(e.target.dataset.svc);
+  }));
+})();
+</script>
+</body></html>
