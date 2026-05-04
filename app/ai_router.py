@@ -222,8 +222,11 @@ def _load_cfg() -> dict:
             "customer":  "anthropic/claude-opus-4-7",
             "admin":     "anthropic/claude-opus-4-7",
             "vendor":    "anthropic/claude-sonnet-4-6",
-            "blog":      "anthropic/claude-opus-4-7",
-            "video":     "anthropic/claude-opus-4-7",
+            # Long-form content prefers OpenAI/Google by default — cheaper for
+            # cron + survives Anthropic credit dips. Cascade still tries
+            # Anthropic later in the chain.
+            "blog":      "openai/gpt-4o",
+            "video":     "google/gemini-2.5-pro",
         },
     }
     out["keys"].update(cur.get("keys") or {})
@@ -414,6 +417,58 @@ async def _call_google_msgs(key: str, model: str, messages: list[dict]) -> str:
     if r.status_code >= 400: raise RuntimeError(f"google {r.status_code}: {r.text[:200]}")
     parts = (r.json().get("candidates") or [{}])[0].get("content",{}).get("parts",[])
     return "".join(p.get("text","") for p in parts)
+
+
+async def call_with_cascade(prompt: str, *, persona: str = "blog",
+                            preferred: str | None = None,
+                            cfg: dict | None = None) -> dict:
+    """Try the admin's preferred model first, then cascade through providers
+    that have keys configured. Returns the first successful result, or the
+    last error if every provider fails. Saves admin from manual fallbacks
+    when one provider runs out of credit / rate-limits."""
+    cfg = cfg or _load_cfg()
+    keys = cfg.get("keys") or {}
+    defaults = cfg.get("defaults") or {}
+
+    # 1. Build provider order: preferred → persona-default → fallback chain
+    chain: list[str] = []
+    def _push(m: str | None):
+        if not m or "/" not in m: return
+        if m not in chain: chain.append(m)
+    _push(preferred)
+    _push(defaults.get(persona))
+    # Cheap/reliable fallbacks for prose tasks
+    for m in ("openai/gpt-4o", "google/gemini-2.5-pro",
+              "anthropic/claude-opus-4-7", "openai/gpt-4o-mini",
+              "google/gemini-2.0-flash-exp",
+              "openrouter/google/gemini-2.0-flash-exp:free",
+              "openrouter/meta-llama/llama-3.3-70b-instruct:free",
+              "groq/llama-3.3-70b-versatile",
+              "deepseek/deepseek-chat", "xai/grok-2-1212",
+              "mistral/mistral-large-latest"):
+        _push(m)
+
+    last_err = None
+    tried: list[dict] = []
+    for entry in chain:
+        provider, _, model = entry.partition("/")
+        # OpenRouter-style entries (provider/model/sub) — keep model intact
+        if provider == "openrouter" and "/" not in model:
+            # already model-only
+            pass
+        if not (keys.get(provider) or "").strip():
+            tried.append({"provider": provider, "model": model, "ok": False, "error": "no key"})
+            continue
+        res = await call_model(provider, model, prompt, cfg)
+        tried.append({"provider": provider, "model": model, "ok": res.get("ok"),
+                      "error": res.get("error") or ""})
+        if res.get("ok"):
+            res["tried"] = tried
+            return res
+        # Anthropic credit/billing error → drop down to next provider quietly
+        last_err = res
+    return {"ok": False, "error": "All providers failed",
+            "tried": tried, "last_error": (last_err or {}).get("error", "")}
 
 
 async def call_model(provider: str, model: str, prompt: str, cfg: dict | None = None,

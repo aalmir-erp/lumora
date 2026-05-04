@@ -1602,15 +1602,15 @@ try:
 
         # Reuse the admin endpoint helper inline (avoid import loop)
         try:
-            import anthropic
-            client = anthropic.Anthropic(api_key=_gs().ANTHROPIC_API_KEY, timeout=30, max_retries=1)
+            from . import ai_router as _ar
+            import asyncio as _aio
             prompt = _autoblog_prompt(em, sv, area, slant, topic)
-            msg = client.messages.create(
-                model=_gs().MODEL, max_tokens=2400,
-                messages=[{"role":"user","content":prompt}],
-            )
-            body = msg.content[0].text if msg.content else ""
+            res = _aio.run(_ar.call_with_cascade(prompt, persona="blog"))
+            if not res.get("ok"):
+                print(f"[autoblog] cascade failed: {res.get('last_error') or res}", flush=True); return
+            body = res.get("text") or ""
             body = _humanize_text(body)
+            print(f"[autoblog] generated via {res.get('provider')}/{res.get('model')}", flush=True)
         except Exception as e:  # noqa: BLE001
             print(f"[autoblog] error: {e}", flush=True); return
 

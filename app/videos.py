@@ -1169,6 +1169,7 @@ class GenerateBody(BaseModel):
     target_seconds: Optional[int] = 18
     area: Optional[str] = None
     emirate: Optional[str] = None
+    model: Optional[str] = None  # e.g. "openai/gpt-4o" — falls back via cascade
 
 
 @admin_router.get("/list")
@@ -1220,10 +1221,8 @@ async def generate_video(body: GenerateBody):
     AC service with Al Khan Lagoon backdrop)."""
     from . import ai_router
     cfg = ai_router._load_cfg()
-    target = (cfg.get("defaults") or {}).get("video", "anthropic/claude-opus-4-7")
-    if "/" not in target:
-        target = "anthropic/" + target
-    provider, model = target.split("/", 1)
+    # `body.model` (e.g. "openai/gpt-4o") overrides the default video model.
+    preferred = (getattr(body, "model", None) or "").strip() or None
     area = (getattr(body, "area", None) or "").strip() or "UAE"
     emirate = (getattr(body, "emirate", None) or "").strip() or "Dubai"
     cur_tpl = db.cfg_get("video_prompt_template", "") or ""
@@ -1245,9 +1244,17 @@ async def generate_video(body: GenerateBody):
             "Use AED prices if relevant. End with a CTA-style scene pointing to servia.ae.\n"
             "Output ONLY the JSON array, no markdown, no commentary."
         )
-    res = await ai_router.call_model(provider, model, prompt, cfg)
+    # Cascade through Anthropic → OpenAI → Google → OpenRouter so a single
+    # provider running out of credit doesn't break video gen.
+    res = await ai_router.call_with_cascade(prompt, persona="video",
+                                            preferred=preferred, cfg=cfg)
     if not res.get("ok"):
-        raise HTTPException(400, res.get("error") or "model call failed")
+        details = "; ".join(
+            f"{t['provider']}/{t['model']}: {t.get('error','no key')}"
+            for t in (res.get("tried") or [])
+        ) or res.get("last_error","")
+        raise HTTPException(400, "All AI providers failed. " + details)
+    target = f"{res.get('provider')}/{res.get('model')}"
     txt = (res.get("text") or "").strip()
     # Extract JSON
     if "```" in txt:

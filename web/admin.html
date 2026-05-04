@@ -403,10 +403,14 @@
         <select id="ab-area" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;min-width:160px">
           <option value="">— random area —</option>
         </select>
+        <select id="ab-model" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;min-width:180px">
+          <option value="">⚡ Auto (cascade fallback)</option>
+        </select>
         <input id="ab-topic" placeholder="Topic (optional, leave blank for auto)" style="flex:1;min-width:240px;padding:8px 12px;border:1px solid var(--border);border-radius:8px">
         <button class="btn btn-primary" onclick="runAutoblog()">Generate now</button>
         <button class="btn btn-ghost" onclick="openAutoblogPrompt()">⚙️ Prompt &amp; areas</button>
       </div>
+      <p style="font-size:11.5px;color:var(--muted);margin:0">⚡ Auto cascades through OpenAI → Google → Anthropic → OpenRouter → Groq using whichever keys are configured. If Anthropic credit is low it skips silently.</p>
       <div id="ab-result" style="font-size:13px;color:var(--muted);margin:8px 0"></div>
       <h3 style="margin:24px 0 12px;font-size:15px">Recent posts</h3>
       <div id="ab-list"></div>
@@ -803,6 +807,9 @@
           </select>
           <select id="vid-area" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
             <option value="">— no area —</option>
+          </select>
+          <select id="vid-model" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
+            <option value="">⚡ Auto (cascade fallback)</option>
           </select>
         </div>
         <button class="btn btn-primary" onclick="genVideo()" style="margin-top:10px">🎥 Generate video</button>
@@ -3049,6 +3056,7 @@ async function loadAutoblog() {
     if (p.areas_json) { try { _AREA_MAP = JSON.parse(p.areas_json); } catch {} }
   } catch {}
   updateAreaList();
+  populateModelSelect("ab-model");
   const wrap = document.getElementById("ab-list");
   wrap.innerHTML = '<div style="color:var(--muted);text-align:center;padding:18px">Loading…</div>';
   let d;
@@ -3107,6 +3115,38 @@ async function loadAutoblog() {
   wrap.innerHTML = statsHtml + selectBar + rows;
   _bulkSetup("#ab-list", "blog", loadAutoblog);
 }
+// ---------- AI model picker (shared by autoblog + video tabs) ----------
+let _aiModelsCache = null;
+async function _loadAiModels() {
+  if (_aiModelsCache) return _aiModelsCache;
+  try {
+    const cat = await adm("/api/admin/ai/catalog");
+    const out = [];
+    for (const prov of (cat.providers || [])) {
+      if (!prov.key_set) continue; // only show providers with a key configured
+      for (const m of (prov.models || [])) {
+        if ((m.modality || "text") !== "text") continue;
+        out.push({
+          value: prov.provider + "/" + m.id,
+          label: (prov.label || prov.provider) + " · " + (m.label || m.id),
+          tier: m.tier || "balanced",
+        });
+      }
+    }
+    _aiModelsCache = out;
+    return out;
+  } catch { return []; }
+}
+async function populateModelSelect(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const models = await _loadAiModels();
+  const cur = el.value;
+  el.innerHTML = '<option value="">⚡ Auto (cascade fallback)</option>' +
+    models.map(m => `<option value="${escapeHtml(m.value)}">${escapeHtml(m.label)}</option>`).join("");
+  if (cur) el.value = cur;
+}
+
 // Default neighborhoods per emirate — admin can override via the prompt modal.
 const AREA_MAP_DEFAULT = {
   "dubai":          ["Jumeirah","Dubai Marina","JLT","JVC","Mirdif","Discovery Gardens","Business Bay","Downtown","Al Barsha","Arabian Ranches","Damac Hills","Silicon Oasis"],
@@ -3128,16 +3168,18 @@ function updateAreaList() {
 async function runAutoblog() {
   const em = document.getElementById("ab-emirate").value;
   const ar = document.getElementById("ab-area").value;
+  const md = document.getElementById("ab-model").value;
   const tp = document.getElementById("ab-topic").value.trim();
   const out = document.getElementById("ab-result");
-  out.textContent = "⏳ Generating with Claude — this takes ~10–20s…";
+  out.textContent = "⏳ Generating — cascading through providers if needed…";
   try {
     const params = new URLSearchParams({ emirate: em });
     if (ar) params.set("area", ar);
     if (tp) params.set("topic", tp);
+    if (md) params.set("model", md);
     const r = await adm("/api/admin/autoblog/run?" + params.toString(), { method: "POST" });
     if (r.ok) {
-      out.innerHTML = '✓ Published <a href="'+escapeHtml(r.url)+'" target="_blank" style="color:#0F766E;font-weight:700">'+escapeHtml(r.topic)+'</a> · <b>'+escapeHtml(r.area||'')+'</b> · '+r.len+' chars';
+      out.innerHTML = '✓ Published <a href="'+escapeHtml(r.url)+'" target="_blank" style="color:#0F766E;font-weight:700">'+escapeHtml(r.topic)+'</a> · <b>'+escapeHtml(r.area||'')+'</b> · '+r.len+' chars · <small style="color:var(--muted)">via '+escapeHtml(r.model||'?')+'</small>';
       document.getElementById("ab-topic").value = "";
       loadAutoblog();
     } else {
@@ -3250,6 +3292,7 @@ async function abSave(slug, btnEl) {
 
 // ============== VIDEOS ==============
 async function loadVideos() {
+  populateModelSelect("vid-model");
   const wrap = document.getElementById("vid-list");
   wrap.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:24px">Loading…</div>';
   try {
@@ -3290,6 +3333,7 @@ async function genVideo() {
     target_seconds: parseInt(document.getElementById("vid-dur").value, 10) || 18,
     emirate: document.getElementById("vid-emirate").value || null,
     area: document.getElementById("vid-area").value || null,
+    model: document.getElementById("vid-model").value || null,
   };
   const msg = document.getElementById("vid-msg");
   msg.textContent = "🎥 Generating…";
