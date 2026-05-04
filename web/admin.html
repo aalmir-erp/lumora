@@ -50,7 +50,8 @@
     <a href="#aiarena"   data-tab="aiarena">🤖 AI Arena</a>
     <a href="#videos"    data-tab="videos">🎬 Videos</a>
     <a href="#autopost"  data-tab="autopost">🌐 Social Auto-post</a>
-    <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
+    <a href="/admin-widget.html" target="_blank" style="margin-top:14px;color:#7DD3FC;border-top:1px solid #1E293B;padding-top:14px">📲 Home-screen widget ↗</a>
+    <a href="#" id="logout" style="margin-top:14px;color:#FCA5A5">Logout</a>
   </aside>
   <main class="admin-main">
     <div id="t-dashboard" class="tab">
@@ -974,7 +975,20 @@ async function boot() {
   fetch("/api/health").then(r=>r.json()).then(j => { document.getElementById("admin-ver").textContent = "v" + j.version; }).catch(()=>{});
   document.getElementById("login").style.display = "none";
   document.getElementById("shell").style.display = "";
-  show("dashboard");
+  // Restore the tab the admin was on before refresh — read from URL hash
+  // (#dashboard, #live, #bookings, #analytics, etc.) and fall back to dashboard.
+  const validTabs = ["dashboard","live","bookings","customers","convos","pricing",
+                     "vendors","outreach","prompts","payments","analytics",
+                     "autoblog","brand","whatsapp","launch","aiarena","videos","autopost"];
+  let initialTab = (location.hash || "").replace(/^#/, "").trim().toLowerCase();
+  if (!validTabs.includes(initialTab)) initialTab = "dashboard";
+  show(initialTab);
+  // Listen for back/forward + manual hash changes — keeps the URL bar in sync
+  // with the visible tab so deep-link sharing + bookmark + refresh all work.
+  window.addEventListener("hashchange", () => {
+    const t = (location.hash || "").replace(/^#/, "").trim().toLowerCase();
+    if (validTabs.includes(t)) show(t);
+  });
   startStream();
 }
 
@@ -2334,7 +2348,7 @@ window.setVendor = async function(vid, action) {
   if (action === 'approve') body.is_approved = true;
   if (action === 'disable') body.is_active = false;
   if (action === 'enable')  body.is_active = true;
-  await adm("/api/admin/vendors/"+vid, { method:"POST", body });
+  await adm("/api/admin/vendors/edit/"+vid, { method:"POST", body });
   loadVendors();
 };
 window.openCreateVendor = function() {
@@ -2889,6 +2903,136 @@ async function runArena() {
     }).join("");
   } catch (e) {
     wrap.innerHTML = '<div style="color:#B91C1C">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+// ============== AUTO-BLOG ==============
+async function loadAutoblog() {
+  const wrap = document.getElementById("ab-list");
+  wrap.innerHTML = '<div style="color:var(--muted);text-align:center;padding:18px">Loading…</div>';
+  let d;
+  try { d = await adm("/api/admin/autoblog"); }
+  catch (e) {
+    wrap.innerHTML = '<div style="color:#B91C1C">Could not load: ' + escapeHtml(e.message) + '</div>';
+    return;
+  }
+  const posts = d.posts || [];
+  const stats = d.stats || {};
+  // Stats strip
+  const sources = (stats.top_sources || []).map(s =>
+    `<span style="background:#E0F2FE;color:#0369A1;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700">${escapeHtml(s.source)} · ${s.hits}</span>`
+  ).join(" ") || '<span style="color:var(--muted);font-size:12px">No traffic data yet — articles need at least one view to register a source.</span>';
+  const statsHtml = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:0 0 14px">
+      <div class="dash-card"><div class="dash-h">Total posts</div><div class="dash-v">${stats.total_posts||0}</div></div>
+      <div class="dash-card"><div class="dash-h">Total views</div><div class="dash-v">${stats.total_views||0}</div></div>
+      <div class="dash-card" style="grid-column:span 2"><div class="dash-h">Top traffic sources (30d)</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${sources}</div></div>
+    </div>`;
+  if (!posts.length) {
+    wrap.innerHTML = statsHtml + '<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px;padding:14px;color:#7C2D12;font-size:13px">No articles yet. Click <b>Generate now</b> above to publish your first one — or wait for the daily 06:00 cron.</div>';
+    return;
+  }
+  // Posts list
+  const rows = posts.map(p => {
+    const srcChips = Object.entries(p.sources || {}).slice(0, 4).map(([s, n]) =>
+      `<span style="background:#F1F5F9;color:#475569;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700">${escapeHtml(s)} · ${n}</span>`
+    ).join(" ") || '<span style="color:#94A3B8;font-size:10.5px">— no source data —</span>';
+    const date = (p.published_at || "").slice(0, 10);
+    return `<div class="ab-card" data-slug="${escapeHtml(p.slug)}" style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:240px">
+          <a href="/blog/${escapeHtml(p.slug)}" target="_blank" style="font-weight:800;color:#0F172A;text-decoration:none;font-size:15px;line-height:1.35">${escapeHtml(p.topic||p.slug)}</a>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:3px">
+            <b>${escapeHtml((p.emirate||'').replace(/-/g,' ').toUpperCase())}</b> · ${date} · <span style="color:#0369A1;font-weight:700">👁 ${p.view_count||0} views</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.45">${escapeHtml(p.preview||'')}…</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">${srcChips}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
+          <button class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px" onclick="abEdit('${escapeHtml(p.slug)}')">✏️ Edit</button>
+          <a class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px;text-align:center" href="/blog/${escapeHtml(p.slug)}" target="_blank">↗ View live</a>
+          <button class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px;color:#B91C1C" onclick="abDelete('${escapeHtml(p.slug)}')">🗑 Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  wrap.innerHTML = statsHtml + rows;
+}
+async function runAutoblog() {
+  const em = document.getElementById("ab-emirate").value;
+  const tp = document.getElementById("ab-topic").value.trim();
+  const out = document.getElementById("ab-result");
+  out.textContent = "⏳ Generating with Claude — this takes ~10–20s…";
+  try {
+    const q = "?emirate=" + encodeURIComponent(em) + (tp ? "&topic="+encodeURIComponent(tp) : "");
+    const r = await adm("/api/admin/autoblog/run" + q, { method: "POST" });
+    if (r.ok) {
+      out.innerHTML = '✓ Published <a href="'+escapeHtml(r.url)+'" target="_blank" style="color:#0F766E;font-weight:700">'+escapeHtml(r.topic)+'</a> ('+r.len+' chars)';
+      document.getElementById("ab-topic").value = "";
+      loadAutoblog();
+    } else {
+      out.innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(r.error||"Failed") + '</span>';
+    }
+  } catch (e) {
+    out.innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(e.message) + '</span>';
+  }
+}
+async function abDelete(slug) {
+  if (!confirm("Delete article \""+slug+"\"? This removes it from /blog and the sitemap.")) return;
+  try {
+    await adm("/api/admin/autoblog/" + encodeURIComponent(slug), { method: "DELETE" });
+    toast("✓ Deleted");
+    loadAutoblog();
+  } catch (e) { /* adm() already toasts */ }
+}
+async function abEdit(slug) {
+  let d;
+  try { d = await adm("/api/admin/autoblog/" + encodeURIComponent(slug)); }
+  catch (e) { return; }
+  // Modal-style overlay editor
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  const recentSrc = (d.recent_views||[]).slice(0,8).map(v =>
+    `<div style="font-size:11px;color:var(--muted);padding:3px 0;border-bottom:1px dashed #E2E8F0">${escapeHtml((v.ts||'').slice(0,16).replace('T',' '))} · <b>${escapeHtml(v.source||'direct')}</b> ${v.referer ? '· '+escapeHtml(v.referer.slice(0,60)) : ''}</div>`
+  ).join("") || '<div style="color:#94A3B8;font-size:11px">No recent views recorded.</div>';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:780px;width:100%;max-height:92vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="margin:0;font-size:16px">✏️ Edit article</h3>
+        <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="this.closest('div[style*=fixed]').remove()">✕ Close</button>
+      </div>
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Title</label>
+      <input id="ab-edit-topic" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-size:14px;font-weight:600" value="${escapeHtml(d.topic||'')}">
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Emirate</label>
+      <input id="ab-edit-emirate" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-size:14px" value="${escapeHtml(d.emirate||'')}">
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Body (markdown — ## for subheadings)</label>
+      <textarea id="ab-edit-body" style="width:100%;min-height:340px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-family:ui-monospace,monospace;font-size:13px;line-height:1.55">${escapeHtml(d.body_md||'')}</textarea>
+      <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Recent visits (where readers came from)</div>
+        ${recentSrc}
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="abSave('${escapeHtml(slug)}', this)">💾 Save changes</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+async function abSave(slug, btnEl) {
+  const topic = document.getElementById("ab-edit-topic").value.trim();
+  const emirate = document.getElementById("ab-edit-emirate").value.trim();
+  const body_md = document.getElementById("ab-edit-body").value;
+  btnEl.disabled = true; btnEl.textContent = "Saving…";
+  try {
+    await adm("/api/admin/autoblog/" + encodeURIComponent(slug), {
+      method: "POST",
+      body: JSON.stringify({ topic, emirate, body_md })
+    });
+    toast("✓ Saved");
+    btnEl.closest('div[style*=fixed]').remove();
+    loadAutoblog();
+  } catch (e) {
+    btnEl.disabled = false; btnEl.textContent = "💾 Save changes";
   }
 }
 

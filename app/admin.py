@@ -423,7 +423,7 @@ class VendorPatchBody(BaseModel):
     services: list[str] | None = None
 
 
-@router.post("/vendors/{vid}")
+@router.post("/vendors/edit/{vid}")
 def update_vendor(vid: int, body: VendorPatchBody):
     with db.connect() as c:
         if body.is_approved is not None:
@@ -1729,14 +1729,110 @@ def autoblog_run(emirate: str = "dubai", topic: str | None = None):
 
 @router.get("/autoblog", dependencies=[Depends(require_admin)])
 def autoblog_list():
+    """List every autoblog post with views + recent traffic-source breakdown so
+    admin can see at a glance which articles are pulling traffic and from where
+    (Google/social/direct/etc)."""
     with db.connect() as c:
         try:
             rows = c.execute(
-                "SELECT slug, emirate, topic, published_at, view_count "
-                "FROM autoblog_posts ORDER BY id DESC LIMIT 200"
+                "SELECT id, slug, emirate, topic, published_at, view_count "
+                "FROM autoblog_posts ORDER BY id DESC LIMIT 500"
             ).fetchall()
         except Exception: rows = []
-    return {"posts": [db.row_to_dict(r) for r in rows]}
+        # Per-slug traffic sources (last 30 days) — one trip, not N+1
+        try:
+            src_rows = c.execute(
+                "SELECT slug, source, COUNT(*) AS n FROM autoblog_views "
+                "WHERE ts > datetime('now','-30 days') "
+                "GROUP BY slug, source"
+            ).fetchall()
+        except Exception: src_rows = []
+    src_map: dict[str, dict[str, int]] = {}
+    for sr in src_rows:
+        d = db.row_to_dict(sr) or {}
+        src_map.setdefault(d["slug"], {})[d["source"] or "direct"] = int(d["n"] or 0)
+    posts = []
+    for r in rows:
+        d = db.row_to_dict(r) or {}
+        d["sources"] = src_map.get(d["slug"], {})
+        body_preview = ""
+        try:
+            with db.connect() as c2:
+                br = c2.execute("SELECT body_md FROM autoblog_posts WHERE id=?",
+                                (d["id"],)).fetchone()
+                body_preview = (br["body_md"] or "")[:140] if br else ""
+        except Exception: pass
+        d["preview"] = body_preview
+        posts.append(d)
+    # Aggregate: total views, top sources globally
+    total_views = sum((p.get("view_count") or 0) for p in posts)
+    src_totals: dict[str, int] = {}
+    for sr in src_rows:
+        d = db.row_to_dict(sr) or {}
+        s = d["source"] or "direct"
+        src_totals[s] = src_totals.get(s, 0) + int(d["n"] or 0)
+    top_sources = sorted(src_totals.items(), key=lambda x: -x[1])[:10]
+    return {
+        "posts": posts,
+        "stats": {
+            "total_posts": len(posts),
+            "total_views": total_views,
+            "top_sources": [{"source": s, "hits": n} for s, n in top_sources],
+        },
+    }
+
+
+@router.get("/autoblog/{slug}", dependencies=[Depends(require_admin)])
+def autoblog_get(slug: str):
+    """Full body of one article — used by the edit modal."""
+    with db.connect() as c:
+        try:
+            r = c.execute("SELECT * FROM autoblog_posts WHERE slug=?", (slug,)).fetchone()
+        except Exception: r = None
+        if not r:
+            raise HTTPException(404, "post not found")
+        # Recent visitors for this post (last 50)
+        try:
+            views = c.execute(
+                "SELECT ts, referer, source FROM autoblog_views WHERE slug=? "
+                "ORDER BY id DESC LIMIT 50", (slug,)).fetchall()
+        except Exception: views = []
+    out = db.row_to_dict(r) or {}
+    out["recent_views"] = [db.row_to_dict(v) for v in views]
+    return out
+
+
+@router.post("/autoblog/{slug}", dependencies=[Depends(require_admin)])
+async def autoblog_update(slug: str, request: Request):
+    """Inline edit: admin can rewrite topic/body before further AI passes.
+    Returns the updated row."""
+    body = await request.json()
+    new_topic = (body.get("topic") or "").strip()
+    new_body = body.get("body_md") or ""
+    new_emirate = (body.get("emirate") or "").strip()
+    if not new_topic and not new_body:
+        return {"ok": False, "error": "nothing to update"}
+    with db.connect() as c:
+        r = c.execute("SELECT id FROM autoblog_posts WHERE slug=?", (slug,)).fetchone()
+        if not r:
+            raise HTTPException(404, "post not found")
+        c.execute(
+            "UPDATE autoblog_posts SET topic=COALESCE(NULLIF(?,''), topic), "
+            "body_md=COALESCE(NULLIF(?,''), body_md), "
+            "emirate=COALESCE(NULLIF(?,''), emirate) WHERE slug=?",
+            (new_topic, new_body, new_emirate, slug))
+    db.log_event("autoblog", slug, "edited", actor="admin",
+                 details={"topic_changed": bool(new_topic), "body_changed": bool(new_body)})
+    return {"ok": True, "slug": slug}
+
+
+@router.delete("/autoblog/{slug}", dependencies=[Depends(require_admin)])
+def autoblog_delete(slug: str):
+    with db.connect() as c:
+        n = c.execute("DELETE FROM autoblog_posts WHERE slug=?", (slug,)).rowcount
+        try: c.execute("DELETE FROM autoblog_views WHERE slug=?", (slug,))
+        except Exception: pass
+    return {"ok": True, "deleted": int(n)}
 
 
 # ---------- LLM diagnostics ----------
