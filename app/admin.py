@@ -282,6 +282,33 @@ def release(body: ReleaseBody):
     return {"ok": True}
 
 
+@router.get("/takeover/active")
+def list_active_takeovers():
+    """Returns every session currently marked as taken-over by an agent. Use
+    this when 'bot is silent' to spot accidentally-stuck takeovers from a
+    forgotten admin click."""
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT session_id, agent_id, started_at FROM agent_takeovers "
+            "WHERE ended_at IS NULL ORDER BY started_at DESC").fetchall()
+    return {"active": [dict(r) for r in rows], "count": len(rows)}
+
+
+@router.post("/takeover/release-all")
+def release_all_takeovers():
+    """Force-release every active takeover. One-click reset when the bot has
+    gone silent due to stale takeovers."""
+    import datetime as _dt
+    now = _dt.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        n = c.execute(
+            "UPDATE agent_takeovers SET ended_at=? WHERE ended_at IS NULL",
+            (now,)).rowcount
+    db.log_event("conversation", "*", "takeover_release_all", actor="admin",
+                 details={"count": n})
+    return {"ok": True, "released": n}
+
+
 class AgentReply(BaseModel):
     session_id: str
     text: str
