@@ -1710,7 +1710,8 @@ def autoblog_prompt_set(body: PromptBody):
 
 
 @router.post("/autoblog/run", dependencies=[Depends(require_admin)])
-def autoblog_run(emirate: str = "dubai", topic: str | None = None, area: str | None = None):
+async def autoblog_run(emirate: str = "dubai", topic: str | None = None,
+                       area: str | None = None, model: str | None = None):
     """Generate one Servia-branded article for the given emirate using Claude.
     Cron-friendly: schedule a daily POST with a different emirate to maintain
     fresh content for SEO + AI engines. Articles stored in 'autoblog_posts'
@@ -1781,16 +1782,21 @@ def autoblog_run(emirate: str = "dubai", topic: str | None = None, area: str | N
             "Output ONLY the markdown article, no preamble."
         )
 
-    try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=s.ANTHROPIC_API_KEY, timeout=30, max_retries=1)
-        msg = client.messages.create(
-            model=s.MODEL, max_tokens=2400,
-            messages=[{"role":"user","content":prompt_text}],
-        )
-        body = msg.content[0].text if msg.content else ""
-    except Exception as e:  # noqa: BLE001
-        return {"ok": False, "error": f"Claude call failed: {e}"}
+    # Use the cascade router so when Anthropic is out of credit it auto-falls
+    # back through OpenAI / Google / OpenRouter / Groq / DeepSeek using whichever
+    # keys are configured. Admin can also force a specific model via ?model=.
+    from . import ai_router
+    res = await ai_router.call_with_cascade(prompt_text, persona="blog",
+                                            preferred=model)
+    if not res.get("ok"):
+        # Surface every attempted provider so admin sees WHICH ones failed
+        details = "; ".join(
+            f"{t['provider']}/{t['model']}: {t.get('error','no key')}"
+            for t in (res.get("tried") or [])
+        ) or res.get("last_error","")
+        return {"ok": False, "error": f"All AI providers failed. {details}"}
+    body = res.get("text") or ""
+    used = f"{res.get('provider','?')}/{res.get('model','?')}"
 
     import datetime as _dtm
     slug = (
@@ -1811,9 +1817,10 @@ def autoblog_run(emirate: str = "dubai", topic: str | None = None, area: str | N
             (slug, emirate, topic, body,
              _dtm.datetime.utcnow().isoformat() + "Z"))
     db.log_event("autoblog", slug, "published", actor="admin",
-                 details={"emirate": emirate, "area": area, "topic": topic, "len": len(body)})
+                 details={"emirate": emirate, "area": area, "topic": topic,
+                          "len": len(body), "model": used})
     return {"ok": True, "slug": slug, "topic": topic, "area": area,
-            "len": len(body), "url": f"/blog/{slug}"}
+            "len": len(body), "url": f"/blog/{slug}", "model": used}
 
 
 @router.get("/autoblog", dependencies=[Depends(require_admin)])
