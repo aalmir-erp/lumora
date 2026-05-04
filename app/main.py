@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, tools, whatsapp
+from . import admin, cart, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, tools, whatsapp
 from .auth import ADMIN_TOKEN
 from .config import get_settings
 
@@ -39,6 +39,7 @@ app.include_router(portal_v2.router)
 app.include_router(portal_v2.public_router)
 app.include_router(whatsapp.router)
 app.include_router(launch.router)
+app.include_router(cart.router)
 
 
 # ---------- public snippets injector — admin pastes GA/GTM/Pixel/etc, all pages run it ----------

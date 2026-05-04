@@ -25,7 +25,11 @@ window.LUMORA_PIXELS = {
 <style>
   @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
   @keyframes shine { 0% { background-position:-200% center } 100% { background-position:200% center } }
-  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s, transform .6s; }
+  /* Above-the-fold-safe reveal: tiny initial offset so we never end up with a
+     blank page if IntersectionObserver doesn't fire. Always-visible fallback
+     applied via JS within 700ms regardless. */
+  .reveal { opacity: 1; transform: translateY(8px); transition: opacity .6s, transform .6s; }
+  .reveal.in { opacity: 1; transform: translateY(0); }
   .reveal.in { opacity: 1; transform: translateY(0); }
 
   .svc-hero { position: relative; overflow: hidden;
@@ -150,6 +154,7 @@ window.LUMORA_PIXELS = {
 
 <script src="/banner.js" defer></script>
 <script src="/_snippets.js" async></script>
+<script src="/cart-badge.js" async></script>
 </head>
 <body>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>

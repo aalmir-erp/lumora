@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="servia-page" content="default">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<title>Your Servia bundle — book multiple services in one go</title>
+<meta name="description" content="Book 2 or more Servia services together and save up to 15% with the automatic bundle discount. Single payment. Single invoice.">
+<link rel="canonical" href="https://servia.ae/cart.html">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="stylesheet" href="/style.css">
+<style>
+  body { background:linear-gradient(180deg,#FFFBEB,#F8FAFC); }
+  .wrap { max-width:1080px; margin:24px auto 80px; padding:0 16px; display:grid;
+    gap:24px; grid-template-columns:1.5fr 1fr; align-items:start }
+  @media(max-width:880px){ .wrap{grid-template-columns:1fr} }
+  .panel { background:#fff; border:1px solid var(--border); border-radius:18px;
+    padding:18px 20px; box-shadow:0 4px 14px rgba(15,23,42,.06) }
+  .item { display:grid; grid-template-columns:48px 1fr auto; gap:12px;
+    align-items:start; padding:14px 0; border-bottom:1px solid #F1F5F9 }
+  .item:last-child { border-bottom:0 }
+  .item .ico { font-size:32px; line-height:1 }
+  .item .nm { font-weight:800; font-size:15px; letter-spacing:-.01em }
+  .item .meta { font-size:12px; color:var(--muted); margin-top:2px; line-height:1.4 }
+  .item .row { display:flex;gap:8px;flex-wrap:wrap;margin-top:8px }
+  .item .row input, .item .row select { padding:6px 8px; border:1px solid var(--border);
+    border-radius:8px; font-size:12px; min-height:34px; max-width:140px }
+  .item .price { font-weight:800; font-size:15px; color:#0F766E; white-space:nowrap }
+  .item .rm { background:transparent; border:0; color:#94A3B8; cursor:pointer;
+    font-size:13px; padding:4px 0; margin-top:4px; display:block }
+  .item .rm:hover { color:#DC2626 }
+  .empty { text-align:center; padding:48px 16px; color:var(--muted) }
+  .summary-row { display:flex;justify-content:space-between;font-size:14px;padding:6px 0 }
+  .summary-row.total { font-size:18px; font-weight:800; padding-top:12px;
+    border-top:2px solid #F1F5F9; margin-top:8px }
+  .summary-row.total .v { color:#0F766E }
+  .summary-row.discount .v { color:#15803D; font-weight:700 }
+  .add-more { display:block; padding:12px; text-align:center; background:#F1F5F9;
+    border-radius:12px; color:#0F766E; font-weight:700; text-decoration:none;
+    margin-top:8px; font-size:13.5px }
+  .add-more:hover { background:#E2E8F0 }
+  .bundle-savings { background:linear-gradient(135deg,#FCD34D,#F59E0B); color:#7C2D12;
+    padding:12px 14px; border-radius:12px; font-size:13px; font-weight:700;
+    margin-bottom:14px }
+  .checkout-btn { background:linear-gradient(135deg,#0F766E,#0D9488); color:#fff;
+    border:0; border-radius:14px; padding:14px 20px; font-weight:800;
+    font-size:15px; cursor:pointer; width:100%; margin-top:14px;
+    box-shadow:0 8px 18px rgba(13,148,136,.32) }
+  .checkout-btn:hover { transform:translateY(-1px) }
+  .checkout-btn:disabled { opacity:.55; cursor:not-allowed; transform:none }
+  .field { margin:10px 0 }
+  .field label { display:block; font-size:11.5px; color:var(--muted);
+    font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px }
+  .field input, .field select { width:100%; padding:9px 12px; border:1px solid var(--border);
+    border-radius:10px; font-size:14px; min-height:40px; font-family:inherit }
+</style>
+<script src="/banner.js" defer></script>
+<script src="/_snippets.js" async></script>
+<script src="/cart-badge.js" async></script>
+</head><body>
+<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36" alt="Servia"></a>
+  <div class="nav-cta" style="margin-inline-start:auto">
+    <a class="btn btn-ghost" href="/services.html">Services</a>
+    <a class="btn btn-primary" href="/book.html">Single booking</a>
+  </div>
+</div></nav>
+
+<section style="padding:32px 16px 8px;text-align:center">
+  <h1 style="font-size:30px;letter-spacing:-.02em;margin:0 0 4px">🛒 Your Servia bundle</h1>
+  <p style="color:var(--muted);margin:0;font-size:14px">Book multiple services together — automatic bundle discount, single invoice, one payment.</p>
+</section>
+
+<section class="wrap">
+  <!-- Cart items -->
+  <div class="panel">
+    <h2 style="margin:0 0 8px;font-size:18px">Your services</h2>
+    <div id="cart-items"></div>
+    <a class="add-more" href="/services.html">+ Add another service</a>
+  </div>
+
+  <!-- Order summary + checkout -->
+  <div class="panel" style="position:sticky;top:16px">
+    <h2 style="margin:0 0 8px;font-size:18px">Order summary</h2>
+    <div id="bundle-saving" class="bundle-savings" style="display:none"></div>
+    <div id="summary"></div>
+
+    <div id="customer-fields" style="margin-top:18px;padding-top:14px;border-top:1px solid #F1F5F9">
+      <div class="field"><label>Your name</label><input id="c-name" placeholder="Full name" required></div>
+      <div class="field"><label>Phone</label><input id="c-phone" type="tel" placeholder="+971 5X XXX XXXX" required></div>
+      <div class="field"><label>Address</label><input id="c-addr" placeholder="Tower / villa, area, emirate" required></div>
+    </div>
+
+    <button id="co-btn" class="checkout-btn" onclick="checkout()" disabled>Loading…</button>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin:10px 0 0;line-height:1.5">
+      🛡 AED 25,000 damage cover · ↻ 7-day re-do guarantee · 💎 Pay only when slot confirmed
+    </p>
+  </div>
+</section>
+
+<footer><div class="container">
+  <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
+  <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
+  <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a></div>
+  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
+</div></footer>
+
+<script>
+const KEY = "servia.cart.v1";
+const SERVICE_META = {
+  deep_cleaning:        {emoji:"✨", label:"Deep Cleaning"},
+  general_cleaning:     {emoji:"🧹", label:"General Cleaning"},
+  ac_cleaning:          {emoji:"❄️", label:"AC Service"},
+  ac_service:           {emoji:"❄️", label:"AC Service"},
+  maid_service:         {emoji:"👤", label:"Maid Service"},
+  pest_control:         {emoji:"🪲", label:"Pest Control"},
+  handyman:             {emoji:"🔧", label:"Handyman"},
+  sofa_carpet:          {emoji:"🛋️", label:"Sofa & Carpet"},
+  carpet_cleaning:      {emoji:"🧼", label:"Carpet Cleaning"},
+  move_in_out:          {emoji:"📦", label:"Move-in / Move-out"},
+  move_in_out_cleaning: {emoji:"📦", label:"Move-in / Move-out"},
+  window_cleaning:      {emoji:"🪟", label:"Window Cleaning"},
+  kitchen_deep:         {emoji:"👨‍🍳", label:"Kitchen Deep Clean"},
+  kitchen_deep_clean:   {emoji:"👨‍🍳", label:"Kitchen Deep Clean"},
+  villa_deep:           {emoji:"🏡", label:"Villa Deep Clean"},
+  car_wash:             {emoji:"🚗", label:"Car Wash"},
+  swimming_pool:        {emoji:"🏊", label:"Pool Maintenance"},
+  painting:             {emoji:"🎨", label:"Painting"},
+  gardening:            {emoji:"🌿", label:"Gardening"},
+  smart_home:           {emoji:"💡", label:"Smart Home Install"},
+  curtain_cleaning:     {emoji:"🪟", label:"Curtain Cleaning"},
+  marble_polish:        {emoji:"💎", label:"Marble Polishing"},
+  laundry:              {emoji:"👕", label:"Laundry"},
+  babysitting:          {emoji:"👶", label:"Babysitter / Nanny"},
+  office_cleaning:      {emoji:"🏢", label:"Office Cleaning"},
+  post_construction:    {emoji:"🏗", label:"Post-Construction"},
+  disinfection:         {emoji:"🧴", label:"Disinfection"},
+};
+
+function loadCart() {
+  try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+  catch (_) { return []; }
+}
+function saveCart(c) { localStorage.setItem(KEY, JSON.stringify(c)); render(); }
+function addToCart(svc) {
+  const c = loadCart();
+  c.push({...svc, _ts: Date.now()});
+  saveCart(c);
+}
+function removeAt(i) {
+  const c = loadCart();
+  c.splice(i, 1);
+  saveCart(c);
+}
+function updateField(i, k, v) {
+  const c = loadCart();
+  if (!c[i]) return;
+  if (v === "" || v === null || v === undefined) delete c[i][k];
+  else c[i][k] = (k==='bedrooms'||k==='hours'||k==='units') ? parseInt(v,10) : v;
+  saveCart(c);
+}
+
+let cachedQuote = null;
+
+async function fetchQuote(items) {
+  try {
+    const r = await fetch("/api/cart/quote", {
+      method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({items}),
+    });
+    if (!r.ok) throw new Error("quote-failed");
+    return await r.json();
+  } catch (e) {
+    return null;
+  }
+}
+
+async function render() {
+  const items = loadCart();
+  const wrap = document.getElementById("cart-items");
+  if (!items.length) {
+    wrap.innerHTML = '<div class="empty">Your bundle is empty.<br><br><a class="btn btn-primary" href="/services.html">Browse services</a></div>';
+    document.getElementById("summary").innerHTML = "";
+    document.getElementById("bundle-saving").style.display = "none";
+    document.getElementById("co-btn").disabled = true;
+    document.getElementById("co-btn").textContent = "Add items to checkout";
+    return;
+  }
+  wrap.innerHTML = items.map((it, i) => {
+    const m = SERVICE_META[it.service_id] || {emoji:"🧽", label:it.service_id};
+    const fields = [];
+    // Show conditional inputs based on service
+    if (["deep_cleaning","general_cleaning","villa_deep","kitchen_deep","kitchen_deep_clean","move_in_out","move_in_out_cleaning","disinfection","post_construction"].includes(it.service_id)) {
+      fields.push(`<label style="font-size:11px;color:var(--muted)">BR <input type="number" min="1" max="10" value="${it.bedrooms||2}" oninput="updateField(${i},'bedrooms',this.value)"></label>`);
+    }
+    if (["maid_service","handyman","babysitting","painting"].includes(it.service_id)) {
+      fields.push(`<label style="font-size:11px;color:var(--muted)">Hrs <input type="number" min="1" max="24" value="${it.hours||3}" oninput="updateField(${i},'hours',this.value)"></label>`);
+    }
+    if (["ac_cleaning","ac_service","sofa_carpet","carpet_cleaning","window_cleaning"].includes(it.service_id)) {
+      fields.push(`<label style="font-size:11px;color:var(--muted)">Units <input type="number" min="1" max="20" value="${it.units||3}" oninput="updateField(${i},'units',this.value)"></label>`);
+    }
+    fields.push(`<input type="date" value="${it.target_date||''}" min="${new Date().toISOString().slice(0,10)}" oninput="updateField(${i},'target_date',this.value)">`);
+    fields.push(`<select onchange="updateField(${i},'time_slot',this.value)">
+      <option value="">Pick a slot</option>
+      ${["08:00","10:00","12:00","14:00","16:00","18:00"].map(s=>`<option value="${s}" ${it.time_slot===s?'selected':''}>${s}</option>`).join("")}
+    </select>`);
+    return `
+      <div class="item">
+        <div class="ico">${m.emoji}</div>
+        <div>
+          <div class="nm">${m.label}</div>
+          <div class="meta" id="line-meta-${i}">Pricing…</div>
+          <div class="row">${fields.join("")}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="price" id="line-price-${i}">…</div>
+          <button class="rm" onclick="removeAt(${i})">Remove</button>
+        </div>
+      </div>`;
+  }).join("");
+
+  // Pull a fresh quote
+  const q = await fetchQuote(items.map(({_ts, ...rest}) => rest));
+  cachedQuote = q;
+  if (!q || !q.ok) {
+    document.getElementById("summary").innerHTML =
+      '<p style="color:#B91C1C;font-size:13px">Pricing unavailable — please refresh.</p>';
+    document.getElementById("co-btn").disabled = true;
+    return;
+  }
+  // Update per-line prices
+  q.lines.forEach((ln, i) => {
+    const pe = document.getElementById("line-price-" + i);
+    const me = document.getElementById("line-meta-" + i);
+    if (pe) pe.textContent = "AED " + ln.total;
+    if (me) {
+      let s = "Base AED " + ln.base;
+      if (ln.discount) s += " · −" + ln.discount + " AED disc";
+      if (ln.addons_total) s += " · +" + ln.addons_total + " AED addons";
+      me.textContent = s;
+    }
+  });
+  // Bundle savings banner
+  if (q.bundle_discount_pct > 0) {
+    document.getElementById("bundle-saving").style.display = "block";
+    document.getElementById("bundle-saving").textContent =
+      `🎁 Bundle discount ${q.bundle_discount_pct}% applied · saving AED ${q.bundle_discount}`;
+  } else {
+    document.getElementById("bundle-saving").style.display = "none";
+  }
+  document.getElementById("summary").innerHTML = `
+    <div class="summary-row"><div>Subtotal</div><div class="v">AED ${q.subtotal}</div></div>
+    ${q.bundle_discount_pct ? `<div class="summary-row discount"><div>Bundle discount (${q.bundle_discount_pct}%)</div><div class="v">−AED ${q.bundle_discount}</div></div>` : ''}
+    <div class="summary-row total"><div>Total</div><div class="v">AED ${q.grand_total}</div></div>
+  `;
+  document.getElementById("co-btn").disabled = false;
+  document.getElementById("co-btn").innerHTML =
+    `Pay AED ${q.grand_total} · book ${items.length} service${items.length>1?'s':''} →`;
+}
+
+async function checkout() {
+  const items = loadCart().map(({_ts, ...rest}) => rest);
+  if (!items.length) return;
+  const name = document.getElementById("c-name").value.trim();
+  const phone = document.getElementById("c-phone").value.trim();
+  const addr = document.getElementById("c-addr").value.trim();
+  if (!name || !phone || !addr) {
+    alert("Please fill in name, phone and address."); return;
+  }
+  // Make sure each item has a date + slot
+  for (const [i, it] of items.entries()) {
+    if (!it.target_date || !it.time_slot) {
+      alert(`Item ${i+1}: please pick a date and time slot.`); return;
+    }
+  }
+  const btn = document.getElementById("co-btn");
+  btn.disabled = true; btn.textContent = "Processing…";
+  try {
+    const r = await fetch("/api/cart/checkout", {
+      method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({items, customer_name:name, phone, address:addr}),
+    });
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.detail || j.error || "checkout failed");
+    localStorage.removeItem(KEY);
+    if (j.payment_url) location.href = j.payment_url;
+    else location.href = `/booked.html?b=${j.bundle_anchor}`;
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Try checkout again";
+    alert("Checkout error: " + (e.message || "unknown"));
+  }
+}
+
+// Allow ?add=service_id&bedrooms=2 etc deep-link to add a service then redirect to /cart.html
+const params = new URLSearchParams(location.search);
+if (params.get("add")) {
+  const item = {service_id: params.get("add")};
+  ["bedrooms","hours","units","target_date","time_slot"].forEach(k => {
+    const v = params.get(k);
+    if (v) item[k] = (k==='bedrooms'||k==='hours'||k==='units') ? parseInt(v,10) : v;
+  });
+  addToCart(item);
+  history.replaceState({}, "", "/cart.html");
+} else {
+  render();
+}
+
+window.serviaCart = { add: addToCart, view: loadCart, clear: () => saveCart([]) };
+</script>
+
+<script src="/theme.js" defer></script>
+<script src="/app.js" defer></script>
+<script src="/install.js" defer></script>
+<script>(function(){var l=false;function ld(){if(l)return;l=true;var s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(function(ev){addEventListener(ev,ld,{once:true,passive:true})});})();</script>
+</body></html>
