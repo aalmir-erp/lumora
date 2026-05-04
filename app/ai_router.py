@@ -157,17 +157,61 @@ def catalog():
     cfg = _load_cfg()
     out = []
     for prov_id, info in MODEL_CATALOG.items():
+        raw_key = (cfg["keys"].get(prov_id) or "").strip()
         out.append({
             "provider": prov_id,
             "label": info["label"],
             "key_env": info["key_env"],
-            "key_set": bool(cfg["keys"].get(prov_id)),
+            "key_set": bool(raw_key),
+            "key_preview": (raw_key[:6] + "…" + raw_key[-4:]) if len(raw_key) >= 12 else "",
+            "key_len": len(raw_key),
+            # Full key only sent when admin clicks 'reveal' — gated by a separate endpoint
             "get_key_url": info.get("get_key_url"),
             "pricing_url": info.get("pricing_url"),
             "free_tier": info.get("free_tier"),
             "models": info["models"],
         })
     return {"providers": out, "defaults": cfg["defaults"]}
+
+
+@router.get("/key/{provider}")
+def reveal_key(provider: str):
+    """Returns the FULL stored key for one provider — gated by admin auth (router-level).
+    Frontend uses this only when the admin clicks 👁 'reveal' on a key."""
+    if provider not in MODEL_CATALOG:
+        raise HTTPException(404, "unknown provider")
+    cfg = _load_cfg()
+    return {"provider": provider, "key": (cfg["keys"].get(provider) or "")}
+
+
+@router.post("/test/{provider}")
+async def test_provider(provider: str):
+    """Pings the provider with the cheapest model + a 1-word prompt to verify the key
+    actually works. Returns {ok, latency_ms, model, sample, error?} so admin sees
+    GREEN/RED status per provider."""
+    if provider not in MODEL_CATALOG:
+        raise HTTPException(404, "unknown provider")
+    cfg = _load_cfg()
+    key = (cfg["keys"].get(provider) or "").strip()
+    if not key:
+        return {"ok": False, "provider": provider, "error": "No key set — paste one above and Save first."}
+    info = MODEL_CATALOG[provider]
+    # Pick the cheapest/smallest model for the test (last in list is usually 'haiku/lite' tier)
+    models = info.get("models") or []
+    if not models:
+        return {"ok": False, "provider": provider, "error": "No models defined for provider."}
+    test_model = next((m["id"] for m in models if m.get("tier") in ("lite", "fast", "small")),
+                      models[-1]["id"])
+    # Use call_model with a tiny prompt so we exercise the real codepath
+    res = await call_model(provider, test_model, "Reply with just the single word: ok", cfg)
+    if res.get("ok"):
+        sample = (res.get("text") or "").strip()[:60]
+        return {"ok": True, "provider": provider, "model": test_model,
+                "latency_ms": res.get("latency_ms"), "sample": sample,
+                "msg": f"✅ Working — replied in {res.get('latency_ms')}ms with: \"{sample}\""}
+    return {"ok": False, "provider": provider, "model": test_model,
+            "latency_ms": res.get("latency_ms"),
+            "error": res.get("error") or "unknown error"}
 
 
 @router.post("/keys")
