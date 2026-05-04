@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, ai_router, cart, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, social_publisher, tools, videos, whatsapp
+from . import admin, ai_router, cart, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, social_publisher, staff_portraits, tools, videos, whatsapp
 from .auth import ADMIN_TOKEN
 from .config import get_settings
 
@@ -44,6 +44,7 @@ app.include_router(ai_router.router)
 app.include_router(videos.public_router)
 app.include_router(videos.admin_router)
 app.include_router(social_publisher.router)
+app.include_router(staff_portraits.router)
 
 
 @app.on_event("startup")

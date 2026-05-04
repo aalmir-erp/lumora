@@ -251,6 +251,31 @@ window.LUMORA_PIXELS = {
   </div>
 </section>
 
+<!-- Branded staff illustration -->
+<section style="padding:24px 16px;background:linear-gradient(180deg,#FFFBEB,#F8FAFC)">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:24px;align-items:center;max-width:1080px;margin:0 auto" class="staff-grid">
+      <div style="border-radius:18px;overflow:hidden;box-shadow:0 12px 32px rgba(15,23,42,.10);background:#fff">
+        <img id="staff-portrait" src="" alt="Servia branded staff illustration"
+             style="display:block;width:100%;height:auto;aspect-ratio:760/460" loading="lazy" decoding="async">
+      </div>
+      <div>
+        <p style="color:#0F766E;font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px">👋 MEET YOUR PRO</p>
+        <h2 style="margin:0 0 10px;font-size:24px;letter-spacing:-.02em">Vetted, uniformed, on-brand</h2>
+        <p style="margin:0 0 14px;color:#475569;font-size:14.5px;line-height:1.55">Every Servia pro arrives in branded uniform with a printed Servia cap and ID badge. Background-checked, insured, with photo + name pre-shared on WhatsApp before they arrive.</p>
+        <ul style="padding:0;list-style:none;font-size:13.5px;line-height:2;color:#0F172A;margin:0">
+          <li>✅ Background-checked + insured</li>
+          <li>✅ Branded cap + apron with name tag</li>
+          <li>✅ Photo + ID shared 30 min before arrival</li>
+          <li>✅ Same pro returns for follow-up visits</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <style>@media(max-width:720px){.staff-grid{grid-template-columns:1fr}}</style>
+  <script>(function(){const sid=new URLSearchParams(location.search).get("id")||"deep_cleaning";const im=document.getElementById("staff-portrait");if(im)im.src="/api/staff/svc-"+sid.replace(/_/g,"-")+".svg?service="+sid})();</script>
+</section>
+
 <!-- Service-specific mascot video -->
 <section style="padding:36px 16px;background:#0F172A">
   <div class="container">

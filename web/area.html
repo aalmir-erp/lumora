@@ -82,6 +82,22 @@
   </div>
 </section>
 
+<!-- 🇦🇪 BRANDED STAFF FOR THIS EMIRATE -->
+<section style="padding:24px 16px;background:linear-gradient(180deg,#FFFBEB,#F8FAFC)">
+  <div style="max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1.3fr 1fr;gap:24px;align-items:center" class="staff-grid">
+    <div>
+      <p style="color:#0F766E;font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px">👋 YOUR LOCAL CREW</p>
+      <h2 style="margin:0 0 10px;font-size:24px;letter-spacing:-.02em">Branded Servia pros, local to your emirate</h2>
+      <p style="margin:0 0 14px;color:#475569;font-size:14.5px;line-height:1.55">Servia teams in <b id="staff-em-label">your emirate</b> are vetted residents who know the local buildings, traffic, and access codes. Branded uniform · ID badge · pre-shared photo before arrival.</p>
+    </div>
+    <div style="border-radius:18px;overflow:hidden;box-shadow:0 12px 32px rgba(15,23,42,.10);background:#fff">
+      <img id="staff-portrait-em" src="" alt="Servia branded staff illustration" style="display:block;width:100%;height:auto;aspect-ratio:760/460" loading="lazy" decoding="async">
+    </div>
+  </div>
+  <style>@media(max-width:720px){.staff-grid{grid-template-columns:1fr}}</style>
+  <script>(function(){const c=(new URLSearchParams(location.search).get("city")||"dubai").toLowerCase();const im=document.getElementById("staff-portrait-em");if(im)im.src="/api/staff/em-"+c+".svg?service=deep_cleaning";const lbl=document.getElementById("staff-em-label");if(lbl)lbl.textContent=c.replace(/-/g,' ').replace(/\b\w/g,m=>m.toUpperCase())})();</script>
+</section>
+
 <!-- 🎬 EMIRATE-SPECIFIC VIDEO -->
 <section style="padding:24px 16px;background:#0F172A">
   <div style="max-width:720px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.4)">
