@@ -637,6 +637,21 @@
     }
   </style>
 </section>
+<!-- COMPACT LIVE-COVERAGE STRIP (replaces the heavy blob map; full map at /coverage.html) -->
+<section style="padding:18px 16px;background:#F0FDFA;border-bottom:1px solid var(--border)">
+  <div style="max-width:1180px;margin:0 auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--primary-dark)">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22C55E;animation:pulseDot 1.6s infinite"></span>
+      <span><b id="live-count">5</b> live bookings happening right now across UAE</span>
+    </div>
+    <span style="color:var(--muted)">·</span>
+    <div style="font-size:13px;color:var(--muted)">
+      <b style="color:var(--text)">2,412+</b> jobs completed UAE-wide this year
+    </div>
+    <span style="color:var(--muted)">·</span>
+    <a href="/coverage.html" style="font-size:13px;color:var(--primary-dark);text-decoration:underline;font-weight:600">See full live coverage map →</a>
+  </div>
+</section>
 
 <!-- 🚀 HOW SERVIA WORKS — animated 6-stage journey with live tracker visual -->
 <section id="how-it-works" style="padding:48px 16px;background:linear-gradient(180deg,#F8FAFC 0%,#FFFFFF 100%);border-bottom:1px solid var(--border)">
@@ -689,160 +704,8 @@
         <p>Photos · invoice · review request. Ambassador % unlocked.</p>
       </div>
     </div>
-
-    <!-- Live driver-tracker preview -->
-    <div style="margin-top:36px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px 18px 12px;box-shadow:0 8px 28px rgba(15,23,42,.06)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-        <div>
-          <div style="font-size:11px;font-weight:800;color:#15803D;letter-spacing:.06em;text-transform:uppercase">● Live tracker preview</div>
-          <h3 style="margin:4px 0 0;font-size:18px;letter-spacing:-.02em">Your Servia pro is en route</h3>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em">ETA</div>
-          <div id="tracker-eta" style="font-size:22px;font-weight:800;color:#0F766E;letter-spacing:-.02em">7 min</div>
-        </div>
-      </div>
-      <!-- Animated road with moving van -->
-      <div class="tracker-road" aria-hidden="true">
-        <div class="tr-line"></div>
-        <div class="tr-pin" id="tr-pin-home" title="Your home">🏠</div>
-        <div class="tr-pin" id="tr-pin-job" title="Pro start">🏢</div>
-        <div class="tr-van" id="tr-van">🚐</div>
-      </div>
-      <p id="tracker-status" style="text-align:center;margin:8px 0 4px;font-size:13.5px;color:var(--text);font-weight:600">📍 Crossing Sheikh Zayed Road · 4.2 km away</p>
-      <div id="tracker-events" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px"></div>
-    </div>
   </div>
 </section>
-
-<style>
-.journey-step { background:#fff; border:1px solid var(--border); border-radius:14px;
-  padding:60px 12px 14px; text-align:center; position:relative; z-index:1;
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s; }
-.journey-step:hover { transform: translateY(-3px); border-color:#0F766E; box-shadow:0 10px 22px rgba(15,118,110,.10) }
-.journey-step h3 { font-size:13.5px; margin:6px 0 4px; letter-spacing:-.01em }
-.journey-step p { font-size:11.5px; color:var(--muted); margin:0; line-height:1.4 }
-.journey-step .js-dot { position:absolute; top:14px; left:50%; transform:translateX(-50%);
-  width:48px; height:48px; border-radius:50%; background:#F1F5F9; color:#475569;
-  display:flex; align-items:center; justify-content:center; font-size:22px;
-  box-shadow:0 4px 10px rgba(15,23,42,.08) }
-.journey-step.done .js-dot { background:linear-gradient(135deg,#0F766E,#0D9488); color:#fff }
-.journey-step.active .js-dot { background:linear-gradient(135deg,#F59E0B,#FCD34D); color:#7C2D12 }
-.journey-step .js-num { position:absolute; top:8px; right:10px;
-  font-size:10px; color:var(--muted); font-weight:800; letter-spacing:.06em }
-.journey-step.active { border-color:#F59E0B; box-shadow:0 8px 18px rgba(245,158,11,.18) }
-.journey-step.done { border-color:#0F766E }
-.js-pulse { animation: jsPulse 1.6s ease-in-out infinite }
-@keyframes jsPulse { 0%,100% { transform:translateX(-50%) scale(1); box-shadow:0 4px 10px rgba(245,158,11,.4) }
-  50% { transform:translateX(-50%) scale(1.08); box-shadow:0 8px 22px rgba(245,158,11,.6) } }
-@keyframes journey-fill { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }
-@media (max-width:780px) {
-  .journey-grid { grid-template-columns:repeat(3,1fr); gap:8px }
-  .journey-track { display:none }
-  .journey-step { padding:54px 8px 10px }
-  .journey-step h3 { font-size:12px }
-  .journey-step p { font-size:10.5px }
-}
-
-/* Live tracker road */
-.tracker-road { position:relative; height:48px; background:#F1F5F9; border-radius:999px;
-  margin:8px 0 4px; overflow:visible }
-.tr-line { position:absolute; top:50%; left:6%; right:6%; height:3px;
-  background:repeating-linear-gradient(90deg,#94A3B8 0 12px,transparent 12px 22px);
-  transform:translateY(-50%); border-radius:2px }
-.tr-pin { position:absolute; top:50%; transform:translate(-50%,-50%);
-  width:34px; height:34px; border-radius:50%; background:#fff; display:flex;
-  align-items:center; justify-content:center; font-size:18px; z-index:2;
-  box-shadow:0 4px 10px rgba(15,23,42,.15); border:2px solid var(--border) }
-#tr-pin-home { left:8% } #tr-pin-job { right:6%; left:auto; transform:translate(50%,-50%) }
-.tr-van { position:absolute; top:50%; left:8%; transform:translate(-50%,-50%);
-  font-size:24px; z-index:3; transition: left 1s linear; filter: drop-shadow(0 3px 4px rgba(0,0,0,.18)) }
-.tracker-event { background:#fff; border:1px solid var(--border); padding:4px 12px;
-  border-radius:999px; font-size:11.5px; font-weight:600; color:var(--text);
-  animation: trEv .35s ease both; }
-.tracker-event b { color:#0F766E; margin-right:4px }
-@keyframes trEv { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
-</style>
-
-<script>
-(() => {
-  // Live tracker simulation — van moves home→job over a loop, ETA + status update
-  const van = document.getElementById('tr-van');
-  const eta = document.getElementById('tracker-eta');
-  const status = document.getElementById('tracker-status');
-  const events = document.getElementById('tracker-events');
-  if (!van) return;
-  const STAGES = [
-    { pct:  8, eta:"22 min", status:"📍 Just left depot · Al Quoz", evt:"Crew dispatched" },
-    { pct: 22, eta:"15 min", status:"📍 Approaching Mall of Emirates", evt:"On the way" },
-    { pct: 38, eta:"11 min", status:"📍 Sheikh Zayed Road · Trade Centre", evt:"5 km away" },
-    { pct: 55, eta:"7 min",  status:"📍 Crossing Business Bay bridge", evt:"4.2 km away" },
-    { pct: 70, eta:"4 min",  status:"📍 Turning into Marina Walk", evt:"2 km away" },
-    { pct: 88, eta:"1 min",  status:"📍 Driver at building entrance", evt:"Almost there" },
-    { pct: 96, eta:"now",    status:"✅ Pro arrived · ringing bell", evt:"Arrived" },
-  ];
-  let i = 0;
-  function step() {
-    const s = STAGES[i];
-    van.style.left = s.pct + '%';
-    eta.textContent = s.eta;
-    status.textContent = s.status;
-    const tag = document.createElement('div');
-    tag.className = 'tracker-event';
-    tag.innerHTML = '<b>' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + '</b>· ' + s.evt;
-    events.prepend(tag);
-    while (events.children.length > 3) events.lastChild.remove();
-    i = (i + 1) % STAGES.length;
-    if (i === 0) { setTimeout(() => events.innerHTML = "", 1800); }
-  }
-  step(); setInterval(step, 3500);
-})();
-</script>
-
-<!-- 🇦🇪 EMIRATE COVERAGE STRIP — clear access to per-state landing pages -->
-<section style="padding:28px 16px;background:linear-gradient(180deg,#FFFFFF,#F8FAFC);border-bottom:1px solid var(--border)">
-  <div style="max-width:1180px;margin:0 auto;text-align:center">
-    <p style="margin:0 0 12px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:0.4px;text-transform:uppercase"><span data-i18n="emirate_strip">📍 Servia operates across all 7 UAE emirates · pick yours</span></p>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
-      <a href="/area.html?city=dubai"          class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🏙 Dubai</a>
-      <a href="/area.html?city=abu-dhabi"      class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🦅 Abu Dhabi</a>
-      <a href="/area.html?city=sharjah"        class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🌅 Sharjah</a>
-      <a href="/area.html?city=ajman"          class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">⛵ Ajman</a>
-      <a href="/area.html?city=ras-al-khaimah" class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🏔 Ras Al Khaimah</a>
-      <a href="/area.html?city=umm-al-quwain"  class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🌊 Umm Al Quwain</a>
-      <a href="/area.html?city=fujairah"       class="em-pill" style="padding:10px 18px;background:#fff;border:1px solid var(--border);border-radius:999px;font-weight:700;font-size:14px;text-decoration:none;color:var(--text);min-height:44px;display:inline-flex;align-items:center;gap:6px;transition:.15s">🏝 Fujairah</a>
-    </div>
-  </div>
-</section>
-
-<!-- COMPACT LIVE-COVERAGE STRIP (replaces the heavy blob map; full map at /coverage.html) -->
-<section style="padding:18px 16px;background:#F0FDFA;border-bottom:1px solid var(--border)">
-  <div style="max-width:1180px;margin:0 auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">
-    <div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--primary-dark)">
-      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22C55E;animation:pulseDot 1.6s infinite"></span>
-      <span><b id="live-count">5</b> live bookings happening right now across UAE</span>
-    </div>
-    <span style="color:var(--muted)">·</span>
-    <div style="font-size:13px;color:var(--muted)">
-      <b style="color:var(--text)">2,412+</b> jobs completed UAE-wide this year
-    </div>
-    <span style="color:var(--muted)">·</span>
-    <a href="/coverage.html" style="font-size:13px;color:var(--primary-dark);text-decoration:underline;font-weight:600">See full live coverage map →</a>
-  </div>
-</section>
-<style>@keyframes pulseDot { 50% { transform: scale(1.6); opacity: .35 } }</style>
-
-<!-- LIVE BOOKING TICKER (social proof) -->
-<div class="live-strip" aria-label="Live activity">
-  <div class="row" id="live-row">
-    <!-- populated by JS; fallback static content below -->
-    <span><span class="live-dot"></span>Sara just booked <b>AC cleaning</b> in Dubai · 2 min ago</span>
-    <span><span class="live-dot"></span>Ahmed booked <b>Deep cleaning</b> in Sharjah · 4 min ago</span>
-    <span><span class="live-dot"></span>Priya booked <b>Maid service</b> in Ajman · 6 min ago</span>
-    <span><span class="live-dot"></span>Omar booked <b>Pest control</b> in Abu Dhabi · 9 min ago</span>
-    <span><span class="live-dot"></span>Layla booked <b>Sofa shampoo</b> in Dubai · 11 min ago</span>
-  </div>
-</div>
 
 <!-- ANIMATED STATS -->
 <section style="padding:24px 16px">
@@ -853,24 +716,6 @@
     <div class="stat reveal"><div class="num" data-count="60" data-suffix="s">0</div><div class="lab">To book online</div></div>
     <div class="stat reveal"><div class="num" data-count="7" data-suffix="-day">0</div><div class="lab">Re-do guarantee</div></div>
   </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section style="padding:48px 24px;background:#F8FAFC">
-  <div class="container">
-    <div style="text-align:center;margin-bottom:32px">
-      <h2 class="reveal" style="margin:0 0 8px">Booking is the easy part</h2>
-      <p class="sub reveal" style="margin:0">Three steps. No phone tag, no callbacks.</p>
-    </div>
-    <div class="steps-row">
-      <div class="step reveal"><div class="step-num">1</div><div class="ico">💬</div><h3>Tell us what you need</h3>
-        <p>Chat with Servia or pick from the list. Type or speak in your language.</p></div>
-      <div class="step reveal"><div class="step-num">2</div><div class="ico">💰</div><h3>See the price upfront</h3>
-        <p>Instant quote with full breakdown. No surprises, no hidden fees.</p></div>
-      <div class="step reveal"><div class="step-num">3</div><div class="ico">🚪</div><h3>Welcome our team</h3>
-        <p>Trained, vetted cleaner arrives on time. Pre-paid bookings always take priority over walk-ins.</p></div>
-    </div>
-
 </section>
 
 <!-- WHY CHOOSE US — customer benefits, not feature list -->
@@ -931,63 +776,6 @@
     </div>
   </div>
 </section>
-
-<!-- TESTIMONIALS -->
-<section style="padding:48px 24px">
-  <div class="container">
-    <div style="text-align:center;margin-bottom:32px">
-      <h2 class="reveal" style="margin:0 0 8px">Real customers, real results</h2>
-      <p class="sub reveal" style="margin:0">From 2,400+ jobs delivered across UAE.</p>
-    </div>
-    <div class="test-grid">
-      <div class="test reveal"><div class="quote-mark">"</div>
-        <div class="stars">★★★★★</div>
-        <p>"Booked deep clean for my 3BR in JLT — done in 3 hours, spotless. Quote came instantly via the chat."</p>
-        <div class="author"><div class="av">SM</div><div><b>Sara M.</b> · Dubai Marina</div></div></div>
-      <div class="test reveal"><div class="quote-mark">"</div>
-        <div class="stars">★★★★★</div>
-        <p>"المساعد بالعربية ممتاز والعاملة كانت تتكلم الهندي أيضاً. سلس جداً."</p>
-        <div class="author"><div class="av">AK</div><div><b>Ahmed K.</b> · Sharjah</div></div></div>
-      <div class="test reveal"><div class="quote-mark">"</div>
-        <div class="stars">★★★★★</div>
-        <p>"Tracking is the best part — knew exactly when the team would arrive. Paid by card, got an instant invoice."</p>
-        <div class="author"><div class="av">MT</div><div><b>Mary T.</b> · Business Bay</div></div></div>
-      <div class="test reveal"><div class="quote-mark">"</div>
-        <div class="stars">★★★★★</div>
-        <p>"Booked AC cleaning for 4 splits before summer. Tech was on time, professional, the AC works like new now."</p>
-        <div class="author"><div class="av">KA</div><div><b>Khalid A.</b> · Ajman</div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- FAQ -->
-<section style="padding:48px 24px;background:#F8FAFC" id="faq">
-  <div class="container" style="max-width:760px">
-    <h2 class="reveal" style="text-align:center">Quick questions, quick answers</h2>
-    <details class="faq reveal" open><summary>How much does deep cleaning a 2-bedroom cost?</summary>
-      <p>Starts at <b>400 AED</b> including 5% VAT. Get an exact quote in 5 seconds via chat — pricing depends on size and any add-ons (oven, fridge, sofa shampoo).</p></details>
-    <details class="faq reveal"><summary>Can I get same-day service?</summary>
-      <p>Yes! Book before 12:00 noon — we typically dispatch within 2 hours across Dubai, Sharjah, Ajman.</p></details>
-    <details class="faq reveal"><summary>Are your cleaners insured?</summary>
-      <p>100%. Every Servia cleaner is background-checked, uniformed, and covered under our liability insurance. Female-only crews on request.</p></details>
-    <details class="faq reveal"><summary>What if I'm not satisfied?</summary>
-      <p>We come back and re-clean for free within 24 hours. No questions, no fee.</p></details>
-    <details class="faq reveal"><summary>Can I cancel or reschedule?</summary>
-      <p>Free cancellation up to 4 hours before. Free reschedule up to 2 hours before. Easy from your account.</p></details>
-  </div>
-</section>
-
-<!-- FINAL CTA -->
-<section style="padding:0 24px">
-  <div class="container">
-    <div class="final-cta reveal">
-      <h2>Your home, sparkling, today.</h2>
-      <p>From 35 AED. First booking gets 15% off automatically.</p>
-      <a class="btn-bigbook" href="/book.html" style="font-size:17px">Book now in 60 seconds →</a>
-    </div>
-  </div>
-</section>
-</main>
 
 <!-- 🎁 SHARE & EARN — multi-platform share toolbar + cashback hint -->
 <section style="padding:32px 16px;background:#FFFBEB;border-top:1px solid #FDE68A;border-bottom:1px solid #FDE68A">
