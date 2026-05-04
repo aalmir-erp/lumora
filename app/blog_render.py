@@ -346,6 +346,7 @@ def render_post(slug: str) -> HTMLResponse:
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
 <script type="application/ld+json">{schema_json}</script>
 <script src="/banner.js" defer></script>
 <style>
@@ -584,6 +585,7 @@ def render_index() -> HTMLResponse:
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/widget.css">
 <script type="application/ld+json">{schema_json}</script>
 <script src="/banner.js" defer></script>
 <style>

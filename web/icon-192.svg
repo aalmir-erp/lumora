@@ -1,31 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
   <defs>
     <clipPath id="rounded"><rect width="192" height="192" rx="42"/></clipPath>
-    <linearGradient id="badge" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0D9488"/>
-      <stop offset="100%" stop-color="#115E59"/>
+    <radialGradient id="face" cx="0.45" cy="0.4" r="0.65">
+      <stop offset="0%" stop-color="#FEF3C7"/><stop offset="100%" stop-color="#FCD34D"/>
+    </radialGradient>
+    <radialGradient id="badge" cx="0.5" cy="0.4" r="0.7">
+      <stop offset="0%" stop-color="#14B8A6"/><stop offset="60%" stop-color="#0D9488"/><stop offset="100%" stop-color="#0F766E"/>
+    </radialGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFAFA"/><stop offset="100%" stop-color="#E2E8F0"/>
     </linearGradient>
     <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.30"/>
     </filter>
   </defs>
   <g clip-path="url(#rounded)">
-    <rect x="0"  y="0"     width="48"  height="192" fill="#EF3340"/>
-    <rect x="48" y="0"     width="144" height="64"  fill="#00732F"/>
-    <rect x="48" y="64"    width="144" height="64"  fill="#FFFFFF"/>
-    <rect x="48" y="128"   width="144" height="64"  fill="#000000"/>
+    <rect x="0"  y="0"   width="48"  height="192" fill="#EF3340"/>
+    <rect x="48" y="0"   width="144" height="64"  fill="#00732F"/>
+    <rect x="48" y="64"  width="144" height="64"  fill="#FFFFFF"/>
+    <rect x="48" y="128" width="144" height="64"  fill="#000000"/>
   </g>
   <g filter="url(#shadow)">
-    <circle cx="96" cy="96" r="44" fill="url(#badge)"/>
-    <circle cx="96" cy="96" r="44" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.85"/>
+    <circle cx="96" cy="96" r="48" fill="url(#badge)"/>
+    <circle cx="96" cy="96" r="48" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.85"/>
   </g>
-  <text x="96" y="112" text-anchor="middle"
-        font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif"
-        font-size="56" font-weight="900" fill="#FFFFFF"
-        letter-spacing="-1.5">S</text>
+  <g transform="translate(96,96)">
+    <circle cx="0" cy="6" r="29" fill="url(#face)"/>
+    <ellipse cx="-14" cy="13" rx="5" ry="3" fill="#FB7185" opacity="0.45"/>
+    <ellipse cx="14"  cy="13" rx="5" ry="3" fill="#FB7185" opacity="0.45"/>
+    <circle cx="-8" cy="2" r="3" fill="#0F172A"/>
+    <circle cx="8"  cy="2" r="3" fill="#0F172A"/>
+    <circle cx="-7" cy="1" r="1" fill="#FFFFFF"/>
+    <circle cx="9"  cy="1" r="1" fill="#FFFFFF"/>
+    <path d="M -8 14 Q 0 21 8 14" stroke="#0F172A" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M -24 -8 Q -20 -25 0 -25 Q 20 -25 24 -8 L 21 -3 Q 0 -8 -21 -3 Z" fill="url(#cap)"/>
+    <rect x="-25" y="-4" width="50" height="2.5" rx="1" fill="#0D9488"/>
+    <circle cx="0" cy="-16" r="5" fill="#0D9488"/>
+    <text x="0" y="-14" text-anchor="middle"
+          font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif"
+          font-size="7" font-weight="900" fill="#FFFFFF">S</text>
+  </g>
   <g fill="#FCD34D">
-    <circle cx="130" cy="66" r="3.5"/>
-    <path d="M130 58 v5 M130 69 v5 M122 66 h5 M133 66 h5"
+    <circle cx="142" cy="54" r="3.5"/>
+    <path d="M142 46 v5 M142 57 v5 M134 54 h5 M145 54 h5"
           stroke="#FCD34D" stroke-width="2" stroke-linecap="round"/>
   </g>
 </svg>
