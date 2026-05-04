@@ -423,6 +423,12 @@
     <a href="/blog">Blog</a><br>
     <a href="/me.html">My account</a><br>
     <a href="/login.html">Sign in</a>
+    <!-- Review platforms strip — populated client-side from /api/reviews/platforms,
+         hidden if admin hasn't configured any review-platform IDs. -->
+    <div id="review-strip" style="margin-top:14px;display:none">
+      <h3 style="margin-top:0">⭐ Review us</h3>
+      <div id="review-strip-links" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
   </div>
   <div>
     <h3>Careers</h3>
@@ -460,6 +466,24 @@
 <script src="/theme.js" defer></script>
 <script src="/app.js" defer></script>
 <script src="/install.js" defer></script>
+<script>
+  // Lazy-load review platform links (Trustpilot, Google, Facebook, etc) from
+  // admin-configured cfg keys. Hidden until at least one platform is set so
+  // we don't show a broken empty section before launch.
+  setTimeout(() => {
+    fetch("/api/reviews/platforms").then(r => r.ok ? r.json() : null).then(d => {
+      if (!d || !d.links || !d.links.length) return;
+      const ICONS = {Trustpilot:"⭐",Google:"🔵",Facebook:"📘",Yelp:"🔴",TripAdvisor:"🦉"};
+      const wrap = document.getElementById("review-strip");
+      const links = document.getElementById("review-strip-links");
+      if (!wrap || !links) return;
+      links.innerHTML = d.links.map(l =>
+        `<a href="${l.url}" target="_blank" rel="noopener" style="background:rgba(255,255,255,.08);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#FCD34D;text-decoration:none">${ICONS[l.label]||"⭐"} ${l.label}</a>`
+      ).join("");
+      wrap.style.display = "block";
+    }).catch(()=>{});
+  }, 5000);
+</script>
 
 <script>
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add("in"); }), {threshold: 0.12});

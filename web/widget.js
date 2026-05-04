@@ -378,6 +378,13 @@
     return escaped
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/_([^_]+)_/g, "<em>$1</em>")
+      // Markdown links: [text](url) → clickable button-styled link.
+      // Only allow http(s) + relative URLs (starts with /) to keep XSS safe.
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]*)\)/g,
+        '<a href="$2" target="_blank" rel="noopener" style="display:inline-block;background:#0F766E;color:#fff;padding:4px 10px;border-radius:6px;font-weight:700;text-decoration:none;font-size:12.5px;margin:2px 2px 2px 0">$1 ↗</a>')
+      // Auto-link bare URLs (only if not already inside an <a>)
+      .replace(/(^|[^"'>])(https?:\/\/[^\s<>]+)/g,
+        '$1<a href="$2" target="_blank" rel="noopener" style="color:#0F766E;font-weight:600;word-break:break-all">$2</a>')
       .replace(/^[•\-\*]\s+(.+)$/gm, "&nbsp;&nbsp;• $1")
       .replace(/\n/g, "<br>");
   }

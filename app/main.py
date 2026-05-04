@@ -37,6 +37,7 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)
+app.include_router(admin.public_reviews_router)
 app.include_router(live_visitors.admin_router)
 app.include_router(push_notifications.router)
 app.include_router(push_notifications.public_router)
@@ -333,12 +334,48 @@ async def _cascade_via_router(prompt: str, history: list[dict], lang: str) -> di
                     break
     # Convert prior chat history into messages-style for the router
     history_msgs = [{"role": h["role"], "content": h["content"]} for h in (history or [])]
-    history_msgs.insert(0, {
-        "role": "user",
-        "content": ("(SYSTEM CONTEXT) You are Servia, the AI concierge for a UAE home-services "
-                    f"platform. Reply in {lang}. Be friendly, concise, helpful. Push to /book.html "
-                    "for bookings. Never refuse — always try to assist with services like cleaning, "
-                    "AC, pest, handyman, sofa, etc.")})
+    # Build a comprehensive system prompt — when the cascade is in play we're
+    # using a non-Anthropic model that has NO tool access and NO knowledge of
+    # our actual services. Inject the live service catalog + brand domain so
+    # the model stops hallucinating "yourwebsite.com" URLs and knows what we
+    # actually offer (chauffeur, mobile repair, etc).
+    try:
+        svc_list = kb.services().get("services", [])
+    except Exception: svc_list = []
+    domain = settings.BRAND_DOMAIN
+    svc_lines = "\n".join(
+        f"- {s.get('name','?')} (id={s.get('id')}) — from AED {s.get('starting_price','?')}"
+        for s in svc_list
+    )[:3500]
+    sys_prompt = (
+        f"You are Servia, the AI concierge for a UAE home-services platform. "
+        f"Brand domain: https://{domain}\n"
+        f"Reply in {lang}. Be friendly, concise, locally informed (UAE).\n\n"
+        "## Hard rules — MUST follow\n"
+        f"1. Every URL MUST start with https://{domain}. NEVER write 'yourwebsite.com', "
+        "'example.com', or any other placeholder. To book: https://" + domain + "/book.html. "
+        "To see prices: https://" + domain + "/services.html. To see videos: "
+        "https://" + domain + "/videos.html. To open a specific service: "
+        "https://" + domain + "/service.html?id=<service_id>.\n"
+        "2. Use Markdown links so the widget renders them clickable: "
+        "[Book now](https://" + domain + "/book.html). NOT raw URLs in parentheses.\n"
+        "3. NEVER claim we don't offer a service that's in the list below. We DO offer "
+        "every service in the catalog.\n"
+        "4. NEVER use em-dashes, en-dashes, or semicolons.\n"
+        "5. Quote prices in AED with VAT inclusive (5%).\n\n"
+        "## Service catalog (live, from our database)\n"
+        f"{svc_lines}\n\n"
+        "## Booking flow\n"
+        "If the customer wants to book, ask for: service id, emirate (Dubai / Sharjah / "
+        "Abu Dhabi / Ajman / RAK / UAQ / Fujairah), date+time, address, name + phone. "
+        "Then confirm with a [Book now](https://" + domain + "/book.html?service=<id>&area=<emirate>) "
+        "deep link.\n\n"
+        "## Out of scope\n"
+        "If asked about something genuinely outside home services (e.g. visa, flight booking), "
+        "politely redirect: 'I help with home services in the UAE — for that, you'd need a "
+        "different specialist. But if you need anything for your home, I'm here.'"
+    )
+    history_msgs.insert(0, {"role": "user", "content": sys_prompt})
     for (provider, model) in candidates:
         key_t = (provider, model)
         if key_t in tried: continue

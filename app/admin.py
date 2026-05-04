@@ -1520,18 +1520,96 @@ def complete_job(bid: str, body: CompleteJobBody):
     db.log_event("booking", bid, "completed", actor="admin",
                  details={"photos": len(body.photos)})
 
-    # Send delivery + review-request WhatsApp to customer
+    # Send delivery + review-request WhatsApp to customer. Includes the on-site
+    # review form PLUS direct deep-links to every external review platform the
+    # admin has configured (Trustpilot, Google, Facebook, Yelp). Customers who
+    # leave 5★ are encouraged to also drop one on Trustpilot — public ratings
+    # there move the SEO needle a lot in the UAE market.
     from .config import get_settings
     base = "https://" + get_settings().BRAND_DOMAIN
     review_url = f"{base}/delivered.html?b={bid}"
+    ext = _review_links()
+    ext_lines = ""
+    if ext:
+        ext_lines = "\n\nLove us? Drop a quick public review here too:\n" + "\n".join(
+            f"• {label}: {url}" for label, url in ext)
     msg = (
         f"✅ Your Servia service is complete (booking {bid}).\n\n"
         f"How did it go? Tap to review (30 seconds): {review_url}\n\n"
         f"5★? We'll send your invoice to WhatsApp + email shortly. "
         f"Need anything else? Reply to this message and we'll help."
+        f"{ext_lines}"
     )
     push = _t.send_whatsapp(b["phone"], msg) if b["phone"] else {"ok": False, "error": "no phone"}
-    return {"ok": True, "review_url": review_url, "wa_send": push}
+    return {"ok": True, "review_url": review_url, "external_links": dict(ext or []),
+            "wa_send": push}
+
+
+# ---------- review-platform integration ----------
+def _review_links() -> list[tuple[str, str]]:
+    """Build the list of (platform_label, review_url) pairs the admin has
+    configured under cfg keys: trustpilot_domain, google_place_id,
+    facebook_page_id, yelp_business_id, tripadvisor_url. Returns [] if none
+    are set so the WhatsApp / footer fallback gracefully omits the section."""
+    out: list[tuple[str, str]] = []
+    tp = (db.cfg_get("trustpilot_domain", "") or "").strip()
+    if tp:
+        out.append(("Trustpilot", f"https://www.trustpilot.com/evaluate/{tp}"))
+    g = (db.cfg_get("google_place_id", "") or "").strip()
+    if g:
+        out.append(("Google", f"https://search.google.com/local/writereview?placeid={g}"))
+    fb = (db.cfg_get("facebook_page_id", "") or "").strip()
+    if fb:
+        out.append(("Facebook", f"https://www.facebook.com/{fb}/reviews/"))
+    y = (db.cfg_get("yelp_business_id", "") or "").strip()
+    if y:
+        out.append(("Yelp", f"https://www.yelp.com/writeareview/biz/{y}"))
+    ta = (db.cfg_get("tripadvisor_url", "") or "").strip()
+    if ta:
+        out.append(("TripAdvisor", ta))
+    return out
+
+
+@router.get("/reviews/platforms", dependencies=[Depends(require_admin)])
+def get_review_platforms():
+    """Return current review-platform IDs + the resolved deep links."""
+    return {
+        "trustpilot_domain":  db.cfg_get("trustpilot_domain", "") or "",
+        "google_place_id":    db.cfg_get("google_place_id", "") or "",
+        "facebook_page_id":   db.cfg_get("facebook_page_id", "") or "",
+        "yelp_business_id":   db.cfg_get("yelp_business_id", "") or "",
+        "tripadvisor_url":    db.cfg_get("tripadvisor_url", "") or "",
+        "links":              dict(_review_links()),
+    }
+
+
+class ReviewPlatformsBody(BaseModel):
+    trustpilot_domain: str | None = None
+    google_place_id: str | None = None
+    facebook_page_id: str | None = None
+    yelp_business_id: str | None = None
+    tripadvisor_url: str | None = None
+
+
+@router.post("/reviews/platforms", dependencies=[Depends(require_admin)])
+def set_review_platforms(body: ReviewPlatformsBody):
+    upd = body.dict(exclude_none=True)
+    for k, v in upd.items():
+        db.cfg_set(k, (v or "").strip())
+    return {"ok": True, "saved": list(upd.keys()),
+            "links": dict(_review_links())}
+
+
+# Public endpoint: every page can render a "Review us on …" footer block by
+# calling this from the client. No admin auth required.
+public_reviews_router = APIRouter(prefix="/api/reviews", tags=["public-reviews"])
+
+
+@public_reviews_router.get("/platforms")
+def public_review_platforms():
+    """Public version of the review-platform list (just the URLs, not raw IDs).
+    Powers the homepage footer 'Review us on Trustpilot / Google / FB' block."""
+    return {"links": [{"label": l, "url": u} for l, u in _review_links()]}
 
 
 @router.get("/jobs/pending-followup", dependencies=[Depends(require_admin)])

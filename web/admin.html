@@ -435,6 +435,37 @@
       </div>
 
       <div id="brand-form"></div>
+
+      <!-- Review platforms (Trustpilot / Google / Facebook / Yelp / TripAdvisor) -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:18px">
+        <h3 style="margin:0 0 4px;font-size:15px">⭐ Review platforms</h3>
+        <p style="margin:0 0 14px;color:var(--muted);font-size:13px">Paste your IDs/handles and the system: (1) appends "Review us on …" links to the WhatsApp message every customer gets after a completed job, (2) shows a footer block on the homepage. Trustpilot ratings move SEO most in UAE — set that one first.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Trustpilot domain<br>
+            <input id="rev-trustpilot" placeholder="servia.ae" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px">
+            <small style="color:#94A3B8;font-size:10.5px">Your business URL on trustpilot.com (just the domain).</small>
+          </label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Place ID<br>
+            <input id="rev-google" placeholder="ChIJ..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px">
+            <small style="color:#94A3B8;font-size:10.5px">From Google Business Profile → Manage → "Place ID".</small>
+          </label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Facebook Page ID<br>
+            <input id="rev-facebook" placeholder="ServiaUAE" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px">
+            <small style="color:#94A3B8;font-size:10.5px">Page username or numeric ID.</small>
+          </label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Yelp business ID<br>
+            <input id="rev-yelp" placeholder="servia-dubai" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px">
+            <small style="color:#94A3B8;font-size:10.5px">Slug from your Yelp business URL.</small>
+          </label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted);grid-column:1/-1">TripAdvisor URL<br>
+            <input id="rev-tripadvisor" placeholder="https://www.tripadvisor.com/UserReviewEdit-..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px">
+            <small style="color:#94A3B8;font-size:10.5px">Full review-link from your TripAdvisor business page.</small>
+          </label>
+        </div>
+        <button class="btn btn-primary" onclick="saveReviews()" style="margin-top:14px">💾 Save review platforms</button>
+        <span id="rev-msg" style="margin-inline-start:12px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+        <div id="rev-preview" style="margin-top:12px"></div>
+      </div>
     </div>
 
     <div id="t-whatsapp" class="tab" style="display:none">
@@ -3670,6 +3701,49 @@ async function saveBrand() {
     await adm("/api/admin/brand", { method:"POST", body });
     toast("✓ Brand saved — public site updates instantly");
   } catch(e) { alert("Error: "+e.message); }
+}
+
+// ---------- Review platforms ----------
+async function loadReviewPlatforms() {
+  try {
+    const r = await adm("/api/admin/reviews/platforms");
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
+    set("rev-trustpilot",  r.trustpilot_domain);
+    set("rev-google",      r.google_place_id);
+    set("rev-facebook",    r.facebook_page_id);
+    set("rev-yelp",        r.yelp_business_id);
+    set("rev-tripadvisor", r.tripadvisor_url);
+    renderReviewPreview(r.links || {});
+  } catch {}
+}
+function renderReviewPreview(links) {
+  const wrap = document.getElementById("rev-preview");
+  if (!wrap) return;
+  const entries = Object.entries(links || {});
+  if (!entries.length) {
+    wrap.innerHTML = '<div style="color:var(--muted);font-size:12px;background:#F8FAFC;padding:10px;border-radius:8px">No platforms configured yet — review prompt is hidden on public site + WhatsApp.</div>';
+    return;
+  }
+  wrap.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Live links (these go to customers):</div>' +
+    entries.map(([label, url]) =>
+      `<div style="font-size:12.5px;padding:4px 0"><b>${label}:</b> <a href="${url}" target="_blank" style="color:#0F766E">${url}</a></div>`
+    ).join("");
+}
+async function saveReviews() {
+  const body = {
+    trustpilot_domain: document.getElementById("rev-trustpilot").value.trim(),
+    google_place_id:   document.getElementById("rev-google").value.trim(),
+    facebook_page_id:  document.getElementById("rev-facebook").value.trim(),
+    yelp_business_id:  document.getElementById("rev-yelp").value.trim(),
+    tripadvisor_url:   document.getElementById("rev-tripadvisor").value.trim(),
+  };
+  try {
+    const r = await adm("/api/admin/reviews/platforms", { method: "POST", body: JSON.stringify(body) });
+    toast("✓ Saved — public site + WhatsApp messages updated");
+    renderReviewPreview(r.links || {});
+    document.getElementById("rev-msg").textContent = "Saved · " + Object.keys(r.links||{}).length + " platforms live";
+    setTimeout(() => document.getElementById("rev-msg").textContent = "", 4000);
+  } catch (e) { /* adm() toasts */ }
 }
 </script>
 </body></html>
