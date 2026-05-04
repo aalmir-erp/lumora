@@ -711,16 +711,21 @@ async function loadDashboard() {
 }
 
 async function loadHealth() {
-  // LLM
+  // LLM — actually ping Anthropic, don't just trust mode flag
   try {
-    const h = await fetch("/api/health").then(r=>r.json()).catch(()=>null);
     const card = document.getElementById("dash-llm");
-    const ok = h && h.mode === "llm";
-    card.querySelector(".dash-v").innerHTML = ok
-      ? `<span style="color:#15803D">● Live</span> · ${escapeHtml(h.model||'Claude')}`
-      : `<span style="color:#B45309">○ Demo mode</span>`;
-    card.insertAdjacentHTML("beforeend",
-      `<div class="dash-sub">${ok?'AI bot serving customers':'Set ANTHROPIC_API_KEY to enable Claude'}</div>`);
+    card.querySelector(".dash-v").innerHTML = `<span style="color:#7C3AED">⏳ pinging…</span>`;
+    const d = await adm("/api/admin/llm/diagnose");
+    if (d.ok) {
+      card.querySelector(".dash-v").innerHTML =
+        `<span style="color:#15803D">● Live</span> · ${escapeHtml(d.model_responded||d.model_configured)} · ${d.latency_ms}ms`;
+      card.insertAdjacentHTML("beforeend",
+        `<div class="dash-sub">AI bot replying — key: ${escapeHtml(d.key_preview||'')}</div>`);
+    } else {
+      card.querySelector(".dash-v").innerHTML = `<span style="color:#B91C1C;font-weight:700">⚠ ${escapeHtml((d.error||'').slice(0,40))}</span>`;
+      card.insertAdjacentHTML("beforeend",
+        `<div class="dash-sub" style="color:#B91C1C;line-height:1.4">${escapeHtml(d.fix||'')}<br><small style="color:#7F1D1D">Bot is in fallback mode — every chat shows 'I'm having a brief hiccup'.</small></div>`);
+    }
   } catch (_) {}
   // WhatsApp
   try {
