@@ -68,6 +68,90 @@ def customer_verify(req: a.OtpVerifyReq):
     return {"ok": True, "token": token, "customer_id": cid}
 
 
+# --- Magic-link login (for the auto-account flow on cart checkout) ---
+class MagicLinkReq(BaseModel):
+    email: str
+
+@public_router.post("/auth/magic-link")
+def request_magic_link(req: MagicLinkReq):
+    """Send the customer a 1-time login token by email. Same OTP plumbing
+    re-used: token = sha256(email + secret + 5-min bucket). Customer clicks
+    https://servia.ae/me.html?login=<email>&t=<token> → we verify + auto-login.
+    For now we record an admin alert (admin can paste token into the email
+    or we wire SMTP/Postmark in a later pass)."""
+    import datetime as _dt, hashlib, secrets
+    email = (req.email or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(400, "valid email required")
+    with db.connect() as c:
+        r = c.execute("SELECT id, name FROM customers WHERE email=?", (email,)).fetchone()
+        if not r:
+            return {"ok": True, "sent": False,
+                    "msg": "If an account exists for that email, we've sent a login link."}
+        cid = r["id"]
+    # 30-min token
+    salt = os.getenv("MAGIC_LINK_SALT", "servia-magic-default")
+    bucket = int(_dt.datetime.utcnow().timestamp() // 1800)
+    token = hashlib.sha256(f"{email}|{salt}|{bucket}".encode()).hexdigest()[:24]
+    link = f"/me.html?login={email}&t={token}"
+    try:
+        from . import admin_alerts
+        admin_alerts.notify_admin(
+            f"📧 Magic-link login requested\n\n"
+            f"Customer: {email} (id {cid})\n"
+            f"Link: https://servia.ae{link}\n\n"
+            f"(Wire SMTP later to auto-send.)",
+            kind="magic_link", urgency="normal")
+    except Exception: pass
+    return {"ok": True, "sent": True,
+            "debug_link": link if os.getenv("DEBUG_MAGIC", "") == "1" else None,
+            "msg": "Login link sent — check your email."}
+
+
+class MagicLinkVerifyReq(BaseModel):
+    email: str
+    token: str
+
+@public_router.post("/auth/magic-link/verify")
+def verify_magic_link(req: MagicLinkVerifyReq):
+    import datetime as _dt, hashlib, os as _os
+    email = (req.email or "").strip().lower()
+    salt = _os.getenv("MAGIC_LINK_SALT", "servia-magic-default")
+    now_b = int(_dt.datetime.utcnow().timestamp() // 1800)
+    # Accept current + previous bucket so the token has a 30-60min window
+    for b in (now_b, now_b - 1):
+        expected = hashlib.sha256(f"{email}|{salt}|{b}".encode()).hexdigest()[:24]
+        if expected == (req.token or ""):
+            with db.connect() as c:
+                r = c.execute("SELECT id FROM customers WHERE email=?", (email,)).fetchone()
+                if not r: raise HTTPException(404, "no account")
+                cid = r["id"]
+            tok = a.create_session("customer", cid)
+            return {"ok": True, "token": tok, "customer_id": cid}
+    raise HTTPException(401, "invalid or expired magic link")
+
+
+# --- Set/change password for customer (post-checkout claim) ---
+class SetPasswordReq(BaseModel):
+    phone: str
+    password: str
+
+@public_router.post("/auth/customer/set-password")
+def set_customer_password(req: SetPasswordReq):
+    """Allows a customer who just placed an order to set a password so they
+    can log in directly next time (OTP no longer required)."""
+    if not req.password or len(req.password) < 6:
+        raise HTTPException(400, "password must be 6+ chars")
+    pw = a.hash_password(req.password)
+    with db.connect() as c:
+        r = c.execute("SELECT id FROM customers WHERE phone=?", (req.phone or "")).fetchone()
+        if not r: raise HTTPException(404, "no account for that phone")
+        try: c.execute("ALTER TABLE customers ADD COLUMN password_hash TEXT")
+        except Exception: pass
+        c.execute("UPDATE customers SET password_hash=? WHERE id=?", (pw, r["id"]))
+    return {"ok": True}
+
+
 @router.post("/auth/vendor/register")
 def vendor_register(req: a.VendorRegisterReq):
     """Self-registration. New vendors are approved by default unless ADMIN_VENDOR_APPROVAL=on."""

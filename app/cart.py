@@ -35,6 +35,7 @@ class CartPayload(BaseModel):
     items: list[CartItem] = Field(..., min_items=1, max_items=20)
     customer_name: Optional[str] = None
     phone: Optional[str] = None
+    email: Optional[str] = None       # for auto-account create / attach
     address: Optional[str] = None
     language: Optional[str] = "en"
 
@@ -111,9 +112,47 @@ def quote(cart: CartPayload):
 @router.post("/checkout")
 def checkout(cart: CartPayload):
     """Create N bookings + a single combined invoice covering all of them.
-    Customer pays once, our team dispatches N pros (or 1 visit if same date)."""
+    Customer pays once, our team dispatches N pros (or 1 visit if same date).
+
+    Auto-account flow: if `phone` matches an existing customer, the bookings
+    attach to that account silently. Otherwise we create the customer record
+    on the fly. After checkout, the customer can claim the account by either
+    setting a password or requesting a magic-link via email."""
     if not (cart.customer_name and cart.phone and cart.address):
         raise HTTPException(400, "customer_name, phone, address required")
+
+    # ---- Auto-account: attach to existing OR auto-create -----------
+    customer_id = None
+    customer_email = (getattr(cart, "email", "") or "").strip().lower()
+    norm_phone = (cart.phone or "").strip()
+    try:
+        with db.connect() as c:
+            r = c.execute("SELECT id, email FROM customers WHERE phone=?", (norm_phone,)).fetchone()
+            if r:
+                customer_id = r["id"]
+                # Patch missing email if we now have one
+                if customer_email and not r["email"]:
+                    c.execute("UPDATE customers SET email=? WHERE id=?", (customer_email, customer_id))
+            elif customer_email:
+                # Or maybe email matches an existing customer with a different phone
+                r2 = c.execute("SELECT id FROM customers WHERE email=?", (customer_email,)).fetchone()
+                if r2:
+                    customer_id = r2["id"]
+                    c.execute("UPDATE customers SET phone=? WHERE id=?", (norm_phone, customer_id))
+            if not customer_id:
+                # Auto-create
+                import datetime as _dt
+                cur = c.execute(
+                    "INSERT INTO customers(phone, name, email, created_at) VALUES(?,?,?,?)",
+                    (norm_phone, cart.customer_name, customer_email or None,
+                     _dt.datetime.utcnow().isoformat() + "Z"))
+                customer_id = cur.lastrowid
+            # Bookings will be associated by phone (existing tools.create_booking
+            # signature) — customer_id link is implicit via the unique phone.
+    except Exception as e:  # noqa: BLE001
+        # Account flow is best-effort; still allow booking
+        print(f"[cart-checkout] auto-account skipped: {e}", flush=True)
+
     bid_list = []
     booked_dicts = []
     for it in cart.items:

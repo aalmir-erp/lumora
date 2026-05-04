@@ -408,17 +408,16 @@ app.add_middleware(GZipMiddleware, minimum_size=500, compresslevel=6)
 async def _smart_cache(request, call_next):
     resp = await call_next(request)
     p = request.url.path
-    # HTML pages — short cache + stale-while-revalidate so PSI sees fast
-    # repeat-visit but deploys still land within ~minute via SW
+    # HTML — short cache + long SWR so deploys land in <1 min
     if p.endswith(".html") or p == "/" or p.endswith("/"):
-        resp.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=600"
-    # JS / CSS — 5-minute cache + 1-day SWR. Service worker handles deploy
-    # invalidation; this cache lets PSI lab tests count repeat-visit savings.
+        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
+    # JS / CSS — 1-hour cache + 1-week SWR. PSI 'efficient cache lifetimes'
+    # check counts hard against anything below 60 min on JS/CSS.
     elif p.endswith((".js", ".css")):
-        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
+        resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=604800"
     elif p.endswith((".json", ".webmanifest")):
-        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
-    # Icons / images / fonts — long cache (30 days) + 7-day SWR
+        resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=86400"
+    # Icons / images / fonts — 30 days + 7-day SWR
     elif p.endswith((".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico", ".woff", ".woff2", ".ttf")):
         resp.headers["Cache-Control"] = "public, max-age=2592000, stale-while-revalidate=604800"
     return resp

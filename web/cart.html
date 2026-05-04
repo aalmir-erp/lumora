@@ -11,8 +11,10 @@
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null">
 <noscript><link rel="stylesheet" href="/style.css"></noscript>
-<link rel="stylesheet" href="/widget.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="preload" as="style" href="/widget.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css"></noscript>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preload" as="style" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin onload="this.rel='stylesheet';this.onload=null">
+<noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin></noscript>
 <style>
 body{background:linear-gradient(180deg,#FFFBEB,#F8FAFC)}
 .wrap{max-width:1080px;margin:24px auto 80px;padding:0 16px;display:grid;gap:20px;grid-template-columns:1.6fr 1fr;align-items:start}
@@ -101,6 +103,7 @@ body{background:linear-gradient(180deg,#FFFBEB,#F8FAFC)}
     <div style="margin-top:18px;padding-top:14px;border-top:1px solid #F1F5F9">
       <div class="field"><label>Your name</label><input id="c-name" placeholder="Full name" required></div>
       <div class="field"><label>Phone</label><input id="c-phone" type="tel" placeholder="+971 5X XXX XXXX" required></div>
+      <div class="field"><label>Email <span style="color:#94A3B8;font-weight:500;text-transform:none;letter-spacing:0">(for receipt + magic-link login)</span></label><input id="c-email" type="email" placeholder="you@example.com"></div>
       <div class="field">
         <label>Default address</label>
         <input id="c-addr" placeholder="Tower / villa, area, emirate (used when a service has no own address)" required>
@@ -120,7 +123,7 @@ body{background:linear-gradient(180deg,#FFFBEB,#F8FAFC)}
   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a></div>
   <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
 </div></footer>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin defer></script>
 <script>
 const KEY="servia.cart.v1";const SAVED_KEY="servia.saved_addresses";
 const SM={deep_cleaning:["✨","Deep Cleaning"],general_cleaning:["🧹","General Cleaning"],ac_cleaning:["❄️","AC Service"],ac_service:["❄️","AC Service"],maid_service:["👤","Maid Service"],pest_control:["🪲","Pest Control"],handyman:["🔧","Handyman"],sofa_carpet:["🛋️","Sofa & Carpet"],carpet_cleaning:["🧼","Carpet"],move_in_out:["📦","Move-in/out"],move_in_out_cleaning:["📦","Move-in/out"],window_cleaning:["🪟","Window"],kitchen_deep:["👨‍🍳","Kitchen Deep"],kitchen_deep_clean:["👨‍🍳","Kitchen Deep"],villa_deep:["🏡","Villa Deep"],car_wash:["🚗","Car Wash"],swimming_pool:["🏊","Pool"],painting:["🎨","Painting"],gardening:["🌿","Gardening"],smart_home:["💡","Smart Home"],curtain_cleaning:["🪟","Curtain"],marble_polish:["💎","Marble"],laundry:["👕","Laundry"],babysitting:["👶","Babysitter"],office_cleaning:["🏢","Office"],post_construction:["🏗","Post-Construction"],disinfection:["🧴","Disinfection"]};
@@ -264,7 +267,7 @@ async function render(){
   document.getElementById("addr-line-count").textContent=lk;
   document.getElementById("default-apply").style.display=lk?'flex':'none';
 }
-async function checkout(){const items=get().map(({_ts,...r})=>r);if(!items.length)return;const n=document.getElementById("c-name").value.trim();const p=document.getElementById("c-phone").value.trim();const a=document.getElementById("c-addr").value.trim();if(!n||!p||!a){alert("Please fill in name, phone and default address.");return}for(const [i,it] of items.entries()){if(!it.target_date||!it.time_slot){alert(`Service ${i+1}: pick a date and time slot.`);return}if(!it.address)it.address=a;if(it.address&&it.address!==a)it.notes=(it.notes?it.notes+" · ":"")+"At: "+it.address}const btn=document.getElementById("co-btn");btn.disabled=true;btn.textContent="Processing…";try{const r=await fetch("/api/cart/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({items,customer_name:n,phone:p,address:a})});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.detail||j.error||"checkout failed");localStorage.removeItem(KEY);if(j.payment_url)location.href=j.payment_url;else location.href=`/booked.html?b=${j.bundle_anchor}`}catch(e){btn.disabled=false;btn.textContent="Try checkout again";alert("Checkout error: "+(e.message||"unknown"))}}
+async function checkout(){const items=get().map(({_ts,...r})=>r);if(!items.length)return;const n=document.getElementById("c-name").value.trim();const p=document.getElementById("c-phone").value.trim();const em=(document.getElementById("c-email")||{}).value?.trim()||"";const a=document.getElementById("c-addr").value.trim();if(!n||!p||!a){alert("Please fill in name, phone and default address.");return}for(const [i,it] of items.entries()){if(!it.target_date||!it.time_slot){alert(`Service ${i+1}: pick a date and time slot.`);return}if(!it.address)it.address=a;if(it.address&&it.address!==a)it.notes=(it.notes?it.notes+" · ":"")+"At: "+it.address}const btn=document.getElementById("co-btn");btn.disabled=true;btn.textContent="Processing…";try{const r=await fetch("/api/cart/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({items,customer_name:n,phone:p,email:em,address:a})});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.detail||j.error||"checkout failed");localStorage.removeItem(KEY);if(j.payment_url)location.href=j.payment_url;else location.href=`/booked.html?b=${j.bundle_anchor}&claim=1`}catch(e){btn.disabled=false;btn.textContent="Try checkout again";alert("Checkout error: "+(e.message||"unknown"))}}
 fetch("/api/services").then(r=>r.json()).then(d=>{(d.services||[]).forEach(s=>SVC[s.id]=s);const p=new URLSearchParams(location.search);if(p.get("add")){const it={service_id:p.get("add")};["bedrooms","hours","units","target_date","time_slot"].forEach(k=>{const v=p.get(k);if(v)it[k]=(["bedrooms","hours","units"].includes(k))?parseInt(v,10):v});const c=get();c.push({...it,_ts:Date.now()});save(c);history.replaceState({},"","/cart.html")}else render()}).catch(()=>render());
 window.serviaCart={add:i=>{const c=get();c.push({...i,_ts:Date.now()});save(c)},view:get,clear:()=>save([])};
 </script>
