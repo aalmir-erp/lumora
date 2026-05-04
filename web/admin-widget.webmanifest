@@ -5,7 +5,7 @@
   "start_url": "/admin-widget.html",
   "scope": "/admin-widget.html",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#0F172A",
   "theme_color": "#0F766E",
   "lang": "en",
