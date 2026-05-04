@@ -78,15 +78,15 @@
     </div>
     <div class="pay-summary" id="pay-summary"><span style="color:var(--muted)">Loading booking details…</span></div>
 
-    <!-- Step 1: identify customer -->
+    <!-- Step 1: contact -->
     <div class="pay-step" id="step-id">
-      <h3><span class="num">1</span> Confirm it's you</h3>
-      <p style="margin:0 0 6px;font-size:13px;color:var(--muted)">Enter your phone or email so we can attach this booking to your account, send updates, and let you re-book in one tap.</p>
+      <h3><span class="num">1</span> Where should we send updates?</h3>
+      <p style="margin:0 0 6px;font-size:13px;color:var(--muted)">We'll text you the technician's name + ETA, plus your receipt and booking link. No password to remember — your phone is your account.</p>
       <div class="pay-row">
-        <input id="pay-phone" type="tel" inputmode="tel" placeholder="Phone (e.g. +9715...)" class="pay-input" autocomplete="tel">
+        <input id="pay-phone" type="tel" inputmode="tel" placeholder="📱 Mobile number (e.g. +9715...)" class="pay-input" autocomplete="tel">
       </div>
-      <input id="pay-email" type="email" placeholder="Email (optional, for receipts)" class="pay-input" autocomplete="email" style="margin-top:8px">
-      <small style="color:var(--muted);font-size:11.5px;display:block;margin-top:6px">No password needed. We'll create your account or sign you in automatically. <a href="/login.html" style="color:#0F766E;font-weight:700">Already have one?</a></small>
+      <input id="pay-email" type="email" placeholder="📧 Email (optional, for tax-receipt PDF)" class="pay-input" autocomplete="email" style="margin-top:8px">
+      <small style="color:var(--muted);font-size:11.5px;display:block;margin-top:6px">Already have a Servia account? <a href="/login.html" style="color:#0F766E;font-weight:700">Sign in here</a> instead.</small>
       <div id="pay-id-msg" class="pay-status" style="display:none"></div>
     </div>
 
