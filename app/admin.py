@@ -906,6 +906,144 @@ def save_prompts(body: PromptsBody):
     return {"ok": True, "saved": list(cur.keys())}
 
 
+# ---------- TOTP 2FA (Google Authenticator) ----------
+# Public router (no admin auth) — needed for the 2FA verify flow itself.
+public_2fa_router = APIRouter()
+
+
+@public_2fa_router.get("/api/admin/2fa/status")
+def public_2fa_status():
+    """Returns whether 2FA is enabled. No auth needed (just yes/no)."""
+    from . import admin_2fa
+    return {"enabled": admin_2fa.is_enabled()}
+
+
+class TotpVerifyBody(BaseModel):
+    code: str
+
+
+@public_2fa_router.post("/api/admin/2fa/verify")
+def public_2fa_verify(body: TotpVerifyBody):
+    """Verify 6-digit TOTP code. Returns the actual admin bearer token so the
+    frontend can call all /api/admin/* endpoints just like a normal login.
+    No password / no token paste needed."""
+    from . import admin_2fa
+    from .auth import ADMIN_TOKEN
+    if not admin_2fa.is_enabled():
+        raise HTTPException(400, "2FA not configured yet")
+    if not admin_2fa.verify(body.code):
+        raise HTTPException(401, "Invalid or expired code")
+    return {"ok": True, "token": ADMIN_TOKEN, "expires_in": 86400}
+
+
+# Admin-protected endpoints (require existing admin token to set up / disable)
+@router.get("/2fa/setup")
+def admin_2fa_setup():
+    """Generate a new secret + return otpauth URI for QR code rendering."""
+    from . import admin_2fa
+    secret = admin_2fa.gen_secret()
+    return {
+        "secret": secret,
+        "otpauth_uri": admin_2fa.otpauth_uri(secret),
+        "instructions": "Open Google Authenticator → + → Scan QR code (or 'Enter setup key' for manual). After scanning, type the 6-digit code below to confirm.",
+    }
+
+
+class TotpEnableBody(BaseModel):
+    secret: str
+    code: str
+
+
+@router.post("/2fa/enable")
+def admin_2fa_enable(body: TotpEnableBody):
+    """Confirm setup by verifying the first code against the new secret. Stores
+    secret only on success."""
+    from . import admin_2fa
+    if not admin_2fa.verify(body.code, secret=body.secret):
+        raise HTTPException(400, "Code didn't match. Make sure your phone clock is set to automatic.")
+    admin_2fa.set_secret(body.secret)
+    db.log_event("admin", "2fa", "enabled", actor="admin")
+    return {"ok": True, "enabled": True}
+
+
+@router.post("/2fa/disable")
+def admin_2fa_disable():
+    from . import admin_2fa
+    admin_2fa.clear_secret()
+    db.log_event("admin", "2fa", "disabled", actor="admin")
+    return {"ok": True, "enabled": False}
+
+
+# ---------- cron status visibility ----------
+@router.get("/cron/status")
+def admin_cron_status():
+    """Returns next-run + last-run for every scheduled job (autoblog, daily summary).
+    Reads from the apscheduler instance attached to main:_scheduler if running."""
+    out = {"running": False, "jobs": [], "note": ""}
+    try:
+        from . import main as _m
+        sched = getattr(_m, "_scheduler", None)
+        if sched is None:
+            out["note"] = "Scheduler not loaded (apscheduler missing or disabled)."
+            return out
+        out["running"] = bool(getattr(sched, "running", False))
+        for j in sched.get_jobs():
+            try:
+                out["jobs"].append({
+                    "id": j.id,
+                    "name": j.name,
+                    "next_run": j.next_run_time.isoformat() if j.next_run_time else None,
+                    "trigger": str(j.trigger),
+                    "max_instances": j.max_instances,
+                })
+            except Exception: pass
+    except Exception as e:
+        out["note"] = f"could not introspect scheduler: {e}"
+    # Look up last-run timestamps from event log
+    try:
+        with db.connect() as c:
+            try:
+                rows = c.execute(
+                    "SELECT actor, kind, created_at FROM events "
+                    "WHERE kind IN ('published','daily_summary_pushed') "
+                    "ORDER BY id DESC LIMIT 20"
+                ).fetchall()
+                out["last_runs"] = [dict(r) for r in rows]
+            except Exception: pass
+    except Exception: pass
+    return out
+
+
+# ---------- one-time: humanize all existing autoblog posts ----------
+@router.post("/blog/humanize-all")
+def admin_blog_humanize_all():
+    """Loops through every published autoblog post and runs _humanize_text()
+    over the body. Strips em-dashes / semicolons / AI cliché words from
+    content that was generated BEFORE the v1.20.6 prompt update.
+    Idempotent — safe to call repeatedly."""
+    try:
+        from .main import _humanize_text
+    except Exception:
+        return {"ok": False, "error": "humanize_text not available"}
+    n_scanned = 0; n_changed = 0
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT slug, body_md FROM autoblog_posts").fetchall()
+        except Exception:
+            return {"ok": False, "error": "no autoblog_posts table yet"}
+        for r in rows:
+            n_scanned += 1
+            new_body = _humanize_text(r["body_md"] or "")
+            if new_body != r["body_md"]:
+                c.execute("UPDATE autoblog_posts SET body_md=? WHERE slug=?",
+                          (new_body, r["slug"]))
+                n_changed += 1
+    db.log_event("admin", "blog", "humanize_all", actor="admin",
+                 details={"scanned": n_scanned, "changed": n_changed})
+    return {"ok": True, "scanned": n_scanned, "changed": n_changed}
+
+
 # ---------- in-place CMS overrides (page content overrides) ----------
 # NB: GET is registered separately as a PUBLIC route (no admin auth) so
 # every visitor's cms.js can fetch the override map on load. The router-level

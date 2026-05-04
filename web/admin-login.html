@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0F766E">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin login: Servia</title>
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0;min-height:100vh}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:#0F172A;background:linear-gradient(135deg,#F0FDFA 0%,#FEF3C7 100%);
+    display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:420px;width:100%;background:#fff;border-radius:18px;padding:30px 28px;
+    box-shadow:0 20px 60px rgba(15,23,42,.16);border:1px solid #E2E8F0;text-align:center}
+  .logo{width:72px;height:72px;margin:0 auto 16px;background:linear-gradient(135deg,#0F766E,#0D9488);
+    border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;
+    font-weight:900;box-shadow:0 8px 24px rgba(15,118,110,.4)}
+  h1{margin:0 0 4px;font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .sub{color:#64748B;font-size:13.5px;margin:0 0 22px}
+  .code-row{display:flex;gap:8px;justify-content:center;margin:18px 0}
+  .code-row input{width:42px;height:54px;border:2px solid #E2E8F0;border-radius:10px;
+    text-align:center;font-size:22px;font-weight:800;font-family:ui-monospace,monospace;outline:none}
+  .code-row input:focus{border-color:#0F766E;box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+  .tok-input{width:100%;padding:12px 14px;border:2px solid #E2E8F0;border-radius:10px;font-size:14px;
+    font-family:ui-monospace,monospace;margin:6px 0 14px}
+  .tok-input:focus{outline:none;border-color:#0F766E;box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+  .btn{width:100%;background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border:0;
+    padding:14px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;
+    transition:.15s;letter-spacing:.01em}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(15,118,110,.4)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+  .err{background:#FEE2E2;color:#B91C1C;padding:10px;border-radius:8px;font-size:13px;margin:10px 0;display:none;font-weight:600}
+  .alt{margin-top:18px;padding-top:14px;border-top:1px solid #E2E8F0;font-size:12.5px;color:#64748B;line-height:1.5}
+  .alt a{color:#0F766E;font-weight:700;text-decoration:none}
+  .alt a:hover{text-decoration:underline}
+</style>
+</head><body>
+<div class="card">
+  <div class="logo">S</div>
+  <h1 id="title">🔐 Admin login</h1>
+  <p class="sub" id="subtitle">Loading…</p>
+
+  <!-- 2FA mode -->
+  <div id="totp-mode" style="display:none">
+    <p style="font-size:13px;color:#475569;margin:0 0 12px">Open <b>Google Authenticator</b> on your phone and enter the 6-digit code for <b>Servia Admin</b>.</p>
+    <div class="code-row">
+      <input type="tel" inputmode="numeric" maxlength="1" data-i="0" autocomplete="one-time-code">
+      <input type="tel" inputmode="numeric" maxlength="1" data-i="1">
+      <input type="tel" inputmode="numeric" maxlength="1" data-i="2">
+      <input type="tel" inputmode="numeric" maxlength="1" data-i="3">
+      <input type="tel" inputmode="numeric" maxlength="1" data-i="4">
+      <input type="tel" inputmode="numeric" maxlength="1" data-i="5">
+    </div>
+    <button class="btn" id="totp-btn" disabled>🔓 Sign in</button>
+  </div>
+
+  <!-- Token mode (when 2FA not yet set up) -->
+  <div id="token-mode" style="display:none">
+    <input type="password" class="tok-input" id="tok" placeholder="Admin token" autocomplete="off">
+    <button class="btn" id="tok-btn">🔓 Sign in</button>
+    <div class="alt">After signing in, enable <b>Google Authenticator</b> in admin → 🔐 2FA so you never need to type a token again.</div>
+  </div>
+
+  <div class="err" id="err"></div>
+
+  <div class="alt" id="bottom-alt"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEY = "lumora.admin.tok";
+const inputs = document.querySelectorAll(".code-row input");
+
+async function init() {
+  let twoFa = false;
+  try {
+    const r = await fetch("/api/admin/2fa/status").then(r => r.ok ? r.json() : null);
+    twoFa = !!(r && r.enabled);
+  } catch(_){}
+  if (twoFa) {
+    $("title").textContent = "🔐 Admin · 2FA";
+    $("subtitle").textContent = "Two-factor authentication is enabled.";
+    $("totp-mode").style.display = "block";
+    $("bottom-alt").innerHTML = "Lost your phone? Use the recovery token: contact your developer.";
+    setTimeout(() => inputs[0].focus(), 100);
+  } else {
+    $("title").textContent = "🔐 Admin login";
+    $("subtitle").textContent = "Enter your admin token to continue.";
+    $("token-mode").style.display = "block";
+    setTimeout(() => $("tok").focus(), 100);
+  }
+}
+
+// 6-digit code auto-advance + paste support
+inputs.forEach((inp, i) => {
+  inp.addEventListener("input", e => {
+    inp.value = inp.value.replace(/\D/g, "");
+    if (inp.value && i < 5) inputs[i+1].focus();
+    $("totp-btn").disabled = ![...inputs].every(x => x.value.length === 1);
+  });
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Backspace" && !inp.value && i > 0) inputs[i-1].focus();
+    if (e.key === "Enter" && [...inputs].every(x => x.value.length === 1)) submitCode();
+  });
+  inp.addEventListener("paste", e => {
+    const txt = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+    if (txt.length === 6) {
+      e.preventDefault();
+      inputs.forEach((x, idx) => x.value = txt[idx] || "");
+      inputs[5].focus();
+      $("totp-btn").disabled = false;
+    }
+  });
+});
+
+async function submitCode() {
+  const code = [...inputs].map(x => x.value).join("");
+  if (code.length !== 6) return;
+  $("totp-btn").disabled = true; $("totp-btn").textContent = "⏳ Verifying…"; $("err").style.display = "none";
+  try {
+    const r = await fetch("/api/admin/2fa/verify", {
+      method: "POST", headers: {"content-type":"application/json"},
+      body: JSON.stringify({code})
+    });
+    const d = await r.json();
+    if (!r.ok || !d.token) throw new Error(d.detail || d.error || "Invalid code");
+    localStorage.setItem(KEY, d.token);
+    location.href = "/admin.html";
+  } catch (e) {
+    $("err").textContent = "⚠ " + e.message + ". Make sure your phone clock is set to automatic time.";
+    $("err").style.display = "block";
+    $("totp-btn").disabled = false; $("totp-btn").textContent = "🔓 Sign in";
+    inputs.forEach(x => x.value = ""); inputs[0].focus();
+  }
+}
+$("totp-btn").onclick = submitCode;
+
+$("tok-btn").onclick = async () => {
+  const tok = $("tok").value.trim();
+  if (!tok) return;
+  // Probe with the token (cheap admin endpoint)
+  try {
+    const r = await fetch("/api/admin/stats", {headers: {Authorization: "Bearer " + tok}});
+    if (!r.ok) throw new Error("Invalid admin token");
+    localStorage.setItem(KEY, tok);
+    location.href = "/admin.html";
+  } catch (e) {
+    $("err").textContent = "⚠ " + e.message;
+    $("err").style.display = "block";
+  }
+};
+
+init();
+</script>
+</body></html>
