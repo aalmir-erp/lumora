@@ -342,20 +342,27 @@ window.LUMORA_PIXELS = {
   </div>
 </section>
 
-<!-- Booking form -->
+<!-- Single clear CTA + lightweight quote-only widget. Full booking happens
+     on /book.html so the customer enters details ONCE. This block:
+     1) Lets visitor get a price estimate without committing
+     2) Has a single big 'Book this service →' button that links to /book.html
+        with the service pre-selected -->
 <section id="book" style="background:color-mix(in srgb, var(--primary) 8%, var(--bg))">
   <div class="container" style="max-width:680px">
-    <h2 class="reveal" style="text-align:center">Book your service</h2>
-    <p class="sub reveal" style="text-align:center">Get a confirmed price + slot in under 60 seconds.</p>
-    <div id="book-form" class="form reveal">
-      <!-- Dynamic per-service intake form (only the questions that apply to this service) -->
+    <h2 class="reveal" style="text-align:center">Book this service</h2>
+    <p class="sub reveal" style="text-align:center;margin-bottom:24px">Same-day slots across all 7 emirates. Cancel free up to 12h before.</p>
+
+    <div class="form reveal" style="background:#fff;border-radius:18px;padding:24px;border:1px solid var(--border);box-shadow:0 8px 28px rgba(15,23,42,.06)">
+      <h3 style="margin:0 0 4px;font-size:15px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em">⚡ Get instant price (no signup)</h3>
+      <p style="margin:0 0 14px;font-size:13px;color:var(--muted)">Tell us how many bedrooms / units / hours so you see the exact price before booking.</p>
+
       <div id="intake-mount"></div>
 
-      <div class="row" style="margin-top:14px">
-        <div><label>First-time customer?</label>
-          <select id="f-first"><option value="">No</option><option value="1">Yes — apply 15% off</option></select></div>
-        <div><label>Recurring</label>
-          <select id="f-recurring">
+      <div class="row" style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:12.5px;color:var(--muted);font-weight:600">First-time customer?</label>
+          <select id="f-first" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-top:4px"><option value="">No</option><option value="1">Yes &mdash; apply 15% off</option></select></div>
+        <div><label style="font-size:12.5px;color:var(--muted);font-weight:600">How often?</label>
+          <select id="f-recurring" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-top:4px">
             <option value="">One-time</option>
             <option value="weekly">Weekly (save 20%)</option>
             <option value="biweekly">Bi-weekly (save 10%)</option>
@@ -363,16 +370,13 @@ window.LUMORA_PIXELS = {
           </select></div>
       </div>
 
-      <button class="btn btn-ghost btn-block" type="button" onclick="getQuote()" style="margin-top:10px">Calculate price</button>
+      <button class="btn btn-ghost btn-block" type="button" onclick="getQuote()" style="margin-top:14px;width:100%;padding:12px">💰 Calculate my price</button>
       <div id="quote-box" style="margin-top:14px"></div>
 
-      <hr style="margin:24px 0;border:0;border-top:1px solid var(--border)">
-
-      <label>Full name</label><input id="f-name" placeholder="e.g. Sarah Khan">
-      <label>Phone (with country code)</label><input id="f-phone" placeholder="+971501234567" inputmode="tel">
-      <label>Building / villa address</label><input id="f-address" placeholder="Tower name, apt no, area, emirate">
-      <button class="btn btn-primary btn-block" type="button" onclick="confirmBooking()" style="margin-top:14px;font-size:16px">Confirm booking →</button>
-      <div id="book-result" style="margin-top:14px"></div>
+      <a id="book-cta" href="/book.html" class="btn btn-primary btn-block" style="margin-top:18px;width:100%;padding:16px;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none">
+        📝 Book this service &rarr;
+      </a>
+      <p style="text-align:center;margin:10px 0 0;font-size:12px;color:var(--muted)">Or message us &mdash; <a href="/contact.html" style="color:var(--primary-dark);font-weight:700">WhatsApp on /contact.html</a></p>
     </div>
   </div>
 </section>
@@ -587,6 +591,22 @@ function render() {
   document.getElementById("cta-wa").href = `/contact.html
   document.getElementById("sticky-wa").href = `/contact.html
   document.getElementById("sticky-price").textContent = `from ${SVC.starting_price} AED`;
+  // Wire 'Book this service →' to pre-select the service on /book.html
+  const bookCta = document.getElementById("book-cta");
+  if (bookCta) bookCta.href = "/book.html?service=" + encodeURIComponent(sid);
+}
+
+// Update Book-this-service link with current intake values so /book.html
+// can pre-fill the form too — saves the customer re-entering bedroom/unit count.
+function _updateBookCtaWithIntake() {
+  const cta = document.getElementById("book-cta");
+  if (!cta) return;
+  const v = (window.LumoraIntake && LumoraIntake.values()) || {};
+  const params = new URLSearchParams({ service: sid });
+  for (const k of ["bedrooms","hours","units","ac_units","ac_count"]) {
+    if (v[k] != null && v[k] !== "") params.set(k, v[k]);
+  }
+  cta.href = "/book.html?" + params.toString();
 }
 
 function toggleAddon(aid, el) {
@@ -610,6 +630,7 @@ function _buildItem() {
 }
 
 async function getQuote() {
+  _updateBookCtaWithIntake();
   const v = LumoraIntake.values() || {};
   if (!Object.keys(v).length && !pickedAddons.size) {
     document.getElementById("quote-box").innerHTML = '<div style="color:var(--muted);font-size:13px">Fill at least one field above to calculate.</div>';
