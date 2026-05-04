@@ -912,12 +912,21 @@ class BulkDeleteBody(BaseModel):
 
 
 _DELETE_MAP = {
-    # entity → (table, id_column, soft_delete?, related cleanup callable)
-    "vendor":   {"table": "vendors",      "idcol": "id", "related": ["vendor_services"]},
-    "customer": {"table": "customers",    "idcol": "id", "related": []},
-    "booking":  {"table": "bookings",     "idcol": "id", "related": []},
-    "invoice":  {"table": "invoices",     "idcol": "id", "related": []},
-    "blog":     {"table": "autoblog_posts","idcol": "slug", "related": []},
+    # entity → (table, id_column)
+    "vendor":       {"table": "vendors",         "idcol": "id"},
+    "customer":     {"table": "customers",       "idcol": "id"},
+    "booking":      {"table": "bookings",        "idcol": "id"},
+    "invoice":      {"table": "invoices",        "idcol": "id"},
+    "blog":         {"table": "autoblog_posts",  "idcol": "slug"},
+    # New: conversations + sessions deletion. session_id is the key for
+    # 'session' (whole conversation thread); 'message' lets you remove single rows.
+    "session":      {"table": "conversations",   "idcol": "session_id"},
+    "message":      {"table": "conversations",   "idcol": "id"},
+    "lead":         {"table": "outreach_leads",  "idcol": "id"},
+    "alert":        {"table": "admin_alerts",    "idcol": "id"},
+    "event":        {"table": "events",          "idcol": "id"},
+    "video":        {"table": "videos",          "idcol": "slug"},
+    "visitor":      {"table": "live_visitors",   "idcol": "visitor_id"},
 }
 
 
@@ -973,18 +982,34 @@ def admin_bulk_delete(entity: str, body: BulkDeleteBody):
 
 @router.post("/{entity}/delete-all")
 def admin_delete_all(entity: str, confirm: str = ""):
-    """DELETE ALL rows in a table. Requires ?confirm=yes-i-mean-it parameter
-    so it can't be triggered by accident. Use with extreme caution."""
+    """DELETE ALL rows in a table. Requires ?confirm=yes-i-mean-it.
+    Surfaces the actual SQL/FK error in the response so admin sees WHY."""
     if confirm != "yes-i-mean-it":
         raise HTTPException(400, "Add ?confirm=yes-i-mean-it to confirm")
     if entity not in _DELETE_MAP:
         raise HTTPException(400, f"unsupported entity '{entity}'")
     info = _DELETE_MAP[entity]
-    with db.connect() as c:
-        if entity == "vendor":
-            try: c.execute("DELETE FROM vendor_services")
-            except Exception: pass
-        n = c.execute(f"DELETE FROM {info['table']}").rowcount
+    n = 0
+    try:
+        with db.connect() as c:
+            # Cascade: clean up dependent FK rows first so SQLite FK enforcement
+            # (when enabled) doesn't reject the wipe.
+            if entity == "vendor":
+                try: c.execute("DELETE FROM vendor_services")
+                except Exception: pass
+            elif entity == "booking":
+                # Detach invoices that reference these bookings — don't delete
+                # the invoices themselves (admin may want them for accounting).
+                try: c.execute("UPDATE invoices SET booking_id=NULL")
+                except Exception: pass
+            elif entity == "blog":
+                try: c.execute("DELETE FROM autoblog_views")
+                except Exception: pass
+            n = c.execute(f"DELETE FROM {info['table']}").rowcount
+    except Exception as e:  # noqa: BLE001
+        # Surface the real error so the admin toast says WHY (FK violation,
+        # missing table, locked db, etc) instead of a generic "Error".
+        raise HTTPException(500, f"delete-all {entity} failed: {type(e).__name__}: {e}")
     db.log_event("admin", entity, "delete_all", actor="admin", details={"count": n})
     return {"ok": True, "entity": entity, "deleted": n}
 

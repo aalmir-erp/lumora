@@ -403,7 +403,15 @@ def chat(req: ChatRequest, request: Request):
     result = None
     mode = ""
     last_err = None
-    if settings.use_llm:
+    # Only attempt the Anthropic-bound primary path when the admin's customer
+    # default IS Anthropic. If they've configured a different provider (or none
+    # at all), skip straight to the cascade so we don't burn 5-10s on a known-
+    # bad Anthropic call before fallback kicks in.
+    try:
+        from . import ai_router as _ar
+        _cust_default = (_ar._load_cfg().get("defaults") or {}).get("customer", "")
+    except Exception: _cust_default = ""
+    if settings.use_llm and (_cust_default.startswith("anthropic/") or not _cust_default):
         try:
             result = llm.chat(history, session_id=sid, language=lang)
             mode = "llm"

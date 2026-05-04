@@ -410,15 +410,22 @@
                             micBtn.textContent = "🔴"; input.placeholder = "🎙 Listening… speak in any UAE language"; };
       rec.onend = () => { listening = false; micBtn.classList.remove("recording");
                           micBtn.textContent = "🎤"; input.placeholder = "Type your message…"; };
-      let finalText = "";
+      // Capture whatever the user had typed BEFORE clicking the mic, so
+      // dictated text is appended (not overwritten).
+      const prefix = (input.value || "").trim();
+      // Idempotent rebuild: each onresult REPLACES the dictated portion by
+      // walking ALL e.results[] from index 0 and taking only finals + the
+      // current interim. Prevents Android Chrome's habit of re-firing the
+      // same final result twice and ending up with "hello hello hello".
       rec.onresult = (e) => {
-        let interim = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
+        let final = "", interim = "";
+        for (let i = 0; i < e.results.length; i++) {
           const r = e.results[i];
-          if (r.isFinal) finalText += r[0].transcript + " ";
-          else interim += r[0].transcript;
+          if (r.isFinal) final += r[0].transcript + " ";
+          else if (i === e.results.length - 1) interim = r[0].transcript;
         }
-        input.value = (finalText + interim).trim();
+        const dictated = (final + interim).trim();
+        input.value = (prefix ? prefix + " " : "") + dictated;
       };
       rec.onerror = (e) => {
         listening = false; micBtn.classList.remove("recording");

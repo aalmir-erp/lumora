@@ -1786,29 +1786,41 @@ async function loadSessions() {
     }
   } catch (_) {}
   const r = await adm("/api/admin/sessions" + (q ? "?q=" + encodeURIComponent(q) : ""));
-  document.getElementById("sessions-list").innerHTML = (r.sessions || []).map(s => {
+  const list = r.sessions || [];
+  const rows = list.map(s => {
     const ua = _parseUA(s.user_agent);
     const live = s.takeover && !s.takeover.ended_at;
     const tin  = s.tokens_in_total || 0, tout = s.tokens_out_total || 0;
     const cost = (s.cost_usd_total || 0).toFixed(4);
     return `
-    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:.12s" onmouseover="this.style.borderColor='#0F766E'" onmouseout="this.style.borderColor='var(--border)'" onclick="openConv('${s.session_id}')">
-      <div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start;margin-bottom:4px">
-        <div style="font-weight:700;font-size:12.5px;color:#0F766E;word-break:break-all;flex:1;min-width:0">${escapeHtml(s.session_id||'')}</div>
-        ${live ? '<span class="badge in_progress" style="font-size:9px">🟢 live agent</span>' : ''}
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">
+      <input type="checkbox" class="bulk-cb" data-id="${escapeHtml(s.session_id||'')}" onclick="event.stopPropagation()" style="margin-top:4px">
+      <div style="flex:1;min-width:0;cursor:pointer" onclick="openConv('${s.session_id}')">
+        <div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start;margin-bottom:4px">
+          <div style="font-weight:700;font-size:12.5px;color:#0F766E;word-break:break-all;flex:1;min-width:0">${escapeHtml(s.session_id||'')}</div>
+          ${live ? '<span class="badge in_progress" style="font-size:9px">🟢 live agent</span>' : ''}
+        </div>
+        ${s.summary ? `<div style="font-size:12px;color:#0F172A;font-style:italic;margin-bottom:4px">"${escapeHtml(s.summary)}"</div>` : ''}
+        <div style="font-size:11px;color:var(--muted);line-height:1.6">
+          ⏱ ${_sinceAgo(s.last_msg)} · ${s.msgs||0} msgs · ${s.attachments||0} 📎
+          ${s.phone ? `· 📞 ${escapeHtml(s.phone)}` : ''}
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:4px">${ua}${s.ip ? ' · '+escapeHtml(s.ip) : ''}</div>
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;margin-top:4px;color:#7C3AED">
+          <span>🔢 ${tin}+${tout} tokens</span>
+          <span>💰 $${cost}</span>
+        </div>
       </div>
-      ${s.summary ? `<div style="font-size:12px;color:#0F172A;font-style:italic;margin-bottom:4px">"${escapeHtml(s.summary)}"</div>` : ''}
-      <div style="font-size:11px;color:var(--muted);line-height:1.6">
-        ⏱ ${_sinceAgo(s.last_msg)} · ${s.msgs||0} msgs · ${s.attachments||0} 📎
-        ${s.phone ? `· 📞 ${escapeHtml(s.phone)}` : ''}
-      </div>
-      <div style="font-size:10.5px;color:var(--muted);margin-top:4px">${ua}${s.ip ? ' · '+escapeHtml(s.ip) : ''}</div>
-      <div style="display:flex;justify-content:space-between;font-size:10.5px;margin-top:4px;color:#7C3AED">
-        <span>🔢 ${tin}+${tout} tokens</span>
-        <span>💰 $${cost}</span>
-      </div>
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:#B91C1C;align-self:center" onclick="deleteRow('session','${escapeHtml(s.session_id||'')}', loadSessions)">🗑</button>
     </div>`;
-  }).join("") || '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No sessions yet.</div>';
+  }).join("");
+  const wrap = document.getElementById("sessions-list");
+  if (!list.length) {
+    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No sessions yet.</div>';
+    return;
+  }
+  wrap.innerHTML = `<div data-bulk-entity="session" style="display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:12.5px"><label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" class="bulk-all">Select all (${list.length})</label></div>` + _bulkBarHtml("conversations") + rows;
+  _bulkSetup("#sessions-list", "session", loadSessions);
 }
 document.getElementById("c-refresh").onclick = loadSessions;
 const _cqInp = document.getElementById("c-q");
