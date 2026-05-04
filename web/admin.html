@@ -2036,13 +2036,15 @@ window.testProvider = async function(provider, btn) {
       if (r.ok) {
         let html = `<span style="color:#15803D;font-weight:700">✅ Working</span> · ${r.model} · ${r.latency_ms||'?'}ms`;
         if (r.image_data_url || r.image_url) {
-          // Image provider — show inline preview
           const src = r.image_data_url || r.image_url;
           html += `<br><img src="${src}" alt="generated test" style="max-width:160px;height:auto;border:1px solid var(--border);border-radius:8px;margin-top:6px;display:block">`;
         } else if (r.sample) {
           html += ` · "${escapeHtml((r.sample||'').slice(0,40))}"`;
         }
         indicator.innerHTML = html;
+      } else if (r.key_valid) {
+        // Key works but billing is empty — yellow, not red
+        indicator.innerHTML = `<span style="color:#B45309;font-weight:700">🟡 Key valid · billing empty</span> · top up at provider to use`;
       } else {
         indicator.innerHTML = `<span style="color:#B91C1C;font-weight:700">❌ Failed</span> · ${escapeHtml((r.error||'').slice(0,180))}`;
       }
