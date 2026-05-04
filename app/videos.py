@@ -537,21 +537,365 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
 }}
 </style>
 </head>
+<style>
+.rich-scene-wrap{{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;padding:0 4%;pointer-events:none}}
+.rich-scene{{width:100%;height:auto;max-width:680px;max-height:65%;filter:drop-shadow(0 6px 14px rgba(0,0,0,.18))}}
+.ironing-iron{{animation:iron-slide 2.4s ease-in-out infinite}}
+@keyframes iron-slide{{0%,100%{{transform:translate(-30px,55px)}}50%{{transform:translate(30px,55px)}}}}
+.ironing-steam{{animation:steam-rise 2s ease-in-out infinite;transform-origin:30px 40px}}
+@keyframes steam-rise{{0%{{opacity:.8;transform:translateY(0) scale(1)}}100%{{opacity:0;transform:translateY(-30px) scale(1.3)}}}}
+.ac-stream path{{animation:ac-blow 1.6s ease-in-out infinite;transform-origin:0 50px}}
+@keyframes ac-blow{{0%,100%{{opacity:.3}}50%{{opacity:1;transform:translateY(8px)}}}}
+.clean-sparkles text{{animation:sparkle 1.6s ease-in-out infinite;transform-origin:center}}
+.clean-sparkles text:nth-child(1){{animation-delay:0s}}
+.clean-sparkles text:nth-child(2){{animation-delay:.4s}}
+.clean-sparkles text:nth-child(3){{animation-delay:.8s}}
+.clean-sparkles text:nth-child(4){{animation-delay:.2s}}
+.clean-sparkles text:nth-child(5){{animation-delay:.6s}}
+@keyframes sparkle{{0%,100%{{opacity:.3;transform:scale(.8)}}50%{{opacity:1;transform:scale(1.2)}}}}
+.mopping{{animation:mop-sweep 1.4s ease-in-out infinite;transform-origin:10px -10px}}
+@keyframes mop-sweep{{0%,100%{{transform:rotate(-15deg)}}50%{{transform:rotate(15deg)}}}}
+.wrench-anim{{animation:wrench-turn 1s linear infinite;transform-origin:0 0}}
+@keyframes wrench-turn{{0%{{transform:rotate(0deg)}}100%{{transform:rotate(360deg)}}}}
+.drip-stop{{animation:drip-fade 3s ease-in-out infinite}}
+@keyframes drip-fade{{0%{{opacity:1}}80%,100%{{opacity:0}}}}
+.car-bubbles circle{{animation:bubble-rise 2s ease-out infinite}}
+.car-bubbles circle:nth-child(1){{animation-delay:0s}}
+.car-bubbles circle:nth-child(2){{animation-delay:.5s}}
+.car-bubbles circle:nth-child(3){{animation-delay:1s}}
+.car-bubbles circle:nth-child(4){{animation-delay:1.5s}}
+@keyframes bubble-rise{{0%{{transform:translateY(0);opacity:.7}}100%{{transform:translateY(-50px);opacity:0}}}}
+.sponge-anim{{animation:sponge-scrub 1.2s ease-in-out infinite;transform-origin:32px 27px}}
+@keyframes sponge-scrub{{0%,100%{{transform:translateX(0)}}50%{{transform:translateX(40px)}}}}
+.pool-water{{animation:water-shimmer 3s ease-in-out infinite}}
+@keyframes water-shimmer{{0%,100%{{filter:brightness(1)}}50%{{filter:brightness(1.2)}}}}
+.net-anim{{animation:net-skim 2s ease-in-out infinite;transform-origin:90px 48px}}
+@keyframes net-skim{{0%,100%{{transform:translateX(0)}}50%{{transform:translateX(80px)}}}}
+.grass-anim path{{animation:grass-sway 2s ease-in-out infinite}}
+.grass-anim path:nth-child(2){{animation-delay:.3s}}
+.grass-anim path:nth-child(3){{animation-delay:.6s}}
+.grass-anim path:nth-child(4){{animation-delay:.9s}}
+@keyframes grass-sway{{0%,100%{{transform:rotate(-3deg)}}50%{{transform:rotate(3deg)}}}}
+.trim-anim{{animation:trim-snip .6s ease-in-out infinite;transform-origin:20px 0}}
+@keyframes trim-snip{{0%,100%{{transform:rotate(0)}}50%{{transform:rotate(-15deg)}}}}
+.spray-anim ellipse{{animation:spray-burst 1.2s ease-out infinite}}
+@keyframes spray-burst{{0%{{transform:translateX(0);opacity:1}}100%{{transform:translateX(30px);opacity:0}}}}
+.pest-out text{{animation:pest-flee 3s ease-out infinite}}
+@keyframes pest-flee{{0%,80%{{opacity:.5;transform:translateX(0)}}100%{{opacity:0;transform:translateX(150px) rotate(45deg)}}}}
+.default-sparkle text{{animation:sparkle 1.8s ease-in-out infinite}}
+.default-sparkle text:nth-child(2){{animation-delay:.4s}}
+.default-sparkle text:nth-child(3){{animation-delay:.8s}}
+.default-sparkle text:nth-child(4){{animation-delay:1.2s}}
+@media(max-width:560px){{.rich-scene{{max-height:55%}}}}
+</style>
+</head>
 <body>
 <div class="video" role="img" aria-label="{title}">
   <div class="brand">SERVIA</div>
-  <div class="duration">{int(v.get('duration_sec',18))}s · loop</div>
+  <div class="duration">{int(v.get('duration_sec',18))}s · loop · 🔊</div>
+  <div class="rich-scene-wrap">{_scene_composition(v.get('mascot') or 'default', v.get('slug',''))}</div>
   <div class="scene-stack">
     {''.join(scene_html)}
-  </div>
-  <div class="mascot-wrap">
-    {_scene_prop_svg(v.get('mascot') or 'default')}
-    <img class="mascot" src="{mascot_src}" alt="Servia mascot">
   </div>
   <a class="cta" href="{cta_href}">{cta_text} →</a>
   <div class="progress"></div>
 </div>
+<!-- Optional ambient chime via Web Audio (free, generated, no external file).
+     Triggered ONLY on user interaction to comply with autoplay policies. -->
+<script>
+(function(){{
+  let played=false;
+  function chime(){{
+    if(played)return;played=true;
+    try{{
+      const ctx=new(window.AudioContext||window.webkitAudioContext)();
+      const notes=[523.25,659.25,783.99]; // C5 E5 G5 — bright major chord
+      const now=ctx.currentTime;
+      notes.forEach((f,i)=>{{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type="sine";o.frequency.value=f;
+        g.gain.setValueAtTime(0,now+i*0.1);g.gain.linearRampToValueAtTime(0.08,now+i*0.1+0.05);
+        g.gain.exponentialRampToValueAtTime(0.001,now+i*0.1+0.6);
+        o.connect(g);g.connect(ctx.destination);o.start(now+i*0.1);o.stop(now+i*0.1+0.7);
+      }});
+    }}catch(_){{}}
+  }}
+  document.addEventListener("click",chime,{{once:true}});
+  document.addEventListener("touchstart",chime,{{once:true,passive:true}});
+}})();
+</script>
 </body></html>"""
+
+
+def _scene_composition(mascot: str, slug: str) -> str:
+    """Rich multi-character scene per service — mascot WITH a customer figure +
+    contextual props + animated foreground (e.g. Servia ironing while customer
+    sits happy on sofa, Servia AC tech repairing unit while customer relaxes)."""
+    SCENES = {
+        "maid": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <!-- Customer (happy on couch) -->
+  <g transform="translate(560,160)">
+    <ellipse cx="0" cy="80" rx="60" ry="14" fill="rgba(0,0,0,.12)"/>
+    <rect x="-46" y="20" width="92" height="50" rx="14" fill="#7C3AED"/>
+    <rect x="-50" y="50" width="100" height="22" rx="6" fill="#5B21B6"/>
+    <circle cx="0" cy="0" r="22" fill="#FCD34D"/>
+    <circle cx="-6" cy="-3" r="2" fill="#0F172A"/><circle cx="6" cy="-3" r="2" fill="#0F172A"/>
+    <path d="M -8 6 Q 0 12 8 6" stroke="#0F172A" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="-30" y="-30" font-size="20">😊</text>
+  </g>
+  <!-- Servia mascot ironing -->
+  <g transform="translate(180,150)">
+    <!-- Ironing board -->
+    <rect x="-90" y="60" width="180" height="14" rx="6" fill="#fff" stroke="#94A3B8" stroke-width="2"/>
+    <rect x="-70" y="74" width="6" height="50" fill="#94A3B8"/>
+    <rect x="64" y="74" width="6" height="50" fill="#94A3B8"/>
+    <!-- Steam from iron, animated -->
+    <g class="ironing-steam">
+      <ellipse cx="20" cy="40" rx="6" ry="10" fill="rgba(255,255,255,.7)"/>
+      <ellipse cx="34" cy="32" rx="5" ry="8" fill="rgba(255,255,255,.6)"/>
+      <ellipse cx="48" cy="40" rx="4" ry="7" fill="rgba(255,255,255,.5)"/>
+    </g>
+    <!-- Iron, moving back-and-forth -->
+    <g class="ironing-iron" transform="translate(0,55)">
+      <rect x="-18" y="-8" width="36" height="14" rx="4" fill="#475569"/>
+      <rect x="-22" y="3" width="44" height="8" rx="3" fill="#1F2937"/>
+    </g>
+    <!-- Mascot body (Servia) -->
+    <ellipse cx="-50" cy="40" rx="34" ry="42" fill="#F472B6"/>
+    <circle cx="-50" cy="-10" r="28" fill="#FCD34D"/>
+    <rect x="-65" y="-30" width="30" height="14" rx="3" fill="#fff"/>
+    <text x="-58" y="-19" font-size="9" font-weight="800" fill="#0F766E">SERVIA</text>
+    <circle cx="-58" cy="-15" r="2" fill="#0F172A"/><circle cx="-44" cy="-15" r="2" fill="#0F172A"/>
+    <path d="M -56 -5 Q -50 0 -44 -5" stroke="#0F172A" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>''',
+        "ac": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <!-- Customer relaxing -->
+  <g transform="translate(560,180)">
+    <ellipse cx="0" cy="70" rx="50" ry="12" fill="rgba(0,0,0,.12)"/>
+    <rect x="-36" y="20" width="72" height="44" rx="14" fill="#0EA5E9"/>
+    <circle cx="0" cy="-2" r="20" fill="#FCD34D"/>
+    <text x="-12" y="-18" font-size="18">🥶</text>
+    <text x="-30" y="50" font-size="11" fill="#fff" font-weight="700">"So cold!"</text>
+  </g>
+  <!-- AC unit on wall, mascot servicing -->
+  <g transform="translate(160,80)">
+    <rect x="-70" y="0" width="140" height="48" rx="8" fill="#fff" stroke="#94A3B8" stroke-width="2"/>
+    <line x1="-60" y1="14" x2="60" y2="14" stroke="#94A3B8" stroke-width="2"/>
+    <line x1="-60" y1="22" x2="60" y2="22" stroke="#94A3B8" stroke-width="2"/>
+    <line x1="-60" y1="30" x2="60" y2="30" stroke="#94A3B8" stroke-width="2"/>
+    <!-- Frost streams animated -->
+    <g class="ac-stream">
+      <path d="M -50 50 L -55 80" stroke="#06B6D4" stroke-width="3" stroke-linecap="round"/>
+      <path d="M -20 50 L -25 90" stroke="#06B6D4" stroke-width="3" stroke-linecap="round"/>
+      <path d="M  10 50 L   5 95" stroke="#06B6D4" stroke-width="3" stroke-linecap="round"/>
+      <path d="M  40 50 L  35 85" stroke="#06B6D4" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </g>
+  <!-- Mascot AC tech with ladder -->
+  <g transform="translate(220,180)">
+    <line x1="-30" y1="0" x2="-30" y2="80" stroke="#94A3B8" stroke-width="3"/>
+    <line x1="10" y1="0" x2="10" y2="80" stroke="#94A3B8" stroke-width="3"/>
+    <line x1="-30" y1="20" x2="10" y2="20" stroke="#94A3B8" stroke-width="3"/>
+    <line x1="-30" y1="40" x2="10" y2="40" stroke="#94A3B8" stroke-width="3"/>
+    <ellipse cx="-10" cy="-10" rx="22" ry="28" fill="#0F766E"/>
+    <circle cx="-10" cy="-40" r="18" fill="#FCD34D"/>
+    <rect x="-22" y="-58" width="24" height="10" rx="3" fill="#1F2937"/>
+    <text x="-17" y="-50" font-size="8" font-weight="800" fill="#fff">AC PRO</text>
+  </g>
+</svg>''',
+        "cleaning": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <!-- Sparkle background animated -->
+  <g class="clean-sparkles">
+    <text x="100" y="80" font-size="28">✨</text>
+    <text x="280" y="100" font-size="22">✨</text>
+    <text x="500" y="60" font-size="26">✨</text>
+    <text x="380" y="180" font-size="20">💧</text>
+    <text x="150" y="240" font-size="22">💧</text>
+  </g>
+  <!-- Customer admiring clean room -->
+  <g transform="translate(560,170)">
+    <ellipse cx="0" cy="80" rx="55" ry="13" fill="rgba(0,0,0,.12)"/>
+    <rect x="-36" y="20" width="72" height="60" rx="14" fill="#0F766E"/>
+    <circle cx="0" cy="-2" r="22" fill="#FCD34D"/>
+    <circle cx="-7" cy="-5" r="2" fill="#0F172A"/><circle cx="7" cy="-5" r="2" fill="#0F172A"/>
+    <path d="M -8 6 Q 0 14 8 6" stroke="#0F172A" stroke-width="2" fill="none"/>
+    <text x="-15" y="-30" font-size="18">😍</text>
+  </g>
+  <!-- Mascot mopping, mop animated -->
+  <g transform="translate(220,190)">
+    <ellipse cx="0" cy="50" rx="60" ry="10" fill="rgba(0,0,0,.10)"/>
+    <ellipse cx="-20" cy="0" rx="26" ry="34" fill="#14B8A6"/>
+    <circle cx="-20" cy="-36" r="20" fill="#FCD34D"/>
+    <rect x="-32" y="-50" width="24" height="10" rx="3" fill="#fff"/>
+    <text x="-30" y="-43" font-size="8" font-weight="800" fill="#0F766E">SERVIA</text>
+    <!-- Mop -->
+    <g class="mopping">
+      <line x1="10" y1="-10" x2="55" y2="50" stroke="#92400E" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="60" cy="56" rx="18" ry="6" fill="#FCD34D"/>
+    </g>
+  </g>
+</svg>''',
+        "handyman": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <!-- Customer waiting -->
+  <g transform="translate(560,180)">
+    <ellipse cx="0" cy="70" rx="50" ry="12" fill="rgba(0,0,0,.12)"/>
+    <rect x="-32" y="20" width="64" height="50" rx="12" fill="#E11D48"/>
+    <circle cx="0" cy="-2" r="20" fill="#FCD34D"/>
+    <text x="-10" y="-22" font-size="16">🙌</text>
+    <text x="-26" y="50" font-size="10" fill="#fff" font-weight="700">"Thanks!"</text>
+  </g>
+  <!-- Mascot fixing pipe with wrench -->
+  <g transform="translate(200,170)">
+    <!-- Pipe -->
+    <rect x="-80" y="-10" width="160" height="20" rx="4" fill="#94A3B8"/>
+    <circle cx="-30" cy="0" r="8" fill="#475569"/>
+    <!-- Water drop fixed (animated drying) -->
+    <text class="drip-stop" x="-32" y="20" font-size="14">💧</text>
+    <!-- Mascot -->
+    <ellipse cx="20" cy="50" rx="26" ry="34" fill="#E11D48"/>
+    <circle cx="20" cy="14" r="20" fill="#FCD34D"/>
+    <rect x="8" y="-6" width="24" height="10" rx="3" fill="#fff"/>
+    <text x="10" y="2" font-size="8" font-weight="800" fill="#E11D48">SERVIA</text>
+    <!-- Wrench animated -->
+    <g class="wrench-anim" transform="translate(-25,0)">
+      <line x1="0" y1="0" x2="-30" y2="-30" stroke="#1F2937" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="-30" cy="-30" r="8" fill="#475569"/>
+    </g>
+  </g>
+</svg>''',
+        "car": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <!-- Customer, satisfied next to clean car -->
+  <g transform="translate(580,200)">
+    <ellipse cx="0" cy="50" rx="40" ry="10" fill="rgba(0,0,0,.10)"/>
+    <rect x="-26" y="0" width="52" height="40" rx="10" fill="#3B82F6"/>
+    <circle cx="0" cy="-18" r="18" fill="#FCD34D"/>
+    <text x="-12" y="-32" font-size="16">😎</text>
+  </g>
+  <!-- Car with bubbles + sponge -->
+  <g transform="translate(280,200)">
+    <ellipse cx="0" cy="60" rx="120" ry="14" fill="rgba(0,0,0,.14)"/>
+    <rect x="-100" y="-10" width="200" height="40" rx="14" fill="#F59E0B"/>
+    <rect x="-80" y="-40" width="140" height="32" rx="8" fill="#FCD34D"/>
+    <circle cx="-70" cy="40" r="14" fill="#1F2937"/><circle cx="-70" cy="40" r="6" fill="#94A3B8"/>
+    <circle cx="60" cy="40" r="14" fill="#1F2937"/><circle cx="60" cy="40" r="6" fill="#94A3B8"/>
+    <!-- Bubbles animated -->
+    <g class="car-bubbles">
+      <circle cx="0" cy="-30" r="8" fill="rgba(255,255,255,.7)"/>
+      <circle cx="-40" cy="-50" r="6" fill="rgba(255,255,255,.6)"/>
+      <circle cx="50" cy="-55" r="7" fill="rgba(255,255,255,.65)"/>
+      <circle cx="20" cy="-70" r="5" fill="rgba(255,255,255,.5)"/>
+    </g>
+  </g>
+  <!-- Mascot in cap, sponge -->
+  <g transform="translate(140,180)">
+    <ellipse cx="0" cy="40" rx="22" ry="30" fill="#0EA5E9"/>
+    <circle cx="0" cy="0" r="20" fill="#FCD34D"/>
+    <path d="M -22 -8 Q 0 -22 22 -8 L 22 0 L -22 0 Z" fill="#1F2937"/>
+    <text x="-12" y="-3" font-size="8" font-weight="800" fill="#fff">SERVIA</text>
+    <!-- Sponge -->
+    <rect class="sponge-anim" x="22" y="20" width="20" height="14" rx="3" fill="#FCD34D"/>
+  </g>
+</svg>''',
+        "pool": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <!-- Pool water animated -->
+  <g class="pool-water">
+    <rect x="40" y="180" width="640" height="100" rx="10" fill="#3B82F6"/>
+    <ellipse cx="200" cy="200" rx="60" ry="10" fill="rgba(255,255,255,.3)"/>
+    <ellipse cx="450" cy="220" rx="80" ry="12" fill="rgba(255,255,255,.25)"/>
+  </g>
+  <!-- Customer floating happily -->
+  <g transform="translate(560,200)">
+    <ellipse cx="0" cy="0" rx="40" ry="14" fill="#FCD34D"/>
+    <circle cx="0" cy="-10" r="14" fill="#FCD34D"/>
+    <text x="-10" y="-20" font-size="16">🏖️</text>
+  </g>
+  <!-- Mascot with pool net -->
+  <g transform="translate(150,160)">
+    <ellipse cx="0" cy="30" rx="22" ry="28" fill="#0EA5E9"/>
+    <circle cx="0" cy="-4" r="20" fill="#FCD34D"/>
+    <line x1="20" y1="0" x2="80" y2="40" stroke="#92400E" stroke-width="4" stroke-linecap="round"/>
+    <ellipse class="net-anim" cx="90" cy="48" rx="20" ry="6" fill="rgba(255,255,255,.6)" stroke="#1F2937" stroke-width="2"/>
+  </g>
+</svg>''',
+        "garden": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <rect x="0" y="220" width="720" height="100" fill="#15803D"/>
+  <g class="grass-anim">
+    <path d="M 100 220 q 4 -20 8 0" stroke="#0F766E" stroke-width="3" fill="none"/>
+    <path d="M 200 220 q 4 -25 8 0" stroke="#0F766E" stroke-width="3" fill="none"/>
+    <path d="M 320 220 q 4 -22 8 0" stroke="#0F766E" stroke-width="3" fill="none"/>
+    <path d="M 460 220 q 4 -24 8 0" stroke="#0F766E" stroke-width="3" fill="none"/>
+  </g>
+  <!-- Customer enjoying tea -->
+  <g transform="translate(580,180)">
+    <rect x="-30" y="0" width="60" height="44" rx="10" fill="#0F766E"/>
+    <circle cx="0" cy="-20" r="20" fill="#FCD34D"/>
+    <text x="-12" y="-26" font-size="14">☕</text>
+  </g>
+  <!-- Mascot trimming hedge -->
+  <g transform="translate(200,180)">
+    <ellipse cx="0" cy="30" rx="22" ry="28" fill="#15803D"/>
+    <circle cx="0" cy="-4" r="20" fill="#FCD34D"/>
+    <g class="trim-anim">
+      <line x1="20" y1="-5" x2="50" y2="-25" stroke="#475569" stroke-width="3"/>
+      <line x1="20" y1="0"  x2="50" y2="-15" stroke="#475569" stroke-width="3"/>
+    </g>
+    <!-- Hedge -->
+    <ellipse cx="100" cy="20" rx="40" ry="22" fill="#15803D"/>
+  </g>
+</svg>''',
+        "pest": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <g class="pest-out">
+    <text x="500" y="100" font-size="22" opacity=".5">🪲</text>
+    <text x="540" y="80"  font-size="20" opacity=".5">🐛</text>
+    <text x="600" y="140" font-size="18" opacity=".5">🪳</text>
+  </g>
+  <!-- Customer relaxing pest-free -->
+  <g transform="translate(560,200)">
+    <rect x="-30" y="0" width="60" height="40" rx="10" fill="#15803D"/>
+    <circle cx="0" cy="-20" r="20" fill="#FCD34D"/>
+    <text x="-12" y="-30" font-size="16">😌</text>
+  </g>
+  <!-- Mascot with sprayer -->
+  <g transform="translate(200,180)">
+    <ellipse cx="0" cy="30" rx="22" ry="28" fill="#15803D"/>
+    <circle cx="0" cy="-4" r="20" fill="#FCD34D"/>
+    <rect x="22" y="0" width="14" height="22" rx="3" fill="#1F2937"/>
+    <g class="spray-anim">
+      <ellipse cx="50" cy="6" rx="5" ry="3" fill="rgba(150,150,150,.5)"/>
+      <ellipse cx="60" cy="3" rx="4" ry="2" fill="rgba(150,150,150,.4)"/>
+      <ellipse cx="70" cy="0" rx="3" ry="2" fill="rgba(150,150,150,.3)"/>
+    </g>
+  </g>
+</svg>''',
+        "default": '''
+<svg class="rich-scene" viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet">
+  <g class="default-sparkle">
+    <text x="120" y="100" font-size="32">✨</text>
+    <text x="280" y="80"  font-size="28">⭐</text>
+    <text x="500" y="100" font-size="30">✨</text>
+    <text x="600" y="60"  font-size="24">⭐</text>
+  </g>
+  <g transform="translate(360,200)">
+    <ellipse cx="0" cy="60" rx="80" ry="14" fill="rgba(0,0,0,.18)"/>
+    <ellipse cx="0" cy="0" rx="50" ry="62" fill="#0F766E"/>
+    <circle cx="0" cy="-50" r="36" fill="#FCD34D"/>
+    <rect x="-20" y="-78" width="40" height="14" rx="3" fill="#fff"/>
+    <text x="-15" y="-67" font-size="9" font-weight="800" fill="#0F766E">SERVIA</text>
+    <circle cx="-12" cy="-55" r="3" fill="#0F172A"/><circle cx="12" cy="-55" r="3" fill="#0F172A"/>
+    <path d="M -10 -42 Q 0 -34 10 -42" stroke="#0F172A" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>''',
+    }
+    return SCENES.get(mascot, SCENES["default"])
 
 
 def _scene_prop_svg(mascot: str) -> str:
