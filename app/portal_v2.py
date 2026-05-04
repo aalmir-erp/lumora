@@ -68,6 +68,22 @@ def customer_verify(req: a.OtpVerifyReq):
     return {"ok": True, "token": token, "customer_id": cid}
 
 
+# --- Customer's ambassador tier (for the dashboard overview) ---
+@router.get("/me/tier")
+def me_tier(user: a.AuthedUser = Depends(a.current_customer)):
+    """Returns the logged-in customer's Ambassador tier + discount + counts."""
+    try:
+        from . import tools as _t
+        with db.connect() as c:
+            r = c.execute("SELECT phone FROM customers WHERE id=?", (user.user_id,)).fetchone()
+        phone = r["phone"] if r else ""
+        return _t.get_my_tier(phone)
+    except Exception as e:
+        return {"ok": False, "error": str(e), "tier": "🥉 Bronze",
+                "discount_pct": 5, "referrals": 0, "reviews": 0,
+                "next_step": "Refer 3 friends to reach Silver (10%)"}
+
+
 # --- Magic-link login (for the auto-account flow on cart checkout) ---
 class MagicLinkReq(BaseModel):
     email: str

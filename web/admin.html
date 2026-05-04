@@ -51,11 +51,76 @@
   </aside>
   <main class="admin-main">
     <div id="t-dashboard" class="tab">
-      <h2>Dashboard</h2>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <h2 style="margin:0">📊 Dashboard</h2>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="loadDashboard()" style="font-size:12px;padding:5px 12px">↻ Refresh</button>
+          <a class="btn btn-ghost" href="/" target="_blank" style="font-size:12px;padding:5px 12px">↗ View site</a>
+        </div>
+      </div>
+      <p style="margin:0 0 16px;color:var(--muted);font-size:13px">Real-time pulse of bookings, revenue, conversions, system health and content.</p>
+
+      <!-- Top KPI strip -->
       <div class="kpis" id="kpis"></div>
-      <h3>Recent activity (live)</h3>
+
+      <!-- Health row -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:18px 0">
+        <div class="dash-card" id="dash-llm"><div class="dash-h">🧠 AI brain</div><div class="dash-v">…</div></div>
+        <div class="dash-card" id="dash-wa"><div class="dash-h">📲 WhatsApp bridge</div><div class="dash-v">…</div></div>
+        <div class="dash-card" id="dash-payments"><div class="dash-h">💳 Stripe</div><div class="dash-v">…</div></div>
+        <div class="dash-card" id="dash-content"><div class="dash-h">📝 Content</div><div class="dash-v">…</div></div>
+      </div>
+
+      <!-- Two-col layout -->
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-bottom:18px" class="dash-grid">
+        <!-- LEFT: today's funnel + chart -->
+        <div class="dash-panel">
+          <h3 style="margin:0 0 8px">📈 Today's funnel</h3>
+          <div id="funnel-bars" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <!-- RIGHT: top services this week -->
+        <div class="dash-panel">
+          <h3 style="margin:0 0 8px">🛠 Top services · 7 days</h3>
+          <div id="top-services" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px" class="dash-grid">
+        <!-- Pending follow-ups -->
+        <div class="dash-panel">
+          <h3 style="margin:0 0 8px">🔔 Needs attention</h3>
+          <div id="dash-attention"></div>
+        </div>
+        <!-- Latest bookings -->
+        <div class="dash-panel">
+          <h3 style="margin:0 0 8px">📋 Latest bookings</h3>
+          <div id="dash-latest"></div>
+        </div>
+      </div>
+
+      <h3 style="margin:0 0 8px">📡 Recent activity (live)</h3>
       <div id="activity" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;font-family:ui-monospace,monospace;font-size:12px;max-height:360px;overflow:auto;color:var(--muted)"></div>
     </div>
+    <style>
+      .dash-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+      .dash-card .dash-h{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+      .dash-card .dash-v{font-size:18px;font-weight:800;letter-spacing:-.01em;color:#0F172A}
+      .dash-card .dash-v.ok{color:#15803D}
+      .dash-card .dash-v.warn{color:#B45309}
+      .dash-card .dash-v.bad{color:#B91C1C}
+      .dash-card .dash-sub{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+      .dash-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+      .dash-panel h3{margin:0 0 8px;font-size:14px}
+      .funnel-bar{display:grid;grid-template-columns:120px 1fr 60px;gap:10px;align-items:center;font-size:13px}
+      .funnel-bar .lab{color:var(--muted);font-weight:600}
+      .funnel-bar .track{height:14px;background:#F1F5F9;border-radius:999px;overflow:hidden}
+      .funnel-bar .fill{height:100%;background:linear-gradient(90deg,#0F766E,#14B8A6);transition:width .5s}
+      .funnel-bar .num{text-align:right;font-weight:800;color:#0F766E}
+      .ts-row{display:grid;grid-template-columns:1fr 50px;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #F1F5F9}
+      .ts-row:last-child{border-bottom:0}
+      .ts-row .b{font-weight:700}
+      @media(max-width:880px){.dash-grid{grid-template-columns:1fr !important}}
+    </style>
 
     <div id="t-bookings" class="tab" style="display:none">
       <h2>Bookings</h2>
@@ -490,7 +555,7 @@ function show(tab) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   document.getElementById("t-"+tab).style.display = "";
   document.querySelectorAll(".admin-side a").forEach(a => a.classList.toggle("active", a.dataset.tab===tab));
-  if (tab==="dashboard") loadDash();
+  if (tab==="dashboard") loadDashboard();
   if (tab==="bookings")  loadBookings();
   if (tab==="customers") loadCustomers();
   if (tab==="convos")    loadSessions();
@@ -611,6 +676,147 @@ async function loadDash() {
   el.innerHTML = `<h3 style="margin:24px 0 8px">Booking status distribution</h3>
     <div style="display:flex;border-radius:8px;overflow:hidden;height:36px;background:var(--bg)">${bar}</div>`;
   document.querySelector("#t-dashboard").appendChild(el);
+}
+
+
+// ============== RICH DASHBOARD (extends loadDash with health + funnel + top services + latest + attention) ==============
+async function loadDashboard() {
+  loadDash();           // existing kpis + activity log
+  loadHealth();
+  loadFunnel();
+  loadTopServices();
+  loadLatestBookings();
+  loadAttention();
+}
+
+async function loadHealth() {
+  // LLM
+  try {
+    const h = await fetch("/api/health").then(r=>r.json()).catch(()=>null);
+    const card = document.getElementById("dash-llm");
+    const ok = h && h.mode === "llm";
+    card.querySelector(".dash-v").innerHTML = ok
+      ? `<span style="color:#15803D">● Live</span> · ${escapeHtml(h.model||'Claude')}`
+      : `<span style="color:#B45309">○ Demo mode</span>`;
+    card.insertAdjacentHTML("beforeend",
+      `<div class="dash-sub">${ok?'AI bot serving customers':'Set ANTHROPIC_API_KEY to enable Claude'}</div>`);
+  } catch (_) {}
+  // WhatsApp
+  try {
+    const w = await fetch("/api/wa/status").then(r=>r.json()).catch(()=>null);
+    const card = document.getElementById("dash-wa");
+    if (w && w.bridge && w.bridge.ready) {
+      card.querySelector(".dash-v").innerHTML = `<span style="color:#15803D">● Paired</span> · ${escapeHtml(w.bridge.paired_number||'')}`;
+    } else if (w && w.configured) {
+      card.querySelector(".dash-v").innerHTML = `<span style="color:#B45309">○ Awaiting QR scan</span>`;
+    } else {
+      card.querySelector(".dash-v").innerHTML = `<span style="color:#94A3B8">— Not configured</span>`;
+    }
+  } catch (_) {}
+  // Stripe (simple presence check)
+  try {
+    const card = document.getElementById("dash-payments");
+    const r = await adm("/api/admin/stats");
+    card.querySelector(".dash-v").innerHTML = (r.revenue_aed && r.revenue_aed > 0)
+      ? `<span style="color:#15803D">● ${r.revenue_aed} AED</span>`
+      : `<span style="color:#94A3B8">— No revenue yet</span>`;
+    card.insertAdjacentHTML("beforeend", `<div class="dash-sub">All-time received</div>`);
+  } catch (_) {}
+  // Content
+  try {
+    const [v, b] = await Promise.all([
+      fetch("/api/videos/list?limit=500").then(r=>r.json()).catch(()=>({videos:[]})),
+      fetch("/api/blog/latest?limit=200").then(r=>r.json()).catch(()=>({posts:[]})),
+    ]);
+    const card = document.getElementById("dash-content");
+    const vN = (v.videos||[]).length, bN = (b.posts||[]).length;
+    card.querySelector(".dash-v").innerHTML = `<span style="color:#15803D">● ${vN} videos</span> · ${bN} articles`;
+    card.insertAdjacentHTML("beforeend",
+      `<div class="dash-sub"><a href="/videos.html" target="_blank" style="color:#0F766E">Watch all →</a> · <a href="/blog" target="_blank" style="color:#0F766E">Blog →</a></div>`);
+  } catch (_) {}
+}
+
+async function loadFunnel() {
+  try {
+    const a = await adm("/api/admin/analytics");
+    const f = a.funnel || {};
+    const stages = [
+      ["Visitors",   f.visitors||0,   "#94A3B8"],
+      ["Chats",      f.chats||0,      "#3B82F6"],
+      ["Quotes",     f.quotes||0,     "#7C3AED"],
+      ["Bookings",   f.bookings||0,   "#0F766E"],
+      ["Paid",       f.paid||0,       "#15803D"],
+      ["Completed",  f.completed||0,  "#FCD34D"],
+    ];
+    const max = Math.max(...stages.map(s => s[1]), 1);
+    document.getElementById("funnel-bars").innerHTML = stages.map(([lab, n, c])=>{
+      const pct = Math.max(2, Math.round(n/max*100));
+      return `<div class="funnel-bar"><span class="lab">${lab}</span><div class="track"><div class="fill" style="width:${pct}%;background:${c}"></div></div><span class="num">${n}</span></div>`;
+    }).join("");
+  } catch (e) {
+    document.getElementById("funnel-bars").innerHTML = '<div style="color:var(--muted);font-size:13px">No funnel data yet.</div>';
+  }
+}
+
+async function loadTopServices() {
+  try {
+    const a = await adm("/api/admin/analytics");
+    const svcs = (a.services||[]).slice(0, 8);
+    document.getElementById("top-services").innerHTML = svcs.length
+      ? svcs.map(s => `<div class="ts-row"><span class="b">${escapeHtml(s.service_id||'?')}</span><span style="text-align:right;color:#0F766E;font-weight:700">${s.n||0}</span></div>`).join("")
+      : '<div style="color:var(--muted);font-size:13px">No bookings yet — top services will populate.</div>';
+  } catch (_) {
+    document.getElementById("top-services").innerHTML = '<div style="color:var(--muted);font-size:13px">No data.</div>';
+  }
+}
+
+async function loadLatestBookings() {
+  try {
+    const r = await adm("/api/admin/bookings?limit=8");
+    const wrap = document.getElementById("dash-latest");
+    if (!r.bookings || !r.bookings.length) {
+      wrap.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:14px">No bookings yet.</div>';
+      return;
+    }
+    wrap.innerHTML = r.bookings.map(b => `
+      <div style="padding:8px 0;border-bottom:1px solid #F1F5F9;display:grid;grid-template-columns:1fr auto;gap:8px">
+        <div style="min-width:0">
+          <div style="font-weight:700;font-size:13px"><code>${escapeHtml(b.id||'')}</code> · ${escapeHtml(b.service_id||'')}</div>
+          <div style="font-size:11px;color:var(--muted)">${escapeHtml(b.customer_name||'')} · ${escapeHtml((b.target_date||'')+' '+(b.time_slot||''))}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:700;color:#0F766E">${b.estimated_total||'—'} AED</div>
+          <span class="badge ${b.status||'pending'}">${b.status||'pending'}</span>
+        </div>
+      </div>`).join("");
+  } catch (_) {
+    document.getElementById("dash-latest").innerHTML = '<div style="color:var(--muted);font-size:13px">Error loading bookings.</div>';
+  }
+}
+
+async function loadAttention() {
+  try {
+    const [bk, alerts] = await Promise.all([
+      adm("/api/admin/bookings?status=pending&limit=20").catch(()=>({bookings:[]})),
+      adm("/api/admin/alerts?limit=20").catch(()=>({alerts:[]}))
+    ]);
+    const items = [];
+    (bk.bookings||[]).forEach(b => items.push({k:'⏳ Pending booking', d: `${b.id} · ${b.service_id||''}`, link:'#bookings'}));
+    (alerts.alerts||[]).filter(a => a.urgency==='urgent').slice(0,5).forEach(a =>
+      items.push({k:'🚨 '+(a.kind||'urgent'), d:(a.text||'').slice(0,80), link:'#whatsapp'}));
+    const wrap = document.getElementById("dash-attention");
+    if (!items.length) {
+      wrap.innerHTML = '<div style="color:#15803D;font-size:13px;text-align:center;padding:14px">✅ All clear — nothing urgent.</div>';
+      return;
+    }
+    wrap.innerHTML = items.slice(0, 8).map(i => `
+      <div style="padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:12.5px">
+        <div style="font-weight:700">${escapeHtml(i.k)}</div>
+        <div style="color:var(--muted);font-size:11.5px">${escapeHtml(i.d)}</div>
+      </div>`).join("");
+  } catch (_) {
+    document.getElementById("dash-attention").innerHTML = '<div style="color:var(--muted);font-size:13px">No data.</div>';
+  }
 }
 
 async function loadBookings() {

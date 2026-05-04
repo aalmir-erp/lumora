@@ -46,12 +46,49 @@
 </div></nav>
 
 <section><div class="container">
+  <!-- Hero overview row -->
+  <div id="me-overview" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px">
+    <div class="me-stat">
+      <div class="me-stat-h">📋 BOOKINGS</div>
+      <div class="me-stat-v" id="me-stat-bookings">—</div>
+      <div class="me-stat-sub" id="me-stat-bookings-sub">All time</div>
+    </div>
+    <div class="me-stat">
+      <div class="me-stat-h">⏱ UPCOMING</div>
+      <div class="me-stat-v" id="me-stat-upcoming">—</div>
+      <div class="me-stat-sub" id="me-stat-upcoming-sub">In the next 7 days</div>
+    </div>
+    <div class="me-stat" style="background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12">
+      <div class="me-stat-h" style="color:#7C2D12">💎 TIER</div>
+      <div class="me-stat-v" id="me-stat-tier" style="color:#7C2D12">🥉 Bronze</div>
+      <div class="me-stat-sub" id="me-stat-tier-sub" style="color:#7C2D12">5% off every booking</div>
+    </div>
+    <div class="me-stat">
+      <div class="me-stat-h">🎁 REFERRALS</div>
+      <div class="me-stat-v" id="me-stat-refs">—</div>
+      <div class="me-stat-sub" id="me-stat-refs-sub">Track at /share-rewards</div>
+    </div>
+    <div class="me-stat">
+      <div class="me-stat-h">⭐ POINTS</div>
+      <div class="me-stat-v" id="me-stat-points">—</div>
+      <div class="me-stat-sub">Creator + reviews</div>
+    </div>
+  </div>
+  <style>
+    .me-stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 16px;
+      box-shadow:0 2px 8px rgba(15,23,42,.04)}
+    .me-stat-h{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+    .me-stat-v{font-size:22px;font-weight:800;letter-spacing:-.02em;color:#0F172A;line-height:1.1}
+    .me-stat-sub{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+  </style>
+
   <!-- Tabs -->
-  <div style="display:flex;gap:6px;margin-bottom:18px;background:var(--bg);padding:4px;border-radius:10px;width:fit-content">
+  <div style="display:flex;gap:6px;margin-bottom:18px;background:var(--bg);padding:4px;border-radius:10px;flex-wrap:wrap">
     <button class="btn btn-primary" id="t-bookings-btn" onclick="setTab('bookings')">📋 My bookings</button>
     <button class="btn btn-ghost" id="t-addresses-btn" onclick="setTab('addresses')">📍 Saved addresses</button>
     <button class="btn btn-ghost" id="t-profile-btn" onclick="setTab('profile')">👤 Profile</button>
     <button class="btn btn-ghost" id="t-referral-btn" onclick="setTab('referral')">🎁 Ambassador</button>
+    <button class="btn btn-ghost" onclick="location.href='/cart.html'">🛒 New bundle</button>
   </div>
 
   <!-- Bookings tab -->
@@ -283,10 +320,37 @@ async function loadBookings() {
     if (!r.bookings.length) {
       list.innerHTML = `<div class="form" style="text-align:center;color:var(--muted)">
         No bookings yet. <a href="/book.html">Book your first service →</a></div>`;
-      return;
+    } else {
+      list.innerHTML = r.bookings.map(renderBooking).join("");
     }
-    list.innerHTML = r.bookings.map(renderBooking).join("");
+    // Update the overview stats from this data
+    const total = r.bookings.length;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const week = new Date(today); week.setDate(week.getDate() + 7);
+    const upcoming = r.bookings.filter(b => {
+      const d = new Date(b.target_date || ""); return d >= today && d <= week
+        && !["cancelled","completed"].includes(b.status||"");
+    }).length;
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setText("me-stat-bookings", total);
+    setText("me-stat-upcoming", upcoming);
+    if (total) setText("me-stat-bookings-sub", `${r.bookings.filter(b=>b.status==='completed').length} completed`);
+    loadOverviewExtras();
   } catch (e) { document.getElementById("list").innerHTML = "Error: "+e.message; }
+}
+
+async function loadOverviewExtras() {
+  try {
+    const t = await authd("/api/me/tier").catch(()=>null);
+    if (t && t.ok) {
+      const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setText("me-stat-tier", t.tier);
+      setText("me-stat-tier-sub", `${t.discount_pct}% off every booking`);
+      setText("me-stat-refs", t.referrals || 0);
+      setText("me-stat-refs-sub", t.next_step || "Refer 3 friends to climb");
+      setText("me-stat-points", (t.referrals||0)*100 + (t.reviews||0)*50);
+    }
+  } catch (_) {}
 }
 
 function renderBooking(b) {
