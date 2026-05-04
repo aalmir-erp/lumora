@@ -2,24 +2,25 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"wtZhOIJ3RrynqPQsezItjw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"CE3u2bPzR2u-SGmGnpoFkQ"}`
 
 ## Build logs
 ```
-[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
-npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-
-npm warn deprecated fluent-ffmpeg@2.1.3: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
-
-
-added 301 packages in 8s
-
-npm notice
-npm notice New major version of npm available! 10.8.2 -> 11.13.0
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.13.0
-npm notice To update run: npm install -g npm@11.13.0
-npm notice
-
+[ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[ 2/11] WORKDIR /app
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[internal] load build context
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[internal] load build context
+[internal] load build context
+[ 2/11] WORKDIR /app
+[ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[ 4/11] COPY requirements.txt ./
+[ 5/11] RUN pip install -r requirements.txt
+[ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/11] COPY app ./app
 [ 8/11] COPY app ./app
@@ -31,10 +32,9 @@ npm notice
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OTE3ODc3M2JlMjI2MDg5NWRjN2RkYjY0OWNhYzAzZjJhYTMyZWNiZWMwZGE3MmUwMWQzZGMzYTFlYWRmZDAzNCIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQxMzozMzoxNVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:33072b710021ab9709e0b358b00f72c692e8489e14d99b6f6fdb6d4209e74ee5
-containerimage.digest: sha256:9178773be2260895dc7ddb649cac03f2aa32ecbec0da72e01d3dc3a1eadfd034
-image push
+containerimage.digest: sha256:24529755129af6bdc975e757447f8cf6fb54ef71d3a2e21c1a22d583ae5f5a55
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MjQ1Mjk3NTUxMjlhZjZiZGM5NzVlNzU3NDQ3ZjhjZjZmYjU0ZWY3MWQzYTJlMjFjMWEyMmQ1ODNhZTVmNWE1NSIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQxNDoxODoxOVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:eff0eb720949978c8bcb3124703b15caeb44be5951ade7f32c02c29a1cf6e192
 image push
 image push
 
@@ -50,34 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:46387 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.7:36174 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.5:44774 - "GET /api/cms HTTP/1.1" 200 OK
+INFO:     100.64.0.6:52956 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.7:36174 - "GET /widget.css HTTP/1.1" 200 OK
+INFO:     100.64.0.13:57916 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.21:62718 - "GET /style.css HTTP/1.1" 200 OK
+INFO:     100.64.0.13:42842 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.20:39722 - "GET /robots.txt HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:10670 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:29446 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:35456 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:48090 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.7:32734 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.8:30540 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.9:22348 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:41770 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:26630 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:41786 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.8:34490 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:19376 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.9:40020 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:11818 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:20656 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:55170 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.11:19768 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.4:10270 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.12:33138 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:45634 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.12:33952 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:20458 - "GET /sw.js HTTP/1.1" 200 OK
+INFO:     100.64.0.4:47912 - "GET /style.css HTTP/1.1" 200 OK
+INFO:     100.64.0.3:61364 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.15:10218 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.11:48020 - "GET /widget.css HTTP/1.1" 200 OK
+INFO:     100.64.0.13:42842 - "GET /api/blog/hero/sharjah-carpet-cleaning-in-al-khan-sharjah---sand--oil--kid-spills-and-what-aed-80-covers.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:20458 - "GET /api/blog/hero/abu-dhabi-bed-bugs-on-reem-island---why-80--of-treatments-fail-and-what-works-in-2026.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.7:36174 - "GET /api/blog/hero/dubai-sofa-shampoo-in-arabian-ranches---why-fabric-protectors-are-a-2026-must-have.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.17:17960 - "GET /api/blog/hero/ras-al-khaimah-rak-ac-service-tips---coastal-humidity-is-killing-your-compressor-faster-th.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.12:32872 - "GET /api/blog/hero/dubai-kitchen-deep-clean-in-jlt---the-ramadan-grease-problem-and-how-pros-solve-it.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.5:12250 - "GET /api/blog/hero/umm-al-quwain-handyman-in-uaq---the-6-small-fixes-every-villa-owner-should-batch-in-one-vi.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.16:60554 - "GET /api/blog/hero/abu-dhabi-deep-cleaning-a-khalifa-city-villa-after-sandstorm-season---a-checklist.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.13:42842 - "GET /api/blog/hero/abu-dhabi-deep-cleaning-a-khalifa-city-villa-after-sandstorm-season---a-checklist.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.10:48530 - "GET /api/blog/hero/ras-al-khaimah-rak-ac-service-tips---coastal-humidity-is-killing-your-compressor-faster-th.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:20458 - "GET /robots.txt HTTP/1.1" 200 OK
+INFO:     100.64.0.6:20458 - "GET /sw.js HTTP/1.1" 200 OK
+INFO:     100.64.0.13:42842 - "GET /mascots/cleaning.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:20458 - "GET /mascots/cleaning.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.17:17976 - "GET /mascots/ac.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.5:38938 - "GET /api/activity/live HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
