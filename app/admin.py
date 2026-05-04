@@ -1657,8 +1657,60 @@ def analytics_overview():
 
 
 # ---------- auto-blog (Claude-generated daily article per emirate) ----------
+@router.get("/autoblog/prompt", dependencies=[Depends(require_admin)])
+def autoblog_prompt_get():
+    """Returns the current admin-overridden prompt template (if any) plus the
+    default fallback so the admin can see what the cron sends to Claude."""
+    cur = db.cfg_get("autoblog_prompt_template", "") or ""
+    default = (
+        "Write a 700-word blog post for Servia (UAE home services).\n\n"
+        "Title: {topic}\nEmirate: {em}  Neighborhood: {area}  Service: {sv}\n"
+        "Season: {slant}\n\n"
+        "WRITE LIKE A REAL UAE TRADESPERSON. NO AI WRITING TELLS.\n"
+        "Hard rules: no em-dashes, no en-dashes, no semicolons, avoid AI cliches "
+        "(delve, tapestry, navigate, crucial, vital, comprehensive, leverage, "
+        "utilize, streamline, robust, seamless, nestled, bustling, vibrant, iconic).\n"
+        "Use contractions. Vary sentence length. Be specific to {area} (real "
+        "towers / streets / landmarks). Include 2-3 personal stories with 'I'. "
+        "2-3 H2 headings (## in markdown). Mention Servia 2-3 times. "
+        "End with a CTA to https://servia.ae/book.html and a 3-question FAQ.\n"
+        "Output ONLY the markdown article."
+    )
+    areas_json = db.cfg_get("autoblog_areas_json", "") or ""
+    return {
+        "current_template": cur,
+        "default_template": default,
+        "placeholders": ["{em}", "{sv}", "{area}", "{slant}", "{topic}"],
+        "areas_json": areas_json,
+        "schedule": "06:00 + 18:00 Asia/Dubai (twice daily)",
+    }
+
+
+class PromptBody(BaseModel):
+    template: str | None = None
+    areas_json: str | None = None
+
+
+@router.post("/autoblog/prompt", dependencies=[Depends(require_admin)])
+def autoblog_prompt_set(body: PromptBody):
+    """Save admin's custom autoblog prompt template (use empty string to revert
+    to the built-in default). Placeholders: {em}, {sv}, {area}, {slant}, {topic}."""
+    if body.template is not None:
+        db.cfg_set("autoblog_prompt_template", body.template.strip())
+    if body.areas_json is not None:
+        # Validate JSON
+        try:
+            import json as _j
+            data = _j.loads(body.areas_json)
+            assert isinstance(data, dict)
+            db.cfg_set("autoblog_areas_json", body.areas_json.strip())
+        except Exception as e:
+            raise HTTPException(400, f"areas_json invalid: {e}")
+    return {"ok": True}
+
+
 @router.post("/autoblog/run", dependencies=[Depends(require_admin)])
-def autoblog_run(emirate: str = "dubai", topic: str | None = None):
+def autoblog_run(emirate: str = "dubai", topic: str | None = None, area: str | None = None):
     """Generate one Servia-branded article for the given emirate using Claude.
     Cron-friendly: schedule a daily POST with a different emirate to maintain
     fresh content for SEO + AI engines. Articles stored in 'autoblog_posts'
@@ -1669,35 +1721,72 @@ def autoblog_run(emirate: str = "dubai", topic: str | None = None):
     if not s.use_llm:
         return {"ok": False, "error": "LLM disabled (set ANTHROPIC_API_KEY)"}
 
-    # Topic rotation if not specified
+    # Default neighborhoods per emirate (admin can override via /autoblog/prompt)
+    AREAS = {
+        "dubai":          ["Jumeirah","Dubai Marina","JLT","JVC","Mirdif","Discovery Gardens","Business Bay","Downtown","Al Barsha"],
+        "sharjah":        ["Al Khan","Al Majaz","Al Nahda Sharjah","Muwaileh","Aljada","Al Qasimia","Al Taawun"],
+        "abu-dhabi":      ["Khalifa City","Al Reem Island","Yas Island","Saadiyat","Al Raha","Mohammed Bin Zayed City","Corniche"],
+        "ajman":          ["Al Nuaimiya","Al Rashidiya","Al Rawda","Ajman Corniche","Al Mowaihat"],
+        "ras-al-khaimah": ["Al Hamra","Mina Al Arab","Al Nakheel","Khuzam"],
+        "umm-al-quwain":  ["Al Ramlah","Al Salamah","UAQ Marina"],
+        "fujairah":       ["Dibba","Al Faseel","Sakamkam"],
+    }
+    # Override with admin-saved areas if set
+    try:
+        import json as _j
+        custom = db.cfg_get("autoblog_areas_json", "")
+        if custom:
+            data = _j.loads(custom)
+            if isinstance(data, dict): AREAS.update(data)
+    except Exception: pass
+
+    import random
+    if not area:
+        area = random.choice(AREAS.get(emirate, [emirate.replace("-"," ").title()]))
+
     DEFAULT_TOPICS = [
-        "Best deep cleaning checklist for {emirate} apartments",
-        "How to choose AC service in {emirate} — what to ask",
-        "Seasonal maintenance tips for {emirate} villas",
-        "Pest control done right in {emirate}",
-        "Move-in / move-out cleaning guide for {emirate}",
-        "Top 5 home services every {emirate} family needs",
-        "Why pre-paid bookings beat cash-on-completion in {emirate}",
-        "Same-day handyman in {emirate} — how Servia delivers in hours",
+        "Best deep cleaning checklist for {area} apartments",
+        "How to choose AC service in {area} ({emirate}): what to ask",
+        "Seasonal maintenance tips for {area} villas",
+        "Pest control done right in {area}",
+        "Move-in / move-out cleaning guide for {area} residents",
+        "Top 5 home services every {area} family needs",
+        "Why pre-paid bookings beat cash-on-completion in {area}",
+        "Same-day handyman in {area}: how Servia delivers in hours",
     ]
     if not topic:
-        import random
-        topic = random.choice(DEFAULT_TOPICS).format(emirate=emirate.replace("-"," ").title())
+        topic = random.choice(DEFAULT_TOPICS).format(
+            area=area, emirate=emirate.replace("-"," ").title())
+
+    # Use the admin-overridable prompt template (fallback to a strong default)
+    cur_tpl = db.cfg_get("autoblog_prompt_template", "") or ""
+    sv_guess = "general"
+    em_pretty = emirate.replace("-"," ").title()
+    slant = "year-round"
+    if cur_tpl:
+        try:
+            prompt_text = cur_tpl.format(em=em_pretty, sv=sv_guess, area=area, slant=slant, topic=topic)
+        except Exception: cur_tpl = ""
+    if not cur_tpl:
+        prompt_text = (
+            f"Write a 700-word SEO-optimized article for Servia (UAE home services).\n\n"
+            f"Title: {topic}\nNeighborhood: {area} ({em_pretty})\n\n"
+            f"Style: Helpful, locally-informed. Open with a hook tied to {area} (real towers / "
+            f"streets / landmarks), not generic 'In the UAE'. Include 1-2 actionable tips and "
+            "real AED prices. Use H2 subheadings (## in markdown). Mention Servia naturally 2-3 "
+            "times. End with a CTA to https://servia.ae/book.html plus a 3-question FAQ.\n"
+            "Avoid em-dashes, en-dashes, semicolons, and AI cliches (delve, tapestry, navigate "
+            "the landscape, crucial, vital, comprehensive, leverage, utilize, streamline, robust, "
+            "seamless, nestled, bustling, vibrant, iconic, stunning).\n"
+            "Output ONLY the markdown article, no preamble."
+        )
 
     try:
         import anthropic
         client = anthropic.Anthropic(api_key=s.ANTHROPIC_API_KEY, timeout=30, max_retries=1)
         msg = client.messages.create(
-            model=s.MODEL,
-            max_tokens=2000,
-            messages=[{"role":"user","content":(
-                f"Write a 600-word SEO-optimized article for Servia (UAE home services platform).\n\n"
-                f"Title: {topic}\n"
-                f"Emirate: {emirate.replace('-',' ').title()}\n\n"
-                "Style: Helpful, locally-informed, mention specific neighborhoods, include 1-2 actionable tips, "
-                "include a clear CTA at the end pointing to https://servia.ae/book.html. "
-                "Use H2 subheadings (markdown ##) for structure. Mention Servia naturally 2-3 times — "
-                "not spammy. End with a short FAQ (2-3 Qs).")}],
+            model=s.MODEL, max_tokens=2400,
+            messages=[{"role":"user","content":prompt_text}],
         )
         body = msg.content[0].text if msg.content else ""
     except Exception as e:  # noqa: BLE001
@@ -1705,9 +1794,9 @@ def autoblog_run(emirate: str = "dubai", topic: str | None = None):
 
     import datetime as _dtm
     slug = (
-        emirate + "-" +
+        emirate + "-" + area.lower().replace(" ","-") + "-" +
         "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-")
-    )[:80]
+    )[:100]
     with db.connect() as c:
         try:
             c.execute("""
@@ -1722,9 +1811,9 @@ def autoblog_run(emirate: str = "dubai", topic: str | None = None):
             (slug, emirate, topic, body,
              _dtm.datetime.utcnow().isoformat() + "Z"))
     db.log_event("autoblog", slug, "published", actor="admin",
-                 details={"emirate": emirate, "topic": topic, "len": len(body)})
-    return {"ok": True, "slug": slug, "topic": topic, "len": len(body),
-            "url": f"/blog/{slug}"}
+                 details={"emirate": emirate, "area": area, "topic": topic, "len": len(body)})
+    return {"ok": True, "slug": slug, "topic": topic, "area": area,
+            "len": len(body), "url": f"/blog/{slug}"}
 
 
 @router.get("/autoblog", dependencies=[Depends(require_admin)])

@@ -389,9 +389,9 @@
 
     <div id="t-autoblog" class="tab" style="display:none">
       <h2>📝 Auto-blog</h2>
-      <p class="sub" style="color:var(--muted)">Generate one Claude-written article per emirate to keep SEO content fresh. Schedule a daily POST <code>/api/admin/autoblog/run?emirate=dubai</code> via Railway cron, or run manually below.</p>
+      <p class="sub" style="color:var(--muted)">Cron schedule: <b>06:00 + 18:00 Asia/Dubai</b> (twice daily). Each tick rotates through (emirate, neighborhood, service) so we get hyper-local content like "AC service in Al Khan, Sharjah" or "Deep cleaning in Jumeirah Marina". Override the area or generate manually below.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0">
-        <select id="ab-emirate" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px">
+        <select id="ab-emirate" onchange="updateAreaList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px">
           <option value="dubai">Dubai</option>
           <option value="sharjah">Sharjah</option>
           <option value="abu-dhabi">Abu Dhabi</option>
@@ -400,8 +400,12 @@
           <option value="umm-al-quwain">Umm Al Quwain</option>
           <option value="fujairah">Fujairah</option>
         </select>
-        <input id="ab-topic" placeholder="Topic (optional — leave blank for auto)" style="flex:1;min-width:240px;padding:8px 12px;border:1px solid var(--border);border-radius:8px">
+        <select id="ab-area" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;min-width:160px">
+          <option value="">— random area —</option>
+        </select>
+        <input id="ab-topic" placeholder="Topic (optional, leave blank for auto)" style="flex:1;min-width:240px;padding:8px 12px;border:1px solid var(--border);border-radius:8px">
         <button class="btn btn-primary" onclick="runAutoblog()">Generate now</button>
+        <button class="btn btn-ghost" onclick="openAutoblogPrompt()">⚙️ Prompt &amp; areas</button>
       </div>
       <div id="ab-result" style="font-size:13px;color:var(--muted);margin:8px 0"></div>
       <h3 style="margin:24px 0 12px;font-size:15px">Recent posts</h3>
@@ -667,6 +671,15 @@
           </div>
         </div>
 
+        <!-- Free-form custom HEAD HTML — for full GA4 / GTM / Tag Manager / Pixel
+             snippets that vendors give as raw HTML. Injected immediately after
+             <head> on every public page. -->
+        <div style="margin-top:18px;padding:14px;background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px">
+          <label style="font-size:12px;font-weight:700;color:#7C2D12;display:block;margin-bottom:4px">📋 Custom HEAD HTML (paste any tag — Google Analytics, GTM, Meta Pixel, Hotjar, Clarity)</label>
+          <p style="font-size:11.5px;color:#7C2D12;margin:0 0 8px;line-height:1.5">If Google Analytics gives you a full <code>&lt;script&gt;</code> block instead of just an ID, paste the entire block here. Injected as the first child of <code>&lt;head&gt;</code> on every public page within ~60 seconds. One snippet per line break is fine — multiple are joined.</p>
+          <textarea id="snip-head-raw" placeholder="<!-- Google tag (gtag.js) -->&#10;<script async src='https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX'></script>&#10;<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXX');</script>" style="width:100%;min-height:160px;padding:10px;border:1px solid #FCD34D;border-radius:8px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5"></textarea>
+        </div>
+
         <button class="btn btn-primary" onclick="saveSnippets()" style="margin-top:14px">💾 Save &amp; deploy site-wide</button>
         <span id="snip-msg" style="margin-inline-start:12px;font-size:12.5px;color:#15803D;font-weight:600"></span>
       </div>
@@ -778,8 +791,22 @@
             <option value="18" selected>18 seconds</option>
             <option value="22">22 seconds</option>
           </select>
+          <select id="vid-emirate" onchange="updateVidAreaList()" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
+            <option value="">— no emirate —</option>
+            <option value="dubai">Dubai</option>
+            <option value="sharjah">Sharjah</option>
+            <option value="abu-dhabi">Abu Dhabi</option>
+            <option value="ajman">Ajman</option>
+            <option value="ras-al-khaimah">Ras Al Khaimah</option>
+            <option value="umm-al-quwain">Umm Al Quwain</option>
+            <option value="fujairah">Fujairah</option>
+          </select>
+          <select id="vid-area" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
+            <option value="">— no area —</option>
+          </select>
         </div>
         <button class="btn btn-primary" onclick="genVideo()" style="margin-top:10px">🎥 Generate video</button>
+        <button class="btn btn-ghost" onclick="openVideoPrompt()" style="margin-top:10px">⚙️ Prompt</button>
         <span id="vid-msg" style="margin-inline-start:10px;font-size:12.5px;color:#15803D;font-weight:600"></span>
       </div>
 
@@ -853,6 +880,35 @@
 <script>
 const KEY = "lumora.admin.tok";
 let TOK = localStorage.getItem(KEY) || "";
+
+// ---------- UAE time formatting (single source of truth) ----------
+// All server timestamps are UTC ISO strings. Admin UI must display them in
+// Asia/Dubai (GMT+4, no DST). Helpers below should be used everywhere instead
+// of new Date().toLocaleString() so a Dubai admin sees Dubai times even when
+// browsing from another timezone.
+const UAE_TZ = "Asia/Dubai";
+const _uaeDateFmt = new Intl.DateTimeFormat("en-GB", {timeZone: UAE_TZ, year:"numeric", month:"2-digit", day:"2-digit"});
+const _uaeTimeFmt = new Intl.DateTimeFormat("en-GB", {timeZone: UAE_TZ, hour:"2-digit", minute:"2-digit", hour12:false});
+const _uaeDtFmt   = new Intl.DateTimeFormat("en-GB", {timeZone: UAE_TZ, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false});
+const _uaeDtSecFmt= new Intl.DateTimeFormat("en-GB", {timeZone: UAE_TZ, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false});
+function _toDate(ts) {
+  if (!ts) return null;
+  // Server stores 'YYYY-MM-DDTHH:MM:SSZ' (UTC). Date() parses Z reliably.
+  // Bare 'YYYY-MM-DD HH:MM:SS' (no Z) is treated as local in some browsers —
+  // append Z so Dubai admins get the correct +4h offset.
+  let s = String(ts);
+  if (s.length >= 19 && !/[Zz]|[+-]\d\d:?\d\d$/.test(s)) {
+    s = s.replace(" ", "T") + "Z";
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+function uaeDate(ts) { const d=_toDate(ts); return d ? _uaeDateFmt.format(d) : (ts||""); }
+function uaeTime(ts) { const d=_toDate(ts); return d ? _uaeTimeFmt.format(d) : (ts||""); }
+function uaeDt(ts)   { const d=_toDate(ts); return d ? _uaeDtFmt.format(d)   : (ts||""); }
+function uaeDtSec(ts){ const d=_toDate(ts); return d ? _uaeDtSecFmt.format(d): (ts||""); }
+// Pretty UAE banner — appended to mini-clocks
+function uaeNow()    { return _uaeDtFmt.format(new Date()) + " GST"; }
 
 // ---------- Auto-register web push for admin PWA ----------
 // First visit after sign-in: register SW + ask for notification permission +
@@ -1115,7 +1171,7 @@ async function loadAnalytics() {
       `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:13px"><span>${escapeHtml(b.bot)}</span><b style="color:#0F766E">${b.hits}</b></div>`).join("")
       : '<div style="color:var(--muted);font-size:13px">⏳ Bots find sites 1-2 weeks after Google Search Console submission.</div>';
 
-    document.getElementById("an-ts").textContent = "Updated " + (d.generated_at||"").slice(0,19).replace("T"," ");
+    document.getElementById("an-ts").textContent = "Updated " + uaeDtSec(d.generated_at) + " GST";
 
     // PSI panel
     loadPsiPanel();
@@ -1172,7 +1228,7 @@ async function loadPsiPanel() {
       html += `<div style="margin-top:14px"><h5 style="margin:0 0 4px;font-size:12px;color:#0F172A">📈 Mobile score · last ${items.length} runs</h5>
         <svg viewBox="0 0 ${W} ${H+10}" style="width:100%;height:auto"><polyline fill="none" stroke="#0D9488" stroke-width="2" points="${points}"/></svg></div>`;
     }
-    html += `<div style="font-size:11px;color:var(--muted);margin-top:10px">Last run: ${(s.ts||"").slice(0,19).replace("T"," ")} · ${s.url}</div>`;
+    html += `<div style="font-size:11px;color:var(--muted);margin-top:10px">Last run: ${uaeDtSec(s.ts)} GST · ${s.url}</div>`;
     wrap.innerHTML = html;
   } catch (e) {
     wrap.innerHTML = `<div style="color:#B91C1C;padding:8px">⚠ ${escapeHtml(e.message)}</div>`;
@@ -1524,16 +1580,70 @@ async function loadAttention() {
   }
 }
 
+// ---------- Generic multi-select / bulk-delete bar ----------
+// Any list table can opt in with a `data-bulk-entity="booking"` attribute on its
+// <table>, plus a checkbox column rendered as <input class="bulk-cb" data-id="...">.
+// Header checkbox class="bulk-all" toggles every row. Container has a sibling
+// <div class="bulk-bar" id="X-bulk-bar"> we update with selection count + delete
+// button. Reused across bookings / customers / vendors / invoices / autoblog.
+function _bulkSetup(containerSel, entity, onAfterDelete) {
+  const root = document.querySelector(containerSel);
+  if (!root) return;
+  const bar = root.querySelector(".bulk-bar");
+  const update = () => {
+    const cbs = root.querySelectorAll(".bulk-cb");
+    const sel = Array.from(cbs).filter(x => x.checked);
+    if (bar) bar.style.display = sel.length ? "flex" : "none";
+    if (bar) bar.querySelector(".bulk-count").textContent = sel.length + " selected";
+  };
+  root.querySelectorAll(".bulk-all").forEach(a => a.onchange = (e) => {
+    root.querySelectorAll(".bulk-cb").forEach(c => c.checked = e.target.checked);
+    update();
+  });
+  root.querySelectorAll(".bulk-cb").forEach(c => c.onchange = update);
+  if (bar) {
+    bar.querySelector(".bulk-delete").onclick = async () => {
+      const ids = Array.from(root.querySelectorAll(".bulk-cb")).filter(x => x.checked).map(x => x.dataset.id);
+      if (!ids.length) return;
+      if (!confirm("Delete " + ids.length + " " + entity + "(s)? This cannot be undone.")) return;
+      try {
+        const r = await adm("/api/admin/" + entity + "/bulk-delete", { method: "POST", body: JSON.stringify({ ids }) });
+        toast("✓ Deleted " + (r.deleted||0) + " row(s)");
+        if (onAfterDelete) onAfterDelete();
+      } catch (e) { /* adm() toasts */ }
+    };
+    bar.querySelector(".bulk-delete-all").onclick = async () => {
+      if (!confirm("⚠️ DELETE ALL " + entity + " records?\n\nThis wipes the table — every row gone. Type 'YES' on the next prompt to confirm.")) return;
+      const c2 = prompt("Type YES (uppercase) to wipe all " + entity + " records:");
+      if (c2 !== "YES") { toast("Cancelled — nothing deleted"); return; }
+      try {
+        const r = await adm("/api/admin/" + entity + "/delete-all?confirm=yes-i-mean-it", { method: "POST" });
+        toast("✓ Deleted ALL " + (r.deleted||0) + " row(s)");
+        if (onAfterDelete) onAfterDelete();
+      } catch (e) { /* adm() toasts */ }
+    };
+  }
+}
+function _bulkBarHtml(label) {
+  return `<div class="bulk-bar" style="display:none;align-items:center;gap:10px;background:#FFFBEB;border:1px solid #FCD34D;padding:8px 12px;border-radius:10px;margin:0 0 10px;font-size:13px">
+    <b class="bulk-count" style="color:#7C2D12">0 selected</b>
+    <button class="btn btn-ghost bulk-delete" style="font-size:12px;padding:4px 12px;background:#FEE2E2;color:#B91C1C;font-weight:700">🗑 Delete selected</button>
+    <button class="btn btn-ghost bulk-delete-all" style="font-size:12px;padding:4px 12px;color:#B91C1C;margin-left:auto">⚠ Delete ALL ${label}</button>
+  </div>`;
+}
+
 async function loadBookings() {
   const q = document.getElementById("b-q").value;
   const status = document.getElementById("b-status").value;
   const url = "/api/admin/bookings?" + new URLSearchParams({...(q?{q}:{}), ...(status?{status}:{})});
   const r = await adm(url);
-  document.getElementById("bookings-table").innerHTML = `
-    <table class="list"><thead><tr>
+  document.getElementById("bookings-table").innerHTML = _bulkBarHtml("bookings") + `
+    <table class="list" data-bulk-entity="booking"><thead><tr>
+      <th style="width:32px"><input type="checkbox" class="bulk-all" title="Select all"></th>
       <th>ID</th><th>Service</th><th>Date / Time</th><th>Customer</th><th>Total</th><th>Status</th><th>Action</th>
     </tr></thead><tbody>${r.bookings.map(b => `
       <tr>
+        <td><input type="checkbox" class="bulk-cb" data-id="${b.id}"></td>
         <td>${b.id}</td><td>${b.service_id}</td>
         <td>${b.target_date} ${b.time_slot}</td>
         <td>${b.customer_name}<br><small>${b.phone}</small></td>
@@ -1548,8 +1658,18 @@ async function loadBookings() {
           <button class="btn btn-ghost" onclick="makeInvoice('${b.id}')">Invoice</button>
           ${b.status !== 'completed' ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="completeJob('${b.id}')" title="Mark complete + WhatsApp customer the review link">✓ Complete</button>` : ''}
           ${b.customer_id ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('customer', ${b.customer_id})" title="Sign in as this customer to see their account">👁 View as customer</button>` : ''}
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:#B91C1C" onclick="deleteRow('booking','${b.id}', loadBookings)">🗑</button>
         </td>
       </tr>`).join("")}</tbody></table>`;
+  _bulkSetup("#bookings-table", "booking", loadBookings);
+}
+async function deleteRow(entity, id, after) {
+  if (!confirm("Delete this " + entity + " (#" + id + ")?")) return;
+  try {
+    await adm("/api/admin/" + entity + "/" + encodeURIComponent(id), { method: "DELETE" });
+    toast("✓ Deleted");
+    if (after) after();
+  } catch (e) { /* adm() toasts */ }
 }
 window.changeStatus = async (bid, s) => { await adm(`/api/admin/bookings/${bid}/status`, { method:"POST", body:{status:s} }); };
 window.makeInvoice  = async (bid) => { const r = await adm(`/api/admin/bookings/${bid}/invoice`, { method:"POST" }); alert("Invoice: "+JSON.stringify(r)); };
@@ -1593,20 +1713,24 @@ function renderCustomers() {
           (c.email||"").toLowerCase().includes(q));
   document.getElementById("customers-table").innerHTML = !list.length
     ? '<div style="padding:24px;color:var(--muted);text-align:center">No customers yet.</div>'
-    : `<table class="list"><thead><tr>
+    : _bulkBarHtml("customers") + `<table class="list" data-bulk-entity="customer"><thead><tr>
+        <th style="width:32px"><input type="checkbox" class="bulk-all" title="Select all"></th>
         <th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th style="text-align:center">Bookings</th><th>Joined</th><th></th>
       </tr></thead><tbody>${list.map(c => `
         <tr>
+          <td><input type="checkbox" class="bulk-cb" data-id="${c.id}"></td>
           <td>#${c.id}</td>
           <td>${escapeHtml(c.name||'—')}</td>
           <td><code style="font-size:12px">${escapeHtml(c.phone||'')}</code></td>
           <td>${escapeHtml(c.email||'—')}</td>
           <td style="text-align:center">${c.bookings||0}</td>
-          <td><small style="color:var(--muted)">${(c.created_at||'').slice(0,10)}</small></td>
-          <td style="text-align:end">
+          <td><small style="color:var(--muted)">${uaeDate(c.created_at)}</small></td>
+          <td style="text-align:end;white-space:nowrap">
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('customer', ${c.id})">👁 View as</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:#B91C1C" onclick="deleteRow('customer','${c.id}', loadCustomers)">🗑</button>
           </td>
         </tr>`).join("")}</tbody></table>`;
+  _bulkSetup("#customers-table", "customer", loadCustomers);
 }
 document.getElementById("cust-q").oninput = renderCustomers;
 
@@ -1740,7 +1864,7 @@ window.openConv = async (sid) => {
     <span>🔢 ${tin}+${tout} tokens (in/out) · 💰 $${cost} spent · 🤖 ${escapeHtml(meta.last_model||'—')}</span>`;
 
   document.getElementById("conv-msgs").innerHTML = (r.messages || []).map((m, idx) => {
-    const ts = (m.created_at || "").slice(11, 16);
+    const ts = uaeTime(m.created_at);
     const isAgent = m.agent_handled;
     const tin = m.tokens_in || 0, tout = m.tokens_out || 0;
     const cost = m.cost_usd ? '$' + Number(m.cost_usd).toFixed(4) : '';
@@ -2246,12 +2370,15 @@ async function loadVendors() {
         <button class="btn btn-ghost" onclick="seedMarket()" title="Bulk-load 45 UAE market vendors">📥 Seed market vendors</button>
       </div>
     </div>
-    <table class="list" id="vtable">
+    ${_bulkBarHtml("vendors")}
+    <table class="list" id="vtable" data-bulk-entity="vendor">
       <thead><tr>
+        <th style="width:32px"><input type="checkbox" class="bulk-all" title="Select all"></th>
         <th>Vendor</th><th>Services offered</th><th>★ Rating</th><th>Jobs</th><th>Status</th><th></th>
       </tr></thead>
       <tbody>${vendors.map(v => `
-        <tr style="cursor:pointer" onclick="openVendor(${v.id})">
+        <tr style="cursor:pointer" onclick="if (!event.target.closest('input,button,a')) openVendor(${v.id})">
+          <td onclick="event.stopPropagation()"><input type="checkbox" class="bulk-cb" data-id="${v.id}"></td>
           <td>
             <div style="font-weight:600">${escapeHtml(v.name)}</div>
             <div style="font-size:11px;color:var(--muted)">${escapeHtml(v.email)}</div>
@@ -2267,16 +2394,18 @@ async function loadVendors() {
             ${v.is_approved ? '<span class="badge confirmed">approved</span>' : '<span class="badge pending">pending</span>'}
             ${v.is_active ? '' : '<br><span class="badge cancelled">disabled</span>'}
           </td>
-          <td style="text-align:end" onclick="event.stopPropagation()">
+          <td style="text-align:end;white-space:nowrap" onclick="event.stopPropagation()">
             ${!v.is_approved ? `<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'approve')">Approve</button>` : ''}
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="setVendor(${v.id},'${v.is_active?'disable':'enable'}')">${v.is_active?'Disable':'Enable'}</button>
             ${v.is_approved && v.is_active ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('vendor', ${v.id})" title="Sign in as this vendor">👁 View as</button>` : ''}
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:#B91C1C" onclick="deleteRow('vendor','${v.id}', loadVendors)">🗑</button>
           </td>
         </tr>`).join("")}</tbody>
     </table>`;
   document.getElementById("vsearch").oninput = filterVendorTable;
   window._allVendors = vendors;
   window._svcMap = svcMap;
+  _bulkSetup("#vendor-table", "vendor", loadVendors);
 }
 function filterVendorTable() {
   const q = (document.getElementById("vsearch").value||"").toLowerCase();
@@ -2435,7 +2564,7 @@ async function loadWA() {
     wa.innerHTML = a.alerts.map(x => {
       const tone = x.urgency === "urgent" ? "#B91C1C" : (x.delivered ? "#15803D" : "#94A3B8");
       const badge = x.urgency === "urgent" ? "🚨 URGENT" : (x.delivered ? "✅ Sent" : "📥 Pending");
-      const ts = (x.created_at||'').slice(0,19).replace('T',' ');
+      const ts = uaeDt(x.created_at);
       return `<div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
           <div style="font-weight:700;color:${tone}">${escapeHtml(x.kind)}</div>
@@ -2527,14 +2656,14 @@ async function loadVizBots() {
     const summary = r.by_bot.map(b =>
       `<div style="display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #F1F5F9;font-size:13px">
         <div><b style="color:#0F766E">${escapeHtml(b.bot_name)}</b> · <small style="color:var(--muted)">${b.pages} pages, ${b.ips} unique IPs</small></div>
-        <div><b>${b.visits}</b> visits · <small style="color:var(--muted)">last ${(b.last_seen||'').slice(0,16).replace('T',' ')}</small></div>
+        <div><b>${b.visits}</b> visits · <small style="color:var(--muted)">last ${uaeDt(b.last_seen)}</small></div>
       </div>`).join("");
     const recent = r.recent.slice(0,12).map(v =>
       `<div style="display:flex;gap:6px;font-size:11.5px;padding:3px 12px;color:var(--muted);font-family:ui-monospace,monospace">
         <span style="color:#0F766E;font-weight:700;min-width:160px">${escapeHtml(v.bot_name)}</span>
         <span style="flex:1">${escapeHtml(v.path)}</span>
         <span>${v.country?'🌍 '+escapeHtml(v.country):''}</span>
-        <span style="color:#94A3B8">${(v.created_at||'').slice(11,19)}</span>
+        <span style="color:#94A3B8">${uaeTime(v.created_at)}</span>
       </div>`).join("");
     wrap.innerHTML =
       `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:0 0 6px;margin-bottom:8px">
@@ -2587,6 +2716,7 @@ async function loadLaunch() {
     set("snip-hotjar",    s.hotjar_id);
     set("snip-plausible", s.plausible_domain);
     set("snip-matomo",    s.matomo_url);
+    set("snip-head-raw",  Array.isArray(s.head) ? s.head.join("\n\n") : (s.head || ""));
     const v = s.verifications || {};
     set("ver-google", v.google_site_verification);
     set("ver-bing",   v.bing);
@@ -2664,17 +2794,22 @@ async function loadLaunch() {
 
 async function saveSnippets() {
   const v = id => (document.getElementById(id) || {}).value || "";
+  // Free-form HEAD: split by blank lines so admin can paste multiple snippets
+  // (each script block kept as its own list entry).
+  const rawHead = v("snip-head-raw").trim();
+  const headList = rawHead ? rawHead.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean) : [];
   const body = {
     ga4_id: v("snip-ga4"), gtm_id: v("snip-gtm"),
     meta_pixel_id: v("snip-meta"), tiktok_pixel_id: v("snip-tiktok"),
     clarity_id: v("snip-clarity"), hotjar_id: v("snip-hotjar"),
     plausible_domain: v("snip-plausible"), matomo_url: v("snip-matomo"),
+    head: headList,
     verifications: {
       google_site_verification: v("ver-google"), bing: v("ver-bing"),
       yandex: v("ver-yandex"), facebook_domain_verification: v("ver-fb"),
     },
   };
-  const r = await adm("/api/admin/launch/snippets", {method:"POST", body});
+  const r = await adm("/api/admin/launch/snippets", {method:"POST", body: JSON.stringify(body)});
   document.getElementById("snip-msg").textContent =
     r.ok ? "✅ Saved + live across all pages." : "❌ " + (r.error || "");
   setTimeout(() => document.getElementById("snip-msg").textContent = "", 4000);
@@ -2908,6 +3043,12 @@ async function runArena() {
 
 // ============== AUTO-BLOG ==============
 async function loadAutoblog() {
+  // Refresh area dropdown from saved admin overrides
+  try {
+    const p = await adm("/api/admin/autoblog/prompt");
+    if (p.areas_json) { try { _AREA_MAP = JSON.parse(p.areas_json); } catch {} }
+  } catch {}
+  updateAreaList();
   const wrap = document.getElementById("ab-list");
   wrap.innerHTML = '<div style="color:var(--muted);text-align:center;padding:18px">Loading…</div>';
   let d;
@@ -2937,16 +3078,19 @@ async function loadAutoblog() {
     const srcChips = Object.entries(p.sources || {}).slice(0, 4).map(([s, n]) =>
       `<span style="background:#F1F5F9;color:#475569;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700">${escapeHtml(s)} · ${n}</span>`
     ).join(" ") || '<span style="color:#94A3B8;font-size:10.5px">— no source data —</span>';
-    const date = (p.published_at || "").slice(0, 10);
+    const date = uaeDate(p.published_at);
     return `<div class="ab-card" data-slug="${escapeHtml(p.slug)}" style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:240px">
-          <a href="/blog/${escapeHtml(p.slug)}" target="_blank" style="font-weight:800;color:#0F172A;text-decoration:none;font-size:15px;line-height:1.35">${escapeHtml(p.topic||p.slug)}</a>
-          <div style="font-size:11.5px;color:var(--muted);margin-top:3px">
-            <b>${escapeHtml((p.emirate||'').replace(/-/g,' ').toUpperCase())}</b> · ${date} · <span style="color:#0369A1;font-weight:700">👁 ${p.view_count||0} views</span>
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:240px">
+          <input type="checkbox" class="bulk-cb" data-id="${escapeHtml(p.slug)}" style="margin-top:4px">
+          <div style="flex:1">
+            <a href="/blog/${escapeHtml(p.slug)}" target="_blank" style="font-weight:800;color:#0F172A;text-decoration:none;font-size:15px;line-height:1.35">${escapeHtml(p.topic||p.slug)}</a>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:3px">
+              <b>${escapeHtml((p.emirate||'').replace(/-/g,' ').toUpperCase())}</b> · ${date} · <span style="color:#0369A1;font-weight:700">👁 ${p.view_count||0} views</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.45">${escapeHtml(p.preview||'')}…</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">${srcChips}</div>
           </div>
-          <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.45">${escapeHtml(p.preview||'')}…</div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">${srcChips}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
           <button class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px" onclick="abEdit('${escapeHtml(p.slug)}')">✏️ Edit</button>
@@ -2956,18 +3100,44 @@ async function loadAutoblog() {
       </div>
     </div>`;
   }).join("");
-  wrap.innerHTML = statsHtml + rows;
+  // Mini select-all bar at the top
+  const selectBar = posts.length ? `<div data-bulk-entity="blog" style="display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:12.5px">
+    <label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" class="bulk-all">Select all (${posts.length})</label>
+  </div>` + _bulkBarHtml("articles") : "";
+  wrap.innerHTML = statsHtml + selectBar + rows;
+  _bulkSetup("#ab-list", "blog", loadAutoblog);
+}
+// Default neighborhoods per emirate — admin can override via the prompt modal.
+const AREA_MAP_DEFAULT = {
+  "dubai":          ["Jumeirah","Dubai Marina","JLT","JVC","Mirdif","Discovery Gardens","Business Bay","Downtown","Al Barsha","Arabian Ranches","Damac Hills","Silicon Oasis"],
+  "sharjah":        ["Al Khan","Al Majaz","Al Nahda Sharjah","Muwaileh","Al Qasimia","Al Taawun","Aljada"],
+  "abu-dhabi":      ["Khalifa City","Al Reem Island","Yas Island","Saadiyat","Al Raha","Mussafah","Mohammed Bin Zayed City","Corniche"],
+  "ajman":          ["Al Nuaimiya","Al Rashidiya","Al Rawda","Ajman Corniche","Al Mowaihat"],
+  "ras-al-khaimah": ["Al Hamra","Mina Al Arab","Al Nakheel","Khuzam"],
+  "umm-al-quwain":  ["Al Ramlah","Al Salamah","UAQ Marina"],
+  "fujairah":       ["Dibba","Al Faseel","Sakamkam"],
+};
+let _AREA_MAP = AREA_MAP_DEFAULT;
+function updateAreaList() {
+  const em = document.getElementById("ab-emirate").value;
+  const sel = document.getElementById("ab-area");
+  const list = (_AREA_MAP[em] || []);
+  sel.innerHTML = '<option value="">— random area —</option>' +
+    list.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
 }
 async function runAutoblog() {
   const em = document.getElementById("ab-emirate").value;
+  const ar = document.getElementById("ab-area").value;
   const tp = document.getElementById("ab-topic").value.trim();
   const out = document.getElementById("ab-result");
   out.textContent = "⏳ Generating with Claude — this takes ~10–20s…";
   try {
-    const q = "?emirate=" + encodeURIComponent(em) + (tp ? "&topic="+encodeURIComponent(tp) : "");
-    const r = await adm("/api/admin/autoblog/run" + q, { method: "POST" });
+    const params = new URLSearchParams({ emirate: em });
+    if (ar) params.set("area", ar);
+    if (tp) params.set("topic", tp);
+    const r = await adm("/api/admin/autoblog/run?" + params.toString(), { method: "POST" });
     if (r.ok) {
-      out.innerHTML = '✓ Published <a href="'+escapeHtml(r.url)+'" target="_blank" style="color:#0F766E;font-weight:700">'+escapeHtml(r.topic)+'</a> ('+r.len+' chars)';
+      out.innerHTML = '✓ Published <a href="'+escapeHtml(r.url)+'" target="_blank" style="color:#0F766E;font-weight:700">'+escapeHtml(r.topic)+'</a> · <b>'+escapeHtml(r.area||'')+'</b> · '+r.len+' chars';
       document.getElementById("ab-topic").value = "";
       loadAutoblog();
     } else {
@@ -2975,6 +3145,48 @@ async function runAutoblog() {
     }
   } catch (e) {
     out.innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(e.message) + '</span>';
+  }
+}
+async function openAutoblogPrompt() {
+  let d;
+  try { d = await adm("/api/admin/autoblog/prompt"); } catch (e) { return; }
+  const cur = d.current_template || d.default_template;
+  const areas = d.areas_json || JSON.stringify(AREA_MAP_DEFAULT, null, 2);
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:840px;width:100%;max-height:92vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="margin:0;font-size:16px">⚙️ Auto-blog prompt &amp; areas</h3>
+        <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="this.closest('div[style*=fixed]').remove()">✕ Close</button>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">Schedule: <b>${escapeHtml(d.schedule||'')}</b>. Placeholders: <code>{em}</code>, <code>{sv}</code>, <code>{area}</code>, <code>{slant}</code>, <code>{topic}</code>. Leave the template empty to revert to the built-in default below.</p>
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Prompt template (Claude)</label>
+      <textarea id="ab-prompt-tpl" style="width:100%;min-height:280px;padding:10px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">${escapeHtml(cur)}</textarea>
+      <details style="font-size:12px;margin-bottom:12px">
+        <summary style="cursor:pointer;color:#0F766E;font-weight:600">📖 View built-in default</summary>
+        <pre style="background:#F8FAFC;padding:10px;border-radius:8px;font-family:ui-monospace,monospace;font-size:11.5px;white-space:pre-wrap;margin-top:6px">${escapeHtml(d.default_template)}</pre>
+      </details>
+      <label style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Neighborhoods JSON (per emirate)</label>
+      <textarea id="ab-areas-json" style="width:100%;min-height:200px;padding:10px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.5">${escapeHtml(areas)}</textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAutoblogPrompt(this)">💾 Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+async function saveAutoblogPrompt(btnEl) {
+  const template = document.getElementById("ab-prompt-tpl").value;
+  const areas_json = document.getElementById("ab-areas-json").value;
+  btnEl.disabled = true; btnEl.textContent = "Saving…";
+  try {
+    await adm("/api/admin/autoblog/prompt", { method: "POST", body: JSON.stringify({ template, areas_json }) });
+    toast("✓ Saved");
+    try { _AREA_MAP = JSON.parse(areas_json); updateAreaList(); } catch {}
+    btnEl.closest('div[style*=fixed]').remove();
+  } catch (e) {
+    btnEl.disabled = false; btnEl.textContent = "💾 Save";
   }
 }
 async function abDelete(slug) {
@@ -2993,7 +3205,7 @@ async function abEdit(slug) {
   const overlay = document.createElement("div");
   overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
   const recentSrc = (d.recent_views||[]).slice(0,8).map(v =>
-    `<div style="font-size:11px;color:var(--muted);padding:3px 0;border-bottom:1px dashed #E2E8F0">${escapeHtml((v.ts||'').slice(0,16).replace('T',' '))} · <b>${escapeHtml(v.source||'direct')}</b> ${v.referer ? '· '+escapeHtml(v.referer.slice(0,60)) : ''}</div>`
+    `<div style="font-size:11px;color:var(--muted);padding:3px 0;border-bottom:1px dashed #E2E8F0">${escapeHtml(uaeDt(v.ts))} · <b>${escapeHtml(v.source||'direct')}</b> ${v.referer ? '· '+escapeHtml(v.referer.slice(0,60)) : ''}</div>`
   ).join("") || '<div style="color:#94A3B8;font-size:11px">No recent views recorded.</div>';
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:14px;padding:18px;max-width:780px;width:100%;max-height:92vh;overflow:auto">
@@ -3062,6 +3274,13 @@ async function loadVideos() {
     wrap.innerHTML = '<div style="color:#B91C1C">Error: ' + escapeHtml(e.message) + '</div>';
   }
 }
+function updateVidAreaList() {
+  const em = document.getElementById("vid-emirate").value;
+  const sel = document.getElementById("vid-area");
+  const list = (_AREA_MAP[em] || []);
+  sel.innerHTML = '<option value="">— no area —</option>' +
+    list.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
+}
 async function genVideo() {
   const topic  = document.getElementById("vid-topic").value.trim();
   if (!topic) { alert("Enter a topic"); return; }
@@ -3069,11 +3288,13 @@ async function genVideo() {
     topic, mascot: document.getElementById("vid-mascot").value,
     tone: document.getElementById("vid-tone").value,
     target_seconds: parseInt(document.getElementById("vid-dur").value, 10) || 18,
+    emirate: document.getElementById("vid-emirate").value || null,
+    area: document.getElementById("vid-area").value || null,
   };
   const msg = document.getElementById("vid-msg");
   msg.textContent = "🎥 Generating…";
   try {
-    const r = await adm("/api/admin/videos/generate", {method:"POST", body});
+    const r = await adm("/api/admin/videos/generate", {method:"POST", body: JSON.stringify(body)});
     if (r.ok) {
       msg.innerHTML = '✅ Generated: <a href="' + r.url + '" target="_blank">▶ play</a>';
       document.getElementById("vid-topic").value = "";
@@ -3082,6 +3303,42 @@ async function genVideo() {
       msg.textContent = "❌ " + (r.detail || r.error || "failed");
     }
   } catch (e) { msg.textContent = "❌ " + e.message; }
+}
+async function openVideoPrompt() {
+  let d;
+  try { d = await adm("/api/admin/videos/prompt"); } catch (e) { return; }
+  const cur = d.current_template || d.default_template;
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:18px;max-width:840px;width:100%;max-height:92vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="margin:0;font-size:16px">⚙️ Video script prompt</h3>
+        <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="this.closest('div[style*=fixed]').remove()">✕ Close</button>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">Placeholders: <code>{topic}</code>, <code>{area}</code>, <code>{emirate}</code>. The model returns scenes as a JSON array; the optional <code>bg_landmark</code> field per scene picks the famous landmark to draw behind. Empty template reverts to the built-in default.</p>
+      <textarea id="vid-prompt-tpl" style="width:100%;min-height:300px;padding:10px;border:1px solid var(--border);border-radius:8px;margin:4px 0 12px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">${escapeHtml(cur)}</textarea>
+      <details style="font-size:12px;margin-bottom:12px">
+        <summary style="cursor:pointer;color:#0F766E;font-weight:600">📖 View built-in default</summary>
+        <pre style="background:#F8FAFC;padding:10px;border-radius:8px;font-family:ui-monospace,monospace;font-size:11.5px;white-space:pre-wrap;margin-top:6px">${escapeHtml(d.default_template)}</pre>
+      </details>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveVideoPrompt(this)">💾 Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+async function saveVideoPrompt(btnEl) {
+  const template = document.getElementById("vid-prompt-tpl").value;
+  btnEl.disabled = true; btnEl.textContent = "Saving…";
+  try {
+    await adm("/api/admin/videos/prompt", { method: "POST", body: JSON.stringify({ template }) });
+    toast("✓ Saved");
+    btnEl.closest('div[style*=fixed]').remove();
+  } catch (e) {
+    btnEl.disabled = false; btnEl.textContent = "💾 Save";
+  }
 }
 async function delVideo(slug) {
   if (!confirm("Delete this video?")) return;
@@ -3169,7 +3426,7 @@ async function loadAutopost() {
       <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12.5px">
         <div style="display:flex;justify-content:space-between;gap:8px">
           <b style="color:${p.ok?'#15803D':'#B91C1C'}">${p.ok?'✓':'❌'} ${escapeHtml(p.platform)}</b>
-          <small style="color:var(--muted)">${(p.created_at||'').slice(0,16).replace('T',' ')}</small>
+          <small style="color:var(--muted)">${uaeDt(p.created_at)}</small>
         </div>
         <div style="margin-top:2px">${escapeHtml(p.title||'')}</div>
         ${p.post_url ? `<a href="${p.post_url}" target="_blank" rel="noopener" style="font-size:11px;color:#0F766E">${escapeHtml(p.post_url)}</a>` : ''}
@@ -3266,7 +3523,7 @@ function startStream() {
       const r = await adm("/api/admin/conversations?limit=20");
       // Just render last few for activity feed
       log.innerHTML = r.messages.slice(-30).map(m => `
-        <div>[${new Date(m.created_at).toLocaleTimeString()}] ${m.role}: ${escapeHtml((m.content||'').slice(0,140))}</div>`).reverse().join("");
+        <div>[${uaeTime(m.created_at)}] ${m.role}: ${escapeHtml((m.content||'').slice(0,140))}</div>`).reverse().join("");
     } catch {}
   }, 4000);
 }

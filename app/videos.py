@@ -1167,6 +1167,8 @@ class GenerateBody(BaseModel):
     mascot: Optional[str] = "default"
     tone: Optional[str] = "teal"
     target_seconds: Optional[int] = 18
+    area: Optional[str] = None
+    emirate: Optional[str] = None
 
 
 @admin_router.get("/list")
@@ -1175,26 +1177,74 @@ def list_videos_admin():
     return list_videos_public()
 
 
+@admin_router.get("/prompt")
+async def get_video_prompt():
+    """Return the current video-script prompt template (admin-overridable)
+    plus the built-in default so admin can see/edit it."""
+    cur = db.cfg_get("video_prompt_template", "") or ""
+    default = (
+        "You write Servia mascot-video scripts. Servia is a UAE home-services platform.\n"
+        "Topic: {topic}\n"
+        "Setting: {area} ({emirate}). The animation backdrop should illustrate a "
+        "famous landmark of {area} (e.g. Jumeirah Beach + Burj Al Arab silhouette "
+        "for Jumeirah, Al Khan Lagoon for Al Khan Sharjah).\n"
+        "Output a JSON array of 4 to 5 scenes. Each scene has: 'text' (max 36 chars, "
+        "punchy headline), 'sub' (max 60 chars, supporting line), 'anim' (one of "
+        "'wave', 'bounce', 'shake', 'point'), and OPTIONAL 'bg_landmark' (1-3 word "
+        "name of the area landmark to render behind).\n"
+        "Style: friendly, concrete UAE context, real numbers, no AI mannerisms. "
+        "Use AED prices if relevant. End with a CTA-style scene pointing to servia.ae.\n"
+        "Output ONLY the JSON array, no markdown, no commentary."
+    )
+    return {"current_template": cur, "default_template": default,
+            "placeholders": ["{topic}", "{area}", "{emirate}"],
+            "schedule": "manual + 2x daily via cron when enabled"}
+
+
+class VideoPromptBody(BaseModel):
+    template: str | None = None
+
+
+@admin_router.post("/prompt")
+async def set_video_prompt(body: VideoPromptBody):
+    if body.template is not None:
+        db.cfg_set("video_prompt_template", body.template.strip())
+    return {"ok": True}
+
+
 @admin_router.post("/generate")
 async def generate_video(body: GenerateBody):
     """Use the configured AI router to script a new mascot video.
-    The model returns 4-6 scenes as JSON, we save it."""
+    The model returns 4-6 scenes as JSON, we save it. Now area-aware: a body
+    with `area` + `emirate` produces hyper-local scenes (e.g. Al Khan Sharjah
+    AC service with Al Khan Lagoon backdrop)."""
     from . import ai_router
     cfg = ai_router._load_cfg()
     target = (cfg.get("defaults") or {}).get("video", "anthropic/claude-opus-4-7")
     if "/" not in target:
         target = "anthropic/" + target
     provider, model = target.split("/", 1)
-    prompt = (
-        "You write Servia mascot-video scripts. Servia is a UAE home-services platform.\n"
-        f"Topic: {body.topic}\n"
-        "Output a JSON array of 4 to 5 scenes. Each scene has: 'text' (max 36 chars, "
-        "punchy headline), 'sub' (max 60 chars, supporting line), 'anim' (one of "
-        "'wave', 'bounce', 'shake', 'point').\n"
-        "Style: friendly, concrete UAE context, real numbers, no AI mannerisms. "
-        "Use AED prices if relevant. End with a CTA-style scene.\n"
-        "Output ONLY the JSON array, no markdown, no commentary."
-    )
+    area = (getattr(body, "area", None) or "").strip() or "UAE"
+    emirate = (getattr(body, "emirate", None) or "").strip() or "Dubai"
+    cur_tpl = db.cfg_get("video_prompt_template", "") or ""
+    if cur_tpl:
+        try: prompt = cur_tpl.format(topic=body.topic, area=area, emirate=emirate)
+        except Exception: cur_tpl = ""
+    if not cur_tpl:
+        prompt = (
+            "You write Servia mascot-video scripts. Servia is a UAE home-services platform.\n"
+            f"Topic: {body.topic}\n"
+            f"Setting: {area} ({emirate}). Animation backdrop should illustrate a famous "
+            f"landmark of {area} (e.g. Jumeirah Beach + Burj Al Arab for Jumeirah, "
+            f"Al Khan Lagoon for Al Khan Sharjah, Ajman Corniche for Ajman).\n"
+            "Output a JSON array of 4 to 5 scenes. Each scene has: 'text' (max 36 chars, "
+            "punchy headline), 'sub' (max 60 chars, supporting line), 'anim' (one of "
+            "'wave', 'bounce', 'shake', 'point'), OPTIONAL 'bg_landmark' (1-3 word landmark "
+            "name to render behind).\n"
+            "Style: friendly, concrete UAE context, real numbers, no AI mannerisms. "
+            "Use AED prices if relevant. End with a CTA-style scene pointing to servia.ae.\n"
+            "Output ONLY the JSON array, no markdown, no commentary."
+        )
     res = await ai_router.call_model(provider, model, prompt, cfg)
     if not res.get("ok"):
         raise HTTPException(400, res.get("error") or "model call failed")
