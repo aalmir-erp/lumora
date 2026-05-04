@@ -1,0 +1,4947 @@
+{
+  "vendors": [
+    {
+      "id": "V001",
+      "name": "First Pro Services",
+      "phone": "+9716 3872427",
+      "whatsapp": "+9716 3872427",
+      "email": "info+v001@firstproservices.ae",
+      "company": "First Pro Services",
+      "emirate": "sharjah",
+      "address": "Industrial Area, Sharjah",
+      "rating": 3.8,
+      "review_count": 112,
+      "years_in_business": 18,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-87397",
+      "vehicle": "Yes — owned car",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "post_construction",
+          "price_aed": 1413,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 110,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 162,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V002",
+      "name": "Pro & Sons Maintenance",
+      "phone": "+9716 6943118",
+      "whatsapp": "+9716 6943118",
+      "email": "info+v002@proandsonsmaintenanc.ae",
+      "company": "Pro & Sons Maintenance",
+      "emirate": "sharjah",
+      "address": "Industrial 13, Sharjah",
+      "rating": 4.0,
+      "review_count": 14,
+      "years_in_business": 6,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-54597",
+      "vehicle": "Yes — bike",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "smart_home",
+          "price_aed": 314,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 327,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1571,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 613,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V003",
+      "name": "Skyline Technical Services LLC",
+      "phone": "+9716 6630852",
+      "whatsapp": "+9716 6630852",
+      "email": "info+v003@skylinetechnicalserv.ae",
+      "company": "Skyline Technical Services LLC",
+      "emirate": "sharjah",
+      "address": "Industrial Area, Sharjah",
+      "rating": 4.0,
+      "review_count": 378,
+      "years_in_business": 7,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-16006",
+      "vehicle": "Yes — owned van",
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "handyman",
+          "price_aed": 187,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 270,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 332,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V004",
+      "name": "First Technical Services LLC",
+      "phone": "+9714 7109761",
+      "whatsapp": "+9714 7109761",
+      "email": "info+v004@firsttechnicalservic.ae",
+      "company": "First Technical Services LLC",
+      "emirate": "dubai",
+      "address": "JLT, Dubai",
+      "rating": 4.5,
+      "review_count": 258,
+      "years_in_business": 6,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-497887",
+      "vehicle": "Yes — bike",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 274,
+          "area": "dubai"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 171,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 681,
+          "area": "dubai"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 365,
+          "area": "dubai"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 168,
+          "area": "dubai"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 128,
+          "area": "dubai"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 272,
+          "area": "dubai"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 502,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V005",
+      "name": "Diamond Pro Services",
+      "phone": "+9716 8249420",
+      "whatsapp": "+9716 8249420",
+      "email": "info+v005@diamondproservices.ae",
+      "company": "Diamond Pro Services",
+      "emirate": "sharjah",
+      "address": "Industrial 13, Sharjah",
+      "rating": 4.4,
+      "review_count": 277,
+      "years_in_business": 14,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-57447",
+      "vehicle": "Yes — owned van",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "chauffeur",
+          "price_aed": 59,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 49,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 368,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 88,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 238,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 826,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 484,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V006",
+      "name": "Mohammed Ahmed",
+      "phone": "+97158 2921859",
+      "whatsapp": "+97158 2921859",
+      "email": "v006+contact@servia.ae",
+      "company": null,
+      "emirate": "umm-al-quwain",
+      "address": "Al Jurf, Umm Al Quwain",
+      "rating": 4.5,
+      "review_count": 281,
+      "years_in_business": 11,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-48469",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 544,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 264,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 320,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 129,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 390,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 488,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V007",
+      "name": "Marina Cleaning Co",
+      "phone": "+9712 6524639",
+      "whatsapp": "+9712 6524639",
+      "email": "info+v007@marinacleaningco.ae",
+      "company": "Marina Cleaning Co",
+      "emirate": "abu-dhabi",
+      "address": "Shahama, Abu Dhabi",
+      "rating": 4.9,
+      "review_count": 8,
+      "years_in_business": 11,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-12552",
+      "vehicle": null,
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 544,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 605,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 802,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 60,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 708,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V008",
+      "name": "Fresh Services Co",
+      "phone": "+9714 3776692",
+      "whatsapp": "+9714 3776692",
+      "email": "info+v008@freshservicesco.ae",
+      "company": "Fresh Services Co",
+      "emirate": "dubai",
+      "address": "Tecom, Dubai",
+      "rating": 4.9,
+      "review_count": 213,
+      "years_in_business": 10,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-804314",
+      "vehicle": "Yes — bike",
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 258,
+          "area": "dubai"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 460,
+          "area": "dubai"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 129,
+          "area": "dubai"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 151,
+          "area": "dubai"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 44,
+          "area": "dubai"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 219,
+          "area": "dubai"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 526,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V009",
+      "name": "Elite Solutions LLC",
+      "phone": "+9717 7611792",
+      "whatsapp": "+9717 7611792",
+      "email": "info+v009@elitesolutionsllc.ae",
+      "company": "Elite Solutions LLC",
+      "emirate": "ras-al-khaimah",
+      "address": "Al Jurf, Ras Al Khaimah",
+      "rating": 4.3,
+      "review_count": 143,
+      "years_in_business": 16,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "RAS-71993",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 214,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 263,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 2121,
+          "area": "ras-al-khaimah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V010",
+      "name": "Ali Al Marzouqi",
+      "phone": "+97155 6692553",
+      "whatsapp": "+97155 6692553",
+      "email": "v010+contact@servia.ae",
+      "company": null,
+      "emirate": "sharjah",
+      "address": "Al Nahda, Sharjah",
+      "rating": 4.7,
+      "review_count": 119,
+      "years_in_business": 8,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-34931",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 201,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 172,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 81,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 492,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V011",
+      "name": "Speed Cleaning Services",
+      "phone": "+9716 2782344",
+      "whatsapp": "+9716 2782344",
+      "email": "info+v011@speedcleaningservice.ae",
+      "company": "Speed Cleaning Services",
+      "emirate": "sharjah",
+      "address": "Industrial 13, Sharjah",
+      "rating": 4.9,
+      "review_count": 250,
+      "years_in_business": 6,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-73653",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "move_in_out",
+          "price_aed": 793,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1862,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 39,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 469,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 436,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 465,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V012",
+      "name": "Golden Building Maintenance",
+      "phone": "+9716 3826207",
+      "whatsapp": "+9716 3826207",
+      "email": "info+v012@goldenbuildingmainte.ae",
+      "company": "Golden Building Maintenance",
+      "emirate": "sharjah",
+      "address": "Industrial Area, Sharjah",
+      "rating": 4.9,
+      "review_count": 70,
+      "years_in_business": 11,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-16572",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "pest_control",
+          "price_aed": 377,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 163,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "villa_deep",
+          "price_aed": 892,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 29,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 383,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 996,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 259,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V013",
+      "name": "Spark Plus Services",
+      "phone": "+9716 4653902",
+      "whatsapp": "+9716 4653902",
+      "email": "info+v013@sparkplusservices.ae",
+      "company": "Spark Plus Services",
+      "emirate": "sharjah",
+      "address": "Al Nahda, Sharjah",
+      "rating": 4.9,
+      "review_count": 217,
+      "years_in_business": 11,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-44814",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "marble_polish",
+          "price_aed": 1103,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 413,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 152,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 236,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 33,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 534,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 293,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 69,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V014",
+      "name": "Speed Building Maintenance",
+      "phone": "+9714 7131124",
+      "whatsapp": "+9714 7131124",
+      "email": "info+v014@speedbuildingmainten.ae",
+      "company": "Speed Building Maintenance",
+      "emirate": "dubai",
+      "address": "Satwa, Dubai",
+      "rating": 4.9,
+      "review_count": 16,
+      "years_in_business": 18,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-795613",
+      "vehicle": null,
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 224,
+          "area": "dubai"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 292,
+          "area": "dubai"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 113,
+          "area": "dubai"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 100,
+          "area": "dubai"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 341,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V015",
+      "name": "Ahmed Al Maktoum",
+      "phone": "+97158 8106422",
+      "whatsapp": "+97158 8106422",
+      "email": "v015+contact@servia.ae",
+      "company": null,
+      "emirate": "abu-dhabi",
+      "address": "Mohammed Bin Zayed City, Abu Dhabi",
+      "rating": 4.7,
+      "review_count": 53,
+      "years_in_business": 1,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-27146",
+      "vehicle": "Yes — bike",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 353,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 106,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 752,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 113,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 169,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 430,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 555,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 26,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V016",
+      "name": "Ahmed Karim",
+      "phone": "+97152 5186414",
+      "whatsapp": "+97152 5186414",
+      "email": "v016+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "Tecom, Dubai",
+      "rating": 4.5,
+      "review_count": 370,
+      "years_in_business": 18,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-750810",
+      "vehicle": "Yes — owned van",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "laundry",
+          "price_aed": 150,
+          "area": "dubai"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 278,
+          "area": "dubai"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 162,
+          "area": "dubai"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 1067,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V017",
+      "name": "Falcon Home Care",
+      "phone": "+9714 9316265",
+      "whatsapp": "+9714 9316265",
+      "email": "info+v017@falconhomecare.ae",
+      "company": "Falcon Home Care",
+      "emirate": "dubai",
+      "address": "Karama, Dubai",
+      "rating": 3.7,
+      "review_count": 489,
+      "years_in_business": 8,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-956253",
+      "vehicle": "Yes — owned car",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "handyman",
+          "price_aed": 187,
+          "area": "dubai"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 88,
+          "area": "dubai"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 63,
+          "area": "dubai"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 207,
+          "area": "dubai"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 801,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V018",
+      "name": "Bilal Al Marzouqi",
+      "phone": "+97150 5382463",
+      "whatsapp": "+97150 5382463",
+      "email": "v018+contact@servia.ae",
+      "company": null,
+      "emirate": "sharjah",
+      "address": "Industrial Area, Sharjah",
+      "rating": 3.8,
+      "review_count": 279,
+      "years_in_business": 2,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-88193",
+      "vehicle": "Yes — owned car",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 229,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 355,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 351,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "villa_deep",
+          "price_aed": 1748,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 607,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 60,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 598,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 280,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V019",
+      "name": "Sahara Group of Companies",
+      "phone": "+9714 7564897",
+      "whatsapp": "+9714 7564897",
+      "email": "info+v019@saharagroupofcompani.ae",
+      "company": "Sahara Group of Companies",
+      "emirate": "dubai",
+      "address": "Satwa, Dubai",
+      "rating": 4.7,
+      "review_count": 315,
+      "years_in_business": 17,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-799287",
+      "vehicle": "Yes — owned car",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 704,
+          "area": "dubai"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 105,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 684,
+          "area": "dubai"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 265,
+          "area": "dubai"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 208,
+          "area": "dubai"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 847,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V020",
+      "name": "City Group of Companies",
+      "phone": "+9714 5900603",
+      "whatsapp": "+9714 5900603",
+      "email": "info+v020@citygroupofcompanies.ae",
+      "company": "City Group of Companies",
+      "emirate": "dubai",
+      "address": "JLT, Dubai",
+      "rating": 4.2,
+      "review_count": 226,
+      "years_in_business": 17,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-932291",
+      "vehicle": "Yes — owned van",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "smart_home",
+          "price_aed": 1152,
+          "area": "dubai"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 837,
+          "area": "dubai"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 216,
+          "area": "dubai"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 1092,
+          "area": "dubai"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 292,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V021",
+      "name": "Sparkle Trading & Cleaning",
+      "phone": "+9716 8025922",
+      "whatsapp": "+9716 8025922",
+      "email": "info+v021@sparkletradingandcle.ae",
+      "company": "Sparkle Trading & Cleaning",
+      "emirate": "ajman",
+      "address": "Al Jurf, Ajman",
+      "rating": 4.5,
+      "review_count": 514,
+      "years_in_business": 13,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-29342",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "handyman",
+          "price_aed": 116,
+          "area": "ajman"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1001,
+          "area": "ajman"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 330,
+          "area": "ajman"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 1477,
+          "area": "ajman"
+        },
+        {
+          "service_id": "villa_deep",
+          "price_aed": 1594,
+          "area": "ajman"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 61,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V022",
+      "name": "Metro Plus Services",
+      "phone": "+9716 5579760",
+      "whatsapp": "+9716 5579760",
+      "email": "info+v022@metroplusservices.ae",
+      "company": "Metro Plus Services",
+      "emirate": "umm-al-quwain",
+      "address": "Industrial Area, Umm Al Quwain",
+      "rating": 4.7,
+      "review_count": 464,
+      "years_in_business": 6,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-72216",
+      "vehicle": "Yes — owned car",
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "car_wash",
+          "price_aed": 43,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 46,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 296,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 186,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V023",
+      "name": "Pro Home Care",
+      "phone": "+9712 7821272",
+      "whatsapp": "+9712 7821272",
+      "email": "info+v023@prohomecare.ae",
+      "company": "Pro Home Care",
+      "emirate": "abu-dhabi",
+      "address": "Shahama, Abu Dhabi",
+      "rating": 3.8,
+      "review_count": 227,
+      "years_in_business": 3,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-63424",
+      "vehicle": "Yes — bike",
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "move_in_out",
+          "price_aed": 629,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 286,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 416,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 376,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 43,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 104,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V024",
+      "name": "Imran Yusuf",
+      "phone": "+97158 4700025",
+      "whatsapp": "+97158 4700025",
+      "email": "v024+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "JLT, Dubai",
+      "rating": 4.3,
+      "review_count": 287,
+      "years_in_business": 14,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-130434",
+      "vehicle": "Yes — owned car",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 127,
+          "area": "dubai"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 266,
+          "area": "dubai"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1508,
+          "area": "dubai"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 158,
+          "area": "dubai"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 302,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 273,
+          "area": "dubai"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 698,
+          "area": "dubai"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 40,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V025",
+      "name": "Express Group of Companies",
+      "phone": "+9714 8385657",
+      "whatsapp": "+9714 8385657",
+      "email": "info+v025@expressgroupofcompan.ae",
+      "company": "Express Group of Companies",
+      "emirate": "dubai",
+      "address": "Satwa, Dubai",
+      "rating": 4.8,
+      "review_count": 292,
+      "years_in_business": 14,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-975467",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "move_in_out",
+          "price_aed": 661,
+          "area": "dubai"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 2244,
+          "area": "dubai"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 305,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V026",
+      "name": "Saif Al Marzouqi",
+      "phone": "+97156 3556551",
+      "whatsapp": "+97156 3556551",
+      "email": "v026+contact@servia.ae",
+      "company": null,
+      "emirate": "ajman",
+      "address": "Industrial Area, Ajman",
+      "rating": 3.9,
+      "review_count": 492,
+      "years_in_business": 4,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-38569",
+      "vehicle": "Yes — owned car",
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "pest_control",
+          "price_aed": 521,
+          "area": "ajman"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 217,
+          "area": "ajman"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 1035,
+          "area": "ajman"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 201,
+          "area": "ajman"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 195,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V027",
+      "name": "Sparkle Pro Services",
+      "phone": "+9714 2854810",
+      "whatsapp": "+9714 2854810",
+      "email": "info+v027@sparkleproservices.ae",
+      "company": "Sparkle Pro Services",
+      "emirate": "dubai",
+      "address": "Discovery Gardens, Dubai",
+      "rating": 4.5,
+      "review_count": 316,
+      "years_in_business": 4,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-693423",
+      "vehicle": null,
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 134,
+          "area": "dubai"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 696,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 105,
+          "area": "dubai"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 38,
+          "area": "dubai"
+        },
+        {
+          "service_id": "villa_deep",
+          "price_aed": 1049,
+          "area": "dubai"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 426,
+          "area": "dubai"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 319,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V028",
+      "name": "Best Solutions LLC",
+      "phone": "+9714 7166647",
+      "whatsapp": "+9714 7166647",
+      "email": "info+v028@bestsolutionsllc.ae",
+      "company": "Best Solutions LLC",
+      "emirate": "dubai",
+      "address": "Tecom, Dubai",
+      "rating": 4.7,
+      "review_count": 503,
+      "years_in_business": 15,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-965845",
+      "vehicle": null,
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 401,
+          "area": "dubai"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1674,
+          "area": "dubai"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 70,
+          "area": "dubai"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 232,
+          "area": "dubai"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 260,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V029",
+      "name": "Premier Group of Companies",
+      "phone": "+9712 4345945",
+      "whatsapp": "+9712 4345945",
+      "email": "info+v029@premiergroupofcompan.ae",
+      "company": "Premier Group of Companies",
+      "emirate": "abu-dhabi",
+      "address": "Mussafah, Abu Dhabi",
+      "rating": 4.8,
+      "review_count": 290,
+      "years_in_business": 18,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-77715",
+      "vehicle": "Yes — owned van",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 350,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 54,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 479,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 103,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V030",
+      "name": "Quick Tech Care",
+      "phone": "+9714 5969996",
+      "whatsapp": "+9714 5969996",
+      "email": "info+v030@quicktechcare.ae",
+      "company": "Quick Tech Care",
+      "emirate": "dubai",
+      "address": "Mirdif, Dubai",
+      "rating": 4.3,
+      "review_count": 360,
+      "years_in_business": 14,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-677124",
+      "vehicle": "Yes — bike",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 256,
+          "area": "dubai"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 449,
+          "area": "dubai"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 309,
+          "area": "dubai"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 247,
+          "area": "dubai"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 122,
+          "area": "dubai"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 703,
+          "area": "dubai"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 211,
+          "area": "dubai"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 258,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V031",
+      "name": "Falcon Trading & Cleaning",
+      "phone": "+9716 4485095",
+      "whatsapp": "+9716 4485095",
+      "email": "info+v031@falcontradingandclea.ae",
+      "company": "Falcon Trading & Cleaning",
+      "emirate": "ajman",
+      "address": "Al Jurf, Ajman",
+      "rating": 3.9,
+      "review_count": 191,
+      "years_in_business": 10,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-80010",
+      "vehicle": "Yes — owned van",
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "move_in_out",
+          "price_aed": 655,
+          "area": "ajman"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 603,
+          "area": "ajman"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 191,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V032",
+      "name": "Modern & Sons Maintenance",
+      "phone": "+9714 4858048",
+      "whatsapp": "+9714 4858048",
+      "email": "info+v032@modernandsonsmainten.ae",
+      "company": "Modern & Sons Maintenance",
+      "emirate": "dubai",
+      "address": "JLT, Dubai",
+      "rating": 3.8,
+      "review_count": 60,
+      "years_in_business": 9,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-219629",
+      "vehicle": null,
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 280,
+          "area": "dubai"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 502,
+          "area": "dubai"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 244,
+          "area": "dubai"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 1373,
+          "area": "dubai"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 94,
+          "area": "dubai"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 65,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V033",
+      "name": "Salem Ibrahim",
+      "phone": "+97156 7381684",
+      "whatsapp": "+97156 7381684",
+      "email": "v033+contact@servia.ae",
+      "company": null,
+      "emirate": "sharjah",
+      "address": "Industrial 13, Sharjah",
+      "rating": 4.2,
+      "review_count": 461,
+      "years_in_business": 10,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-50026",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 277,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 118,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 211,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 38,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 151,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 221,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 389,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V034",
+      "name": "Next & Sons Maintenance",
+      "phone": "+9714 2597099",
+      "whatsapp": "+9714 2597099",
+      "email": "info+v034@nextandsonsmaintenan.ae",
+      "company": "Next & Sons Maintenance",
+      "emirate": "dubai",
+      "address": "Tecom, Dubai",
+      "rating": 4.5,
+      "review_count": 278,
+      "years_in_business": 7,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-220351",
+      "vehicle": null,
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 268,
+          "area": "dubai"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 377,
+          "area": "dubai"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 481,
+          "area": "dubai"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 436,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 435,
+          "area": "dubai"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 39,
+          "area": "dubai"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 117,
+          "area": "dubai"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1247,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V035",
+      "name": "Metro Technical Services LLC",
+      "phone": "+9714 7016695",
+      "whatsapp": "+9714 7016695",
+      "email": "info+v035@metrotechnicalservic.ae",
+      "company": "Metro Technical Services LLC",
+      "emirate": "dubai",
+      "address": "Al Qusais, Dubai",
+      "rating": 3.7,
+      "review_count": 450,
+      "years_in_business": 11,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-362529",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 138,
+          "area": "dubai"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 102,
+          "area": "dubai"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 53,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 58,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V036",
+      "name": "Prime Technical Services LLC",
+      "phone": "+9716 5942732",
+      "whatsapp": "+9716 5942732",
+      "email": "info+v036@primetechnicalservic.ae",
+      "company": "Prime Technical Services LLC",
+      "emirate": "sharjah",
+      "address": "Industrial Area, Sharjah",
+      "rating": 4.1,
+      "review_count": 349,
+      "years_in_business": 11,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-31079",
+      "vehicle": "Yes — bike",
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "chauffeur",
+          "price_aed": 53,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 142,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 581,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 72,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 275,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 427,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 137,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 160,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V037",
+      "name": "Golden Plus Services",
+      "phone": "+9712 5034825",
+      "whatsapp": "+9712 5034825",
+      "email": "info+v037@goldenplusservices.ae",
+      "company": "Golden Plus Services",
+      "emirate": "abu-dhabi",
+      "address": "Mussafah, Abu Dhabi",
+      "rating": 4.4,
+      "review_count": 518,
+      "years_in_business": 15,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-36680",
+      "vehicle": "Yes — bike",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 290,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 47,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 78,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 130,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 279,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V038",
+      "name": "Pearl Facility Management",
+      "phone": "+9717 6180676",
+      "whatsapp": "+9717 6180676",
+      "email": "info+v038@pearlfacilitymanagem.ae",
+      "company": "Pearl Facility Management",
+      "emirate": "ras-al-khaimah",
+      "address": "Industrial Area, Ras Al Khaimah",
+      "rating": 4.9,
+      "review_count": 306,
+      "years_in_business": 17,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "RAS-45838",
+      "vehicle": "Yes — owned car",
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 524,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 260,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 126,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 663,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 38,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 312,
+          "area": "ras-al-khaimah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V039",
+      "name": "Yousef Al Marzouqi",
+      "phone": "+97154 6008935",
+      "whatsapp": "+97154 6008935",
+      "email": "v039+contact@servia.ae",
+      "company": null,
+      "emirate": "abu-dhabi",
+      "address": "Shahama, Abu Dhabi",
+      "rating": 4.7,
+      "review_count": 509,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-80592",
+      "vehicle": "Yes — owned car",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 464,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 221,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 390,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 27,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 462,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V040",
+      "name": "Omar Ahmed",
+      "phone": "+97158 3551903",
+      "whatsapp": "+97158 3551903",
+      "email": "v040+contact@servia.ae",
+      "company": null,
+      "emirate": "sharjah",
+      "address": "Al Majaz, Sharjah",
+      "rating": 4.3,
+      "review_count": 45,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-23154",
+      "vehicle": "Yes — owned car",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 152,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 493,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 205,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 534,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 243,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 175,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 188,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V041",
+      "name": "Express Star Services",
+      "phone": "+9716 9318079",
+      "whatsapp": "+9716 9318079",
+      "email": "info+v041@expressstarservices.ae",
+      "company": "Express Star Services",
+      "emirate": "sharjah",
+      "address": "Al Majaz, Sharjah",
+      "rating": 4.3,
+      "review_count": 78,
+      "years_in_business": 8,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-39817",
+      "vehicle": null,
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 286,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 342,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 140,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V042",
+      "name": "Marina Services Co",
+      "phone": "+9716 3221127",
+      "whatsapp": "+9716 3221127",
+      "email": "info+v042@marinaservicesco.ae",
+      "company": "Marina Services Co",
+      "emirate": "ajman",
+      "address": "Al Jurf, Ajman",
+      "rating": 3.9,
+      "review_count": 429,
+      "years_in_business": 6,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-32946",
+      "vehicle": null,
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 425,
+          "area": "ajman"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 53,
+          "area": "ajman"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 408,
+          "area": "ajman"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 682,
+          "area": "ajman"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 449,
+          "area": "ajman"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 146,
+          "area": "ajman"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 272,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V043",
+      "name": "Mahmoud Ahmed",
+      "phone": "+97155 5195951",
+      "whatsapp": "+97155 5195951",
+      "email": "v043+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "Tecom, Dubai",
+      "rating": 4.2,
+      "review_count": 317,
+      "years_in_business": 7,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-994787",
+      "vehicle": "Yes — owned car",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 722,
+          "area": "dubai"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 1953,
+          "area": "dubai"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 347,
+          "area": "dubai"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 149,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V044",
+      "name": "Ahmed Patel",
+      "phone": "+97158 9333700",
+      "whatsapp": "+97158 9333700",
+      "email": "v044+contact@servia.ae",
+      "company": null,
+      "emirate": "sharjah",
+      "address": "Al Majaz, Sharjah",
+      "rating": 4.7,
+      "review_count": 301,
+      "years_in_business": 8,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-38705",
+      "vehicle": "Yes — owned van",
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "disinfection",
+          "price_aed": 467,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 160,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 524,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 135,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 300,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 223,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 131,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 113,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V045",
+      "name": "Ibrahim Yusuf",
+      "phone": "+97156 5572250",
+      "whatsapp": "+97156 5572250",
+      "email": "v045+contact@servia.ae",
+      "company": null,
+      "emirate": "ajman",
+      "address": "Al Nuaimiya, Ajman",
+      "rating": 4.7,
+      "review_count": 271,
+      "years_in_business": 16,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-54396",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 313,
+          "area": "ajman"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 353,
+          "area": "ajman"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 211,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V046",
+      "name": "Speed Home Services",
+      "phone": "+9716 5815021",
+      "whatsapp": "+9716 5815021",
+      "email": "info+v046@speedhomeservices.ae",
+      "company": "Speed Home Services",
+      "emirate": "ajman",
+      "address": "Industrial Area, Ajman",
+      "rating": 4.1,
+      "review_count": 276,
+      "years_in_business": 13,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-58689",
+      "vehicle": null,
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 107,
+          "area": "ajman"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 398,
+          "area": "ajman"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 321,
+          "area": "ajman"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 129,
+          "area": "ajman"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 251,
+          "area": "ajman"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 179,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V047",
+      "name": "Mahmoud Zafar",
+      "phone": "+97150 2630611",
+      "whatsapp": "+97150 2630611",
+      "email": "v047+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "JLT, Dubai",
+      "rating": 3.9,
+      "review_count": 146,
+      "years_in_business": 13,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-489033",
+      "vehicle": null,
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 221,
+          "area": "dubai"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 352,
+          "area": "dubai"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 201,
+          "area": "dubai"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 364,
+          "area": "dubai"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 454,
+          "area": "dubai"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 288,
+          "area": "dubai"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 283,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V048",
+      "name": "Ibrahim Yusuf",
+      "phone": "+97158 7017548",
+      "whatsapp": "+97158 7017548",
+      "email": "v048+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "Deira, Dubai",
+      "rating": 3.7,
+      "review_count": 290,
+      "years_in_business": 7,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-989227",
+      "vehicle": "Yes — owned car",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "gardening",
+          "price_aed": 188,
+          "area": "dubai"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 189,
+          "area": "dubai"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 217,
+          "area": "dubai"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 402,
+          "area": "dubai"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 488,
+          "area": "dubai"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 105,
+          "area": "dubai"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 174,
+          "area": "dubai"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 496,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V049",
+      "name": "Fresh Cleaning Services",
+      "phone": "+9714 4325949",
+      "whatsapp": "+9714 4325949",
+      "email": "info+v049@freshcleaningservice.ae",
+      "company": "Fresh Cleaning Services",
+      "emirate": "dubai",
+      "address": "Business Bay, Dubai",
+      "rating": 4.8,
+      "review_count": 156,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-362829",
+      "vehicle": "Yes — owned van",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 120,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 293,
+          "area": "dubai"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 294,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 144,
+          "area": "dubai"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 250,
+          "area": "dubai"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 342,
+          "area": "dubai"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 193,
+          "area": "dubai"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 617,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V050",
+      "name": "Top Pro Services",
+      "phone": "+9712 9930721",
+      "whatsapp": "+9712 9930721",
+      "email": "info+v050@topproservices.ae",
+      "company": "Top Pro Services",
+      "emirate": "abu-dhabi",
+      "address": "Mussafah, Abu Dhabi",
+      "rating": 4.4,
+      "review_count": 316,
+      "years_in_business": 15,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-17972",
+      "vehicle": "Yes — owned car",
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 186,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 252,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 698,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 296,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 43,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 332,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V051",
+      "name": "Next & Sons Maintenance",
+      "phone": "+9714 6240869",
+      "whatsapp": "+9714 6240869",
+      "email": "info+v051@nextandsonsmaintenan.ae",
+      "company": "Next & Sons Maintenance",
+      "emirate": "dubai",
+      "address": "International City, Dubai",
+      "rating": 4.4,
+      "review_count": 109,
+      "years_in_business": 4,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-782535",
+      "vehicle": null,
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 222,
+          "area": "dubai"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 51,
+          "area": "dubai"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 98,
+          "area": "dubai"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 254,
+          "area": "dubai"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 407,
+          "area": "dubai"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 266,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V052",
+      "name": "Rashid Al Maktoum",
+      "phone": "+97150 2564141",
+      "whatsapp": "+97150 2564141",
+      "email": "v052+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "Business Bay, Dubai",
+      "rating": 4.2,
+      "review_count": 389,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-162894",
+      "vehicle": null,
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 88,
+          "area": "dubai"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 204,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 78,
+          "area": "dubai"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 159,
+          "area": "dubai"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 799,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 198,
+          "area": "dubai"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 197,
+          "area": "dubai"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 480,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V053",
+      "name": "Pearl Solutions LLC",
+      "phone": "+9714 6815899",
+      "whatsapp": "+9714 6815899",
+      "email": "info+v053@pearlsolutionsllc.ae",
+      "company": "Pearl Solutions LLC",
+      "emirate": "dubai",
+      "address": "Discovery Gardens, Dubai",
+      "rating": 3.9,
+      "review_count": 447,
+      "years_in_business": 18,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-958182",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "car_wash",
+          "price_aed": 130,
+          "area": "dubai"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 375,
+          "area": "dubai"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 892,
+          "area": "dubai"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 208,
+          "area": "dubai"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 1951,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 144,
+          "area": "dubai"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 254,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V054",
+      "name": "Best Trading & Cleaning",
+      "phone": "+9716 5155747",
+      "whatsapp": "+9716 5155747",
+      "email": "info+v054@besttradingandcleani.ae",
+      "company": "Best Trading & Cleaning",
+      "emirate": "umm-al-quwain",
+      "address": "Al Nuaimiya, Umm Al Quwain",
+      "rating": 4.2,
+      "review_count": 357,
+      "years_in_business": 6,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-50846",
+      "vehicle": "Yes — bike",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 237,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 238,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 666,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V055",
+      "name": "First Trading & Cleaning",
+      "phone": "+9712 8332922",
+      "whatsapp": "+9712 8332922",
+      "email": "info+v055@firsttradingandclean.ae",
+      "company": "First Trading & Cleaning",
+      "emirate": "abu-dhabi",
+      "address": "Mussafah, Abu Dhabi",
+      "rating": 4.3,
+      "review_count": 361,
+      "years_in_business": 14,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-47125",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "marble_polish",
+          "price_aed": 504,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 196,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 265,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 62,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 46,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 109,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 415,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V056",
+      "name": "Speed Pro Services",
+      "phone": "+9712 6196504",
+      "whatsapp": "+9712 6196504",
+      "email": "info+v056@speedproservices.ae",
+      "company": "Speed Pro Services",
+      "emirate": "abu-dhabi",
+      "address": "Shahama, Abu Dhabi",
+      "rating": 4.4,
+      "review_count": 370,
+      "years_in_business": 3,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-15544",
+      "vehicle": "Yes — owned car",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 417,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 312,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 245,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 417,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 448,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 146,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V057",
+      "name": "Marina Technical Services LLC",
+      "phone": "+9719 5663403",
+      "whatsapp": "+9719 5663403",
+      "email": "info+v057@marinatechnicalservi.ae",
+      "company": "Marina Technical Services LLC",
+      "emirate": "fujairah",
+      "address": "Industrial Area, Fujairah",
+      "rating": 4.7,
+      "review_count": 257,
+      "years_in_business": 14,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "FUJ-62487",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "marble_polish",
+          "price_aed": 477,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 321,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 169,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 201,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 511,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 322,
+          "area": "fujairah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V058",
+      "name": "Khalid Khan",
+      "phone": "+97150 3456926",
+      "whatsapp": "+97150 3456926",
+      "email": "v058+contact@servia.ae",
+      "company": null,
+      "emirate": "sharjah",
+      "address": "Industrial Area, Sharjah",
+      "rating": 3.9,
+      "review_count": 185,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-33218",
+      "vehicle": "Yes — owned car",
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 364,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 581,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 539,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 47,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 436,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 295,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 346,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V059",
+      "name": "Oasis Plus Services",
+      "phone": "+9716 2622356",
+      "whatsapp": "+9716 2622356",
+      "email": "info+v059@oasisplusservices.ae",
+      "company": "Oasis Plus Services",
+      "emirate": "ajman",
+      "address": "Al Jurf, Ajman",
+      "rating": 4.0,
+      "review_count": 470,
+      "years_in_business": 2,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-58331",
+      "vehicle": "Yes — bike",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "post_construction",
+          "price_aed": 2134,
+          "area": "ajman"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 907,
+          "area": "ajman"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 90,
+          "area": "ajman"
+        },
+        {
+          "service_id": "villa_deep",
+          "price_aed": 1727,
+          "area": "ajman"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 53,
+          "area": "ajman"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 159,
+          "area": "ajman"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 524,
+          "area": "ajman"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 87,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V060",
+      "name": "Sahara Technical Services LLC",
+      "phone": "+9716 6232463",
+      "whatsapp": "+9716 6232463",
+      "email": "info+v060@saharatechnicalservi.ae",
+      "company": "Sahara Technical Services LLC",
+      "emirate": "umm-al-quwain",
+      "address": "Industrial Area, Umm Al Quwain",
+      "rating": 4.5,
+      "review_count": 48,
+      "years_in_business": 8,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-67377",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 400,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 228,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 501,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 254,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 589,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V061",
+      "name": "Premier Facility Management",
+      "phone": "+9716 4796443",
+      "whatsapp": "+9716 4796443",
+      "email": "info+v061@premierfacilitymanag.ae",
+      "company": "Premier Facility Management",
+      "emirate": "sharjah",
+      "address": "Al Majaz, Sharjah",
+      "rating": 3.7,
+      "review_count": 152,
+      "years_in_business": 12,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-95990",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "post_construction",
+          "price_aed": 1908,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 236,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 120,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 61,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 362,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 251,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 399,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V062",
+      "name": "Marina Building Maintenance",
+      "phone": "+9712 3512154",
+      "whatsapp": "+9712 3512154",
+      "email": "info+v062@marinabuildingmainte.ae",
+      "company": "Marina Building Maintenance",
+      "emirate": "abu-dhabi",
+      "address": "Khalifa City, Abu Dhabi",
+      "rating": 4.9,
+      "review_count": 357,
+      "years_in_business": 16,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-39693",
+      "vehicle": "Yes — owned van",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 555,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 335,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 44,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V063",
+      "name": "Crystal Cleaning Co",
+      "phone": "+9716 8049721",
+      "whatsapp": "+9716 8049721",
+      "email": "info+v063@crystalcleaningco.ae",
+      "company": "Crystal Cleaning Co",
+      "emirate": "sharjah",
+      "address": "Al Nahda, Sharjah",
+      "rating": 4.2,
+      "review_count": 428,
+      "years_in_business": 12,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-68222",
+      "vehicle": null,
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 342,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 123,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 105,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 218,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 175,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 311,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 391,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 377,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V064",
+      "name": "Golden Facility Management",
+      "phone": "+9712 9323270",
+      "whatsapp": "+9712 9323270",
+      "email": "info+v064@goldenfacilitymanage.ae",
+      "company": "Golden Facility Management",
+      "emirate": "abu-dhabi",
+      "address": "Mussafah, Abu Dhabi",
+      "rating": 3.9,
+      "review_count": 500,
+      "years_in_business": 12,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-77621",
+      "vehicle": null,
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "pest_control",
+          "price_aed": 511,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 50,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 217,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V065",
+      "name": "Metro Tech Care",
+      "phone": "+9719 9805364",
+      "whatsapp": "+9719 9805364",
+      "email": "info+v065@metrotechcare.ae",
+      "company": "Metro Tech Care",
+      "emirate": "fujairah",
+      "address": "Industrial Area, Fujairah",
+      "rating": 3.6,
+      "review_count": 62,
+      "years_in_business": 13,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "FUJ-59015",
+      "vehicle": "Yes — owned van",
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 230,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 131,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 167,
+          "area": "fujairah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V066",
+      "name": "Al Reem Building Maintenance",
+      "phone": "+9714 9695676",
+      "whatsapp": "+9714 9695676",
+      "email": "info+v066@alreembuildingmainte.ae",
+      "company": "Al Reem Building Maintenance",
+      "emirate": "dubai",
+      "address": "JLT, Dubai",
+      "rating": 4.7,
+      "review_count": 150,
+      "years_in_business": 16,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-745239",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "villa_deep",
+          "price_aed": 1281,
+          "area": "dubai"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 362,
+          "area": "dubai"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 198,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V067",
+      "name": "Quick Home Services",
+      "phone": "+9714 2400551",
+      "whatsapp": "+9714 2400551",
+      "email": "info+v067@quickhomeservices.ae",
+      "company": "Quick Home Services",
+      "emirate": "dubai",
+      "address": "Deira, Dubai",
+      "rating": 3.9,
+      "review_count": 476,
+      "years_in_business": 3,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-977330",
+      "vehicle": "Yes — owned car",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 285,
+          "area": "dubai"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 1383,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 556,
+          "area": "dubai"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 82,
+          "area": "dubai"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 451,
+          "area": "dubai"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 298,
+          "area": "dubai"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 747,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 108,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V068",
+      "name": "Skyline Star Services",
+      "phone": "+9716 2365193",
+      "whatsapp": "+9716 2365193",
+      "email": "info+v068@skylinestarservices.ae",
+      "company": "Skyline Star Services",
+      "emirate": "umm-al-quwain",
+      "address": "Industrial Area, Umm Al Quwain",
+      "rating": 4.5,
+      "review_count": 390,
+      "years_in_business": 9,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-12128",
+      "vehicle": "Yes — bike",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 324,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 191,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 958,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 484,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 46,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V069",
+      "name": "Crystal Facility Management",
+      "phone": "+9716 2529325",
+      "whatsapp": "+9716 2529325",
+      "email": "info+v069@crystalfacilitymanag.ae",
+      "company": "Crystal Facility Management",
+      "emirate": "umm-al-quwain",
+      "address": "Al Nuaimiya, Umm Al Quwain",
+      "rating": 4.6,
+      "review_count": 476,
+      "years_in_business": 2,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-36422",
+      "vehicle": null,
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 457,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 759,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 183,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V070",
+      "name": "Oasis Maintenance LLC",
+      "phone": "+9716 9262842",
+      "whatsapp": "+9716 9262842",
+      "email": "info+v070@oasismaintenancellc.ae",
+      "company": "Oasis Maintenance LLC",
+      "emirate": "ajman",
+      "address": "Al Nuaimiya, Ajman",
+      "rating": 4.5,
+      "review_count": 287,
+      "years_in_business": 4,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-67272",
+      "vehicle": "Yes — owned car",
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "smart_home",
+          "price_aed": 1291,
+          "area": "ajman"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1435,
+          "area": "ajman"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 482,
+          "area": "ajman"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 2116,
+          "area": "ajman"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 154,
+          "area": "ajman"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 123,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V071",
+      "name": "Express Home Services",
+      "phone": "+9716 2671666",
+      "whatsapp": "+9716 2671666",
+      "email": "info+v071@expresshomeservices.ae",
+      "company": "Express Home Services",
+      "emirate": "ajman",
+      "address": "Al Nuaimiya, Ajman",
+      "rating": 4.0,
+      "review_count": 310,
+      "years_in_business": 10,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-88986",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 174,
+          "area": "ajman"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 181,
+          "area": "ajman"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 398,
+          "area": "ajman"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 89,
+          "area": "ajman"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 381,
+          "area": "ajman"
+        },
+        {
+          "service_id": "tv_setup",
+          "price_aed": 168,
+          "area": "ajman"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 954,
+          "area": "ajman"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 345,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V072",
+      "name": "Fresh & Sons Maintenance",
+      "phone": "+9716 2291914",
+      "whatsapp": "+9716 2291914",
+      "email": "info+v072@freshandsonsmaintena.ae",
+      "company": "Fresh & Sons Maintenance",
+      "emirate": "umm-al-quwain",
+      "address": "Al Nuaimiya, Umm Al Quwain",
+      "rating": 3.8,
+      "review_count": 249,
+      "years_in_business": 12,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-60181",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 80,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 362,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 215,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 78,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 175,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 535,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 116,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V073",
+      "name": "Bright Home Services",
+      "phone": "+9714 4195941",
+      "whatsapp": "+9714 4195941",
+      "email": "info+v073@brighthomeservices.ae",
+      "company": "Bright Home Services",
+      "emirate": "dubai",
+      "address": "Al Qusais, Dubai",
+      "rating": 4.6,
+      "review_count": 464,
+      "years_in_business": 7,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-399449",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "disinfection",
+          "price_aed": 219,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 582,
+          "area": "dubai"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 367,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V074",
+      "name": "Bilal Ahmed",
+      "phone": "+97154 2089496",
+      "whatsapp": "+97154 2089496",
+      "email": "v074+contact@servia.ae",
+      "company": null,
+      "emirate": "ajman",
+      "address": "Al Jurf, Ajman",
+      "rating": 4.3,
+      "review_count": 305,
+      "years_in_business": 10,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-93584",
+      "vehicle": "Yes — owned van",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "handyman",
+          "price_aed": 255,
+          "area": "ajman"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 523,
+          "area": "ajman"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 253,
+          "area": "ajman"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 236,
+          "area": "ajman"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 727,
+          "area": "ajman"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 107,
+          "area": "ajman"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 337,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V075",
+      "name": "Modern Plus Services",
+      "phone": "+9714 5445999",
+      "whatsapp": "+9714 5445999",
+      "email": "info+v075@modernplusservices.ae",
+      "company": "Modern Plus Services",
+      "emirate": "dubai",
+      "address": "Al Barsha, Dubai",
+      "rating": 4.6,
+      "review_count": 83,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-773540",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "painting",
+          "price_aed": 1910,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 298,
+          "area": "dubai"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 359,
+          "area": "dubai"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 284,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 679,
+          "area": "dubai"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 41,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V076",
+      "name": "Crown Cleaning Co",
+      "phone": "+9714 4706674",
+      "whatsapp": "+9714 4706674",
+      "email": "info+v076@crowncleaningco.ae",
+      "company": "Crown Cleaning Co",
+      "emirate": "dubai",
+      "address": "Business Bay, Dubai",
+      "rating": 4.9,
+      "review_count": 238,
+      "years_in_business": 12,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-397846",
+      "vehicle": null,
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "car_wash",
+          "price_aed": 87,
+          "area": "dubai"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 218,
+          "area": "dubai"
+        },
+        {
+          "service_id": "marble_polish",
+          "price_aed": 1060,
+          "area": "dubai"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 848,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V077",
+      "name": "Bilal Patel",
+      "phone": "+97150 1476028",
+      "whatsapp": "+97150 1476028",
+      "email": "v077+contact@servia.ae",
+      "company": null,
+      "emirate": "sharjah",
+      "address": "Industrial 13, Sharjah",
+      "rating": 3.7,
+      "review_count": 279,
+      "years_in_business": 7,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-91016",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 418,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 291,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 240,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 256,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 178,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 235,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 255,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 370,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V078",
+      "name": "Oasis Home Care",
+      "phone": "+9717 3096945",
+      "whatsapp": "+9717 3096945",
+      "email": "info+v078@oasishomecare.ae",
+      "company": "Oasis Home Care",
+      "emirate": "ras-al-khaimah",
+      "address": "Al Jurf, Ras Al Khaimah",
+      "rating": 4.6,
+      "review_count": 535,
+      "years_in_business": 18,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "RAS-51827",
+      "vehicle": "Yes — owned van",
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "car_wash",
+          "price_aed": 50,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 114,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 533,
+          "area": "ras-al-khaimah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V079",
+      "name": "Crown Group of Companies",
+      "phone": "+9717 9832875",
+      "whatsapp": "+9717 9832875",
+      "email": "info+v079@crowngroupofcompanie.ae",
+      "company": "Crown Group of Companies",
+      "emirate": "ras-al-khaimah",
+      "address": "Al Jurf, Ras Al Khaimah",
+      "rating": 4.4,
+      "review_count": 328,
+      "years_in_business": 7,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "RAS-75308",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "marble_polish",
+          "price_aed": 695,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 285,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 439,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 26,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 39,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "villa_deep",
+          "price_aed": 1341,
+          "area": "ras-al-khaimah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V080",
+      "name": "Next First Choice",
+      "phone": "+9717 2068597",
+      "whatsapp": "+9717 2068597",
+      "email": "info+v080@nextfirstchoice.ae",
+      "company": "Next First Choice",
+      "emirate": "ras-al-khaimah",
+      "address": "Al Nuaimiya, Ras Al Khaimah",
+      "rating": 4.7,
+      "review_count": 449,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "RAS-57943",
+      "vehicle": "Yes — owned car",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 210,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 488,
+          "area": "ras-al-khaimah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 44,
+          "area": "ras-al-khaimah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V081",
+      "name": "Clean Home Services",
+      "phone": "+9712 3079306",
+      "whatsapp": "+9712 3079306",
+      "email": "info+v081@cleanhomeservices.ae",
+      "company": "Clean Home Services",
+      "emirate": "abu-dhabi",
+      "address": "Mohammed Bin Zayed City, Abu Dhabi",
+      "rating": 4.9,
+      "review_count": 411,
+      "years_in_business": 12,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-83116",
+      "vehicle": "Yes — bike",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 319,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 41,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 210,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 1254,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V082",
+      "name": "Bilal Sheikh",
+      "phone": "+97155 6020319",
+      "whatsapp": "+97155 6020319",
+      "email": "v082+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "Business Bay, Dubai",
+      "rating": 4.4,
+      "review_count": 527,
+      "years_in_business": 17,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-613641",
+      "vehicle": null,
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 151,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 153,
+          "area": "dubai"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 433,
+          "area": "dubai"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 1012,
+          "area": "dubai"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 363,
+          "area": "dubai"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 271,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V083",
+      "name": "Salem Khattak",
+      "phone": "+97150 9060593",
+      "whatsapp": "+97150 9060593",
+      "email": "v083+contact@servia.ae",
+      "company": null,
+      "emirate": "umm-al-quwain",
+      "address": "Industrial Area, Umm Al Quwain",
+      "rating": 3.8,
+      "review_count": 397,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-41745",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 99,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "oven_microwave_repair",
+          "price_aed": 285,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 277,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 390,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V084",
+      "name": "Ahmed Khattak",
+      "phone": "+97152 9702060",
+      "whatsapp": "+97152 9702060",
+      "email": "v084+contact@servia.ae",
+      "company": null,
+      "emirate": "fujairah",
+      "address": "Industrial Area, Fujairah",
+      "rating": 3.9,
+      "review_count": 340,
+      "years_in_business": 16,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "FUJ-59391",
+      "vehicle": "Yes — bike",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "smart_home",
+          "price_aed": 1003,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 118,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 71,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 54,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 709,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 212,
+          "area": "fujairah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V085",
+      "name": "Mahmoud Ibrahim",
+      "phone": "+97154 4477544",
+      "whatsapp": "+97154 4477544",
+      "email": "v085+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "JLT, Dubai",
+      "rating": 4.5,
+      "review_count": 508,
+      "years_in_business": 11,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-465746",
+      "vehicle": null,
+      "team_size": 3,
+      "services": [
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 147,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 283,
+          "area": "dubai"
+        },
+        {
+          "service_id": "washing_machine_repair",
+          "price_aed": 297,
+          "area": "dubai"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 1217,
+          "area": "dubai"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 176,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V086",
+      "name": "Golden First Choice",
+      "phone": "+9714 4274426",
+      "whatsapp": "+9714 4274426",
+      "email": "info+v086@goldenfirstchoice.ae",
+      "company": "Golden First Choice",
+      "emirate": "dubai",
+      "address": "Deira, Dubai",
+      "rating": 4.9,
+      "review_count": 286,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-745584",
+      "vehicle": null,
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "move_in_out",
+          "price_aed": 508,
+          "area": "dubai"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 248,
+          "area": "dubai"
+        },
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 283,
+          "area": "dubai"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 193,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V087",
+      "name": "Hamad Sayed",
+      "phone": "+97158 8980915",
+      "whatsapp": "+97158 8980915",
+      "email": "v087+contact@servia.ae",
+      "company": null,
+      "emirate": "umm-al-quwain",
+      "address": "Al Nuaimiya, Umm Al Quwain",
+      "rating": 4.2,
+      "review_count": 212,
+      "years_in_business": 10,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-47409",
+      "vehicle": null,
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "handyman",
+          "price_aed": 377,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 53,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 514,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 551,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 243,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 141,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 2106,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "gardening",
+          "price_aed": 446,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V088",
+      "name": "Mohammed Hassan",
+      "phone": "+97156 2800206",
+      "whatsapp": "+97156 2800206",
+      "email": "v088+contact@servia.ae",
+      "company": null,
+      "emirate": "fujairah",
+      "address": "Al Nuaimiya, Fujairah",
+      "rating": 4.9,
+      "review_count": 351,
+      "years_in_business": 10,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "FUJ-94058",
+      "vehicle": null,
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 263,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 110,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 57,
+          "area": "fujairah"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 252,
+          "area": "fujairah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V089",
+      "name": "Next Trading & Cleaning",
+      "phone": "+9714 3472158",
+      "whatsapp": "+9714 3472158",
+      "email": "info+v089@nexttradingandcleani.ae",
+      "company": "Next Trading & Cleaning",
+      "emirate": "dubai",
+      "address": "Business Bay, Dubai",
+      "rating": 4.4,
+      "review_count": 423,
+      "years_in_business": 14,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-443856",
+      "vehicle": null,
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "sofa_carpet",
+          "price_aed": 203,
+          "area": "dubai"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1318,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 343,
+          "area": "dubai"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 316,
+          "area": "dubai"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 372,
+          "area": "dubai"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 217,
+          "area": "dubai"
+        },
+        {
+          "service_id": "deep_cleaning",
+          "price_aed": 351,
+          "area": "dubai"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 295,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V090",
+      "name": "Capital Building Maintenance",
+      "phone": "+9714 3339801",
+      "whatsapp": "+9714 3339801",
+      "email": "info+v090@capitalbuildingmaint.ae",
+      "company": "Capital Building Maintenance",
+      "emirate": "dubai",
+      "address": "Mirdif, Dubai",
+      "rating": 4.1,
+      "review_count": 522,
+      "years_in_business": 10,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-223119",
+      "vehicle": "Yes — bike",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "handyman",
+          "price_aed": 410,
+          "area": "dubai"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 167,
+          "area": "dubai"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 576,
+          "area": "dubai"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 521,
+          "area": "dubai"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 447,
+          "area": "dubai"
+        },
+        {
+          "service_id": "chauffeur",
+          "price_aed": 66,
+          "area": "dubai"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 470,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V091",
+      "name": "Fresh Technical Services LLC",
+      "phone": "+9716 6408269",
+      "whatsapp": "+9716 6408269",
+      "email": "info+v091@freshtechnicalservic.ae",
+      "company": "Fresh Technical Services LLC",
+      "emirate": "ajman",
+      "address": "Industrial Area, Ajman",
+      "rating": 4.2,
+      "review_count": 378,
+      "years_in_business": 3,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-24707",
+      "vehicle": null,
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 238,
+          "area": "ajman"
+        },
+        {
+          "service_id": "post_construction",
+          "price_aed": 1753,
+          "area": "ajman"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 331,
+          "area": "ajman"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 385,
+          "area": "ajman"
+        },
+        {
+          "service_id": "villa_deep",
+          "price_aed": 1152,
+          "area": "ajman"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 117,
+          "area": "ajman"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 413,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V092",
+      "name": "Bright & Sons Maintenance",
+      "phone": "+9712 7643584",
+      "whatsapp": "+9712 7643584",
+      "email": "info+v092@brightandsonsmainten.ae",
+      "company": "Bright & Sons Maintenance",
+      "emirate": "abu-dhabi",
+      "address": "Mohammed Bin Zayed City, Abu Dhabi",
+      "rating": 4.7,
+      "review_count": 30,
+      "years_in_business": 13,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-10395",
+      "vehicle": "Yes — owned van",
+      "team_size": 1,
+      "services": [
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 284,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 542,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "office_cleaning",
+          "price_aed": 679,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V093",
+      "name": "Next Services Co",
+      "phone": "+9716 3509792",
+      "whatsapp": "+9716 3509792",
+      "email": "info+v093@nextservicesco.ae",
+      "company": "Next Services Co",
+      "emirate": "umm-al-quwain",
+      "address": "Al Nuaimiya, Umm Al Quwain",
+      "rating": 4.6,
+      "review_count": 438,
+      "years_in_business": 12,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "UMM-68790",
+      "vehicle": "Yes — owned car",
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "disinfection",
+          "price_aed": 222,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "painting",
+          "price_aed": 1668,
+          "area": "umm-al-quwain"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 206,
+          "area": "umm-al-quwain"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V094",
+      "name": "Al Madar Cleaning Services",
+      "phone": "+9716 4502850",
+      "whatsapp": "+9716 4502850",
+      "email": "info+v094@almadarcleaningservi.ae",
+      "company": "Al Madar Cleaning Services",
+      "emirate": "sharjah",
+      "address": "Industrial 13, Sharjah",
+      "rating": 4.2,
+      "review_count": 442,
+      "years_in_business": 18,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-40102",
+      "vehicle": "Yes — owned van",
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 272,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 78,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 62,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 293,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 25,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V095",
+      "name": "Al Reem & Sons Maintenance",
+      "phone": "+9714 7014583",
+      "whatsapp": "+9714 7014583",
+      "email": "info+v095@alreemandsonsmainten.ae",
+      "company": "Al Reem & Sons Maintenance",
+      "emirate": "dubai",
+      "address": "Mirdif, Dubai",
+      "rating": 4.5,
+      "review_count": 57,
+      "years_in_business": 8,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-146385",
+      "vehicle": "Yes — owned car",
+      "team_size": 10,
+      "services": [
+        {
+          "service_id": "gardening",
+          "price_aed": 184,
+          "area": "dubai"
+        },
+        {
+          "service_id": "move_in_out",
+          "price_aed": 788,
+          "area": "dubai"
+        },
+        {
+          "service_id": "disinfection",
+          "price_aed": 382,
+          "area": "dubai"
+        },
+        {
+          "service_id": "swimming_pool",
+          "price_aed": 510,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V096",
+      "name": "Salem Hassan",
+      "phone": "+97152 9745141",
+      "whatsapp": "+97152 9745141",
+      "email": "v096+contact@servia.ae",
+      "company": null,
+      "emirate": "ajman",
+      "address": "Al Jurf, Ajman",
+      "rating": 3.9,
+      "review_count": 315,
+      "years_in_business": 9,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-82970",
+      "vehicle": null,
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 353,
+          "area": "ajman"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 68,
+          "area": "ajman"
+        },
+        {
+          "service_id": "kitchen_deep",
+          "price_aed": 347,
+          "area": "ajman"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 98,
+          "area": "ajman"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 88,
+          "area": "ajman"
+        },
+        {
+          "service_id": "curtain_cleaning",
+          "price_aed": 384,
+          "area": "ajman"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 759,
+          "area": "ajman"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 66,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V097",
+      "name": "Faisal Al Marzouqi",
+      "phone": "+97156 7923579",
+      "whatsapp": "+97156 7923579",
+      "email": "v097+contact@servia.ae",
+      "company": null,
+      "emirate": "dubai",
+      "address": "Karama, Dubai",
+      "rating": 4.9,
+      "review_count": 145,
+      "years_in_business": 13,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "DED-367382",
+      "vehicle": "Yes — owned van",
+      "team_size": 4,
+      "services": [
+        {
+          "service_id": "post_construction",
+          "price_aed": 1934,
+          "area": "dubai"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 142,
+          "area": "dubai"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 218,
+          "area": "dubai"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 302,
+          "area": "dubai"
+        },
+        {
+          "service_id": "laundry",
+          "price_aed": 36,
+          "area": "dubai"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 27,
+          "area": "dubai"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 118,
+          "area": "dubai"
+        },
+        {
+          "service_id": "mobile_repair",
+          "price_aed": 357,
+          "area": "dubai"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V098",
+      "name": "Smart Group of Companies",
+      "phone": "+9716 4543325",
+      "whatsapp": "+9716 4543325",
+      "email": "info+v098@smartgroupofcompanie.ae",
+      "company": "Smart Group of Companies",
+      "emirate": "sharjah",
+      "address": "Al Nahda, Sharjah",
+      "rating": 4.9,
+      "review_count": 23,
+      "years_in_business": 7,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "SHA-25376",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "gardening",
+          "price_aed": 237,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 51,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "water_heater_repair",
+          "price_aed": 275,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "ac_cleaning",
+          "price_aed": 140,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "car_wash",
+          "price_aed": 88,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "pest_control",
+          "price_aed": 335,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 163,
+          "area": "sharjah"
+        },
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 317,
+          "area": "sharjah"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V099",
+      "name": "Saif Karim",
+      "phone": "+97154 7944595",
+      "whatsapp": "+97154 7944595",
+      "email": "v099+contact@servia.ae",
+      "company": null,
+      "emirate": "abu-dhabi",
+      "address": "Mussafah, Abu Dhabi",
+      "rating": 3.7,
+      "review_count": 234,
+      "years_in_business": 5,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "ABU-44180",
+      "vehicle": null,
+      "team_size": 6,
+      "services": [
+        {
+          "service_id": "window_cleaning",
+          "price_aed": 209,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "babysitting",
+          "price_aed": 37,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 850,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "handyman",
+          "price_aed": 396,
+          "area": "abu-dhabi"
+        },
+        {
+          "service_id": "laptop_repair",
+          "price_aed": 315,
+          "area": "abu-dhabi"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    },
+    {
+      "id": "V100",
+      "name": "Prime & Sons Maintenance",
+      "phone": "+9716 3411246",
+      "whatsapp": "+9716 3411246",
+      "email": "info+v100@primeandsonsmaintena.ae",
+      "company": "Prime & Sons Maintenance",
+      "emirate": "ajman",
+      "address": "Al Jurf, Ajman",
+      "rating": 4.6,
+      "review_count": 368,
+      "years_in_business": 6,
+      "is_approved": true,
+      "is_active": true,
+      "trade_license": "AJM-81636",
+      "vehicle": "Yes — owned car",
+      "team_size": 2,
+      "services": [
+        {
+          "service_id": "move_in_out",
+          "price_aed": 373,
+          "area": "ajman"
+        },
+        {
+          "service_id": "villa_deep",
+          "price_aed": 608,
+          "area": "ajman"
+        },
+        {
+          "service_id": "general_cleaning",
+          "price_aed": 97,
+          "area": "ajman"
+        },
+        {
+          "service_id": "fridge_repair",
+          "price_aed": 346,
+          "area": "ajman"
+        },
+        {
+          "service_id": "dishwasher_repair",
+          "price_aed": 149,
+          "area": "ajman"
+        },
+        {
+          "service_id": "maid_service",
+          "price_aed": 30,
+          "area": "ajman"
+        },
+        {
+          "service_id": "smart_home",
+          "price_aed": 458,
+          "area": "ajman"
+        }
+      ],
+      "notes": "(Synthetic seed — replace phone with real once verified)"
+    }
+  ],
+  "generated_at": "v1.22.1",
+  "is_synthetic": true,
+  "warning": "Phone numbers are synthetic UAE-format placeholders. Replace with real ones as partnerships confirm."
+}

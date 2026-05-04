@@ -906,6 +906,319 @@ def save_prompts(body: PromptsBody):
     return {"ok": True, "saved": list(cur.keys())}
 
 
+# ---------- Universal bulk + single delete (vendor / customer / booking / invoice) ----------
+class BulkDeleteBody(BaseModel):
+    ids: list[str | int]
+
+
+_DELETE_MAP = {
+    # entity → (table, id_column, soft_delete?, related cleanup callable)
+    "vendor":   {"table": "vendors",      "idcol": "id", "related": ["vendor_services"]},
+    "customer": {"table": "customers",    "idcol": "id", "related": []},
+    "booking":  {"table": "bookings",     "idcol": "id", "related": []},
+    "invoice":  {"table": "invoices",     "idcol": "id", "related": []},
+    "blog":     {"table": "autoblog_posts","idcol": "slug", "related": []},
+}
+
+
+@router.delete("/{entity}/{rid}")
+def admin_delete_one(entity: str, rid: str):
+    """DELETE one row by id. Allowed entities: vendor, customer, booking, invoice, blog."""
+    if entity not in _DELETE_MAP:
+        raise HTTPException(400, f"unsupported entity '{entity}'. Allowed: {list(_DELETE_MAP.keys())}")
+    info = _DELETE_MAP[entity]
+    with db.connect() as c:
+        # For vendor: also kill vendor_services rows
+        if entity == "vendor":
+            try: c.execute("DELETE FROM vendor_services WHERE vendor_id=?", (rid,))
+            except Exception: pass
+        # For booking: detach invoices too
+        if entity == "booking":
+            try: c.execute("UPDATE invoices SET booking_id=NULL WHERE booking_id=?", (rid,))
+            except Exception: pass
+        try:
+            n = c.execute(f"DELETE FROM {info['table']} WHERE {info['idcol']}=?", (rid,)).rowcount
+        except Exception as e:
+            raise HTTPException(500, f"delete failed: {e}")
+    db.log_event("admin", entity, "deleted", actor="admin", details={"id": str(rid)})
+    return {"ok": True, "entity": entity, "id": rid, "deleted": n}
+
+
+@router.post("/{entity}/bulk-delete")
+def admin_bulk_delete(entity: str, body: BulkDeleteBody):
+    """POST a list of ids to delete in one go. Returns count actually deleted."""
+    if entity not in _DELETE_MAP:
+        raise HTTPException(400, f"unsupported entity '{entity}'")
+    if not body.ids:
+        raise HTTPException(400, "no ids provided")
+    info = _DELETE_MAP[entity]
+    deleted = 0
+    with db.connect() as c:
+        for rid in body.ids:
+            try:
+                if entity == "vendor":
+                    try: c.execute("DELETE FROM vendor_services WHERE vendor_id=?", (rid,))
+                    except Exception: pass
+                if entity == "booking":
+                    try: c.execute("UPDATE invoices SET booking_id=NULL WHERE booking_id=?", (rid,))
+                    except Exception: pass
+                n = c.execute(f"DELETE FROM {info['table']} WHERE {info['idcol']}=?",
+                              (rid,)).rowcount
+                deleted += n
+            except Exception: pass
+    db.log_event("admin", entity, "bulk_deleted", actor="admin",
+                 details={"requested": len(body.ids), "deleted": deleted})
+    return {"ok": True, "entity": entity, "requested": len(body.ids), "deleted": deleted}
+
+
+@router.post("/{entity}/delete-all")
+def admin_delete_all(entity: str, confirm: str = ""):
+    """DELETE ALL rows in a table. Requires ?confirm=yes-i-mean-it parameter
+    so it can't be triggered by accident. Use with extreme caution."""
+    if confirm != "yes-i-mean-it":
+        raise HTTPException(400, "Add ?confirm=yes-i-mean-it to confirm")
+    if entity not in _DELETE_MAP:
+        raise HTTPException(400, f"unsupported entity '{entity}'")
+    info = _DELETE_MAP[entity]
+    with db.connect() as c:
+        if entity == "vendor":
+            try: c.execute("DELETE FROM vendor_services")
+            except Exception: pass
+        n = c.execute(f"DELETE FROM {info['table']}").rowcount
+    db.log_event("admin", entity, "delete_all", actor="admin", details={"count": n})
+    return {"ok": True, "entity": entity, "deleted": n}
+
+
+# ---------- Vendor seed import (one-shot 100-vendor onboarding) ----------
+@router.get("/vendors/seed-preview")
+def vendors_seed_preview():
+    """Returns the 100-vendor seed for the admin to review BEFORE importing."""
+    import json as _json, pathlib
+    p = pathlib.Path("app/data/vendors_seed_100.json")
+    if not p.exists(): return {"vendors": [], "warning": "seed file missing"}
+    return _json.loads(p.read_text(encoding="utf-8"))
+
+
+@router.post("/vendors/import-seed")
+def vendors_import_seed():
+    """Imports the 100-vendor seed into the vendors + vendor_services tables.
+    Skips vendors whose phone OR email already exists (idempotent — safe to
+    call multiple times). Returns counts so admin sees what landed."""
+    import json as _json, pathlib, datetime as _d
+    p = pathlib.Path("app/data/vendors_seed_100.json")
+    if not p.exists():
+        raise HTTPException(404, "vendors_seed_100.json missing in app/data/")
+    data = _json.loads(p.read_text(encoding="utf-8"))
+    inserted = 0; skipped_dup = 0; svc_added = 0
+    now = _d.datetime.utcnow().isoformat() + "Z"
+    pwhash = "imported-no-password"  # vendors use phone+OTP; password can be set later
+    with db.connect() as c:
+        for v in data.get("vendors", []):
+            # Idempotency: skip if phone/email already exists
+            r = c.execute(
+                "SELECT id FROM vendors WHERE phone=? OR email=?",
+                (v["phone"], v["email"])).fetchone()
+            if r:
+                skipped_dup += 1
+                continue
+            try:
+                cur = c.execute(
+                    "INSERT INTO vendors(email, password_hash, name, phone, "
+                    "company, is_approved, is_active, created_at) "
+                    "VALUES(?,?,?,?,?,?,?,?)",
+                    (v["email"], pwhash, v["name"], v["phone"],
+                     v.get("company") or v["name"],
+                     1 if v.get("is_approved") else 0,
+                     1 if v.get("is_active") else 0,
+                     now))
+                vid = cur.lastrowid
+                inserted += 1
+                # Optional fields — added via idempotent ALTER
+                for col, typ in [("rating","REAL"),("review_count","INTEGER"),
+                                 ("years_in_business","INTEGER"),
+                                 ("trade_license","TEXT"),("address","TEXT"),
+                                 ("emirate","TEXT"),("team_size","INTEGER"),
+                                 ("vehicle","TEXT")]:
+                    try: c.execute(f"ALTER TABLE vendors ADD COLUMN {col} {typ}")
+                    except Exception: pass
+                try:
+                    c.execute(
+                        "UPDATE vendors SET rating=?, review_count=?, "
+                        "years_in_business=?, trade_license=?, address=?, "
+                        "emirate=?, team_size=?, vehicle=? WHERE id=?",
+                        (v.get("rating"), v.get("review_count"),
+                         v.get("years_in_business"), v.get("trade_license"),
+                         v.get("address"), v.get("emirate"),
+                         v.get("team_size"), v.get("vehicle"), vid))
+                except Exception: pass
+                # Services
+                for s in (v.get("services") or []):
+                    try:
+                        c.execute(
+                            "INSERT OR IGNORE INTO vendor_services"
+                            "(vendor_id, service_id, area, price_aed) VALUES(?,?,?,?)",
+                            (vid, s["service_id"], s.get("area","*"),
+                             float(s.get("price_aed") or 0)))
+                        svc_added += 1
+                    except Exception: pass
+            except Exception:
+                continue
+    db.log_event("admin", "vendors", "seed_imported", actor="admin",
+                 details={"inserted": inserted, "skipped_dup": skipped_dup,
+                          "service_offerings": svc_added})
+    return {"ok": True, "inserted": inserted, "skipped_duplicate": skipped_dup,
+            "service_offerings_added": svc_added,
+            "total_vendors_in_seed": len(data.get("vendors", []))}
+
+
+# ---------- Detailed Analytics ----------
+@router.get("/analytics/detail")
+def analytics_detail():
+    """Comprehensive analytics: 30-day timeseries, funnel, top services,
+    top emirates, AOV, repeat-rate, bot crawl summary, live visitor count."""
+    import datetime as _d
+    now = _d.datetime.utcnow()
+    today = now.date()
+    out = {"generated_at": now.isoformat() + "Z"}
+    with db.connect() as c:
+        # 30-day daily bookings + revenue
+        try:
+            rows = c.execute(
+                "SELECT date(created_at) AS day, COUNT(*) AS cnt, "
+                "SUM(estimated_total) AS rev "
+                "FROM bookings WHERE created_at > ? "
+                "GROUP BY date(created_at) ORDER BY day ASC",
+                ((now - _d.timedelta(days=30)).isoformat() + "Z",)).fetchall()
+            daily = [{"day": r["day"], "bookings": r["cnt"],
+                      "revenue": round(r["rev"] or 0, 2)} for r in rows]
+        except Exception:
+            daily = []
+        out["daily_30d"] = daily
+        out["bookings_30d_total"] = sum(d["bookings"] for d in daily)
+        out["revenue_30d_total"] = round(sum(d["revenue"] for d in daily), 2)
+
+        # Conversion funnel (today)
+        try:
+            n_visitors = c.execute(
+                "SELECT COUNT(DISTINCT visitor_id) AS n FROM live_visitors "
+                "WHERE first_seen > ?",
+                ((now - _d.timedelta(hours=24)).isoformat() + "Z",)).fetchone()["n"]
+        except Exception: n_visitors = 0
+        try:
+            n_chats = c.execute(
+                "SELECT COUNT(DISTINCT session_id) AS n FROM conversations "
+                "WHERE created_at > ?",
+                ((now - _d.timedelta(hours=24)).isoformat() + "Z",)).fetchone()["n"]
+        except Exception: n_chats = 0
+        try:
+            n_quotes = c.execute(
+                "SELECT COUNT(*) AS n FROM quotes WHERE created_at > ?",
+                ((now - _d.timedelta(hours=24)).isoformat() + "Z",)).fetchone()["n"]
+        except Exception: n_quotes = 0
+        try:
+            n_bookings = c.execute(
+                "SELECT COUNT(*) AS n FROM bookings WHERE created_at > ?",
+                ((now - _d.timedelta(hours=24)).isoformat() + "Z",)).fetchone()["n"]
+        except Exception: n_bookings = 0
+        try:
+            n_paid = c.execute(
+                "SELECT COUNT(*) AS n FROM invoices WHERE payment_status='paid' "
+                "AND paid_at > ?",
+                ((now - _d.timedelta(hours=24)).isoformat() + "Z",)).fetchone()["n"]
+        except Exception: n_paid = 0
+        out["funnel_24h"] = {
+            "visitors": n_visitors, "chats": n_chats, "quotes": n_quotes,
+            "bookings": n_bookings, "paid": n_paid,
+            "v_to_chat": round(n_chats/max(1,n_visitors)*100,1) if n_visitors else 0,
+            "chat_to_book": round(n_bookings/max(1,n_chats)*100,1) if n_chats else 0,
+            "book_to_paid": round(n_paid/max(1,n_bookings)*100,1) if n_bookings else 0,
+        }
+
+        # Top services (last 30 days)
+        try:
+            svc_rows = c.execute(
+                "SELECT service_id, COUNT(*) AS n, "
+                "SUM(estimated_total) AS rev FROM bookings "
+                "WHERE created_at > ? GROUP BY service_id ORDER BY n DESC LIMIT 10",
+                ((now - _d.timedelta(days=30)).isoformat() + "Z",)).fetchall()
+            out["top_services_30d"] = [
+                {"service_id": r["service_id"], "bookings": r["n"],
+                 "revenue": round(r["rev"] or 0, 2)} for r in svc_rows]
+        except Exception:
+            out["top_services_30d"] = []
+
+        # Top emirates
+        try:
+            em_rows = c.execute(
+                "SELECT emirate, COUNT(*) AS n FROM bookings "
+                "WHERE created_at > ? AND emirate IS NOT NULL "
+                "GROUP BY emirate ORDER BY n DESC",
+                ((now - _d.timedelta(days=30)).isoformat() + "Z",)).fetchall()
+            out["top_emirates_30d"] = [{"emirate": r["emirate"], "bookings": r["n"]}
+                                       for r in em_rows]
+        except Exception:
+            out["top_emirates_30d"] = []
+
+        # AOV (avg order value, last 30d)
+        try:
+            r = c.execute(
+                "SELECT AVG(estimated_total) AS aov FROM bookings WHERE created_at > ?",
+                ((now - _d.timedelta(days=30)).isoformat() + "Z",)).fetchone()
+            out["aov_30d"] = round(r["aov"] or 0, 2)
+        except Exception:
+            out["aov_30d"] = 0
+
+        # Repeat customer rate
+        try:
+            r = c.execute(
+                "SELECT customer_id, COUNT(*) AS bookings FROM bookings "
+                "WHERE customer_id IS NOT NULL AND created_at > ? "
+                "GROUP BY customer_id",
+                ((now - _d.timedelta(days=90)).isoformat() + "Z",)).fetchall()
+            n_total = len(r) or 1
+            n_repeat = sum(1 for x in r if x["bookings"] > 1)
+            out["repeat_rate_90d"] = round(n_repeat/n_total*100, 1)
+            out["unique_customers_90d"] = n_total
+        except Exception:
+            out["repeat_rate_90d"] = 0; out["unique_customers_90d"] = 0
+
+        # Top customers (by lifetime bookings)
+        try:
+            r = c.execute(
+                "SELECT b.customer_id, c.name, c.phone, COUNT(*) AS bookings, "
+                "SUM(b.estimated_total) AS lifetime_revenue "
+                "FROM bookings b LEFT JOIN customers c ON b.customer_id=c.id "
+                "WHERE b.customer_id IS NOT NULL "
+                "GROUP BY b.customer_id ORDER BY lifetime_revenue DESC LIMIT 10").fetchall()
+            out["top_customers"] = [
+                {"id": x["customer_id"], "name": x["name"], "phone": x["phone"],
+                 "bookings": x["bookings"], "lifetime_revenue": round(x["lifetime_revenue"] or 0, 2)}
+                for x in r]
+        except Exception:
+            out["top_customers"] = []
+
+        # Vendor count
+        try:
+            out["vendors_active"] = c.execute(
+                "SELECT COUNT(*) AS n FROM vendors WHERE is_active=1").fetchone()["n"]
+            out["vendors_total"] = c.execute(
+                "SELECT COUNT(*) AS n FROM vendors").fetchone()["n"]
+        except Exception:
+            out["vendors_active"] = 0; out["vendors_total"] = 0
+
+        # Bot crawl summary (top 5)
+        try:
+            bot_rows = c.execute(
+                "SELECT bot_name, COUNT(*) AS n FROM bot_visits "
+                "WHERE created_at > ? GROUP BY bot_name ORDER BY n DESC LIMIT 5",
+                ((now - _d.timedelta(days=7)).isoformat() + "Z",)).fetchall()
+            out["bot_crawls_7d"] = [{"bot": r["bot_name"], "hits": r["n"]} for r in bot_rows]
+        except Exception:
+            out["bot_crawls_7d"] = []
+
+    return out
+
+
 # ---------- TOTP 2FA (Google Authenticator) ----------
 # Public router (no admin auth) — needed for the 2FA verify flow itself.
 public_2fa_router = APIRouter()
