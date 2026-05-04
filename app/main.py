@@ -906,10 +906,11 @@ def dynamic_logo():
 
 
 # ---------- SEO / GEO endpoints ----------
-@app.get("/robots.txt", response_class=HTMLResponse)
+@app.get("/robots.txt")
 def robots_txt():
+    from fastapi.responses import Response as _Resp
     base = f"https://{settings.BRAND_DOMAIN}"
-    return (
+    body = (
         "User-agent: *\n"
         "Allow: /\n"
         # Block admin / private surfaces from EVERY crawler (SEO + AI)
@@ -938,8 +939,42 @@ def robots_txt():
         "User-agent: CCBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
         f"Sitemap: {base}/sitemap.xml\n"
     )
+    # robots.txt MUST be served as text/plain — Googlebot rejects text/html.
+    # Previously we declared response_class=HTMLResponse which broke GSC's
+    # robots fetcher.
+    return _Resp(content=body, media_type="text/plain; charset=utf-8")
 
 
+# --- Sitemap self-test endpoint (admin-only) ----------------------------------
+@app.get("/api/admin/seo/sitemap-validate")
+def sitemap_validate():
+    """Generates the sitemap, parses it as XML, and reports any errors plus a
+    counter of <url> + <video:video> entries. Useful when GSC reports
+    'Couldn't fetch' or 'Couldn't parse' so admin can verify our end is
+    healthy without leaving the dashboard."""
+    import xml.etree.ElementTree as _ET
+    try:
+        resp = sitemap_xml()
+        body_bytes = resp.body if hasattr(resp, "body") else str(resp).encode()
+        body_text = body_bytes.decode("utf-8", "replace")
+        try:
+            root = _ET.fromstring(body_text)
+            n_url = sum(1 for e in root if e.tag.endswith("}url") or e.tag == "url")
+            n_video = sum(1 for e in root.iter() if e.tag.endswith("}video"))
+            n_image = sum(1 for e in root.iter() if e.tag.endswith("}image"))
+            return {"ok": True, "size_bytes": len(body_bytes),
+                    "url_count": n_url, "video_count": n_video,
+                    "image_count": n_image,
+                    "preview_first_500": body_text[:500]}
+        except _ET.ParseError as pe:
+            return {"ok": False, "parse_error": str(pe),
+                    "size_bytes": len(body_bytes),
+                    "preview_first_500": body_text[:500]}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": str(e)[:300]}
+
+
+# Robots.txt route declared above with proper text/plain content-type
 @app.get("/blog/{slug}", response_class=HTMLResponse)
 def blog_post(slug: str, request: Request):
     """Public blog post — Claude-generated, SEO-friendly, server-rendered.
