@@ -989,6 +989,29 @@ def admin_delete_all(entity: str, confirm: str = ""):
     return {"ok": True, "entity": entity, "deleted": n}
 
 
+# ---------- Logo variant picker ----------
+@router.get("/brand/logo-variant")
+def get_logo_variant():
+    """Returns currently selected logo variant ('a', 'b', or 'c')."""
+    v = db.cfg_get("brand_logo_variant", "a") or "a"
+    return {"variant": v.lower()}
+
+
+class LogoVariantBody(BaseModel):
+    variant: str   # "a" | "b" | "c"
+
+
+@router.post("/brand/logo-variant")
+def set_logo_variant(body: LogoVariantBody):
+    v = (body.variant or "").lower()
+    if v not in ("a", "b", "c"):
+        raise HTTPException(400, "variant must be one of a/b/c")
+    db.cfg_set("brand_logo_variant", v)
+    db.log_event("admin", "brand", "logo_variant_set", actor="admin",
+                 details={"variant": v})
+    return {"ok": True, "variant": v}
+
+
 # ---------- Vendor seed import (one-shot 100-vendor onboarding) ----------
 @router.get("/vendors/seed-preview")
 def vendors_seed_preview():

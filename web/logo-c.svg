@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Variant C — Bilingual: 'ia' gold + Arabic tagline 'بإذن الله' (b'idhn-illah,
+     "by God's will") at 55% opacity below wordmark. Subtle cultural anchor. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 92" width="360" height="92" role="img" aria-label="Servia logo bilingual">
+  <defs>
+    <linearGradient id="lC-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#0F766E"/>
+      <stop offset="55%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <radialGradient id="lC-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FCD34D" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FCD34D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Mark -->
+  <g>
+    <rect x="8" y="8" width="64" height="64" rx="18" fill="url(#lC-grad)"/>
+    <rect x="12" y="12" width="56" height="20" rx="14" fill="#fff" opacity="0.10"/>
+    <circle cx="40" cy="42" r="22" fill="url(#lC-glow)"/>
+    <path d="M52 24 Q28 24 28 36 Q28 44 38 46 L48 48 Q56 50 56 56 Q56 64 38 64"
+          stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <g transform="translate(56 22)">
+      <path d="M0 -8 L1.6 -1.6 L8 0 L1.6 1.6 L0 8 L-1.6 1.6 L-8 0 L-1.6 -1.6 Z" fill="#FCD34D"/>
+    </g>
+  </g>
+  <!-- Wordmark: Serv (teal) + ia (gold) -->
+  <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+     font-weight="800" letter-spacing="-0.5">
+    <text x="92" y="46" font-size="36" fill="#0F766E">Serv</text>
+    <text x="168" y="46" font-size="36" fill="#F59E0B">ia</text>
+    <!-- gentle gold flourish beneath ia -->
+    <path d="M168 56 Q190 62 210 56" stroke="#F59E0B" stroke-width="2.2"
+          stroke-linecap="round" fill="none" opacity="0.85"/>
+    <!-- Arabic line: "بإذن الله" — by God's will. Right-to-left rendering with system Arabic stack. -->
+    <text x="92" y="74" font-size="14" font-weight="600" fill="#475569" opacity="0.85"
+          font-family="'Geeza Pro','Damascus','Arabic UI Display','Noto Naskh Arabic',sans-serif"
+          direction="rtl">بإذن الله</text>
+    <!-- English transliteration tagline alongside (still business-tagline) -->
+    <text x="138" y="74" font-size="9" font-weight="600" letter-spacing="2.2"
+          fill="#94A3B8">SERVICE, GOD WILLING · UAE FIX-IT IN 60s</text>
+  </g>
+</svg>

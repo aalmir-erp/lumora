@@ -884,6 +884,21 @@ async def _smart_cache(request, call_next):
         resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return resp
 
+@app.get("/logo.svg")
+def dynamic_logo():
+    """Serves the active logo variant chosen by admin in Brand tab.
+    Falls back to logo-a.svg, then the legacy logo.svg."""
+    from fastapi.responses import Response
+    variant = (db.cfg_get("brand_logo_variant", "a") or "a").lower()
+    if variant not in ("a", "b", "c"): variant = "a"
+    p = pathlib.Path(f"web/logo-{variant}.svg")
+    if not p.exists():
+        p = pathlib.Path("web/logo.svg")
+    return Response(content=p.read_text(encoding="utf-8") if p.exists() else "",
+                    media_type="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=300, stale-while-revalidate=86400"})
+
+
 # Static mounts MOVED to end-of-file. Registering Mount("/", StaticFiles)
 # at this point would shadow every route registered later (live activity feed,
 # blog index, blog post, contact, app-install, etc.) because Starlette's
