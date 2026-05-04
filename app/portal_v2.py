@@ -110,16 +110,51 @@ def request_magic_link(req: MagicLinkReq):
     bucket = int(_dt.datetime.utcnow().timestamp() // 1800)
     token = hashlib.sha256(f"{email}|{salt}|{bucket}".encode()).hexdigest()[:24]
     link = f"/me.html?login={email}&t={token}"
+    full_link = f"https://servia.ae{link}"
+
+    # 1) Try SMTP delivery first if configured
+    delivered_via_smtp = False
+    try:
+        from . import mail
+        if mail.configured():
+            customer_name = (r["name"] or "").strip() or "there"
+            text = (
+                f"Hi {customer_name},\n\n"
+                f"Click the link below to log in to your Servia account:\n\n"
+                f"{full_link}\n\n"
+                f"This link expires in 30 minutes. If you didn't request it, "
+                f"you can safely ignore this email.\n\n"
+                f"— Servia"
+            )
+            html = (
+                f"<div style='font-family:-apple-system,Arial,sans-serif;max-width:480px;"
+                f"margin:0 auto;padding:24px'>"
+                f"<h2 style='color:#0F766E;margin:0 0 12px'>Sign in to Servia</h2>"
+                f"<p>Hi {customer_name}, tap the button below to log in:</p>"
+                f"<p style='margin:24px 0'><a href='{full_link}' "
+                f"style='background:#0D9488;color:#fff;padding:12px 22px;"
+                f"border-radius:999px;text-decoration:none;font-weight:700'>"
+                f"Log in to Servia</a></p>"
+                f"<p style='color:#64748B;font-size:13px'>"
+                f"Or copy this link: <code>{full_link}</code><br>"
+                f"This link expires in 30 minutes.</p></div>"
+            )
+            delivered_via_smtp = mail.send(email, "Your Servia login link", text, html)
+    except Exception:
+        delivered_via_smtp = False
+
+    # 2) Always record an admin alert so a human can intervene if SMTP isn't set up
     try:
         from . import admin_alerts
         admin_alerts.notify_admin(
-            f"📧 Magic-link login requested\n\n"
+            f"📧 Magic-link login {'sent' if delivered_via_smtp else 'requested'}\n\n"
             f"Customer: {email} (id {cid})\n"
-            f"Link: https://servia.ae{link}\n\n"
-            f"(Wire SMTP later to auto-send.)",
+            f"Link: {full_link}\n"
+            f"SMTP delivered: {'YES' if delivered_via_smtp else 'NO — wire SMTP env vars'}",
             kind="magic_link", urgency="normal")
     except Exception: pass
-    return {"ok": True, "sent": True,
+
+    return {"ok": True, "sent": True, "delivered": delivered_via_smtp,
             "debug_link": link if os.getenv("DEBUG_MAGIC", "") == "1" else None,
             "msg": "Login link sent — check your email."}
 

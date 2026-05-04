@@ -106,14 +106,32 @@ def _new_sid() -> str:
 
 
 def _persist(session_id: str, role: str, content: str, *, phone: str | None,
-             tool_calls: list | None = None, agent: bool = False) -> None:
+             tool_calls: list | None = None, agent: bool = False,
+             user_agent: str | None = None, ip: str | None = None,
+             model_used: str | None = None,
+             tokens_in: int | None = None, tokens_out: int | None = None,
+             cost_usd: float | None = None,
+             attachment_url: str | None = None) -> None:
+    """Persist a chat turn with rich metadata for the admin Conversations view.
+    All metadata cols are added via idempotent ALTER TABLE so old DBs upgrade
+    silently — never crashes if a column already exists or doesn't yet."""
     with db.connect() as c:
+        for col, typ in [("user_agent","TEXT"),("ip","TEXT"),("model_used","TEXT"),
+                         ("tokens_in","INTEGER"),("tokens_out","INTEGER"),
+                         ("cost_usd","REAL"),("attachment_url","TEXT")]:
+            try: c.execute(f"ALTER TABLE conversations ADD COLUMN {col} {typ}")
+            except Exception: pass
         c.execute(
             "INSERT INTO conversations(session_id, role, content, tool_calls_json, "
-            "channel, phone, agent_handled, created_at) VALUES(?,?,?,?,?,?,?,?)",
+            "channel, phone, agent_handled, user_agent, ip, model_used, "
+            "tokens_in, tokens_out, cost_usd, attachment_url, created_at) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (session_id, role, content,
              json.dumps(tool_calls) if tool_calls else None,
              "web", phone, 1 if agent else 0,
+             (user_agent or "")[:300], (ip or "")[:64], (model_used or "")[:80],
+             tokens_in, tokens_out, cost_usd,
+             (attachment_url or "")[:300] if attachment_url else None,
              _dt.datetime.utcnow().isoformat() + "Z"),
         )
 
@@ -179,9 +197,13 @@ def _try_fast_book(message: str) -> dict | None:
 
 
 @app.post("/api/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
+def chat(req: ChatRequest, request: Request):
     sid = req.session_id or _new_sid()
     lang = (req.language or "en").lower()[:2]
+
+    # Capture browser/IP for the admin Conversations view.
+    user_agent = (request.headers.get("user-agent") or "")[:300]
+    ip = (request.client.host if request.client else "")[:64]
 
     # If the user attached an image, fold a marker into the persisted message
     # so it's visible in conversations + the LLM gets context. The actual image
@@ -189,13 +211,15 @@ def chat(req: ChatRequest):
     msg = req.message
     if req.attachment_url:
         msg = (msg + f"\n[attached image: {req.attachment_url}]").strip()
-    _persist(sid, "user", msg, phone=req.phone)
+    _persist(sid, "user", msg, phone=req.phone,
+             user_agent=user_agent, ip=ip, attachment_url=req.attachment_url)
 
     # Fast-path for explicit booking commands — saves a 10-15s LLM round-trip
     fast = _try_fast_book(req.message)
     if fast:
         text = fast.get("text") or "(no response)"
-        _persist(sid, "assistant", text, phone=req.phone, tool_calls=fast.get("tool_calls"))
+        _persist(sid, "assistant", text, phone=req.phone,
+                 tool_calls=fast.get("tool_calls"), model_used="fast-path")
         return ChatResponse(session_id=sid, text=text,
                             tool_calls=fast.get("tool_calls", []),
                             mode="fast", usage={})
@@ -231,10 +255,23 @@ def chat(req: ChatRequest):
         mode = "demo"
 
     text = result.get("text") or "(no response)"
-    _persist(sid, "assistant", text, phone=req.phone, tool_calls=result.get("tool_calls"))
+    usage = result.get("usage") or {}
+    tin  = usage.get("input_tokens") or usage.get("prompt_tokens") or None
+    tout = usage.get("output_tokens") or usage.get("completion_tokens") or None
+    # Anthropic Claude pricing (Sonnet 4.6 default): $3 in / $15 out per 1M tokens
+    cost = None
+    try:
+        if tin is not None and tout is not None:
+            cost = round((tin/1_000_000)*3.0 + (tout/1_000_000)*15.0, 4)
+    except Exception: pass
+    model_used = settings.MODEL if mode == "llm" else mode
+    _persist(sid, "assistant", text, phone=req.phone,
+             tool_calls=result.get("tool_calls"),
+             model_used=model_used,
+             tokens_in=tin, tokens_out=tout, cost_usd=cost)
     return ChatResponse(session_id=sid, text=text,
                         tool_calls=result.get("tool_calls", []),
-                        mode=mode, usage=result.get("usage", {}))
+                        mode=mode, usage=usage)
 
 
 @app.get("/api/chat/poll")

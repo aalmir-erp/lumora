@@ -153,6 +153,8 @@ def save_service_addons(body: AddonsBody):
 # ---------- Conversations + live-agent takeover ----------
 @router.get("/conversations")
 def list_conversations(session_id: str | None = None, limit: int = 200):
+    """Returns messages with rich metadata: role, content, tool_calls, model,
+    tokens, cost, attachment URL, timestamp. All optional cols safe via .get."""
     sql = "SELECT * FROM conversations"
     params: list = []
     if session_id:
@@ -165,18 +167,84 @@ def list_conversations(session_id: str | None = None, limit: int = 200):
 
 
 @router.get("/sessions")
-def list_sessions(limit: int = 50):
+def list_sessions(limit: int = 50, q: str | None = None):
+    """Rich session summary: total messages, total tokens (in+out), total cost,
+    last UA + IP, channel, phone, summary of first user message, takeover state."""
+    where = ""
+    params: list = []
+    if q:
+        where = "WHERE session_id LIKE ? OR phone LIKE ? OR content LIKE ?"
+        like = f"%{q}%"; params.extend([like, like, like])
+    sql = f"""
+        SELECT session_id,
+               COUNT(*) AS msgs,
+               MIN(created_at) AS first_msg,
+               MAX(created_at) AS last_msg,
+               MAX(channel) AS channel,
+               MAX(phone) AS phone,
+               COALESCE(SUM(tokens_in), 0) AS tokens_in_total,
+               COALESCE(SUM(tokens_out), 0) AS tokens_out_total,
+               COALESCE(SUM(cost_usd), 0) AS cost_usd_total,
+               MAX(user_agent) AS user_agent,
+               MAX(ip) AS ip,
+               MAX(model_used) AS last_model,
+               COUNT(attachment_url) AS attachments,
+               (SELECT content FROM conversations c2
+                  WHERE c2.session_id = conversations.session_id AND c2.role='user'
+                  ORDER BY c2.id ASC LIMIT 1) AS first_user_msg
+          FROM conversations
+          {where}
+          GROUP BY session_id
+          ORDER BY last_msg DESC
+          LIMIT ?
+    """
+    params.append(max(1, min(limit, 200)))
     with db.connect() as c:
-        rows = c.execute(
-            "SELECT session_id, COUNT(*) AS msgs, MAX(created_at) AS last_msg, "
-            "MAX(channel) AS channel, MAX(phone) AS phone "
-            "FROM conversations GROUP BY session_id ORDER BY last_msg DESC LIMIT ?",
-            (limit,)).fetchall()
+        try:
+            rows = c.execute(sql, params).fetchall()
+        except Exception:
+            # Old schema without optional cols — fall back to a simpler query
+            rows = c.execute(
+                "SELECT session_id, COUNT(*) AS msgs, MAX(created_at) AS last_msg, "
+                "MAX(channel) AS channel, MAX(phone) AS phone "
+                "FROM conversations GROUP BY session_id ORDER BY last_msg DESC LIMIT ?",
+                (params[-1],)).fetchall()
         takeovers = {r["session_id"]: dict(r) for r in c.execute(
             "SELECT session_id, agent_id, started_at, ended_at FROM agent_takeovers"
         ).fetchall()}
-    sessions = [dict(r) | {"takeover": takeovers.get(r["session_id"])} for r in rows]
+    sessions = []
+    for r in rows:
+        d = dict(r)
+        d["takeover"] = takeovers.get(d["session_id"])
+        # Trim summary
+        s = (d.get("first_user_msg") or "")[:120]
+        if len(d.get("first_user_msg") or "") > 120: s += "…"
+        d["summary"] = s
+        sessions.append(d)
     return {"sessions": sessions}
+
+
+# ---------- Translate a single message via the AI router ----------
+class TranslateBody(BaseModel):
+    text: str
+    target: str = "en"
+
+
+@router.post("/conversations/translate")
+async def translate_message(body: TranslateBody):
+    from . import ai_router
+    cfg = ai_router._load_cfg()
+    target = (cfg.get("defaults") or {}).get("admin", "anthropic/claude-haiku-4-5-20251001")
+    if "/" not in target: target = "anthropic/" + target
+    provider, model = target.split("/", 1)
+    prompt = (
+        f"Translate the following text to {body.target} (output ONLY the "
+        "translation, no preamble, no quotes, no explanation):\n\n" + (body.text or "")[:4000])
+    res = await ai_router.call_model(provider, model, prompt, cfg)
+    if not res.get("ok"):
+        return {"ok": False, "error": res.get("error")}
+    return {"ok": True, "translation": (res.get("text") or "").strip(),
+            "model": target}
 
 
 class TakeoverBody(BaseModel):

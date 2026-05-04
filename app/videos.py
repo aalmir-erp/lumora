@@ -471,6 +471,11 @@ def render_video_html(v: dict) -> str:
             f'</div>')
     mascot_src = "/mascot.svg" if v.get("mascot","default") == "default" else f"/mascots/{v['mascot']}.svg"
     title = v.get("title", "Servia")
+    import json as _json_v
+    scenes_json_for_voice = _json_v.dumps(
+        [{"text": s.get("text",""), "sub": s.get("sub","")} for s in scenes]
+    )
+    scenes_per = per
     return f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -607,75 +612,133 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
   <a class="cta" href="{cta_href}">{cta_text} →</a>
   <div class="progress"></div>
 </div>
-<!-- Continuous ambient music via Web Audio (free, fully generated, no external file).
-     Loops forever once user enables sound. Sound toggle in top-right of video. -->
+<!-- Continuous scene-aware music + female voice-over via Web Audio + speechSynthesis.
+     Music: chord progression with bass+pad+melody that swells/dips per scene.
+     Voice: female narrator reads each scene's headline+sub aloud.
+     All free, browser-native, no external files. -->
 <button id="vid-sound-btn" type="button"
         style="position:absolute;top:14px;right:90px;z-index:5;background:rgba(0,0,0,.42);border:0;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)"
-        title="Toggle ambient music">🔇</button>
+        title="Toggle voice-over + music">🔇</button>
+<script type="application/json" id="vid-scenes-data">{scenes_json_for_voice}</script>
 <script>
 (function(){{
-  let ctx=null, nodes=[], running=false, chimeTimer=null;
+  let ctx=null, nodes=[], running=false, schedTimer=null, voiceTimer=null;
   const btn=document.getElementById("vid-sound-btn");
-  // C-major chord pad: C3, E3, G3, C4 — soft sine pad
-  const PAD_NOTES=[130.81,164.81,196.00,261.63];
-  // Gentle melody chime every 5s
-  const MELODY=[523.25,659.25,783.99,987.77,783.99,659.25];
+  const SCENES = (function(){{
+    try {{ return JSON.parse(document.getElementById("vid-scenes-data").textContent); }}
+    catch(_) {{ return []; }}
+  }})();
+  const PER = {scenes_per:.2f};
+  // 4-chord progression (Cmaj-Am-Fmaj-Gmaj) — modern pop bed
+  const CHORDS = [
+    [130.81, 164.81, 196.00],   // C-E-G   (scene 1)
+    [110.00, 130.81, 164.81],   // A-C-E   (scene 2)
+    [87.31, 130.81, 174.61],    // F-C-F   (scene 3)
+    [98.00, 123.47, 146.83],    // G-B-D   (scene 4)
+    [130.81, 164.81, 196.00],   // C-E-G   (back to home)
+  ];
+  // Bright melody played on top each scene
+  const MELODY_PER_SCENE = [
+    [523.25, 659.25, 783.99],
+    [880.00, 698.46, 587.33],
+    [523.25, 698.46, 880.00],
+    [880.00, 783.99, 659.25],
+    [987.77, 783.99, 659.25],
+  ];
 
   function start(){{
     if(running) return;
-    try{{
-      ctx=new(window.AudioContext||window.webkitAudioContext)();
-      const master=ctx.createGain();
-      master.gain.value=0.05;  // quiet ambient
-      master.connect(ctx.destination);
-      // Pad oscillators
-      PAD_NOTES.forEach((f,i)=>{{
-        const o=ctx.createOscillator();
-        o.type="sine"; o.frequency.value=f;
-        const g=ctx.createGain(); g.gain.value=0.18;
-        // LFO for gentle volume swell
-        const lfo=ctx.createOscillator(); lfo.type="sine"; lfo.frequency.value=0.08+i*0.03;
-        const lfoGain=ctx.createGain(); lfoGain.gain.value=0.08;
-        lfo.connect(lfoGain); lfoGain.connect(g.gain);
-        o.connect(g); g.connect(master);
-        o.start(); lfo.start();
-        nodes.push(o, lfo);
-      }});
-      // Periodic melody chime
-      let mi=0;
-      function chime(){{
+    try {{
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const master = ctx.createGain(); master.gain.value=0.06; master.connect(ctx.destination);
+      // Compressor so peaks don't clip
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value=-18; comp.knee.value=20; comp.ratio.value=4;
+      comp.attack.value=0.005; comp.release.value=0.1;
+      master.connect(comp); comp.connect(ctx.destination);
+      let scene = 0;
+      function playScene(){{
         if(!running||!ctx) return;
-        const f=MELODY[mi%MELODY.length]; mi++;
-        const t=ctx.currentTime;
-        const o=ctx.createOscillator(); o.type="sine"; o.frequency.value=f;
-        const g=ctx.createGain();
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.10,t+0.04);
-        g.gain.exponentialRampToValueAtTime(0.001,t+1.2);
-        o.connect(g); g.connect(master);
-        o.start(t); o.stop(t+1.2);
+        const ch = CHORDS[scene % CHORDS.length];
+        const mel = MELODY_PER_SCENE[scene % MELODY_PER_SCENE.length];
+        const t0 = ctx.currentTime;
+        const dur = PER;
+        // Bass note
+        const bass = ctx.createOscillator(); bass.type="sine"; bass.frequency.value = ch[0]/2;
+        const bg = ctx.createGain(); bg.gain.setValueAtTime(0, t0);
+        bg.gain.linearRampToValueAtTime(0.18, t0+0.3);
+        bg.gain.linearRampToValueAtTime(0.12, t0+dur-0.4);
+        bg.gain.linearRampToValueAtTime(0, t0+dur);
+        bass.connect(bg); bg.connect(master); bass.start(t0); bass.stop(t0+dur);
+        // Pad chord (3 sine voices)
+        ch.forEach(f => {{
+          const o = ctx.createOscillator(); o.type="triangle"; o.frequency.value=f;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0, t0);
+          g.gain.linearRampToValueAtTime(0.07, t0+0.5);
+          g.gain.linearRampToValueAtTime(0.05, t0+dur-0.5);
+          g.gain.linearRampToValueAtTime(0, t0+dur);
+          o.connect(g); g.connect(master); o.start(t0); o.stop(t0+dur);
+        }});
+        // Melody arpeggio over the scene
+        mel.forEach((f, i) => {{
+          const at = t0 + 0.5 + i*(dur-0.5)/mel.length;
+          const o = ctx.createOscillator(); o.type="sine"; o.frequency.value=f;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0, at);
+          g.gain.linearRampToValueAtTime(0.09, at+0.05);
+          g.gain.exponentialRampToValueAtTime(0.001, at+0.7);
+          o.connect(g); g.connect(master); o.start(at); o.stop(at+0.8);
+        }});
+        // Female voice-over for this scene
+        try {{
+          const sc = SCENES[scene];
+          if (sc && window.speechSynthesis) {{
+            const u = new SpeechSynthesisUtterance(sc.text + ". " + (sc.sub||""));
+            const voices = window.speechSynthesis.getVoices() || [];
+            // Prefer female English voice
+            const female = voices.find(v => /female/i.test(v.name)) ||
+                           voices.find(v => /Samantha|Karen|Tessa|Moira|Zira|Susan|Microsoft Aria|Google.*Female|Google US English/i.test(v.name)) ||
+                           voices.find(v => v.lang && v.lang.toLowerCase().startsWith("en") && !/male/i.test(v.name)) ||
+                           voices[0];
+            if (female) u.voice = female;
+            u.rate = 1.05; u.pitch = 1.15; u.volume = 0.85;
+            // Cancel any ongoing speech then queue this scene's narration
+            try {{ window.speechSynthesis.cancel(); }} catch(_) {{}}
+            window.speechSynthesis.speak(u);
+          }}
+        }} catch(_) {{}}
+        scene = (scene + 1) % Math.max(SCENES.length || 1, CHORDS.length);
       }}
-      chimeTimer=setInterval(chime, 4500);
-      running=true; btn.textContent="🔊"; btn.title="Mute";
-    }}catch(_){{ running=false; btn.textContent="🔇"; }}
+      playScene();
+      schedTimer = setInterval(playScene, PER * 1000);
+      running = true; btn.textContent="🔊"; btn.title="Mute voice-over + music";
+    }} catch(_) {{
+      running=false; btn.textContent="🔇";
+    }}
   }}
   function stop(){{
     if(!running) return;
     running=false;
-    try{{
-      nodes.forEach(n=>{{ try{{n.stop()}}catch(_){{}} }});
-      nodes=[];
-      if(chimeTimer){{ clearInterval(chimeTimer); chimeTimer=null; }}
-      if(ctx){{ ctx.close(); ctx=null; }}
-    }}catch(_){{}}
-    btn.textContent="🔇"; btn.title="Play ambient music";
+    try {{
+      if(schedTimer) {{ clearInterval(schedTimer); schedTimer=null; }}
+      if(window.speechSynthesis) {{ try {{ window.speechSynthesis.cancel(); }} catch(_) {{}} }}
+      if(ctx) {{ ctx.close(); ctx=null; }}
+    }} catch(_) {{}}
+    btn.textContent="🔇"; btn.title="Play voice-over + music";
   }}
-  btn.addEventListener("click",()=>{{ running?stop():start(); }});
-  // Auto-start ambient ONLY if user enabled it on a previous video this session
+  btn.addEventListener("click",()=>{{
+    running?stop():start();
+    try {{ sessionStorage.setItem("servia.video.sound", running?"1":"0"); }} catch(_) {{}}
+  }});
+  // Auto-resume if user enabled sound earlier
   if(sessionStorage.getItem("servia.video.sound")==="1") {{
     document.addEventListener("click",function _f(){{ start(); document.removeEventListener("click",_f); }},{{once:true}});
   }}
-  // Remember preference
-  btn.addEventListener("click",()=>{{ try{{sessionStorage.setItem("servia.video.sound",running?"1":"0")}}catch(_){{}} }});
+  // Some browsers populate voices async — re-trigger getVoices once they arrive
+  if (window.speechSynthesis && typeof window.speechSynthesis.onvoiceschanged !== "undefined") {{
+    window.speechSynthesis.onvoiceschanged = ()=>{{}};  // ensures voice list is populated
+  }}
 }})();
 </script>
 </body></html>"""

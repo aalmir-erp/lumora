@@ -142,17 +142,23 @@
     </div>
 
     <div id="t-convos" class="tab" style="display:none">
-      <h2>Conversations</h2>
-      <div style="display:grid;grid-template-columns:300px 1fr;gap:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <h2 style="margin:0">💬 Conversations</h2>
+        <div style="display:flex;gap:6px">
+          <input id="c-q" placeholder="🔎 Search session id, phone, content" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;width:240px">
+          <button class="btn btn-ghost" id="c-refresh" style="font-size:12px;padding:5px 12px">↻ Refresh</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:16px" class="convos-grid">
         <div>
-          <button class="btn btn-ghost" id="c-refresh">Refresh sessions</button>
           <div id="sessions-list" style="margin-top:8px"></div>
         </div>
         <div>
-          <div id="conv-header" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div id="conv-header" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px">
             <span style="color:var(--muted)">No session selected</span>
           </div>
-          <div id="conv-msgs" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;height:420px;overflow:auto;margin-top:12px"></div>
+          <div id="conv-meta" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 14px;margin-top:6px;font-size:11.5px;color:var(--muted);line-height:1.6"></div>
+          <div id="conv-msgs" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;height:520px;overflow:auto;margin-top:8px"></div>
           <form id="agent-reply-form" style="display:none;margin-top:12px">
             <input id="agent-reply" placeholder="Type your reply as the agent…" style="padding:10px;border:1px solid var(--border);border-radius:8px;width:80%">
             <button class="btn btn-primary">Send</button>
@@ -530,9 +536,22 @@
         <input id="ap-title" placeholder="Post title" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-top:8px">
         <textarea id="ap-body" placeholder="Post body (or leave blank to auto-fill from video metadata)" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-top:8px;min-height:80px;font-family:inherit"></textarea>
         <input id="ap-tags" placeholder="Tags (comma-separated, no #)" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-top:8px">
-        <button class="btn btn-primary" onclick="postNow()" style="margin-top:10px">📤 Post now</button>
-        <span id="ap-msg" style="margin-inline-start:10px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center">
+          <button class="btn btn-primary" onclick="postNow()">📤 Post to selected</button>
+          <button class="btn" onclick="planAll()" style="background:#FCD34D;color:#7C2D12">🚀 Plan & post to ALL</button>
+          <span id="ap-msg" style="font-size:12.5px;color:#15803D;font-weight:600"></span>
+        </div>
       </div>
+
+      <div id="ap-plan" style="display:none;margin-top:14px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px">
+        <h4 style="margin:0 0 10px;font-size:14px">📋 Multi-platform plan — review & tweak before posting</h4>
+        <div id="ap-plan-items"></div>
+        <button class="btn btn-primary" id="ap-confirm" onclick="confirmPostAll()" style="margin-top:10px">✅ Post this plan to all configured</button>
+        <span id="ap-plan-msg" style="margin-inline-start:10px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+      </div>
+
+      <h3 style="margin:24px 0 8px;font-size:16px">📖 Setup guides — click to connect each platform</h3>
+      <div id="ap-howto" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:0;overflow:hidden"></div>
 
       <h3 style="margin:24px 0 8px;font-size:16px">📜 Post history</h3>
       <div id="ap-history" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:0"></div>
@@ -905,29 +924,173 @@ function renderCustomers() {
 }
 document.getElementById("cust-q").oninput = renderCustomers;
 
+function _parseUA(ua) {
+  ua = ua || "";
+  let device = "🖥 Desktop";
+  if (/Mobi|Android|iPhone|iPod/i.test(ua)) device = "📱 Mobile";
+  else if (/Tablet|iPad/i.test(ua)) device = "📲 Tablet";
+  let browser = "Unknown";
+  if (/Edg/i.test(ua)) browser = "Edge";
+  else if (/Chrome/i.test(ua)) browser = "Chrome";
+  else if (/Firefox/i.test(ua)) browser = "Firefox";
+  else if (/Safari/i.test(ua)) browser = "Safari";
+  let os = "Unknown";
+  if (/Windows/i.test(ua)) os = "Windows";
+  else if (/Mac OS|Macintosh/i.test(ua)) os = "macOS";
+  else if (/Android/i.test(ua)) os = "Android";
+  else if (/iPhone|iPad|iOS/i.test(ua)) os = "iOS";
+  else if (/Linux/i.test(ua)) os = "Linux";
+  return `${device} · ${browser} · ${os}`;
+}
+function _sinceAgo(ts) {
+  if (!ts) return "—";
+  const t = new Date(ts).getTime();
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + "m ago";
+  const h = Math.round(m/60);
+  if (h < 24) return h + "h ago";
+  const d = Math.round(h/24);
+  return d + "d ago";
+}
+
 async function loadSessions() {
-  const r = await adm("/api/admin/sessions");
-  document.getElementById("sessions-list").innerHTML = r.sessions.map(s => `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer" onclick="openConv('${s.session_id}')">
-      <div style="font-size:12px;color:var(--muted)">${s.channel||'web'} • ${s.msgs} msgs</div>
-      <div style="font-weight:600;font-size:13px;word-break:break-all">${s.session_id}</div>
-      ${s.takeover && !s.takeover.ended_at ? '<span class="badge in_progress">agent-handled</span>' : ''}
-    </div>`).join("");
+  const q = (document.getElementById("c-q") || {}).value || "";
+  const r = await adm("/api/admin/sessions" + (q ? "?q=" + encodeURIComponent(q) : ""));
+  document.getElementById("sessions-list").innerHTML = (r.sessions || []).map(s => {
+    const ua = _parseUA(s.user_agent);
+    const live = s.takeover && !s.takeover.ended_at;
+    const tin  = s.tokens_in_total || 0, tout = s.tokens_out_total || 0;
+    const cost = (s.cost_usd_total || 0).toFixed(4);
+    return `
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:.12s" onmouseover="this.style.borderColor='#0F766E'" onmouseout="this.style.borderColor='var(--border)'" onclick="openConv('${s.session_id}')">
+      <div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start;margin-bottom:4px">
+        <div style="font-weight:700;font-size:12.5px;color:#0F766E;word-break:break-all;flex:1;min-width:0">${escapeHtml(s.session_id||'')}</div>
+        ${live ? '<span class="badge in_progress" style="font-size:9px">🟢 live agent</span>' : ''}
+      </div>
+      ${s.summary ? `<div style="font-size:12px;color:#0F172A;font-style:italic;margin-bottom:4px">"${escapeHtml(s.summary)}"</div>` : ''}
+      <div style="font-size:11px;color:var(--muted);line-height:1.6">
+        ⏱ ${_sinceAgo(s.last_msg)} · ${s.msgs||0} msgs · ${s.attachments||0} 📎
+        ${s.phone ? `· 📞 ${escapeHtml(s.phone)}` : ''}
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);margin-top:4px">${ua}${s.ip ? ' · '+escapeHtml(s.ip) : ''}</div>
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;margin-top:4px;color:#7C3AED">
+        <span>🔢 ${tin}+${tout} tokens</span>
+        <span>💰 $${cost}</span>
+      </div>
+    </div>`;
+  }).join("") || '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No sessions yet.</div>';
 }
 document.getElementById("c-refresh").onclick = loadSessions;
+const _cqInp = document.getElementById("c-q");
+if (_cqInp) {
+  let _t = null;
+  _cqInp.oninput = () => { clearTimeout(_t); _t = setTimeout(loadSessions, 300); };
+}
+
 let currentSid = null;
+let currentSessionMeta = null;
 window.openConv = async (sid) => {
   currentSid = sid;
-  const r = await adm("/api/admin/conversations?session_id="+encodeURIComponent(sid));
+  const [r, sList] = await Promise.all([
+    adm("/api/admin/conversations?session_id=" + encodeURIComponent(sid)),
+    adm("/api/admin/sessions?q=" + encodeURIComponent(sid)).catch(()=>({sessions:[]}))
+  ]);
+  const meta = (sList.sessions || []).find(x => x.session_id === sid) || {};
+  currentSessionMeta = meta;
+
+  const live = meta.takeover && !meta.takeover.ended_at;
   document.getElementById("conv-header").innerHTML = `
-    <b>${sid}</b>
-    <button class="btn btn-ghost" onclick="takeover('${sid}')">Take over</button>
-    <button class="btn btn-ghost" onclick="release('${sid}')">Release</button>`;
-  document.getElementById("conv-msgs").innerHTML = r.messages.map(m => `
-    <div style="margin-bottom:8px"><b style="color:${m.role==='user'?'var(--text)':'var(--primary)'}">${m.role}${m.agent_handled?' (agent)':''}:</b>
-      <div style="white-space:pre-wrap">${escapeHtml(m.content)}</div></div>`).join("");
+    <div style="font-weight:800;font-size:14px;flex:1;min-width:0;word-break:break-all">${escapeHtml(sid)}</div>
+    ${live ? '<span class="badge in_progress" style="font-size:10px">🟢 agent has taken over</span>' : ''}
+    <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="takeover('${sid}')">${live?'🟢 In takeover':'🤝 Take over'}</button>
+    <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="release('${sid}')">↩ Release back to bot</button>
+    <select id="conv-model-pick" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:11.5px;background:#fff" title="Default AI model for next replies">
+      <option value="">— default model —</option>
+    </select>`;
+  // Populate model picker from AI catalog
+  fetch("/api/admin/ai/catalog", {headers:{Authorization:"Bearer "+TOK}}).then(r=>r.ok?r.json():null).then(j=>{
+    if (!j) return;
+    const sel = document.getElementById("conv-model-pick");
+    if (!sel) return;
+    j.providers.forEach(p => p.models.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = p.provider + "/" + m.id;
+      opt.textContent = p.label + " — " + m.label;
+      sel.appendChild(opt);
+    }));
+  }).catch(()=>{});
+
+  // Meta strip with browser/IP/tokens/cost
+  const tin = meta.tokens_in_total || 0, tout = meta.tokens_out_total || 0;
+  const cost = (meta.cost_usd_total || 0).toFixed(4);
+  document.getElementById("conv-meta").style.display = "flex";
+  document.getElementById("conv-meta").style.flexWrap = "wrap";
+  document.getElementById("conv-meta").style.gap = "12px";
+  document.getElementById("conv-meta").innerHTML = `
+    <span>📅 First: ${(meta.first_msg||'').slice(0,16).replace('T',' ')} · Last: ${(meta.last_msg||'').slice(0,16).replace('T',' ')}</span>
+    <span>${_parseUA(meta.user_agent||'')}${meta.ip ? ' · 📍 '+escapeHtml(meta.ip) : ''}</span>
+    <span>📨 ${meta.msgs||0} msgs · 📎 ${meta.attachments||0} attachments</span>
+    <span>🔢 ${tin}+${tout} tokens (in/out) · 💰 $${cost} spent · 🤖 ${escapeHtml(meta.last_model||'—')}</span>`;
+
+  document.getElementById("conv-msgs").innerHTML = (r.messages || []).map((m, idx) => {
+    const ts = (m.created_at || "").slice(11, 16);
+    const isAgent = m.agent_handled;
+    const tin = m.tokens_in || 0, tout = m.tokens_out || 0;
+    const cost = m.cost_usd ? '$' + Number(m.cost_usd).toFixed(4) : '';
+    const tags = [];
+    if (m.model_used) tags.push(`<span style="background:#F1F5F9;color:#475569;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700">🤖 ${escapeHtml(m.model_used)}</span>`);
+    if (tin || tout) tags.push(`<span style="background:#EDE9FE;color:#5B21B6;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700">🔢 ${tin}/${tout}</span>`);
+    if (cost) tags.push(`<span style="background:#FEF3C7;color:#7C2D12;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700">${cost}</span>`);
+    if (m.attachment_url) tags.push(`<a href="${m.attachment_url}" target="_blank" rel="noopener" style="background:#DBEAFE;color:#1E40AF;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700;text-decoration:none">📎 attach</a>`);
+    const bgColor = m.role === 'user' ? '#FAFBFD' : (isAgent ? '#FEF3C7' : '#ECFDF5');
+    const align = m.role === 'user' ? 'flex-start' : 'flex-end';
+    return `
+      <div style="display:flex;justify-content:${align};margin-bottom:10px">
+        <div style="max-width:78%;background:${bgColor};border:1px solid var(--border);border-radius:14px;padding:10px 12px">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px">
+            <b style="font-size:11px;color:${m.role==='user'?'#0F766E':'#7C3AED'}">${m.role}${isAgent?' · 🟢 live agent':''}</b>
+            <small style="color:#94A3B8;font-size:10px">${ts}</small>
+          </div>
+          <div style="white-space:pre-wrap;font-size:13.5px;line-height:1.5">${escapeHtml(m.content||'')}${m.attachment_url ? `<br><img src="${m.attachment_url}" style="max-width:200px;max-height:160px;border-radius:8px;margin-top:6px;display:block">` : ''}</div>
+          ${tags.length || (m.content||'').length > 12 ? `<div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;align-items:center">${tags.join("")}<button onclick="translateBubble(${idx}, this)" style="background:transparent;border:0;color:#0F766E;font-size:10.5px;cursor:pointer;font-weight:700;padding:2px 6px;border-radius:999px">🌐 Translate</button></div>` : ''}
+          <div id="trans-${idx}" style="margin-top:6px;font-size:12.5px;color:#475569;font-style:italic;display:none"></div>
+        </div>
+      </div>`;
+  }).join("");
+  // store messages so translateBubble can read them
+  window._convMessages = r.messages || [];
   document.getElementById("agent-reply-form").style.display = "";
 };
+
+// Translate a single message via /api/admin/conversations/translate
+window.translateBubble = async function(idx, btn) {
+  const m = (window._convMessages || [])[idx];
+  if (!m) return;
+  const slot = document.getElementById("trans-" + idx);
+  if (!slot) return;
+  if (slot.style.display === "block") { slot.style.display = "none"; return; }
+  btn.textContent = "🌐 Translating…";
+  try {
+    const r = await adm("/api/admin/conversations/translate", {
+      method:"POST", body:{text: m.content, target: "en"}
+    });
+    if (r.ok) {
+      slot.innerHTML = "🌐 <b>EN translation:</b> " + escapeHtml(r.translation || "");
+      slot.style.display = "block";
+      btn.textContent = "🌐 Hide translation";
+    } else {
+      slot.innerHTML = '<span style="color:#B91C1C">Translation failed: ' + escapeHtml(r.error || '') + '</span>';
+      slot.style.display = "block";
+      btn.textContent = "🌐 Retry";
+    }
+  } catch (e) {
+    slot.innerHTML = '<span style="color:#B91C1C">Error: ' + escapeHtml(e.message) + '</span>';
+    slot.style.display = "block";
+    btn.textContent = "🌐 Retry";
+  }
+};
+
 window.takeover = async (sid) => { await adm("/api/admin/takeover", { method:"POST", body:{session_id:sid} }); openConv(sid); };
 window.release  = async (sid) => { await adm("/api/admin/release",  { method:"POST", body:{session_id:sid} }); openConv(sid); };
 document.getElementById("agent-reply-form").addEventListener("submit", async e => {
@@ -1981,6 +2144,23 @@ async function loadAutopost() {
     document.getElementById("ap-video").innerHTML = (v.videos||[]).map(x =>
       `<option value="${x.slug}" data-title="${escapeHtml(x.title||'')}">${escapeHtml(x.title||'')}</option>`).join("");
   } catch (_) {}
+  // How-to setup guides
+  try {
+    const g = await adm("/api/admin/social/howto");
+    const guides = g.howto || {};
+    document.getElementById("ap-howto").innerHTML = Object.keys(guides).map(k => {
+      const x = guides[k];
+      return `<details style="border-bottom:1px solid var(--border);padding:10px 14px">
+        <summary style="cursor:pointer;font-weight:700;font-size:13.5px">${escapeHtml(x.label)} <small style="color:var(--muted);font-weight:400">— ${escapeHtml(x.summary||'')}</small></summary>
+        <div style="margin-top:8px;font-size:12.5px;line-height:1.55">
+          <div style="background:#F1F5F9;border-radius:8px;padding:8px 10px;margin-bottom:8px">
+            <b>Free tier:</b> ${escapeHtml(x.free_tier||'—')}<br>
+            <b>Scopes needed:</b> ${(x.scopes_needed||[]).map(s=>`<code style="background:#fff;padding:1px 6px;border-radius:4px;font-size:11px">${escapeHtml(s)}</code>`).join(' ') || '—'}
+          </div>
+          <ol style="padding-inline-start:18px;margin:0">${(x.steps||[]).map(s => `<li style="margin-bottom:4px">${escapeHtml(s.text)} ${s.link?`<a href="${escapeHtml(s.link)}" target="_blank" rel="noopener" style="color:#0F766E;font-weight:700">↗ open</a>`:''}</li>`).join('')}</ol>
+        </div></details>`;
+    }).join("");
+  } catch (_) {}
   // History
   try {
     const h = await adm("/api/admin/social/history?limit=20");
@@ -2020,6 +2200,53 @@ async function postNow() {
     msg.innerHTML = r.ok ? `✅ <a href="${r.url||''}" target="_blank">posted</a>` : `❌ ${escapeHtml(r.error||'')}`;
     setTimeout(loadAutopost, 1200);
   } catch (e) { msg.textContent = "❌ " + e.message; }
+}
+
+async function planAll() {
+  const slug = document.getElementById("ap-video").value;
+  if (!slug) { alert("Pick a video first"); return; }
+  const opt   = document.querySelector('#ap-video option[value="'+slug+'"]');
+  const title = document.getElementById("ap-title").value.trim() || (opt && opt.dataset.title) || "Servia video";
+  const summary = document.getElementById("ap-body").value.trim() || "";
+  const tags  = document.getElementById("ap-tags").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const msg = document.getElementById("ap-msg");
+  msg.textContent = "🧠 Planning…";
+  try {
+    const r = await adm("/api/admin/social/plan", {method:"POST", body:{video_slug:slug, title, summary, tags}});
+    msg.textContent = "";
+    const wrap = document.getElementById("ap-plan");
+    const items = (r.plan || []).map((p, i) => `
+      <details ${p.connected?'open':''} style="border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:6px;background:${p.connected?'#F0FDF4':'#F8FAFC'}">
+        <summary style="cursor:pointer;font-weight:700;font-size:13px;display:flex;justify-content:space-between;gap:8px">
+          <span>${p.connected?'✅':'○'} ${escapeHtml(p.label)} <small style="color:var(--muted);font-weight:400">· ${escapeHtml(p.aspect)} · ${escapeHtml(p.best_time||'')}</small></span>
+          <small style="color:var(--muted)">${p.method}</small>
+        </summary>
+        <div style="margin-top:8px">
+          <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px"><b>Voice:</b> ${escapeHtml(p.voice||'')}</div>
+          <textarea data-platform="${escapeHtml(p.platform)}" data-vu="${escapeHtml(p.video_url)}" data-title="${escapeHtml(title)}"
+                    style="width:100%;min-height:90px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:12.5px"
+                    maxlength="${p.max_chars}">${escapeHtml(p.caption)}</textarea>
+          <small style="color:var(--muted);font-size:11px">max ${p.max_chars} chars · suggested ${p.hashtags_used} hashtags · video URL: <code style="font-size:10px">${escapeHtml(p.video_url)}</code></small>
+        </div>
+      </details>`).join("");
+    document.getElementById("ap-plan-items").innerHTML = items;
+    wrap.style.display = "";
+    document.getElementById("ap-plan-msg").textContent = "";
+  } catch (e) { msg.textContent = "❌ " + e.message; }
+}
+async function confirmPostAll() {
+  const items = [...document.querySelectorAll('#ap-plan-items textarea')].map(t => ({
+    platform: t.dataset.platform, video_url: t.dataset.vu, title: t.dataset.title,
+    caption: t.value, tags: []
+  }));
+  if (!items.length) { alert("No plan to post"); return; }
+  const m = document.getElementById("ap-plan-msg");
+  m.textContent = "🚀 Posting…";
+  try {
+    const r = await adm("/api/admin/social/post-all", {method:"POST", body:{plan: items}});
+    m.innerHTML = (r.results||[]).map(x => `<span style="margin-inline-end:8px">${x.ok?'✅':'❌'} ${escapeHtml(x.platform)}${x.error?': '+escapeHtml(x.error):''}</span>`).join("");
+    setTimeout(loadAutopost, 1500);
+  } catch (e) { m.textContent = "❌ " + e.message; }
 }
 
 // Auto-load social profiles when the launch tab opens too
