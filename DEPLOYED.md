@@ -1,49 +1,83 @@
 # Lumora deploy
 
 **URL:** https://lumora-production-4071.up.railway.app
-**Status:** BUILDING
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"lE1B7KUjSumZpOPNLPU1MQ"}`
+**Status:** SUCCESS
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"1MssjTi_QuWeOqPGezItjw"}`
 
 ## Build logs
 ```
-scheduling build on Metal builder "builder-zoruvv"
-[snapshot] received sha256:fb0a7e9d719ab346dc436023433f69112ad1f078dc92d78a535ec3f7814ce564 md5:1fa9b5a775f76f5cdc3f3f527e4d1925
-receiving snapshot
-found 'Dockerfile' at 'Dockerfile'
-found 'railway.json' at 'railway.json'
-skipping 'Dockerfile' at 'whatsapp_bridge/Dockerfile' as it is not rooted at a valid path (root_dir=, fileOpts={acceptChildOfRepoRoot:false})
-analyzing snapshot
-unpacking archive
-[internal] load build definition from Dockerfile
-[internal] load build definition from Dockerfile
-[internal] load build definition from Dockerfile
-uploading snapshot
-[internal] load build definition from Dockerfile
-[internal] load metadata for docker.io/library/python:3.12-slim
-[internal] load metadata for docker.io/library/python:3.12-slim
-[internal] load .dockerignore
-[internal] load .dockerignore
-[internal] load .dockerignore
-[ 5/11] RUN pip install -r requirements.txt
-[ 4/11] COPY requirements.txt ./
-[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+[internal] load build context
 [ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[ 2/11] WORKDIR /app
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[internal] load build context
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[internal] load build context
+[internal] load build context
+[ 2/11] WORKDIR /app
+[ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[ 4/11] COPY requirements.txt ./
+[ 5/11] RUN pip install -r requirements.txt
+[ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
+[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+[ 8/11] COPY app ./app
 [ 8/11] COPY app ./app
 [ 9/11] COPY web ./web
+[ 9/11] COPY web ./web
+[10/11] COPY start.sh /app/start.sh
 [10/11] COPY start.sh /app/start.sh
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
-[ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
-[internal] load build context
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 2/11] WORKDIR /app
-[ 2/11] WORKDIR /app
-[internal] load build context
-[internal] load build context
+[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
+exporting to docker image format
+exporting to docker image format
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODJiY2EwNjFlZmYzYmJkNzNkZDg4Njk5YWVkZjFkZjJkNTU1NjAwNWM2NjFhZjBkNWI0YzkzMWUzNWEzYTlkMSIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQxOTozNjozMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:26db33766f47c9ce3af6807b548f07cd3a658cc70fa873fd68b53139d6b222fd
+containerimage.digest: sha256:82bca061eff3bbd73dd88699aedf1df2d5556005c661af0d5b4c931e35a3a9d1
+image push
+
+[35m====================
+Starting Healthcheck
+====================
+[0m
+[37mPath: /api/health[0m
+[37mRetry window: 1m0s[0m
+
+[92m[1/1] Healthcheck succeeded![0m
 ```
 
 ## Runtime logs
 ```
-
+INFO:     100.64.0.5:15240 - "GET /style.css HTTP/1.1" 200 OK
+INFO:     100.64.0.6:13648 - "GET /install.js HTTP/1.1" 200 OK
+INFO:     100.64.0.3:41614 - "GET /widget.css HTTP/1.1" 200 OK
+INFO:     100.64.0.4:18130 - "GET /logo.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.7:25452 - "GET /share.js HTTP/1.1" 200 OK
+INFO:     100.64.0.7:25436 - "GET /cms.js HTTP/1.1" 200 OK
+INFO:     100.64.0.3:41604 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.6:13648 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.6:13648 - "GET /?gtm_latency=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:13648 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.6:13648 - "GET /widget.js HTTP/1.1" 200 OK
+INFO:     100.64.0.6:13648 - "GET /avatar.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.3:41604 - "GET /api/blog/latest?limit=10 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:41614 - "GET /cart-badge.js HTTP/1.1" 200 OK
+INFO:     100.64.0.5:15240 - "GET /_snippets.js HTTP/1.1" 200 OK
+INFO:     100.64.0.6:13648 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.5:15240 - "GET /social-proof.js HTTP/1.1" 200 OK
+INFO:     100.64.0.7:25436 - "GET /social-strip.js HTTP/1.1" 200 OK
+INFO:     100.64.0.5:15240 - "GET /api/reviews/platforms HTTP/1.1" 200 OK
+INFO:     100.64.0.5:15240 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.7:25436 - "GET /api/blog/hero/sharjah-carpet-cleaning-in-al-khan-sharjah---sand--oil--kid-spills-and-what-aed-80-covers.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.5:15240 - "GET /api/blog/hero/ras-al-khaimah-rak-ac-service-tips---coastal-humidity-is-killing-your-compressor-faster-th.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:13648 - "GET /api/blog/hero/abu-dhabi-deep-cleaning-a-khalifa-city-villa-after-sandstorm-season---a-checklist.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.5:15230 - "GET /api/blog/hero/abu-dhabi-bed-bugs-on-reem-island---why-80--of-treatments-fail-and-what-works-in-2026.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.3:41604 - "GET /api/blog/hero/dubai-sofa-shampoo-in-arabian-ranches---why-fabric-protectors-are-a-2026-must-have.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.3:41614 - "GET /api/blog/hero/dubai-kitchen-deep-clean-in-jlt---the-ramadan-grease-problem-and-how-pros-solve-it.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:18130 - "GET /api/blog/hero/umm-al-quwain-handyman-in-uaq---the-6-small-fixes-every-villa-owner-should-batch-in-one-vi.svg HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+[wa-bridge] QR received. Open /qr in your browser to scan.
+[wa-bridge] QR received. Open /qr in your browser to scan.
 ```
