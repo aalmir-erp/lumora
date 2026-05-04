@@ -367,40 +367,194 @@
       <!-- Snippet editor -->
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin:16px 0">
         <h3 style="margin:0 0 4px;font-size:16px">🔌 Site-wide tracking codes</h3>
-        <p style="color:var(--muted);font-size:13px;margin:0 0 14px">Paste IDs from each provider — we generate the full snippet and inject it into every page header.</p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Analytics 4 ID
-            <input id="snip-ga4" placeholder="G-XXXXXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Tag Manager ID
-            <input id="snip-gtm" placeholder="GTM-XXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Meta Pixel ID
-            <input id="snip-meta" placeholder="1234567890123456" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">TikTok Pixel ID
-            <input id="snip-tiktok" placeholder="CXXXXXXXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Microsoft Clarity ID
-            <input id="snip-clarity" placeholder="abcdef1234" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Hotjar Site ID
-            <input id="snip-hotjar" placeholder="1234567" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Plausible domain
-            <input id="snip-plausible" placeholder="servia.ae" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Matomo URL
-            <input id="snip-matomo" placeholder="https://matomo.example.com" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+        <p style="color:var(--muted);font-size:13px;margin:0 0 14px">Paste IDs from each provider — we generate the full snippet and inject it into every page header.<br><b>New here?</b> Each field has step-by-step instructions in <a href="javascript:document.querySelectorAll('.snip-help').forEach(d=>d.style.display=d.style.display==='block'?'none':'block')">▾ how-to (click to toggle)</a>.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Analytics 4 ID
+              <input id="snip-ga4" placeholder="G-XXXXXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://analytics.google.com/" target="_blank" rel="noopener" style="color:#0F766E">analytics.google.com</a> → sign in with the Google account that owns Servia.</li>
+                <li>Click <b>Admin</b> (gear icon, bottom-left) → <b>Create Property</b> → enter "Servia" + UAE timezone + AED currency.</li>
+                <li>Choose <b>Web</b> platform → enter <code>https://servia.ae</code>.</li>
+                <li>You'll see a <b>Measurement ID</b> like <code>G-XXXXXXXXXX</code>. Copy it.</li>
+                <li>Paste it above + click Save.</li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Tag Manager ID
+              <input id="snip-gtm" placeholder="GTM-XXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this (optional)</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://tagmanager.google.com/" target="_blank" rel="noopener" style="color:#0F766E">tagmanager.google.com</a>.</li>
+                <li><b>Create Account</b> → "Servia" → <b>Container</b> → "servia.ae" → Web.</li>
+                <li>Top of page shows <code>GTM-XXXXXXX</code>. Copy + paste above.</li>
+                <li><i>Skip if you don't need to manage multiple ad/analytics tags from one place.</i></li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Meta Pixel ID
+              <input id="snip-meta" placeholder="1234567890123456" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://business.facebook.com/events_manager" target="_blank" rel="noopener" style="color:#0F766E">business.facebook.com/events_manager</a>.</li>
+                <li>Click <b>Connect Data Sources</b> → <b>Web</b> → <b>Meta Pixel</b> → Connect.</li>
+                <li>Name it "Servia Pixel" → enter <code>https://servia.ae</code>.</li>
+                <li>Choose <b>Manual setup</b>. The 16-digit Pixel ID appears at top — copy + paste above.</li>
+                <li>Required if you'll run Facebook/Instagram ads.</li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">TikTok Pixel ID
+              <input id="snip-tiktok" placeholder="CXXXXXXXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://ads.tiktok.com/i18n/events_manager/" target="_blank" rel="noopener" style="color:#0F766E">TikTok Events Manager</a> (sign in with TikTok Business).</li>
+                <li><b>Connect Data Sources</b> → <b>Web</b> → name it "Servia Pixel".</li>
+                <li>Pick <b>Manual</b> setup. Copy the Pixel ID (starts with <code>C</code>).</li>
+                <li>Required if you'll run TikTok ads or want TikTok feed retargeting.</li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Microsoft Clarity ID
+              <input id="snip-clarity" placeholder="abcdef1234" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this — recommended (FREE)</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://clarity.microsoft.com/" target="_blank" rel="noopener" style="color:#0F766E">clarity.microsoft.com</a> → sign in.</li>
+                <li><b>+ New Project</b> → name "Servia" → URL <code>https://servia.ae</code>.</li>
+                <li>Open the project → Settings → Setup → copy the <b>Project ID</b> (10-char code).</li>
+                <li>Paste above. <b>Free heatmaps + session recording</b> — best free analytics tool.</li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Hotjar Site ID
+              <input id="snip-hotjar" placeholder="1234567" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this (optional)</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://insights.hotjar.com/sites" target="_blank" rel="noopener" style="color:#0F766E">insights.hotjar.com/sites</a>.</li>
+                <li><b>Add new site</b> → enter <code>servia.ae</code>.</li>
+                <li>Site ID (7-digit number) shown at top — paste above.</li>
+                <li><i>Skip if you've added Microsoft Clarity already — does the same job, free.</i></li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Plausible domain
+              <input id="snip-plausible" placeholder="servia.ae" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to set this up (optional)</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Sign up at <a href="https://plausible.io/" target="_blank" rel="noopener" style="color:#0F766E">plausible.io</a> ($9/mo).</li>
+                <li>Add site → enter <code>servia.ae</code>.</li>
+                <li>Just paste <code>servia.ae</code> above (the domain is the only ID needed).</li>
+                <li><i>Privacy-respecting alternative to GA4. Use either or both.</i></li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Matomo URL
+              <input id="snip-matomo" placeholder="https://matomo.example.com" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to set this up (advanced)</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Self-host Matomo on your own server (free) or sign up at <a href="https://matomo.org/" target="_blank" rel="noopener" style="color:#0F766E">matomo.org</a>.</li>
+                <li>Add site "Servia" → URL <code>https://servia.ae</code>.</li>
+                <li>Copy the tracker URL (looks like <code>https://yourname.matomo.cloud</code>) → paste above.</li>
+                <li><i>Skip unless you specifically need self-hosted analytics for compliance.</i></li>
+              </ol>
+            </details>
+          </div>
         </div>
 
-        <h4 style="margin:18px 0 4px;font-size:13px">🔍 Search engine site verifications</h4>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Search Console
-            <input id="ver-google" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Bing Webmaster
-            <input id="ver-bing" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Yandex Webmaster
-            <input id="ver-yandex" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
-          <label style="font-size:12px;font-weight:700;color:var(--muted)">Facebook domain verification
-            <input id="ver-fb" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+        <h4 style="margin:24px 0 4px;font-size:13px">🔍 Search engine site verifications</h4>
+        <p style="color:var(--muted);font-size:12px;margin:0 0 10px">Each engine wants a small verification token in your &lt;head&gt;. Sign up, copy the token, paste here, click Save — we inject the meta tag site-wide.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Search Console token
+              <input id="ver-google" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#92400E">▸ How to get this — CRITICAL for SEO</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://search.google.com/search-console/welcome" target="_blank" rel="noopener" style="color:#0F766E">search.google.com/search-console</a>.</li>
+                <li>Pick <b>URL prefix</b> → enter <code>https://servia.ae</code>.</li>
+                <li>Choose <b>HTML tag</b> verification method.</li>
+                <li>Copy ONLY the <code>content="..."</code> value (the random string, not the full meta tag) → paste above.</li>
+                <li>Save here, then click <b>Verify</b> in Google Search Console.</li>
+                <li>Then submit your sitemap: <code>https://servia.ae/sitemap.xml</code>.</li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Bing Webmaster token
+              <input id="ver-bing" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#92400E">▸ How to get this</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://www.bing.com/webmasters/about" target="_blank" rel="noopener" style="color:#0F766E">bing.com/webmasters</a> → sign in.</li>
+                <li><b>Add a site</b> → enter <code>https://servia.ae</code>.</li>
+                <li>Choose <b>Add Meta Tag</b> verification.</li>
+                <li>Copy the <code>content="..."</code> value → paste above.</li>
+                <li>Save → verify on Bing → submit sitemap.</li>
+                <li><i>This also covers DuckDuckGo + Yahoo + Phind, all of which read Bing's index.</i></li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Yandex Webmaster token
+              <input id="ver-yandex" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Go to <a href="https://webmaster.yandex.com/welcome/" target="_blank" rel="noopener" style="color:#0F766E">webmaster.yandex.com</a>.</li>
+                <li>Add site → enter <code>https://servia.ae</code>.</li>
+                <li>Choose <b>Meta tag</b> verification → copy the content value → paste above.</li>
+                <li><i>UAE has a large Russian-speaking population — this matters.</i></li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Facebook domain verification token
+              <input id="ver-fb" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>In <a href="https://business.facebook.com/" target="_blank" rel="noopener" style="color:#0F766E">business.facebook.com</a> → Brand Safety → Domains.</li>
+                <li>Add domain <code>servia.ae</code>.</li>
+                <li>Choose <b>Meta tag</b> verification → copy the content → paste above.</li>
+                <li>Required to run Meta ads with conversion tracking on servia.ae.</li>
+              </ol>
+            </details>
+          </div>
         </div>
 
         <button class="btn btn-primary" onclick="saveSnippets()" style="margin-top:14px">💾 Save &amp; deploy site-wide</button>
         <span id="snip-msg" style="margin-inline-start:12px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+      </div>
+
+      <!-- Visibility tracker (NEW) -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin:16px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <h3 style="margin:0;font-size:16px">📡 Where is Servia appearing? (auto-detected)</h3>
+          <button class="btn btn-primary" onclick="vizScan()" style="font-size:12px;padding:6px 14px">🔄 Scan now</button>
+        </div>
+        <p style="color:var(--muted);font-size:13px;margin:6px 0 14px">Live-probes Google/Bing/Brave/DuckDuckGo for indexed pages, plus shows every AI/search bot that crawled servia.ae in the last 7 days. Cached for 24h after each scan to avoid rate-limiting.</p>
+        <div id="viz-engines" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px"></div>
+        <h4 style="margin:14px 0 6px;font-size:13px">🤖 Bot crawls — last 7 days</h4>
+        <p style="font-size:11.5px;color:var(--muted);margin:0 0 8px">Every time GPTBot / ClaudeBot / Googlebot / etc. visits servia.ae, we log it here. Empty list = bots haven't found the site yet (give it 1-2 weeks after submitting to Google Search Console + Bing Webmaster).</p>
+        <div id="viz-bots"></div>
+        <small id="viz-ts" style="color:var(--muted);font-size:11px"></small>
       </div>
 
       <!-- Checklist -->
@@ -1797,7 +1951,80 @@ async function fireDailySummary() {
 }
 
 // ============== LAUNCH & GROWTH ==============
+async function loadVizScan() {
+  try {
+    const r = await adm("/api/admin/launch/visibility/scan");
+    if (!r.ok) {
+      document.getElementById("viz-engines").innerHTML =
+        `<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:16px">${escapeHtml(r.msg||'No scan yet — click 🔄 Scan now')}</div>`;
+      document.getElementById("viz-ts").textContent = "";
+      return;
+    }
+    const items = (r.results||[]).map(e => {
+      const lbl = ({google:"🔵 Google", bing:"🟦 Bing", brave:"🟧 Brave", duckduckgo:"🦆 DuckDuckGo"})[e.engine] || e.engine;
+      const v = (e.indexed!=null) ? e.indexed : "?";
+      const colour = e.ok ? "#15803D" : "#B91C1C";
+      const note = e.note ? `<small style="color:var(--muted);display:block;font-size:10px">${escapeHtml(e.note)}</small>` : '';
+      const err = e.error ? `<small style="color:#B91C1C;display:block;font-size:10px">${escapeHtml(e.error)}</small>` : '';
+      return `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+        <div style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">${lbl}</div>
+        <div style="font-size:24px;font-weight:800;color:${colour};margin-top:2px">${v}</div>
+        <div style="font-size:11px;color:var(--muted)">indexed pages</div>
+        ${note}${err}
+        ${e.search_url?`<a href="${e.search_url}" target="_blank" rel="noopener" style="font-size:11px;color:#0F766E;font-weight:700">↗ View results</a>`:''}
+      </div>`;
+    }).join("");
+    document.getElementById("viz-engines").innerHTML = items || '';
+    document.getElementById("viz-ts").textContent = "Last scan: " + (r.ts||'').slice(0,19).replace('T',' ');
+  } catch (_) {}
+}
+
+async function vizScan() {
+  document.getElementById("viz-engines").innerHTML =
+    '<div style="grid-column:1/-1;text-align:center;color:#7C3AED;font-size:13px;padding:16px">⏳ Probing Google, Bing, Brave, DuckDuckGo (10-20s)…</div>';
+  try {
+    await adm("/api/admin/launch/visibility/scan", {method:"POST", body:{domain:"servia.ae"}});
+    await loadVizScan();
+  } catch (e) {
+    document.getElementById("viz-engines").innerHTML =
+      `<div style="grid-column:1/-1;color:#B91C1C">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function loadVizBots() {
+  try {
+    const r = await adm("/api/admin/launch/visibility/bots?days=7&limit=80");
+    const wrap = document.getElementById("viz-bots");
+    if (!(r.by_bot && r.by_bot.length)) {
+      wrap.innerHTML = '<div style="background:#FEF3C7;border:1px solid #FDE68A;color:#78350F;padding:10px 12px;border-radius:8px;font-size:13px">⏳ No bot crawls yet. Bots find sites 1-2 weeks after you submit to Google Search Console + Bing Webmaster (above checklist).</div>';
+      return;
+    }
+    const summary = r.by_bot.map(b =>
+      `<div style="display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #F1F5F9;font-size:13px">
+        <div><b style="color:#0F766E">${escapeHtml(b.bot_name)}</b> · <small style="color:var(--muted)">${b.pages} pages, ${b.ips} unique IPs</small></div>
+        <div><b>${b.visits}</b> visits · <small style="color:var(--muted)">last ${(b.last_seen||'').slice(0,16).replace('T',' ')}</small></div>
+      </div>`).join("");
+    const recent = r.recent.slice(0,12).map(v =>
+      `<div style="display:flex;gap:6px;font-size:11.5px;padding:3px 12px;color:var(--muted);font-family:ui-monospace,monospace">
+        <span style="color:#0F766E;font-weight:700;min-width:160px">${escapeHtml(v.bot_name)}</span>
+        <span style="flex:1">${escapeHtml(v.path)}</span>
+        <span>${v.country?'🌍 '+escapeHtml(v.country):''}</span>
+        <span style="color:#94A3B8">${(v.created_at||'').slice(11,19)}</span>
+      </div>`).join("");
+    wrap.innerHTML =
+      `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:0 0 6px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);padding:6px 12px;text-transform:uppercase">By bot · ${r.total_visits} total visits</div>
+        ${summary}
+       </div>
+       <details style="background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:8px 0">
+         <summary style="cursor:pointer;font-size:12px;font-weight:700;color:#0F766E;padding:0 12px">▸ Last 12 raw visits (timestamps)</summary>
+         <div style="margin-top:6px">${recent}</div>
+       </details>`;
+  } catch (_) {}
+}
+
 async function loadLaunch() {
+  loadVizScan(); loadVizBots();
   try {
     const s = await adm("/api/admin/launch/snippets");
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
