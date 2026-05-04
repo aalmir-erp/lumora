@@ -183,6 +183,23 @@
   </div>
 </section>
 
+<!-- 🎬 EMIRATE-SPECIFIC VIDEO -->
+<section style="padding:24px 16px;background:#0F172A">
+  <div style="max-width:720px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.4)">
+    <iframe id="em-video" style="width:100%;aspect-ratio:16/9;border:0;background:#0F172A;display:block"
+            loading="lazy" title="Emirate video"></iframe>
+  </div>
+  <p style="text-align:center;margin:10px 0 0"><a href="/videos.html" style="color:#FCD34D;font-weight:700;text-decoration:none;font-size:13px">📺 More Servia videos →</a></p>
+  <script>
+  (function(){
+    const params = new URLSearchParams(location.search);
+    const city = (params.get("city") || "dubai").toLowerCase();
+    const f = document.getElementById("em-video");
+    if (f) f.src = "/api/videos/play/em-" + city;
+  })();
+  </script>
+</section>
+
 <!-- 🗺 STATE-LEVEL LIVE MAP — shows real-time service activity in this emirate only -->
 <section style="padding:36px 16px;background:linear-gradient(180deg,#F8FAFC,#FFFFFF)">
   <div style="max-width:1180px;margin:0 auto">

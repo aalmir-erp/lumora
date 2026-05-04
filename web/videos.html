@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="servia-page" content="default">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<title>Servia videos — UAE home services in 30 seconds</title>
+<meta name="description" content="Watch Servia mascot videos for every UAE home service and emirate. Quick explainers, seasonal tips, and how-it-works guides.">
+<link rel="canonical" href="https://servia.ae/videos.html">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null">
+<noscript><link rel="stylesheet" href="/style.css"></noscript>
+<link rel="stylesheet" href="/widget.css">
+<style>
+  body { background:linear-gradient(180deg,#0F172A 0%,#1E293B 100%); color:#fff; }
+  .v-hero { padding:48px 16px 24px; text-align:center }
+  .v-hero h1 { font-size:36px; letter-spacing:-.02em; margin:0 0 8px }
+  .v-hero p { color:#CBD5E1; margin:0 0 14px }
+  .v-filters { display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:0 16px 24px;max-width:1180px;margin:0 auto }
+  .v-chip { background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18);
+    border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s }
+  .v-chip:hover { background:rgba(255,255,255,.18) }
+  .v-chip.active { background:#FCD34D;color:#7C2D12;border-color:#FCD34D }
+  .v-grid { display:grid;gap:16px;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    max-width:1280px;margin:0 auto 64px;padding:0 16px }
+  .v-card { background:#fff;border-radius:14px;overflow:hidden;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);transition:.18s;color:#0F172A }
+  .v-card:hover { transform:translateY(-3px); box-shadow:0 14px 32px rgba(0,0,0,.4) }
+  .v-card iframe { width:100%;height:200px;border:0;background:#0F172A;display:block }
+  .v-card .v-body { padding:14px 16px 16px }
+  .v-card h3 { font-size:14.5px;margin:0 0 6px;letter-spacing:-.01em;line-height:1.3 }
+  .v-card .v-meta { font-size:11.5px;color:#64748B;display:flex;gap:8px;flex-wrap:wrap }
+  .v-card .v-tag { background:#F1F5F9;color:#0F766E;padding:2px 8px;border-radius:999px;
+    font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em }
+  .v-empty { grid-column:1/-1;padding:48px;text-align:center;color:#94A3B8 }
+</style>
+<script src="/banner.js" defer></script>
+<script src="/_snippets.js" async></script>
+<script src="/cart-badge.js" async></script>
+<script src="/social-strip.js" async></script>
+</head><body>
+<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav" style="background:rgba(15,23,42,.85);border-bottom-color:rgba(255,255,255,.08)"><div class="nav-inner">
+  <a href="/"><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></a>
+  <div class="nav-cta" style="margin-inline-start:auto">
+    <a class="btn btn-ghost" href="/services.html" style="color:#fff;border-color:rgba(255,255,255,.2)">Services</a>
+    <a class="btn btn-primary" href="/book.html">Book now</a>
+  </div>
+</div></nav>
+
+<header class="v-hero">
+  <p style="margin:0 0 4px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#FCD34D;text-transform:uppercase">🎬 SERVIA STUDIO · MASCOT VIDEOS</p>
+  <h1>Quick UAE-service videos</h1>
+  <p>15–22 second explainers. Every service. Every emirate. Hand-picked.</p>
+</header>
+
+<div class="v-filters" id="v-filters">
+  <button class="v-chip active" data-f="all">All videos</button>
+  <button class="v-chip" data-f="kind:starter">⭐ Featured</button>
+  <button class="v-chip" data-f="kind:long">🎞 Long-form (60s)</button>
+  <button class="v-chip" data-f="kind:generic">💡 Tips &amp; how-to</button>
+  <button class="v-chip" data-f="kind:service">🛠 By service</button>
+  <button class="v-chip" data-f="kind:emirate">📍 By emirate</button>
+</div>
+<div class="v-filters" id="v-aspects" style="margin-top:-12px">
+  <button class="v-chip active" data-a="16x9">▭ 16:9 (YouTube · desktop)</button>
+  <button class="v-chip" data-a="9x16">▯ 9:16 (TikTok · Reels · Shorts)</button>
+  <button class="v-chip" data-a="1x1">⬜ 1:1 (Instagram feed)</button>
+</div>
+
+<section>
+  <div class="v-grid" id="v-grid"></div>
+</section>
+
+<footer><div class="container">
+  <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
+  <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
+  <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a></div>
+  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:hello@servia.ae">hello@servia.ae</a></div>
+</div></footer>
+
+<script>
+(() => {
+  const grid = document.getElementById('v-grid');
+  const chips = document.querySelectorAll('#v-filters .v-chip');
+  let all = [], filter = 'all', aspect = '16x9';
+
+  function render() {
+    let list = all;
+    if (filter !== 'all' && filter.startsWith('kind:')) {
+      const k = filter.slice(5);
+      list = all.filter(v => v.kind === k);
+    }
+    grid.innerHTML = list.length ? list.map(v => {
+      const tag = v.service_id ? '🛠 ' + (v.service_id.replace(/_/g,' ')) :
+                  v.emirate    ? '📍 ' + (v.emirate.replace(/-/g,' ')) :
+                  v.kind === 'starter' ? '⭐ Featured' : '💡 ' + (v.kind || 'tip');
+      const ifH = aspect === '9x16' ? '356px' : aspect === '1x1' ? '300px' : '200px';
+      return `
+        <div class="v-card">
+          <iframe loading="lazy" src="/api/videos/play/${v.slug}?aspect=${aspect}" title="${(v.title||'').replace(/"/g,'&quot;')}" style="height:${ifH}"></iframe>
+          <div class="v-body">
+            <h3>${(v.title||'').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</h3>
+            <div class="v-meta">
+              <span class="v-tag">${tag}</span>
+              <span>${v.duration_sec||18}s</span>
+              <span>${v.view_count||0} views</span>
+              <span style="background:#FCD34D;color:#7C2D12;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800">${aspect}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join("") : '<div class="v-empty">No videos in this filter — try another.</div>';
+  }
+
+  chips.forEach(c => c.onclick = () => {
+    chips.forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    filter = c.dataset.f;
+    render();
+  });
+  document.querySelectorAll('#v-aspects .v-chip').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#v-aspects .v-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    aspect = c.dataset.a;
+    render();
+  });
+
+  fetch("/api/videos/list?limit=200").then(r => r.ok ? r.json() : null).then(d => {
+    all = (d && d.videos) || [];
+    render();
+  }).catch(() => render());
+})();
+</script>
+
+<script src="/theme.js" defer></script>
+<script src="/app.js" defer></script>
+<script src="/install.js" defer></script>
+<script>(function(){var l=false;function ld(){if(l)return;l=true;var s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(function(ev){addEventListener(ev,ld,{once:true,passive:true})});})();</script>
+</body></html>

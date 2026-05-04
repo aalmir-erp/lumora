@@ -251,6 +251,29 @@ window.LUMORA_PIXELS = {
   </div>
 </section>
 
+<!-- Service-specific mascot video -->
+<section style="padding:36px 16px;background:#0F172A">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:18px">
+      <p style="color:#FCD34D;font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px">🎬 SERVIA STUDIO</p>
+      <h2 style="color:#fff;margin:0">Watch the 18-second explainer</h2>
+    </div>
+    <div style="max-width:720px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4)">
+      <iframe id="svc-video" style="width:100%;aspect-ratio:16/9;border:0;background:#0F172A;display:block"
+              loading="lazy" title="Service video"></iframe>
+    </div>
+    <p style="text-align:center;margin-top:14px"><a href="/videos.html" style="color:#FCD34D;font-weight:700;text-decoration:none">📺 More Servia videos →</a></p>
+  </div>
+  <script>
+  (function(){
+    const params = new URLSearchParams(location.search);
+    const sid = params.get("id") || "deep_cleaning";
+    const f = document.getElementById("svc-video");
+    if (f) f.src = "/api/videos/play/svc-" + sid.replace(/_/g,"-");
+  })();
+  </script>
+</section>
+
 <!-- Process -->
 <section style="background:color-mix(in srgb, var(--primary) 6%, var(--bg))">
   <div class="container">

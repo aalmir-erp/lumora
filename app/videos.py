@@ -116,23 +116,296 @@ STARTER_VIDEOS = [
 ]
 
 
+def _service_video(sid: str, sname: str, emoji: str, mascot: str, tone: str) -> dict:
+    return {
+        "slug": f"svc-{sid.replace('_','-')}",
+        "title": f"{sname} — Servia UAE",
+        "mascot": mascot, "tone": tone, "duration_sec": 18,
+        "scenes": [
+            {"text": f"{emoji} {sname}", "sub": "Across all 7 UAE emirates", "anim": "wave"},
+            {"text": "Vetted pros · same-day", "sub": "Background-checked + insured", "anim": "point"},
+            {"text": "Transparent fixed price", "sub": "AED 25,000 damage cover", "anim": "bounce"},
+            {"text": "7-day re-do guarantee", "sub": "Not happy? We come back free.", "anim": "shake"},
+            {"text": "Tap. Book. Done.", "sub": "60 seconds at servia.ae", "anim": "wave"},
+        ],
+        "service_id": sid, "kind": "service",
+    }
+
+
+def _emirate_video(em_id: str, em_name: str, tone: str) -> dict:
+    return {
+        "slug": f"em-{em_id}",
+        "title": f"Servia in {em_name}",
+        "mascot": "default", "tone": tone, "duration_sec": 16,
+        "scenes": [
+            {"text": f"📍 Servia in {em_name}", "sub": "Daily coverage · all neighbourhoods", "anim": "wave"},
+            {"text": "Local crews · local prices", "sub": "No premium for your area", "anim": "point"},
+            {"text": "Same-day if booked by 11am", "sub": "Real-time tracking on WhatsApp", "anim": "bounce"},
+            {"text": f"Book in {em_name} →", "sub": "servia.ae/book", "anim": "wave"},
+        ],
+        "emirate": em_id, "kind": "emirate",
+    }
+
+
+LONG_FORM_VIDEOS = [
+    {"slug":"long-ac-pre-summer", "title":"AC pre-summer guide — Servia explainer (60s)",
+     "mascot":"ac","tone":"amber","duration_sec":60, "kind":"long",
+     "scenes":[
+       {"text":"☀️ UAE summer hits 45°C", "sub":"Your AC works 14h/day in July", "anim":"shake"},
+       {"text":"❌ Why people skip service","sub":"'It's still cold' isn't enough","anim":"point"},
+       {"text":"⚠️ What happens then","sub":"Compressor fails · AED 1,200+ repair","anim":"shake"},
+       {"text":"✅ Servia AC service","sub":"From AED 75/unit · 90 min visit","anim":"bounce"},
+       {"text":"📅 Best time = April-May","sub":"Slots fill 2-3 weeks ahead","anim":"point"},
+       {"text":"📲 Book in 60 seconds","sub":"servia.ae/book?service=ac_service","anim":"wave"},
+       {"text":"💎 7-day re-do guarantee","sub":"AED 25k damage cover","anim":"wave"},
+     ]},
+    {"slug":"long-deep-clean-truth", "title":"Deep cleaning — what people don't tell you (60s)",
+     "mascot":"cleaning","tone":"teal","duration_sec":60, "kind":"long",
+     "scenes":[
+       {"text":"✨ Deep clean ≠ general clean","sub":"Top-to-bottom · 4-6 hours","anim":"point"},
+       {"text":"❌ Why DIY fails","sub":"Wrong tools · wrong products","anim":"shake"},
+       {"text":"⚠️ Hidden grime damages","sub":"Tile grout · oven · AC vents","anim":"shake"},
+       {"text":"✅ Servia 2-pro crew","sub":"Supplies + equipment included","anim":"bounce"},
+       {"text":"💰 From AED 350 · transparent","sub":"All sizes · all emirates","anim":"point"},
+       {"text":"🛡 AED 25k damage cover","sub":"7-day re-do guarantee","anim":"wave"},
+       {"text":"📲 Book your deep clean","sub":"servia.ae/book?service=deep_cleaning","anim":"wave"},
+     ]},
+    {"slug":"long-pest-truth", "title":"Pest control — what sprays don't tell you (60s)",
+     "mascot":"pest","tone":"green","duration_sec":60, "kind":"long",
+     "scenes":[
+       {"text":"🪲 Cockroaches in UAE","sub":"American + German species","anim":"point"},
+       {"text":"❌ Sprays = surface-only","sub":"Eggs survive · come back in 6 wks","anim":"shake"},
+       {"text":"⚠️ DIY costs AED 200+/yr","sub":"Buying sprays that don't work","anim":"shake"},
+       {"text":"✅ Servia residual treatment","sub":"Gel baits + IGR · kills lifecycle","anim":"bounce"},
+       {"text":"📅 90-day warranty","sub":"Free re-treat if pests return","anim":"point"},
+       {"text":"💰 From AED 200 · 1 visit","sub":"Pet-safe + child-safe options","anim":"point"},
+       {"text":"📲 Book pest control","sub":"servia.ae/book?service=pest_control","anim":"wave"},
+     ]},
+    {"slug":"long-handyman-saves", "title":"How a handyman visit saves AED 1000+ (60s)",
+     "mascot":"handyman","tone":"rose","duration_sec":60, "kind":"long",
+     "scenes":[
+       {"text":"🔧 Small problem today","sub":"Big bill tomorrow","anim":"point"},
+       {"text":"❌ Dripping tap = water bill spike","sub":"Loose socket = fire risk","anim":"shake"},
+       {"text":"⚠️ Postponing = compounding cost","sub":"AED 50 fix becomes AED 800+","anim":"shake"},
+       {"text":"✅ Servia hourly handyman","sub":"From AED 100/hr · 1-2h jobs","anim":"bounce"},
+       {"text":"🛠 Plumb · electric · paint","sub":"All-in-one visit · transparent","anim":"point"},
+       {"text":"📲 Book a handyman","sub":"servia.ae/book?service=handyman","anim":"wave"},
+     ]},
+    {"slug":"long-move-out", "title":"Move-out cleaning saves your deposit (60s)",
+     "mascot":"cleaning","tone":"indigo","duration_sec":60, "kind":"long",
+     "scenes":[
+       {"text":"📦 Moving out?","sub":"Landlord deposit on the line","anim":"point"},
+       {"text":"❌ Rushing the clean = loss","sub":"AED 800-3000 deposits kept","anim":"shake"},
+       {"text":"⚠️ Common cuts","sub":"AC filters · oven · grout · grates","anim":"shake"},
+       {"text":"✅ Servia move-out package","sub":"From AED 400 · 5h crew","anim":"bounce"},
+       {"text":"📋 Handover checklist","sub":"We document with photos","anim":"point"},
+       {"text":"📲 Book before handover day","sub":"servia.ae/book?service=move_in_out","anim":"wave"},
+     ]},
+    {"slug":"long-sofa-renew", "title":"Sofa shampoo brings back 'new' (60s)",
+     "mascot":"cleaning","tone":"blue","duration_sec":60, "kind":"long",
+     "scenes":[
+       {"text":"🛋 Tired-looking sofa?","sub":"Don't replace · restore","anim":"point"},
+       {"text":"❌ Why DIY fails","sub":"Wrong shampoo = water rings","anim":"shake"},
+       {"text":"⚠️ Stains set permanently","sub":"After 2-3 months they bond","anim":"shake"},
+       {"text":"✅ Servia steam shampoo","sub":"Pro extractor · safe foam","anim":"bounce"},
+       {"text":"💰 AED 120/seater · 2h","sub":"Looks + smells new","anim":"point"},
+       {"text":"📲 Book sofa cleaning","sub":"servia.ae/book?service=sofa_carpet","anim":"wave"},
+     ]},
+    {"slug":"long-villa-deep", "title":"Villa deep clean — full reset (60s)",
+     "mascot":"cleaning","tone":"green","duration_sec":60, "kind":"long",
+     "scenes":[
+       {"text":"🏡 Villa = bigger crew","sub":"5-7 hour full reset","anim":"bounce"},
+       {"text":"✅ Indoor + outdoor","sub":"Garden, pool deck, garage","anim":"point"},
+       {"text":"✨ Top-to-bottom","sub":"Every BR · BA · kitchen · majlis","anim":"wave"},
+       {"text":"💰 From AED 700","sub":"Transparent · no hidden fees","anim":"point"},
+       {"text":"🛡 AED 25k damage cover","sub":"7-day re-do guarantee","anim":"wave"},
+       {"text":"📲 Book villa deep clean","sub":"servia.ae/book?service=villa_deep","anim":"wave"},
+     ]},
+    {"slug":"long-bundle-savings", "title":"Bundle services — save up to 15% (60s)",
+     "mascot":"default","tone":"amber","duration_sec":60, "kind":"long",
+     "scenes":[
+       {"text":"📦 Need 2+ services?","sub":"Stack them in your cart","anim":"point"},
+       {"text":"💰 Auto bundle discount","sub":"2 = 5% · 3 = 10% · 4+ = 15% off","anim":"bounce"},
+       {"text":"📅 Same day or different days","sub":"You decide per line","anim":"point"},
+       {"text":"💳 ONE payment · ONE invoice","sub":"Apple Pay · Google Pay · Card","anim":"wave"},
+       {"text":"📲 Build your bundle","sub":"servia.ae/cart","anim":"wave"},
+     ]},
+]
+
+
+GENERIC_VIDEOS = [
+    {"slug":"why-servia",       "title":"Why 2,400+ UAE families pick Servia",     "mascot":"default","tone":"teal",
+     "scenes":[{"text":"4.9★ from 2,400+","sub":"Real verified reviews","anim":"wave"},
+               {"text":"Vetted pros only","sub":"Background-checked + insured","anim":"point"},
+               {"text":"Pay only when satisfied","sub":"7-day re-do guarantee","anim":"bounce"},
+               {"text":"AED 25,000 damage cover","sub":"On every visit","anim":"shake"}]},
+    {"slug":"summer-prep",      "title":"UAE summer prep — book before June",      "mascot":"ac","tone":"amber",
+     "scenes":[{"text":"☀️ 45°C is coming","sub":"AC failures spike June-Aug","anim":"shake"},
+               {"text":"Pre-summer check","sub":"AED 75/unit · 90 min","anim":"point"},
+               {"text":"Book by May","sub":"Slots disappearing fast","anim":"wave"}]},
+    {"slug":"deposit-saving",   "title":"Move-out cleaning saves your deposit",    "mascot":"cleaning","tone":"green",
+     "scenes":[{"text":"📦 Moving out?","sub":"Landlords keep AED 800-3000 deposits","anim":"shake"},
+               {"text":"Deposit-saving deep clean","sub":"From AED 400 · 5h crew","anim":"bounce"},
+               {"text":"Be present at handover","sub":"We document everything","anim":"wave"}]},
+    {"slug":"pest-truth",       "title":"What pest sprays don't tell you",         "mascot":"pest","tone":"green",
+     "scenes":[{"text":"🪲 Sprays = quick fix","sub":"Pests come back in 6 weeks","anim":"shake"},
+               {"text":"Servia residual treatment","sub":"90-day warranty","anim":"point"},
+               {"text":"Book pest control →","sub":"From AED 200","anim":"wave"}]},
+    {"slug":"handyman-saves",   "title":"Handyman saves you AED 500+",             "mascot":"handyman","tone":"rose",
+     "scenes":[{"text":"🔧 Small fix or full job?","sub":"Most jobs done in 1-2h","anim":"wave"},
+               {"text":"Hourly · transparent","sub":"From AED 100 / hour","anim":"point"},
+               {"text":"Plumbing · electric · paint","sub":"All in one visit","anim":"bounce"}]},
+    {"slug":"sofa-renew",       "title":"Sofa shampoo brings back 'new'",          "mascot":"cleaning","tone":"blue",
+     "scenes":[{"text":"🛋️ Tired sofa?","sub":"Don't replace — restore","anim":"point"},
+               {"text":"Steam shampoo","sub":"AED 120 / seater · 2h","anim":"bounce"},
+               {"text":"Stains gone · smell gone","sub":"Like new again","anim":"wave"}]},
+    {"slug":"car-at-home",      "title":"Car wash at YOUR home",                   "mascot":"car","tone":"blue",
+     "scenes":[{"text":"🚗 Skip the queue","sub":"We come to you","anim":"wave"},
+               {"text":"Inside + outside","sub":"From AED 60","anim":"point"},
+               {"text":"Book your time","sub":"Daily slots open","anim":"bounce"}]},
+    {"slug":"ramadan-clean",    "title":"Ramadan kitchen reset",                   "mascot":"cleaning","tone":"purple",
+     "scenes":[{"text":"🌙 Ramadan = heavy cooking","sub":"Grease + spice = stuck","anim":"point"},
+               {"text":"Kitchen deep clean","sub":"Oven · hood · cabinets","anim":"bounce"},
+               {"text":"Book between iftars","sub":"We work around you","anim":"wave"}]},
+    {"slug":"baby-safe",        "title":"Babysitter-safe disinfection",            "mascot":"maid","tone":"purple",
+     "scenes":[{"text":"👶 New baby coming?","sub":"Hospital-grade disinfection","anim":"wave"},
+               {"text":"Servia pre-arrival deep clean","sub":"Safe for newborns","anim":"point"},
+               {"text":"Book before the due date","sub":"Peace of mind","anim":"bounce"}]},
+    {"slug":"refer-rewards",    "title":"Refer = climb tier ladder",               "mascot":"default","tone":"amber",
+     "scenes":[{"text":"🎁 Refer one friend","sub":"You both get a discount","anim":"point"},
+               {"text":"3 = Silver · 10% off","sub":"Every booking forever","anim":"bounce"},
+               {"text":"11+ = Platinum 20% off","sub":"Highest tier","anim":"wave"}]},
+    {"slug":"creator-program",  "title":"Make a video, climb tiers",               "mascot":"default","tone":"rose",
+     "scenes":[{"text":"🎬 Tag @servia.ae","sub":"On Instagram / TikTok / YouTube","anim":"point"},
+               {"text":"Length × followers × platform","sub":"= creator points","anim":"bounce"},
+               {"text":"5,000 pts = Elite track","sub":"Custom perks · revenue share","anim":"wave"}]},
+    {"slug":"emergency-tonight","title":"Emergency tonight? Same-day Servia",      "mascot":"handyman","tone":"rose",
+     "scenes":[{"text":"🚨 Burst pipe?","sub":"AC down? Lock broken?","anim":"shake"},
+               {"text":"Same-day pros","sub":"Most slots within 2h","anim":"point"},
+               {"text":"Book → pay → done","sub":"60 seconds total","anim":"wave"}]},
+    {"slug":"villa-deep",       "title":"Villa deep clean — full reset",           "mascot":"cleaning","tone":"green",
+     "scenes":[{"text":"🏡 Bigger crew · 5-7h","sub":"Indoor + outdoor","anim":"bounce"},
+               {"text":"Garden · pool deck · windows","sub":"All included","anim":"point"},
+               {"text":"From AED 700","sub":"Transparent pricing","anim":"wave"}]},
+    {"slug":"office-clean",     "title":"Office cleaning — day OR night",          "mascot":"cleaning","tone":"indigo",
+     "scenes":[{"text":"🏢 Out-of-hours?","sub":"Our crews work nights","anim":"point"},
+               {"text":"Per square foot","sub":"Daily / weekly / monthly","anim":"bounce"},
+               {"text":"Quiet · efficient · vetted","sub":"Trust badges + IDs","anim":"wave"}]},
+    {"slug":"smart-home",       "title":"Smart home setup in 3 hours",             "mascot":"handyman","tone":"indigo",
+     "scenes":[{"text":"💡 Alexa · Google Home","sub":"Smart locks · cameras","anim":"point"},
+               {"text":"Install + configure","sub":"From AED 250","anim":"bounce"},
+               {"text":"Pro shows you everything","sub":"You're up & running","anim":"wave"}]},
+    {"slug":"weekend-saver",    "title":"Save your weekend with Servia",           "mascot":"default","tone":"teal",
+     "scenes":[{"text":"⏱ 4-6h cleaning yourself?","sub":"Or 2 cleaners doing it","anim":"point"},
+               {"text":"Servia takes 3 hours","sub":"You get the weekend back","anim":"bounce"},
+               {"text":"From AED 350","sub":"Worth every dirham","anim":"wave"}]},
+    {"slug":"bundle-discount",  "title":"Bundle 2+ services — save up to 15%",     "mascot":"default","tone":"amber",
+     "scenes":[{"text":"📦 Need 2+ services?","sub":"Stack them in your cart","anim":"point"},
+               {"text":"2 = 5% off · 3 = 10%","sub":"4+ = 15% off bundle","anim":"bounce"},
+               {"text":"One payment · one invoice","sub":"servia.ae/cart","anim":"wave"}]},
+    {"slug":"tabby-pay",        "title":"Pay with Tabby — split into 4",           "mascot":"default","tone":"purple",
+     "scenes":[{"text":"💳 Big service?","sub":"Pay over 4 weeks","anim":"point"},
+               {"text":"Tabby · 0% interest","sub":"No fees · instant","anim":"bounce"},
+               {"text":"Available at checkout","sub":"For all UAE bookings","anim":"wave"}]},
+    {"slug":"woman-only",       "title":"Female-only crews on request",            "mascot":"maid","tone":"purple",
+     "scenes":[{"text":"👩 Need female crew?","sub":"Just tick the box","anim":"point"},
+               {"text":"Vetted female pros","sub":"Same price · same standards","anim":"bounce"},
+               {"text":"Book in privacy","sub":"servia.ae","anim":"wave"}]},
+    {"slug":"app-install",      "title":"Install the Servia app — free",           "mascot":"default","tone":"teal",
+     "scenes":[{"text":"📲 Mobile app","sub":"60-second install · no app store","anim":"wave"},
+               {"text":"Real-time tracking","sub":"Push alerts on arrival","anim":"point"},
+               {"text":"App-only deals","sub":"Exclusive perks","anim":"bounce"}]},
+]
+
+
+# Service catalogue used to bulk-generate per-service videos
+ALL_SERVICES = [
+    ("ac_service",          "AC Service",            "❄️", "ac",       "amber"),
+    ("ac_cleaning",         "AC Cleaning",           "❄️", "ac",       "amber"),
+    ("deep_cleaning",       "Deep Cleaning",         "✨", "cleaning", "teal"),
+    ("general_cleaning",    "General Cleaning",      "🧹", "cleaning", "teal"),
+    ("villa_deep",          "Villa Deep Clean",      "🏡", "cleaning", "green"),
+    ("kitchen_deep_clean",  "Kitchen Deep Clean",    "👨‍🍳", "cleaning", "orange"),
+    ("kitchen_deep",        "Kitchen Deep Clean",    "👨‍🍳", "cleaning", "orange"),
+    ("move_in_out_cleaning","Move-in/Move-out Clean","📦", "cleaning", "indigo"),
+    ("move_in_out",         "Move-in/Move-out Clean","📦", "cleaning", "indigo"),
+    ("office_cleaning",     "Office Cleaning",       "🏢", "cleaning", "indigo"),
+    ("post_construction",   "Post-Construction Clean","🏗", "cleaning","rose"),
+    ("disinfection",        "Disinfection",          "🧴", "cleaning", "green"),
+    ("maid_service",        "Maid Service",          "👤", "maid",     "purple"),
+    ("babysitting",         "Babysitter / Nanny",    "👶", "maid",     "purple"),
+    ("handyman",            "Handyman",              "🔧", "handyman", "rose"),
+    ("painting",            "Painting",              "🎨", "handyman", "rose"),
+    ("pest_control",        "Pest Control",          "🪲", "pest",     "green"),
+    ("sofa_carpet",         "Sofa & Carpet Clean",   "🛋️","cleaning", "blue"),
+    ("carpet_cleaning",     "Carpet Cleaning",       "🧼", "cleaning", "blue"),
+    ("window_cleaning",     "Window Cleaning",       "🪟", "cleaning", "blue"),
+    ("curtain_cleaning",    "Curtain Cleaning",      "🪟", "cleaning", "blue"),
+    ("marble_polish",       "Marble Polishing",      "💎", "cleaning", "amber"),
+    ("car_wash",            "Car Wash",              "🚗", "car",      "blue"),
+    ("swimming_pool",       "Pool Maintenance",      "🏊", "pool",     "blue"),
+    ("gardening",           "Gardening",             "🌿", "garden",   "green"),
+    ("smart_home",          "Smart Home Setup",      "💡", "handyman", "indigo"),
+    ("laundry",             "Laundry & Ironing",     "👕", "maid",     "purple"),
+]
+
+ALL_EMIRATES = [
+    ("dubai",          "Dubai",          "teal"),
+    ("abu-dhabi",      "Abu Dhabi",      "green"),
+    ("sharjah",        "Sharjah",        "amber"),
+    ("ajman",          "Ajman",          "purple"),
+    ("ras-al-khaimah", "Ras Al Khaimah", "rose"),
+    ("umm-al-quwain",  "Umm Al Quwain",  "blue"),
+    ("fujairah",       "Fujairah",       "indigo"),
+]
+
+
+def _ensure_extra_columns():
+    with db.connect() as c:
+        try: c.execute("ALTER TABLE videos ADD COLUMN service_id TEXT")
+        except Exception: pass
+        try: c.execute("ALTER TABLE videos ADD COLUMN emirate TEXT")
+        except Exception: pass
+        try: c.execute("ALTER TABLE videos ADD COLUMN kind TEXT")
+        except Exception: pass
+
+
 def seed_videos_if_empty():
+    """Bulk seed: 5 hand-crafted starter + 20 generic + 1 per service + 1 per
+    emirate. Idempotent via INSERT OR IGNORE."""
     _ensure_table()
-    with db.connect() as c:
-        try:
-            n = c.execute("SELECT COUNT(*) AS n FROM videos").fetchone()["n"]
-        except Exception:
-            n = 0
-    if n >= 5: return
+    _ensure_extra_columns()
     now = _dt.datetime.utcnow().isoformat() + "Z"
+    inserts = []
+    for v in STARTER_VIDEOS:
+        inserts.append((v["slug"], v["title"], v["mascot"], v["tone"],
+                        _json.dumps(v["scenes"]), v["duration_sec"], now,
+                        None, None, "starter"))
+    for v in LONG_FORM_VIDEOS:
+        inserts.append((v["slug"], v["title"], v["mascot"], v["tone"],
+                        _json.dumps(v["scenes"]), v["duration_sec"], now,
+                        None, None, "long"))
+    for v in GENERIC_VIDEOS:
+        inserts.append((v["slug"], v["title"], v["mascot"], v["tone"],
+                        _json.dumps(v["scenes"]), 18, now,
+                        None, None, "generic"))
+    for sid, name, emoji, mascot, tone in ALL_SERVICES:
+        v = _service_video(sid, name, emoji, mascot, tone)
+        inserts.append((v["slug"], v["title"], v["mascot"], v["tone"],
+                        _json.dumps(v["scenes"]), v["duration_sec"], now,
+                        sid, None, "service"))
+    for em_id, em_name, tone in ALL_EMIRATES:
+        v = _emirate_video(em_id, em_name, tone)
+        inserts.append((v["slug"], v["title"], v["mascot"], v["tone"],
+                        _json.dumps(v["scenes"]), v["duration_sec"], now,
+                        None, em_id, "emirate"))
     with db.connect() as c:
-        for v in STARTER_VIDEOS:
+        for row in inserts:
             try:
                 c.execute(
-                    "INSERT OR IGNORE INTO videos(slug, title, mascot, tone, scenes_json, duration_sec, created_at) "
-                    "VALUES(?,?,?,?,?,?,?)",
-                    (v["slug"], v["title"], v["mascot"], v["tone"],
-                     _json.dumps(v["scenes"]), v["duration_sec"], now))
+                    "INSERT OR IGNORE INTO videos(slug, title, mascot, tone, scenes_json, "
+                    "duration_sec, created_at, service_id, emirate, kind) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?)", row)
             except Exception: pass
 
 
@@ -153,6 +426,10 @@ def render_video_html(v: dict) -> str:
     n = len(scenes)
     per = max(2.5, v.get("duration_sec", 18) / n)
     total = per * n
+    aspect = v.get("aspect") or "16x9"
+    aspect_css = {"16x9": "16/9", "9x16": "9/16", "1x1": "1/1"}.get(aspect, "16/9")
+    is_vertical = aspect == "9x16"
+    is_square = aspect == "1x1"
     # Build N scene divs with staggered animation-delay
     scene_html = []
     for i, s in enumerate(scenes):
@@ -173,7 +450,7 @@ def render_video_html(v: dict) -> str:
 * {{ box-sizing: border-box; }}
 body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   background:#0F172A; min-height:100vh; display:flex; align-items:center; justify-content:center; }}
-.video {{ position:relative; width:min(720px, 95vw); aspect-ratio: 16/9;
+.video {{ position:relative; width:min({"360px" if is_vertical else "640px" if is_square else "720px"}, 95vw); aspect-ratio: {aspect_css};
   background:linear-gradient(135deg,{a},{b}); border-radius:14px;
   box-shadow:0 24px 60px rgba(0,0,0,.4); overflow:hidden; color:#fff; }}
 .video::before {{ content:""; position:absolute; inset:0;
@@ -255,19 +532,28 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
 
 # ---------- public endpoints ----------
 @public_router.get("/list")
-def list_videos_public():
+def list_videos_public(service_id: str | None = None, emirate: str | None = None,
+                       kind: str | None = None, limit: int = 100):
     seed_videos_if_empty()
+    where, params = [], []
+    if service_id: where.append("service_id = ?"); params.append(service_id)
+    if emirate:    where.append("emirate = ?");    params.append(emirate)
+    if kind:       where.append("kind = ?");       params.append(kind)
+    sql = ("SELECT slug, title, mascot, tone, duration_sec, view_count, "
+           "service_id, emirate, kind FROM videos")
+    if where: sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY id DESC LIMIT ?"
+    params.append(max(1, min(limit, 200)))
     with db.connect() as c:
-        try:
-            rows = c.execute(
-                "SELECT slug, title, mascot, tone, duration_sec, view_count "
-                "FROM videos ORDER BY id DESC LIMIT 50").fetchall()
+        try: rows = c.execute(sql, params).fetchall()
         except Exception: rows = []
-    return {"videos": [db.row_to_dict(r) for r in rows]}
+    return {"videos": [db.row_to_dict(r) for r in rows], "count": len(rows)}
 
 
 @public_router.get("/play/{slug}", response_class=HTMLResponse)
-def play_video(slug: str):
+def play_video(slug: str, aspect: str = "16x9"):
+    """`?aspect=` accepts 16x9 (default · landscape · YouTube/Insta feed),
+    9x16 (vertical · TikTok/Reels/Shorts), or 1x1 (square · Insta feed/post)."""
     seed_videos_if_empty()
     with db.connect() as c:
         try:
@@ -278,6 +564,7 @@ def play_video(slug: str):
     v = db.row_to_dict(r) or {}
     try: v["scenes"] = _json.loads(v.get("scenes_json") or "[]")
     except Exception: v["scenes"] = []
+    v["aspect"] = aspect if aspect in ("16x9", "9x16", "1x1") else "16x9"
     with db.connect() as c:
         try: c.execute("UPDATE videos SET view_count=view_count+1 WHERE slug=?", (slug,))
         except Exception: pass

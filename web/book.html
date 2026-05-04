@@ -83,7 +83,24 @@
     <label>Notes (optional)</label><textarea id="notes"></textarea>
 
     <button class="btn btn-primary btn-block" type="button" id="book-btn" style="margin-top:18px;font-size:16px">Confirm booking →</button>
+    <button type="button" id="bundle-btn"
+            style="width:100%;margin-top:8px;background:#FEF3C7;color:#7C2D12;border:1px solid #FCD34D;padding:11px;border-radius:999px;font-weight:800;cursor:pointer;font-size:14px"
+            onclick="addCurrentToBundle()">
+      🛒 Or add this to a bundle (book more services together — save 5–15%)
+    </button>
     <div id="result" style="margin-top:18px"></div>
+    <script>
+      function addCurrentToBundle() {
+        const sid = document.getElementById("service").value;
+        if (!sid) { alert("Pick a service first."); return; }
+        const item = {service_id: sid};
+        const br = document.getElementById("bedrooms"); if (br && br.value) item.bedrooms = parseInt(br.value,10);
+        const hr = document.getElementById("hours");    if (hr && hr.value) item.hours    = parseInt(hr.value,10);
+        const un = document.getElementById("units");    if (un && un.value) item.units    = parseInt(un.value,10);
+        if (window.serviaAddToBundle) serviaAddToBundle(item);
+        else { try { const cur = JSON.parse(localStorage.getItem("servia.cart.v1")||"[]"); cur.push({...item, _ts:Date.now()}); localStorage.setItem("servia.cart.v1", JSON.stringify(cur)); location.href="/cart.html"; } catch (_) { location.href="/cart.html"; } }
+      }
+    </script>
   </div>
 </div></section>
 
