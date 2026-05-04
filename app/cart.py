@@ -41,24 +41,35 @@ class CartPayload(BaseModel):
 
 @router.post("/quote")
 def quote(cart: CartPayload):
-    """Return per-line + bundle pricing for the cart."""
+    """Return per-line + bundle pricing for the cart. Tolerant — if a service
+    can't be priced, fall back to a starting-price estimate so the cart
+    never fully breaks for the customer."""
     lines = []
     subtotal = 0
+    try:
+        services_index = {s["id"]: s for s in kb.services()["services"]}
+    except Exception:
+        services_index = {}
     for it in cart.items:
-        q = tools.get_quote(
-            service_id=it.service_id,
-            bedrooms=it.bedrooms, hours=it.hours, units=it.units,
-            recurring=None,  # bundle is one-off
-        )
+        try:
+            q = tools.get_quote(
+                service_id=it.service_id,
+                bedrooms=it.bedrooms, hours=it.hours, units=it.units,
+                recurring=None,
+            )
+        except Exception as e:
+            q = {"ok": False, "error": str(e)}
         if not q.get("ok"):
-            raise HTTPException(400, f"Cannot quote {it.service_id}: {q.get('error')}")
+            # Soft-fallback to starting price so the cart still renders
+            sp = (services_index.get(it.service_id) or {}).get("starting_price", 100)
+            q = {"ok": True, "subtotal": sp, "discount": 0, "total": sp,
+                 "breakdown": {"service": it.service_id, "fallback": True}}
         line_total = q.get("total") or 0
-        # Apply addon line items (look up addon prices in kb)
         addon_total = 0
         addon_breakdown = []
         try:
-            svc = next((s for s in kb.services()["services"] if s["id"] == it.service_id), None)
-            valid_addons = {a["id"]: a for a in (svc or {}).get("addons", [])}
+            svc = services_index.get(it.service_id) or {}
+            valid_addons = {a.get("id"): a for a in (svc.get("addons") or []) if a.get("id")}
             for aid in (it.addons or []):
                 ad = valid_addons.get(aid)
                 if ad:
@@ -69,7 +80,7 @@ def quote(cart: CartPayload):
         line_total += addon_total
         lines.append({
             "service_id": it.service_id,
-            "service_name": (q.get("breakdown") or {}).get("service") or it.service_id,
+            "service_name": (services_index.get(it.service_id) or {}).get("name") or it.service_id,
             "base": q.get("subtotal", 0),
             "discount": q.get("discount", 0),
             "addons_total": addon_total,

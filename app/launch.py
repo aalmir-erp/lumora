@@ -410,6 +410,31 @@ def remove_listing(url: str):
     return {"ok": True, "count": len(arr)}
 
 
+# ---------- social profile URLs (also rendered on every public page footer) ----------
+class SocialBody(BaseModel):
+    instagram: str | None = None
+    tiktok: str | None = None
+    facebook: str | None = None
+    twitter: str | None = None
+    linkedin: str | None = None
+    youtube: str | None = None
+    pinterest: str | None = None
+
+
+@router.get("/social")
+def get_social():
+    return db.cfg_get("social_profiles", {}) or {}
+
+
+@router.post("/social")
+def save_social(body: SocialBody):
+    cur = db.cfg_get("social_profiles", {}) or {}
+    upd = {k: (v or "").strip() for k, v in body.dict(exclude_none=True).items()}
+    cur.update(upd)
+    db.cfg_set("social_profiles", cur)
+    return {"ok": True, "saved": cur}
+
+
 @router.get("/mentions/queries")
 def mention_queries():
     """Returns preset Google search URLs to discover where Servia is mentioned."""

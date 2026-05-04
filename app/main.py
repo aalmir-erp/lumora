@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, cart, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, tools, whatsapp
+from . import admin, ai_router, cart, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, tools, videos, whatsapp
 from .auth import ADMIN_TOKEN
 from .config import get_settings
 
@@ -40,6 +40,35 @@ app.include_router(portal_v2.public_router)
 app.include_router(whatsapp.router)
 app.include_router(launch.router)
 app.include_router(cart.router)
+app.include_router(ai_router.router)
+app.include_router(videos.public_router)
+app.include_router(videos.admin_router)
+
+
+@app.on_event("startup")
+def _seed_starter_videos():
+    try: videos.seed_videos_if_empty()
+    except Exception as e: print(f"[videos] seed skipped: {e}", flush=True)
+
+
+# ---------- public social profiles for frontend follow strip ----------
+@app.get("/api/site/social")
+def public_social():
+    s = db.cfg_get("social_profiles", {}) or {}
+    out = []
+    LABELS = [
+        ("instagram", "Instagram", "📷"),
+        ("tiktok",    "TikTok",    "🎵"),
+        ("facebook",  "Facebook",  "📘"),
+        ("twitter",   "X",         "𝕏"),
+        ("linkedin",  "LinkedIn",  "💼"),
+        ("youtube",   "YouTube",   "📺"),
+        ("pinterest", "Pinterest", "📌"),
+    ]
+    for k, label, emoji in LABELS:
+        url = (s.get(k) or "").strip()
+        if url: out.append({"key": k, "label": label, "emoji": emoji, "url": url})
+    return {"profiles": out}
 
 
 # ---------- public snippets injector — admin pastes GA/GTM/Pixel/etc, all pages run it ----------

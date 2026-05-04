@@ -44,6 +44,8 @@
     <a href="#brand"     data-tab="brand">🎨 Brand &amp; Contact</a>
     <a href="#whatsapp"  data-tab="whatsapp">📲 WhatsApp</a>
     <a href="#launch"    data-tab="launch">🚀 Launch &amp; Growth</a>
+    <a href="#aiarena"   data-tab="aiarena">🤖 AI Arena</a>
+    <a href="#videos"    data-tab="videos">🎬 Videos</a>
     <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
   </aside>
   <main class="admin-main">
@@ -347,6 +349,81 @@
       <h3 style="margin:24px 0 8px;font-size:18px">🔎 Find where Servia is being mentioned</h3>
       <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Quick search shortcuts to find brand mentions across the open web.</p>
       <div id="lc-mentions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px"></div>
+
+      <h3 style="margin:24px 0 8px;font-size:18px">📲 Public social profile URLs</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Once saved, these appear in a 'Follow Servia' strip above every page footer.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
+        <label style="font-size:12px;font-weight:700;color:var(--muted)">📷 Instagram <input id="soc-instagram" placeholder="https://instagram.com/servia.ae" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700;color:var(--muted)">🎵 TikTok <input id="soc-tiktok" placeholder="https://tiktok.com/@servia.ae" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700;color:var(--muted)">📘 Facebook <input id="soc-facebook" placeholder="https://facebook.com/servia.ae" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700;color:var(--muted)">𝕏 X / Twitter <input id="soc-twitter" placeholder="https://x.com/servia" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700;color:var(--muted)">💼 LinkedIn <input id="soc-linkedin" placeholder="https://linkedin.com/company/servia" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700;color:var(--muted)">📺 YouTube <input id="soc-youtube" placeholder="https://youtube.com/@servia" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+        <label style="font-size:12px;font-weight:700;color:var(--muted)">📌 Pinterest <input id="soc-pinterest" placeholder="https://pinterest.com/servia" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+      </div>
+      <button class="btn btn-primary" onclick="saveSocial()" style="margin-top:12px">💾 Save social URLs</button>
+      <span id="soc-msg" style="margin-inline-start:10px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+    </div>
+
+    <!-- ====== AI ARENA ====== -->
+    <div id="t-aiarena" class="tab" style="display:none">
+      <h2>🤖 AI Arena — multi-provider router &amp; comparison</h2>
+      <p style="color:var(--muted);margin-top:0;font-size:14px">Paste API keys from any AI provider, pick a default per persona, and run side-by-side comparisons of multiple models on the same prompt.</p>
+
+      <h3 style="margin:18px 0 8px;font-size:16px">🔑 Provider API keys</h3>
+      <div id="ai-providers"></div>
+
+      <h3 style="margin:24px 0 8px;font-size:16px">🎯 Default model per persona</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px">Each persona uses its own default. Customer = chat widget, Admin = your WhatsApp replies, Vendor = onboarding bot, Blog/Video = content generation.</p>
+      <div id="ai-defaults" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>
+      <button class="btn btn-primary" onclick="saveAIKeys()" style="margin-top:14px">💾 Save keys + defaults</button>
+      <span id="ai-msg" style="margin-inline-start:10px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+
+      <h3 style="margin:32px 0 8px;font-size:16px">🥊 Run an arena</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 8px">Pick 2-4 models, type one prompt, hit Compare. Responses arrive side-by-side with latency.</p>
+      <textarea id="arena-prompt" placeholder="e.g. 'Write a 2-line tagline for an AC service in Dubai Marina, summer ready.'" style="width:100%;min-height:80px;padding:10px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px"></textarea>
+      <div id="arena-targets" style="margin:10px 0;display:flex;flex-wrap:wrap;gap:8px"></div>
+      <button class="btn btn-primary" onclick="runArena()">⚡ Compare selected</button>
+      <div id="arena-results" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:18px"></div>
+    </div>
+
+    <!-- ====== VIDEOS ====== -->
+    <div id="t-videos" class="tab" style="display:none">
+      <h2>🎬 Mascot videos</h2>
+      <p style="color:var(--muted);margin-top:0;font-size:14px">Animated motion-graphic videos starring the Servia mascot — runs in any browser, no MP4 file needed. Generate new ones with the AI router (uses your default 'video' model).</p>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin:14px 0">
+        <h3 style="margin:0 0 8px;font-size:15px">✨ Generate a new video</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+          <input id="vid-topic" placeholder="Topic — e.g. 'Pre-summer AC service Dubai'" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px;grid-column:1/-1">
+          <select id="vid-mascot" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
+            <option value="default">Default mascot</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="ac">AC tech</option>
+            <option value="handyman">Handyman</option>
+            <option value="pool">Pool</option>
+            <option value="garden">Garden</option>
+            <option value="car">Car</option>
+            <option value="maid">Maid</option>
+            <option value="pest">Pest control</option>
+          </select>
+          <select id="vid-tone" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
+            <option value="teal">Teal</option><option value="amber">Amber</option>
+            <option value="purple">Purple</option><option value="rose">Rose</option>
+            <option value="green">Green</option><option value="blue">Blue</option>
+          </select>
+          <select id="vid-dur" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
+            <option value="14">14 seconds</option>
+            <option value="18" selected>18 seconds</option>
+            <option value="22">22 seconds</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="genVideo()" style="margin-top:10px">🎥 Generate video</button>
+        <span id="vid-msg" style="margin-inline-start:10px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+      </div>
+
+      <h3 style="margin:18px 0 8px;font-size:15px">📺 Library</h3>
+      <div id="vid-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px"></div>
     </div>
 
   </main>
@@ -380,6 +457,8 @@ function show(tab) {
   if (tab==="brand")     loadBrand();
   if (tab==="whatsapp")  loadWA();
   if (tab==="launch")    loadLaunch();
+  if (tab==="aiarena")   loadAIArena();
+  if (tab==="videos")    loadVideos();
 }
 async function adm(path, opts={}) {
   try {
@@ -1326,6 +1405,176 @@ async function removeListing(encUrl) {
   await adm("/api/admin/launch/listings?url=" + encUrl, {method:"DELETE"});
   loadLaunch();
 }
+
+// ============== SOCIAL PROFILES (under Launch tab) ==============
+async function loadSocial() {
+  try {
+    const s = await adm("/api/admin/launch/social");
+    ["instagram","tiktok","facebook","twitter","linkedin","youtube","pinterest"].forEach(k => {
+      const el = document.getElementById("soc-" + k);
+      if (el) el.value = s[k] || "";
+    });
+  } catch (_) {}
+}
+async function saveSocial() {
+  const body = {};
+  ["instagram","tiktok","facebook","twitter","linkedin","youtube","pinterest"].forEach(k => {
+    body[k] = (document.getElementById("soc-" + k) || {}).value || "";
+  });
+  const r = await adm("/api/admin/launch/social", {method:"POST", body});
+  document.getElementById("soc-msg").textContent = r.ok ? "✅ Saved + live across all pages." : "❌";
+  setTimeout(() => document.getElementById("soc-msg").textContent = "", 3000);
+}
+
+// ============== AI ARENA ==============
+let _aiCatalog = null;
+const AI_PERSONAS = ["customer","admin","vendor","blog","video"];
+
+async function loadAIArena() {
+  try {
+    _aiCatalog = await adm("/api/admin/ai/catalog");
+  } catch (e) {
+    document.getElementById("ai-providers").innerHTML = "Error: " + escapeHtml(e.message);
+    return;
+  }
+  const provHtml = _aiCatalog.providers.map(p => {
+    const status = p.key_set ? '<span style="color:#15803D">●</span> key set' : '<span style="color:#94A3B8">○</span> no key';
+    return `<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+        <div>
+          <div style="font-weight:800;font-size:14px">${escapeHtml(p.label)}</div>
+          <div style="font-size:11.5px;color:var(--muted)">${status} · env: <code>${escapeHtml(p.key_env)}</code></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted)">${p.models.length} models</div>
+      </div>
+      <input id="aikey-${p.provider}" type="password" placeholder="Paste API key (leave blank to keep)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px">
+      <details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--muted)">Available models</summary>
+        <div style="margin-top:6px;font-size:12px;line-height:1.6">
+          ${p.models.map(m => `<div>• <code>${m.id}</code> <span style="color:var(--muted)">— ${m.label} <small style="color:#0F766E">(${m.tier})</small></span></div>`).join("")}
+        </div>
+      </details>
+    </div>`;
+  }).join("");
+  document.getElementById("ai-providers").innerHTML = provHtml;
+
+  // Defaults selectors
+  const allModels = [];
+  _aiCatalog.providers.forEach(p => p.models.forEach(m =>
+    allModels.push({val: p.provider+"/"+m.id, label: p.label + " — " + m.label})));
+  const defaultsHtml = AI_PERSONAS.map(persona => {
+    const cur = _aiCatalog.defaults[persona] || "";
+    const opts = allModels.map(m => `<option value="${m.val}" ${m.val===cur?'selected':''}>${escapeHtml(m.label)}</option>`).join("");
+    return `<label style="font-size:12px;font-weight:700;color:var(--muted)">${persona.charAt(0).toUpperCase()+persona.slice(1)}
+      <select id="aidef-${persona}" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px">${opts}</select></label>`;
+  }).join("");
+  document.getElementById("ai-defaults").innerHTML = defaultsHtml;
+
+  // Arena targets — checkboxes per model
+  const targetsHtml = allModels.map(m =>
+    `<label style="background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center">
+      <input type="checkbox" value="${m.val}"> ${escapeHtml(m.label)}
+    </label>`).join("");
+  document.getElementById("arena-targets").innerHTML = targetsHtml;
+}
+
+async function saveAIKeys() {
+  const keys = {};
+  _aiCatalog.providers.forEach(p => {
+    const v = (document.getElementById("aikey-" + p.provider) || {}).value || "";
+    if (v.trim()) keys[p.provider] = v.trim();
+  });
+  const defaults = {};
+  AI_PERSONAS.forEach(persona => {
+    const v = (document.getElementById("aidef-" + persona) || {}).value || "";
+    if (v) defaults[persona] = v;
+  });
+  const r = await adm("/api/admin/ai/keys", {method:"POST", body:{keys, defaults}});
+  document.getElementById("ai-msg").textContent = r.ok ? "✅ Saved." : "❌";
+  setTimeout(() => { document.getElementById("ai-msg").textContent = ""; loadAIArena(); }, 1500);
+}
+
+async function runArena() {
+  const prompt = document.getElementById("arena-prompt").value.trim();
+  if (!prompt) { alert("Enter a prompt"); return; }
+  const targets = [...document.querySelectorAll("#arena-targets input:checked")].map(x => x.value);
+  if (!targets.length) { alert("Pick at least one model"); return; }
+  const wrap = document.getElementById("arena-results");
+  wrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:24px">⏳ Running ' + targets.length + ' models in parallel…</div>';
+  try {
+    const r = await adm("/api/admin/ai/arena", {method:"POST", body:{prompt, targets}});
+    wrap.innerHTML = (r.results || []).map(res => {
+      const tone = res.ok ? "#15803D" : "#B91C1C";
+      return `<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div style="font-weight:800;font-size:13px">${escapeHtml(res.provider)} <small style="color:var(--muted);font-weight:400">/ ${escapeHtml(res.model)}</small></div>
+            <div style="font-size:11px;color:${tone}">${res.ok ? '✓ ' + (res.latency_ms||'?') + ' ms · ' + (res.char_count||0) + ' chars' : '❌ ' + escapeHtml(res.error||'')}</div>
+          </div>
+        </div>
+        <pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.55;color:var(--text);margin:0;background:#FAFBFD;padding:10px;border-radius:8px;max-height:340px;overflow:auto">${escapeHtml(res.text || res.error || '')}</pre>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    wrap.innerHTML = '<div style="color:#B91C1C">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+// ============== VIDEOS ==============
+async function loadVideos() {
+  const wrap = document.getElementById("vid-list");
+  wrap.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:24px">Loading…</div>';
+  try {
+    const r = await adm("/api/admin/videos/list");
+    if (!r.videos || !r.videos.length) {
+      wrap.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:24px">No videos yet — generate your first above.</div>';
+      return;
+    }
+    wrap.innerHTML = r.videos.map(v => `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <iframe src="/api/videos/play/${v.slug}" style="width:100%;height:200px;border:0;background:#0F172A"></iframe>
+        <div style="padding:12px 14px">
+          <div style="font-weight:800;font-size:14px;letter-spacing:-.01em;line-height:1.3">${escapeHtml(v.title)}</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${v.duration_sec||18}s · ${v.view_count||0} views · ${escapeHtml(v.mascot||'default')} · ${escapeHtml(v.tone||'teal')}</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <a class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px" href="/api/videos/play/${v.slug}" target="_blank">▶ Open full</a>
+            <button class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px;color:#DC2626" onclick="delVideo('${v.slug}')">🗑 Delete</button>
+          </div>
+        </div>
+      </div>`).join("");
+  } catch (e) {
+    wrap.innerHTML = '<div style="color:#B91C1C">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+async function genVideo() {
+  const topic  = document.getElementById("vid-topic").value.trim();
+  if (!topic) { alert("Enter a topic"); return; }
+  const body = {
+    topic, mascot: document.getElementById("vid-mascot").value,
+    tone: document.getElementById("vid-tone").value,
+    target_seconds: parseInt(document.getElementById("vid-dur").value, 10) || 18,
+  };
+  const msg = document.getElementById("vid-msg");
+  msg.textContent = "🎥 Generating…";
+  try {
+    const r = await adm("/api/admin/videos/generate", {method:"POST", body});
+    if (r.ok) {
+      msg.innerHTML = '✅ Generated: <a href="' + r.url + '" target="_blank">▶ play</a>';
+      document.getElementById("vid-topic").value = "";
+      loadVideos();
+    } else {
+      msg.textContent = "❌ " + (r.detail || r.error || "failed");
+    }
+  } catch (e) { msg.textContent = "❌ " + e.message; }
+}
+async function delVideo(slug) {
+  if (!confirm("Delete this video?")) return;
+  await adm("/api/admin/videos/" + encodeURIComponent(slug), {method:"DELETE"});
+  loadVideos();
+}
+
+// Auto-load social profiles when the launch tab opens too
+const _origLoadLaunch2 = loadLaunch;
+loadLaunch = async function() { await _origLoadLaunch2(); await loadSocial(); };
 
 let es = null;
 function startStream() {
