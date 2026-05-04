@@ -103,6 +103,34 @@ MODEL_CATALOG = {
             {"id": "gpt-image-1",    "tier": "premium",  "modality": "image", "label": "GPT-Image-1 (newest)","price_per_1m": "$0.04 per image"},
         ],
     },
+    "xai_image": {
+        "label": "xAI Grok image",
+        "key_env": "XAI_API_KEY",   # same key as text Grok
+        "get_key_url": "https://x.ai/api",
+        "pricing_url": "https://x.ai/api#pricing",
+        "free_tier": "Trial credits on signup",
+        "modality": "image",
+        "models": [
+            {"id": "grok-2-image-1212", "tier": "premium", "modality": "image",
+             "label": "Grok 2 Image", "price_per_1m": "$0.07 per image"},
+        ],
+    },
+    "fal_image": {
+        "label": "fal.ai (FLUX models, fast + cheap)",
+        "key_env": "FAL_API_KEY",
+        "get_key_url": "https://fal.ai/dashboard/keys",
+        "pricing_url": "https://fal.ai/pricing",
+        "free_tier": "Free tier with rate limits",
+        "modality": "image",
+        "models": [
+            {"id": "fal-ai/flux/schnell", "tier": "fast",    "modality": "image",
+             "label": "FLUX schnell (fastest)",        "price_per_1m": "$0.003 per image"},
+            {"id": "fal-ai/flux/dev",     "tier": "balanced","modality": "image",
+             "label": "FLUX dev (balanced)",            "price_per_1m": "$0.025 per image"},
+            {"id": "fal-ai/flux-pro",     "tier": "premium", "modality": "image",
+             "label": "FLUX Pro (best quality)",        "price_per_1m": "$0.05 per image"},
+        ],
+    },
     "stability": {
         "label": "Stability AI (Stable Diffusion)",
         "key_env": "STABILITY_API_KEY",
@@ -565,6 +593,55 @@ async def _call_openai_image(key: str, model: str, prompt: str, *, n: int = 1, s
     return {"image_url": data.get("url", "")}
 
 
+async def _call_xai_image(key: str, model: str, prompt: str) -> dict:
+    """xAI Grok image generation. Uses the same /v1/images/generations
+    endpoint format as OpenAI. Same key as text Grok."""
+    import httpx
+    async with httpx.AsyncClient(timeout=60.0,
+            headers={"Authorization": f"Bearer {key}",
+                     "Content-Type": "application/json"}) as c:
+        r = await c.post("https://api.x.ai/v1/images/generations",
+                         json={"model": model, "prompt": prompt[:4000],
+                               "n": 1, "response_format": "b64_json"})
+        if r.status_code != 200:
+            raise RuntimeError(f"xai_image {r.status_code}: {r.text[:200]}")
+        data = (r.json().get("data") or [{}])[0]
+        b64 = data.get("b64_json") or ""
+        if not b64:
+            url = data.get("url") or ""
+            return {"image_url": url}
+        return {"image_data_url": f"data:image/png;base64,{b64}"}
+
+
+async def _call_fal_image(key: str, model: str, prompt: str) -> dict:
+    """fal.ai FLUX models. Synchronous polling endpoint — submit job, poll
+    until result is ready (usually 2-5s for schnell, 8-15s for dev/pro)."""
+    import httpx, asyncio
+    async with httpx.AsyncClient(timeout=90.0,
+            headers={"Authorization": f"Key {key}",
+                     "Content-Type": "application/json"}) as c:
+        # fal uses /v1/<model_path> for sync requests with input
+        r = await c.post(f"https://fal.run/{model}",
+                         json={"prompt": prompt[:4000], "num_images": 1,
+                               "image_size": "square_hd", "enable_safety_checker": True})
+        if r.status_code != 200:
+            raise RuntimeError(f"fal_image {r.status_code}: {r.text[:200]}")
+        data = r.json()
+        imgs = data.get("images") or []
+        if not imgs:
+            raise RuntimeError(f"fal_image no images in response: {data}")
+        url = imgs[0].get("url") or ""
+        if not url:
+            raise RuntimeError("fal_image returned no URL")
+        # Download bytes + return as data URL so admin gallery can serve it
+        ir = await c.get(url, timeout=30.0)
+        if ir.status_code != 200:
+            return {"image_url": url}
+        import base64
+        b64 = base64.b64encode(ir.content).decode("ascii")
+        return {"image_data_url": f"data:image/png;base64,{b64}"}
+
+
 async def _call_stability_image(key: str, model: str, prompt: str) -> dict:
     """Stable Diffusion 3.5 / Core via Stability AI API."""
     # stable-image generate endpoint differs by model family
@@ -590,18 +667,43 @@ async def _call_stability_image(key: str, model: str, prompt: str) -> dict:
 async def call_image_model(provider: str, model: str, prompt: str,
                            cfg: dict | None = None) -> dict:
     """Returns {ok, image_data_url|image_url, latency_ms, ...}. Drop-in for
-    any image-modality provider in MODEL_CATALOG."""
+    any image-modality provider in MODEL_CATALOG.
+
+    Image providers fall back to their TEXT counterpart's key when their own
+    slot is empty:
+      google_image → google      (same Gemini API key)
+      openai_image → openai      (same OpenAI API key)
+    Stability has its own dedicated key slot only."""
     cfg = cfg or _load_cfg()
-    key = (cfg["keys"].get(provider) or "").strip()
+    keys = cfg.get("keys") or {}
+    # Try the image-provider's own slot first, then fall back to the matching
+    # text provider so a single key entry works for both.
+    KEY_FALLBACKS = {
+        "google_image": ["google_image", "google"],
+        "openai_image": ["openai_image", "openai"],
+        "xai_image":    ["xai_image", "xai"],     # same xAI key as Grok text
+        "fal_image":    ["fal_image"],
+        "stability":    ["stability"],
+    }
+    key = ""
+    for slot in KEY_FALLBACKS.get(provider, [provider]):
+        candidate = (keys.get(slot) or "").strip()
+        if candidate:
+            key = candidate
+            break
     if not key:
         return {"ok": False, "provider": provider, "model": model,
-                "error": f"No API key set for {provider}. Add it in admin → AI."}
+                "error": f"No API key for {provider} (or its fallback). Add the corresponding key in admin → AI Arena."}
     started = time.perf_counter()
     try:
         if provider == "google_image":
             res = await _call_google_image(key, model, prompt)
         elif provider == "openai_image":
             res = await _call_openai_image(key, model, prompt)
+        elif provider == "xai_image":
+            res = await _call_xai_image(key, model, prompt)
+        elif provider == "fal_image":
+            res = await _call_fal_image(key, model, prompt)
         elif provider == "stability":
             res = await _call_stability_image(key, model, prompt)
         else:
