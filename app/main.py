@@ -35,6 +35,7 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Routers
 app.include_router(admin.router)
+app.include_router(admin.public_cms_router)
 app.include_router(portal.router)
 app.include_router(portal_v2.router)
 app.include_router(portal_v2.public_router)

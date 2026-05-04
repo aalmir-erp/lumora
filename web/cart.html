@@ -74,9 +74,14 @@ body{background:linear-gradient(180deg,#FFFBEB,#F8FAFC)}
 .apply-all{background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:12.5px;color:#7C2D12;display:flex;align-items:center;gap:8px}
 </style>
 <script src="/banner.js" defer></script>
-<script src="/_snippets.js" async></script>
-<script src="/cart-badge.js" async></script>
-<script src="/social-strip.js" async></script>
+<!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
+<script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
+  {src:"/_snippets.js",id:"snippets"},
+  {src:"/cart-badge.js",id:"cart-badge"},
+  {src:"/social-strip.js",id:"social-strip"},
+  {src:"/social-proof.js",id:"social-proof"}
+]);</script>
+<script src="/lazy-loaders.js" defer></script>
 </head><body>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <nav class="nav"><div class="nav-inner">
