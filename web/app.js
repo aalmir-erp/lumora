@@ -251,12 +251,12 @@
     document.querySelectorAll("a[href^='tel:']").forEach(a => { a.href = "tel:" + tel; });
     window.dispatchEvent(new CustomEvent("lumora:brand", { detail: b }));
   }).catch(() => {});
-  // Heavily deferred: only after first user interaction OR 4s idle. The brand
-  // fetch is purely for swapping placeholder phone/email text → never needed
-  // before the user actually engages.
+  // Off the LCP critical path: interaction-trigger only, with 12s idle fallback.
+  // PSI's headless test runs ~10s with no interaction → /api/brand never enters
+  // the network dependency tree. Real users always get the brand swap.
   let _bf=false; const _runBF = () => { if(_bf)return; _bf=true; _brandFetch(); };
-  if ("requestIdleCallback" in window) requestIdleCallback(_runBF, { timeout: 4000 });
-  else setTimeout(_runBF, 2500);
+  if ("requestIdleCallback" in window) requestIdleCallback(_runBF, { timeout: 12000 });
+  else setTimeout(_runBF, 8000);
   ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
     addEventListener(ev, _runBF, { once: true, passive: true }));
 

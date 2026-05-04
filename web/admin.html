@@ -366,6 +366,18 @@
         </div>
       </div>
 
+      <!-- Stealth-launch payment-gate toggle -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div style="flex:1;min-width:240px">
+          <div style="font-size:14px;font-weight:800;color:#0F172A;display:flex;align-items:center;gap:6px">🚧 Stealth-launch payment gate <span id="gate-status-badge" style="font-size:10.5px;padding:2px 8px;border-radius:999px;background:#F1F5F9;color:#64748B;font-weight:700">…</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">When ON: customers picking card/Apple/Google Pay get a realistic 3-D Secure spinner, then a believable "Transaction declined" page with a 15% goodwill credit + voice/text feedback capture. <b>No money changes hands.</b> All attempts logged to Market Signals.<br>When OFF: real Stripe checkout (needs STRIPE_SECRET_KEY).</div>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:13px">
+          <input type="checkbox" id="gate-toggle" style="width:20px;height:20px;cursor:pointer;accent-color:#0F766E">
+          <span id="gate-toggle-label" style="min-width:64px">Loading…</span>
+        </label>
+      </div>
+
       <!-- Snippet editor -->
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin:16px 0">
         <h3 style="margin:0 0 4px;font-size:16px">🔌 Site-wide tracking codes</h3>
@@ -2066,8 +2078,34 @@ async function loadVizBots() {
   } catch (_) {}
 }
 
+async function loadGateMode() {
+  try {
+    const r = await adm("/api/admin/launch/gate-mode");
+    const cb = document.getElementById("gate-toggle");
+    const lbl = document.getElementById("gate-toggle-label");
+    const badge = document.getElementById("gate-status-badge");
+    if (!cb) return;
+    cb.checked = !!r.enabled;
+    lbl.textContent = r.enabled ? "Gate ON" : "Gate OFF";
+    lbl.style.color = r.enabled ? "#B45309" : "#15803D";
+    badge.textContent = r.enabled ? "ACTIVE — no real charges" : "OFF — live payments";
+    badge.style.background = r.enabled ? "#FEF3C7" : "#DCFCE7";
+    badge.style.color = r.enabled ? "#92400E" : "#15803D";
+    cb.onchange = async () => {
+      lbl.textContent = "saving…";
+      try {
+        await adm("/api/admin/launch/gate-mode", {method:"POST", body:{enabled: cb.checked}});
+        loadGateMode();
+      } catch (e) {
+        toast("⚠ " + e.message, true);
+        cb.checked = !cb.checked;
+      }
+    };
+  } catch (_) {}
+}
+
 async function loadLaunch() {
-  loadVizScan(); loadVizBots();
+  loadVizScan(); loadVizBots(); loadGateMode();
   try {
     const s = await adm("/api/admin/launch/snippets");
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
