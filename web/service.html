@@ -484,7 +484,7 @@ function render() {
   document.getElementById("cat-pill").innerHTML = "📂 " + SVC.category;
   document.getElementById("svc-name").innerHTML = SVC.name + " <span class='price-big'>from " + SVC.starting_price + " AED</span>";
   document.getElementById("svc-desc").textContent = SVC.description;
-  document.getElementById("svc-emoji").textContent = ICONS[SVC.icon] || "✨";
+  document.getElementById("svc-emoji").textContent = SVC.emoji || ICONS[SVC.icon] || "🛠️";
 
   // Pick a mascot variant that matches the service so the visual feels relevant.
   const MASCOT_BY_SVC = {

@@ -131,9 +131,9 @@ function render() {
   const grid = document.getElementById("svc-grid");
   document.getElementById("empty").style.display = filtered.length ? "none" : "block";
   grid.innerHTML = filtered.map(s => `
-    <div class="svc-card">
+    <div class="svc-card" data-svc-emoji="${s.emoji || icons[s.icon] || '🛠️'}">
       <span class="svc-cat">${s.category}</span>
-      <div class="svc-icon">${icons[s.icon] || "🧽"}</div>
+      <div class="svc-icon">${s.emoji || icons[s.icon] || "🛠️"}</div>
       <h3>${s.name}</h3>
       <p>${s.description}</p>
       <div class="svc-price"><span data-i18n="starting_from">starting from</span>
