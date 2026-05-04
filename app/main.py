@@ -118,6 +118,59 @@ def _new_sid() -> str:
     return "sw-" + secrets.token_urlsafe(12)
 
 
+# AI-tell scrubber for blog content. LLMs love em-dashes, semicolons, and a
+# small clutch of "smart-sounding" filler words. Strip them so blog reads human.
+_HUMANIZE_REPLACEMENTS = [
+    ("—", ", "),          # em-dash → comma + space (most common AI tell)
+    (" – ", ", "),         # en-dash with spaces → comma
+    ("–", "-"),            # bare en-dash → hyphen
+    (";", "."),            # semicolons → period
+    (" - ", ", "),         # spaced hyphen used as parenthetical → comma
+    ("…", "..."),          # ellipsis char → three dots
+]
+_HUMANIZE_WORDS = {
+    # word → human alternative (case-insensitive whole-word replace)
+    "delve": "look", "delves": "looks", "delved": "looked", "delving": "looking",
+    "tapestry": "mix",
+    "navigate": "handle", "navigates": "handles", "navigated": "handled", "navigating": "handling",
+    "leverage": "use", "leverages": "uses", "leveraged": "used", "leveraging": "using",
+    "utilize": "use", "utilizes": "uses", "utilized": "used", "utilizing": "using",
+    "streamline": "simplify", "streamlined": "simplified",
+    "robust": "solid", "seamless": "smooth", "seamlessly": "smoothly",
+    "comprehensive": "full", "vital": "important", "crucial": "key",
+    "myriad": "many", "plethora": "lots",
+    "embark": "start", "embarks": "starts", "embarked": "started", "embarking": "starting",
+    "foster": "build", "fosters": "builds", "fostered": "built", "fostering": "building",
+    "showcase": "show", "showcases": "shows", "showcased": "showed", "showcasing": "showing",
+    "nestled": "tucked",
+    "bustling": "busy", "vibrant": "lively", "iconic": "famous", "stunning": "great",
+    "in conclusion,": "Bottom line:",
+    "in summary,": "So:",
+    "it's worth noting that": "note:",
+    "when it comes to": "for",
+}
+
+
+def _humanize_text(text: str) -> str:
+    if not text: return text
+    import re as _re
+    out = text
+    for src, dst in _HUMANIZE_REPLACEMENTS:
+        out = out.replace(src, dst)
+    for w, repl in _HUMANIZE_WORDS.items():
+        # Case-insensitive whole-word replace, preserve leading capital
+        pat = _re.compile(r"\b" + _re.escape(w) + r"\b", _re.IGNORECASE)
+        def _sub(m, _repl=repl):
+            orig = m.group(0)
+            return _repl[0].upper() + _repl[1:] if orig[0].isupper() else _repl
+        out = pat.sub(_sub, out)
+    # Collapse double spaces / double commas the substitutions can produce
+    out = _re.sub(r" {2,}", " ", out)
+    out = _re.sub(r",\s*,", ",", out)
+    out = _re.sub(r"\.\s*\.", ".", out)
+    return out
+
+
 def _persist(session_id: str, role: str, content: str, *, phone: str | None,
              tool_calls: list | None = None, agent: bool = False,
              user_agent: str | None = None, ip: str | None = None,
@@ -1101,25 +1154,40 @@ try:
             import anthropic
             client = anthropic.Anthropic(api_key=_gs().ANTHROPIC_API_KEY, timeout=30, max_retries=1)
             prompt = (
-                f"Write a 700-word SEO-optimized blog post for Servia (UAE home services).\n\n"
+                f"Write a 700-word blog post for Servia (UAE home services).\n\n"
                 f"Title: {topic}\nEmirate: {em.replace('-',' ').title()}  Service: {sv.replace('_',' ')}\n"
                 f"Season: {slant}\n\n"
-                "REQUIREMENTS:\n"
-                "- Sound like a UAE-resident expert writing for friends. NO AI mannerisms — never say 'as a language "
-                "model', 'I am an AI', 'in conclusion', 'in summary'. No bullet-list overuse.\n"
-                "- Mix paragraphs (60%) with the occasional short list. Vary sentence length.\n"
-                "- Mention specific UAE neighborhoods, weather context, real numbers (AED prices, durations).\n"
-                "- Include 2-3 personal touches (e.g. 'I had a customer last Ramadan who…').\n"
-                "- 2-3 H2 sub-headings (## in markdown). Servia mentioned 2-3 times naturally.\n"
-                "- End with a punchy 1-line CTA pointing to https://servia.ae/book.html.\n"
-                "- Include a 3-Q FAQ at the end with realistic UAE-specific answers.\n"
-                "- DO NOT mention you are AI or that this was auto-generated."
+                "WRITE LIKE A REAL UAE TRADESPERSON. NO AI WRITING TELLS. Hard rules:\n"
+                "1. NEVER use em-dashes (—). Use periods, commas, or 'and' instead. ZERO em-dashes anywhere.\n"
+                "2. NEVER use the en-dash (–) for ranges either. Write '5 to 7' not '5–7'.\n"
+                "3. NEVER use semicolons. Split into two sentences.\n"
+                "4. NEVER use 'delve', 'tapestry', 'navigate the landscape', 'in the realm of', 'crucial', "
+                "'vital', 'essential', 'comprehensive', 'leverage', 'utilize', 'streamline', 'robust', "
+                "'seamless', 'unlock', 'elevate', 'paradigm', 'plethora', 'myriad', 'embark on', "
+                "'in conclusion', 'in summary', 'it's worth noting', 'when it comes to', 'navigate', "
+                "'foster', 'showcase', 'nestled', 'bustling', 'vibrant', 'iconic', 'stunning'.\n"
+                "5. Use contractions: don't, won't, isn't, you'll, we've. People talk like that.\n"
+                "6. Vary sentence length wildly. Some short. Some long ones that ramble a bit because real "
+                "people write that way when they know their craft.\n"
+                "7. Be specific. Real Dubai areas (Cluster T at JLT, Marina, Mirdif, Discovery Gardens, JVC). "
+                "Real prices in AED. Real timings (suhoor 4am, iftar 6:30pm in Ramadan). Real brand names.\n"
+                "8. Include 2-3 personal stories. Use 'I' freely. 'A customer in Mirdif last June called me "
+                "because...'. Make it sound like you've actually done this work.\n"
+                "9. Occasionally use mild filler: 'honestly', 'look', 'thing is', 'basically'. Real speech.\n"
+                "10. 2 to 3 H2 headings (## in markdown). Headings short and direct, no clever wordplay.\n"
+                "11. Mention Servia 2 or 3 times, naturally.\n"
+                "12. End with a one-line CTA pointing to https://servia.ae/book.html.\n"
+                "13. Include a 3-question FAQ at the end with short direct answers.\n"
+                "14. Output ONLY the markdown article. No preamble like 'Here is your post'. No "
+                "explanation. Start with the article body."
             )
             msg = client.messages.create(
                 model=_gs().MODEL, max_tokens=2400,
                 messages=[{"role":"user","content":prompt}],
             )
             body = msg.content[0].text if msg.content else ""
+            # Humanize pass — strip residual AI tells the model slipped past the prompt
+            body = _humanize_text(body)
         except Exception as e:  # noqa: BLE001
             print(f"[autoblog] error: {e}", flush=True); return
 

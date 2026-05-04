@@ -618,8 +618,9 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
   let ctx=null, running=false, schedTimer=null;
   const btn=document.getElementById("vid-sound-btn");
 
-  // 120 BPM → 0.5s per beat, 8 beats per bar (4 sec/bar). Loop 4 bars per progression.
-  const BPM = 120;
+  // 128 BPM upbeat EDM/dance bed — faster + punchier than the old 120 ambient.
+  // Sidechain pump on every kick gives that energetic 'breathing' feel.
+  const BPM = 128;
   const SPB = 60 / BPM;   // seconds per beat
   // 4-chord progression Cmaj-Am-Fmaj-Gmaj (one bar each, 4 beats per bar)
   const PROG = [
@@ -629,13 +630,26 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
     {{root:49.00,  pad:[98.00, 123.47,146.83], lead:[587.33,698.46,880.00,987.77]}}, // G
   ];
 
-  function kick(t, master){{
+  function kick(t, master, sidechain){{
+    // Punchy kick: high-freq click + sub-bass body + sidechain pump on the bus
     const o = ctx.createOscillator(), g = ctx.createGain();
-    o.frequency.setValueAtTime(150, t);
-    o.frequency.exponentialRampToValueAtTime(45, t+0.16);
-    g.gain.setValueAtTime(0.95, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t+0.22);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t+0.25);
+    o.frequency.setValueAtTime(180, t);
+    o.frequency.exponentialRampToValueAtTime(40, t+0.12);
+    g.gain.setValueAtTime(1.1, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.20);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+0.22);
+    // Click layer for transient
+    const click = ctx.createOscillator(), cg = ctx.createGain();
+    click.type = "square"; click.frequency.value = 1800;
+    cg.gain.setValueAtTime(0.25, t);
+    cg.gain.exponentialRampToValueAtTime(0.001, t+0.018);
+    click.connect(cg); cg.connect(master); click.start(t); click.stop(t+0.02);
+    // Sidechain pump: dip the sidechain bus to 0.25 then ramp back to 1.0 over 200ms
+    if (sidechain) {{
+      sidechain.gain.cancelScheduledValues(t);
+      sidechain.gain.setValueAtTime(0.25, t);
+      sidechain.gain.linearRampToValueAtTime(1.0, t + 0.22);
+    }}
   }}
   function snap(t, master){{
     const buf = ctx.createBuffer(1, 0.08*ctx.sampleRate, ctx.sampleRate);
@@ -655,37 +669,48 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
     const g = ctx.createGain(); g.gain.value = 0.22;
     src.connect(hp); hp.connect(g); g.connect(master); src.start(t);
   }}
-  function bass(t, dur, freq, master){{
-    const o = ctx.createOscillator(); o.type = "square"; o.frequency.value = freq;
-    const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=600; lp.Q.value=2;
+  function bass(t, dur, freq, sidechainBus){{
+    // Plucky sawtooth bass through resonant lowpass — gets pumped by sidechain
+    const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = freq;
+    const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=900; lp.Q.value=4;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.42, t+0.02);
-    g.gain.linearRampToValueAtTime(0.32, t+dur*0.7);
+    g.gain.linearRampToValueAtTime(0.50, t+0.015);  // fast attack = pluck
+    g.gain.exponentialRampToValueAtTime(0.18, t+0.18);
     g.gain.linearRampToValueAtTime(0, t+dur);
-    o.connect(lp); lp.connect(g); g.connect(master);
+    o.connect(lp); lp.connect(g); g.connect(sidechainBus);
     o.start(t); o.stop(t+dur+0.05);
   }}
-  function pad(t, dur, freqs, master){{
+  function pad(t, dur, freqs, sidechainBus){{
+    // 3-voice sawtooth chord stack with chorus-like detune for fullness — pumps with sidechain
     freqs.forEach(f => {{
-      const o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = f;
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.12, t+0.4);
-      g.gain.linearRampToValueAtTime(0.08, t+dur-0.4);
-      g.gain.linearRampToValueAtTime(0, t+dur);
-      o.connect(g); g.connect(master); o.start(t); o.stop(t+dur);
+      [0, 0.6, -0.6].forEach(detuneCents => {{
+        const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
+        o.detune.value = detuneCents * 100 * 0.05;  // small detune for thickness
+        const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=2200;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.07, t+0.3);
+        g.gain.linearRampToValueAtTime(0.05, t+dur-0.3);
+        g.gain.linearRampToValueAtTime(0, t+dur);
+        o.connect(lp); lp.connect(g); g.connect(sidechainBus);
+        o.start(t); o.stop(t+dur);
+      }});
     }});
   }}
   function lead(t, freq, master){{
-    const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = freq;
-    const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=3500; lp.Q.value=1;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.22, t+0.02);
-    g.gain.exponentialRampToValueAtTime(0.001, t+SPB*0.95);
-    o.connect(lp); lp.connect(g); g.connect(master);
-    o.start(t); o.stop(t+SPB);
+    // Bright supersaw lead — 3 detuned saws + envelope
+    [0, 5, -5].forEach(cents => {{
+      const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = freq;
+      o.detune.value = cents;
+      const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=4500; lp.Q.value=2;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.10, t+0.015);
+      g.gain.exponentialRampToValueAtTime(0.001, t+SPB*0.85);
+      o.connect(lp); lp.connect(g); g.connect(master);
+      o.start(t); o.stop(t+SPB);
+    }});
   }}
 
   function start(){{
@@ -693,10 +718,13 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
     try {{
       ctx = new (window.AudioContext||window.webkitAudioContext)();
       // Loud master + compressor so peaks don't clip
-      const master = ctx.createGain(); master.gain.value = 0.45;
+      const master = ctx.createGain(); master.gain.value = 0.55;
+      // Sidechain bus — pad + bass route through this; kick dips it = pump effect
+      const sidechain = ctx.createGain(); sidechain.gain.value = 1.0;
+      sidechain.connect(master);
       const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -14; comp.knee.value = 18; comp.ratio.value = 5;
-      comp.attack.value = 0.003; comp.release.value = 0.12;
+      comp.threshold.value = -12; comp.knee.value = 16; comp.ratio.value = 6;
+      comp.attack.value = 0.002; comp.release.value = 0.10;
       master.connect(comp); comp.connect(ctx.destination);
 
       let bar = 0;
@@ -705,17 +733,20 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
         const t0 = ctx.currentTime + 0.05;
         const ch = PROG[bar % PROG.length];
         const barDur = SPB * 4;          // 4 beats / bar
-        // Pad chord across the bar
-        pad(t0, barDur, ch.pad, master);
-        // Walking bass: root on 1, fifth on 3 (for energy)
-        bass(t0,            SPB*1.9, ch.root,    master);
-        bass(t0 + SPB*2,    SPB*1.9, ch.root*1.5, master);
-        // Drum + lead on every beat
+        // Pad + bass go through sidechain bus (gets pumped by kick)
+        pad(t0, barDur, ch.pad, sidechain);
+        // Walking bass: root, fifth, root-up-octave, fifth — pluck on every beat for EDM feel
+        bass(t0,           SPB*0.95, ch.root,       sidechain);
+        bass(t0 + SPB,     SPB*0.95, ch.root*1.5,   sidechain);
+        bass(t0 + SPB*2,   SPB*0.95, ch.root*2,     sidechain);
+        bass(t0 + SPB*3,   SPB*0.95, ch.root*1.5,   sidechain);
+        // Drums on every beat (4-on-the-floor) + snare on 2&4 + hi-hat on every 8th
         for(let b=0; b<4; b++) {{
           const tb = t0 + b*SPB;
-          if (b === 0 || b === 2) kick(tb, master);          // 1 + 3
-          if (b === 1 || b === 3) snap(tb, master);          // 2 + 4
-          // hi-hat on every off-beat for energy
+          kick(tb, master, sidechain);                       // four-on-the-floor
+          if (b === 1 || b === 3) snap(tb, master);          // snare 2 + 4
+          // hi-hats on every 8th note (off + on) for driving energy
+          hihat(tb, master);
           hihat(tb + SPB*0.5, master);
           // Lead arpeggio
           lead(tb, ch.lead[b], master);
