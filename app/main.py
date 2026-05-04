@@ -1014,13 +1014,12 @@ def robots_txt():
 
 # --- Sitemap self-test endpoint (admin-only) ----------------------------------
 @app.get("/api/admin/seo/sitemap-list")
-def sitemap_list_all():
+def sitemap_list_all(request: Request):
     """Return every sitemap-related URL with its in-process generation result.
     Powers the admin sitemap manager — admin sees one row per file with
     bytes/url-count/parse-status without leaving the dashboard."""
     import xml.etree.ElementTree as _ET
-    domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
-    base = f"https://{domain}"
+    base = _sitemap_base(request)
     routes = [
         ("/sitemap.xml",          "Sitemap INDEX",       sitemap_xml),
         ("/sitemap-pages.xml",    "Static pages",         sitemap_pages),
@@ -1034,7 +1033,7 @@ def sitemap_list_all():
     for path, label, fn in routes:
         rec = {"path": path, "url": base + path, "label": label}
         try:
-            r = fn()
+            r = fn(request)             # pass request through so URLs match Host
             body = r.body if hasattr(r, "body") else b""
             rec["status_code"] = 200
             rec["size_bytes"] = len(body)
@@ -1156,21 +1155,31 @@ def _x_url(s: str) -> str:
     return (s or "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
 
 
-@app.get("/sitemap.xml")
-def sitemap_xml():
-    """Sitemap INDEX — industry-standard pattern used by big sites. Lists
-    every child sitemap. Smaller children = easier for Google to parse and
-    one bad URL never blocks everything. Children:
+def _sitemap_base(request: Request | None) -> str:
+    """Build the base URL using the actual Host the sitemap was fetched under.
+    Critical: Google treats www.servia.ae and servia.ae as different
+    properties — if the index says www but a child URL says non-www, those
+    URLs get DISCARDED on crawl ('discovered pages: 0').
 
-      /sitemap-pages.xml     → static HTML pages
-      /sitemap-services.xml  → service detail + service×emirate landings
-      /sitemap-areas.xml     → emirate-specific area pages
-      /sitemap-blog.xml      → autoblog posts
-      /sitemap-videos.xml    → videos w/ proper Video XML schema
-    """
+    By using request.url.netloc we always emit URLs that match whichever
+    domain Google fetched the sitemap under. Falls back to settings.BRAND_DOMAIN
+    when called from the admin self-test (no request)."""
+    if request is not None:
+        # Behind a proxy/CDN, prefer X-Forwarded-Host then Host header
+        host = (request.headers.get("x-forwarded-host")
+                or request.headers.get("host")
+                or "").strip().split(":")[0]
+        if host and "." in host:
+            return f"https://{host}"
+    return f"https://{(settings.BRAND_DOMAIN or 'servia.ae').strip()}"
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml(request: Request = None):
+    """Sitemap INDEX. Children inherit the same Host so www / apex stay
+    consistent with whatever Google fetched under."""
     try:
-        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
-        base = f"https://{domain}"
+        base = _sitemap_base(request)
         today = _dt.date.today().isoformat()
         children = [
             ("sitemap-pages.xml", today),
@@ -1218,10 +1227,9 @@ def _wrap_urlset(urls: list[tuple[str, str, str, str]], *,
 
 
 @app.get("/sitemap-pages.xml")
-def sitemap_pages():
+def sitemap_pages(request: Request = None):
     try:
-        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
-        base = f"https://{domain}"
+        base = _sitemap_base(request)
         today = _dt.date.today().isoformat()
         urls = [
             (f"{base}/",                    today, "daily",   "1.0"),
@@ -1250,10 +1258,9 @@ def sitemap_pages():
 
 
 @app.get("/sitemap-services.xml")
-def sitemap_services():
+def sitemap_services(request: Request = None):
     try:
-        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
-        base = f"https://{domain}"
+        base = _sitemap_base(request)
         today = _dt.date.today().isoformat()
         EMIRATES = ("dubai", "abu-dhabi", "sharjah", "ajman",
                     "umm-al-quwain", "ras-al-khaimah", "fujairah")
@@ -1272,10 +1279,9 @@ def sitemap_services():
 
 
 @app.get("/sitemap-areas.xml")
-def sitemap_areas():
+def sitemap_areas(request: Request = None):
     try:
-        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
-        base = f"https://{domain}"
+        base = _sitemap_base(request)
         today = _dt.date.today().isoformat()
         EMIRATES = ("dubai", "abu-dhabi", "sharjah", "ajman",
                     "umm-al-quwain", "ras-al-khaimah", "fujairah")
@@ -1289,10 +1295,9 @@ def sitemap_areas():
 
 
 @app.get("/sitemap-blog.xml")
-def sitemap_blog():
+def sitemap_blog(request: Request = None):
     try:
-        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
-        base = f"https://{domain}"
+        base = _sitemap_base(request)
         today = _dt.date.today().isoformat()
         urls: list[tuple[str, str, str, str]] = []
         try:
@@ -1314,11 +1319,10 @@ def sitemap_blog():
 
 
 @app.get("/sitemap-videos.xml")
-def sitemap_videos_xml():
+def sitemap_videos_xml(request: Request = None):
     """Per Google Video Sitemap spec — proper <video:video> blocks."""
     try:
-        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
-        base = f"https://{domain}"
+        base = _sitemap_base(request)
         today = _dt.date.today().isoformat()
         rows = []
         try:
@@ -1361,7 +1365,7 @@ def sitemap_videos_xml():
 
 # OLD monolithic sitemap kept for backward compat (some crawlers still ask for it)
 @app.get("/sitemap-full.xml")
-def sitemap_full_legacy():
+def sitemap_full_legacy(request: Request = None):
     try:
         return _sitemap_xml_inner()
     except Exception:
