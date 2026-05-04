@@ -2,6 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="stylesheet" href="/style.css">
+<script src="/_snippets.js" async></script>
 </head><body>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <div id="login" class="paystub" style="display:none">
@@ -42,6 +43,7 @@
     <a href="#autoblog"  data-tab="autoblog">📝 Auto-blog</a>
     <a href="#brand"     data-tab="brand">🎨 Brand &amp; Contact</a>
     <a href="#whatsapp"  data-tab="whatsapp">📲 WhatsApp</a>
+    <a href="#launch"    data-tab="launch">🚀 Launch &amp; Growth</a>
     <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
   </aside>
   <main class="admin-main">
@@ -269,6 +271,84 @@
       <p style="font-size:13px;color:var(--muted);margin:0 0 8px">Every event the system would WhatsApp you about — even if the bridge wasn't paired at that moment.</p>
       <div id="wa-alerts" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:0;max-height:480px;overflow:auto"></div>
     </div>
+
+    <!-- ====== LAUNCH & GROWTH ====== -->
+    <div id="t-launch" class="tab" style="display:none">
+      <h2>🚀 Launch &amp; Growth</h2>
+      <p style="color:var(--muted);margin-top:0;font-size:14px">One place to register Servia on every search engine + AI engine + listing site, paste analytics codes once (we wire them everywhere), and track where the brand is appearing.</p>
+
+      <!-- progress summary -->
+      <div id="lc-summary" style="background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border-radius:14px;padding:18px;margin:16px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center">
+        <div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:.06em;opacity:.85;text-transform:uppercase">Launch progress</div>
+          <div style="font-size:22px;font-weight:800;margin-top:4px"><span id="lc-done">0</span> / <span id="lc-total">0</span> tasks complete</div>
+        </div>
+        <div id="lc-progress-bar" style="flex:1;max-width:280px;background:rgba(255,255,255,.18);height:10px;border-radius:999px;overflow:hidden">
+          <div id="lc-progress-fill" style="height:100%;background:#FCD34D;width:0%;transition:width .5s"></div>
+        </div>
+      </div>
+
+      <!-- Snippet editor -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin:16px 0">
+        <h3 style="margin:0 0 4px;font-size:16px">🔌 Site-wide tracking codes</h3>
+        <p style="color:var(--muted);font-size:13px;margin:0 0 14px">Paste IDs from each provider — we generate the full snippet and inject it into every page header.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Analytics 4 ID
+            <input id="snip-ga4" placeholder="G-XXXXXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Tag Manager ID
+            <input id="snip-gtm" placeholder="GTM-XXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Meta Pixel ID
+            <input id="snip-meta" placeholder="1234567890123456" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">TikTok Pixel ID
+            <input id="snip-tiktok" placeholder="CXXXXXXXXXXXX" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Microsoft Clarity ID
+            <input id="snip-clarity" placeholder="abcdef1234" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Hotjar Site ID
+            <input id="snip-hotjar" placeholder="1234567" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Plausible domain
+            <input id="snip-plausible" placeholder="servia.ae" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Matomo URL
+            <input id="snip-matomo" placeholder="https://matomo.example.com" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px"></label>
+        </div>
+
+        <h4 style="margin:18px 0 4px;font-size:13px">🔍 Search engine site verifications</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Google Search Console
+            <input id="ver-google" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Bing Webmaster
+            <input id="ver-bing" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Yandex Webmaster
+            <input id="ver-yandex" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+          <label style="font-size:12px;font-weight:700;color:var(--muted)">Facebook domain verification
+            <input id="ver-fb" placeholder="abcdef1234..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px"></label>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveSnippets()" style="margin-top:14px">💾 Save &amp; deploy site-wide</button>
+        <span id="snip-msg" style="margin-inline-start:12px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+      </div>
+
+      <!-- Checklist -->
+      <h3 style="margin:24px 0 8px;font-size:18px">✅ Step-by-step launch checklist</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Each row is a one-click action — opens the registration page in a new tab. Mark done when you've finished.</p>
+      <div id="lc-list"></div>
+
+      <!-- Listings tracker -->
+      <h3 style="margin:24px 0 8px;font-size:18px">📋 Where is Servia listed?</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Track every directory + business listing where Servia appears. Add entries as you complete them.</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input id="li-name" placeholder="Listing site name (e.g. 'Trustpilot')" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;min-width:160px">
+        <input id="li-url"  placeholder="https://..." style="flex:2;padding:8px 10px;border:1px solid var(--border);border-radius:8px;min-width:200px">
+        <input id="li-notes" placeholder="Notes (optional)" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;min-width:160px">
+        <button class="btn btn-primary" onclick="addListing()">+ Add</button>
+      </div>
+      <div id="lc-listings" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:0"></div>
+
+      <!-- Mention queries -->
+      <h3 style="margin:24px 0 8px;font-size:18px">🔎 Find where Servia is being mentioned</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Quick search shortcuts to find brand mentions across the open web.</p>
+      <div id="lc-mentions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px"></div>
+    </div>
+
   </main>
 </div>
 
@@ -299,6 +379,7 @@ function show(tab) {
   if (tab==="autoblog")  loadAutoblog();
   if (tab==="brand")     loadBrand();
   if (tab==="whatsapp")  loadWA();
+  if (tab==="launch")    loadLaunch();
 }
 async function adm(path, opts={}) {
   try {
@@ -1116,6 +1197,134 @@ async function fireDailySummary() {
     else r.innerHTML = '<span style="color:#B91C1C">❌ '+escapeHtml(res.error||'failed')+'</span>';
     setTimeout(loadWA, 800);
   } catch (e) { r.innerHTML = '<span style="color:#B91C1C">❌ '+escapeHtml(e.message)+'</span>'; }
+}
+
+// ============== LAUNCH & GROWTH ==============
+async function loadLaunch() {
+  try {
+    const s = await adm("/api/admin/launch/snippets");
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
+    set("snip-ga4",       s.ga4_id);
+    set("snip-gtm",       s.gtm_id);
+    set("snip-meta",      s.meta_pixel_id);
+    set("snip-tiktok",    s.tiktok_pixel_id);
+    set("snip-clarity",   s.clarity_id);
+    set("snip-hotjar",    s.hotjar_id);
+    set("snip-plausible", s.plausible_domain);
+    set("snip-matomo",    s.matomo_url);
+    const v = s.verifications || {};
+    set("ver-google", v.google_site_verification);
+    set("ver-bing",   v.bing);
+    set("ver-yandex", v.yandex);
+    set("ver-fb",     v.facebook_domain_verification);
+  } catch (_) {}
+
+  try {
+    const c = await adm("/api/admin/launch/checklist");
+    document.getElementById("lc-done").textContent = c.summary.done;
+    document.getElementById("lc-total").textContent = c.summary.total;
+    document.getElementById("lc-progress-fill").style.width =
+      Math.round((c.summary.done / Math.max(1, c.summary.total)) * 100) + "%";
+    const list = document.getElementById("lc-list");
+    list.innerHTML = "";
+    Object.entries(c.groups).forEach(([group, items]) => {
+      const sec = document.createElement("div");
+      sec.style.cssText = "margin-bottom:18px";
+      sec.innerHTML = `<h4 style="font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#0F766E;margin:8px 0 6px">${escapeHtml(group)}</h4>`;
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden";
+      items.forEach(it => {
+        const row = document.createElement("div");
+        const isDone = it.status === "done";
+        row.style.cssText = "display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #F1F5F9";
+        row.innerHTML =
+          `<input type="checkbox" ${isDone?'checked':''} onchange="toggleLaunch('${it.id}', this.checked?'done':'pending')" style="cursor:pointer;width:18px;height:18px">
+           <div style="flex:1;min-width:0">
+             <div style="font-weight:700;font-size:13.5px;${isDone?'text-decoration:line-through;color:#94A3B8':''}">${escapeHtml(it.label)}</div>
+             ${it.info ? `<div style="font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:2px">${escapeHtml(it.info)}</div>` : ''}
+           </div>
+           <div style="display:flex;gap:6px;flex-shrink:0">
+             ${it.action_url ? `<a class="btn btn-ghost" href="${it.action_url}" target="_blank" rel="noopener" style="font-size:12px;padding:5px 10px">↗ Open</a>` : ''}
+             ${it.submit_url ? `<a class="btn btn-primary" href="${it.submit_url}" target="_blank" rel="noopener" style="font-size:12px;padding:5px 10px">📤 Submit</a>` : ''}
+           </div>`;
+        wrap.appendChild(row);
+      });
+      sec.appendChild(wrap);
+      list.appendChild(sec);
+    });
+  } catch (e) { document.getElementById("lc-list").innerHTML = "Error: "+escapeHtml(e.message); }
+
+  try {
+    const l = await adm("/api/admin/launch/listings");
+    const wrap = document.getElementById("lc-listings");
+    if (!l.listings || !l.listings.length) {
+      wrap.innerHTML = '<div style="padding:14px;color:var(--muted);text-align:center;font-size:13px">No listings tracked yet — add Servia\'s first directory entry above.</div>';
+    } else {
+      wrap.innerHTML = l.listings.map(x => `
+        <div style="display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid #F1F5F9;font-size:13px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700">${escapeHtml(x.name||'')}</div>
+            <a href="${escapeHtml(x.url||'#')}" target="_blank" rel="noopener" style="color:#0F766E;font-size:12px;text-decoration:none;word-break:break-all">${escapeHtml(x.url||'')}</a>
+            ${x.notes ? `<div style="font-size:11.5px;color:var(--muted)">${escapeHtml(x.notes)}</div>` : ''}
+          </div>
+          <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="removeListing('${encodeURIComponent(x.url)}')">Remove</button>
+        </div>`).join("");
+    }
+  } catch (_) {}
+
+  try {
+    const m = await adm("/api/admin/launch/mentions/queries");
+    const wrap = document.getElementById("lc-mentions");
+    wrap.innerHTML = (m.queries||[]).map(q => `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px">${escapeHtml(q.query)}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <a class="btn btn-ghost" style="font-size:12px;padding:4px 10px" href="${q.google}" target="_blank" rel="noopener">Google</a>
+          <a class="btn btn-ghost" style="font-size:12px;padding:4px 10px" href="${q.bing}" target="_blank" rel="noopener">Bing</a>
+          <a class="btn btn-ghost" style="font-size:12px;padding:4px 10px" href="${q.duck}" target="_blank" rel="noopener">DDG</a>
+        </div>
+      </div>`).join("");
+  } catch (_) {}
+}
+
+async function saveSnippets() {
+  const v = id => (document.getElementById(id) || {}).value || "";
+  const body = {
+    ga4_id: v("snip-ga4"), gtm_id: v("snip-gtm"),
+    meta_pixel_id: v("snip-meta"), tiktok_pixel_id: v("snip-tiktok"),
+    clarity_id: v("snip-clarity"), hotjar_id: v("snip-hotjar"),
+    plausible_domain: v("snip-plausible"), matomo_url: v("snip-matomo"),
+    verifications: {
+      google_site_verification: v("ver-google"), bing: v("ver-bing"),
+      yandex: v("ver-yandex"), facebook_domain_verification: v("ver-fb"),
+    },
+  };
+  const r = await adm("/api/admin/launch/snippets", {method:"POST", body});
+  document.getElementById("snip-msg").textContent =
+    r.ok ? "✅ Saved + live across all pages." : "❌ " + (r.error || "");
+  setTimeout(() => document.getElementById("snip-msg").textContent = "", 4000);
+}
+
+async function toggleLaunch(id, status) {
+  await adm("/api/admin/launch/toggle", {method:"POST", body:{id, status}});
+  loadLaunch();
+}
+
+async function addListing() {
+  const name = document.getElementById("li-name").value.trim();
+  const url  = document.getElementById("li-url").value.trim();
+  const notes = document.getElementById("li-notes").value.trim();
+  if (!name || !url) { alert("Name and URL required"); return; }
+  await adm("/api/admin/launch/listings", {method:"POST", body:{name, url, notes}});
+  document.getElementById("li-name").value = "";
+  document.getElementById("li-url").value = "";
+  document.getElementById("li-notes").value = "";
+  loadLaunch();
+}
+
+async function removeListing(encUrl) {
+  await adm("/api/admin/launch/listings?url=" + encUrl, {method:"DELETE"});
+  loadLaunch();
 }
 
 let es = null;

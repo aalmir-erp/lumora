@@ -100,8 +100,18 @@
     tipIdx++;
     setTimeout(() => tip.classList.remove("show"), 4500);
   }
-  // First tip 6s after page load, then every 25s
-  setTimeout(() => { showTip(); tipTimer = setInterval(showTip, 25000); }, 6000);
+  // First tip after the browser has been idle (PSI-friendly: never blocks
+  // first paint or interaction). Falls back to a longer setTimeout if
+  // requestIdleCallback is unavailable.
+  function _scheduleTips() {
+    showTip();
+    tipTimer = setInterval(showTip, 35000);
+  }
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(() => setTimeout(_scheduleTips, 8000), { timeout: 12000 });
+  } else {
+    setTimeout(_scheduleTips, 12000);
+  }
   // Hide tooltip permanently if user clicks/dismisses
   tip.addEventListener("click", () => { tip.classList.remove("show"); if (tipTimer) clearInterval(tipTimer); launcher.click(); });
   launcher.addEventListener("click", () => { tip.classList.remove("show"); if (tipTimer) clearInterval(tipTimer); });

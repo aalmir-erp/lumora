@@ -8,7 +8,8 @@
  * Skips: /admin.html, /vendor.html, /portal-vendor.html (internal pages),
  *        /pay/* (payment flow — should stay clean).
  */
-(function () {
+// Defer all banner work until the browser is idle so it never blocks LCP / TBT.
+function __serviaBannerInit() {
   const KEY_DISMISSED = "servia.topbanner.dismissed_at";
   const path = location.pathname;
   if (/^\/(admin|vendor|portal-vendor|pay)/.test(path)) return;
@@ -238,4 +239,10 @@
     // Background tone follows slide tone
     wrap.style.background = TONES[slides[i].tone] || TONES.teal;
   }, period);
-})();
+}
+// Schedule the banner during browser idle time — never blocks LCP / TBT
+if ("requestIdleCallback" in window) {
+  requestIdleCallback(__serviaBannerInit, { timeout: 3000 });
+} else {
+  setTimeout(__serviaBannerInit, 1500);
+}
