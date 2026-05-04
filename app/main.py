@@ -215,6 +215,56 @@ def _try_fast_book(message: str) -> dict | None:
     }
 
 
+async def _cascade_via_router(prompt: str, history: list[dict], lang: str) -> dict | None:
+    """Try every text provider/model in MODEL_CATALOG that has a key set, in
+    cost-ascending order, until one returns a non-empty reply. The customer
+    NEVER sees a 'brain hiccup' message — they see a real AI answer or
+    (only as last resort) the rule-based demo brain.
+
+    Returns {ok, text, provider, model, latency_ms} or None if no key works.
+    """
+    from . import ai_router
+    cfg = ai_router._load_cfg()
+    # Build cascade order: 'customer' default first (admin's pick), then every
+    # other text provider/model that has a key, cheapest fast tier first.
+    tried = set()
+    candidates: list[tuple[str, str]] = []   # (provider, model)
+    cust = (cfg.get("defaults") or {}).get("customer", "")
+    if cust and "/" in cust:
+        p, m = cust.split("/", 1)
+        if (cfg["keys"].get(p) or "").strip():
+            candidates.append((p, m))
+    # Add every other provider's cheapest model that has a key
+    PRIORITY_TIERS = ["fast", "balanced", "premium"]
+    for prov_id, info in ai_router.MODEL_CATALOG.items():
+        if info.get("modality") != "text": continue          # skip image providers
+        if not (cfg["keys"].get(prov_id) or "").strip(): continue
+        for tier in PRIORITY_TIERS:
+            for m in info.get("models", []):
+                if m.get("tier") == tier:
+                    candidates.append((prov_id, m["id"]))
+                    break
+    # Convert prior chat history into messages-style for the router
+    history_msgs = [{"role": h["role"], "content": h["content"]} for h in (history or [])]
+    history_msgs.insert(0, {
+        "role": "user",
+        "content": ("(SYSTEM CONTEXT) You are Servia, the AI concierge for a UAE home-services "
+                    f"platform. Reply in {lang}. Be friendly, concise, helpful. Push to /book.html "
+                    "for bookings. Never refuse — always try to assist with services like cleaning, "
+                    "AC, pest, handyman, sofa, etc.")})
+    for (provider, model) in candidates:
+        key_t = (provider, model)
+        if key_t in tried: continue
+        tried.add(key_t)
+        try:
+            res = await ai_router.call_model(provider, model, prompt, cfg, history=history_msgs)
+        except Exception:  # noqa: BLE001
+            continue
+        if res.get("ok") and (res.get("text") or "").strip():
+            return res
+    return None
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(req: ChatRequest, request: Request):
     sid = req.session_id or _new_sid()
@@ -251,29 +301,55 @@ def chat(req: ChatRequest, request: Request):
                             mode="agent_handling", usage={}, agent_handled=True)
 
     history = _history(sid)
+    # Resolve which model+key to use. Priority order so customer NEVER sees an
+    # error and admin-side configuration takes precedence over Railway env vars:
+    #
+    #   1) Anthropic via env (full tool-use path with bookings/quotes)
+    #      ↓ falls through on auth/model/rate-limit failure
+    #   2) Admin-side AI Router 'customer' default (whatever provider/key admin saved)
+    #      ↓ falls through if that key is missing or returns an error
+    #   3) Cascade through every text provider in MODEL_CATALOG that has a key set,
+    #      starting with the cheapest fast model (so we don't burn dollars on retries)
+    #   4) Rule-based demo brain — always succeeds, never blank
+    #
+    # The customer-visible text is ALWAYS a real reply; the fallback chain is silent.
+    result = None
+    mode = ""
+    last_err = None
     if settings.use_llm:
         try:
             result = llm.chat(history, session_id=sid, language=lang)
             mode = "llm"
         except Exception as e:  # noqa: BLE001
-            # Fall back to the rule-based brain so the UX never 502s on a transient LLM blip
-            print(f"[chat] LLM error, falling back to demo: {e}", flush=True)
-            try:
-                result = demo_brain.respond(req.message, history)
-                result["text"] = (
-                    "I'm having a brief hiccup with my AI brain — let me try a quick reply: "
-                    + (result.get("text") or "")
-                )
-                mode = "fallback"
-            except Exception as e2:  # noqa: BLE001
-                result = {"text": "Sorry, I'm having technical trouble — please try again or use /contact.html and we'll respond within minutes.",
-                          "tool_calls": [], "usage": {}}
-                mode = "error"
-                db.log_event("chat", sid, "llm_error", actor="system",
-                             details={"err": str(e), "fallback_err": str(e2)})
-    else:
-        result = demo_brain.respond(req.message, history)
-        mode = "demo"
+            last_err = f"primary anthropic: {e}"
+            print(f"[chat] primary LLM failed, cascading: {e}", flush=True)
+
+    if (not result) or not (result.get("text") or "").strip():
+        # 2 & 3: try admin-side AI Router with cascade
+        try:
+            import asyncio as _aio
+            cascade_result = _aio.run(_cascade_via_router(req.message, history, lang))
+        except RuntimeError:
+            # Already in event loop (FastAPI sync handler shouldn't be, but defensive)
+            cascade_result = None
+        except Exception as e:  # noqa: BLE001
+            cascade_result = None
+            last_err = (last_err or "") + f" · cascade: {e}"
+        if cascade_result and cascade_result.get("ok") and (cascade_result.get("text") or "").strip():
+            result = {"text": cascade_result["text"], "tool_calls": [], "usage": {}}
+            mode = "router:" + cascade_result.get("provider","?") + "/" + cascade_result.get("model","?")
+
+    if (not result) or not (result.get("text") or "").strip():
+        # 4: rule-based demo brain — always returns something
+        try:
+            result = demo_brain.respond(req.message, history)
+            mode = "fallback"
+        except Exception as e2:  # noqa: BLE001
+            result = {"text": "I'm here — but I'm having a brief technical hiccup. Try again in a moment, or message us via /contact.html and we'll reply within minutes.",
+                      "tool_calls": [], "usage": {}}
+            mode = "error"
+            db.log_event("chat", sid, "llm_error", actor="system",
+                         details={"err": last_err, "fallback_err": str(e2)})
 
     text = (result.get("text") or "").strip()
     if not text:

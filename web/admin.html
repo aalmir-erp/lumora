@@ -2033,9 +2033,19 @@ window.testProvider = async function(provider, btn) {
   try {
     const r = await adm("/api/admin/ai/test/" + encodeURIComponent(provider), {method:"POST"});
     if (indicator) {
-      indicator.innerHTML = r.ok
-        ? `<span style="color:#15803D;font-weight:700">✅ Working</span> · ${r.model} · ${r.latency_ms||'?'}ms · "${escapeHtml((r.sample||'').slice(0,40))}"`
-        : `<span style="color:#B91C1C;font-weight:700">❌ Failed</span> · ${escapeHtml((r.error||'').slice(0,180))}`;
+      if (r.ok) {
+        let html = `<span style="color:#15803D;font-weight:700">✅ Working</span> · ${r.model} · ${r.latency_ms||'?'}ms`;
+        if (r.image_data_url || r.image_url) {
+          // Image provider — show inline preview
+          const src = r.image_data_url || r.image_url;
+          html += `<br><img src="${src}" alt="generated test" style="max-width:160px;height:auto;border:1px solid var(--border);border-radius:8px;margin-top:6px;display:block">`;
+        } else if (r.sample) {
+          html += ` · "${escapeHtml((r.sample||'').slice(0,40))}"`;
+        }
+        indicator.innerHTML = html;
+      } else {
+        indicator.innerHTML = `<span style="color:#B91C1C;font-weight:700">❌ Failed</span> · ${escapeHtml((r.error||'').slice(0,180))}`;
+      }
     }
   } catch (e) {
     if (indicator) indicator.innerHTML = `<span style="color:#B91C1C">❌ ${escapeHtml(e.message)}</span>`;
