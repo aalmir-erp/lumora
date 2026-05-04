@@ -119,12 +119,27 @@
 
   // ---------- API helper ----------
   window.api = async function (path, opts = {}) {
-    const o = { headers: { "content-type": "application/json", ...(opts.headers || {}) }, ...opts };
+    // NB: spread `opts` FIRST so the carefully-merged `headers` block (with
+    // content-type AND any caller-supplied headers like Authorization) wins.
+    // Reverse order would let opts.headers clobber content-type, sending
+    // POST bodies as text/plain → FastAPI 422 with `detail` array → JS would
+    // render as "[object Object]".
+    const o = { ...opts, headers: { "content-type": "application/json", ...(opts.headers || {}) } };
     if (o.body && typeof o.body !== "string") o.body = JSON.stringify(o.body);
     const r = await fetch(path, o);
     const text = await r.text();
     let json; try { json = text ? JSON.parse(text) : {}; } catch { json = { raw: text }; }
-    if (!r.ok) throw Object.assign(new Error(json.detail || r.statusText), { status: r.status, json });
+    if (!r.ok) {
+      // FastAPI validation errors return detail as an array of {loc, msg, type}.
+      // Convert to a readable string so error toasts don't show "[object Object]".
+      let detailMsg = json.detail;
+      if (Array.isArray(detailMsg)) {
+        detailMsg = detailMsg.map(d => (d && d.msg) ? `${(d.loc||[]).join('.')}: ${d.msg}` : JSON.stringify(d)).join('; ');
+      } else if (detailMsg && typeof detailMsg === "object") {
+        detailMsg = JSON.stringify(detailMsg);
+      }
+      throw Object.assign(new Error(detailMsg || r.statusText), { status: r.status, json });
+    }
     return json;
   };
 
