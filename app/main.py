@@ -992,12 +992,15 @@ def robots_txt():
 
 # --- Sitemap self-test endpoint (admin-only) ----------------------------------
 @app.get("/api/admin/seo/sitemap-validate")
-def sitemap_validate():
-    """Generates the sitemap, parses it as XML, and reports any errors plus a
-    counter of <url> + <video:video> entries. Useful when GSC reports
-    'Couldn't fetch' or 'Couldn't parse' so admin can verify our end is
-    healthy without leaving the dashboard."""
+def sitemap_validate(live: bool = False):
+    """Generate the sitemap, parse it as XML, and report any errors plus a
+    counter of <url> + <video:video> entries. With ?live=true the endpoint
+    ALSO does an HTTP GET against its own /sitemap.xml and reports the actual
+    status code + content-type + first 500 bytes — exactly what Googlebot
+    would receive. Use this when GSC reports 'General HTTP error' to confirm
+    our origin is responding correctly."""
     import xml.etree.ElementTree as _ET
+    out = {}
     try:
         resp = sitemap_xml()
         body_bytes = resp.body if hasattr(resp, "body") else str(resp).encode()
@@ -1007,16 +1010,38 @@ def sitemap_validate():
             n_url = sum(1 for e in root if e.tag.endswith("}url") or e.tag == "url")
             n_video = sum(1 for e in root.iter() if e.tag.endswith("}video"))
             n_image = sum(1 for e in root.iter() if e.tag.endswith("}image"))
-            return {"ok": True, "size_bytes": len(body_bytes),
-                    "url_count": n_url, "video_count": n_video,
-                    "image_count": n_image,
-                    "preview_first_500": body_text[:500]}
+            out.update({"ok": True, "size_bytes": len(body_bytes),
+                        "url_count": n_url, "video_count": n_video,
+                        "image_count": n_image,
+                        "preview_first_500": body_text[:500],
+                        "is_fallback": "X-Sitemap-Fallback" in (resp.headers or {})})
         except _ET.ParseError as pe:
-            return {"ok": False, "parse_error": str(pe),
-                    "size_bytes": len(body_bytes),
-                    "preview_first_500": body_text[:500]}
+            out.update({"ok": False, "parse_error": str(pe),
+                        "size_bytes": len(body_bytes),
+                        "preview_first_500": body_text[:500]})
     except Exception as e:  # noqa: BLE001
-        return {"ok": False, "error": str(e)[:300]}
+        out.update({"ok": False, "error": str(e)[:300]})
+    # Optional live HTTP self-test — proves the route is actually reachable
+    # over the public domain (catches DNS / proxy / WAF issues that an
+    # in-process call would miss).
+    if live:
+        try:
+            import httpx
+            url = f"https://{settings.BRAND_DOMAIN}/sitemap.xml"
+            r = httpx.get(url, timeout=20.0, follow_redirects=False,
+                          headers={"User-Agent": "Mozilla/5.0 (compatible; Servia-Self-Check/1.0)"})
+            out["live_check"] = {
+                "url": url,
+                "status_code": r.status_code,
+                "content_type": r.headers.get("content-type",""),
+                "content_length": r.headers.get("content-length","") or str(len(r.content)),
+                "x_sitemap_fallback": r.headers.get("x-sitemap-fallback",""),
+                "first_300_chars": r.text[:300],
+                "redirected_to": r.headers.get("location","") if 300 <= r.status_code < 400 else "",
+            }
+        except Exception as e:  # noqa: BLE001
+            out["live_check"] = {"error": str(e)[:300]}
+    return out
 
 
 # Robots.txt route declared above with proper text/plain content-type
@@ -1051,10 +1076,34 @@ def blog_index():
 
 @app.get("/sitemap.xml")
 def sitemap_xml():
-    """Comprehensive sitemap: every public HTML page + all services × emirates +
-    every published autoblog post (with its own lastmod) + every video standalone
-    page + every emirate area landing. Crawled by Google/Bing/Yandex/AI bots."""
-    base = f"https://{settings.BRAND_DOMAIN}"
+    """Comprehensive sitemap. Wrapped in a master try/except so a single bad
+    DB row never returns a 500 to Googlebot (which would show as
+    'General HTTP error' in GSC). Worst case we ship a minimal valid
+    homepage-only sitemap so crawling doesn't break."""
+    try:
+        return _sitemap_xml_inner()
+    except Exception as e:  # noqa: BLE001
+        # Last-resort fallback: minimal one-URL sitemap. Always 200 OK valid XML
+        # so Google never marks the URL as broken. The error is logged for
+        # admin to find via /api/admin/seo/sitemap-validate.
+        print(f"[sitemap] generation failed: {e}", flush=True)
+        domain = settings.BRAND_DOMAIN or "servia.ae"
+        fallback = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f'  <url><loc>https://{domain}/</loc>'
+            f'<lastmod>{_dt.date.today().isoformat()}</lastmod>'
+            f'<changefreq>daily</changefreq><priority>1.0</priority></url>\n'
+            '</urlset>\n'
+        )
+        from fastapi.responses import Response as _R
+        return _R(content=fallback, media_type="application/xml; charset=utf-8",
+                  headers={"X-Sitemap-Fallback": "1",
+                           "Cache-Control": "no-store"})
+
+
+def _sitemap_xml_inner():
+    base = f"https://{(settings.BRAND_DOMAIN or 'servia.ae').strip()}"
     today = _dt.date.today().isoformat()
     services = kb.services()["services"]
     EMIRATES = ("dubai", "abu-dhabi", "sharjah", "ajman",
@@ -1197,9 +1246,29 @@ def sitemap_xml():
             body += "    </image:image>\n"
         body += "  </url>\n"
     body += "</urlset>\n"
+    # Validate before returning — if the XML can't parse, fall back so
+    # Googlebot never sees broken XML (would trip "General HTTP error").
+    try:
+        import xml.etree.ElementTree as _ET
+        _ET.fromstring(body)
+    except Exception as e:  # noqa: BLE001
+        print(f"[sitemap] generated invalid XML: {e}", flush=True)
+        raise   # outer handler ships the safe minimal fallback
+    body_bytes = body.encode("utf-8")
     from fastapi.responses import Response
-    return Response(content=body, media_type="application/xml",
-                    headers={"X-Sitemap-Url-Count": str(len(urls))})
+    # NB: never set Content-Length manually — Starlette computes it from the
+    # encoded body. A mismatched value is the classic cause of GSC's
+    # 'General HTTP error' (proxy/CDN drops the connection mid-stream).
+    return Response(
+        content=body_bytes,
+        media_type="application/xml; charset=utf-8",
+        headers={
+            "X-Sitemap-Url-Count": str(len(urls)),
+            # Always-fresh: stops GSC from reading a stale cached error
+            # response after we've fixed something.
+            "Cache-Control": "no-cache, must-revalidate",
+        },
+    )
 
 
 @app.get("/llms.txt", response_class=HTMLResponse)
