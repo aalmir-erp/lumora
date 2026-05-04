@@ -103,30 +103,57 @@ _DEFAULT_TITLE_TEMPLATE = (
 IMAGE_PROVIDERS_BY_AESTHETIC = {
     "vibrant":    ("google_image", "gemini-2.5-flash-image"),
     "premium":    ("openai_image", "dall-e-3"),
-    "artistic":   ("stability",    "stable-diffusion-xl-1024-v1-0"),
+    "fast":       ("fal_image",    "fal-ai/flux/schnell"),       # cheapest + fastest
+    "balanced":   ("fal_image",    "fal-ai/flux/dev"),
+    "flux_pro":   ("fal_image",    "fal-ai/flux-pro"),
+    "grok":       ("xai_image",    "grok-2-image-1212"),
+    "artistic":   ("stability",    "sd3.5-large"),
 }
+
+
+def _has_image_key(provider: str, cfg: dict) -> bool:
+    """Image providers can use their own slot OR fall back to the matching
+    text-provider key (Gemini key works for google_image, OpenAI key works
+    for openai_image). Mirrors the fallback logic in ai_router.call_image_model."""
+    keys = cfg.get("keys") or {}
+    fallback = {"google_image": ["google_image", "google"],
+                "openai_image": ["openai_image", "openai"],
+                "xai_image":    ["xai_image", "xai"],
+                "fal_image":    ["fal_image"],
+                "stability":    ["stability"]}.get(provider, [provider])
+    return any((keys.get(s) or "").strip() for s in fallback)
 
 
 async def _gen_one_image(prompt: str, *, provider: str | None = None,
                          model: str | None = None) -> dict:
     """Cascade: try preferred → other configured providers. Returns
-    {ok, image_data_url, model, latency_ms, ...}."""
+    {ok, image_data_url, model, latency_ms, ...}.
+
+    Considers a provider 'configured' if EITHER its own key slot OR its
+    text-counterpart's key is set — so admin only needs one Gemini /
+    OpenAI key entry, not two."""
     from . import ai_router
     cfg = ai_router._load_cfg()
     chain: list[tuple[str, str]] = []
     if provider and model:
         chain.append((provider, model))
-    # Add every image provider that has a key
+    # Add every image provider that has a key (or its text-counterpart's key)
     for name, mdl in IMAGE_PROVIDERS_BY_AESTHETIC.values():
         if (name, mdl) in chain: continue
-        if (cfg.get("keys") or {}).get(name): chain.append((name, mdl))
+        if _has_image_key(name, cfg): chain.append((name, mdl))
+    if not chain:
+        return {"ok": False, "error": (
+            "No image-provider key configured. In admin → AI Arena set ANY of: "
+            "Google AI (Gemini), OpenAI, or Stability AI. Same Google/OpenAI key "
+            "you use for text generation works automatically."
+        )}
     last_err = None
     for prov, mdl in chain:
         res = await ai_router.call_image_model(prov, mdl, prompt, cfg)
         if res.get("ok") and (res.get("image_data_url") or res.get("image_url")):
             return res
         last_err = res.get("error") or "no image returned"
-    return {"ok": False, "error": last_err or "no image provider configured"}
+    return {"ok": False, "error": last_err or "all image providers failed"}
 
 
 # ---------------------------------------------------------------------------

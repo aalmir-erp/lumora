@@ -1001,6 +1001,50 @@ def robots_txt():
 
 
 # --- Sitemap self-test endpoint (admin-only) ----------------------------------
+@app.get("/api/admin/seo/sitemap-list")
+def sitemap_list_all():
+    """Return every sitemap-related URL with its in-process generation result.
+    Powers the admin sitemap manager — admin sees one row per file with
+    bytes/url-count/parse-status without leaving the dashboard."""
+    import xml.etree.ElementTree as _ET
+    domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
+    base = f"https://{domain}"
+    routes = [
+        ("/sitemap.xml",          "Sitemap INDEX",       sitemap_xml),
+        ("/sitemap-pages.xml",    "Static pages",         sitemap_pages),
+        ("/sitemap-services.xml", "Service × emirate",    sitemap_services),
+        ("/sitemap-areas.xml",    "Emirate area pages",   sitemap_areas),
+        ("/sitemap-blog.xml",     "Blog posts",           sitemap_blog),
+        ("/sitemap-videos.xml",   "Videos",               sitemap_videos_xml),
+        ("/sitemap-full.xml",     "Legacy (full, monolithic)", sitemap_full_legacy),
+    ]
+    out = []
+    for path, label, fn in routes:
+        rec = {"path": path, "url": base + path, "label": label}
+        try:
+            r = fn()
+            body = r.body if hasattr(r, "body") else b""
+            rec["status_code"] = 200
+            rec["size_bytes"] = len(body)
+            rec["content_type"] = (r.media_type or
+                                   (r.headers or {}).get("content-type", ""))
+            try:
+                root = _ET.fromstring(body.decode("utf-8", "replace"))
+                rec["parses_ok"] = True
+                rec["url_count"] = sum(1 for e in root.iter() if e.tag.endswith("}url"))
+                rec["sitemap_count"] = sum(1 for e in root.iter() if e.tag.endswith("}sitemap"))
+                rec["video_count"] = sum(1 for e in root.iter() if e.tag.endswith("}video"))
+            except Exception as pe:
+                rec["parses_ok"] = False
+                rec["parse_error"] = str(pe)[:200]
+        except Exception as e:  # noqa: BLE001
+            rec["status_code"] = 500
+            rec["error"] = str(e)[:200]
+        out.append(rec)
+    return {"sitemaps": out, "robots_url": base + "/robots.txt",
+            "version": settings.APP_VERSION}
+
+
 @app.get("/api/admin/seo/sitemap-validate")
 def sitemap_validate(live: bool = False):
     """Generate the sitemap, parse it as XML, and report any errors plus a
