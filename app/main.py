@@ -1045,24 +1045,28 @@ def sitemap_xml():
     body += 'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" '
     body += 'xmlns:video="http://www.google.com/schemas/sitemap-video/1.1" '
     body += 'xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n'
-    # Helper: html-encode a string for XML attributes
+    # Helper: XML-encode a string. CRITICAL for <loc> and any href= attribute,
+    # otherwise URLs containing '&' (every multi-param query string we have)
+    # break the XML parser with "EntityRef: expecting ';'".
     def _x(s: str) -> str:
-        return (s or "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
+        return (s or "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
     for u, prio, freq, lastmod in urls:
-        sep = "&amp;" if "?" in u else "?"
-        body += f"  <url>\n    <loc>{base}{u}</loc>\n"
+        sep = "&" if "?" in u else "?"   # we _x() the whole URL below, so use raw '&' here
+        loc = _x(f"{base}{u}")
+        body += f"  <url>\n    <loc>{loc}</loc>\n"
         body += f"    <lastmod>{lastmod or today}</lastmod>\n"
         body += f"    <changefreq>{freq}</changefreq>\n    <priority>{prio}</priority>\n"
         # hreflang on UI pages, not API/video deep-links
         if not u.startswith(("/api/",)):
             for lg in langs:
+                href = _x(f"{base}{u}{sep}lang={lg}")
                 body += (f'    <xhtml:link rel="alternate" hreflang="{lg}" '
-                         f'href="{base}{u}{sep}lang={lg}"/>\n')
+                         f'href="{href}"/>\n')
         # Add an image entry for every blog post (auto-generated hero) and
         # for the homepage / coverage / videos page (using the mascot icon).
         if u.startswith("/blog/"):
             slug = u.split("/blog/", 1)[1]
-            img_url = f"{base}/api/blog/hero/{slug}.svg"
+            img_url = _x(f"{base}/api/blog/hero/{slug}.svg")
             body += "    <image:image>\n"
             body += f"      <image:loc>{img_url}</image:loc>\n"
             body += f"      <image:title>Servia: {_x(slug.replace('-',' ').title())}</image:title>\n"
@@ -1079,18 +1083,36 @@ def sitemap_xml():
                     body += "    </news:news>\n"
             except Exception: pass
         elif u.startswith("/api/videos/play/"):
-            # Video sitemap entry — helps Google Video Search index our SVG videos
+            # Full video sitemap entry per Google's spec
+            # https://developers.google.com/search/docs/crawling-indexing/sitemaps/video-sitemaps
             slug = u.split("/play/", 1)[1].split("?", 1)[0]
+            title = _x(slug.replace('-',' ').replace('_',' ').title())
+            # Per-video poster (auto-generated SVG mascot scene). Falls back to
+            # generic mascot if the per-video endpoint isn't available yet.
+            thumb = _x(f"{base}/api/videos/poster/{slug}.svg")
+            player = _x(f"{base}{u}")
+            page_loc = _x(f"{base}/videos.html#{slug}")
             body += "    <video:video>\n"
-            body += f"      <video:thumbnail_loc>{base}/mascot.svg</video:thumbnail_loc>\n"
-            body += f"      <video:title>Servia: {_x(slug.replace('-',' ').title())}</video:title>\n"
-            body += "      <video:description>Servia animated explainer for UAE home services.</video:description>\n"
-            body += f"      <video:player_loc>{base}{u}</video:player_loc>\n"
-            body += "      <video:duration>30</video:duration>\n"
+            body += f"      <video:thumbnail_loc>{thumb}</video:thumbnail_loc>\n"
+            body += f"      <video:title>Servia: {title}</video:title>\n"
+            body += (f"      <video:description>Animated Servia explainer about "
+                     f"{title.lower()} for UAE home-services customers. Booked "
+                     f"in seconds via servia.ae.</video:description>\n")
+            body += f"      <video:player_loc allow_embed=\"yes\">{player}</video:player_loc>\n"
+            body += "      <video:duration>22</video:duration>\n"
+            body += "      <video:family_friendly>yes</video:family_friendly>\n"
+            body += "      <video:requires_subscription>no</video:requires_subscription>\n"
+            body += "      <video:live>no</video:live>\n"
+            body += f"      <video:publication_date>{lastmod or today}</video:publication_date>\n"
+            body += "      <video:platform relationship=\"allow\">web mobile tv</video:platform>\n"
+            body += "      <video:tag>UAE</video:tag>\n"
+            body += "      <video:tag>home services</video:tag>\n"
+            body += "      <video:tag>Dubai</video:tag>\n"
+            body += "      <video:uploader info=\"" + _x(f"{base}/about.html") + "\">Servia</video:uploader>\n"
             body += "    </video:video>\n"
         elif u in ("/", "/services.html", "/coverage.html", "/videos.html"):
             body += "    <image:image>\n"
-            body += f"      <image:loc>{base}/mascot.svg</image:loc>\n"
+            body += f"      <image:loc>{_x(base + '/mascot.svg')}</image:loc>\n"
             body += f"      <image:title>Servia mascot — UAE home services concierge</image:title>\n"
             body += "    </image:image>\n"
         body += "  </url>\n"

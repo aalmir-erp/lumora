@@ -1140,6 +1140,55 @@ def list_videos_public(service_id: str | None = None, emirate: str | None = None
     return {"videos": [db.row_to_dict(r) for r in rows], "count": len(rows)}
 
 
+@public_router.get("/poster/{slug}.svg")
+def video_poster_svg(slug: str):
+    """Static SVG poster used as video:thumbnail_loc in the sitemap. Renders
+    the first scene's headline + sub on a teal gradient — Google Video Search
+    needs a stable thumbnail URL per video. Cached aggressively (24h)."""
+    from fastapi.responses import Response
+    seed_videos_if_empty()
+    title = slug.replace("-", " ").replace("_", " ").title()
+    sub = ""
+    try:
+        with db.connect() as c:
+            r = c.execute(
+                "SELECT title, scenes_json FROM videos WHERE slug=?", (slug,)
+            ).fetchone()
+            if r:
+                title = r["title"] or title
+                try:
+                    scenes = _json.loads(r["scenes_json"] or "[]")
+                    if scenes and isinstance(scenes, list):
+                        sub = (scenes[0].get("sub") or scenes[0].get("text") or "")[:90]
+                except Exception: pass
+    except Exception: pass
+    def _x(s: str) -> str:
+        return (s or "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
+    svg = f'''<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" role="img" aria-label="Servia: {_x(title)}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="220" cy="360" r="170" fill="#0D9488" opacity="0.55"/>
+  <circle cx="220" cy="360" r="120" fill="#FCD34D" opacity="0.85"/>
+  <text x="220" y="385" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="120" font-weight="900" fill="#0F766E">S</text>
+  <text x="450" y="320" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="62" font-weight="900" fill="#FFFFFF">{_x(title[:40])}</text>
+  <text x="450" y="390" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="32" font-weight="500" fill="#FFFFFF" opacity="0.85">{_x(sub[:60])}</text>
+  <text x="450" y="600" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="28" font-weight="700" fill="#FCD34D">▶ servia.ae · UAE Home Services</text>
+</svg>
+'''
+    return Response(svg, media_type="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
 @public_router.get("/play/{slug}", response_class=HTMLResponse)
 def play_video(slug: str, aspect: str = "16x9"):
     """`?aspect=` accepts 16x9 (default · landscape · YouTube/Insta feed),
