@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Variant C — Bilingual: 'ia' gold + Arabic tagline 'بإذن الله' (b'idhn-illah,
-     "by God's will") below wordmark. Mark uses UAE flag color scheme
-     (red hoist + green/white/black stripes) with centered teal disc and 'S'. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 92" width="360" height="92" role="img" aria-label="Servia logo bilingual">
+<!-- Variant C — Bilingual: UAE-colour gradient mark + 'إن شاء الله' above 'ia'
+     plus a longer Arabic tagline 'بإذن الله' (b'idhn-illah, "by God's will") below. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100" width="360" height="100" role="img" aria-label="Servia bilingual logo">
   <defs>
-    <clipPath id="lC-mark"><rect x="8" y="8" width="64" height="64" rx="14"/></clipPath>
+    <linearGradient id="lC-uae" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#EF3340"/>
+      <stop offset="40%"  stop-color="#00732F"/>
+      <stop offset="75%"  stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
     <radialGradient id="lC-disc" cx="0.5" cy="0.4" r="0.7">
       <stop offset="0%" stop-color="#14B8A6"/><stop offset="60%" stop-color="#0D9488"/>
       <stop offset="100%" stop-color="#0F766E"/>
@@ -13,13 +17,8 @@
       <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-opacity="0.25"/>
     </filter>
   </defs>
-  <!-- UAE flag inside the rounded square mark -->
-  <g clip-path="url(#lC-mark)">
-    <rect x="8"  y="8"  width="16" height="64" fill="#EF3340"/>
-    <rect x="24" y="8"  width="48" height="21.33" fill="#00732F"/>
-    <rect x="24" y="29.33" width="48" height="21.33" fill="#FFFFFF"/>
-    <rect x="24" y="50.67" width="48" height="21.33" fill="#000000"/>
-  </g>
+  <!-- UAE-colour gradient mark -->
+  <rect x="8" y="8" width="64" height="64" rx="14" fill="url(#lC-uae)"/>
   <!-- Centered teal disc with stylised 'S' -->
   <g filter="url(#lC-shadow)">
     <circle cx="40" cy="40" r="18" fill="url(#lC-disc)"/>
@@ -27,26 +26,30 @@
   </g>
   <path d="M48 32 Q32 32 32 38 Q32 42 38 43 L42 44 Q48 45 48 48 Q48 52 36 52"
         stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <!-- Subtle gold sparkle on top-right of the disc — anchors the bilingual feel -->
+  <!-- Subtle gold sparkle on top-right of the disc -->
   <g fill="#FCD34D" transform="translate(56 26)">
     <circle cx="0" cy="0" r="2.4"/>
     <path d="M0 -6 v3 M0 4 v3 M-6 0 h3 M4 0 h3" stroke="#FCD34D" stroke-width="1.4" stroke-linecap="round"/>
   </g>
 
+  <!-- Arabic 'إن شاء الله' directly above 'ia' (small, gold) -->
+  <text x="186" y="22" text-anchor="middle" font-size="11" font-weight="600"
+        fill="#F59E0B" opacity="0.95"
+        font-family="'Geeza Pro','Damascus','Arabic UI Display','Noto Naskh Arabic',sans-serif"
+        direction="rtl">إن شاء الله</text>
+
   <!-- Wordmark: Serv (teal) + ia (gold) -->
   <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
      font-weight="800" letter-spacing="-0.5">
-    <text x="92" y="46" font-size="36" fill="#0F766E">Serv</text>
-    <text x="168" y="46" font-size="36" fill="#F59E0B">ia</text>
-    <!-- gentle gold flourish beneath ia -->
-    <path d="M168 56 Q190 62 210 56" stroke="#F59E0B" stroke-width="2.2"
+    <text x="92" y="54" font-size="36" fill="#0F766E">Serv</text>
+    <text x="168" y="54" font-size="36" fill="#F59E0B">ia</text>
+    <path d="M168 64 Q190 70 210 64" stroke="#F59E0B" stroke-width="2.2"
           stroke-linecap="round" fill="none" opacity="0.85"/>
-    <!-- Arabic line: "بإذن الله" — by God's will. Right-to-left rendering with system Arabic stack. -->
-    <text x="92" y="74" font-size="14" font-weight="600" fill="#475569" opacity="0.85"
+    <!-- Longer Arabic tagline + transliteration below -->
+    <text x="92" y="82" font-size="14" font-weight="600" fill="#475569" opacity="0.85"
           font-family="'Geeza Pro','Damascus','Arabic UI Display','Noto Naskh Arabic',sans-serif"
           direction="rtl">بإذن الله</text>
-    <!-- English transliteration tagline alongside -->
-    <text x="138" y="74" font-size="9" font-weight="600" letter-spacing="2.2"
+    <text x="138" y="82" font-size="9" font-weight="600" letter-spacing="2.2"
           fill="#94A3B8">SERVICE, GOD WILLING · UAE FIX-IT IN 60s</text>
   </g>
 </svg>

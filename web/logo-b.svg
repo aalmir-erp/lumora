@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Variant B — UAE star: 'ia' in gold + 5-point gold star
-     replacing the dot of 'i'. Mark uses UAE flag color scheme (red hoist + green/white/black stripes)
-     with a centered teal disc and stylised 'S'. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80" role="img" aria-label="Servia logo with UAE star">
+<!-- Variant B — UAE-colour gradient mark + 5-point gold star replaces dot of 'i' +
+     small Arabic 'إن شاء الله' above 'ia' to make the wordplay literal. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 92" width="360" height="92" role="img" aria-label="Servia inshallah star">
   <defs>
-    <clipPath id="lB-mark"><rect x="8" y="8" width="64" height="64" rx="14"/></clipPath>
+    <linearGradient id="lB-uae" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#EF3340"/>
+      <stop offset="40%"  stop-color="#00732F"/>
+      <stop offset="75%"  stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
     <radialGradient id="lB-disc" cx="0.5" cy="0.4" r="0.7">
       <stop offset="0%" stop-color="#14B8A6"/><stop offset="60%" stop-color="#0D9488"/>
       <stop offset="100%" stop-color="#0F766E"/>
@@ -13,13 +17,8 @@
       <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-opacity="0.25"/>
     </filter>
   </defs>
-  <!-- UAE flag inside the rounded square mark -->
-  <g clip-path="url(#lB-mark)">
-    <rect x="8"  y="8"  width="16" height="64" fill="#EF3340"/>
-    <rect x="24" y="8"  width="48" height="21.33" fill="#00732F"/>
-    <rect x="24" y="29.33" width="48" height="21.33" fill="#FFFFFF"/>
-    <rect x="24" y="50.67" width="48" height="21.33" fill="#000000"/>
-  </g>
+  <!-- UAE-colour gradient mark -->
+  <rect x="8" y="8" width="64" height="64" rx="14" fill="url(#lB-uae)"/>
   <!-- Centered teal disc with stylised 'S' -->
   <g filter="url(#lB-shadow)">
     <circle cx="40" cy="40" r="18" fill="url(#lB-disc)"/>
@@ -27,23 +26,27 @@
   </g>
   <path d="M48 32 Q32 32 32 38 Q32 42 38 43 L42 44 Q48 45 48 48 Q48 52 36 52"
         stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <!-- 5-point gold UAE star, top-right of disc — matches the wordmark star -->
+  <!-- Gold UAE-style 5-point star top-right of the disc -->
   <g transform="translate(56 22)" fill="#FCD34D">
     <path d="M0 -7 L2.1 -2.2 L7 -2.2 L3 0.9 L4.6 6 L0 3.1 L-4.6 6 L-3 0.9 L-7 -2.2 L-2.1 -2.2 Z"/>
   </g>
 
+  <!-- Arabic 'إن شاء الله' above 'ia' — depicts ia = inshallah -->
+  <text x="190" y="22" text-anchor="middle" font-size="11" font-weight="600"
+        fill="#F59E0B" opacity="0.95"
+        font-family="'Geeza Pro','Damascus','Arabic UI Display','Noto Naskh Arabic',sans-serif"
+        direction="rtl">إن شاء الله</text>
+
   <!-- Wordmark: Serv (teal) + (★)a (gold star replaces 'i' dot) -->
   <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
      font-weight="800" letter-spacing="-0.5">
-    <text x="92" y="50" font-size="38" fill="#0F766E">Serv</text>
-    <!-- dotless 'i' -->
-    <text x="172" y="50" font-size="38" fill="#F59E0B" style="font-feature-settings:'dotless' 1">ı</text>
-    <!-- gold star where 'i' dot would be -->
-    <g transform="translate(180 24)" fill="#FCD34D">
+    <text x="92" y="58" font-size="38" fill="#0F766E">Serv</text>
+    <text x="172" y="58" font-size="38" fill="#F59E0B" style="font-feature-settings:'dotless' 1">ı</text>
+    <g transform="translate(180 32)" fill="#FCD34D">
       <path d="M0 -8 L2.4 -2.5 L8 -2.5 L3.4 1 L5.2 7 L0 3.6 L-5.2 7 L-3.4 1 L-8 -2.5 L-2.4 -2.5 Z"/>
     </g>
-    <text x="187" y="50" font-size="38" fill="#F59E0B">a</text>
-    <text x="92" y="74" font-size="10" font-weight="600" letter-spacing="2.6"
+    <text x="187" y="58" font-size="38" fill="#F59E0B">a</text>
+    <text x="92" y="84" font-size="10" font-weight="600" letter-spacing="2.6"
           fill="#475569">YOUR UAE FIX-IT IN 60 SECONDS</text>
   </g>
 </svg>

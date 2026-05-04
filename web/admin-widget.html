@@ -151,7 +151,7 @@ async function load() {
   document.getElementById("m-active").textContent = stats.active_now || 0;
   document.getElementById("m-today").textContent = stats.today || 0;
   document.getElementById("m-week").textContent = stats.week || 0;
-  document.getElementById("last-upd").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  document.getElementById("last-upd").textContent = "updated " + new Intl.DateTimeFormat("en-GB", {timeZone:"Asia/Dubai",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date()) + " GST";
 
   // Hourly bar chart (24 buckets, last is current hour)
   const hr = stats.hourly_24h || new Array(24).fill(0);

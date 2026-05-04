@@ -1512,11 +1512,67 @@ try:
     from apscheduler.schedulers.background import BackgroundScheduler
     _scheduler = BackgroundScheduler(timezone="Asia/Dubai")
 
-    def _autoblog_tick():
-        """Daily 06:00 UAE — generate one article. Topic rotates by day-of-year
-        through (emirate, service, slant) tuples so we get fresh, situational
-        content (e.g. 'AC pre-summer prep in Dubai Marina May 2026')."""
-        import os, datetime as _d, random
+    # UAE neighborhoods used for hyper-local article + video targeting. Editable
+    # by admin via db.cfg("autoblog_areas_json"). Order = focus emirates first.
+    AREA_MAP = {
+        "dubai":          ["Jumeirah", "Dubai Marina", "JLT", "JVC", "Mirdif",
+                           "Discovery Gardens", "Business Bay", "Downtown",
+                           "Al Barsha", "Arabian Ranches", "Damac Hills", "Silicon Oasis"],
+        "sharjah":        ["Al Khan", "Al Majaz", "Al Nahda Sharjah", "Muwaileh",
+                           "Al Qasimia", "Al Taawun", "Sharjah Al Suyoh", "Aljada"],
+        "abu-dhabi":      ["Khalifa City", "Al Reem Island", "Yas Island", "Saadiyat",
+                           "Al Raha", "Mussafah", "Mohammed Bin Zayed City", "Corniche"],
+        "ajman":          ["Al Nuaimiya", "Al Rashidiya", "Al Rawda", "Ajman Corniche",
+                           "Al Jurf", "Al Mowaihat"],
+        "ras-al-khaimah": ["Al Hamra", "Mina Al Arab", "Al Nakheel", "Khuzam"],
+        "umm-al-quwain":  ["Al Ramlah", "Al Salamah", "UAQ Marina"],
+        "fujairah":       ["Dibba", "Al Faseel", "Sakamkam"],
+    }
+
+    def _autoblog_prompt(em: str, sv: str, area: str, slant: str, topic: str) -> str:
+        """Default prompt template. Admin can override by setting db.cfg key
+        'autoblog_prompt_template' — placeholders {em},{sv},{area},{slant},{topic}."""
+        from . import db as _db
+        tpl = _db.cfg_get("autoblog_prompt_template", "") or ""
+        if tpl:
+            try:
+                return tpl.format(em=em, sv=sv, area=area, slant=slant, topic=topic)
+            except Exception: pass
+        # Default — area-aware. NO em-dashes (AI tell) and lots of UAE specifics.
+        return (
+            f"Write a 700-word blog post for Servia (UAE home services).\n\n"
+            f"Title: {topic}\n"
+            f"Emirate: {em.replace('-',' ').title()}  Neighborhood: {area}  Service: {sv.replace('_',' ')}\n"
+            f"Season: {slant}\n\n"
+            "WRITE LIKE A REAL UAE TRADESPERSON. NO AI WRITING TELLS. Hard rules:\n"
+            "1. NEVER use em-dashes. Use periods, commas, or 'and' instead.\n"
+            "2. NEVER use the en-dash for ranges. Write '5 to 7' not '5-7'.\n"
+            "3. NEVER use semicolons. Split into two sentences.\n"
+            "4. Avoid 'delve', 'tapestry', 'navigate the landscape', 'crucial', 'vital', "
+            "'comprehensive', 'leverage', 'utilize', 'streamline', 'robust', 'seamless', "
+            "'unlock', 'elevate', 'plethora', 'myriad', 'embark on', 'in conclusion', "
+            "'in summary', 'when it comes to', 'foster', 'nestled', 'bustling', 'vibrant', "
+            "'iconic', 'stunning'.\n"
+            "5. Use contractions: don't, won't, isn't, you'll, we've.\n"
+            "6. Vary sentence length wildly. Short. Then long ones that ramble a bit.\n"
+            f"7. Be specific to {area}. Mention real towers / streets / landmarks in {area} "
+            f"({em.replace('-',' ').title()}). Real prices in AED. Real timings.\n"
+            f"8. Open with a 1-line hook tied to {area}, not generic 'In the UAE...'.\n"
+            "9. Include 2 to 3 personal stories. Use 'I' freely. Make it sound like you've "
+            "done this work in that specific neighborhood last week.\n"
+            "10. 2 to 3 H2 headings (## in markdown). Short and direct.\n"
+            "11. Mention Servia 2 or 3 times, naturally.\n"
+            "12. End with a one-line CTA pointing to https://servia.ae/book.html.\n"
+            "13. Include a 3-question FAQ at the end with short direct answers.\n"
+            "14. Output ONLY the markdown article. No preamble, no explanation."
+        )
+
+    def _autoblog_tick(slot: str = "morning"):
+        """Generate one area-targeted article. Runs twice daily (06:00 + 18:00).
+        Each tick rotates through (emirate, neighborhood, service, slant) so we
+        get hyper-local content like 'AC service in Al Khan, Sharjah May 2026'.
+        slot='morning' favours Dubai+Sharjah, slot='evening' favours Ajman+AD."""
+        import os, datetime as _d
         from . import db as _db, kb as _kb
         if os.getenv("AUTOBLOG_ENABLED", "1") == "0": return
         try:
@@ -1524,9 +1580,11 @@ try:
             if not _gs().use_llm: return
         except Exception: return
 
-        emirates = ["dubai","abu-dhabi","sharjah","ajman","ras-al-khaimah","umm-al-quwain","fujairah"]
+        # Different rotation per slot so morning/evening don't both pick the same emirate.
+        morning_emirates = ["dubai","sharjah","ajman","abu-dhabi"]
+        evening_emirates = ["ajman","abu-dhabi","ras-al-khaimah","sharjah","dubai","umm-al-quwain","fujairah"]
+        emirates_pool = morning_emirates if slot == "morning" else evening_emirates
         services = [s["id"] for s in _kb.services()["services"]]
-        # Seasonal slant — UAE-aware
         m = _d.datetime.now().month
         season_slant = {
             (3,4,5): "pre-summer prep",
@@ -1535,54 +1593,29 @@ try:
             (12,1,2): "cool-season deep care",
         }
         slant = next((v for k,v in season_slant.items() if m in k), "year-round")
-        ts = int(_d.datetime.now().timestamp() / 86400)
-        em = emirates[ts % len(emirates)]
-        sv = services[(ts // len(emirates)) % len(services)]
-        topic = f"{slant.title()} — best {sv.replace('_',' ')} in {em.replace('-',' ').title()} ({_d.datetime.now().strftime('%B %Y')})"
+        ts = int(_d.datetime.now().timestamp() / 43200)  # half-day buckets so AM/PM differ
+        em = emirates_pool[ts % len(emirates_pool)]
+        sv = services[(ts // len(emirates_pool)) % len(services)]
+        areas = AREA_MAP.get(em, [em.replace("-"," ").title()])
+        area = areas[ts % len(areas)]
+        topic = f"{sv.replace('_',' ').title()} in {area} ({em.replace('-',' ').title()}): {slant} guide for {_d.datetime.now().strftime('%B %Y')}"
 
         # Reuse the admin endpoint helper inline (avoid import loop)
         try:
             import anthropic
             client = anthropic.Anthropic(api_key=_gs().ANTHROPIC_API_KEY, timeout=30, max_retries=1)
-            prompt = (
-                f"Write a 700-word blog post for Servia (UAE home services).\n\n"
-                f"Title: {topic}\nEmirate: {em.replace('-',' ').title()}  Service: {sv.replace('_',' ')}\n"
-                f"Season: {slant}\n\n"
-                "WRITE LIKE A REAL UAE TRADESPERSON. NO AI WRITING TELLS. Hard rules:\n"
-                "1. NEVER use em-dashes (—). Use periods, commas, or 'and' instead. ZERO em-dashes anywhere.\n"
-                "2. NEVER use the en-dash (–) for ranges either. Write '5 to 7' not '5–7'.\n"
-                "3. NEVER use semicolons. Split into two sentences.\n"
-                "4. NEVER use 'delve', 'tapestry', 'navigate the landscape', 'in the realm of', 'crucial', "
-                "'vital', 'essential', 'comprehensive', 'leverage', 'utilize', 'streamline', 'robust', "
-                "'seamless', 'unlock', 'elevate', 'paradigm', 'plethora', 'myriad', 'embark on', "
-                "'in conclusion', 'in summary', 'it's worth noting', 'when it comes to', 'navigate', "
-                "'foster', 'showcase', 'nestled', 'bustling', 'vibrant', 'iconic', 'stunning'.\n"
-                "5. Use contractions: don't, won't, isn't, you'll, we've. People talk like that.\n"
-                "6. Vary sentence length wildly. Some short. Some long ones that ramble a bit because real "
-                "people write that way when they know their craft.\n"
-                "7. Be specific. Real Dubai areas (Cluster T at JLT, Marina, Mirdif, Discovery Gardens, JVC). "
-                "Real prices in AED. Real timings (suhoor 4am, iftar 6:30pm in Ramadan). Real brand names.\n"
-                "8. Include 2-3 personal stories. Use 'I' freely. 'A customer in Mirdif last June called me "
-                "because...'. Make it sound like you've actually done this work.\n"
-                "9. Occasionally use mild filler: 'honestly', 'look', 'thing is', 'basically'. Real speech.\n"
-                "10. 2 to 3 H2 headings (## in markdown). Headings short and direct, no clever wordplay.\n"
-                "11. Mention Servia 2 or 3 times, naturally.\n"
-                "12. End with a one-line CTA pointing to https://servia.ae/book.html.\n"
-                "13. Include a 3-question FAQ at the end with short direct answers.\n"
-                "14. Output ONLY the markdown article. No preamble like 'Here is your post'. No "
-                "explanation. Start with the article body."
-            )
+            prompt = _autoblog_prompt(em, sv, area, slant, topic)
             msg = client.messages.create(
                 model=_gs().MODEL, max_tokens=2400,
                 messages=[{"role":"user","content":prompt}],
             )
             body = msg.content[0].text if msg.content else ""
-            # Humanize pass — strip residual AI tells the model slipped past the prompt
             body = _humanize_text(body)
         except Exception as e:  # noqa: BLE001
             print(f"[autoblog] error: {e}", flush=True); return
 
-        slug = (em + "-" + "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-"))[:90]
+        slug = (em + "-" + area.lower().replace(" ", "-") + "-" +
+                "".join(c.lower() if c.isalnum() else "-" for c in topic).strip("-"))[:100]
         with _db.connect() as c:
             try:
                 c.execute("""
@@ -1609,10 +1642,18 @@ try:
                 meta={"slug": slug, "emirate": em, "service": sv})
         except Exception: pass
 
-    @_scheduler.scheduled_job("cron", hour=6, minute=0, id="autoblog_daily",
+    # Run twice daily — morning (06:00) skews Dubai+Sharjah, evening (18:00)
+    # skews Ajman+Abu-Dhabi+RAK so we cover all emirates over time. Both ticks
+    # use neighborhood-targeted topics (Jumeirah, Al Khan, Mirdif, etc).
+    @_scheduler.scheduled_job("cron", hour=6, minute=0, id="autoblog_morning",
                               max_instances=1, coalesce=True, replace_existing=True)
-    def _job_autoblog():
-        _autoblog_tick()
+    def _job_autoblog_morning():
+        _autoblog_tick("morning")
+
+    @_scheduler.scheduled_job("cron", hour=18, minute=0, id="autoblog_evening",
+                              max_instances=1, coalesce=True, replace_existing=True)
+    def _job_autoblog_evening():
+        _autoblog_tick("evening")
 
     # Daily summary push at 21:00 Asia/Dubai
     @_scheduler.scheduled_job("cron", hour=21, minute=0, id="daily_summary",
@@ -1642,7 +1683,7 @@ try:
         try:
             if not _scheduler.running:
                 _scheduler.start()
-                print("[scheduler] started — autoblog 06:00, PSI 03:00, summary 21:00 (Asia/Dubai)", flush=True)
+                print("[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)", flush=True)
         except Exception as e:  # noqa: BLE001
             print(f"[scheduler] failed: {e}", flush=True)
 

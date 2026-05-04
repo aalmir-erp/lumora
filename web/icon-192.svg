@@ -1,6 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
   <defs>
     <clipPath id="rounded"><rect width="192" height="192" rx="42"/></clipPath>
+    <!-- UAE-colour gradient (red → green → white-ish → black) used as the mark
+         backdrop instead of literal flag stripes. Smooth, app-icon friendly. -->
+    <linearGradient id="uae-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#EF3340"/>
+      <stop offset="40%"  stop-color="#00732F"/>
+      <stop offset="75%"  stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
     <radialGradient id="face" cx="0.45" cy="0.4" r="0.65">
       <stop offset="0%" stop-color="#FEF3C7"/><stop offset="100%" stop-color="#FCD34D"/>
     </radialGradient>
@@ -14,12 +22,7 @@
       <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.30"/>
     </filter>
   </defs>
-  <g clip-path="url(#rounded)">
-    <rect x="0"  y="0"   width="48"  height="192" fill="#EF3340"/>
-    <rect x="48" y="0"   width="144" height="64"  fill="#00732F"/>
-    <rect x="48" y="64"  width="144" height="64"  fill="#FFFFFF"/>
-    <rect x="48" y="128" width="144" height="64"  fill="#000000"/>
-  </g>
+  <rect width="192" height="192" rx="42" fill="url(#uae-grad)"/>
   <g filter="url(#shadow)">
     <circle cx="96" cy="96" r="48" fill="url(#badge)"/>
     <circle cx="96" cy="96" r="48" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.85"/>
