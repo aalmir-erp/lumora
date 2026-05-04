@@ -36,6 +36,7 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 # Routers
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
+app.include_router(admin.public_2fa_router)
 app.include_router(portal.router)
 app.include_router(portal_v2.router)
 app.include_router(portal_v2.public_router)
@@ -906,32 +907,92 @@ def blog_index():
 
 @app.get("/sitemap.xml")
 def sitemap_xml():
+    """Comprehensive sitemap: every public HTML page + all services × emirates +
+    every published autoblog post (with its own lastmod) + every video standalone
+    page + every emirate area landing. Crawled by Google/Bing/Yandex/AI bots."""
     base = f"https://{settings.BRAND_DOMAIN}"
     today = _dt.date.today().isoformat()
     services = kb.services()["services"]
-    urls = [("/", "1.0", "daily"),
-            ("/services.html", "0.9", "weekly"),
-            ("/book.html", "0.9", "weekly"),
-            ("/login.html", "0.7", "monthly")]
+    EMIRATES = ("dubai", "abu-dhabi", "sharjah", "ajman",
+                "umm-al-quwain", "ras-al-khaimah", "fujairah")
+
+    urls: list[tuple[str, str, str, str | None]] = []  # (url, prio, freq, lastmod)
+    # Top-level pages
+    static_pages = [
+        ("/", "1.0", "daily"),
+        ("/services.html", "0.9", "weekly"),
+        ("/book.html", "0.9", "weekly"),
+        ("/cart.html", "0.7", "weekly"),
+        ("/coverage.html", "0.85", "daily"),
+        ("/videos.html", "0.85", "weekly"),
+        ("/blog", "0.85", "daily"),
+        ("/contact.html", "0.7", "monthly"),
+        ("/me.html", "0.5", "monthly"),
+        ("/login.html", "0.6", "monthly"),
+        ("/share-rewards.html", "0.6", "monthly"),
+        ("/faq.html", "0.6", "monthly"),
+        ("/privacy.html", "0.4", "yearly"),
+        ("/terms.html", "0.4", "yearly"),
+        ("/refund.html", "0.4", "yearly"),
+    ]
+    for p, prio, freq in static_pages:
+        urls.append((p, prio, freq, today))
+
+    # Service detail pages (one per service)
     for s in services:
-        urls.append((f"/service.html?id={s['id']}", "0.85", "weekly"))
-    for area in ("dubai", "sharjah", "ajman", "abu-dhabi", "ras-al-khaimah"):
-        urls.append((f"/services.html?area={area}", "0.7", "weekly"))
+        urls.append((f"/service.html?id={s['id']}", "0.85", "weekly", today))
+
+    # Service × Emirate landing pages — high SEO value (long-tail "ac-cleaning-dubai")
+    for s in services:
+        for em in EMIRATES:
+            urls.append((f"/services.html?service={s['id']}&area={em}", "0.7", "weekly", today))
+
+    # Emirate-only area pages
+    for em in EMIRATES:
+        urls.append((f"/area.html?city={em}", "0.75", "weekly", today))
+
+    # All published blog posts (with their actual published_at as lastmod)
+    try:
+        with db.connect() as c:
+            try:
+                rows = c.execute(
+                    "SELECT slug, published_at FROM autoblog_posts ORDER BY published_at DESC"
+                ).fetchall()
+                for r in rows:
+                    lm = (r["published_at"] or today)[:10]
+                    urls.append((f"/blog/{r['slug']}", "0.75", "monthly", lm))
+            except Exception: pass
+    except Exception: pass
+
+    # All videos as standalone playable pages (one per slug + per aspect)
+    try:
+        with db.connect() as c:
+            try:
+                vrows = c.execute("SELECT slug FROM videos").fetchall()
+                for vr in vrows:
+                    urls.append((f"/api/videos/play/{vr['slug']}?aspect=16x9", "0.6", "monthly", today))
+            except Exception: pass
+    except Exception: pass
+
     langs = ("en", "ar", "hi", "tl")
     body = '<?xml version="1.0" encoding="UTF-8"?>\n'
     body += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
     body += 'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
-    for u, prio, freq in urls:
+    for u, prio, freq, lastmod in urls:
         sep = "&amp;" if "?" in u else "?"
         body += f"  <url><loc>{base}{u}</loc>"
-        body += f"<lastmod>{today}</lastmod><changefreq>{freq}</changefreq><priority>{prio}</priority>"
-        for lg in langs:
-            body += (f'<xhtml:link rel="alternate" hreflang="{lg}" '
-                     f'href="{base}{u}{sep}lang={lg}"/>')
+        body += f"<lastmod>{lastmod or today}</lastmod>"
+        body += f"<changefreq>{freq}</changefreq><priority>{prio}</priority>"
+        # hreflang only on UI pages, not on api/video deep links
+        if u.startswith(("/api/", "/blog/")) is False:
+            for lg in langs:
+                body += (f'<xhtml:link rel="alternate" hreflang="{lg}" '
+                         f'href="{base}{u}{sep}lang={lg}"/>')
         body += "</url>\n"
     body += "</urlset>\n"
     from fastapi.responses import Response
-    return Response(content=body, media_type="application/xml")
+    return Response(content=body, media_type="application/xml",
+                    headers={"X-Sitemap-Url-Count": str(len(urls))})
 
 
 @app.get("/llms.txt", response_class=HTMLResponse)

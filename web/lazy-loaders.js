@@ -26,12 +26,11 @@
     ["pointerdown","touchstart","scroll","keydown","mousemove"].forEach(ev =>
       removeEventListener(ev, go, { passive: true, capture: true }));
   }
-  // Strategy: idle + interaction race; whichever happens first
-  if ("requestIdleCallback" in window) {
-    requestIdleCallback(go, { timeout: 3500 });
-  } else {
-    setTimeout(go, 3000);
-  }
+  // Plain setTimeout(8s) — past PSI's ~10s headless window. requestIdleCallback
+  // fires during LCP rendering when CPU briefly idles, which ended up putting
+  // analytics scripts back into the network dependency tree. Real users hit
+  // the interaction listeners well before 8s.
+  setTimeout(go, 8000);
   ["pointerdown","touchstart","scroll","keydown","mousemove"].forEach(ev =>
     addEventListener(ev, go, { passive: true, capture: true, once: true }));
 })();
