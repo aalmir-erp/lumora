@@ -270,16 +270,9 @@ def get_smtp():
             "configured": bool(cfg["host"] and cfg["user"] and cfg["pass"])}
 
 
-class SmtpBody(BaseModel):
-    host: str | None = None
-    port: int | None = None
-    user: str | None = None
-    pass_: str | None = None
-    from_addr: str | None = None
-    from_name: str | None = None
-
-    class Config:
-        fields = {"pass_": "pass", "from_addr": "from"}
+# SmtpBody is no longer a Pydantic class — set_smtp accepts a raw dict so we
+# can use 'from' and 'pass' as keys (both Python reserved words). Pydantic v2
+# dropped the per-field-alias 'class Config' shortcut.
 
 
 @router.post("/smtp")

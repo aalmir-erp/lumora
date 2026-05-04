@@ -1077,32 +1077,233 @@ def blog_index():
     return blog_render.render_index()
 
 
+def _xml_response(body: str, *, fallback: bool = False):
+    """Return a properly-headered XML response. NEVER set Content-Length —
+    Starlette computes it from the encoded body (mismatch = General HTTP error)."""
+    from fastapi.responses import Response as _R
+    headers = {"Cache-Control": "no-cache, must-revalidate"}
+    if fallback: headers["X-Sitemap-Fallback"] = "1"
+    return _R(content=body.encode("utf-8"),
+              media_type="application/xml; charset=utf-8",
+              headers=headers)
+
+
+def _x_url(s: str) -> str:
+    """XML-encode a URL for safe inclusion in <loc>."""
+    return (s or "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
+
+
 @app.get("/sitemap.xml")
 def sitemap_xml():
-    """Comprehensive sitemap. Wrapped in a master try/except so a single bad
-    DB row never returns a 500 to Googlebot (which would show as
-    'General HTTP error' in GSC). Worst case we ship a minimal valid
-    homepage-only sitemap so crawling doesn't break."""
+    """Sitemap INDEX — industry-standard pattern used by big sites. Lists
+    every child sitemap. Smaller children = easier for Google to parse and
+    one bad URL never blocks everything. Children:
+
+      /sitemap-pages.xml     → static HTML pages
+      /sitemap-services.xml  → service detail + service×emirate landings
+      /sitemap-areas.xml     → emirate-specific area pages
+      /sitemap-blog.xml      → autoblog posts
+      /sitemap-videos.xml    → videos w/ proper Video XML schema
+    """
+    try:
+        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
+        base = f"https://{domain}"
+        today = _dt.date.today().isoformat()
+        children = [
+            ("sitemap-pages.xml", today),
+            ("sitemap-services.xml", today),
+            ("sitemap-areas.xml", today),
+            ("sitemap-blog.xml", today),
+            ("sitemap-videos.xml", today),
+        ]
+        body = ['<?xml version="1.0" encoding="UTF-8"?>',
+                '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+        for path, lm in children:
+            body.append(f'  <sitemap><loc>{_x_url(base)}/{path}</loc>'
+                        f'<lastmod>{lm}</lastmod></sitemap>')
+        body.append('</sitemapindex>')
+        return _xml_response("\n".join(body) + "\n")
+    except Exception as e:  # noqa: BLE001
+        print(f"[sitemap-index] error: {e}", flush=True)
+        return _xml_response(
+            f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f'  <sitemap><loc>https://servia.ae/sitemap-pages.xml</loc>'
+            f'<lastmod>{_dt.date.today().isoformat()}</lastmod></sitemap>\n'
+            f'</sitemapindex>\n', fallback=True)
+
+
+def _wrap_urlset(urls: list[tuple[str, str, str, str]], *,
+                 video_xmlns: bool = False) -> str:
+    """Build a clean <urlset> XML body from (loc, lastmod, changefreq, priority)
+    tuples. Optional video namespace for the videos sitemap."""
+    parts = ['<?xml version="1.0" encoding="UTF-8"?>']
+    if video_xmlns:
+        parts.append(
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+            'xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">')
+    else:
+        parts.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    for loc, lm, freq, prio in urls:
+        parts.append(
+            f'  <url><loc>{_x_url(loc)}</loc>'
+            f'<lastmod>{lm}</lastmod>'
+            f'<changefreq>{freq}</changefreq>'
+            f'<priority>{prio}</priority></url>')
+    parts.append('</urlset>')
+    return "\n".join(parts) + "\n"
+
+
+@app.get("/sitemap-pages.xml")
+def sitemap_pages():
+    try:
+        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
+        base = f"https://{domain}"
+        today = _dt.date.today().isoformat()
+        urls = [
+            (f"{base}/",                    today, "daily",   "1.0"),
+            (f"{base}/services.html",       today, "weekly",  "0.9"),
+            (f"{base}/book.html",           today, "weekly",  "0.9"),
+            (f"{base}/coverage.html",       today, "daily",   "0.85"),
+            (f"{base}/videos.html",         today, "weekly",  "0.85"),
+            (f"{base}/blog",                today, "daily",   "0.85"),
+            (f"{base}/contact.html",        today, "monthly", "0.7"),
+            (f"{base}/share-rewards.html",  today, "monthly", "0.6"),
+            (f"{base}/faq.html",            today, "monthly", "0.6"),
+            (f"{base}/login.html",          today, "monthly", "0.5"),
+            (f"{base}/me.html",             today, "monthly", "0.5"),
+            (f"{base}/privacy.html",        today, "yearly",  "0.4"),
+            (f"{base}/terms.html",          today, "yearly",  "0.4"),
+            (f"{base}/refund.html",         today, "yearly",  "0.4"),
+        ]
+        return _xml_response(_wrap_urlset(urls))
+    except Exception as e:  # noqa: BLE001
+        print(f"[sitemap-pages] error: {e}", flush=True)
+        return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            '  <url><loc>https://servia.ae/</loc></url>\n</urlset>\n',
+            fallback=True)
+
+
+@app.get("/sitemap-services.xml")
+def sitemap_services():
+    try:
+        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
+        base = f"https://{domain}"
+        today = _dt.date.today().isoformat()
+        EMIRATES = ("dubai", "abu-dhabi", "sharjah", "ajman",
+                    "umm-al-quwain", "ras-al-khaimah", "fujairah")
+        urls = []
+        for s in kb.services()["services"]:
+            urls.append((f"{base}/service.html?id={s['id']}", today, "weekly", "0.85"))
+            for em in EMIRATES:
+                urls.append((f"{base}/services.html?service={s['id']}&area={em}",
+                             today, "weekly", "0.7"))
+        return _xml_response(_wrap_urlset(urls))
+    except Exception as e:  # noqa: BLE001
+        print(f"[sitemap-services] error: {e}", flush=True)
+        return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n',
+            fallback=True)
+
+
+@app.get("/sitemap-areas.xml")
+def sitemap_areas():
+    try:
+        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
+        base = f"https://{domain}"
+        today = _dt.date.today().isoformat()
+        EMIRATES = ("dubai", "abu-dhabi", "sharjah", "ajman",
+                    "umm-al-quwain", "ras-al-khaimah", "fujairah")
+        urls = [(f"{base}/area.html?city={em}", today, "weekly", "0.75")
+                for em in EMIRATES]
+        return _xml_response(_wrap_urlset(urls))
+    except Exception as e:  # noqa: BLE001
+        return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n',
+            fallback=True)
+
+
+@app.get("/sitemap-blog.xml")
+def sitemap_blog():
+    try:
+        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
+        base = f"https://{domain}"
+        today = _dt.date.today().isoformat()
+        urls: list[tuple[str, str, str, str]] = []
+        try:
+            with db.connect() as c:
+                rows = c.execute(
+                    "SELECT slug, published_at FROM autoblog_posts "
+                    "ORDER BY published_at DESC LIMIT 5000").fetchall()
+                for r in rows:
+                    lm = (r["published_at"] or today)[:10]
+                    urls.append((f"{base}/blog/{r['slug']}", lm, "monthly", "0.75"))
+        except Exception: pass
+        # Always include /blog index even when empty
+        urls.insert(0, (f"{base}/blog", today, "daily", "0.85"))
+        return _xml_response(_wrap_urlset(urls))
+    except Exception as e:  # noqa: BLE001
+        return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n',
+            fallback=True)
+
+
+@app.get("/sitemap-videos.xml")
+def sitemap_videos_xml():
+    """Per Google Video Sitemap spec — proper <video:video> blocks."""
+    try:
+        domain = (settings.BRAND_DOMAIN or "servia.ae").strip()
+        base = f"https://{domain}"
+        today = _dt.date.today().isoformat()
+        rows = []
+        try:
+            with db.connect() as c:
+                rows = c.execute("SELECT slug, title FROM videos LIMIT 1000").fetchall()
+        except Exception: pass
+        parts = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+                 'xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">']
+        for r in rows:
+            slug = r["slug"]
+            title = (r["title"] or slug.replace("-", " ").title())[:100]
+            page = f"{base}/api/videos/play/{slug}"
+            poster = f"{base}/api/videos/poster/{slug}.svg"
+            parts.append(
+                f'  <url><loc>{_x_url(page)}</loc>'
+                f'<lastmod>{today}</lastmod>'
+                f'<changefreq>monthly</changefreq><priority>0.6</priority>'
+                f'<video:video>'
+                f'<video:thumbnail_loc>{_x_url(poster)}</video:thumbnail_loc>'
+                f'<video:title>Servia: {_x_url(title)}</video:title>'
+                f'<video:description>{_x_url("Animated Servia explainer about " + title.lower() + " for UAE home services. Booked in seconds via servia.ae.")}</video:description>'
+                f'<video:player_loc allow_embed="yes">{_x_url(page)}</video:player_loc>'
+                f'<video:duration>22</video:duration>'
+                f'<video:family_friendly>yes</video:family_friendly>'
+                f'<video:requires_subscription>no</video:requires_subscription>'
+                f'<video:live>no</video:live>'
+                f'<video:publication_date>{today}</video:publication_date>'
+                f'<video:platform relationship="allow">web mobile tv</video:platform>'
+                f'<video:tag>UAE</video:tag><video:tag>home services</video:tag>'
+                f'<video:uploader info="{_x_url(base + "/")}">Servia</video:uploader>'
+                f'</video:video></url>')
+        parts.append('</urlset>')
+        return _xml_response("\n".join(parts) + "\n")
+    except Exception as e:  # noqa: BLE001
+        return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n',
+            fallback=True)
+
+
+# OLD monolithic sitemap kept for backward compat (some crawlers still ask for it)
+@app.get("/sitemap-full.xml")
+def sitemap_full_legacy():
     try:
         return _sitemap_xml_inner()
-    except Exception as e:  # noqa: BLE001
-        # Last-resort fallback: minimal one-URL sitemap. Always 200 OK valid XML
-        # so Google never marks the URL as broken. The error is logged for
-        # admin to find via /api/admin/seo/sitemap-validate.
-        print(f"[sitemap] generation failed: {e}", flush=True)
-        domain = settings.BRAND_DOMAIN or "servia.ae"
-        fallback = (
-            '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-            f'  <url><loc>https://{domain}/</loc>'
-            f'<lastmod>{_dt.date.today().isoformat()}</lastmod>'
-            f'<changefreq>daily</changefreq><priority>1.0</priority></url>\n'
-            '</urlset>\n'
-        )
-        from fastapi.responses import Response as _R
-        return _R(content=fallback, media_type="application/xml; charset=utf-8",
-                  headers={"X-Sitemap-Fallback": "1",
-                           "Cache-Control": "no-store"})
+    except Exception:
+        return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n',
+            fallback=True)
 
 
 def _sitemap_xml_inner():
