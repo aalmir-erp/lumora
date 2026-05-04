@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"PttYPP0uRaW850tVPvyhXg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"jvGAFBsIQkWbJHWABT7zVQ"}`
 
 ## Build logs
 ```
@@ -22,6 +22,7 @@
 [ 5/11] RUN pip install -r requirements.txt
 [ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/11] COPY app ./app
 [ 8/11] COPY app ./app
 [ 9/11] COPY web ./web
@@ -32,10 +33,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODY2ZmE3Y2EyZWI5MGVlNjYxMzhmNDQzNjc5YzFjODNjMzdkNGM4NWRiZDdlYTY0NGJhZjE5NGU3OGJhZDViOCIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQyMDozODozM1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:9e3f2a0b700078dd8ba48174e9b54361d1f25eac9b69182b30066cd709713e74
-containerimage.digest: sha256:866fa7ca2eb90ee66138f443679c1c83c37d4c85dbd7ea644baf194e78bad5b8
-image push
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OTlmOWZiMzY1ZTAzYWUzNTBmNzFmOTc5MWE3ZWI4MTgyZDQxZGZhMmU3NDc5ZWVhZWZiMGRlYzNlNjg0ODkwOCIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQyMDo1MjozNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:da0e00afc3d86a6be287aea0f6cdb5c2ea271419fa8d79d23df72119c96ef434
+containerimage.digest: sha256:99f9fb365e03ae350f71f9791a7eb8182d41dfa2e7479eeaefb0dec3e6848908
 image push
 
 [35m====================
@@ -50,17 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-[start] launching whatsapp_bridge
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/9d92d4c3-2093-49a0-9450-aebe29e82a30/vol_onr647rhdeir9di9
-Starting Container
-[wa-bridge] listening on :3001
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     100.64.0.2:42663 - "GET /api/health HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.4:61576 - "GET /api/blog/hero/dubai-sofa-shampoo-in-arabian-ranches---why-fabric-protectors-are-a-2026-must-have.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61594 - "GET /api/blog/hero/abu-dhabi-bed-bugs-on-reem-island---why-80--of-treatments-fail-and-what-works-in-2026.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61554 - "GET /api/blog/hero/ras-al-khaimah-rak-ac-service-tips---coastal-humidity-is-killing-your-compressor-faster-th.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61718 - "GET /api/blog/hero/umm-al-quwain-handyman-in-uaq---the-6-small-fixes-every-villa-owner-should-batch-in-one-vi.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61602 - "GET /api/blog/hero/abu-dhabi-deep-cleaning-a-khalifa-city-villa-after-sandstorm-season---a-checklist.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61576 - "GET /api/blog/latest?limit=10 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61718 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61576 - "GET /api/blog/hero/abu-dhabi-bed-bugs-on-reem-island---why-80--of-treatments-fail-and-what-works-in-2026.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61602 - "GET /api/blog/hero/abu-dhabi-deep-cleaning-a-khalifa-city-villa-after-sandstorm-season---a-checklist.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61554 - "GET /api/blog/hero/dubai-sofa-shampoo-in-arabian-ranches---why-fabric-protectors-are-a-2026-must-have.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:38514 - "GET /api/blog/hero/sharjah-carpet-cleaning-in-al-khan-sharjah---sand--oil--kid-spills-and-what-aed-80-covers.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:38522 - "GET /api/blog/hero/ras-al-khaimah-rak-ac-service-tips---coastal-humidity-is-killing-your-compressor-faster-th.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:27228 - "GET /api/blog/hero/dubai-kitchen-deep-clean-in-jlt---the-ramadan-grease-problem-and-how-pros-solve-it.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:38514 - "GET /api/blog/hero/umm-al-quwain-handyman-in-uaq---the-6-small-fixes-every-villa-owner-should-batch-in-one-vi.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61554 - "GET /social-strip.js HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61718 - "GET /cart-badge.js HTTP/1.1" 200 OK
+INFO:     100.64.0.6:27228 - "GET /social-proof.js HTTP/1.1" 200 OK
+INFO:     100.64.0.6:38514 - "GET /_snippets.js HTTP/1.1" 200 OK
+INFO:     100.64.0.6:38514 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61554 - "GET /social-strip.js HTTP/1.1" 200 OK
+INFO:     100.64.0.5:21924 - "GET /social-proof.js HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61718 - "GET /_snippets.js HTTP/1.1" 200 OK
+INFO:     100.64.0.6:27228 - "GET /cart-badge.js HTTP/1.1" 200 OK
+INFO:     100.64.0.6:27228 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61554 - "GET /mascots/cleaning.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61554 - "GET /mascots/cleaning.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.7:37994 - "GET /sitemap.xml HTTP/1.1" 200 OK
+INFO:     100.64.0.7:37994 - "GET /sw.js HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
