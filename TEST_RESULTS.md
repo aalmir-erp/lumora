@@ -1,46 +1,46 @@
 # Servia E2E Test Report
 
 **URL:** https://lumora-production-4071.up.railway.app
-**Run at:** 2026-05-04T08:42:51.959131Z
-**Result:** **13/20 scenarios passed**
+**Run at:** 2026-05-04T14:29:45.315995Z
+**Result:** **0/20 scenarios passed**
 
 
-## ✅ #1: Anonymous: deep clean 2BR quote
+## ❌ #1: Anonymous: deep clean 2BR quote
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ POST /api/chat | 200 | 516ms | text len=248, has AED: True, has tool_call: True |
+| ✗ POST /api/chat | 404 | 333ms | text len=0, has AED: False, has tool_call: False |
 
-## ✅ #2: Anonymous: deep clean 3BR with addons (oven, fridge)
+## ❌ #2: Anonymous: deep clean 3BR with addons (oven, fridge)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ POST /api/chat (with addons) | 200 | 341ms | total: 600.0 AED |
+| ✗ POST /api/chat (with addons) | 404 | 118ms | total: None AED — err: {"status": "error", "code": 404, "message": "Application not found", "request_id": "lysLCT5uRbqnj |
 
-## ✅ #3: Anonymous: coverage check Sharjah
+## ❌ #3: Anonymous: coverage check Sharjah
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ POST /api/chat (coverage) | 200 | 262ms | Sharjah covered: True |
+| ✗ POST /api/chat (coverage) | 404 | 106ms | Sharjah covered: None |
 
-## ✅ #4: Public: GET /api/services + /api/brand + /api/i18n
+## ❌ #4: Public: GET /api/services + /api/brand + /api/i18n
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ GET /api/services | 200 | 391ms | 32 services |
-| ✓ GET /api/brand | 200 | 187ms | phone: +971 56 4020087 |
-| ✓ GET /api/i18n | 200 | 250ms | 15 languages |
+| ✗ GET /api/services | 404 | 102ms | 0 services |
+| ✗ GET /api/brand | 404 | 85ms | phone: None |
+| ✗ GET /api/i18n | 404 | 97ms | 4 languages |
 
-## ✅ #5: Anonymous: book general cleaning 2BR via chat
+## ❌ #5: Anonymous: book general cleaning 2BR via chat
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ POST /api/chat (book) | 200 | 344ms | booking_id: LM-800277 |
+| ✗ POST /api/chat (book) | 404 | 73ms | booking_id: None |
 
-## ✅ #6: Anonymous: book AC cleaning 4 units
+## ❌ #6: Anonymous: book AC cleaning 4 units
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ POST /api/chat (AC book) | 200 | 261ms | booking_id: LM-5826AC |
+| ✗ POST /api/chat (AC book) | 404 | 88ms | booking_id: None |
 
 ## ❌ #7: Customer: OTP request + verify (login flow)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ OTP issue | 200 | 231ms | no dev_otp returned (WhatsApp bridge active or production mode) |
+| ✗ OTP issue | 404 | 71ms | no dev_otp returned (WhatsApp bridge active or production mode) |
 
 ## ❌ #8: Customer: update profile (name, email, language)
 | Step | Code | Time | Result |
@@ -72,45 +72,43 @@
 |---|---|---|---|
 | ✗ skip | — | ?ms | no booking |
 
-## ✅ #14: Vendor: login (seeded JustMop)
+## ❌ #14: Vendor: login (seeded JustMop)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ POST /auth/vendor/login | 200 | 234ms | vendor_id=1, token len=46 |
+| ✗ POST /auth/vendor/login | 404 | 97ms | vendor_id=None, token len=0 |
 
-## ✅ #15: Vendor: list available marketplace jobs
+## ❌ #15: Vendor: list available marketplace jobs
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ GET /vendor/jobs/available | 200 | 205ms | 1 available, first: LM-800277 |
+| ✗ skip | — | ?ms | no vendor token |
 
-## ✅ #16: Vendor: claim a job + mark in_progress + completed
+## ❌ #16: Vendor: claim a job + mark in_progress + completed
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ POST /vendor/jobs/claim | 200 | 210ms | {"ok": true, "assignment_id": 7, "payout_amount": 192.0} |
-| ✓ POST /vendor/jobs/status (in_progress) | 200 | 223ms | null |
-| ✓ POST /vendor/jobs/status (completed) | 200 | 208ms | null |
+| ✗ skip | — | ?ms | no claimable booking |
 
-## ✅ #17: Admin: GET stats + vendors + services-summary
+## ❌ #17: Admin: GET stats + vendors + services-summary
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ GET /admin/stats | 200 | 194ms | bookings_today=13, total=34 |
-| ✓ GET /admin/vendors | 200 | 179ms | 45 vendors |
-| ✓ GET /admin/services-summary | 200 | 253ms | 32 services |
+| ✗ GET /admin/stats | 404 | 101ms | bookings_today=None, total=None |
+| ✗ GET /admin/vendors | 404 | 72ms | 0 vendors |
+| ✗ GET /admin/services-summary | 404 | 78ms | 0 services |
 
-## ✅ #18: Admin: read brand, no-op patch (preserve existing)
+## ❌ #18: Admin: read brand, no-op patch (preserve existing)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ GET /admin/brand | 200 | 184ms | phone=+971 56 4020087 |
-| ✓ POST /admin/brand (no-op) | 200 | 215ms | null |
+| ✗ GET /admin/brand | 404 | 77ms | phone=None |
+| ✗ POST /admin/brand (no-op) | 404 | 75ms | null |
 
-## ✅ #19: Admin: service detail (vendors + pricing)
+## ❌ #19: Admin: service detail (vendors + pricing)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ GET /admin/service/deep_cleaning | 200 | 180ms | 12 vendors offering |
+| ✗ GET /admin/service/deep_cleaning | 404 | 71ms | 0 vendors offering |
 
-## ✅ #20: Public: GET /api/reviews/deep_cleaning
+## ❌ #20: Public: GET /api/reviews/deep_cleaning
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✓ GET /api/reviews/deep_cleaning | 200 | 183ms | count=0, avg=None |
+| ✗ GET /api/reviews/deep_cleaning | 404 | 99ms | count=None, avg=None |
 
 ## State captured during run
 ```json
@@ -120,14 +118,11 @@
   "customer_token": null,
   "customer_id": null,
   "address_id": null,
-  "booking_ids": [
-    "LM-800277",
-    "LM-5826AC"
-  ],
+  "booking_ids": [],
   "quote_id": null,
   "invoice_id": null,
-  "vendor_token": "lt__OQep\u2026",
-  "vendor_id": 1,
-  "claimable_booking": "LM-800277"
+  "vendor_token": null,
+  "vendor_id": null,
+  "claimable_booking": null
 }
 ```
