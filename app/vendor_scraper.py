@@ -458,6 +458,66 @@ async def _bing_search(query: str, area: str, limit: int = 10) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Source 7: APIFY GOOGLE MAPS SCRAPER — the production-grade option.
+#
+# Apify hosts pre-built scrapers ('actors') that handle every anti-bot
+# system (Cloudflare, captchas, IP rotation, browser fingerprinting). Their
+# 'compass~google-maps-scraper' actor returns structured Google Maps data:
+# name, phone, website, address, rating, reviews_count, hours, photos.
+#
+# Pricing: ~$0.0035 per result. Free trial: $5 credit = ~1400 results.
+# Get a token at https://console.apify.com/account/integrations
+# Admin pastes the token in cfg key 'apify_api_token'.
+# ---------------------------------------------------------------------------
+async def _apify_google_maps(query: str, area: str, limit: int = 10) -> list[dict]:
+    token = (db.cfg_get("apify_api_token", "") or "").strip()
+    if not token:
+        return [{"_error": "Apify token not set — paste yours from console.apify.com/account/integrations into admin → Vendors → 🌐 Scrape live vendors → Apify token"}]
+    # run-sync-get-dataset-items returns the result inline. Long actors timeout
+    # at 5 min by default; 'compass~google-maps-scraper' usually finishes <1 min
+    # for a 10-result query.
+    try:
+        async with httpx.AsyncClient(timeout=180.0) as c:
+            r = await c.post(
+                f"https://api.apify.com/v2/acts/compass~google-maps-scraper/"
+                f"run-sync-get-dataset-items?token={token}",
+                json={
+                    "searchStringsArray": [f"{query} {area} UAE"],
+                    "locationQuery": f"{area}, United Arab Emirates",
+                    "maxCrawledPlacesPerSearch": limit,
+                    "language": "en",
+                    "scrapePlaceDetailPage": True,
+                    "skipClosedPlaces": True,
+                },
+            )
+            if r.status_code != 200:
+                return [{"_error": f"Apify HTTP {r.status_code}: {r.text[:200]}"}]
+            data = r.json()
+    except Exception as e:
+        return [{"_error": f"Apify exception: {e}"}]
+    if not isinstance(data, list):
+        return [{"_error": f"Apify returned non-list: {str(data)[:150]}"}]
+    out: list[dict] = []
+    for it in data[:limit]:
+        if not isinstance(it, dict): continue
+        name = (it.get("title") or it.get("name") or "").strip()
+        phone = (it.get("phone") or it.get("phoneNumber") or "").strip()
+        if not (name and phone): continue
+        out.append({
+            "place_id": "ap_" + hashlib.sha1((name+phone).encode()).hexdigest()[:14],
+            "name": name[:100], "phone": phone[:24],
+            "website": (it.get("website") or "").strip()[:200],
+            "address": (it.get("address") or area).strip()[:240],
+            "rating": float(it.get("totalScore") or it.get("rating") or 0),
+            "reviews_count": int(it.get("reviewsCount") or it.get("userRatingCount") or 0),
+            "source": "apify_google_maps",
+            "source_url": (it.get("url") or "").strip(),
+            "emirate": area,
+        })
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Source 6: GEMINI GROUNDED SEARCH — the only thing that actually works.
 #
 # Reality check (May 2026): every direct HTML source we tried returns 403:
@@ -472,52 +532,69 @@ async def _bing_search(query: str, area: str, limit: int = 10) -> list[dict]:
 # to return structured vendor data as JSON. Same Google API key as text gen.
 # ---------------------------------------------------------------------------
 async def _gemini_search(query: str, area: str, limit: int = 10) -> list[dict]:
-    """Use Gemini grounded search to find real UAE vendors. Returns
-    structured vendor dicts. Same Google API key the user already pasted
-    in AI Arena for text gen — no extra setup. Bypasses every direct-scrape
-    block because the search runs on Google's infrastructure."""
+    """Use Gemini grounded search to find real UAE vendors. Tries multiple
+    model + tool combos because Google keeps changing the grounding API:
+
+      gemini-2.0-flash-exp  with tool {"google_search": {}}     (newest)
+      gemini-1.5-pro        with tool {"google_search_retrieval": {}}  (older)
+      gemini-1.5-flash      same                                (cheapest)
+
+    First combo that returns a 200 with parseable JSON wins.
+    Same Google API key the user pasted in AI Arena — no extra setup.
+    Bypasses every direct-scrape block because search runs on Google infra."""
     from . import ai_router
     cfg = ai_router._load_cfg()
     keys = cfg.get("keys") or {}
     key = (keys.get("google_image") or keys.get("google") or "").strip()
     if not key:
-        return [{"_error": "Gemini search needs a Google AI key in admin → AI Arena"}]
+        return [{"_error": "Gemini search needs a Google AI key — paste it in admin → 🤖 AI Arena under 'Google AI'"}]
     prompt = (
         f"Find real, currently-operating UAE businesses that offer '{query}' "
-        f"in {area}, UAE. Use Google Search. Prefer SMALL active vendors "
-        f"(under 200 reviews — we need hungry vendors who quote competitively, "
-        f"not big established brands).\n\n"
+        f"in {area}, UAE. Use Google Search to find them. Prefer SMALL active "
+        f"vendors (under 200 reviews — we need hungry vendors who quote "
+        f"competitively, not big established brands).\n\n"
         f"Return EXACTLY a JSON array of up to {limit} vendors. NO commentary, "
         "NO markdown fences, JUST the JSON array. Each vendor object has:\n"
         '  {"name": "...", "phone": "+9715XXXXXXXX", "website": "https://...", '
         '"address": "...", "rating": 4.5, "reviews_count": 75, "summary": "1-line"}\n\n'
         "Rules:\n"
-        f"- Phone MUST be valid UAE mobile (starts with +9715)\n"
+        "- Phone MUST be valid UAE mobile (starts with +9715)\n"
         "- Skip if no phone or only landline\n"
         "- Skip enterprise brands with 500+ reviews\n"
         "- Skip directory aggregators — only direct vendor businesses\n"
         "- Output ONLY the JSON array."
     )
-    try:
-        async with httpx.AsyncClient(timeout=45.0) as c:
-            r = await c.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/"
-                f"gemini-2.5-pro:generateContent?key={key}",
-                json={
-                    "contents": [{"parts": [{"text": prompt}]}],
-                    "tools": [{"google_search": {}}],
+    # Combos to try, newest API first
+    combos = [
+        ("gemini-2.0-flash-exp",   {"google_search": {}}),
+        ("gemini-2.0-flash",       {"google_search": {}}),
+        ("gemini-1.5-pro-latest",  {"google_search_retrieval": {}}),
+        ("gemini-1.5-flash-latest",{"google_search_retrieval": {}}),
+    ]
+    text = ""
+    last_err = None
+    for model, tool in combos:
+        url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+               f"{model}:generateContent?key={key}")
+        try:
+            async with httpx.AsyncClient(timeout=45.0) as c:
+                r = await c.post(url, json={
+                    "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                    "tools": [tool],
                     "generationConfig": {"temperature": 0.3, "maxOutputTokens": 4000},
-                },
-            )
-            if r.status_code != 200:
-                return [{"_error": f"Gemini search HTTP {r.status_code}: {r.text[:200]}"}]
-            data = r.json()
-            text = ""
-            for cand in data.get("candidates", []):
-                for part in (cand.get("content", {}) or {}).get("parts", []):
-                    text += part.get("text") or ""
-    except Exception as e:
-        return [{"_error": f"Gemini search exception: {e}"}]
+                })
+                if r.status_code == 200:
+                    data = r.json()
+                    for cand in data.get("candidates", []):
+                        for part in (cand.get("content", {}) or {}).get("parts", []):
+                            text += part.get("text") or ""
+                    if text.strip(): break
+                last_err = f"{model} HTTP {r.status_code}: {r.text[:150]}"
+        except Exception as e:
+            last_err = f"{model} exception: {e}"
+            continue
+    if not text.strip():
+        return [{"_error": f"All Gemini grounding combos failed. Last: {last_err}"}]
     # Extract JSON array — model sometimes wraps in fences or prose
     if "```" in text:
         m = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", text, re.S)
@@ -773,7 +850,10 @@ async def scrape_for_service(service_id: str, *, target_per_area: int = 3,
                 enabled = {"google_places": True, "gemini_search": True,
                            "reddit": True, "yellowpages_ae": False,
                            "connect_ae": False, "bing": False}
-            # Gemini grounded search — the most reliable working source in 2026
+            # Apify Google Maps — production-grade if admin set the token
+            if enabled.get("apify", True) and (db.cfg_get("apify_api_token", "") or "").strip():
+                sources.append(("apify_google_maps", _apify_google_maps(query, area, limit=target_per_area*2)))
+            # Gemini grounded search — free + reliable when key is set
             if enabled.get("gemini_search", True):
                 sources.append(("gemini_search", _gemini_search(query, area, limit=target_per_area*2)))
             if google_key and enabled.get("google_places", True):
@@ -978,24 +1058,47 @@ class GoogleKeyBody(BaseModel):
     api_key: str
 
 
+@router.get("/apify-token")
+def get_apify_token():
+    """Return whether the Apify token is set + a preview (never the full key)."""
+    t = (db.cfg_get("apify_api_token", "") or "").strip()
+    return {"set": bool(t), "preview": (t[:6] + "…" + t[-4:]) if len(t) >= 12 else ""}
+
+
+class ApifyTokenBody(BaseModel):
+    api_token: str
+
+
+@router.post("/apify-token")
+def set_apify_token(body: ApifyTokenBody):
+    db.cfg_set("apify_api_token", body.api_token.strip())
+    return {"ok": True}
+
+
 @router.get("/sources")
 def get_sources():
     """Return the list of available scraper sources + their enabled state.
-    Direct HTML scrapers (YP / Connect / Bing) are disabled by default
-    because Cloudflare bot protection 403s our datacenter IP. Gemini
-    grounded search + Google Places API are the reliable options."""
+    Apify (paid, $0.0035/result, $5 free trial) is the production-grade
+    option — handles every anti-bot system. Gemini grounded search is the
+    free fallback. Direct HTML scrapers are off by default because
+    Cloudflare 403s datacenter IPs."""
     enabled = db.cfg_get("scraper_sources_enabled", None) or {
-        "google_places": True, "gemini_search": True, "reddit": True,
-        "yellowpages_ae": False, "connect_ae": False, "bing": False}
+        "apify": True, "google_places": True, "gemini_search": True,
+        "reddit": True, "yellowpages_ae": False, "connect_ae": False, "bing": False}
     cfg_keys = {}
     try:
         from . import ai_router
         cfg_keys = (ai_router._load_cfg().get("keys") or {})
     except Exception: pass
     google_key = (db.cfg_get("google_places_api_key", "") or "").strip()
+    apify_token = (db.cfg_get("apify_api_token", "") or "").strip()
     has_gemini_key = bool((cfg_keys.get("google_image") or cfg_keys.get("google") or "").strip())
     return {"sources": [
-        {"key": "gemini_search", "label": "🌟 Gemini grounded search (RECOMMENDED)",
+        {"key": "apify", "label": "🏆 Apify Google Maps (PRODUCTION)",
+         "enabled": enabled.get("apify", True),
+         "needs_key": True, "key_set": bool(apify_token),
+         "note": "Best results. Handles every anti-bot system. ~$0.0035/result, $5 free trial = ~1400 vendors. Get token at console.apify.com/account/integrations."},
+        {"key": "gemini_search", "label": "🌟 Gemini grounded search (FREE FALLBACK)",
          "enabled": enabled.get("gemini_search", True),
          "needs_key": True, "key_set": has_gemini_key,
          "note": "AI-powered web search via Google. Reuses your Gemini text key. Most reliable in 2026 — bypasses 403 bot blocks because search runs on Google's infra."},

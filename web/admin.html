@@ -2684,6 +2684,7 @@ async function wipeSyntheticVendors() {
 async function openScraperPanel() {
   const services = await adm("/api/admin/services-summary").catch(()=>({services:[]}));
   const gk = await adm("/api/admin/scraper/google-key").catch(()=>({set:false}));
+  const ap = await adm("/api/admin/scraper/apify-token").catch(()=>({set:false}));
   const smtp = await adm("/api/admin/outreach/smtp").catch(()=>({configured:false}));
   const overlay = document.createElement("div");
   overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
@@ -2696,10 +2697,21 @@ async function openScraperPanel() {
         <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="this.closest('div[style*=fixed]').remove()">✕</button>
       </div>
 
+      <!-- Apify token (production-grade, paid) -->
+      <div style="background:${ap.set?'#ECFDF5':'#FEF3C7'};border:1px solid ${ap.set?'#6EE7B7':'#FCD34D'};border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
+        <b>🏆 Apify token (production-grade, RECOMMENDED):</b>
+        ${ap.set ? '✓ configured (' + escapeHtml(ap.preview) + ')' : '⚠ not set — direct scrapers are blocked everywhere by Cloudflare. Apify handles every anti-bot system.'}
+        <details style="margin-top:6px"><summary style="cursor:pointer;color:#0F766E">Set / update Apify token</summary>
+          <input id="scr-apify" placeholder="apify_api_..." style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:6px;font-family:ui-monospace,monospace">
+          <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;margin-top:6px" onclick="saveApifyToken(this)">💾 Save token</button>
+          <p style="font-size:11px;color:var(--muted);margin:6px 0 0">Get a token (free $5 credit ≈ 1400 vendors) at <a href="https://console.apify.com/account/integrations" target="_blank" style="color:#0F766E">console.apify.com/account/integrations</a>. Each result costs ~$0.0035. Apify runs Google Maps Scraper actor — handles Cloudflare, captchas, IP rotation automatically. Best results, no maintenance.</p>
+        </details>
+      </div>
+
       <!-- Google Places key -->
       <div style="background:${gk.set?'#ECFDF5':'#FEF3C7'};border:1px solid ${gk.set?'#6EE7B7':'#FCD34D'};border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
-        <b>Google Places API key:</b>
-        ${gk.set ? '✓ configured (' + escapeHtml(gk.preview) + ')' : '⚠ not set — falls back to Yellow Pages UAE (lower quality)'}
+        <b>Google Places API key (free, structured):</b>
+        ${gk.set ? '✓ configured (' + escapeHtml(gk.preview) + ')' : '⚠ not set'}
         <details style="margin-top:6px"><summary style="cursor:pointer;color:#0F766E">Set / update key</summary>
           <input id="scr-gkey" placeholder="AIzaSy..." style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;margin-top:6px;font-family:ui-monospace,monospace">
           <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;margin-top:6px" onclick="saveGoogleKey(this)">💾 Save key</button>
@@ -2740,6 +2752,16 @@ async function openScraperPanel() {
       <p id="scr-msg" style="margin-top:10px;font-size:13px;color:var(--muted)"></p>
     </div>`;
   document.body.appendChild(overlay);
+}
+async function saveApifyToken(btn) {
+  const t = document.getElementById("scr-apify").value.trim();
+  if (!t) return;
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    await adm("/api/admin/scraper/apify-token", {method:"POST", body: JSON.stringify({api_token: t})});
+    toast("✓ Apify token saved");
+  } catch(e) {}
+  btn.disabled = false; btn.textContent = "💾 Save token";
 }
 async function saveGoogleKey(btn) {
   const key = document.getElementById("scr-gkey").value.trim();
