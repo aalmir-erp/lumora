@@ -74,6 +74,7 @@
         <div class="dash-card" id="dash-wa"><div class="dash-h">📲 WhatsApp bridge</div><div class="dash-v">…</div></div>
         <div class="dash-card" id="dash-payments"><div class="dash-h">💳 Stripe</div><div class="dash-v">…</div></div>
         <div class="dash-card" id="dash-content"><div class="dash-h">📝 Content</div><div class="dash-v">…</div></div>
+        <div class="dash-card" id="dash-psi"><div class="dash-h">⚡ PageSpeed</div><div class="dash-v">…</div></div>
       </div>
 
       <!-- Two-col layout -->
@@ -320,9 +321,68 @@
     </div>
 
     <div id="t-analytics" class="tab" style="display:none">
-      <h2>📊 Analytics</h2>
-      <p class="sub" style="color:var(--muted)">Conversion funnel, top sources, services, sentiment, vendors, and growth signals.</p>
-      <div id="analytics-body" style="margin-top:18px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <div>
+          <h2 style="margin:0">📊 Analytics</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13px">Conversion funnel · revenue · top services · cohort · vendor health · bot crawls.</p>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost" id="an-refresh" style="font-size:12px;padding:5px 12px">↻ Refresh</button>
+          <button class="btn" id="an-import-vendors" style="font-size:12px;padding:5px 12px;background:#FCD34D;color:#7C2D12;font-weight:700">+ Import 100 vendor seed</button>
+        </div>
+      </div>
+
+      <!-- Headline KPI strip -->
+      <div id="an-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px"></div>
+
+      <!-- 30-day chart + funnel side by side -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:18px" class="an-row">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h4 style="margin:0 0 10px;font-size:13px;color:#0F766E;text-transform:uppercase;letter-spacing:.06em">📈 30-day bookings &amp; revenue</h4>
+          <div id="an-timeseries" style="min-height:180px"></div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h4 style="margin:0 0 10px;font-size:13px;color:#0F766E;text-transform:uppercase;letter-spacing:.06em">🪜 Funnel · 24 h</h4>
+          <div id="an-funnel"></div>
+        </div>
+      </div>
+
+      <!-- Top services + emirates side by side -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px" class="an-row">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h4 style="margin:0 0 10px;font-size:13px;color:#0F766E;text-transform:uppercase;letter-spacing:.06em">🏆 Top services · 30d</h4>
+          <div id="an-top-services"></div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h4 style="margin:0 0 10px;font-size:13px;color:#0F766E;text-transform:uppercase;letter-spacing:.06em">📍 Top emirates · 30d</h4>
+          <div id="an-top-emirates"></div>
+        </div>
+      </div>
+
+      <!-- Top customers + bot crawls -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="an-row">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h4 style="margin:0 0 10px;font-size:13px;color:#0F766E;text-transform:uppercase;letter-spacing:.06em">💎 Top customers (LTV)</h4>
+          <div id="an-top-customers"></div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <h4 style="margin:0 0 10px;font-size:13px;color:#0F766E;text-transform:uppercase;letter-spacing:.06em">🤖 Bot crawls · 7d</h4>
+          <div id="an-bot-crawls"></div>
+        </div>
+      </div>
+
+      <!-- PSI panel -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <h4 style="margin:0;font-size:13px;color:#0F766E;text-transform:uppercase;letter-spacing:.06em">⚡ PageSpeed Insights</h4>
+          <button class="btn btn-ghost" id="psi-run-btn" style="font-size:11.5px;padding:5px 10px">🔄 Run now</button>
+        </div>
+        <div id="an-psi"></div>
+      </div>
+
+      <p id="an-ts" style="font-size:11px;color:var(--muted);margin-top:14px"></p>
+
+      <style>@media (max-width:780px){.an-row{grid-template-columns:1fr !important}}</style>
     </div>
 
     <div id="t-autoblog" class="tab" style="display:none">
@@ -914,6 +974,157 @@ async function loadDash() {
 
 
 // ============== RICH DASHBOARD (extends loadDash with health + funnel + top services + latest + attention) ==============
+// ============== ANALYTICS ==============
+async function loadAnalytics() {
+  try {
+    const d = await adm("/api/admin/analytics/detail");
+    // Headline KPIs
+    const f = d.funnel_24h || {};
+    document.getElementById("an-kpis").innerHTML = [
+      ["Bookings 30d",  d.bookings_30d_total, "#0F766E"],
+      ["Revenue 30d",   "AED " + (d.revenue_30d_total||0).toLocaleString(), "#15803D"],
+      ["AOV 30d",       "AED " + (d.aov_30d||0), "#7C3AED"],
+      ["Repeat 90d",    (d.repeat_rate_90d||0) + "%", "#DC2626"],
+      ["Customers 90d", d.unique_customers_90d, "#F59E0B"],
+      ["Vendors active",(d.vendors_active||0) + " / " + (d.vendors_total||0), "#0E7490"],
+    ].map(([lbl,val,col]) =>
+      `<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px"><div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">${lbl}</div><div style="font-size:24px;font-weight:900;color:${col};margin-top:4px;letter-spacing:-.01em">${val}</div></div>`).join("");
+
+    // 30-day timeseries — inline SVG bar chart
+    const days = d.daily_30d || [];
+    if (days.length) {
+      const W = 600, H = 180, P = 30;
+      const maxRev = Math.max(...days.map(x => x.revenue), 1);
+      const maxBookings = Math.max(...days.map(x => x.bookings), 1);
+      const bw = (W - 2*P) / Math.max(days.length, 1);
+      const bars = days.map((x, i) => {
+        const xpos = P + i*bw;
+        const rh = (x.revenue / maxRev) * (H - 2*P);
+        const bh = (x.bookings / maxBookings) * (H - 2*P);
+        return `<rect x="${xpos+1}" y="${H-P-rh}" width="${bw-2}" height="${rh}" fill="#0D9488" opacity=".75" rx="2"></rect>` +
+               `<rect x="${xpos+bw*0.35}" y="${H-P-bh}" width="${bw*0.3}" height="${bh}" fill="#FCD34D" rx="2"></rect>`;
+      }).join("");
+      document.getElementById("an-timeseries").innerHTML = `<svg viewBox="0 0 ${W} ${H+20}" style="width:100%;height:auto"><line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="#E2E8F0"/>${bars}<text x="${P}" y="${H+15}" font-size="10" fill="#64748B">${days[0]?.day||""}</text><text x="${W-P}" y="${H+15}" font-size="10" fill="#64748B" text-anchor="end">${days[days.length-1]?.day||""}</text></svg><div style="display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:6px;justify-content:center"><span>🟦 Revenue (AED)</span><span>🟨 Bookings</span></div>`;
+    } else {
+      document.getElementById("an-timeseries").innerHTML = '<div style="color:var(--muted);font-size:13px;padding:24px;text-align:center">📊 Data populates as bookings come in.</div>';
+    }
+
+    // Funnel
+    const fkeys = [["Visitors",f.visitors,"#94A3B8"],["Chats",f.chats,"#0EA5E9"],
+                   ["Quotes",f.quotes,"#7C3AED"],["Bookings",f.bookings,"#0F766E"],
+                   ["Paid",f.paid,"#15803D"]];
+    const maxF = Math.max(...fkeys.map(x => x[1] || 0), 1);
+    document.getElementById("an-funnel").innerHTML =
+      fkeys.map(([lbl, n, col]) => {
+        const pct = ((n||0) / maxF) * 100;
+        return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span style="font-weight:600">${lbl}</span><b>${n||0}</b></div><div style="background:#F1F5F9;border-radius:6px;height:10px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col};transition:width .4s"></div></div></div>`;
+      }).join("") +
+      `<div style="margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.7">↘ Visitor → Chat: <b>${f.v_to_chat||0}%</b><br>↘ Chat → Booking: <b>${f.chat_to_book||0}%</b><br>↘ Booking → Paid: <b>${f.book_to_paid||0}%</b></div>`;
+
+    // Top services
+    const ts = d.top_services_30d || [];
+    document.getElementById("an-top-services").innerHTML = ts.length ? ts.map(s =>
+      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:13px"><code style="color:#0F172A">${escapeHtml(s.service_id)}</code><div><b style="color:#0F766E">${s.bookings}</b><small style="color:var(--muted);margin-left:6px">${s.revenue} AED</small></div></div>`).join("")
+      : '<div style="color:var(--muted);font-size:13px">No bookings yet.</div>';
+
+    // Top emirates
+    const te = d.top_emirates_30d || [];
+    document.getElementById("an-top-emirates").innerHTML = te.length ? te.map(e =>
+      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:13px"><span>${escapeHtml((e.emirate||"").replace(/-/g," "))}</span><b style="color:#0F766E">${e.bookings}</b></div>`).join("")
+      : '<div style="color:var(--muted);font-size:13px">No emirate data yet.</div>';
+
+    // Top customers
+    const tc = d.top_customers || [];
+    document.getElementById("an-top-customers").innerHTML = tc.length ? tc.map(c =>
+      `<div style="padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:12.5px"><div style="display:flex;justify-content:space-between"><b>${escapeHtml(c.name||"Customer #"+c.id)}</b><span style="color:#0F766E;font-weight:700">${c.lifetime_revenue} AED</span></div><div style="color:var(--muted);font-size:11px">${c.bookings} bookings · ${escapeHtml(c.phone||"")}</div></div>`).join("")
+      : '<div style="color:var(--muted);font-size:13px">No repeat customers yet.</div>';
+
+    // Bot crawls
+    const bc = d.bot_crawls_7d || [];
+    document.getElementById("an-bot-crawls").innerHTML = bc.length ? bc.map(b =>
+      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:13px"><span>${escapeHtml(b.bot)}</span><b style="color:#0F766E">${b.hits}</b></div>`).join("")
+      : '<div style="color:var(--muted);font-size:13px">⏳ Bots find sites 1-2 weeks after Google Search Console submission.</div>';
+
+    document.getElementById("an-ts").textContent = "Updated " + (d.generated_at||"").slice(0,19).replace("T"," ");
+
+    // PSI panel
+    loadPsiPanel();
+  } catch (e) {
+    document.getElementById("an-kpis").innerHTML = `<div style="color:#B91C1C">⚠ ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function loadPsiPanel() {
+  const wrap = document.getElementById("an-psi");
+  if (!wrap) return;
+  try {
+    const [latest, hist] = await Promise.all([
+      adm("/api/admin/psi/latest"),
+      adm("/api/admin/psi/history?limit=14"),
+    ]);
+    if (!latest.snap) {
+      wrap.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:14px;text-align:center;background:#F8FAFC;border-radius:10px">📊 No PSI scan yet. Auto-runs 5 min after every deploy + 03:00 daily. Tap '🔄 Run now' to test now.</div>`;
+      return;
+    }
+    const s = latest.snap;
+    const ms = s.mobile||{}, ds = s.desktop||{};
+    const colour = (n) => n >= 95 ? "#15803D" : n >= 80 ? "#B45309" : "#B91C1C";
+    let html = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="text-align:center;padding:14px;background:#F8FAFC;border-radius:12px">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.06em">📱 Mobile</div>
+          <div style="font-size:48px;font-weight:900;color:${colour(ms.score||0)};line-height:1">${ms.score ?? "?"}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">FCP ${ms.fcp||"?"} · LCP ${ms.lcp||"?"} · TBT ${ms.tbt||"?"} · CLS ${ms.cls||"?"}</div>
+        </div>
+        <div style="text-align:center;padding:14px;background:#F8FAFC;border-radius:12px">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.06em">🖥 Desktop</div>
+          <div style="font-size:48px;font-weight:900;color:${colour(ds.score||0)};line-height:1">${ds.score ?? "?"}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">FCP ${ds.fcp||"?"} · LCP ${ds.lcp||"?"} · TBT ${ds.tbt||"?"} · CLS ${ds.cls||"?"}</div>
+        </div>
+      </div>`;
+    // Top opportunities
+    const opps = (ms.top_opportunities || []).slice(0, 5);
+    if (opps.length) {
+      html += `<h5 style="margin:0 0 6px;font-size:12px;color:#0F172A">🔧 Mobile — top opportunities to fix:</h5>` +
+        opps.map(o =>
+          `<div style="padding:6px 10px;border-bottom:1px solid #F1F5F9;font-size:12.5px;display:flex;justify-content:space-between;gap:8px"><span>${escapeHtml(o.title)}</span><b style="color:#B45309">save ~${Math.round(o.savings_ms/100)/10}s</b></div>`).join("");
+    }
+    // History sparkline
+    const items = (hist.history || []).slice().reverse();  // chronological
+    if (items.length > 1) {
+      const W = 480, H = 60;
+      const points = items.map((s, i) => {
+        const score = (s.mobile && s.mobile.score) || 0;
+        const x = (i / (items.length - 1)) * W;
+        const y = H - (score / 100) * H;
+        return `${x},${y}`;
+      }).join(" ");
+      html += `<div style="margin-top:14px"><h5 style="margin:0 0 4px;font-size:12px;color:#0F172A">📈 Mobile score · last ${items.length} runs</h5>
+        <svg viewBox="0 0 ${W} ${H+10}" style="width:100%;height:auto"><polyline fill="none" stroke="#0D9488" stroke-width="2" points="${points}"/></svg></div>`;
+    }
+    html += `<div style="font-size:11px;color:var(--muted);margin-top:10px">Last run: ${(s.ts||"").slice(0,19).replace("T"," ")} · ${s.url}</div>`;
+    wrap.innerHTML = html;
+  } catch (e) {
+    wrap.innerHTML = `<div style="color:#B91C1C;padding:8px">⚠ ${escapeHtml(e.message)}</div>`;
+  }
+}
+document.getElementById("psi-run-btn") && (document.getElementById("psi-run-btn").onclick = async () => {
+  const btn = document.getElementById("psi-run-btn");
+  btn.disabled = true; btn.textContent = "⏳ Probing Google PSI (30-60s)…";
+  try { await adm("/api/admin/psi/run", {method:"POST"}); loadPsiPanel(); }
+  catch (e) { toast("⚠ " + e.message, true); }
+  finally { btn.disabled = false; btn.textContent = "🔄 Run now"; }
+});
+document.getElementById("an-refresh") && (document.getElementById("an-refresh").onclick = loadAnalytics);
+document.getElementById("an-import-vendors") && (document.getElementById("an-import-vendors").onclick = async () => {
+  if (!confirm("Import 100 synthetic UAE vendor seeds? Existing vendors with same phone/email will be skipped (idempotent).")) return;
+  try {
+    const r = await adm("/api/admin/vendors/import-seed", {method:"POST"});
+    toast(`✅ Imported ${r.inserted} new vendors (${r.skipped_duplicate} duplicates skipped, ${r.service_offerings_added} service offerings added)`);
+    setTimeout(loadAnalytics, 600);
+  } catch (e) { toast("⚠ " + e.message, true); }
+});
+
 // ============== LIVE VISITORS ==============
 let _liveTimer = null;
 function _liveAgo(s) {
@@ -1051,6 +1262,44 @@ async function loadDashboard() {
   loadTopServices();
   loadLatestBookings();
   loadAttention();
+  loadPsiCard();
+}
+
+async function loadPsiCard() {
+  const card = document.getElementById("dash-psi");
+  if (!card) return;
+  try {
+    const r = await adm("/api/admin/psi/latest");
+    if (!r.snap) {
+      card.querySelector(".dash-v").innerHTML =
+        `<span style="color:#94A3B8">— Not run yet</span>`;
+      card.insertAdjacentHTML("beforeend",
+        `<div class="dash-sub"><a href="#" id="psi-run-now" style="color:#0F766E;font-weight:700">Run now →</a></div>`);
+      const runBtn = document.getElementById("psi-run-now");
+      if (runBtn) runBtn.onclick = async (e) => {
+        e.preventDefault();
+        runBtn.textContent = "⏳ probing…";
+        try { await adm("/api/admin/psi/run", {method:"POST"}); loadPsiCard(); }
+        catch (e) { runBtn.textContent = "⚠ " + e.message; }
+      };
+      return;
+    }
+    const s = r.snap;
+    const ms = s.mobile && s.mobile.score;
+    const ds = s.desktop && s.desktop.score;
+    const minScore = Math.min(ms||100, ds||100);
+    const colour = minScore >= 95 ? "#15803D" : minScore >= 80 ? "#B45309" : "#B91C1C";
+    card.querySelector(".dash-v").innerHTML =
+      `<span style="color:${colour};font-weight:800;font-size:18px">${ms}/${ds}</span> <small style="color:var(--muted)">mob/desk</small>`;
+    const lcp = (s.mobile||{}).lcp || "?";
+    const tbt = (s.mobile||{}).tbt || "?";
+    const cls = (s.mobile||{}).cls || "?";
+    card.insertAdjacentHTML("beforeend",
+      `<div class="dash-sub" style="line-height:1.5">LCP ${lcp} · TBT ${tbt} · CLS ${cls}<br><a href="#analytics" style="color:#0F766E;font-weight:700;font-size:11px">Full PageSpeed report →</a></div>`);
+  } catch (_) {
+    card.querySelector(".dash-v").innerHTML =
+      `<span style="color:#94A3B8">— No data</span>`;
+  }
 }
 
 async function loadHealth() {
