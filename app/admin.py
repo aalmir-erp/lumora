@@ -1228,6 +1228,77 @@ def autoblog_list():
     return {"posts": [db.row_to_dict(r) for r in rows]}
 
 
+# ---------- LLM diagnostics ----------
+@router.get("/llm/diagnose")
+def llm_diagnose():
+    """Pings the configured Anthropic key + model with a 1-token prompt and
+    returns the EXACT error so admin can see why /api/chat keeps falling back
+    to the demo brain. Common causes: invalid key, billing not set up, model
+    name wrong, region restriction, rate limit."""
+    from .config import get_settings
+    s = get_settings()
+    out = {
+        "configured": bool(s.ANTHROPIC_API_KEY),
+        "key_preview": (s.ANTHROPIC_API_KEY[:8] + "…" + s.ANTHROPIC_API_KEY[-4:]) if len(s.ANTHROPIC_API_KEY or "") >= 14 else "",
+        "key_len": len(s.ANTHROPIC_API_KEY or ""),
+        "model_configured": s.MODEL,
+        "use_llm": s.use_llm,
+        "demo_mode": s.DEMO_MODE,
+    }
+    if not s.ANTHROPIC_API_KEY:
+        out["ok"] = False
+        out["error"] = "ANTHROPIC_API_KEY env var is empty. Set it in Railway → Variables."
+        out["fix"] = "Go to https://console.anthropic.com/settings/keys → create key → paste into Railway env."
+        return out
+    import time, anthropic
+    t0 = time.perf_counter()
+    try:
+        client = anthropic.Anthropic(api_key=s.ANTHROPIC_API_KEY, timeout=12.0, max_retries=0)
+        resp = client.messages.create(
+            model=s.MODEL, max_tokens=10,
+            messages=[{"role": "user", "content": "Reply with just: ok"}],
+        )
+        latency = int((time.perf_counter() - t0) * 1000)
+        text = ""
+        for b in resp.content:
+            if getattr(b, "type", "") == "text": text += b.text
+        out["ok"] = True
+        out["latency_ms"] = latency
+        out["model_responded"] = getattr(resp, "model", s.MODEL)
+        out["sample"] = text[:80]
+        out["usage"] = {
+            "input_tokens": getattr(resp.usage, "input_tokens", 0),
+            "output_tokens": getattr(resp.usage, "output_tokens", 0),
+        }
+        out["msg"] = f"✅ Working — {out['model_responded']} replied in {latency}ms with: \"{text[:60]}\""
+    except anthropic.AuthenticationError as e:
+        out["ok"] = False
+        out["error"] = f"Authentication failed (401): {e}"
+        out["fix"] = "Key is invalid or revoked. Generate a new one at https://console.anthropic.com/settings/keys."
+    except anthropic.RateLimitError as e:
+        out["ok"] = False
+        out["error"] = f"Rate limited (429): {e}"
+        out["fix"] = "Wait a minute, or upgrade your Anthropic plan: https://console.anthropic.com/settings/billing."
+    except anthropic.NotFoundError as e:
+        out["ok"] = False
+        out["error"] = f"Model not found (404): {e}"
+        out["fix"] = f"Model '{s.MODEL}' is not available on your account. Try CLAUDE_MODEL=claude-sonnet-4-6 or claude-haiku-4-5 in Railway env."
+    except anthropic.BadRequestError as e:
+        out["ok"] = False
+        out["error"] = f"Bad request (400): {e}"
+        out["fix"] = "Likely a prompt-shape issue or model alias problem. Try CLAUDE_MODEL=claude-sonnet-4-6 in Railway env."
+    except anthropic.PermissionDeniedError as e:
+        out["ok"] = False
+        out["error"] = f"Permission denied (403): {e}"
+        out["fix"] = "Your account doesn't have access to this model. Check https://console.anthropic.com/settings/limits."
+    except Exception as e:  # noqa: BLE001
+        out["ok"] = False
+        out["error"] = f"{type(e).__name__}: {e}"
+        out["fix"] = "Check Railway service logs for full traceback."
+    out["latency_ms"] = int((time.perf_counter() - t0) * 1000)
+    return out
+
+
 # ---------- WhatsApp admin pairing + alerts ----------
 @router.get("/whatsapp/qr")
 def whatsapp_qr():
