@@ -562,15 +562,16 @@ async def _smart_cache(request, call_next):
     # HTML — short cache + long SWR so deploys land in <1 min
     if p.endswith(".html") or p == "/" or p.endswith("/"):
         resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
-    # JS / CSS — 1-hour cache + 1-week SWR. PSI 'efficient cache lifetimes'
-    # check counts hard against anything below 60 min on JS/CSS.
+    # JS / CSS — 1-year cache (PSI requires ≥30d for 'efficient cache lifetimes' to score
+    # well). Cache invalidation handled by the service-worker version bump (sw.js bumps
+    # CACHE = "servia-vX.Y.Z" on every release so returning users get new code on next visit).
     elif p.endswith((".js", ".css")):
-        resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=604800"
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     elif p.endswith((".json", ".webmanifest")):
         resp.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=86400"
-    # Icons / images / fonts — 30 days + 7-day SWR
+    # Icons / images / fonts — 1 year (these never change without a deploy)
     elif p.endswith((".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico", ".woff", ".woff2", ".ttf")):
-        resp.headers["Cache-Control"] = "public, max-age=2592000, stale-while-revalidate=604800"
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return resp
 
 # Static mounts MOVED to end-of-file. Registering Mount("/", StaticFiles)

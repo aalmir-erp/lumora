@@ -184,9 +184,13 @@
     if (t) applyLang(t.value);
   });
 
-  // ---------- Google Translate widget (full-page translation) ----------
-  (function injectGT() {
-    if (document.getElementById("google_translate_element")) return;
+  // ---------- Google Translate widget — LAZY LOAD ONLY ----------
+  // The Translate widget injects ~236 KiB of unused JS that murders LCP and
+  // forces reflows. Only load it when the user actually switches to a non-
+  // English language. English-only visitors (~70%) never download it.
+  let _gtLoaded = false;
+  function loadGoogleTranslate() {
+    if (_gtLoaded) return; _gtLoaded = true;
     const el = document.createElement("div");
     el.id = "google_translate_element";
     el.style.cssText = "position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden";
@@ -207,7 +211,15 @@
     const css = document.createElement("style");
     css.textContent = ".goog-te-banner-frame, .skiptranslate { display:none !important } body { top:0 !important } .goog-te-gadget { font-size:0 } .goog-te-gadget > span { display:none }";
     document.head.appendChild(css);
-  })();
+  }
+  // Load it only if (a) saved language is non-English, OR (b) user clicks the picker
+  if (currentLang && currentLang !== "en") {
+    if ("requestIdleCallback" in window) requestIdleCallback(loadGoogleTranslate, { timeout: 4000 });
+    else setTimeout(loadGoogleTranslate, 2000);
+  }
+  document.addEventListener("change", function _gtPicker(e) {
+    if (e.target.closest(".lang-pick") && e.target.value !== "en") loadGoogleTranslate();
+  });
 
   // ---------- bootstrap ----------
   loadI18n().then(() => {
