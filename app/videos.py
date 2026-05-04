@@ -420,6 +420,28 @@ TONE_GRADIENTS = {
 }
 
 
+# Friendly CTA bank — randomly chosen per render so each video looks fresh
+_CTA_LINES = [
+    ("👉 Book on servia.ae",                "https://servia.ae/book.html"),
+    ("Get your slot — servia.ae",            "https://servia.ae/book.html"),
+    ("Tap to book in 60s",                   "https://servia.ae/book.html"),
+    ("Bundle 2+ services, save 15%",         "https://servia.ae/cart.html"),
+    ("Same-day pros · servia.ae",            "https://servia.ae/services.html"),
+    ("Need help? Chat with Servia",          "https://servia.ae/?chat=1"),
+    ("Watch more videos",                    "https://servia.ae/videos.html"),
+    ("See live coverage map",                "https://servia.ae/coverage.html"),
+    ("Refer + climb · 20% off forever",      "https://servia.ae/share-rewards.html"),
+    ("Get instant quote",                    "https://servia.ae/book.html"),
+]
+
+
+def _pick_cta(slug: str) -> tuple[str, str]:
+    # Deterministic pick per slug so the same video always shows the same CTA
+    # but the catalogue overall has variety
+    idx = sum(ord(c) for c in (slug or "x")) % len(_CTA_LINES)
+    return _CTA_LINES[idx]
+
+
 def render_video_html(v: dict) -> str:
     a, b = TONE_GRADIENTS.get(v.get("tone") or "teal", TONE_GRADIENTS["teal"])
     scenes = v["scenes"]
@@ -430,6 +452,7 @@ def render_video_html(v: dict) -> str:
     aspect_css = {"16x9": "16/9", "9x16": "9/16", "1x1": "1/1"}.get(aspect, "16/9")
     is_vertical = aspect == "9x16"
     is_square = aspect == "1x1"
+    cta_text, cta_href = _pick_cta(v.get("slug") or v.get("title") or "x")
     # Build N scene divs with staggered animation-delay
     scene_html = []
     for i, s in enumerate(scenes):
@@ -522,12 +545,79 @@ body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto
     {''.join(scene_html)}
   </div>
   <div class="mascot-wrap">
+    {_scene_prop_svg(v.get('mascot') or 'default')}
     <img class="mascot" src="{mascot_src}" alt="Servia mascot">
   </div>
-  <a class="cta" href="https://servia.ae/book.html">Book on servia.ae →</a>
+  <a class="cta" href="{cta_href}">{cta_text} →</a>
   <div class="progress"></div>
 </div>
 </body></html>"""
+
+
+def _scene_prop_svg(mascot: str) -> str:
+    """Animated SVG prop next to the mascot — gives each video its own
+    visual context (car for chauffeur, steam for cleaning, AC unit for AC,
+    tools for handyman, etc) instead of always plain text+mascot."""
+    PROPS = {
+        "car": (
+            '<svg class="scene-prop car-anim" viewBox="0 0 200 120" '
+            'style="position:absolute;right:-20%;bottom:0;width:80%;height:auto;opacity:.85;pointer-events:none">'
+            '<rect x="20" y="60" width="160" height="40" rx="14" fill="#F59E0B"/>'
+            '<rect x="40" y="35" width="110" height="30" rx="8" fill="#FCD34D"/>'
+            '<circle cx="55" cy="100" r="14" fill="#1F2937"/>'
+            '<circle cx="55" cy="100" r="6" fill="#94A3B8"/>'
+            '<circle cx="155" cy="100" r="14" fill="#1F2937"/>'
+            '<circle cx="155" cy="100" r="6" fill="#94A3B8"/>'
+            '<rect x="170" y="68" width="14" height="6" fill="#fff" opacity=".7"/>'
+            '</svg>'),
+        "ac": (
+            '<svg class="scene-prop steam-anim" viewBox="0 0 100 100" '
+            'style="position:absolute;right:-10%;top:-10%;width:60%;height:auto;opacity:.85;pointer-events:none">'
+            '<rect x="10" y="10" width="80" height="40" rx="6" fill="#fff" stroke="#94A3B8" stroke-width="2"/>'
+            '<line x1="20" y1="22" x2="80" y2="22" stroke="#94A3B8" stroke-width="2"/>'
+            '<line x1="20" y1="30" x2="80" y2="30" stroke="#94A3B8" stroke-width="2"/>'
+            '<line x1="20" y1="38" x2="80" y2="38" stroke="#94A3B8" stroke-width="2"/>'
+            '<text x="30" y="65" font-size="14" fill="#fff">❄️ ❄️ ❄️</text>'
+            '</svg>'),
+        "cleaning": (
+            '<svg class="scene-prop steam-anim" viewBox="0 0 100 100" '
+            'style="position:absolute;right:-5%;top:-5%;width:55%;height:auto;opacity:.7;pointer-events:none">'
+            '<text x="20" y="40" font-size="44">✨</text>'
+            '<text x="50" y="70" font-size="32">🧼</text>'
+            '<text x="20" y="90" font-size="28">💧</text>'
+            '</svg>'),
+        "handyman": (
+            '<svg class="scene-prop tool-anim" viewBox="0 0 100 100" '
+            'style="position:absolute;right:-5%;top:-10%;width:55%;height:auto;opacity:.85;pointer-events:none">'
+            '<text x="10" y="50" font-size="46">🔧</text>'
+            '<text x="50" y="80" font-size="36">🔩</text>'
+            '</svg>'),
+        "pool": (
+            '<svg class="scene-prop water-anim" viewBox="0 0 100 100" '
+            'style="position:absolute;right:-10%;bottom:0;width:65%;height:auto;opacity:.7;pointer-events:none">'
+            '<ellipse cx="50" cy="80" rx="42" ry="14" fill="#3B82F6" opacity=".5"/>'
+            '<text x="35" y="60" font-size="36">🏊</text>'
+            '</svg>'),
+        "garden": (
+            '<svg class="scene-prop tool-anim" viewBox="0 0 100 100" '
+            'style="position:absolute;right:0;bottom:0;width:55%;height:auto;opacity:.85;pointer-events:none">'
+            '<text x="20" y="60" font-size="42">🌿</text>'
+            '<text x="55" y="85" font-size="32">🌳</text>'
+            '</svg>'),
+        "pest": (
+            '<svg class="scene-prop tool-anim" viewBox="0 0 100 100" '
+            'style="position:absolute;right:0;top:5%;width:55%;height:auto;opacity:.7;pointer-events:none">'
+            '<text x="20" y="50" font-size="40">🪲</text>'
+            '<text x="60" y="80" font-size="32">🚫</text>'
+            '</svg>'),
+        "maid": (
+            '<svg class="scene-prop steam-anim" viewBox="0 0 100 100" '
+            'style="position:absolute;right:0;top:5%;width:50%;height:auto;opacity:.7;pointer-events:none">'
+            '<text x="30" y="60" font-size="40">🧹</text>'
+            '</svg>'),
+        "default": "",
+    }
+    return PROPS.get(mascot, "")
 
 
 # ---------- public endpoints ----------

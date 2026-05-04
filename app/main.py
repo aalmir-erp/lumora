@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, ai_router, cart, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, tools, videos, whatsapp
+from . import admin, ai_router, cart, db, demo_brain, kb, launch, llm, portal, portal_v2, quotes, social_publisher, tools, videos, whatsapp
 from .auth import ADMIN_TOKEN
 from .config import get_settings
 
@@ -43,6 +43,7 @@ app.include_router(cart.router)
 app.include_router(ai_router.router)
 app.include_router(videos.public_router)
 app.include_router(videos.admin_router)
+app.include_router(social_publisher.router)
 
 
 @app.on_event("startup")
@@ -395,19 +396,29 @@ for _path, _city in [("/dubai","dubai"), ("/abu-dhabi","abu-dhabi"),
     app.get(_path, include_in_schema=False)(_make_emirate_redirect(_city))
 
 
+# GZIP all responses ≥ 500 bytes — biggest single PSI lever (HTML often
+# compresses 3-5×, JS 4×, CSS 6×). Lighthouse fails 'enable text compression'
+# without this.
+from fastapi.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=500, compresslevel=6)
+
+
 @app.middleware("http")
 async def _smart_cache(request, call_next):
     resp = await call_next(request)
     p = request.url.path
-    # Code (HTML / JS / CSS / JSON / manifest) — always fresh so deploys land instantly.
-    if (p.endswith((".html", ".js", ".css", ".json", ".webmanifest")) or p == "/" or p.endswith("/")):
-        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        resp.headers["Pragma"] = "no-cache"
-        resp.headers["Expires"] = "0"
-    # Icons / images / fonts — long cache + stale-while-revalidate so PageSpeed
-    # gives full marks on repeat visits without blocking new deploys.
+    # HTML pages — short cache + stale-while-revalidate so PSI sees fast
+    # repeat-visit but deploys still land within ~minute via SW
+    if p.endswith(".html") or p == "/" or p.endswith("/"):
+        resp.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=600"
+    # JS / CSS — 5-minute cache + 1-day SWR. Service worker handles deploy
+    # invalidation; this cache lets PSI lab tests count repeat-visit savings.
+    elif p.endswith((".js", ".css")):
+        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
+    elif p.endswith((".json", ".webmanifest")):
+        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
+    # Icons / images / fonts — long cache (30 days) + 7-day SWR
     elif p.endswith((".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico", ".woff", ".woff2", ".ttf")):
-        # 30 days + 7 days stale-while-revalidate for branding/icon assets.
         resp.headers["Cache-Control"] = "public, max-age=2592000, stale-while-revalidate=604800"
     return resp
 

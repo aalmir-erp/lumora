@@ -46,6 +46,7 @@
     <a href="#launch"    data-tab="launch">🚀 Launch &amp; Growth</a>
     <a href="#aiarena"   data-tab="aiarena">🤖 AI Arena</a>
     <a href="#videos"    data-tab="videos">🎬 Videos</a>
+    <a href="#autopost"  data-tab="autopost">🌐 Social Auto-post</a>
     <a href="#" id="logout" style="margin-top:24px;color:#FCA5A5">Logout</a>
   </aside>
   <main class="admin-main">
@@ -424,6 +425,47 @@
 
       <h3 style="margin:18px 0 8px;font-size:15px">📺 Library</h3>
       <div id="vid-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px"></div>
+
+      <!-- AI brainstorm helper -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:18px">
+        <h3 style="margin:0 0 6px;font-size:15px">💡 AI brainstorm</h3>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 10px">Type a brief idea and the AI elaborates a full prompt — OR leave empty and let it brainstorm a fresh idea for you. Then click 'Generate video' to ship it.</p>
+        <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center">
+          <input id="brain-seed" placeholder="Optional: brief idea (e.g. 'pre-Eid villa cleaning push')" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
+          <select id="brain-platform" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px">
+            <option value="tiktok">TikTok</option>
+            <option value="instagram">Instagram</option>
+            <option value="youtube">YouTube</option>
+            <option value="facebook">Facebook</option>
+          </select>
+          <button class="btn btn-primary" onclick="brainstorm()">🧠 Brainstorm</button>
+        </div>
+        <div id="brain-out" style="margin-top:10px;font-size:13px"></div>
+      </div>
+    </div>
+
+    <!-- ====== SOCIAL AUTO-POST ====== -->
+    <div id="t-autopost" class="tab" style="display:none">
+      <h2>🌐 Social Auto-post</h2>
+      <p style="color:var(--muted);margin-top:0;font-size:14px">Connect each platform once with the right tokens, then one-click post any Servia video to all of them. Each platform shows what fields it needs + a help-doc link.</p>
+
+      <div id="ap-platforms"></div>
+
+      <h3 style="margin:24px 0 8px;font-size:16px">📤 Post a video now</h3>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+          <select id="ap-video" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px"><option>Loading videos…</option></select>
+          <select id="ap-platform" style="padding:9px 11px;border:1px solid var(--border);border-radius:8px"></select>
+        </div>
+        <input id="ap-title" placeholder="Post title" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-top:8px">
+        <textarea id="ap-body" placeholder="Post body (or leave blank to auto-fill from video metadata)" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-top:8px;min-height:80px;font-family:inherit"></textarea>
+        <input id="ap-tags" placeholder="Tags (comma-separated, no #)" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-top:8px">
+        <button class="btn btn-primary" onclick="postNow()" style="margin-top:10px">📤 Post now</button>
+        <span id="ap-msg" style="margin-inline-start:10px;font-size:12.5px;color:#15803D;font-weight:600"></span>
+      </div>
+
+      <h3 style="margin:24px 0 8px;font-size:16px">📜 Post history</h3>
+      <div id="ap-history" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:0"></div>
     </div>
 
   </main>
@@ -459,6 +501,7 @@ function show(tab) {
   if (tab==="launch")    loadLaunch();
   if (tab==="aiarena")   loadAIArena();
   if (tab==="videos")    loadVideos();
+  if (tab==="autopost")  loadAutopost();
 }
 async function adm(path, opts={}) {
   try {
@@ -1634,6 +1677,103 @@ async function delVideo(slug) {
   if (!confirm("Delete this video?")) return;
   await adm("/api/admin/videos/" + encodeURIComponent(slug), {method:"DELETE"});
   loadVideos();
+}
+
+// ============== AI BRAINSTORM ==============
+async function brainstorm() {
+  const seed = document.getElementById("brain-seed").value.trim();
+  const plat = document.getElementById("brain-platform").value;
+  const out = document.getElementById("brain-out");
+  out.innerHTML = "🧠 Thinking…";
+  try {
+    const r = await adm("/api/admin/social/idea", {method:"POST", body:{seed, target_platform: plat}});
+    const i = r.idea || {};
+    out.innerHTML = `
+      <div style="background:#FAFBFD;border:1px solid var(--border);border-radius:10px;padding:12px">
+        <div style="font-weight:800;margin-bottom:4px">${escapeHtml(i.topic||'')}</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:6px"><i>${escapeHtml(i.angle||'')}</i></div>
+        <div style="font-size:12px;background:#fff;padding:8px;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">${escapeHtml(i.detailed_prompt||'')}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">tone: <b>${escapeHtml(i.tone||'teal')}</b> · mascot: <b>${escapeHtml(i.mascot||'default')}</b> · ${i.duration_sec||18}s</div>
+        <button class="btn btn-primary" onclick="useBrainstormIdea(${JSON.stringify(JSON.stringify(i))})">🎬 Generate this video</button>
+      </div>`;
+  } catch (e) { out.innerHTML = '<span style="color:#B91C1C">❌ ' + escapeHtml(e.message) + '</span>'; }
+}
+function useBrainstormIdea(json) {
+  const i = JSON.parse(json);
+  document.getElementById("vid-topic").value = i.detailed_prompt || i.topic || '';
+  document.getElementById("vid-mascot").value = i.mascot || 'default';
+  document.getElementById("vid-tone").value = i.tone || 'teal';
+  document.getElementById("vid-dur").value = String(i.duration_sec || 18);
+  window.scrollTo({top:0, behavior:'smooth'});
+  setTimeout(() => genVideo(), 600);
+}
+
+// ============== AUTO-POST ==============
+async function loadAutopost() {
+  // Platforms config
+  try {
+    const r = await adm("/api/admin/social/platforms");
+    document.getElementById("ap-platforms").innerHTML = (r.platforms||[]).map(p => `
+      <details style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:8px">
+        <summary style="cursor:pointer;font-weight:700;font-size:14px;display:flex;justify-content:space-between;gap:8px">
+          <span>${escapeHtml(p.label)} <small style="color:var(--muted);font-weight:400">· method: ${p.method}</small></span>
+          <span>${p.configured ? '<span style="color:#15803D">● configured</span>' : '<span style="color:#94A3B8">○ not connected</span>'}</span>
+        </summary>
+        <div style="margin-top:10px">
+          <p style="font-size:12px;color:var(--muted);margin:0 0 8px">📖 <a href="${escapeHtml(p.help_url)}" target="_blank" rel="noopener">${escapeHtml(p.help_url)}</a></p>
+          ${p.fields.map(f => `<label style="display:block;margin-bottom:6px;font-size:12px;color:var(--muted)">${escapeHtml(f)}<input type="password" data-platform="${escapeHtml(p.platform)}" data-field="${escapeHtml(f)}" placeholder="${p.values_present[f]?'(saved · enter to replace)':'enter '+f}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:ui-monospace,monospace;font-size:12px;margin-top:3px"></label>`).join("")}
+          <button class="btn btn-primary" style="font-size:12px;padding:5px 12px" onclick="saveAPTokens('${escapeHtml(p.platform)}')">💾 Save</button>
+        </div>
+      </details>`).join("");
+    // Build platform <select>
+    document.getElementById("ap-platform").innerHTML = (r.platforms||[]).filter(p => p.method === 'api').map(p =>
+      `<option value="${p.platform}">${p.label}</option>`).join("");
+  } catch (e) { document.getElementById("ap-platforms").innerHTML = "Error: " + escapeHtml(e.message); }
+  // Videos for the post selector
+  try {
+    const v = await adm("/api/admin/videos/list");
+    document.getElementById("ap-video").innerHTML = (v.videos||[]).map(x =>
+      `<option value="${x.slug}" data-title="${escapeHtml(x.title||'')}">${escapeHtml(x.title||'')}</option>`).join("");
+  } catch (_) {}
+  // History
+  try {
+    const h = await adm("/api/admin/social/history?limit=20");
+    document.getElementById("ap-history").innerHTML = (h.posts||[]).map(p => `
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12.5px">
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <b style="color:${p.ok?'#15803D':'#B91C1C'}">${p.ok?'✓':'❌'} ${escapeHtml(p.platform)}</b>
+          <small style="color:var(--muted)">${(p.created_at||'').slice(0,16).replace('T',' ')}</small>
+        </div>
+        <div style="margin-top:2px">${escapeHtml(p.title||'')}</div>
+        ${p.post_url ? `<a href="${p.post_url}" target="_blank" rel="noopener" style="font-size:11px;color:#0F766E">${escapeHtml(p.post_url)}</a>` : ''}
+        ${p.error ? `<div style="font-size:11px;color:#B91C1C">${escapeHtml(p.error)}</div>` : ''}
+      </div>`).join("") || '<div style="padding:14px;color:var(--muted);text-align:center">No posts yet.</div>';
+  } catch (_) {}
+}
+async function saveAPTokens(platform) {
+  const inputs = document.querySelectorAll(`#ap-platforms input[data-platform="${platform}"]`);
+  const fields = {};
+  inputs.forEach(i => { if (i.value.trim()) fields[i.dataset.field] = i.value.trim(); });
+  if (!Object.keys(fields).length) { alert("Enter at least one field"); return; }
+  await adm("/api/admin/social/tokens", {method:"POST", body:{platform, fields}});
+  loadAutopost();
+}
+async function postNow() {
+  const slug = document.getElementById("ap-video").value;
+  const opt  = document.querySelector('#ap-video option[value="'+slug+'"]');
+  const title = document.getElementById("ap-title").value.trim() || (opt && opt.dataset.title) || "Servia video";
+  const body  = document.getElementById("ap-body").value.trim() || "Watch the new Servia explainer.";
+  const tags  = document.getElementById("ap-tags").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const platform = document.getElementById("ap-platform").value;
+  const msg = document.getElementById("ap-msg");
+  msg.textContent = "📤 Posting…";
+  try {
+    const r = await adm("/api/admin/social/post", {method:"POST", body:{
+      platform, title, body, video_url: location.origin + "/api/videos/play/" + slug, tags
+    }});
+    msg.innerHTML = r.ok ? `✅ <a href="${r.url||''}" target="_blank">posted</a>` : `❌ ${escapeHtml(r.error||'')}`;
+    setTimeout(loadAutopost, 1200);
+  } catch (e) { msg.textContent = "❌ " + e.message; }
 }
 
 // Auto-load social profiles when the launch tab opens too
