@@ -2,19 +2,18 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"1MssjTi_QuWeOqPGezItjw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"QVVjXkl2SL-P7JpTBT7zVQ"}`
 
 ## Build logs
 ```
-[internal] load build context
-[ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 2/11] WORKDIR /app
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[builder 1/5] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[builder 1/5] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[builder 1/5] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
+[10/11] COPY start.sh /app/start.sh
+[ 9/11] COPY web ./web
 [internal] load build context
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
 [internal] load build context
 [ 2/11] WORKDIR /app
@@ -22,6 +21,7 @@
 [ 4/11] COPY requirements.txt ./
 [ 5/11] RUN pip install -r requirements.txt
 [ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
+[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/11] COPY app ./app
 [ 8/11] COPY app ./app
@@ -33,9 +33,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODJiY2EwNjFlZmYzYmJkNzNkZDg4Njk5YWVkZjFkZjJkNTU1NjAwNWM2NjFhZjBkNWI0YzkzMWUzNWEzYTlkMSIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQxOTozNjozMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:26db33766f47c9ce3af6807b548f07cd3a658cc70fa873fd68b53139d6b222fd
-containerimage.digest: sha256:82bca061eff3bbd73dd88699aedf1df2d5556005c661af0d5b4c931e35a3a9d1
+containerimage.digest: sha256:67c448425f199209c93ed906c6c72f248e6414bd76a0f2cba70a5f0fbe5e9569
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NjdjNDQ4NDI1ZjE5OTIwOWM5M2VkOTA2YzZjNzJmMjQ4ZTY0MTRiZDc2YTBmMmNiYTcwYTVmMGZiZTVlOTU2OSIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNFQxOTo1MjoxMFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:f8b9ffb4b312d58bdee5f51d5d4864d701b60bffb8f01286a8635ef70bc4a759
 image push
 
 [35m====================
@@ -50,34 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.5:15240 - "GET /style.css HTTP/1.1" 200 OK
-INFO:     100.64.0.6:13648 - "GET /install.js HTTP/1.1" 200 OK
-INFO:     100.64.0.3:41614 - "GET /widget.css HTTP/1.1" 200 OK
-INFO:     100.64.0.4:18130 - "GET /logo.svg HTTP/1.1" 200 OK
-INFO:     100.64.0.7:25452 - "GET /share.js HTTP/1.1" 200 OK
-INFO:     100.64.0.7:25436 - "GET /cms.js HTTP/1.1" 200 OK
-INFO:     100.64.0.3:41604 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.6:13648 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.6:13648 - "GET /?gtm_latency=1 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:13648 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.6:13648 - "GET /widget.js HTTP/1.1" 200 OK
-INFO:     100.64.0.6:13648 - "GET /avatar.svg HTTP/1.1" 200 OK
-INFO:     100.64.0.3:41604 - "GET /api/blog/latest?limit=10 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:41614 - "GET /cart-badge.js HTTP/1.1" 200 OK
-INFO:     100.64.0.5:15240 - "GET /_snippets.js HTTP/1.1" 200 OK
-INFO:     100.64.0.6:13648 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.5:15240 - "GET /social-proof.js HTTP/1.1" 200 OK
-INFO:     100.64.0.7:25436 - "GET /social-strip.js HTTP/1.1" 200 OK
-INFO:     100.64.0.5:15240 - "GET /api/reviews/platforms HTTP/1.1" 200 OK
-INFO:     100.64.0.5:15240 - "GET /api/site/social HTTP/1.1" 200 OK
-INFO:     100.64.0.7:25436 - "GET /api/blog/hero/sharjah-carpet-cleaning-in-al-khan-sharjah---sand--oil--kid-spills-and-what-aed-80-covers.svg HTTP/1.1" 200 OK
-INFO:     100.64.0.5:15240 - "GET /api/blog/hero/ras-al-khaimah-rak-ac-service-tips---coastal-humidity-is-killing-your-compressor-faster-th.svg HTTP/1.1" 200 OK
-INFO:     100.64.0.6:13648 - "GET /api/blog/hero/abu-dhabi-deep-cleaning-a-khalifa-city-villa-after-sandstorm-season---a-checklist.svg HTTP/1.1" 200 OK
-INFO:     100.64.0.5:15230 - "GET /api/blog/hero/abu-dhabi-bed-bugs-on-reem-island---why-80--of-treatments-fail-and-what-works-in-2026.svg HTTP/1.1" 200 OK
-INFO:     100.64.0.3:41604 - "GET /api/blog/hero/dubai-sofa-shampoo-in-arabian-ranches---why-fabric-protectors-are-a-2026-must-have.svg HTTP/1.1" 200 OK
-INFO:     100.64.0.3:41614 - "GET /api/blog/hero/dubai-kitchen-deep-clean-in-jlt---the-ramadan-grease-problem-and-how-pros-solve-it.svg HTTP/1.1" 200 OK
-INFO:     100.64.0.4:18130 - "GET /api/blog/hero/umm-al-quwain-handyman-in-uaq---the-6-small-fixes-every-villa-owner-should-batch-in-one-vi.svg HTTP/1.1" 200 OK
+    rows = c.execute(
+           ^^^^^^^^^^
+sqlite3.OperationalError: no such column: customer_phone
+INFO:     100.64.0.3:50320 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:50320 - "GET /api/admin/bookings HTTP/1.1" 200 OK
+INFO:     100.64.0.3:50320 - "GET /admin.html HTTP/1.1" 200 OK
+INFO:     100.64.0.3:50320 - "GET /__admin_token__ HTTP/1.1" 403 Forbidden
+INFO:     100.64.0.3:34458 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:50320 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34458 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34468 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.3:50320 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34478 - "GET /api/admin/bookings?status=pending&limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34468 - "GET /api/admin/alerts?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:50320 - "GET /api/admin/bookings?limit=8 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34506 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34484 - "GET /api/admin/analytics HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34500 - "GET /api/admin/psi/latest HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34458 - "GET /api/admin/llm/diagnose HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34458 - "GET /api/admin/bookings?limit=300 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34458 - "GET /api/admin/analytics HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34500 - "GET /api/wa/status HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.3:34500 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34500 - "POST /api/admin/push/subscribe HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34458 - "GET /api/videos/list?limit=500 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34484 - "GET /api/blog/latest?limit=200 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34484 - "GET /sw.js HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34484 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:44444 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 ```
