@@ -679,8 +679,8 @@ def api_pay_start(body: PayStartBody):
                      _d.datetime.utcnow().isoformat() + "Z"))
         except Exception: pass
 
-        # CARD / APPLE / GOOGLE → realistic 3DS spinner + decline flow
-        if method in ("card", "apple", "google"):
+        # CARD / APPLE / GOOGLE / SAMSUNG → realistic 3DS spinner + decline flow
+        if method in ("card", "apple", "google", "samsung"):
             params = (
                 f"?inv={inv['id']}"
                 f"&amount={inv.get('amount','')}"
@@ -693,7 +693,7 @@ def api_pay_start(body: PayStartBody):
         # Other methods (WA / Bank / COD) — fall through to normal handlers below.
         # Their nature (admin-mediated, no auto-charge) makes the gate moot for them.
 
-    if method in ("card", "apple", "google"):
+    if method in ("card", "apple", "google", "samsung"):
         sk = _os.getenv("STRIPE_SECRET_KEY", "").strip()
         if sk:
             try:

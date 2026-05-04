@@ -29,12 +29,28 @@
   .pay-row{display:flex;gap:8px;align-items:stretch;margin-top:6px}
   .pay-row .pay-input{flex:1}
   .pay-row .btn{padding:11px 18px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;border:0}
-  .pay-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:8px}
-  .pay-opt{background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:center;transition:.15s;font-weight:700;font-size:13.5px;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;min-height:88px}
-  .pay-opt:hover{border-color:#0F766E;background:#F0FDFA;transform:translateY(-2px);box-shadow:0 6px 14px rgba(15,118,110,.10)}
-  .pay-opt.selected{border-color:#0F766E;background:#0F766E;color:#fff}
-  .pay-opt .ico{font-size:28px;line-height:1}
-  .pay-opt small{font-weight:500;font-size:11px;opacity:.85}
+  /* Method buttons — official-style branded buttons */
+  .pay-options{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  .pm-btn{width:100%;border:0;border-radius:12px;font-weight:700;cursor:pointer;
+    transition:.15s;display:flex;align-items:center;justify-content:center;gap:10px;
+    min-height:54px;font-size:15px;letter-spacing:.01em;padding:0 18px;position:relative}
+  .pm-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.14)}
+  .pm-btn.selected{outline:3px solid #0F766E;outline-offset:2px}
+  .pm-btn:disabled{cursor:not-allowed;opacity:.55}
+  .pm-card{background:#fff;color:#0F172A;border:1.5px solid #CBD5E1}
+  .pm-card .logos{margin-inline-start:auto;display:inline-flex;gap:6px;align-items:center}
+  .pm-apple{background:#000;color:#fff}
+  .pm-apple b{font-family:-apple-system,"SF Pro Display","Segoe UI",sans-serif;font-weight:600;font-size:18px;letter-spacing:-.02em}
+  .pm-google{background:#fff;color:#0F172A;border:1.5px solid #DADCE0}
+  .pm-samsung{background:#fff;color:#1428A0;border:1.5px solid #1428A0}
+  .pm-wa{background:#075E54;color:#fff}
+  .pm-locked{background:#F8FAFC;color:#64748B;border:1.5px dashed #CBD5E1;text-align:start;justify-content:flex-start;padding-block:12px;flex-wrap:wrap}
+  .pm-locked .pm-locked-meta{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0}
+  .pm-locked .corp-tag{display:inline-flex;align-items:center;gap:4px;background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-inline-start:auto;flex-shrink:0}
+  .pm-locked .corp-tag::before{content:"🔒"}
+  .pm-locked small{display:block;font-weight:500;font-size:11.5px;color:#94A3B8;margin-top:2px}
+  .pm-divider{display:flex;align-items:center;gap:10px;margin:18px 0 8px;color:#94A3B8;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .pm-divider::before,.pm-divider::after{content:"";flex:1;height:1px;background:#E2E8F0}
   .btn-pay{width:100%;background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border:0;padding:16px 24px;border-radius:14px;font-weight:800;font-size:16px;cursor:pointer;letter-spacing:.01em;box-shadow:0 8px 22px rgba(15,118,110,.32);transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
   .btn-pay:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(15,118,110,.4)}
   .btn-pay:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
@@ -94,12 +110,69 @@
     <div class="pay-step" id="step-method">
       <h3><span class="num">2</span> Choose how to pay</h3>
       <div class="pay-options" id="pay-methods">
-        <button type="button" class="pay-opt" data-m="card"><span class="ico">💳</span>Credit/Debit Card<small>Visa · Mastercard · Amex</small></button>
-        <button type="button" class="pay-opt" data-m="apple"><span class="ico">🍎</span>Apple Pay<small>Touch / Face ID</small></button>
-        <button type="button" class="pay-opt" data-m="google"><span class="ico">🔷</span>Google Pay<small>1-tap on Android</small></button>
-        <button type="button" class="pay-opt" data-m="wa"><span class="ico">💬</span>Pay via WhatsApp<small>We send a payment link</small></button>
-        <button type="button" class="pay-opt" data-m="bank"><span class="ico">🏦</span>Bank Transfer<small>UAE banks</small></button>
-        <button type="button" class="pay-opt" data-m="cod"><span class="ico">💵</span>Cash on Service<small>Pay the technician</small></button>
+        <!-- Apple Pay — official black pill with Apple logo + 'Pay' wordmark -->
+        <button type="button" class="pm-btn pm-apple" data-m="apple" aria-label="Pay with Apple Pay">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.7 12.3c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.5-3-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.7-.7-1.4 0-2.7.8-3.4 2.1-1.5 2.6-.4 6.4 1 8.5.7 1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.7.7 2.7.7c1.1 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.5-.1 0-2.6-1-2.6-3.6zM15.5 5.4c.6-.7 1-1.7.9-2.6-.9 0-1.9.6-2.5 1.3-.6.6-1.1 1.6-.9 2.5 1 .1 2-.5 2.5-1.2z"/></svg>
+          <b>Pay</b>
+        </button>
+
+        <!-- Google Pay — white pill with Google G + 'Pay' wordmark -->
+        <button type="button" class="pm-btn pm-google" data-m="google" aria-label="Pay with Google Pay">
+          <svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
+            <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
+            <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
+            <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
+          </svg>
+          <b style="font-weight:600;font-size:16px;letter-spacing:-.01em">Pay</b>
+        </button>
+
+        <!-- Samsung Pay — white with blue Samsung logotype -->
+        <button type="button" class="pm-btn pm-samsung" data-m="samsung" aria-label="Pay with Samsung Pay">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#1428A0"/><path d="M7 13.5c0 1 .8 1.5 1.8 1.5 1 0 1.6-.4 1.6-1.2 0-1.5-3.4-1.1-3.4-2.6 0-.7.6-1.2 1.6-1.2.9 0 1.5.4 1.5 1m1.6 2.5h.6v-1.5c0-.4.2-.7.7-.7s.6.3.6.7V14.5h.6V13c0-.6-.3-1-1-1-.4 0-.7.2-.9.4v-.4h-.6V14.5zm3.4 0h.6V13c0-.4.2-.7.6-.7s.5.3.5.7V14.5h.6V13c0-.4.2-.7.6-.7s.6.3.6.7V14.5h.6V12.8c0-.6-.3-1-1-1-.4 0-.7.2-.9.5-.2-.3-.5-.5-.9-.5-.3 0-.6.2-.7.4v-.3h-.6V14.5z" fill="#fff"/></svg>
+          <b style="color:#1428A0">Samsung</b>
+          <span style="font-weight:600">Pay</span>
+        </button>
+
+        <!-- Credit/Debit Card -->
+        <button type="button" class="pm-btn pm-card" data-m="card" aria-label="Pay with credit or debit card">
+          <span style="font-size:22px">💳</span>
+          <span>Credit / Debit Card</span>
+          <span class="logos" aria-hidden="true">
+            <svg width="32" height="20" viewBox="0 0 32 20"><rect width="32" height="20" rx="3" fill="#1A1F71"/><text x="16" y="14" text-anchor="middle" fill="#fff" font-family="Arial Black" font-size="9" font-style="italic">VISA</text></svg>
+            <svg width="32" height="20" viewBox="0 0 32 20"><rect width="32" height="20" rx="3" fill="#fff" stroke="#E2E8F0"/><circle cx="13" cy="10" r="6" fill="#EB001B"/><circle cx="19" cy="10" r="6" fill="#F79E1B"/><path d="M16 5.5a6 6 0 010 9 6 6 0 010-9z" fill="#FF5F00"/></svg>
+            <svg width="32" height="20" viewBox="0 0 32 20"><rect width="32" height="20" rx="3" fill="#006FCF"/><text x="16" y="13" text-anchor="middle" fill="#fff" font-family="Arial Black" font-size="6.5">AMEX</text></svg>
+          </span>
+        </button>
+
+        <!-- WhatsApp Pay link -->
+        <button type="button" class="pm-btn pm-wa" data-m="wa" aria-label="Pay via WhatsApp">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 3.5A11.95 11.95 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.8 1.4 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3zM12 22c-1.9 0-3.7-.5-5.3-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A10 10 0 0112 2c5.5 0 10 4.5 10 10s-4.5 10-10 10z"/></svg>
+          Pay via WhatsApp
+        </button>
+
+        <!-- Corporate-only divider -->
+        <div class="pm-divider">For Corporate &amp; Premium customers</div>
+
+        <!-- Bank Transfer — DISABLED (corporate-only) -->
+        <button type="button" class="pm-btn pm-locked" data-m="bank" disabled aria-label="Bank transfer — corporate customers only">
+          <span style="font-size:22px">🏦</span>
+          <span class="pm-locked-meta">
+            <span style="color:#475569;font-weight:700">Bank Transfer</span>
+            <small>Direct UAE wire to Servia FZ-LLC · 1-day settlement</small>
+          </span>
+          <span class="corp-tag">Corporate only</span>
+        </button>
+
+        <!-- Cash on Service — DISABLED (premium-only) -->
+        <button type="button" class="pm-btn pm-locked" data-m="cod" disabled aria-label="Cash on service — premium customers only">
+          <span style="font-size:22px">💵</span>
+          <span class="pm-locked-meta">
+            <span style="color:#475569;font-weight:700">Cash on Service</span>
+            <small>Pay the technician on arrival · Premium tier perk</small>
+          </span>
+          <span class="corp-tag">Premium only</span>
+        </button>
       </div>
     </div>
 
@@ -173,8 +246,9 @@
   function esc(s){ return (s||"").toString().replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
 
   // ---- Method picker
-  document.querySelectorAll(".pay-opt").forEach(b => b.onclick = () => {
-    document.querySelectorAll(".pay-opt").forEach(x => x.classList.remove("selected"));
+  document.querySelectorAll(".pm-btn").forEach(b => b.onclick = () => {
+    if (b.disabled) return;
+    document.querySelectorAll(".pm-btn").forEach(x => x.classList.remove("selected"));
     b.classList.add("selected");
     chosenMethod = b.dataset.m;
     renderMethodForm();
@@ -182,12 +256,11 @@
   });
   function renderMethodForm() {
     const wraps = {
-      card: '<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.6">💳 You\'ll be redirected to our PCI-DSS gateway to enter card details. <b>No card data ever touches our servers.</b></div>',
-      apple:'<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.6">🍎 Apple Pay sheet will open on tap. Authenticate with Face ID / Touch ID.</div>',
-      google:'<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.6">🔷 Google Pay sheet will open on tap. Confirm on your device.</div>',
-      wa:   '<div style="background:#F0FDF4;border:1px dashed #86EFAC;color:#14532D;border-radius:10px;padding:14px;font-size:13px;line-height:1.6">💬 We\'ll WhatsApp you a secure 1-tap payment link from <b>Servia Pay</b>. Open it on your phone, tap Apple Pay / card / GPay, and you\'re done.</div>',
-      bank: '<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.7">🏦 IBAN: <code style="background:#fff;padding:2px 6px;border-radius:4px">AE12 3456 7890 1234 5678 901</code><br>Bank: Emirates NBD · Account: Servia FZ-LLC<br>Reference: <code id="bank-ref">'+(inv||"INV-XXXX")+'</code><br><small style="color:var(--muted)">After transfer, tap Confirm — we\'ll match it within 30 min on UAE banking days.</small></div>',
-      cod:  '<div style="background:#FEF3C7;border:1px dashed #FDE68A;color:#78350F;border-radius:10px;padding:14px;font-size:13px;line-height:1.6">💵 Pay the technician directly when service is done. <b>Cash or card-machine</b>. We\'ll send a digital receipt after.</div>',
+      card:    '<div style="background:#F8FAFC;border:1px dashed var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.6">💳 You\'ll be redirected to our PCI-DSS gateway to enter card details. <b>No card data ever touches our servers.</b></div>',
+      apple:   '<div style="background:#000;color:#fff;border-radius:10px;padding:14px;font-size:13px;line-height:1.6"><b>Apple Pay</b> sheet will open on tap. Authenticate with Face ID / Touch ID. Available on iPhone, iPad &amp; Mac.</div>',
+      google:  '<div style="background:#1A73E8;color:#fff;border-radius:10px;padding:14px;font-size:13px;line-height:1.6"><b>Google Pay</b> sheet will open on tap. Confirm on your Android device. Works in Chrome on web too.</div>',
+      samsung: '<div style="background:#1428A0;color:#fff;border-radius:10px;padding:14px;font-size:13px;line-height:1.6"><b>Samsung Pay</b> sheet will open on tap. Authenticate with your Samsung device. Available on Galaxy phones.</div>',
+      wa:      '<div style="background:#F0FDF4;border:1px dashed #86EFAC;color:#14532D;border-radius:10px;padding:14px;font-size:13px;line-height:1.6">💬 We\'ll WhatsApp you a secure 1-tap payment link from <b>Servia Pay</b>. Open it on your phone, tap Apple Pay / card / GPay, and you\'re done.</div>',
     };
     $("pay-method-form").innerHTML = wraps[chosenMethod] || "";
   }

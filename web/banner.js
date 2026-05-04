@@ -123,9 +123,10 @@ function __serviaBannerInit() {
       #servia-topbanner .b-text b { font-weight: 800; letter-spacing: -.01em }
       #servia-topbanner .b-text span { color: rgba(255,255,255,.92); font-weight: 500 }
       #servia-topbanner .b-cta {
-        display: inline-block; padding: 4px 12px; border-radius: 999px;
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 8px 14px; min-height: 36px; min-width: 80px; border-radius: 999px;
         background: rgba(255,255,255,.95); color: #0F172A !important;
-        font-weight: 800; font-size: 12px; text-decoration: none;
+        font-weight: 800; font-size: 12.5px; text-decoration: none;
         white-space: nowrap; flex-shrink: 0;
         transition: transform .12s ease, background .15s ease;
       }
@@ -140,18 +141,18 @@ function __serviaBannerInit() {
       }
       #servia-topbanner .b-dots .d.active { background: #fff; width: 14px; border-radius: 999px }
       #servia-topbanner .b-x {
-        position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-        background: rgba(0,0,0,.18); border: 0; color: #fff;
-        width: 24px; height: 24px; border-radius: 50%;
-        cursor: pointer; font-size: 12px; line-height: 1;
+        position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+        background: rgba(0,0,0,.22); border: 0; color: #fff;
+        width: 36px; height: 36px; border-radius: 50%;
+        cursor: pointer; font-size: 16px; line-height: 1;
         display: flex; align-items: center; justify-content: center;
-        opacity: .8; transition: opacity .12s, background .12s; z-index: 4;
+        opacity: .85; transition: opacity .12s, background .12s; z-index: 4;
       }
       #servia-topbanner .b-x:hover { opacity: 1; background: rgba(0,0,0,.32) }
       @media (max-width: 640px) {
         #servia-topbanner { font-size: 12.5px }
         #servia-topbanner .b-emoji { font-size: 17px }
-        #servia-topbanner .b-cta { padding: 3px 10px; font-size: 11px }
+        #servia-topbanner .b-cta { padding: 7px 12px; font-size: 11.5px; min-height: 32px }
         #servia-topbanner .b-text b { font-size: 13px }
         #servia-topbanner .b-text span { display: none }
         #servia-topbanner .b-dots { display: none }
