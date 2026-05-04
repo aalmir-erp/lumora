@@ -112,6 +112,44 @@ def patch_service(body: ServicePatch):
     return {"ok": True, "services": kb.services()}
 
 
+# ---------- Per-service addons editor ----------
+class AddonsBody(BaseModel):
+    service_id: str
+    addons: list[dict]   # [{id, label, price, default?}]
+
+
+@router.get("/services/{service_id}/addons")
+def get_service_addons(service_id: str):
+    """Returns the addons array currently in effect for this service.
+    Sources merged in priority order: services_overrides → kb default."""
+    overrides = db.cfg_get("services_overrides", {}) or {}
+    o = overrides.get(service_id, {}) or {}
+    if "addons" in o: return {"service_id": service_id, "addons": o["addons"], "source": "override"}
+    svc = next((s for s in kb.services()["services"] if s["id"] == service_id), {})
+    return {"service_id": service_id, "addons": svc.get("addons") or [], "source": "default"}
+
+
+@router.post("/services/addons")
+def save_service_addons(body: AddonsBody):
+    """Replace the addons array for a service. Each addon = {id, label, price[, default]}."""
+    cleaned = []
+    for a in (body.addons or []):
+        if not isinstance(a, dict): continue
+        aid = (a.get("id") or "").strip()
+        label = (a.get("label") or "").strip()
+        if not aid or not label: continue
+        try: price = float(a.get("price") or 0)
+        except Exception: price = 0
+        cleaned.append({"id": aid[:40], "label": label[:80],
+                        "price": price, "default": bool(a.get("default", False))})
+    overrides = db.cfg_get("services_overrides", {}) or {}
+    cur = overrides.get(body.service_id, {}) or {}
+    cur["addons"] = cleaned
+    overrides[body.service_id] = cur
+    db.cfg_set("services_overrides", overrides)
+    return {"ok": True, "service_id": body.service_id, "addons": cleaned}
+
+
 # ---------- Conversations + live-agent takeover ----------
 @router.get("/conversations")
 def list_conversations(session_id: str | None = None, limit: int = 200):

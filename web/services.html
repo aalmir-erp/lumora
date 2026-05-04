@@ -133,7 +133,11 @@ function render() {
       <p>${s.description}</p>
       <div class="svc-price"><span data-i18n="starting_from">starting from</span>
         <span style="font-size:18px;font-weight:700;color:var(--text)"> ${s.starting_price} AED</span></div>
-      <div style="display:flex;gap:6px;margin-top:12px"><a class="btn btn-ghost" style="flex:1;text-align:center" href="/service.html?id=${s.id}">📖 Details</a><a class="btn btn-primary" style="flex:1;text-align:center" href="/book.html?service=${s.id}">Book →</a></div>
+      <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+        <a class="btn btn-ghost" style="flex:1;min-width:80px;text-align:center" href="/service.html?id=${s.id}">📖 Details</a>
+        <a class="btn btn-primary" style="flex:1;min-width:80px;text-align:center" href="/book.html?service=${s.id}">Book →</a>
+        <button type="button" class="btn btn-ghost" style="flex:1;min-width:80px;background:#FEF3C7;color:#7C2D12;border-color:#FCD34D" onclick="event.preventDefault();window.serviaAddToBundle&&serviaAddToBundle({service_id:'${s.id}'});">🛒 Bundle</button>
+      </div>
     </div>`).join("");
 }
 

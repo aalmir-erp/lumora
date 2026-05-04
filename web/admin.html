@@ -743,7 +743,64 @@ window.toggleSvc = async function(sid) {
   exp.innerHTML = `<div style="padding:24px;color:var(--muted)">Loading…</div>`;
   const detail = await adm("/api/admin/service/"+sid);
   exp.innerHTML = renderServiceDetail(sid, detail);
+  loadAddons(sid);
 };
+
+// ---------- per-service addons editor ----------
+async function loadAddons(sid) {
+  try {
+    const r = await adm("/api/admin/services/" + sid + "/addons");
+    renderAddons(sid, r.addons || []);
+  } catch (e) {
+    const el = document.getElementById("addons-" + sid);
+    if (el) el.innerHTML = '<div style="color:#B91C1C;font-size:12px">Error loading addons: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+function renderAddons(sid, addons) {
+  const el = document.getElementById("addons-" + sid);
+  if (!el) return;
+  if (!addons.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;background:#fff;border:1px dashed var(--border);border-radius:8px">No addons yet — click "+ Add new addon" below.</div>';
+    return;
+  }
+  el.innerHTML = addons.map((a, i) => `
+    <div data-row="${sid}" style="display:grid;grid-template-columns:1fr 2fr 90px auto;gap:6px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px">
+      <input data-k="id" placeholder="id (e.g. oven)" value="${escapeHtml(a.id||'')}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:ui-monospace,monospace;font-size:12px">
+      <input data-k="label" placeholder="Label shown to customer" value="${escapeHtml(a.label||'')}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+      <input data-k="price" type="number" min="0" step="5" placeholder="AED" value="${a.price||0}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right">
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;color:#DC2626" onclick="this.parentElement.remove()">✕</button>
+    </div>
+  `).join("");
+}
+function addonAdd(sid) {
+  const el = document.getElementById("addons-" + sid);
+  // If empty placeholder is showing, clear it
+  if (el.querySelector('div[data-row]') == null) el.innerHTML = "";
+  const row = document.createElement("div");
+  row.dataset.row = sid;
+  row.style.cssText = "display:grid;grid-template-columns:1fr 2fr 90px auto;gap:6px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px";
+  row.innerHTML = `
+    <input data-k="id" placeholder="id (e.g. oven)" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:ui-monospace,monospace;font-size:12px">
+    <input data-k="label" placeholder="Label shown to customer" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+    <input data-k="price" type="number" min="0" step="5" placeholder="AED" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right">
+    <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;color:#DC2626" onclick="this.parentElement.remove()">✕</button>`;
+  el.appendChild(row);
+}
+async function addonsSave(sid) {
+  const rows = document.querySelectorAll('#addons-' + sid + ' div[data-row]');
+  const addons = [...rows].map(r => {
+    const get = k => (r.querySelector('[data-k="' + k + '"]') || {}).value || "";
+    return { id: get("id").trim(), label: get("label").trim(), price: parseFloat(get("price")||"0") };
+  }).filter(a => a.id && a.label);
+  const msg = document.getElementById("addons-msg-" + sid);
+  msg.textContent = "Saving…";
+  try {
+    const r = await adm("/api/admin/services/addons", {method:"POST", body:{service_id: sid, addons}});
+    msg.textContent = r.ok ? "✅ Saved" : "❌ failed";
+    setTimeout(() => msg.textContent = "", 2500);
+    loadAddons(sid);
+  } catch (e) { msg.textContent = "❌ " + e.message; }
+}
 
 function renderServiceDetail(sid, d) {
   const s = d.service, rule = d.rule||{}, vendors = d.vendors||[], sum = d.summary||{};
@@ -809,6 +866,13 @@ function renderServiceDetail(sid, d) {
           <code>emirate</code>, <code>property_address</code>, <code>frequency (one-time/weekly/monthly)</code></p>
         <textarea id="info-intake-${sid}" rows="6" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px">${escapeHtml((s.intake||[]).join("\n"))}</textarea>
         <button class="btn btn-ghost" style="margin-top:8px;font-size:13px" onclick="saveIntake('${sid}')">Save intake fields</button>
+
+        <h4 style="margin:24px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">⚙️ Add-ons</h4>
+        <p style="margin:0 0 8px;font-size:12px;color:var(--muted)">Customer can pick these on the booking + cart pages. Each = id, label, price (AED).</p>
+        <div id="addons-${sid}" style="display:flex;flex-direction:column;gap:6px"></div>
+        <button class="btn btn-ghost" style="margin-top:6px;font-size:12px;padding:5px 10px" onclick="addonAdd('${sid}')">+ Add new addon</button>
+        <button class="btn btn-primary" style="margin-top:6px;margin-inline-start:6px;font-size:12px;padding:5px 12px" onclick="addonsSave('${sid}')">💾 Save addons</button>
+        <span id="addons-msg-${sid}" style="margin-inline-start:10px;font-size:12px;color:#15803D;font-weight:600"></span>
 
         <h4 style="margin:24px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Includes</h4>
         <div>${includes||'<span style="color:var(--muted);font-size:12px">—</span>'}</div>
