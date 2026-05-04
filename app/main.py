@@ -34,15 +34,20 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Routers
-app.include_router(admin.router)
-app.include_router(admin.public_cms_router)
-app.include_router(admin.public_2fa_router)
-app.include_router(admin.public_reviews_router)
+# IMPORTANT: specific admin sub-routers MUST be registered BEFORE
+# admin.router because admin.router has a catch-all DELETE /{entity}/{rid}
+# pattern that would otherwise match /social-images/{slug} etc and reject
+# them with "unsupported entity". FastAPI routes are matched in registration
+# order — first match wins.
 from . import vendor_scraper as _vs, vendor_outreach as _vo, social_images as _si
 app.include_router(_vs.router)
 app.include_router(_vo.router)
 app.include_router(_si.admin_router)
 app.include_router(_si.public_router)
+app.include_router(admin.router)
+app.include_router(admin.public_cms_router)
+app.include_router(admin.public_2fa_router)
+app.include_router(admin.public_reviews_router)
 
 
 @app.get("/image/{slug}", response_class=HTMLResponse)
@@ -1335,7 +1340,8 @@ def sitemap_videos_xml(request: Request = None):
         for r in rows:
             slug = r["slug"]
             title = (r["title"] or slug.replace("-", " ").title())[:100]
-            page = f"{base}/api/videos/play/{slug}"
+            page = f"{base}/api/videos/play/{slug}"     # landing page (loc)
+            embed = f"{base}/api/videos/embed/{slug}"   # embeddable player (player_loc)
             poster = f"{base}/api/videos/poster/{slug}.svg"
             parts.append(
                 f'  <url><loc>{_x_url(page)}</loc>'
@@ -1345,7 +1351,7 @@ def sitemap_videos_xml(request: Request = None):
                 f'<video:thumbnail_loc>{_x_url(poster)}</video:thumbnail_loc>'
                 f'<video:title>Servia: {_x_url(title)}</video:title>'
                 f'<video:description>{_x_url("Animated Servia explainer about " + title.lower() + " for UAE home services. Booked in seconds via servia.ae.")}</video:description>'
-                f'<video:player_loc allow_embed="yes">{_x_url(page)}</video:player_loc>'
+                f'<video:player_loc allow_embed="yes">{_x_url(embed)}</video:player_loc>'
                 f'<video:duration>22</video:duration>'
                 f'<video:family_friendly>yes</video:family_friendly>'
                 f'<video:requires_subscription>no</video:requires_subscription>'
