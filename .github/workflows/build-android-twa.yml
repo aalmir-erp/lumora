@@ -108,32 +108,8 @@ jobs:
           # CI works without setting any secrets.
           ADMIN_TOKEN_RUNTIME: ${{ secrets.ADMIN_TOKEN || 'lumora-admin-test' }}
         run: |
-          # Install crypto deps + decrypt blob into a real keystore file.
           pip install --quiet cryptography
-          python3 - <<'PY'
-          import base64, hashlib, json, os
-          from cryptography.fernet import Fernet
-          token = os.environ['ADMIN_TOKEN_RUNTIME']
-          salt = b'servia.twa.creds.v1'
-          kb = hashlib.pbkdf2_hmac('sha256', token.encode(), salt, 100_000, dklen=32)
-          fkey = base64.urlsafe_b64encode(kb)
-          enc = open(os.environ['GITHUB_WORKSPACE'] + '/app/data/twa_credentials.enc', 'rb').read()
-          data = json.loads(Fernet(fkey).decrypt(enc))
-          # Drop the keystore file
-          ks_path = os.environ['RUNNER_TEMP'] + '/servia.jks'
-          open(ks_path, 'wb').write(base64.b64decode(data['keystore_base64']))
-          # Export passwords as workflow env vars (masked)
-          ge = open(os.environ['GITHUB_ENV'], 'a')
-          ge.write(f"KEYSTORE_PASS={data['keystore_password']}\n")
-          ge.write(f"KEY_PASS={data['key_password']}\n")
-          ge.write(f"KEY_ALIAS={data['key_alias']}\n")
-          # Mask passwords from the workflow log
-          print(f"::add-mask::{data['keystore_password']}")
-          print(f"::add-mask::{data['key_password']}")
-          print(f"Decrypted {len(data['keystore_base64'])//4*3} bytes of keystore")
-          print(f"  alias: {data['key_alias']}")
-          print(f"  SHA-256: {data.get('sha256_fingerprint','(unknown)')}")
-          PY
+          python3 "${GITHUB_WORKSPACE}/.scripts/decrypt-keystore.py" "$RUNNER_TEMP/servia.jks"
           ls -la $RUNNER_TEMP/servia.jks
 
       - name: Generate debug keystore
