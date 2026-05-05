@@ -987,6 +987,28 @@ _DELETE_MAP = {
 }
 
 
+def _cascade_for_single(c, entity: str, rid):
+    """Mirror delete-all's cascade for a single row so FK constraints don't
+    reject the parent delete. Bookings have 4 FK-referencing tables
+    (assignments / reviews / quotes / invoices) — the previous code only
+    NULLed invoices, so single delete failed with FOREIGN KEY constraint
+    failed whenever any of the other 3 had a row for this booking."""
+    if entity == "vendor":
+        for sql in ("DELETE FROM vendor_services WHERE vendor_id=?",
+                    "DELETE FROM assignments    WHERE vendor_id=?"):
+            try: c.execute(sql, (rid,))
+            except Exception: pass
+    elif entity == "booking":
+        for sql in ("DELETE FROM assignments WHERE booking_id=?",
+                    "DELETE FROM reviews     WHERE booking_id=?",
+                    "DELETE FROM quotes      WHERE booking_id=?"):
+            try: c.execute(sql, (rid,))
+            except Exception: pass
+        # Invoices outlive the booking (kept for accounting) — detach, don't delete
+        try: c.execute("UPDATE invoices SET booking_id=NULL WHERE booking_id=?", (rid,))
+        except Exception: pass
+
+
 @router.delete("/{entity}/{rid}")
 def admin_delete_one(entity: str, rid: str):
     """DELETE one row by id. Allowed entities: vendor, customer, booking, invoice, blog."""
@@ -994,14 +1016,7 @@ def admin_delete_one(entity: str, rid: str):
         raise HTTPException(400, f"unsupported entity '{entity}'. Allowed: {list(_DELETE_MAP.keys())}")
     info = _DELETE_MAP[entity]
     with db.connect() as c:
-        # For vendor: also kill vendor_services rows
-        if entity == "vendor":
-            try: c.execute("DELETE FROM vendor_services WHERE vendor_id=?", (rid,))
-            except Exception: pass
-        # For booking: detach invoices too
-        if entity == "booking":
-            try: c.execute("UPDATE invoices SET booking_id=NULL WHERE booking_id=?", (rid,))
-            except Exception: pass
+        _cascade_for_single(c, entity, rid)
         try:
             n = c.execute(f"DELETE FROM {info['table']} WHERE {info['idcol']}=?", (rid,)).rowcount
         except Exception as e:
@@ -1022,12 +1037,7 @@ def admin_bulk_delete(entity: str, body: BulkDeleteBody):
     with db.connect() as c:
         for rid in body.ids:
             try:
-                if entity == "vendor":
-                    try: c.execute("DELETE FROM vendor_services WHERE vendor_id=?", (rid,))
-                    except Exception: pass
-                if entity == "booking":
-                    try: c.execute("UPDATE invoices SET booking_id=NULL WHERE booking_id=?", (rid,))
-                    except Exception: pass
+                _cascade_for_single(c, entity, rid)
                 n = c.execute(f"DELETE FROM {info['table']} WHERE {info['idcol']}=?",
                               (rid,)).rowcount
                 deleted += n

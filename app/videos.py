@@ -460,6 +460,55 @@ def render_video_html(v: dict) -> str:
     is_vertical = aspect == "9x16"
     is_square = aspect == "1x1"
     cta_text, cta_href = _pick_cta(v.get("slug") or v.get("title") or "x")
+    is_embed = bool(v.get("_embed"))
+
+    if is_embed:
+        # Minimal embeddable player — different bytes from /play/{slug} so
+        # Google's content-fingerprinter doesn't dedupe the two URLs and
+        # re-fire the GSC "<video:player_loc> is the same as <loc>" warning.
+        # No music UI, no scene-stack chrome, no nav, noindex meta.
+        title_e = (v.get("title") or "Servia") .replace("<","&lt;").replace(">","&gt;")
+        slug = (v.get("slug") or "").replace("<","&lt;").replace(">","&gt;")
+        # Pick a single representative scene line — this is the player only,
+        # so we don't need the rotating headline carousel.
+        first = scenes[0] if scenes else {"text": title_e, "sub": ""}
+        head = (first.get("text") or title_e).replace("<","&lt;").replace(">","&gt;")
+        sub  = (first.get("sub")  or "").replace("<","&lt;").replace(">","&gt;")
+        return f"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,follow">
+<title>{title_e} — embed</title>
+<style>
+*{{box-sizing:border-box}}html,body{{margin:0;height:100%;background:#0F172A}}
+.player{{position:relative;width:100%;height:100%;
+  background:linear-gradient(135deg,{a},{b});color:#fff;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}}
+.player::before{{content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 25% 30%,rgba(255,255,255,.18) 0%,transparent 35%),
+             radial-gradient(circle at 75% 70%,rgba(255,255,255,.10) 0%,transparent 35%)}}
+.b{{position:absolute;top:14px;left:18px;font-weight:800;font-size:13px;letter-spacing:.2em;text-transform:uppercase;opacity:.85}}
+.h{{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);text-align:center;width:86%;text-shadow:0 2px 6px rgba(0,0,0,.3);z-index:2}}
+.h .t{{font-size:30px;font-weight:800;line-height:1.15;margin:0 0 10px}}
+.h .s{{font-size:14px;opacity:.92}}
+.cta{{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#FCD34D;color:#7C2D12;padding:8px 18px;border-radius:999px;font-weight:800;font-size:13px;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:3}}
+</style></head><body>
+<div class="player" role="img" aria-label="{title_e}">
+  <div class="b">SERVIA</div>
+  <div class="h"><div class="t">{head}</div><div class="s">{sub}</div></div>
+  <a class="cta" href="{cta_href}">{cta_text} →</a>
+</div>
+<script type="application/ld+json">
+{{"@context":"https://schema.org","@type":"VideoObject",
+  "name":"Servia: {title_e}",
+  "description":"Animated Servia explainer about {title_e.lower()} for UAE home services. Booked in seconds via servia.ae.",
+  "thumbnailUrl":"/api/videos/poster/{slug}.png",
+  "uploadDate":"{_dt.date.today().isoformat()}T00:00:00+04:00",
+  "embedUrl":"/api/videos/embed/{slug}",
+  "contentUrl":"/api/videos/play/{slug}"}}
+</script>
+</body></html>"""
+
     # Build N scene divs with staggered animation-delay
     scene_html = []
     for i, s in enumerate(scenes):
@@ -1187,6 +1236,101 @@ def video_poster_svg(slug: str):
 '''
     return Response(svg, media_type="image/svg+xml",
                     headers={"Cache-Control": "public, max-age=86400"})
+
+
+@public_router.get("/poster/{slug}.png")
+def video_poster_png(slug: str):
+    """Raster (PNG) variant of the SVG poster — REQUIRED by Google's video
+    sitemap spec, which does not reliably accept SVG for
+    <video:thumbnail_loc>. Same teal-gradient + headline composition,
+    rendered with PIL at 1280×720. Cached aggressively (24h)."""
+    from fastapi.responses import Response
+    seed_videos_if_empty()
+    title = slug.replace("-", " ").replace("_", " ").title()
+    sub = ""
+    try:
+        with db.connect() as c:
+            r = c.execute(
+                "SELECT title, scenes_json FROM videos WHERE slug=?", (slug,)
+            ).fetchone()
+            if r:
+                title = r["title"] or title
+                try:
+                    scenes = _json.loads(r["scenes_json"] or "[]")
+                    if scenes and isinstance(scenes, list):
+                        sub = (scenes[0].get("sub") or scenes[0].get("text") or "")[:90]
+                except Exception: pass
+    except Exception: pass
+
+    try:
+        import io
+        from PIL import Image, ImageDraw, ImageFont
+        W, H = 1280, 720
+        img = Image.new("RGB", (W, H), (15, 118, 110))   # teal base
+        # Diagonal gradient teal-700 → teal-500
+        top = (15, 118, 110); bot = (20, 184, 166)
+        px = img.load()
+        for y in range(H):
+            t = y / (H - 1)
+            r2 = int(top[0] + (bot[0] - top[0]) * t)
+            g2 = int(top[1] + (bot[1] - top[1]) * t)
+            b2 = int(top[2] + (bot[2] - top[2]) * t)
+            for x in range(W):
+                px[x, y] = (r2, g2, b2)
+        draw = ImageDraw.Draw(img, "RGBA")
+        # Outer teal disc + inner gold disc + "S" mascot
+        draw.ellipse([50, 190, 390, 530], fill=(13, 148, 136, 140))
+        draw.ellipse([100, 240, 340, 480], fill=(252, 211, 77, 220))
+
+        def _font(size: int, bold: bool = False) -> "ImageFont.FreeTypeFont":
+            for fp in (
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold
+                    else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/Library/Fonts/Arial Bold.ttf" if bold else "/Library/Fonts/Arial.ttf",
+                "/System/Library/Fonts/Helvetica.ttc",
+            ):
+                try: return ImageFont.truetype(fp, size)
+                except Exception: pass
+            return ImageFont.load_default()
+
+        try:
+            f_s = _font(160, bold=True)
+            bbox = draw.textbbox((0, 0), "S", font=f_s)
+            tw = bbox[2] - bbox[0]; th = bbox[3] - bbox[1]
+            draw.text((220 - tw / 2 - bbox[0], 360 - th / 2 - bbox[1]),
+                      "S", font=f_s, fill=(15, 118, 110, 255))
+        except Exception: pass
+
+        # Headline + sub
+        try:
+            f_h = _font(62, bold=True)
+            draw.text((450, 290), (title or "")[:40],
+                      font=f_h, fill=(255, 255, 255, 255))
+        except Exception: pass
+        try:
+            f_sub = _font(32)
+            draw.text((450, 380), (sub or "")[:60],
+                      font=f_sub, fill=(255, 255, 255, 218))
+        except Exception: pass
+        try:
+            f_b = _font(28, bold=True)
+            draw.text((450, 600), "▶ servia.ae · UAE Home Services",
+                      font=f_b, fill=(252, 211, 77, 255))
+        except Exception: pass
+
+        buf = io.BytesIO()
+        img.save(buf, format="PNG", optimize=True)
+        return Response(buf.getvalue(), media_type="image/png",
+                        headers={"Cache-Control": "public, max-age=86400"})
+    except Exception as e:  # noqa: BLE001
+        # Last-resort 1×1 transparent PNG so the route NEVER 500s
+        # (a 500 thumbnail would re-trigger the GSC error we're fixing)
+        import base64
+        png = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lpgAAAABJRU5ErkJggg=="
+        )
+        return Response(png, media_type="image/png",
+                        headers={"Cache-Control": "public, max-age=300"})
 
 
 @public_router.get("/embed/{slug}", response_class=HTMLResponse)

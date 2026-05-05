@@ -803,7 +803,7 @@ def api_pay_start(body: PayStartBody):
                         "unit_amount": int(float(inv["amount"]) * 100),
                         "product_data": {"name": f"Servia booking {inv.get('booking_id') or inv['id']}"},
                     }, "quantity": 1}],
-                    success_url=f"{base}/me.html?b={inv.get('booking_id','')}&paid=1",
+                    success_url=f"{base}/booked.html?id={inv.get('booking_id','')}&paid=1",
                     cancel_url=f"{base}/pay/{inv['id']}",
                     metadata={"invoice_id": inv["id"], "booking_id": inv.get("booking_id") or "",
                               "customer_id": str(cid), "method": method},
@@ -1381,7 +1381,7 @@ def sitemap_videos_xml(request: Request = None):
             title = (r["title"] or slug.replace("-", " ").title())[:100]
             page = f"{base}/api/videos/play/{slug}"     # landing page (loc)
             embed = f"{base}/api/videos/embed/{slug}"   # embeddable player (player_loc)
-            poster = f"{base}/api/videos/poster/{slug}.svg"
+            poster = f"{base}/api/videos/poster/{slug}.png"
             parts.append(
                 f'  <url><loc>{_x_url(page)}</loc>'
                 f'<lastmod>{today}</lastmod>'
@@ -1580,7 +1580,7 @@ def _sitemap_xml_inner():
             title = _x(slug.replace('-',' ').replace('_',' ').title())
             # Per-video poster (auto-generated SVG mascot scene). Falls back to
             # generic mascot if the per-video endpoint isn't available yet.
-            thumb = _x(f"{base}/api/videos/poster/{slug}.svg")
+            thumb = _x(f"{base}/api/videos/poster/{slug}.png")
             player = _x(f"{base}{u}")
             page_loc = _x(f"{base}/videos.html#{slug}")
             body += "    <video:video>\n"
