@@ -7,4 +7,6 @@
     <string name="servia_loyalty_widget_desc">Servia loyalty — your Ambassador tier + discount</string>
     <string name="servia_dailytip_widget_desc">Servia daily tip — UAE home-services know-how</string>
     <string name="servia_quote_widget_desc">Servia quick quote — 60-second AI estimate</string>
+    <string name="servia_search_widget_desc">Servia search — find services, areas, FAQs (with voice)</string>
+    <string name="servia_ask_widget_desc">Ask Servia — 1-tap chat to book, quote or track</string>
 </resources>

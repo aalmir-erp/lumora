@@ -871,8 +871,17 @@ async def scrape_for_service(service_id: str, *, target_per_area: int = 3,
             for (src_name, _), cs in zip(sources, results):
                 if isinstance(cs, Exception):
                     report["errors"].append(f"{area}/{query}/{src_name}: {cs}")
+                    _push_status(f"  ❌ {src_name}: crashed — {type(cs).__name__}: {str(cs)[:120]}")
                     continue
-                _push_status(f"  · {src_name}: {len([x for x in cs if '_error' not in x])} results")
+                ok = [x for x in cs if "_error" not in x]
+                errs = [x["_error"] for x in cs if "_error" in x]
+                if errs and not ok:
+                    # All-error from this source — surface the actual reason
+                    # to the admin live log so they know WHY 0 results (e.g.
+                    # "Apify token not set"). Was being silently swallowed.
+                    _push_status(f"  ⚠ {src_name}: 0 results — {errs[0][:150]}")
+                else:
+                    _push_status(f"  · {src_name}: {len(ok)} results")
                 for c in cs:
                     if "_error" in c:
                         report["errors"].append(f"{area}/{query}/{src_name}: {c['_error']}")
@@ -988,14 +997,31 @@ async def _bg_scrape(service_id, target_per_area, areas, min_ai_score):
 
 @router.post("/run-all")
 async def scrape_run_all(target_per_area: int = 2):
-    """Loop through every service in services.json and scrape each. Long-
-    running — admin should call this offline (cron) rather than from a
-    browser request. Returns aggregate summary."""
+    """Loop through every service in services.json and scrape each.
+    Background task — returns immediately so the admin browser doesn't
+    sit on a 5-minute request and 502 at the proxy. Live progress is
+    pushed to the same /scraper/status SSE stream as single-service runs."""
+    if _LIVE_STATUS.get("running"):
+        raise HTTPException(409, "A scrape is already running — wait for it to finish or stop it first.")
     services = [s["id"] for s in kb.services().get("services", [])]
+    if not services:
+        raise HTTPException(500, "No services defined in services.json")
+    asyncio.create_task(_bg_scrape_all(services, target_per_area))
+    return {"ok": True, "queued": True, "services_to_scrape": len(services),
+            "message": f"Scraping {len(services)} services × all emirates × {target_per_area} per area in background. Watch live log above."}
+
+
+async def _bg_scrape_all(service_ids: list[str], target_per_area: int):
+    """Background driver for /run-all. Loops services serially so the live
+    log makes sense — within a service, areas/queries run in parallel."""
+    _push_status(f"🚀 Run-all started — {len(service_ids)} services queued",
+                 running=True, step="run-all-start")
     summary = {"services_done": 0, "total_imported": 0, "total_rejected": 0,
                "errors": []}
-    for sid in services:
+    for sid in service_ids:
         try:
+            _push_status(f"━━━━━ Service {summary['services_done']+1}/{len(service_ids)}: {sid} ━━━━━",
+                         step=f"service:{sid}")
             r = await scrape_for_service(sid, target_per_area=target_per_area)
             summary["services_done"] += 1
             summary["total_imported"] += r["imported"]
@@ -1003,7 +1029,11 @@ async def scrape_run_all(target_per_area: int = 2):
             summary["errors"].extend(r["errors"][:3])
         except Exception as e:  # noqa: BLE001
             summary["errors"].append(f"{sid}: {e}")
-    return summary
+            _push_status(f"❌ {sid}: {type(e).__name__}: {str(e)[:120]}")
+    _push_status(
+        f"✅ Run-all done — imported {summary['total_imported']} · "
+        f"rejected {summary['total_rejected']} · errors {len(summary['errors'])}",
+        running=False, step="run-all-done")
 
 
 @router.post("/wipe-synthetic")

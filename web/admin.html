@@ -3721,7 +3721,14 @@ async function runScraper(allServices) {
   try {
     if (allServices) {
       const r = await adm("/api/admin/scraper/run-all?target_per_area=" + target, {method:"POST"});
-      msg.innerHTML = `✓ Done — ${r.services_done} services · imported ${r.total_imported}, rejected ${r.total_rejected}`;
+      // /run-all is fire-and-forget background task as of v1.22.83 — we
+      // don't await the loop, we just confirm the queue and let the live
+      // SSE log show progress.
+      if (r.queued) {
+        msg.textContent = `🌐 Queued ${r.services_to_scrape} services — watch live log above (this can take 10-30 min)`;
+      } else {
+        msg.innerHTML = `✓ Done — ${r.services_done||0} services · imported ${r.total_imported||0}, rejected ${r.total_rejected||0}`;
+      }
     } else {
       const r = await adm("/api/admin/scraper/run", {
         method:"POST",

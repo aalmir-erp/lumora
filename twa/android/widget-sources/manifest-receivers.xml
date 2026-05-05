@@ -65,3 +65,21 @@
     <meta-data android:name="android.appwidget.provider"
                android:resource="@xml/servia_quote_widget_info" />
 </receiver>
+<receiver android:name=".SearchWidget"
+          android:exported="true"
+          android:label="Servia · Search">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_search_widget_info" />
+</receiver>
+<receiver android:name=".AskServiaWidget"
+          android:exported="true"
+          android:label="Servia · Ask Servia">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_ask_widget_info" />
+</receiver>
