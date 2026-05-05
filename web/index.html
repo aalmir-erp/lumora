@@ -670,7 +670,7 @@
 
 <!-- ANIMATED STATS -->
 <section style="padding:24px 16px">
-  <div class="stats-strip" style="content-visibility:auto;contain-intrinsic-size:auto 240px">
+  <div class="stats-strip">
     <div class="stat reveal"><div class="num" data-count="2412" data-suffix="+">0</div><div class="lab">Happy UAE families</div></div>
     <div class="stat reveal"><div class="num" data-count="23" data-suffix="">0</div><div class="lab">Services on call</div></div>
     <div class="stat reveal"><div class="num" data-count="4.9" data-suffix="★" data-decimals="1">0</div><div class="lab">Average rating</div></div>
@@ -686,7 +686,7 @@
       <h2 class="reveal" style="margin:0 0 8px">Why UAE families pick Servia</h2>
       <p class="sub reveal" style="margin:0">Built for the people who actually live here.</p>
     </div>
-    <div class="trust-grid" style="content-visibility:auto;contain-intrinsic-size:auto 320px">
+    <div class="trust-grid">
       <div class="trust-item reveal">
         <div class="ico">🛡️</div>
         <div><h3>Insured & background-checked</h3>
@@ -760,7 +760,11 @@
       </div>
       <a href="/blog" style="font-size:13px;font-weight:600;color:var(--primary-dark)">All posts →</a>
     </div>
-    <div id="latest-blog" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;min-height:420px;contain:layout;content-visibility:auto;contain-intrinsic-size:auto 420px"></div>
+    <!-- min-height kept (reserves space for async-injected blog cards) but
+         content-visibility:auto removed - the 420px intrinsic placeholder
+         was way smaller than actual rendered cards (~900px), causing a
+         large CLS jump when the section scrolled into view. -->
+    <div id="latest-blog" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;min-height:420px;contain:layout"></div>
   </div>
 </section>
 <!-- Pre-reserved slot for /api/site/social strip. Hidden by default -
