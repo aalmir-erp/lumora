@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 import pathlib
-from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import admin, ai_router, cart, db, demo_brain, kb, launch, live_visitors, llm, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, selftest, social_publisher, staff_portraits, tools, videos, visibility, whatsapp
-from .auth import ADMIN_TOKEN
+from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
 
 settings = get_settings()
@@ -1085,11 +1085,20 @@ def _indexnow_key() -> str:
     return _hl.sha256(seed.encode()).hexdigest()[:32]
 
 
-@app.get("/{key}.txt", include_in_schema=False)
+def _indexnow_keyfile_path(key: str) -> str:
+    """The on-disk path style we use for the IndexNow key file. Lives under
+    /.well-known/ to avoid the catch-all /{key}.txt route pattern that was
+    intercepting /llms.txt, /robots.txt and any other root .txt request.
+    Spec allows any keyLocation as long as it's reported in the submit body."""
+    return f"/.well-known/indexnow/{key}.txt"
+
+
+@app.get("/.well-known/indexnow/{key}.txt", include_in_schema=False)
 def indexnow_key_file(key: str):
     """Serve the IndexNow verification file. Only the configured key returns
-    plain text; anything else falls through to the static-file handler."""
-    from fastapi.responses import Response as _R, PlainTextResponse
+    the key body. Bing's IndexNow validator follows whatever keyLocation we
+    declare in the POST payload, so /.well-known/ works fine."""
+    from fastapi.responses import PlainTextResponse
     if key == _indexnow_key():
         return PlainTextResponse(key, media_type="text/plain; charset=utf-8")
     raise HTTPException(404, "not found")
@@ -1104,7 +1113,7 @@ def indexnow_submit(urls: list[str]) -> dict:
     payload = {
         "host": host,
         "key": key,
-        "keyLocation": f"https://{host}/{key}.txt",
+        "keyLocation": f"https://{host}{_indexnow_keyfile_path(key)}",
         "urlList": urls[:10000],
     }
     try:
@@ -1121,13 +1130,13 @@ def indexnow_submit(urls: list[str]) -> dict:
         return {"ok": False, "error": str(e)[:200]}
 
 
-@app.get("/api/admin/seo/indexnow-key")
+@app.get("/api/admin/seo/indexnow-key", dependencies=[Depends(require_admin)])
 def admin_indexnow_key():
     """Show the IndexNow key + verification URL so admin can confirm Bing
     Webmaster's check would pass."""
     host = (settings.BRAND_DOMAIN or "servia.ae").strip()
     k = _indexnow_key()
-    return {"key": k, "key_url": f"https://{host}/{k}.txt",
+    return {"key": k, "key_url": f"https://{host}{_indexnow_keyfile_path(k)}",
             "submit_url": "https://api.indexnow.org/indexnow"}
 
 
@@ -1135,7 +1144,7 @@ class _IndexNowBody(BaseModel):
     urls: list[str] | None = None
 
 
-@app.post("/api/admin/seo/indexnow-submit")
+@app.post("/api/admin/seo/indexnow-submit", dependencies=[Depends(require_admin)])
 def admin_indexnow_submit(body: _IndexNowBody | None = None):
     """Submit a batch of URLs to IndexNow. If `urls` is omitted, submits the
     full sitemap (every public-facing page). Use after a content refresh —
@@ -1155,7 +1164,7 @@ def admin_indexnow_submit(body: _IndexNowBody | None = None):
 
 
 # --- Sitemap self-test endpoint (admin-only) ----------------------------------
-@app.get("/api/admin/seo/sitemap-list")
+@app.get("/api/admin/seo/sitemap-list", dependencies=[Depends(require_admin)])
 def sitemap_list_all(request: Request):
     """Return every sitemap-related URL with its in-process generation result.
     Powers the admin sitemap manager — admin sees one row per file with
@@ -1199,7 +1208,7 @@ def sitemap_list_all(request: Request):
             "version": settings.APP_VERSION}
 
 
-@app.get("/api/admin/seo/sitemap-validate")
+@app.get("/api/admin/seo/sitemap-validate", dependencies=[Depends(require_admin)])
 def sitemap_validate(live: bool = False):
     """Generate the sitemap, parse it as XML, and report any errors plus a
     counter of <url> + <video:video> entries. With ?live=true the endpoint

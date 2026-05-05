@@ -620,6 +620,20 @@ def render_index() -> HTMLResponse:
 <title>Servia Journal — UAE home services insights, daily</title>
 <meta name="description" content="Locally-informed UAE home services articles updated daily. Cleaning, AC, pest control, handyman tips and more for all 7 emirates.">
 <link rel="canonical" href="https://servia.ae/blog">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Servia">
+<meta property="og:locale" content="en_AE">
+<meta property="og:title" content="Servia Journal — UAE home services insights, daily">
+<meta property="og:description" content="Locally-informed UAE home services articles updated daily across all 7 emirates.">
+<meta property="og:url" content="https://servia.ae/blog">
+<meta property="og:image" content="https://servia.ae/og-blog.svg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@servia">
+<meta name="twitter:title" content="Servia Journal — UAE home services insights, daily">
+<meta name="twitter:description" content="Locally-informed UAE home services articles updated daily across all 7 emirates.">
+<meta name="twitter:image" content="https://servia.ae/og-blog.svg">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link rel="stylesheet" href="/style.css">
