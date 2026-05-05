@@ -19,6 +19,18 @@
   if (window.__servia_conv) return;
   window.__servia_conv = true;
 
+  // Stub dataLayer + gtag BEFORE firing any events. /_snippets.js is
+  // lazy-loaded (defers gtag.js until 3s idle), so without this stub
+  // every page-load event (book_service, view_service_details, etc.)
+  // would fire before window.gtag exists and be silently dropped.
+  // When the real gtag.js loads later, it sees the existing dataLayer
+  // and processes the queued events as if they had fired with the
+  // tag already in place. Standard Google-recommended pattern.
+  window.dataLayer = window.dataLayer || [];
+  if (typeof window.gtag !== "function") {
+    window.gtag = function () { window.dataLayer.push(arguments); };
+  }
+
   function fire(name, params) {
     if (!name) return;
     var p = params || {};
