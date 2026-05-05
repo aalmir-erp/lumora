@@ -83,9 +83,12 @@ echo "=== Building Wear OS APK ==="
 cd "$BUILD_DIR"
 mkdir -p _artifacts
 LOG=_artifacts/wear-gradle.log
-# tee the FULL log to an artifact file so we can inspect it after the run
-# regardless of success/failure. Previously only stdout tail was visible
-# in the GH Actions UI and was lost when the wrapper caught the failure.
+# CRITICAL: disable `set -e`/`pipefail` for the gradle invocation. Otherwise
+# the script aborts on the first non-zero exit BEFORE we get a chance to
+# capture the log and write diagnostics. Was the root cause of the
+# "wear-gradle-tail.txt missing -> log push skipped" loop.
+set +e
+set +o pipefail
 ./gradlew --no-daemon --stacktrace --info \
     -Pandroid.injected.signing.store.file="$KS_PATH" \
     -Pandroid.injected.signing.store.password="${KEYSTORE_PASS}" \
@@ -93,6 +96,8 @@ LOG=_artifacts/wear-gradle.log
     -Pandroid.injected.signing.key.password="${KEY_PASS}" \
     bundleRelease assembleRelease 2>&1 | tee "$LOG" | tail -150
 GRADLE_EXIT=${PIPESTATUS[0]}
+set -e
+set -o pipefail
 echo ""
 echo "=== gradle exit code: $GRADLE_EXIT ==="
 echo "=== full log saved to $BUILD_DIR/$LOG ==="

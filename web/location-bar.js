@@ -109,6 +109,48 @@
     #servia-loc-modal .actions .skip {
       background:#F1F5F9; color:#475569;
     }
+    /* Tag chips */
+    #servia-loc-modal .tag-chips {
+      display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;
+    }
+    #servia-loc-modal .tag-chip {
+      padding:8px 14px; border:1.5px solid #E2E8F0; background:#fff;
+      border-radius:999px; font-size:13px; font-weight:600; color:#475569;
+      cursor:pointer; line-height:1.1; display:inline-flex; align-items:center; gap:5px;
+      transition:.12s; font-family:inherit;
+    }
+    #servia-loc-modal .tag-chip:hover { border-color:#0F766E; color:#0F766E; }
+    #servia-loc-modal .tag-chip.active {
+      background:linear-gradient(135deg,#0F766E,#14B8A6); color:#fff;
+      border-color:#0F766E; box-shadow:0 4px 10px rgba(15,118,110,.25);
+    }
+    #servia-loc-modal .tag-chip.add-custom { border-style:dashed; color:#94A3B8; }
+    #servia-loc-modal #lm-tag-custom {
+      width:auto; max-width:160px; padding:6px 12px; font-size:13px;
+      border-radius:999px; display:none;
+    }
+    #servia-loc-modal #lm-tag-custom.show { display:inline-block; }
+    /* Map picker */
+    #servia-loc-modal .map-toggle {
+      display:flex; align-items:center; gap:8px; margin:8px 0 4px;
+      padding:10px 12px; background:#F0FDFA; border:1.5px solid #99F6E4;
+      border-radius:10px; cursor:pointer; font-size:13px; font-weight:600;
+      color:#0F766E; user-select:none;
+    }
+    #servia-loc-modal .map-toggle:hover { background:#CCFBF1; }
+    #servia-loc-modal .map-toggle .arr { margin-inline-start:auto; transition:transform .2s; }
+    #servia-loc-modal .map-toggle.open .arr { transform:rotate(90deg); }
+    #servia-loc-modal #lm-map-wrap {
+      display:none; margin-top:8px; border-radius:12px; overflow:hidden;
+      border:1.5px solid #E2E8F0;
+    }
+    #servia-loc-modal #lm-map-wrap.show { display:block; }
+    #servia-loc-modal #lm-map { width:100%; height:260px; }
+    #servia-loc-modal .map-hint {
+      font-size:11.5px; color:#64748B; padding:6px 10px; background:#F8FAFC;
+      border-top:1px solid #E2E8F0;
+    }
+    #servia-loc-modal .map-hint b { color:#0F766E; }
   `;
   document.head.appendChild(css);
 
@@ -156,7 +198,8 @@
     const edit = document.getElementById("servia-loc-edit");
     if (saved && saved.area) {
       const where = [saved.area, saved.emirate].filter(Boolean).join(", ");
-      lbl.innerHTML = `Servicing <b>${escapeHtml(where)}</b>${saved.full_address ? "" : " · add your full address for one-tap booking"}`;
+      const tag = saved.tag ? `<span style="background:rgba(252,211,77,.25);color:#FCD34D;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:800;margin-inline-end:4px">${escapeHtml(saved.tag)}</span>` : "";
+      lbl.innerHTML = `${tag}Servicing <b>${escapeHtml(where)}</b>${saved.full_address ? "" : " · add your full address for one-tap booking"}`;
       grant.style.display = "none";
       edit.style.display = "";
       bar.classList.add("compact");
@@ -242,6 +285,22 @@
       <div class="sheet">
         <h3>📍 Where should we send the pro?</h3>
         <p class="sub">We use this to pre-fill bookings, show area-specific prices, and route the closest crew. Update any time.</p>
+
+        <div class="row">
+          <label>Save as</label>
+          <div class="tag-chips" id="lm-tag-chips">
+            <button type="button" class="tag-chip" data-tag="Home">🏠 Home</button>
+            <button type="button" class="tag-chip" data-tag="Work">🏢 Work</button>
+            <button type="button" class="tag-chip" data-tag="Villa">🏡 Villa</button>
+            <button type="button" class="tag-chip" data-tag="Hotel">🏨 Hotel</button>
+            <button type="button" class="tag-chip" data-tag="Parents">👨‍👩‍👧 Parents</button>
+            <button type="button" class="tag-chip" data-tag="Friend">💒 Friend</button>
+            <button type="button" class="tag-chip" data-tag="Office 2">🏬 Office 2</button>
+            <button type="button" class="tag-chip add-custom" id="lm-tag-add">＋ Custom</button>
+            <input id="lm-tag-custom" placeholder="My label" maxlength="20">
+          </div>
+        </div>
+
         <div class="grid2">
           <div class="row">
             <label>Emirate</label>
@@ -285,6 +344,16 @@
             <input id="lm-notes" placeholder="Gate 4242, parking P-12">
           </div>
         </div>
+
+        <div class="map-toggle" id="lm-map-toggle" role="button" tabindex="0">
+          🗺️ Pin location on map <small style="font-weight:500;color:#475569;margin-inline-start:4px">— drag the marker for exact spot</small>
+          <span class="arr">›</span>
+        </div>
+        <div id="lm-map-wrap">
+          <div id="lm-map"></div>
+          <div class="map-hint">Drop the pin where the pro should arrive. Address fields above auto-fill from the pin. <b>Tap "Save"</b> when done.</div>
+        </div>
+
         <div class="actions">
           <button class="skip" type="button" id="lm-skip">Skip for now</button>
           <button class="save" type="button" id="lm-save">Save address</button>
@@ -303,9 +372,128 @@
     setVal("lm-contact-phone", saved.contact_phone);
     setVal("lm-notes", saved.notes);
 
+    // Tag chip handling: pick existing or create custom
+    const chipsRow = document.getElementById("lm-tag-chips");
+    const customInput = document.getElementById("lm-tag-custom");
+    function selectChip(tag) {
+      chipsRow.querySelectorAll(".tag-chip").forEach(c => c.classList.remove("active"));
+      const match = chipsRow.querySelector(`.tag-chip[data-tag="${tag}"]`);
+      if (match) match.classList.add("active");
+      m.dataset.selectedTag = tag || "";
+    }
+    selectChip(saved.tag || "Home");
+    chipsRow.addEventListener("click", e => {
+      const c = e.target.closest(".tag-chip");
+      if (!c) return;
+      if (c.id === "lm-tag-add") {
+        customInput.classList.add("show");
+        customInput.focus();
+        return;
+      }
+      selectChip(c.dataset.tag);
+      customInput.classList.remove("show");
+      customInput.value = "";
+    });
+    customInput.addEventListener("input", () => {
+      const v = customInput.value.trim();
+      if (v) {
+        chipsRow.querySelectorAll(".tag-chip").forEach(c => c.classList.remove("active"));
+        m.dataset.selectedTag = v;
+      }
+    });
+
+    // Map toggle + lazy init
+    const mapToggle = document.getElementById("lm-map-toggle");
+    const mapWrap = document.getElementById("lm-map-wrap");
+    function openMap() {
+      mapToggle.classList.add("open");
+      mapWrap.classList.add("show");
+      initMap(saved.lat, saved.lng);
+    }
+    mapToggle.addEventListener("click", () => {
+      if (mapWrap.classList.contains("show")) {
+        mapToggle.classList.remove("open");
+        mapWrap.classList.remove("show");
+      } else {
+        openMap();
+      }
+    });
+
     document.getElementById("lm-skip").onclick = () => m.remove();
     m.addEventListener("click", e => { if (e.target === m) m.remove(); });
     document.getElementById("lm-save").onclick = saveFromModal;
+  }
+
+  // Lazy-load Leaflet (~40KB) only when user opens the map picker.
+  let _leafletLoaded = null;
+  function loadLeaflet() {
+    if (_leafletLoaded) return _leafletLoaded;
+    _leafletLoaded = new Promise(res => {
+      if (window.L) { res(window.L); return; }
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(css);
+      const s = document.createElement("script");
+      s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      s.onload = () => res(window.L);
+      s.onerror = () => res(null);
+      document.head.appendChild(s);
+    });
+    return _leafletLoaded;
+  }
+
+  let _map = null, _marker = null;
+  async function initMap(lat, lng) {
+    const L = await loadLeaflet();
+    if (!L) return;
+    // Default to Dubai Marina if no saved coordinates
+    const c = [lat || 25.0772, lng || 55.1396];
+    if (_map) {
+      _map.setView(c, 15);
+      _marker.setLatLng(c);
+      // Force tile recalc since modal can resize
+      setTimeout(() => _map.invalidateSize(), 80);
+      return;
+    }
+    _map = L.map("lm-map", { zoomControl: true }).setView(c, lat ? 16 : 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap',
+    }).addTo(_map);
+    _marker = L.marker(c, { draggable: true }).addTo(_map);
+    _marker.on("dragend", async () => {
+      const p = _marker.getLatLng();
+      await reverseGeocodePin(p.lat, p.lng);
+    });
+    _map.on("click", e => {
+      _marker.setLatLng(e.latlng);
+      reverseGeocodePin(e.latlng.lat, e.latlng.lng);
+    });
+    setTimeout(() => _map.invalidateSize(), 120);
+  }
+
+  async function reverseGeocodePin(lat, lng) {
+    try {
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      if (!r.ok) return;
+      const j = await r.json();
+      const a = j.address || {};
+      // Best-effort UAE area extraction
+      const area = a.suburb || a.neighbourhood || a.quarter || a.village ||
+                    a.city_district || a.town || a.district || "";
+      const emirate = (a.state || a.region || "").replace(" Emirate", "").trim();
+      const street = a.road || "";
+      if (area)    setVal("lm-area", area);
+      if (emirate) setVal("lm-emirate", emirate);
+      if (street)  setVal("lm-street", street);
+      // Stash exact pin coords on the modal for save
+      const m = document.getElementById("servia-loc-modal");
+      if (m) { m.dataset.pinLat = lat; m.dataset.pinLng = lng; }
+    } catch (_) {}
   }
 
   function setVal(id, v) {
@@ -315,7 +503,15 @@
 
   async function saveFromModal() {
     const cur = getSaved() || {};
+    const m = document.getElementById("servia-loc-modal");
+    // Tag: prefer the custom-input value if non-empty, else the active chip,
+    // else fall back to the previously-saved tag or "Home".
+    const customTag = (document.getElementById("lm-tag-custom") || {}).value || "";
+    const tag = (customTag.trim() ||
+                  (m && m.dataset.selectedTag) ||
+                  cur.tag || "Home").slice(0, 20);
     const obj = Object.assign({}, cur, {
+      tag,
       emirate: getVal("lm-emirate"),
       area: getVal("lm-area"),
       building: getVal("lm-building"),
@@ -326,6 +522,12 @@
       notes: getVal("lm-notes"),
       saved_at: new Date().toISOString(),
     });
+    // Map pin coordinates override geolocation if user moved the marker
+    if (m && m.dataset.pinLat && m.dataset.pinLng) {
+      obj.lat = parseFloat(m.dataset.pinLat);
+      obj.lng = parseFloat(m.dataset.pinLng);
+      obj.pin_set_by_user = true;
+    }
     obj.full_address = [obj.building, obj.apartment, obj.street, obj.area, obj.emirate]
       .filter(Boolean).join(", ");
     setSaved(obj);
