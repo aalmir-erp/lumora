@@ -445,6 +445,32 @@
       .ssn-trigger input, .ssn-trigger .kbd { display:none }
       .ssn-dropdown { display:none !important }
     }
+    /* Compact GPT + Install icon buttons sitting alongside the search
+       combobox in nav-cta. */
+    .sapp-fabs { display:inline-flex; gap:6px; align-items:center; margin-inline-start:6px; }
+    .sapp-fab { display:inline-flex; align-items:center; gap:6px;
+      padding:7px 12px; border-radius:999px; border:0; cursor:pointer;
+      font-size:12.5px; font-weight:700; text-decoration:none;
+      transition:transform .12s, box-shadow .12s, filter .12s;
+      box-shadow:0 4px 12px rgba(15,23,42,.10); white-space:nowrap;
+      font-family:inherit; line-height:1; }
+    .sapp-fab .ic { font-size:14px; line-height:1 }
+    .sapp-fab .lbl { font-size:12px; line-height:1 }
+    .sapp-fab:hover { transform:translateY(-1px); filter:brightness(1.05); box-shadow:0 8px 20px rgba(15,23,42,.18); }
+    .sapp-fab.gpt { background:linear-gradient(135deg,#5B21B6,#7C3AED); color:#fff; }
+    .sapp-fab.install { background:linear-gradient(135deg,#0F766E,#14B8A6); color:#fff; }
+    @media (max-width:720px) {
+      /* Mobile: collapse to icon-only chips - tighter nav-cta. */
+      .sapp-fab { padding:7px 10px }
+      .sapp-fab .lbl { display:none }
+      .sapp-fabs { gap:4px; margin-inline-start:4px }
+    }
+    @media (max-width:420px) {
+      /* Tiny phones: show only one of the two (Install) and drop GPT to save
+         room for the Book CTA which is the primary conversion. GPT still
+         reachable via the Cmd+K palette + footer + /install.html. */
+      .sapp-fab.gpt { display:none }
+    }
   `;
   document.head.appendChild(inlineCSS);
 
@@ -665,6 +691,71 @@
       const txt = (a.textContent || "").trim();
       if (txt.length <= 2 || /^[🔍🔎]/.test(txt)) a.style.display = "none";
     });
+
+    // ----- Inject small ChatGPT-GPT + Install-PWA icon buttons -----
+    // Right after the inline search combobox, before any existing CTA.
+    // GPT button always visible. PWA-install button shows when the
+    // browser fires beforeinstallprompt OR (iOS) when the user opens the
+    // page in Safari (since iOS doesn't fire that event but supports
+    // Add-to-Home-Screen).
+    if (!ncta.querySelector(".sapp-fabs")) {
+      const fabs = document.createElement("div");
+      fabs.className = "sapp-fabs";
+      fabs.innerHTML = `
+        <a class="sapp-fab gpt" href="${GPT_URL}" target="_blank" rel="noopener"
+           data-event="open_chatgpt_gpt"
+           title="Talk to Servia on ChatGPT (@servia)" aria-label="Open Servia GPT in ChatGPT">
+          <span class="ic">🚀</span>
+          <span class="lbl">GPT</span>
+        </a>
+        <button type="button" class="sapp-fab install" id="sapp-install"
+                data-event="install_pwa"
+                title="Install Servia as an app on your device" aria-label="Install Servia app">
+          <span class="ic">📲</span>
+          <span class="lbl">Install</span>
+        </button>`;
+      ncta.insertBefore(fabs, ncta.firstChild?.nextSibling || null);
+
+      const installBtn = fabs.querySelector("#sapp-install");
+      let deferredPrompt = null;
+
+      // Show install button only when browser says it's installable, OR on
+      // iOS Safari (where we just send to /install.html since iOS doesn't
+      // expose the prompt API). Hide if already running as installed PWA.
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+                        || window.navigator.standalone === true;
+      const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent)
+                       && !window.MSStream
+                       && /Safari/.test(navigator.userAgent)
+                       && !/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent);
+
+      if (isStandalone) {
+        installBtn.style.display = "none";  // already installed
+      } else if (isIOSSafari) {
+        // iOS: send to /install.html instructions (Add to Home Screen flow).
+        installBtn.addEventListener("click", () => location.href = "/install.html");
+      } else {
+        // Hide until the browser tells us it's installable. While hidden,
+        // user can still get there via /install.html or the Cmd+K palette.
+        installBtn.style.display = "none";
+        window.addEventListener("beforeinstallprompt", e => {
+          e.preventDefault();
+          deferredPrompt = e;
+          installBtn.style.display = "";
+        });
+        installBtn.addEventListener("click", async () => {
+          if (!deferredPrompt) { location.href = "/install.html"; return; }
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+          if (outcome === "accepted") {
+            installBtn.querySelector(".ic").textContent = "✅";
+            installBtn.querySelector(".lbl").textContent = "Installed";
+            setTimeout(() => installBtn.style.display = "none", 1200);
+          }
+        });
+      }
+    }
   }
 
   // Inject as soon as DOM is ready (defer in <script> means doc is parsed)
