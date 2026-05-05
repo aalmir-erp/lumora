@@ -720,6 +720,71 @@ def poll(session_id: str, since_id: int = 0):
 
 
 # ---------- public read endpoints ----------
+# In-memory cache for the GitHub Releases lookup so the in-app
+# "Check for updates" button doesn't hammer GitHub on every tap.
+_APP_LATEST_CACHE: dict = {"data": None, "ts": 0.0}
+
+
+@app.get("/api/app/latest")
+async def app_latest():
+    """Return the latest published Servia APK info: version, download URL,
+    asset size, release notes. Used by the in-app /web/about-app.js
+    'Check for updates' button to detect when the user's installed APK
+    is older than the latest release.
+
+    Source: GitHub Releases on aalmir-erp/lumora (public repo, anonymous
+    download URLs work for the asset). Cached for 5 minutes."""
+    import time
+    now = time.time()
+    if _APP_LATEST_CACHE["data"] and (now - _APP_LATEST_CACHE["ts"]) < 300:
+        return _APP_LATEST_CACHE["data"]
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as c:
+            r = await c.get(
+                "https://api.github.com/repos/aalmir-erp/lumora/releases/latest",
+                headers={"Accept": "application/vnd.github+json"},
+            )
+        if r.status_code != 200:
+            # Fall back to current web version — better than 500ing the
+            # in-app menu when GitHub is rate-limiting.
+            data = {"web_version": settings.APP_VERSION,
+                    "apk_version": settings.APP_VERSION,
+                    "apk_url": None, "apk_size_mb": None,
+                    "wear_url": None, "wear_size_mb": None,
+                    "released_at": None,
+                    "notes": "Latest release info unavailable — open https://github.com/aalmir-erp/lumora/releases manually.",
+                    "source": "fallback"}
+            _APP_LATEST_CACHE.update({"data": data, "ts": now})
+            return data
+        rel = r.json()
+        tag = (rel.get("tag_name") or "").lstrip("v")
+        apk = next((a for a in rel.get("assets", [])
+                    if a.get("name") == "app-release-signed.apk"), None)
+        wear = next((a for a in rel.get("assets", [])
+                     if a.get("name") == "servia-wear-signed.apk"), None)
+        data = {
+            "web_version": settings.APP_VERSION,
+            "apk_version": tag or settings.APP_VERSION,
+            "apk_url": (apk or {}).get("browser_download_url"),
+            "apk_size_mb": round(((apk or {}).get("size") or 0) / (1024*1024), 1),
+            "wear_url": (wear or {}).get("browser_download_url"),
+            "wear_size_mb": round(((wear or {}).get("size") or 0) / (1024*1024), 1),
+            "released_at": rel.get("published_at"),
+            "notes": (rel.get("body") or "")[:600],
+            "release_url": rel.get("html_url"),
+            "source": "github_release",
+        }
+        _APP_LATEST_CACHE.update({"data": data, "ts": now})
+        return data
+    except Exception as e:  # noqa: BLE001
+        return {"web_version": settings.APP_VERSION,
+                "apk_version": settings.APP_VERSION,
+                "apk_url": None, "wear_url": None,
+                "notes": f"Lookup error: {type(e).__name__}",
+                "source": "error"}
+
+
 @app.get("/api/health")
 def health():
     return {"ok": True, "service": settings.BRAND_NAME, "version": settings.APP_VERSION,

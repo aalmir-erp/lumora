@@ -81,32 +81,45 @@ PROPS
 echo ""
 echo "=== Building Wear OS APK ==="
 cd "$BUILD_DIR"
+mkdir -p _artifacts
+LOG=_artifacts/wear-gradle.log
+# tee the FULL log to an artifact file so we can inspect it after the run
+# regardless of success/failure. Previously only stdout tail was visible
+# in the GH Actions UI and was lost when the wrapper caught the failure.
 ./gradlew --no-daemon --stacktrace --info \
     -Pandroid.injected.signing.store.file="$KS_PATH" \
     -Pandroid.injected.signing.store.password="${KEYSTORE_PASS}" \
     -Pandroid.injected.signing.key.alias="${KEY_ALIAS}" \
     -Pandroid.injected.signing.key.password="${KEY_PASS}" \
-    bundleRelease assembleRelease 2>&1 | tail -200
+    bundleRelease assembleRelease 2>&1 | tee "$LOG" | tail -150
 GRADLE_EXIT=${PIPESTATUS[0]}
-echo "gradle exit code: $GRADLE_EXIT"
-if [ "$GRADLE_EXIT" != "0" ]; then
-  echo "::error::Wear OS gradle build FAILED with exit $GRADLE_EXIT"
-  exit "$GRADLE_EXIT"
-fi
+echo ""
+echo "=== gradle exit code: $GRADLE_EXIT ==="
+echo "=== full log saved to $BUILD_DIR/$LOG ==="
+
+# Always copy a trimmed last-300-lines tail in case the full log gets truncated
+tail -300 "$LOG" > _artifacts/wear-gradle-tail.txt 2>/dev/null || true
 
 echo ""
-echo "=== Listing all build outputs ==="
-find app/build -type f \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null || echo "no build outputs found"
+echo "=== Build outputs (everything matching apk/aab) ==="
+find app/build -type f \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null > _artifacts/wear-found.txt || true
+cat _artifacts/wear-found.txt
 echo ""
-echo "=== Tree of build dir ==="
-find app/build -type d 2>/dev/null | head -30 || true
-echo ""
-echo "=== Wear OS artifacts ==="
-mkdir -p _artifacts
+echo "=== Output dir tree (first 40 dirs) ==="
+find app/build -type d 2>/dev/null | head -40 > _artifacts/wear-dirtree.txt || true
+cat _artifacts/wear-dirtree.txt
+
+# Try to copy artefacts even if gradle reported non-zero (some configs
+# produce a partial APK that still installs)
 find app/build/outputs -name "*.apk" -exec cp {} _artifacts/servia-wear-signed.apk \; 2>&1 || true
 find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-wear-bundle.aab \; 2>&1 || true
 ls -la _artifacts/
+
+if [ "$GRADLE_EXIT" != "0" ]; then
+  echo "::error::Wear OS gradle build FAILED with exit $GRADLE_EXIT — see _artifacts/wear-gradle-tail.txt"
+  exit "$GRADLE_EXIT"
+fi
 if [ ! -f _artifacts/servia-wear-signed.apk ]; then
-  echo "::error::Wear OS APK was NOT produced. Inspect logs above for gradle error."
+  echo "::error::Wear OS gradle returned 0 but produced NO APK — see _artifacts/wear-gradle-tail.txt"
   exit 1
 fi

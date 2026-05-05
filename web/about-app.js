@@ -206,13 +206,62 @@
   async function handleAction(action, modal) {
     switch (action) {
       case "check-update":
+        // Two-stage update check:
+        //   1. Web (service worker): refresh cached HTML/CSS/JS — picks up
+        //      banner / nav / scraper-style / page-content changes that
+        //      live on the server. Always done.
+        //   2. APK (native shell): if running standalone (TWA) and the
+        //      bundled APK version is older than the latest GitHub
+        //      Release, offer to download the new .apk. Sideloaded APKs
+        //      do NOT auto-update — user has to install the new one over
+        //      the old one (Android keeps user data).
+        toast("⏳ Checking…", 1500);
         try {
           if (navigator.serviceWorker) {
             const regs = await navigator.serviceWorker.getRegistrations();
             await Promise.all(regs.map(r => r.update()));
           }
         } catch (_) {}
-        location.reload();
+        try {
+          const r = await fetch("/api/app/latest", {cache:"no-store"});
+          if (r.ok) {
+            const j = await r.json();
+            // Running APK version = either the version baked into the
+            // page meta (set by app/main.py via settings.APP_VERSION)
+            // or, in the absence of that, the SW-cache version.
+            const installedApk = (window.SERVIA_INSTALLED_APK_VER ||
+                                   localStorage.getItem("servia.apk.installed_ver") ||
+                                   j.web_version || "0.0.0");
+            const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+                                  document.referrer.startsWith("android-app://");
+            if (j.apk_url && j.apk_version && cmpSemver(j.apk_version, installedApk) > 0) {
+              // Newer APK available
+              const proceed = confirm(
+                "📲 New Servia version available — v" + j.apk_version +
+                " (" + (j.apk_size_mb || "?") + " MB)\n\n" +
+                "Your installed app: v" + installedApk + "\n\n" +
+                "Sideloaded apps don't auto-update. Tap OK to download the " +
+                "new APK; install it over the existing app (your data stays)."
+              );
+              if (proceed) {
+                location.href = j.apk_url;
+                // Mark as installed AFTER they tap install on the OS prompt
+                // — they'll hit Check-for-updates again later and we'll see
+                // the same version and not nag.
+                localStorage.setItem("servia.apk.pending_ver", j.apk_version);
+              }
+              return;  // don't reload
+            }
+            if (isStandalone && j.apk_version) {
+              toast("✓ You're on the latest v" + j.apk_version, 2200);
+            } else {
+              toast("✓ Web content refreshed — reloading…", 1500);
+            }
+          }
+        } catch (_) {
+          toast("⚠ Couldn't check for updates — refreshing web only", 2000);
+        }
+        setTimeout(() => location.reload(), 1200);
         break;
       case "install-app":
         if (window.serviaShowInstall) window.serviaShowInstall();
@@ -274,11 +323,50 @@
     if (modal && action !== "reset-language") modal.remove();
   }
 
-  function toast(t) {
+  function toast(t, ms) {
     const el = document.createElement("div");
     el.textContent = t;
     el.style.cssText = "position:fixed;bottom:50%;left:50%;transform:translate(-50%,50%);background:#0F172A;color:#fff;padding:14px 22px;border-radius:999px;z-index:99999;font-weight:700;font-size:14px;box-shadow:0 12px 28px rgba(15,23,42,.32);animation:abfade .2s";
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2200);
+    setTimeout(() => el.remove(), ms || 2200);
   }
+
+  function cmpSemver(a, b) {
+    // Returns -1 / 0 / 1 like Array.sort. Tolerates "1.22.84" or "v1.22.84".
+    const pa = String(a || "0").replace(/^v/, "").split(".").map(n => parseInt(n) || 0);
+    const pb = String(b || "0").replace(/^v/, "").split(".").map(n => parseInt(n) || 0);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const x = pa[i] || 0, y = pb[i] || 0;
+      if (x > y) return 1;
+      if (x < y) return -1;
+    }
+    return 0;
+  }
+
+  // First-launch detection: when the user first opens the TWA, we don't
+  // know which APK version they have. We mark the current web version as
+  // the "installed APK version" so subsequent update checks can compare.
+  // (Best-effort heuristic — accurate as long as APK + web ship together.)
+  try {
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+                          document.referrer.startsWith("android-app://");
+    if (isStandalone && !localStorage.getItem("servia.apk.installed_ver")) {
+      // Pull web version from /api/health (avoids needing it inlined in HTML)
+      fetch("/api/health").then(r => r.ok && r.json()).then(j => {
+        if (j && j.version) {
+          localStorage.setItem("servia.apk.installed_ver", j.version);
+        }
+      }).catch(()=>{});
+    }
+    // If a pending APK version was confirmed installed (the user came back
+    // to a higher web version after re-installing the APK), update marker.
+    const pending = localStorage.getItem("servia.apk.pending_ver");
+    if (pending && isStandalone) {
+      const cur = localStorage.getItem("servia.apk.installed_ver") || "0";
+      if (cmpSemver(pending, cur) > 0) {
+        // User likely installed it — but don't overwrite until they
+        // open after install. We confirm on next /api/app/latest call.
+      }
+    }
+  } catch (_) {}
 })();

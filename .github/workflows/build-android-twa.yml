@@ -337,16 +337,21 @@ jobs:
           KS_PATH: ${{ runner.temp }}/servia.jks
         run: |
           chmod +x .scripts/build-wear-apk.sh
-          .scripts/build-wear-apk.sh "$KS_PATH" || {
-            echo "::warning::Wear OS build FAILED — continuing without watch APK."
+          # Run the build but ALWAYS leave _artifacts populated with logs
+          # so the upload step has something to capture.
+          if ! .scripts/build-wear-apk.sh "$KS_PATH"; then
+            echo "::warning::Wear OS build FAILED — diagnostic logs uploaded as servia-android-wear artifact"
             mkdir -p twa/android/wear-build/_artifacts
             echo "Wear build failed in CI run ${{ github.run_id }}." \
               > twa/android/wear-build/_artifacts/_BUILD_FAILED.txt
-            exit 0
-          }
+          fi
+          # Whatever happened, list what we have
+          ls -la twa/android/wear-build/_artifacts/ 2>/dev/null || true
 
-      - name: Upload Wear OS APK + AAB
-        if: always() && hashFiles('twa/android/wear-build/_artifacts/*.apk') != ''
+      - name: Upload Wear OS APK + AAB + diagnostic logs
+        # Always upload — even on Wear build failure we want the gradle
+        # log + tree dump so we can debug from outside the runner.
+        if: always() && hashFiles('twa/android/wear-build/_artifacts/*') != ''
         uses: actions/upload-artifact@v4
         with:
           name: servia-android-wear
@@ -378,3 +383,35 @@ jobs:
           echo "  web/.well-known/assetlinks.json on the website. If they"
           echo "  differ, update the website's file and redeploy."
           echo "==================================================="
+
+      # -----------------------------------------------------------------
+      # Publish a GitHub Release on every v* tag with the signed APK +
+      # AAB attached. Public repos: release asset URLs are anonymous-
+      # downloadable, which lets the in-app "Check for updates" flow
+      # detect a new APK and link the user to the install file with no
+      # auth juggling.
+      # -----------------------------------------------------------------
+      - name: Publish GitHub Release with APK + AAB
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Servia ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            ## Servia Android ${{ github.ref_name }}
+
+            ### Install
+            Download `app-release-signed.apk` below and tap it on your Android phone. Allow "Install unknown apps" if prompted.
+
+            ### What changed
+            See commit history since previous tag.
+          files: |
+            twa/android/generated/_artifacts/app-release-signed.apk
+            twa/android/generated/_artifacts/app-release-bundle.aab
+            twa/android/generated/_artifacts/assetlinks.json
+            twa/android/wear-build/_artifacts/servia-wear-signed.apk
+            twa/android/wear-build/_artifacts/servia-wear-bundle.aab
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
