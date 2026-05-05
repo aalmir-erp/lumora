@@ -44,44 +44,22 @@ const fs = require("fs");
   tm.appVersionCode = 1;
   tm.fallbackType = "customtabs";
   // Brand the splash screen — teal background instead of generic white.
-  // Without this the splash flashes a white card with a small icon, which
-  // looks unfinished. Teal matches the brand and makes the launch feel
-  // intentional.
-  tm.backgroundColor = "#0D9488";   // teal — matches the navigation chrome
-  tm.themeColor = "#0D9488";
-  tm.themeColorDark = "#0F172A";
-  tm.navigationColor = "#0D9488";
-  tm.navigationColorDark = "#0F172A";
+  // Bubblewrap's Color type wraps via the `color` npm package, so we have
+  // to construct one rather than assign a hex string.
+  try {
+    const { Color } = require(path.join(corePath, "../../color/index.js"));
+    tm.backgroundColor = new Color("#0D9488");
+  } catch (_) {
+    // Fallback: rely on the manifest's background_color value as-is.
+  }
   tm.splashScreenFadeOutDuration = 300;
 
-  // Rewrite shortcut URLs to absolute https://servia.ae paths. Bubblewrap
-  // resolved them against the localhost manifest URL, which would make the
-  // TWA's long-press shortcuts point at localhost:8080 — broken on real
-  // phones. Without this fix, every long-press shortcut just opens the
-  // home page (404 → fallback).
-  if (Array.isArray(tm.shortcuts)) {
-    tm.shortcuts = tm.shortcuts.map(s => {
-      const sc = Object.assign({}, s);
-      if (sc.url) {
-        try {
-          const u = new URL(sc.url);
-          // Replace whatever host the URL has with servia.ae.
-          u.protocol = "https:";
-          u.host = "servia.ae";
-          sc.url = u.toString();
-        } catch (_) {}
-      }
-      // Same for shortcut iconUrl — it'll fail to download otherwise.
-      if (sc.chosenIconUrl) {
-        try {
-          const u = new URL(sc.chosenIconUrl);
-          u.protocol = "https:"; u.host = "servia.ae";
-          sc.chosenIconUrl = u.toString();
-        } catch (_) {}
-      }
-      return sc;
-    });
-  }
+  // We DON'T rewrite shortcut URLs to servia.ae here — Bubblewrap fetches
+  // shortcut icons during generation from those URLs, and Cloudflare blocks
+  // the GitHub runner from servia.ae (host_not_allowed 403). Let bubblewrap
+  // resolve them against the localhost manifest URL (icons download fine),
+  // then post-generation we'll patch the URLs in the generated res/xml/
+  // shortcuts.xml to point at the production domain.
   // Force HTTPS scheme on origin URLs so post-init updates work cleanly.
   tm.fullScopeUrl = new URL("https://servia.ae/");
   // KEEP webManifestUrl pointing at the localhost server while bubblewrap
@@ -111,6 +89,26 @@ const fs = require("fs");
   // so when the user later inspects twa-manifest.json or runs `bubblewrap
   // update` post-deployment, the manifest URL is correct.
   tm.webManifestUrl = new URL("https://servia.ae/manifest.webmanifest");
+
+  // Post-process: rewrite shortcut URLs in the generated shortcuts.xml +
+  // strings.xml from localhost to servia.ae (the user's phone obviously
+  // can't reach our CI's localhost server).
+  function rewriteFile(p) {
+    if (!fs.existsSync(p)) return;
+    const re = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?/g;
+    const before = fs.readFileSync(p, "utf8");
+    const after = before.replace(re, "https://servia.ae");
+    if (after !== before) {
+      fs.writeFileSync(p, after);
+      console.log("→ Patched localhost → servia.ae in", path.relative(targetDir, p));
+    }
+  }
+  const candidates = [
+    path.join(targetDir, "app/src/main/res/xml/shortcuts.xml"),
+    path.join(targetDir, "app/src/main/res/values/strings.xml"),
+    path.join(targetDir, "app/src/main/AndroidManifest.xml"),
+  ];
+  candidates.forEach(rewriteFile);
   fs.writeFileSync(
     path.join(targetDir, "twa-manifest.json"),
     JSON.stringify(tm.toJson(), null, 2)
