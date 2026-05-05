@@ -392,6 +392,38 @@
   </style>
 </section>
 
+<!-- 🎙️ SMART-SPEAKER ANNOUNCEMENT BANNER - Live now (ChatGPT, Siri Shortcut)
+     + Coming soon (Alexa, Google Home, Samsung Watch). Slim banner so it
+     doesn't compete with the main hero, but visible enough that users know
+     voice booking is part of Servia's product surface. -->
+<section style="padding:24px 16px;background:linear-gradient(135deg,#0F0E1F 0%,#1E1B4B 100%);color:#fff;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden">
+  <!-- Decorative animated voice waves -->
+  <div aria-hidden="true" style="position:absolute;left:-40px;top:50%;transform:translateY(-50%);font-size:80px;opacity:.08;animation:voicepulse 2.6s ease-in-out infinite">🎙️</div>
+  <div aria-hidden="true" style="position:absolute;right:-30px;top:50%;transform:translateY(-50%);font-size:80px;opacity:.08;animation:voicepulse 2.6s ease-in-out 1.3s infinite">⌚</div>
+  <style>@keyframes voicepulse { 0%,100% { transform:translateY(-50%) scale(1) } 50% { transform:translateY(-50%) scale(1.08) } }</style>
+  <div style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;position:relative">
+    <div>
+      <div style="display:inline-flex;gap:6px;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#10B981;margin-bottom:6px">
+        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;animation:livepulse 1.4s infinite"></span> NEW · HANDS-FREE BOOKING
+        <style>@keyframes livepulse { 0%,100% { opacity:1 } 50% { opacity:.4 } }</style>
+      </div>
+      <h2 style="margin:0 0 6px;font-size:22px;letter-spacing:-.02em;color:#fff;font-weight:800">Now book Servia by voice 🎙️</h2>
+      <p style="margin:0;color:#CBD5E1;font-size:14px;line-height:1.5">
+        <span style="color:#FCD34D;font-weight:700">Live now</span> on ChatGPT (<code style="background:rgba(255,255,255,.1);padding:1px 7px;border-radius:5px;color:#FCD34D;font-family:ui-monospace,monospace">@servia</code>) and Siri Shortcuts ·
+        <span style="color:#94A3B8;font-weight:700">Coming Q3 2026</span> on Alexa, Google Home, and Samsung Watch.
+      </p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+      <a href="/smart-speakers.html" data-event="open_smart_speakers"
+         style="background:linear-gradient(135deg,#7C3AED,#A78BFA);color:#fff;padding:11px 18px;border-radius:999px;font-weight:700;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px;box-shadow:0 8px 20px rgba(124,58,237,.4);white-space:nowrap">🎙️ See how it works →</a>
+    </div>
+  </div>
+  <style>@media (max-width:720px) {
+    section[style*='SMART-SPEAKER'], section[style*='0F0E1F'] > div[style*='grid-template-columns:1fr auto'] { grid-template-columns:1fr !important }
+    section[style*='0F0E1F'] > div[style*='grid-template-columns'] > div:last-child { justify-content:center !important }
+  }</style>
+</section>
+
 <!-- 🎯 POPULAR SERVICES — visible above the fold, the moment hero ends -->
 <section style="padding:24px 16px 28px;background:linear-gradient(180deg,#FFFFFF 0%,#F8FAFC 100%)">
   <div class="container" style="max-width:1180px;margin:0 auto">
