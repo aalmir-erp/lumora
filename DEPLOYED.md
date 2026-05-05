@@ -2,23 +2,22 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"Lv4Bc-kbQpe3WWizwoOzXw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"ljrz_8lsSjKncXQ_2prcFg"}`
 
 ## Build logs
 ```
 [ 9/11] COPY web ./web
-[ 8/11] COPY app ./app
-[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
-[ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
-[ 5/11] RUN pip install -r requirements.txt
-[ 4/11] COPY requirements.txt ./
 [internal] load build context
 [ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 2/11] WORKDIR /app
+[10/11] COPY start.sh /app/start.sh
+[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
+[ 8/11] COPY app ./app
+[ 4/11] COPY requirements.txt ./
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
 [internal] load build context
 [ 2/11] WORKDIR /app
@@ -31,11 +30,12 @@
 [ 9/11] COPY web ./web
 [10/11] COPY start.sh /app/start.sh
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
+[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZGY4YWJkYTVlODNjNTBjMmNiZjE5MzEwNzQxOTQ2ZjcyZTQ0ZDc2MWYyMjhjNjg5ZDhiNjA3ZDhlOGQ4NDI2NSIsInNpemUiOjI5NTgsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNVQyMDo1ODozM1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:b010f55f934151e442e08e2ccaa5f9d0279177ccc4f82c5a7404973fbc258e66
-containerimage.digest: sha256:df8abda5e83c50c2cbf19310741946f72e44d761f228c689d8b607d8e8d84265
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MWZhYWVkNjA0ODc1NTE2Y2QwMzkxYTQwNzkwODRkY2I1NzhlZDVkMTIzZmQ4MTE5MDhkNTQxYWVmNzM1MDhlMiIsInNpemUiOjI5NTgsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNVQyMTowNDo1MloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:dbca27e972bf2c3c5785be8a67d7cf3a9d42602b28c203c196e2cc6259b33d7a
+containerimage.digest: sha256:1faaed604875516cd0391a4079084dcb578ed5d123fd811908d541aef73508e2
 image push
 
 [35m====================
@@ -50,22 +50,25 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/6be409d9-9b34-46c3-8b91-b65cd700b3bd/vol_onr647rhdeir9di9
 [start] launching whatsapp_bridge
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/c5e2a66c-b3a1-4e37-9c88-f426344e323d/vol_onr647rhdeir9di9
 [wa-bridge] listening on :3001
 Starting Container
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
 INFO:     Started server process [1]
 INFO:     Waiting for application startup.
-INFO:     100.64.0.2:33655 - "GET /api/health HTTP/1.1" 200 OK
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:18872 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-Stopping Container
-INFO:     Finished server process [1]
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-Stopping Container
+INFO:     100.64.0.2:55713 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:27904 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.4:32312 - "POST /api/auth/webauthn/challenge HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.4:16350 - "POST /api/auth/webauthn/challenge HTTP/1.1" 200 OK
+INFO:     100.64.0.5:47220 - "GET / HTTP/1.1" 200 OK
+[push] pywebpush not installed — skipping push send
+INFO:     100.64.0.4:46788 - "POST /api/auth/uaepass/start HTTP/1.1" 200 OK
+INFO:     100.64.0.6:47478 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
 ```
