@@ -197,12 +197,12 @@ def broadcast(body: BroadcastBody):
 
     # Audience filter — passes through to send_to_all which queries
     # push_subscriptions filtered by linked customer/vendor.
-    n_sent = send_to_all(payload, audience=body.audience or "all")
-    return {"ok": True, "sent": n_sent, "audience": body.audience or "all"}
+    result = send_to_all(payload, audience=body.audience or "all", filters=getattr(body, 'filters', None))
+    return {"ok": True, "audience": body.audience or "all", **result}
 
 
 # ---------- Send a payload to all subscribers ----------
-def send_to_all(payload: dict, audience: str = "all") -> int:
+def send_to_all(payload: dict, audience: str = "all", filters: dict | None = None) -> dict:
     """Sends `payload` (dict — title/body/kind/etc.) to subscribers in the
     selected `audience` ('all' | 'customers' | 'vendors' | 'logged_in').
     Returns count of successful deliveries. Auto-prunes 410-Gone subscribers.
@@ -217,35 +217,64 @@ def send_to_all(payload: dict, audience: str = "all") -> int:
     keys = _ensure_vapid_keys()
     if not keys.get("private"):
         print("[push] no VAPID keys — call /api/admin/push/test once to generate", flush=True)
-        return 0
+        return {"sent": 0, "pruned": 0, "failed": 0, "matched": 0,
+                "errors": ["VAPID keys not configured. Generate them via /api/admin/push/test."]}
     _ensure_table()
     try:
         from pywebpush import webpush, WebPushException
     except Exception:
         print("[push] pywebpush not installed — skipping push send", flush=True)
-        return 0
-    # Build the WHERE clause once for audience filtering
-    where = ""
+        return {"sent": 0, "pruned": 0, "failed": 0, "matched": 0,
+                "errors": ["pywebpush library missing on the server. pip install pywebpush"]}
+    # Build the WHERE clause for audience filtering. v1.22.88 expanded
+    # to support a granular `filters` object: location/language/booking/...
+    where_parts: list[str] = []
+    params: list = []
     if audience == "customers":
-        where = " WHERE customer_id IS NOT NULL"
+        where_parts.append("customer_id IS NOT NULL")
     elif audience == "vendors":
-        where = " WHERE vendor_id IS NOT NULL"
+        where_parts.append("vendor_id IS NOT NULL")
     elif audience == "logged_in":
-        where = " WHERE customer_id IS NOT NULL OR vendor_id IS NOT NULL"
+        where_parts.append("(customer_id IS NOT NULL OR vendor_id IS NOT NULL)")
+    elif audience == "anonymous":
+        where_parts.append("customer_id IS NULL AND vendor_id IS NULL")
+    # Per-feature filters (each one ANDs with audience)
+    f = filters or {}
+    if f.get("emirate"):
+        where_parts.append("(emirate = ? OR emirate IS NULL)")
+        params.append(f["emirate"])
+    if f.get("language"):
+        where_parts.append("(language = ? OR language IS NULL)")
+        params.append(f["language"])
+    if f.get("subscribed_within_days"):
+        try:
+            days = int(f["subscribed_within_days"])
+            cutoff = (_dt.datetime.utcnow() - _dt.timedelta(days=days)).isoformat() + "Z"
+            where_parts.append("created_at >= ?")
+            params.append(cutoff)
+        except Exception: pass
+    if f.get("only_installed_app"):
+        # TWAs identify themselves with "TWA" in the user_agent header
+        # (Bubblewrap injects "wv" + display-mode standalone hints).
+        where_parts.append("(user_agent LIKE '%; wv)%' OR user_agent LIKE '%TWA%' OR user_agent LIKE '%Servia%')")
+    where = (" WHERE " + " AND ".join(where_parts)) if where_parts else ""
     with db.connect() as c:
-        # Idempotent migration: ensure customer_id + vendor_id columns exist
+        # Idempotent migrations for the new columns we filter on
         for stmt in (
             "ALTER TABLE push_subscriptions ADD COLUMN customer_id INTEGER",
             "ALTER TABLE push_subscriptions ADD COLUMN vendor_id INTEGER",
+            "ALTER TABLE push_subscriptions ADD COLUMN emirate TEXT",
+            "ALTER TABLE push_subscriptions ADD COLUMN language TEXT",
         ):
             try: c.execute(stmt)
             except Exception: pass
         rows = c.execute(
-            f"SELECT id, endpoint, subscription_json FROM push_subscriptions{where}").fetchall()
+            f"SELECT id, endpoint, subscription_json FROM push_subscriptions{where}", params).fetchall()
     print(f"[push] sending '{payload.get('title','?')[:50]}' to {len(rows)} sub(s) "
           f"(audience={audience})", flush=True)
     n_ok = 0
     pruned: list[int] = []
+    failed_errors: list[str] = []
     vapid_claims = {"sub": "mailto:" + os.getenv("ADMIN_EMAIL", "admin@servia.ae")}
     for r in rows:
         try:
@@ -266,15 +295,24 @@ def send_to_all(payload: dict, audience: str = "all") -> int:
             # 410 Gone or 404 → subscription expired/revoked → prune
             if "410" in err or "404" in err:
                 pruned.append(r["id"])
+                failed_errors.append(f"sub#{r['id']}: 410 Gone (browser unregistered) — pruned")
             else:
                 with db.connect() as c:
                     c.execute("UPDATE push_subscriptions SET last_error=? WHERE id=?",
                               (err, r["id"]))
+                failed_errors.append(f"sub#{r['id']}: {err[:120]}")
         except Exception as e:  # noqa: BLE001
             print(f"[push] send error: {e}", flush=True)
+            failed_errors.append(f"sub#{r['id']}: {type(e).__name__}: {str(e)[:120]}")
     if pruned:
         with db.connect() as c:
             c.execute(f"DELETE FROM push_subscriptions WHERE id IN ({','.join('?'*len(pruned))})",
                       pruned)
         print(f"[push] pruned {len(pruned)} expired subscriptions", flush=True)
-    return n_ok
+    return {
+        "sent": n_ok,
+        "pruned": len(pruned),
+        "failed": len(failed_errors),
+        "matched": len(rows),
+        "errors": failed_errors[:30],   # cap so admin doesn't get a 1MB JSON
+    }

@@ -3036,6 +3036,176 @@ def _auto_seed_market_vendors_if_empty():
         print(f"[startup] auto-seed skipped: {e}")
 
 
+# ---------- v1.22.88: seed test customer + vendor accounts on first deploy ----------
+@app.on_event("startup")
+def _seed_test_user_accounts():
+    """Idempotent seed of two test accounts so admins can log in as a real
+    user / vendor without triggering OTP or passkey flows. Skipped in pure
+    production mode (ADMIN_SEED_TEST_USERS=0). Passwords are hashed with
+    scrypt — never stored plaintext."""
+    if os.getenv("ADMIN_SEED_TEST_USERS", "1") == "0":
+        return
+    try:
+        from . import db as _db
+        from . import auth_users as _au
+        now = _dt.datetime.utcnow().isoformat() + "Z"
+        seeds = [
+            ("customer", "+971500000001", "test@servia.ae", "Test Customer",   "test123"),
+            ("customer", "+971500000002", "demo@servia.ae", "Demo Customer",   "demo123"),
+        ]
+        with _db.connect() as c:
+            for kind, phone, email, name, pwd in seeds:
+                try:
+                    h = _au.hash_password(pwd)
+                    c.execute(
+                        "INSERT OR IGNORE INTO customers(phone, email, name, password_hash, language, created_at) "
+                        "VALUES(?,?,?,?,?,?)",
+                        (phone, email, name, h, "en", now),
+                    )
+                    # If the row existed before v1.22.88 (no password_hash), backfill one
+                    c.execute("UPDATE customers SET password_hash=? WHERE phone=? AND (password_hash IS NULL OR password_hash='')",
+                              (h, phone))
+                except Exception as _e:
+                    print(f"[seed-users] customer {phone} skipped: {_e}", flush=True)
+            # Test vendor
+            try:
+                c.execute(
+                    "INSERT OR IGNORE INTO vendors(email, password_hash, name, phone, company, is_active, is_approved, created_at) "
+                    "VALUES(?,?,?,?,?,?,?,?)",
+                    ("vendor@servia.ae", _au.hash_password("vendor123"),
+                     "Test Vendor", "+971500000099", "Servia Test FZ-LLC", 1, 1, now),
+                )
+            except Exception as _e:
+                print(f"[seed-users] vendor skipped: {_e}", flush=True)
+        print("[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"[seed-users] failed: {e}", flush=True)
+
+
+# ---------- v1.22.88: admin user CRUD (list/edit/delete + password reset) ----------
+@app.get("/api/admin/users", dependencies=[Depends(require_admin)])
+def admin_list_users(kind: str = "customers", q: str | None = None, limit: int = 100):
+    """List customers or vendors for the admin user-management UI.
+    `kind` = customers | vendors; `q` filters by name/phone/email."""
+    table = "customers" if kind == "customers" else "vendors"
+    where = ""
+    params: list = []
+    if q:
+        if kind == "customers":
+            where = " WHERE phone LIKE ? OR name LIKE ? OR email LIKE ?"
+        else:
+            where = " WHERE email LIKE ? OR name LIKE ? OR phone LIKE ?"
+        like = f"%{q}%"; params = [like, like, like]
+    with db.connect() as c:
+        cols_row = c.execute(f"PRAGMA table_info({table})").fetchall()
+        cols = [r["name"] for r in cols_row]
+        # Never return password_hash to the UI
+        select_cols = ", ".join([cl for cl in cols if cl != "password_hash"])
+        rows = c.execute(
+            f"SELECT {select_cols} FROM {table}{where} ORDER BY id DESC LIMIT ?",
+            params + [int(limit)],
+        ).fetchall()
+    return {"kind": kind, "count": len(rows), "users": [dict(r) for r in rows]}
+
+
+class _AdminUpdateUser(BaseModel):
+    kind: str             # "customers" | "vendors"
+    id: int
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    is_active: int | None = None
+    is_blocked: int | None = None
+    new_password: str | None = None  # if non-empty -> reset password
+
+
+@app.put("/api/admin/users", dependencies=[Depends(require_admin)])
+def admin_update_user(body: _AdminUpdateUser):
+    """Edit user fields (name/email/phone/active/blocked) and/or reset password."""
+    from . import auth_users as _au
+    if body.kind not in ("customers", "vendors"):
+        raise HTTPException(400, "kind must be 'customers' or 'vendors'")
+    table = body.kind
+    sets: list[str] = []
+    params: list = []
+    if body.name is not None:    sets.append("name = ?");    params.append(body.name)
+    if body.email is not None:   sets.append("email = ?");   params.append(body.email)
+    if body.phone is not None:   sets.append("phone = ?");   params.append(body.phone)
+    if body.is_active is not None:
+        sets.append("is_active = ?"); params.append(int(bool(body.is_active)))
+    if body.is_blocked is not None:
+        sets.append("is_blocked = ?"); params.append(int(bool(body.is_blocked)))
+    if body.new_password and body.new_password.strip():
+        sets.append("password_hash = ?"); params.append(_au.hash_password(body.new_password))
+    if not sets:
+        return {"ok": True, "updated": 0, "note": "no changes"}
+    params.append(body.id)
+    with db.connect() as c:
+        # Idempotent column adds — vendor table doesn't have is_blocked/is_active
+        # in older schemas. Insert only those that the table actually has.
+        cols = {r["name"] for r in c.execute(f"PRAGMA table_info({table})").fetchall()}
+        valid_sets = []
+        valid_params = []
+        for clause, p in zip(sets, params[:len(sets)]):
+            col = clause.split(" = ")[0]
+            if col in cols:
+                valid_sets.append(clause); valid_params.append(p)
+        valid_params.append(body.id)
+        if not valid_sets:
+            return {"ok": True, "updated": 0, "note": "none of the requested fields exist on this table"}
+        n = c.execute(
+            f"UPDATE {table} SET {', '.join(valid_sets)} WHERE id = ?",
+            valid_params,
+        ).rowcount
+    db.log_event("admin_users", str(body.id), "update", actor="admin",
+                 details={"kind": body.kind, "fields": [s.split(" = ")[0] for s in sets]})
+    return {"ok": True, "updated": n}
+
+
+@app.delete("/api/admin/users/{kind}/{user_id}", dependencies=[Depends(require_admin)])
+def admin_delete_user(kind: str, user_id: int):
+    if kind not in ("customers", "vendors"):
+        raise HTTPException(400, "kind must be customers or vendors")
+    with db.connect() as c:
+        n = c.execute(f"DELETE FROM {kind} WHERE id = ?", (user_id,)).rowcount
+    db.log_event("admin_users", str(user_id), "delete", actor="admin", details={"kind": kind})
+    return {"ok": True, "deleted": n}
+
+
+# ---------- v1.22.88: customer email+password login (alongside OTP/passkey) ----------
+class _CustomerPwdLogin(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/api/auth/customer/login")
+def customer_login_pwd(body: _CustomerPwdLogin):
+    """Login a customer with email+password. Returns a JWT-style token
+    compatible with the existing OTP-issued token (auth.py issue_token)."""
+    from . import auth_users as _au
+    from .auth import issue_token
+    email = (body.email or "").strip().lower()
+    pwd = body.password or ""
+    if not email or not pwd:
+        raise HTTPException(400, "email and password required")
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT id, phone, name, email, password_hash, COALESCE(is_blocked,0) AS is_blocked "
+            "FROM customers WHERE LOWER(email) = ?", (email,)).fetchone()
+    if not row or not row["password_hash"]:
+        raise HTTPException(401, "Invalid email or password")
+    if row["is_blocked"]:
+        raise HTTPException(403, "Account suspended — contact support")
+    if not _au.verify_password(pwd, row["password_hash"]):
+        raise HTTPException(401, "Invalid email or password")
+    tok = issue_token({"sub": str(row["id"]), "kind": "customer", "phone": row["phone"]})
+    db.log_event("auth", str(row["id"]), "customer_pwd_login", actor=row["phone"])
+    return {"ok": True, "token": tok, "user": {
+        "id": row["id"], "name": row["name"] or "", "email": row["email"] or "",
+        "phone": row["phone"]
+    }}
+
+
 # ---------- one-shot: backfill 10 articles on first deploy so /blog isn't empty ----------
 @app.on_event("startup")
 def _auto_seed_blog_articles_if_empty():

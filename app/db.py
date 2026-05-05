@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS customers (
     name TEXT,
     email TEXT,
     language TEXT DEFAULT 'en',
+    password_hash TEXT,        -- v1.22.88: optional pwd login (in addition to OTP/passkey)
     created_at TEXT NOT NULL,
     last_seen_at TEXT
 );
@@ -267,6 +268,12 @@ def init_db() -> None:
             "ALTER TABLE saved_addresses ADD COLUMN lat REAL",
             "ALTER TABLE saved_addresses ADD COLUMN lng REAL",
             "ALTER TABLE saved_addresses ADD COLUMN updated_at TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN tag TEXT",
+            # v1.22.88: optional password login for customers (in addition
+            # to OTP/passkey). Lets admin seed test accounts and resets.
+            "ALTER TABLE customers ADD COLUMN password_hash TEXT",
+            "ALTER TABLE customers ADD COLUMN is_active INTEGER DEFAULT 1",
+            "ALTER TABLE customers ADD COLUMN is_blocked INTEGER DEFAULT 0",
         ):
             try:
                 c.execute(stmt)

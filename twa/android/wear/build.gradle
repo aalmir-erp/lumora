@@ -52,11 +52,16 @@ android {
 }
 
 dependencies {
-    // Smallest possible dependency surface that compiles to a watchable
-    // standalone APK. NO androidx.wear, NO compileOnly wearable jar
-    // (delisted from Maven, was the silent dependency-resolution failure
-    // that produced 0 outputs in CI). Watch-app status is signalled by
-    // <uses-feature android:name="android.hardware.type.watch"> +
-    // <meta-data wearable.standalone=true> in the manifest.
-    implementation 'androidx.appcompat:appcompat:1.7.0'
+    // ZERO external deps. MainActivity extends android.app.Activity (NOT
+    // AppCompatActivity) and the layout uses pure platform views
+    // (FrameLayout, LinearLayout, TextView). The styles.xml references
+    // @android:style/Theme.DeviceDefault.Light which is built-in.
+    //
+    // Why nothing here: androidx.appcompat:appcompat:1.7.0 transitively
+    // pulls kotlin-stdlib:1.8.22 which conflicts with kotlin-stdlib-
+    // jdk7/jdk8:1.6.21 brought in by the AGP plugin classpath, causing
+    // 'Duplicate class kotlin.collections.jdk8.CollectionsJDK8Kt' errors
+    // and a silent BUILD FAILED in 30s with no APK produced. (The actual
+    // root cause was finally readable from the ci-wear-debug branch in
+    // v1.22.87.) Empty deps = no transitive jar conflicts = clean build.
 }
