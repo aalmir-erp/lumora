@@ -1,35 +1,29 @@
 name: Build Android TWA (AAB + APK)
-# Builds servia.ae as a Trusted Web Activity using Bubblewrap.
+# Builds servia.ae as a Trusted Web Activity. Uses Bubblewrap to scaffold
+# the Android Studio project, then runs gradle directly with keystore
+# credentials passed as -P properties (Bubblewrap's own `build` command
+# prompts for passwords interactively, which doesn't work in CI — that's
+# why the previous run produced 0 artifacts despite "success").
 #
-# WHAT YOU GET, depending on what you set up:
+# WHAT YOU GET:
 #
-# • You haven't added any secrets yet → workflow auto-generates a one-off
-#   debug keystore in-CI and produces an APK you can sideload onto any
-#   Android phone for testing (NOT Play-Store-acceptable, but installs
-#   fine on a phone with "Install unknown apps" enabled).
+# • No secrets configured → workflow auto-generates a one-off debug
+#   keystore in CI and produces a sideload-able APK. NOT Play-Store
+#   acceptable but installs on any phone with "Install unknown apps"
+#   enabled.
 #
-# • You've added the four ANDROID_* secrets → workflow signs with YOUR
-#   production keystore and produces:
-#       app-release-bundle.aab  ← upload to Play Console
-#       app-release-signed.apk  ← test on a phone first via adb install
+# • Four ANDROID_* secrets set → production-signed AAB + APK ready for
+#   Play Console upload.
 #
-# Run from the GitHub Actions tab → "Build Android TWA" → "Run workflow",
-# or push a tag matching v* (e.g. v1.0.0).
-#
-# To switch from auto-debug to production signing, generate a keystore
-# locally (one time, NEVER lose it):
-#
+# To switch to production signing, generate a keystore locally:
 #   keytool -genkeypair -v -keystore servia.jks -keyalg RSA -keysize 2048 \
 #           -validity 10000 -alias servia
 #   base64 -w0 servia.jks > servia.jks.b64
-#
-# Then add these 4 GitHub secrets at
-#   Repo → Settings → Secrets and variables → Actions:
-#
-#   ANDROID_KEYSTORE_BASE64   contents of servia.jks.b64
-#   ANDROID_KEY_ALIAS         servia
-#   ANDROID_KEYSTORE_PASSWORD <your strong password>
-#   ANDROID_KEY_PASSWORD      <often the same password>
+# Then add at Repo → Settings → Secrets → Actions:
+#   ANDROID_KEYSTORE_BASE64    contents of servia.jks.b64
+#   ANDROID_KEY_ALIAS          servia
+#   ANDROID_KEYSTORE_PASSWORD  <password>
+#   ANDROID_KEY_PASSWORD       <password> (same as keystore for PKCS12)
 
 on:
   workflow_dispatch:
@@ -53,25 +47,25 @@ jobs:
         with:
           packages: "build-tools;34.0.0 platforms;android-34"
 
-      - name: Set up Node.js
+      - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with: { node-version: "20" }
 
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli@latest
 
-      - name: Decide signing mode (production secrets vs auto-debug)
+      - name: Decide signing mode
         id: sign
         run: |
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "Mode: production (using your keystore)"
+            echo "Mode: production (using ANDROID_* secrets)"
             echo "mode=production" >> $GITHUB_OUTPUT
           else
             echo "Mode: debug (auto-generating temporary keystore for sideload testing)"
             echo "mode=debug" >> $GITHUB_OUTPUT
           fi
 
-      - name: Restore production keystore from secret
+      - name: Restore production keystore
         if: steps.sign.outputs.mode == 'production'
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -79,7 +73,7 @@ jobs:
           echo "$KS" | base64 -d > $RUNNER_TEMP/servia.jks
           ls -la $RUNNER_TEMP/servia.jks
 
-      - name: Generate temporary debug keystore
+      - name: Generate debug keystore
         if: steps.sign.outputs.mode == 'debug'
         run: |
           keytool -genkeypair -v \
@@ -89,94 +83,122 @@ jobs:
             -storepass servia-debug-pass \
             -keypass servia-debug-pass \
             -dname "CN=Servia Debug, OU=Servia, O=Servia, L=Dubai, ST=Dubai, C=AE"
-          echo ""
-          echo "⚠️  This is a DEBUG keystore — useful for testing on your phone"
-          echo "    via adb, but will NOT be accepted by Play Store. Set the"
-          echo "    ANDROID_KEYSTORE_BASE64 secret with a real keystore for prod."
+          echo "Debug keystore created at $RUNNER_TEMP/servia.jks"
+          # Print the SHA-256 so the user can update assetlinks.json if they
+          # want this APK to launch full-screen (otherwise URL bar appears).
+          keytool -list -v -keystore $RUNNER_TEMP/servia.jks \
+            -storepass servia-debug-pass -alias servia | grep "SHA256" || true
 
-      - name: Initialize Bubblewrap project
-        working-directory: twa/android
+      - name: Initialize Bubblewrap project (scaffold only, no build)
         run: |
-          rm -rf generated && mkdir -p generated
-          # Bubblewrap init reads twa-manifest.json and scaffolds the
-          # Android Studio project. We answer Y to all prompts via yes(1).
-          cd generated
-          yes | bubblewrap init --manifest=../twa-manifest.json --skipPwaValidation || true
+          mkdir -p twa/android/generated
+          cd twa/android/generated
+          # `init` scaffolds the Android Studio project from twa-manifest.json.
+          # It asks several Y/N questions during init; we feed unlimited Y via
+          # yes(1). --skipPwaValidation avoids fetching the live manifest.
+          yes | bubblewrap init --manifest=../twa-manifest.json --skipPwaValidation
+          echo ""
+          echo "Generated project structure:"
           ls -la
+          echo ""
+          ls -la app/
 
-      - name: Build (production-signed AAB + APK)
-        if: steps.sign.outputs.mode == 'production'
-        working-directory: twa/android/generated
+      - name: Build AAB + APK via gradle (non-interactive)
         env:
           KS_PATH:  ${{ runner.temp }}/servia.jks
-          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KS_PASS:  ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # In production mode, use the user's secret values. In debug mode,
+          # the keystore was generated with these fixed values above.
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'servia' }}
+          KS_PASS:  ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'servia-debug-pass' }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD || 'servia-debug-pass' }}
+        working-directory: twa/android/generated
         run: |
-          bubblewrap build \
-            --signingKeyPath="$KS_PATH" \
-            --signingKeyAlias="$KS_ALIAS" \
-            --skipPwaValidation
-          # Bubblewrap reads passwords interactively — feed via stdin if asked.
-          ls -la app-release-bundle.aab app-release-signed.apk || true
+          chmod +x ./gradlew
+          # Bubblewrap's generated build.gradle reads signing config from
+          # gradle properties at build time. We pass them via -P so there's
+          # no interactive prompt and no plaintext password on disk.
+          ./gradlew --no-daemon \
+            -Pandroid.injected.signing.store.file="$KS_PATH" \
+            -Pandroid.injected.signing.store.password="$KS_PASS" \
+            -Pandroid.injected.signing.key.alias="$KS_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASS" \
+            bundleRelease assembleRelease
+          echo ""
+          echo "Outputs:"
+          find app/build/outputs -type f \( -name "*.aab" -o -name "*.apk" \) -exec ls -la {} \;
 
-      - name: Build (debug-signed APK only — sideload for testing)
-        if: steps.sign.outputs.mode == 'debug'
+      - name: Generate assetlinks.json sample
         working-directory: twa/android/generated
         env:
           KS_PATH: ${{ runner.temp }}/servia.jks
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'servia-debug-pass' }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'servia' }}
         run: |
-          # Bubblewrap will prompt for passwords interactively; we feed them
-          # in via printf because the debug keystore uses known fixed values.
-          printf "servia-debug-pass\nservia-debug-pass\n" | \
-          bubblewrap build \
-            --signingKeyPath="$KS_PATH" \
-            --signingKeyAlias=servia \
-            --skipPwaValidation || true
-          ls -la app-release-bundle.aab app-release-signed.apk 2>/dev/null || true
-          # Also build via gradle directly in case Bubblewrap's build hits
-          # a prompt issue.
-          if [ ! -f app-release-signed.apk ]; then
-            chmod +x ./gradlew && ./gradlew assembleRelease || true
-            find . -name "*.apk" -exec ls -la {} \;
-          fi
+          # Extract SHA-256 of the signed APK's cert + emit assetlinks.json
+          # the user can drop into web/.well-known/ if the fingerprint differs
+          # from the one we baked in.
+          SHA=$(keytool -list -v -keystore "$KS_PATH" -storepass "$KS_PASS" -alias "$KS_ALIAS" 2>/dev/null \
+                | grep "SHA256:" | head -1 | awk '{print $2}')
+          echo "[" > assetlinks.json
+          echo "  {" >> assetlinks.json
+          echo '    "relation": ["delegate_permission/common.handle_all_urls"],' >> assetlinks.json
+          echo '    "target": {' >> assetlinks.json
+          echo '      "namespace": "android_app",' >> assetlinks.json
+          echo '      "package_name": "ae.servia.app",' >> assetlinks.json
+          echo "      \"sha256_cert_fingerprints\": [\"$SHA\"]" >> assetlinks.json
+          echo '    }' >> assetlinks.json
+          echo "  }" >> assetlinks.json
+          echo "]" >> assetlinks.json
+          echo ""
+          echo "================================================================"
+          echo "  This APK's SHA-256: $SHA"
+          echo ""
+          echo "  If different from web/.well-known/assetlinks.json, the TWA"
+          echo "  will open with a Chrome URL bar instead of full-screen."
+          echo "  Update the fingerprint in the repo and redeploy."
+          echo "================================================================"
+          cat assetlinks.json
 
-      - name: Upload artifacts
+      - name: Copy outputs to a single artifacts dir
+        working-directory: twa/android/generated
+        run: |
+          mkdir -p _artifacts
+          # Copy whatever AAB / APK exists, with a stable name
+          find app/build/outputs/bundle/release -name "*.aab" -exec cp {} _artifacts/app-release-bundle.aab \;
+          find app/build/outputs/apk/release    -name "*.apk" -exec cp {} _artifacts/app-release-signed.apk \;
+          cp assetlinks.json _artifacts/ 2>/dev/null || true
+          echo "Final artifacts:"
+          ls -la _artifacts/
+
+      - name: Upload AAB + APK + assetlinks
         uses: actions/upload-artifact@v4
         with:
           name: servia-android-twa
-          path: |
-            twa/android/generated/app-release-bundle.aab
-            twa/android/generated/app-release-signed.apk
-            twa/android/generated/assetlinks.json
-            twa/android/generated/app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn
+          path: twa/android/generated/_artifacts/*
+          if-no-files-found: error
           retention-days: 30
 
-      - name: Print install instructions
+      - name: Print install + Play Store instructions
         run: |
           echo ""
           echo "==================================================="
-          echo "  Build done. Download artifacts: Actions → this run → Artifacts"
+          echo "  ✅ Build complete. Download artifacts (this run → Artifacts → servia-android-twa.zip)."
           echo ""
-          echo "  TO INSTALL ON YOUR PHONE FOR TESTING:"
-          echo "  1. Download servia-android-twa.zip from this run"
-          echo "  2. Unzip → email yourself the .apk OR copy via cable"
-          echo "  3. On phone: Settings → Security → 'Install unknown apps' (allow)"
-          echo "  4. Open the .apk file on your phone → Install"
-          echo "  5. Servia icon appears on home screen"
+          echo "  TO INSTALL FOR TESTING (any Android phone):"
+          echo "  1. Download servia-android-twa.zip on your phone"
+          echo "  2. Unzip → tap app-release-signed.apk"
+          echo "  3. Settings → Security → 'Install unknown apps' (allow)"
+          echo "  4. Tap APK → Install. Servia icon appears on home screen."
           echo ""
-          echo "  ⚠️  If you used the debug keystore (no secrets set), the APK"
-          echo "      WILL NOT install over a previous Play Store version, and"
-          echo "      WILL NOT be accepted by Play Console. For Play Store,"
-          echo "      generate a real keystore + add the four ANDROID_* secrets,"
-          echo "      then re-run this workflow."
+          echo "  TO PUBLISH TO PLAY STORE (production secrets set):"
+          echo "  1. Download app-release-bundle.aab"
+          echo "  2. play.google.com/console (\$25 one-time fee)"
+          echo "  3. Create app → upload AAB → fill data-safety + screenshots"
+          echo "  4. Privacy URL: https://servia.ae/privacy.html"
+          echo "  5. Submit for review (1-7 day wait)"
           echo ""
-          echo "  TO PUBLISH TO PLAY STORE (production keystore set):"
-          echo "  1. Download app-release-bundle.aab from this run"
-          echo "  2. Go to https://play.google.com/console (\$25 one-time fee)"
-          echo "  3. Create app → upload the AAB → fill data-safety + screenshots"
-          echo "  4. Submit for review (1-7 day wait)"
-          echo "  5. CRITICAL: copy the SHA-256 from generated assetlinks.json"
-          echo "     into web/.well-known/assetlinks.json on this repo, push."
+          echo "  CRITICAL FOR FULL-SCREEN MODE:"
+          echo "  Compare the SHA-256 in the artifact's assetlinks.json with"
+          echo "  web/.well-known/assetlinks.json on the website. If they"
+          echo "  differ, update the website's file and redeploy."
           echo "==================================================="
