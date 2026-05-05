@@ -12,12 +12,30 @@
 function __serviaBannerInit() {
   const KEY_DISMISSED = "servia.topbanner.dismissed_at";
   const path = location.pathname;
-  if (/^\/(admin|vendor|portal-vendor|pay)/.test(path)) return;
-  // Suppress for 24h after explicit dismiss
-  try {
-    const last = parseInt(localStorage.getItem(KEY_DISMISSED) || "0", 10);
-    if (Date.now() - last < 24 * 3600 * 1000) return;
-  } catch (_) {}
+  // Hide the static placeholder div on internal pages (we never want a banner
+  // there) AND when the user dismissed within the suppression window. Without
+  // this collapse, the placeholder stayed visible as an empty teal stripe —
+  // which the user reported as "rotating bar is gone".
+  function collapsePlaceholder() {
+    const ph = document.getElementById("servia-topbanner");
+    if (ph) ph.style.display = "none";
+  }
+  if (/^\/(admin|vendor|portal-vendor|pay)/.test(path)) {
+    collapsePlaceholder(); return;
+  }
+  // Allow ?show-banner=1 to bypass dismissal for testing.
+  const FORCE_SHOW = /[?&]show-banner=1\b/.test(location.search);
+  // Cut suppression from 24h to 6h — the rotating banner is informational
+  // (deals + ambassador + install hooks), not transactional. Six hours is
+  // enough to respect a single dismiss without permanently hiding the bar.
+  if (!FORCE_SHOW) {
+    try {
+      const last = parseInt(localStorage.getItem(KEY_DISMISSED) || "0", 10);
+      if (Date.now() - last < 6 * 3600 * 1000) {
+        collapsePlaceholder(); return;
+      }
+    } catch (_) {}
+  }
 
   // Page-context-aware slide deck
   const pageMeta = document.querySelector('meta[name="servia-page"]');
