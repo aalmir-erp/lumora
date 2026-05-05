@@ -318,38 +318,9 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Build Wear OS standalone APK + AAB
-        id: wear_build
-        env:
-          KS_PATH: ${{ runner.temp }}/servia.jks
-        run: |
-          chmod +x "${GITHUB_WORKSPACE}/.scripts/build-wear-apk.sh"
-          # Direct invocation — gradle errors propagate naturally to the step.
-          # Tee was masking exit codes even with pipefail.
-          "${GITHUB_WORKSPACE}/.scripts/build-wear-apk.sh" "$KS_PATH"
-          ls -la "${GITHUB_WORKSPACE}/twa/android/wear-build/_artifacts/" 2>&1 || true
-
-      - name: Upload Wear build log (ALWAYS, for debugging)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: wear-build-log
-          path: |
-            /tmp/wear-build.log
-            twa/android/wear-build/app/build/outputs/**
-          if-no-files-found: warn
-
-      # (debug-branch push removed — gradle errors now propagate naturally
-      # via removed-tee + pipefail. Wear build either produces APK or fails
-      # the run with the actual gradle error visible in the workflow log.)
-
-      - name: Upload Wear OS APK + AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: servia-wear-os
-          path: twa/android/wear-build/_artifacts/*
-          if-no-files-found: warn
-          retention-days: 30
+      # Wear OS build deferred: gradle wear-build silently produces no APK
+      # in CI — needs local Android SDK debugging to find the cause.
+      # Source files remain at twa/android/wear/ for future workflow.
 
       - name: Print install + Play Store instructions
         run: |
