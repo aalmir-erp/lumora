@@ -21,37 +21,25 @@
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <script src="/impersonation.js"></script>
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36" alt="Servia" decoding="async"></a>
+  <a href="/" aria-label="Servia home"><img src="/logo.svg" width="124" height="40" alt="Servia" decoding="async"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
-    <a href="/services.html">Services</a>
-    <a href="/videos.html">Videos</a>
+    <a href="/services.html" data-i18n="nav_services">Services</a>
+    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/book.html">Book</a>
-    <a href="/me.html" class="active" style="color:var(--primary)">My account</a>
+    <a href="/me.html" data-i18n="nav_my_account">My account</a>
   </div>
   <div class="nav-cta">
-    <button class="btn btn-ghost" onclick="lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">⚙️ <span style="display:none;display:inline-block">Theme</span></button>
+    <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
     <select class="lang-dropdown notranslate" translate="no" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
-      <option value="en">🇬🇧 English</option>
-      <option value="ar">🇦🇪 العربية</option>
-      <option value="ur">🇵🇰 اردو</option>
-      <option value="hi">🇮🇳 हिन्दी</option>
-      <option value="bn">🇧🇩 বাংলা</option>
-      <option value="ta">தமிழ்</option>
-      <option value="ml">മലയാളം</option>
-      <option value="tl">🇵🇭 Filipino</option>
-      <option value="ps">🇦🇫 پښتو</option>
-      <option value="ne">🇳🇵 नेपाली</option>
-      <option value="ru">🇷🇺 Русский</option>
-      <option value="fa">🇮🇷 فارسی</option>
-      <option value="fr">🇫🇷 Français</option>
-      <option value="zh">🇨🇳 中文</option>
-      <option value="es">🇪🇸 Español</option>
+      <option value="en">🇬🇧 EN</option><option value="ar">🇦🇪 AR</option><option value="ur">🇵🇰 UR</option>
+      <option value="hi">🇮🇳 HI</option><option value="bn">🇧🇩 BN</option><option value="ta">TA</option><option value="ml">ML</option>
+      <option value="tl">🇵🇭 TL</option><option value="ps">🇦🇫 PS</option><option value="ne">🇳🇵 NE</option>
+      <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
+      <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
     </select>
-    <select class="lang-pick" hidden></select>
-    <span id="who" style="font-size:13px;color:var(--muted)"></span>
-    <button class="btn btn-ghost" onclick="logout()">Sign out</button>
+    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
+    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
   </div>
 </div></nav>
 

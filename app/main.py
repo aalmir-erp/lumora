@@ -1155,6 +1155,25 @@ def apple_app_site_association():
     return JSONResponse({"applinks": {"apps": [], "details": []}})
 
 
+@app.get("/shortcuts/{slug}.shortcut", include_in_schema=False)
+def siri_shortcut(slug: str):
+    """Serve a pre-built .shortcut binary plist with the correct iOS MIME
+    type so tapping the link from Safari opens the Shortcuts app and
+    prompts to add the shortcut. Files live in web/shortcuts/."""
+    from fastapi.responses import FileResponse
+    safe = slug.replace("/", "").replace("..", "").lower()
+    p = settings.WEB_DIR / "shortcuts" / f"{safe}.shortcut"
+    if not p.exists():
+        raise HTTPException(404, "shortcut not found")
+    # iOS recognises .shortcut by extension regardless of MIME, but
+    # application/x-apple-shortcut is the documented type and gives the
+    # smoothest UX (no ambiguous "what to do with this file?" dialog).
+    return FileResponse(str(p),
+                        media_type="application/x-apple-shortcut",
+                        filename=f"{safe}.shortcut",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
 def indexnow_submit(urls: list[str]) -> dict:
     """POST a batch of URLs to IndexNow. Returns the API status. Safe to call
     fire-and-forget; logs the result without raising."""

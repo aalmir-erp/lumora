@@ -8,9 +8,32 @@
  */
 (function () {
   const KEY_DISMISSED = "servia.install.dismissed";
+  const KEY_DISMISSED_AT = "servia.install.dismissed_at";
   const KEY_INSTALLED = "servia.install.completed";
+  // Banner dismissal now expires after 7 days. Was permanent before, which
+  // is why users who tapped X once never saw it again — even after a fresh
+  // install / browser change.
+  const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+  // Debug: append ?show-install=1 to any page URL to force-show the CTAs
+  // regardless of dismissed/installed state. Useful for testing.
+  const FORCE_SHOW = /[?&]show-install=1\b/.test(location.search);
 
   let deferred = null;
+
+  // Was the banner dismissed within the TTL?
+  function isBannerDismissed() {
+    if (FORCE_SHOW) return false;
+    if (localStorage.getItem(KEY_DISMISSED) !== "banner") return false;
+    const t = parseInt(localStorage.getItem(KEY_DISMISSED_AT) || "0", 10);
+    if (!t) return true;  // dismissed before we tracked timestamps — keep dismissed
+    if (Date.now() - t > DISMISS_TTL_MS) {
+      // expired — reset
+      localStorage.removeItem(KEY_DISMISSED);
+      localStorage.removeItem(KEY_DISMISSED_AT);
+      return false;
+    }
+    return true;
+  }
 
   // Phone-app benefits — what the user actually gains
   const BENEFITS = [
@@ -43,7 +66,7 @@
 
   // ---------- Floating "Get the Servia app" CTA ----------
   function injectFAB() {
-    if (isStandalone() || localStorage.getItem(KEY_INSTALLED)) return;
+    if (!FORCE_SHOW && (isStandalone() || localStorage.getItem(KEY_INSTALLED))) return;
     if (document.getElementById("servia-install-fab")) return;
     const fab = document.createElement("button");
     fab.id = "servia-install-fab";
@@ -67,8 +90,8 @@
 
   // ---------- Subtle banner (top of page) ----------
   function injectBanner() {
-    if (isStandalone() || localStorage.getItem(KEY_INSTALLED)) return;
-    if (localStorage.getItem(KEY_DISMISSED) === "banner") return;
+    if (!FORCE_SHOW && (isStandalone() || localStorage.getItem(KEY_INSTALLED))) return;
+    if (isBannerDismissed()) return;
     if (document.getElementById("servia-install-banner")) return;
     const b = document.createElement("div");
     b.id = "servia-install-banner";
@@ -92,6 +115,7 @@
     document.getElementById("servia-install-banner-go").onclick = openModal;
     document.getElementById("servia-install-banner-x").onclick = () => {
       localStorage.setItem(KEY_DISMISSED, "banner");
+      localStorage.setItem(KEY_DISMISSED_AT, String(Date.now()));
       b.remove(); track("banner_dismissed");
     };
     track("banner_shown");
@@ -199,8 +223,8 @@
   // or generic instructions), so we don't need beforeinstallprompt to
   // surface the CTA — just to enable one-tap programmatic install.
   function surfaceInstallCTAs() {
-    if (isStandalone() || localStorage.getItem(KEY_INSTALLED)) return;
-    if (localStorage.getItem(KEY_DISMISSED) !== "banner") injectBanner();
+    if (!FORCE_SHOW && (isStandalone() || localStorage.getItem(KEY_INSTALLED))) return;
+    injectBanner();  // its own dismissal-TTL check inside
     injectFAB();
   }
 
