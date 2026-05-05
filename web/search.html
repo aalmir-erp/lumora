@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="servia-page" content="default">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<title>Search • Servia</title>
+<meta name="description" content="Search every service, blog post, FAQ and area page on Servia in one place.">
+<link rel="canonical" href="https://servia.ae/search.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Servia">
+<meta property="og:locale" content="en_AE">
+<meta property="og:title" content="Search • Servia">
+<meta property="og:description" content="Search every service, blog post, FAQ and area page on Servia.">
+<meta property="og:url" content="https://servia.ae/search.html">
+<meta property="og:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Search • Servia">
+<meta name="twitter:description" content="Search every service, blog post, FAQ and area page on Servia.">
+<meta name="twitter:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"Servia","url":"https://servia.ae",
+ "potentialAction":{"@type":"SearchAction","target":"https://servia.ae/search.html?q={search_term_string}","query-input":"required name=search_term_string"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"https://servia.ae/"},
+  {"@type":"ListItem","position":2,"name":"Search","item":"https://servia.ae/search.html"}]}
+</script>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
+<style>
+  body { background:linear-gradient(180deg,#F0FDFA,#FFFFFF); min-height:100vh }
+  .search-shell { max-width:760px; margin:32px auto; padding:0 16px }
+  .search-hero { text-align:center; padding:24px 0 16px }
+  .search-hero h1 { font-size:32px; letter-spacing:-.02em; margin:8px 0 4px }
+  .search-hero p { color:var(--muted); font-size:14px; margin:0 }
+  .search-box { position:relative; margin:18px auto 8px; max-width:620px }
+  .search-box input { width:100%; padding:16px 56px 16px 48px; font-size:16px;
+    border:2px solid #BAE6FD; border-radius:999px; background:#fff;
+    box-shadow:0 4px 16px rgba(15,23,42,.06); outline:none; transition:border-color .15s,box-shadow .15s }
+  .search-box input:focus { border-color:#0F766E; box-shadow:0 4px 20px rgba(15,118,110,.18) }
+  .search-box .ico { position:absolute; left:18px; top:50%; transform:translateY(-50%); font-size:18px; color:#64748B }
+  .search-box .clear { position:absolute; right:14px; top:50%; transform:translateY(-50%);
+    background:#F1F5F9; border:0; width:32px; height:32px; border-radius:50%;
+    cursor:pointer; font-size:14px; color:#475569; display:none; align-items:center; justify-content:center }
+  .search-box.has-text .clear { display:flex }
+  .search-meta { text-align:center; color:var(--muted); font-size:13px; margin:4px 0 18px }
+  .search-meta b { color:var(--text) }
+  .filters { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:6px 0 18px }
+  .filters .chip { background:#fff; border:1px solid var(--border); padding:5px 12px;
+    border-radius:999px; font-size:12px; font-weight:700; cursor:pointer; color:var(--text);
+    display:inline-flex; align-items:center; gap:5px }
+  .filters .chip.active { background:#0F766E; color:#fff; border-color:#0F766E }
+  .filters .chip .count { background:rgba(255,255,255,.25); padding:1px 7px; border-radius:999px; font-size:10px; font-weight:800 }
+  .filters .chip:not(.active) .count { background:#F1F5F9; color:var(--muted) }
+  .results { display:flex; flex-direction:column; gap:10px; padding-bottom:64px }
+  .result { background:#fff; border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; text-decoration:none; color:var(--text); display:block;
+    transition:transform .12s,box-shadow .12s,border-color .12s }
+  .result:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.08); border-color:transparent }
+  .result .kind { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+    padding:3px 9px; border-radius:999px; margin-bottom:8px }
+  .result .kind.service { background:#ECFDF5; color:#065F46 }
+  .result .kind.area { background:#EFF6FF; color:#1E40AF }
+  .result .kind.blog { background:#FEF3C7; color:#92400E }
+  .result .kind.faq { background:#F3E8FF; color:#5B21B6 }
+  .result .kind.video { background:#FCE7F3; color:#9F1239 }
+  .result .kind.page { background:#F1F5F9; color:#475569 }
+  .result h3 { margin:0 0 4px; font-size:17px; letter-spacing:-.01em; color:var(--text) }
+  .result p { margin:0; color:var(--muted); font-size:13.5px; line-height:1.45 }
+  .result mark { background:#FEF3C7; color:#7C2D12; padding:0 2px; border-radius:3px }
+  .empty { text-align:center; padding:48px 16px; color:var(--muted) }
+  .empty .ico { font-size:56px; line-height:1; margin-bottom:12px }
+  .empty h2 { font-size:20px; margin:0 0 6px; color:var(--text) }
+  .empty .sg { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px; max-width:520px; margin-left:auto; margin-right:auto }
+  .empty .sg a { background:#fff; border:1px solid var(--border); padding:8px 14px; border-radius:999px;
+    font-size:13px; font-weight:600; color:var(--primary-dark); text-decoration:none }
+  .empty .sg a:hover { background:#F0FDFA; border-color:#0F766E }
+</style>
+<script src="/banner.js" defer></script>
+<script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
+  {src:"/_snippets.js",id:"snippets"},
+  {src:"/cart-badge.js",id:"cart-badge"}
+]);</script>
+<script src="/lazy-loaders.js" defer></script>
+<script src="/conv.js" defer></script>
+</head><body>
+<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav"><div class="nav-inner">
+  <a href="/" aria-label="Home"><img src="/logo.svg" height="36" alt="Servia" decoding="async"></a>
+  <div class="nav-cta" style="margin-inline-start:auto">
+    <a class="btn btn-primary" href="/book.html">Book now</a>
+  </div>
+</div></nav>
+
+<main class="search-shell">
+  <div class="search-hero">
+    <div style="font-size:48px;line-height:1">🔎</div>
+    <h1>Search Servia</h1>
+    <p>One box, every service, blog post, FAQ, video and area page across all 7 emirates.</p>
+  </div>
+
+  <div class="search-box" id="sbox">
+    <span class="ico">🔍</span>
+    <input id="q" type="search" placeholder="Try 'AC service Sharjah', 'deep cleaning price', 'pest control'…"
+           autocomplete="off" autofocus>
+    <button class="clear" type="button" id="qc" aria-label="Clear search">✕</button>
+  </div>
+
+  <p class="search-meta" id="meta"></p>
+  <div class="filters" id="filters"></div>
+  <div class="results" id="results"></div>
+</main>
+
+<script>
+(async function(){
+  const q = document.getElementById("q");
+  const sbox = document.getElementById("sbox");
+  const qc = document.getElementById("qc");
+  const meta = document.getElementById("meta");
+  const filtersEl = document.getElementById("filters");
+  const resultsEl = document.getElementById("results");
+  let docs = []; let activeKind = "all";
+  const KIND_LABEL = {all:"All",service:"Services",area:"Areas",blog:"Blog",faq:"FAQs",video:"Videos",page:"Pages"};
+
+  const urlQ = (new URLSearchParams(location.search).get("q") || "").trim();
+  if (urlQ) { q.value = urlQ; sbox.classList.add("has-text"); }
+
+  async function loadIndex(){
+    const tasks = [
+      fetch("/api/services").then(r=>r.json()).then(j => (j.services||[]).map(s => ({
+        kind:"service", title:s.name, body:(s.description||"")+" "+(s.category||""),
+        url:`/service.html?id=${s.id}` }))).catch(()=>[]),
+      fetch("/api/blog/list?limit=200").then(r=>r.ok?r.json():null).then(j => j ? (j.posts||[]).map(p => ({
+        kind:"blog", title:p.topic||p.slug, body:(p.emirate||"")+" "+(p.service_id||""),
+        url:`/blog/${p.slug}` })) : []).catch(()=>[]),
+      fetch("/api/videos/list?limit=200").then(r=>r.ok?r.json():null).then(j => j ? (j.videos||[]).map(v => ({
+        kind:"video", title:v.title||v.slug, body:(v.tone||""),
+        url:`/api/videos/play/${v.slug}` })) : []).catch(()=>[]),
+    ];
+    const STATIC = [
+      {kind:"page",  title:"All services",          body:"home services UAE 32 services catalogue", url:"/services.html"},
+      {kind:"page",  title:"Book a service",        body:"book online quote pay schedule",          url:"/book.html"},
+      {kind:"page",  title:"Coverage map",          body:"areas emirates covered live",             url:"/coverage.html"},
+      {kind:"page",  title:"Videos",                body:"how-to explainer mascot",                 url:"/videos.html"},
+      {kind:"page",  title:"Gallery",               body:"photos before after jobs",                url:"/gallery.html"},
+      {kind:"page",  title:"Servia Journal (Blog)", body:"articles tips guides",                    url:"/blog"},
+      {kind:"page",  title:"Contact us",            body:"whatsapp email support",                  url:"/contact.html"},
+      {kind:"page",  title:"Ambassador rewards",    body:"refer earn discount tier",                url:"/share-rewards.html"},
+      {kind:"page",  title:"FAQ",                   body:"questions answers pricing payment cancellation insurance", url:"/faq.html"},
+      {kind:"page",  title:"Refund policy",         body:"refund cancellation return money",        url:"/refund.html"},
+      {kind:"page",  title:"Terms of Service",      body:"terms conditions legal",                  url:"/terms.html"},
+      {kind:"page",  title:"Privacy",               body:"data privacy gdpr",                       url:"/privacy.html"},
+      {kind:"area", title:"Dubai",          body:"jumeirah marina jlt downtown business bay jvc mirdif palm", url:"/area.html?city=dubai"},
+      {kind:"area", title:"Abu Dhabi",      body:"khalifa city yas reem saadiyat raha mussafah corniche",     url:"/area.html?city=abu-dhabi"},
+      {kind:"area", title:"Sharjah",        body:"al khan al majaz nahda muwaileh qasimia taawun aljada",      url:"/area.html?city=sharjah"},
+      {kind:"area", title:"Ajman",          body:"al nuaimiya rashidiya rawda corniche jurf mowaihat",         url:"/area.html?city=ajman"},
+      {kind:"area", title:"Ras Al Khaimah", body:"al hamra mina al arab al nakheel khuzam",                   url:"/area.html?city=ras-al-khaimah"},
+      {kind:"area", title:"Umm Al Quwain",  body:"al ramlah al salamah uaq marina",                            url:"/area.html?city=umm-al-quwain"},
+      {kind:"area", title:"Fujairah",       body:"dibba al faseel sakamkam",                                   url:"/area.html?city=fujairah"},
+      {kind:"faq", title:"How much is deep cleaning a 2-bed apartment in Dubai?",  body:"AED 350 to 450 deep cleaning price quote",       url:"/faq.html"},
+      {kind:"faq", title:"Which UAE areas does Servia cover?",                     body:"all 7 emirates Dubai Sharjah Ajman Abu Dhabi",   url:"/faq.html"},
+      {kind:"faq", title:"How do I pay for a Servia booking?",                     body:"Apple Pay Google Pay card Tabby WhatsApp",       url:"/faq.html"},
+      {kind:"faq", title:"What is the cancellation policy?",                       body:"free cancellation 4 hours refund policy",        url:"/faq.html"},
+      {kind:"faq", title:"Are cleaners insured and background-checked?",           body:"insurance background check female crews",        url:"/faq.html"},
+      {kind:"faq", title:"Languages supported on chat and WhatsApp?",              body:"English Arabic Hindi Filipino",                  url:"/faq.html"},
+      {kind:"faq", title:"Does Servia offer a re-clean guarantee?",                body:"24 hour re-clean satisfaction guarantee",        url:"/faq.html"},
+    ];
+    const results = await Promise.allSettled(tasks);
+    const dynamic = results.flatMap(r => r.status === "fulfilled" ? r.value : []);
+    docs = [...STATIC, ...dynamic];
+  }
+
+  function escapeRe(s){ return (s||"").replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+  function score(doc, terms){
+    if (!terms.length) return 0;
+    const t = (doc.title || "").toLowerCase();
+    const b = (doc.body || "").toLowerCase();
+    let s = 0;
+    for (const term of terms) {
+      if (!term) continue;
+      const re = new RegExp(`\\b${escapeRe(term)}\\b`);
+      if (re.test(t)) s += 12;
+      else if (t.includes(term)) s += 6;
+      if (re.test(b)) s += 3;
+      else if (b.includes(term)) s += 1;
+    }
+    return s;
+  }
+  function highlight(text, terms){
+    if (!terms.length || !text) return (text||"").replace(/</g,"&lt;");
+    let out = (text||"").replace(/</g,"&lt;");
+    for (const term of terms) {
+      if (!term || term.length < 2) continue;
+      out = out.replace(new RegExp("("+escapeRe(term)+")","ig"), "<mark>$1</mark>");
+    }
+    return out;
+  }
+
+  function render(){
+    const query = q.value.trim();
+    sbox.classList.toggle("has-text", !!query);
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    let scored = docs.map(d => ({...d, _s: score(d, terms)}));
+    if (terms.length) scored = scored.filter(d => d._s > 0);
+    if (activeKind !== "all") scored = scored.filter(d => d.kind === activeKind);
+    scored.sort((a,b) => b._s - a._s);
+    const top = scored.slice(0, 50);
+
+    const counts = {all:0,service:0,area:0,blog:0,faq:0,video:0,page:0};
+    const matchedAll = (terms.length ? docs.filter(d => score(d, terms) > 0) : docs);
+    counts.all = matchedAll.length;
+    matchedAll.forEach(d => { if (counts[d.kind] !== undefined) counts[d.kind]++; });
+    filtersEl.innerHTML = Object.keys(counts).filter(k => k === "all" || counts[k] > 0).map(k =>
+      `<button class="chip ${k===activeKind?"active":""}" data-kind="${k}">${KIND_LABEL[k]} <span class="count">${counts[k]}</span></button>`
+    ).join("");
+    filtersEl.querySelectorAll(".chip").forEach(c => c.onclick = () => { activeKind = c.dataset.kind; render(); });
+
+    if (!terms.length) meta.innerHTML = `Type to search ${docs.length} pages.`;
+    else meta.innerHTML = `Found <b>${counts.all}</b> result${counts.all===1?"":"s"} for "${query.replace(/</g,"&lt;")}"`;
+
+    const u = new URL(location.href);
+    if (query) u.searchParams.set("q", query); else u.searchParams.delete("q");
+    history.replaceState(null, "", u.toString());
+
+    if (!top.length) {
+      if (terms.length) {
+        resultsEl.innerHTML = `<div class="empty"><div class="ico">🤔</div>
+          <h2>No results for "${query.replace(/</g,"&lt;")}"</h2>
+          <p>Try a different keyword, or pick one of these:</p>
+          <div class="sg">
+            <a href="/services.html">All services →</a>
+            <a href="/coverage.html">Coverage map →</a>
+            <a href="/faq.html">FAQ →</a>
+            <a href="/contact.html">Talk to us →</a>
+          </div></div>`;
+      } else { resultsEl.innerHTML = ""; }
+      return;
+    }
+    resultsEl.innerHTML = top.map(d => `
+      <a class="result" href="${d.url}">
+        <span class="kind ${d.kind}">${d.kind}</span>
+        <h3>${highlight(d.title, terms)}</h3>
+        ${d.body ? `<p>${highlight(d.body, terms).slice(0, 220)}${d.body.length > 220 ? "…" : ""}</p>` : ""}
+      </a>`).join("");
+  }
+
+  q.addEventListener("input", render);
+  qc.addEventListener("click", () => { q.value = ""; q.focus(); render(); });
+  await loadIndex();
+  render();
+})();
+</script>
+
+<nav class="mobile-nav" aria-label="Primary mobile">
+  <div class="mobile-nav-inner">
+    <a href="/"           data-mobnav="home"><span class="ico">🏠</span><span>Home</span></a>
+    <a href="/services.html" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
+    <a href="/book.html"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
+    <a href="/me.html"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
+    <a href="#" onclick="document.querySelector('.us-launcher')?.click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
+  </div>
+</nav>
+</body></html>
