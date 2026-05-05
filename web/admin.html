@@ -2798,12 +2798,53 @@ function renderCustomers() {
           <td><small style="color:var(--muted)">${uaeDate(c.created_at)}</small></td>
           <td style="text-align:end;white-space:nowrap">
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('customer', ${c.id})">👁 View as</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="editUser('customers', ${c.id})">✎ Edit</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="resetUserPwd('customers', ${c.id})">🔑 Password</button>
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:#B91C1C" onclick="deleteRow('customer','${c.id}', loadCustomers)">🗑</button>
           </td>
         </tr>`).join("")}</tbody></table>`;
   _bulkSetup("#customers-table", "customer", loadCustomers);
 }
 document.getElementById("cust-q").oninput = renderCustomers;
+
+// v1.22.89 — admin can edit + reset-password for customers / vendors
+window.editUser = async function(kind, id) {
+  const list = kind === "customers" ? (window._allCustomers||[])
+                                     : (window._allVendors||[]);
+  const u = list.find(x => x.id == id);
+  if (!u) return;
+  const name  = prompt("Name:",  u.name  || "");
+  if (name === null) return;
+  const phone = prompt("Phone:", u.phone || "");
+  if (phone === null) return;
+  const email = prompt("Email:", u.email || "");
+  if (email === null) return;
+  const blocked = confirm("Block this account from logging in? (cancel = unblocked)") ? 1 : 0;
+  try {
+    const r = await adm("/api/admin/users", {
+      method: "PUT",
+      body: JSON.stringify({ kind, id: Number(id), name, phone, email, is_blocked: blocked })
+    });
+    toast(r.updated ? `✓ Updated ${kind.slice(0,-1)} #${id}` : "No changes saved");
+    if (kind === "customers") loadCustomers(); else loadVendors && loadVendors();
+  } catch(e) {
+    alert("Failed: " + (e.message||e));
+  }
+};
+window.resetUserPwd = async function(kind, id) {
+  const pwd = prompt("New password (min 6 chars). Leave blank to cancel.");
+  if (!pwd) return;
+  if (pwd.length < 6) { alert("Password must be at least 6 characters."); return; }
+  try {
+    const r = await adm("/api/admin/users", {
+      method: "PUT",
+      body: JSON.stringify({ kind, id: Number(id), new_password: pwd })
+    });
+    toast(r.updated ? `✓ Password reset for ${kind.slice(0,-1)} #${id}` : "No change");
+  } catch(e) {
+    alert("Failed: " + (e.message||e));
+  }
+};
 
 function _parseUA(ua) {
   ua = ua || "";
@@ -4953,8 +4994,25 @@ async function sendBroadcast() {
       r.textContent = "Title and body required"; r.style.color = "#B91C1C"; return;
     }
     const res = await adm("/api/admin/push/broadcast", {method:"POST", body});
-    r.textContent = `✓ Sent to ${res.sent} device${res.sent === 1 ? "" : "s"} (${body.audience})`;
-    r.style.color = "#065F46";
+    // v1.22.89 — server now returns rich {sent, pruned, failed, matched, errors[]}
+    const sent = res.sent || 0, pruned = res.pruned || 0, failed = res.failed || 0,
+          matched = res.matched != null ? res.matched : sent;
+    let summary = `✓ Sent to ${sent}/${matched} device${sent === 1 ? "" : "s"} (${body.audience})`;
+    if (pruned)  summary += ` · 🗑 pruned ${pruned} stale`;
+    if (failed && failed > pruned) summary += ` · ⚠ ${failed - pruned} other failure(s)`;
+    if (sent === 0 && matched === 0)
+      summary = `⚠ Audience '${body.audience}' matched 0 subscriptions. Use the Audience builder to broaden the filter.`;
+    r.innerHTML = escapeHtml(summary);
+    r.style.color = sent ? "#065F46" : "#B45309";
+    if (res.errors && res.errors.length) {
+      const det = document.createElement("details");
+      det.style.cssText = "margin-top:6px;font-size:12px;color:#475569";
+      det.innerHTML = `<summary style="cursor:pointer;color:#0F766E;font-weight:600">
+        Show ${res.errors.length} delivery error${res.errors.length===1?"":"s"} →</summary>
+        <ul style="margin:6px 0 0;padding-inline-start:20px;line-height:1.55">
+        ${res.errors.map(e => `<li>${escapeHtml(e)}</li>`).join("")}</ul>`;
+      r.appendChild(det);
+    }
   } catch (e) {
     r.textContent = "Failed: " + (e.message || e); r.style.color = "#B91C1C";
   }
