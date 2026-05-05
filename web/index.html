@@ -236,60 +236,278 @@
     </div>
     <!-- Bigger, more colourful service tiles - more eye-candy, easier to grok -->
     <div class="svc-grid-hero" id="svc-tiles">
-      <a class="svc-tile-hero c-teal" href="/book.html?service=deep_cleaning"><button data-bundle="deep_cleaning" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-teal" href="/book.html?service=deep_cleaning">
         <span class="popular">★ Most booked</span>
+        <span class="tile-action" data-svc="deep_cleaning">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=deep_cleaning">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="deep_cleaning">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">✨</div><h3>Deep Cleaning</h3>
         <small>Top-to-bottom · 4-6h</small><div class="price">from <b>AED 350</b></div></a>
-      <a class="svc-tile-hero c-amber" href="/book.html?service=ac_cleaning"><button data-bundle="ac_cleaning" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-amber" href="/book.html?service=ac_cleaning">
+        
+        <span class="tile-action" data-svc="ac_cleaning">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=ac_cleaning">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="ac_cleaning">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">❄️</div><h3>AC Service</h3>
         <small>Pre-summer urgent · 90 min</small><div class="price">from <b>AED 75</b>/unit</div></a>
-      <a class="svc-tile-hero c-purple" href="/book.html?service=maid_service"><button data-bundle="maid_service" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-purple" href="/book.html?service=maid_service">
         <span class="popular">⏱ Hourly</span>
+        <span class="tile-action" data-svc="maid_service">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=maid_service">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="maid_service">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">👤</div><h3>Maid Service</h3>
         <small>By the hour · same-day</small><div class="price">from <b>AED 25</b>/hr</div></a>
-      <a class="svc-tile-hero c-rose" href="/book.html?service=handyman"><button data-bundle="handyman" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-rose" href="/book.html?service=handyman">
+        
+        <span class="tile-action" data-svc="handyman">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=handyman">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="handyman">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">🔧</div><h3>Handyman</h3>
         <small>Plumbing · electric · paint</small><div class="price">from <b>AED 100</b></div></a>
-      <a class="svc-tile-hero c-green" href="/book.html?service=pest_control"><button data-bundle="pest_control" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-green" href="/book.html?service=pest_control">
+        
+        <span class="tile-action" data-svc="pest_control">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=pest_control">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="pest_control">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">🪲</div><h3>Pest Control</h3>
         <small>Cockroach · bed bugs · ants</small><div class="price">from <b>AED 200</b></div></a>
-      <a class="svc-tile-hero c-blue" href="/book.html?service=sofa_carpet"><button data-bundle="sofa_carpet" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-blue" href="/book.html?service=sofa_carpet">
+        
+        <span class="tile-action" data-svc="sofa_carpet">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=sofa_carpet">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="sofa_carpet">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">🛋️</div><h3>Sofa &amp; Carpet</h3>
         <small>Steam shampoo · 2-3h</small><div class="price">from <b>AED 120</b></div></a>
-      <a class="svc-tile-hero c-indigo" href="/book.html?service=move_in_out"><button data-bundle="move_in_out" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-indigo" href="/book.html?service=move_in_out">
+        
+        <span class="tile-action" data-svc="move_in_out">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=move_in_out">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="move_in_out">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">📦</div><h3>Move-in / Move-out</h3>
         <small>Deposit-saving deep clean</small><div class="price">from <b>AED 400</b></div></a>
-      <a class="svc-tile-hero c-orange" href="/book.html?service=window_cleaning"><button data-bundle="window_cleaning" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-orange" href="/book.html?service=window_cleaning">
+        
+        <span class="tile-action" data-svc="window_cleaning">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=window_cleaning">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="window_cleaning">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">🪟</div><h3>Window Cleaning</h3>
         <small>Inside + balcony glass</small><div class="price">from <b>AED 80</b></div></a>
-      <a class="svc-tile-hero c-teal" href="/book.html?service=general_cleaning"><button data-bundle="general_cleaning" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-teal" href="/book.html?service=general_cleaning">
+        
+        <span class="tile-action" data-svc="general_cleaning">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=general_cleaning">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="general_cleaning">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">🧹</div><h3>General Cleaning</h3>
         <small>Weekly · 2-3h</small><div class="price">from <b>AED 89</b></div></a>
-      <a class="svc-tile-hero c-blue" href="/book.html?service=office_cleaning"><button data-bundle="office_cleaning" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-blue" href="/book.html?service=office_cleaning">
+        
+        <span class="tile-action" data-svc="office_cleaning">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=office_cleaning">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="office_cleaning">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">🏢</div><h3>Office Cleaning</h3>
         <small>Daily / weekly contracts</small><div class="price">from <b>AED 150</b></div></a>
-      <a class="svc-tile-hero c-amber" href="/book.html?service=painting"><button data-bundle="painting" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-amber" href="/book.html?service=painting">
+        
+        <span class="tile-action" data-svc="painting">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=painting">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="painting">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">🎨</div><h3>Wall Painting</h3>
         <small>Per room · primer + 2 coats</small><div class="price">from <b>AED 350</b></div></a>
-      <a class="svc-tile-hero c-purple" href="/book.html?service=marble_polish"><button data-bundle="marble_polish" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-purple" href="/book.html?service=marble_polish">
+        
+        <span class="tile-action" data-svc="marble_polish">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=marble_polish">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="marble_polish">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">💎</div><h3>Marble Polishing</h3>
         <small>Crystallise · diamond grind</small><div class="price">from <b>AED 12</b>/sqm</div></a>
-      <a class="svc-tile-hero c-rose" href="/book.html?service=laundry"><button data-bundle="laundry" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-rose" href="/book.html?service=laundry">
+        
+        <span class="tile-action" data-svc="laundry">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=laundry">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="laundry">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">👕</div><h3>Laundry &amp; Ironing</h3>
         <small>Pickup + delivery · 24h</small><div class="price">from <b>AED 30</b>/load</div></a>
-      <a class="svc-tile-hero c-green" href="/book.html?service=car_wash"><button data-bundle="car_wash" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-green" href="/book.html?service=car_wash">
+        
+        <span class="tile-action" data-svc="car_wash">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=car_wash">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="car_wash">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">🚗</div><h3>Car Wash &amp; Detail</h3>
         <small>Doorstep · interior + wax</small><div class="price">from <b>AED 50</b></div></a>
-      <a class="svc-tile-hero c-indigo" href="/book.html?service=babysitting"><button data-bundle="babysitting" type="button" onclick="event.preventDefault();event.stopPropagation();window.serviaAddToBundle&&serviaAddToBundle({service_id:this.dataset.bundle});" style="position:absolute;bottom:12px;right:12px;background:#fff;border:1.5px solid #0F766E;color:#0F766E;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;z-index:2;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,.18)">+ Bundle</button>
+      <a class="svc-tile-hero c-indigo" href="/book.html?service=babysitting">
+        
+        <span class="tile-action" data-svc="babysitting">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=babysitting">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="babysitting">🛒 Add to bundle</button>
+          </span>
+        </span>
         <div class="e">👶</div><h3>Babysitting / Nanny</h3>
         <small>Vetted · short or full-time</small><div class="price">from <b>AED 35</b>/hr</div></a>
+      <a class="svc-tile-hero c-teal" href="/book.html?service=kitchen_deep">
+        
+        <span class="tile-action" data-svc="kitchen_deep">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=kitchen_deep">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="kitchen_deep">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">🍳</div><h3>Kitchen Deep Clean</h3>
+        <small>Oven · hood · degrease</small><div class="price">from <b>AED 150</b></div></a>
+      <a class="svc-tile-hero c-blue" href="/book.html?service=swimming_pool">
+        
+        <span class="tile-action" data-svc="swimming_pool">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=swimming_pool">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="swimming_pool">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">🏊</div><h3>Pool Maintenance</h3>
+        <small>Weekly chemicals + skim</small><div class="price">from <b>AED 250</b></div></a>
+      <a class="svc-tile-hero c-purple" href="/book.html?service=smart_home">
+        
+        <span class="tile-action" data-svc="smart_home">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=smart_home">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="smart_home">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">🏠</div><h3>Smart Home Setup</h3>
+        <small>Alexa · cameras · lighting</small><div class="price">from <b>AED 200</b></div></a>
+      <a class="svc-tile-hero c-rose" href="/book.html?service=fridge_repair">
+        
+        <span class="tile-action" data-svc="fridge_repair">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=fridge_repair">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="fridge_repair">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">🧊</div><h3>Fridge Repair</h3>
+        <small>All brands · same-day</small><div class="price">from <b>AED 120</b></div></a>
+      <a class="svc-tile-hero c-amber" href="/book.html?service=washing_machine_repair">
+        
+        <span class="tile-action" data-svc="washing_machine_repair">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=washing_machine_repair">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="washing_machine_repair">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">🧺</div><h3>Washing Machine Repair</h3>
+        <small>Diagnose + fix in 1 visit</small><div class="price">from <b>AED 100</b></div></a>
+      <a class="svc-tile-hero c-green" href="/book.html?service=gardening">
+        
+        <span class="tile-action" data-svc="gardening">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=gardening">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="gardening">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">🌳</div><h3>Gardening &amp; Landscape</h3>
+        <small>Trim · plant · maintain</small><div class="price">from <b>AED 120</b></div></a>
+      <a class="svc-tile-hero c-orange" href="/book.html?service=tv_setup">
+        
+        <span class="tile-action" data-svc="tv_setup">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=tv_setup">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="tv_setup">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">📺</div><h3>Smart TV Mount &amp; Setup</h3>
+        <small>Wall-mount + cable hide</small><div class="price">from <b>AED 150</b></div></a>
+      <a class="svc-tile-hero c-indigo" href="/book.html?service=disinfection">
+        
+        <span class="tile-action" data-svc="disinfection">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=disinfection">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="disinfection">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">🧴</div><h3>Disinfection</h3>
+        <small>Hospital-grade fogging</small><div class="price">from <b>AED 180</b></div></a>
+      <a class="svc-tile-hero c-blue" href="/book.html?service=chauffeur">
+        
+        <span class="tile-action" data-svc="chauffeur">
+          <button class="tile-action-btn" type="button" aria-label="More options" aria-expanded="false">+</button>
+          <span class="tile-action-menu" role="menu">
+            <a role="menuitem" href="/book.html?service=chauffeur">📋 Book now</a>
+            <button type="button" role="menuitem" data-bundle="chauffeur">🛒 Add to bundle</button>
+          </span>
+        </span>
+        <div class="e">🚙</div><h3>Chauffeur Driver</h3>
+        <small>Hourly / daily / monthly</small><div class="price">from <b>AED 60</b>/hr</div></a>
     </div>
     <div style="text-align:center;margin-top:18px">
       <a class="btn btn-primary" href="/services.html" style="padding:11px 22px;font-weight:700">Browse all 32 services →</a>
     </div>
   </div>
 
-  <style>.svc-grid-hero{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));}.svc-tile-hero{position:relative;background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px 16px 16px;text-decoration:none;color:var(--text);transition:transform .18s ease,box-shadow .18s ease,border-color .18s;overflow:hidden;}.svc-tile-hero::before{content:"";position:absolute;inset:0;background:var(--svc-tone,linear-gradient(135deg,#0F766E,#14B8A6));opacity:0;transition:opacity .25s;pointer-events:none;}.svc-tile-hero:hover{transform:translateY(-4px);box-shadow:0 14px 32px rgba(15,23,42,.10);border-color:transparent}.svc-tile-hero:hover::before{opacity:.06}.svc-tile-hero .e{font-size:42px;line-height:1;margin-bottom:8px;transition:transform .18s ease;display:inline-block;}.svc-tile-hero:hover .e{transform:scale(1.15) rotate(-5deg)}.svc-tile-hero h3{margin:4px 0 2px;font-size:16px;font-weight:800;letter-spacing:-.01em}.svc-tile-hero small{color:var(--muted);font-size:12px;display:block;line-height:1.4}.svc-tile-hero .price{color:#0F766E;font-weight:600;font-size:13px;margin-top:8px}.svc-tile-hero .price b{font-weight:800;font-size:15px;color:#0F172A}.svc-tile-hero .popular{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.04em;box-shadow:0 2px 6px rgba(245,158,11,.3);}.c-teal{--svc-tone:linear-gradient(135deg,#0F766E,#14B8A6)}.c-amber{--svc-tone:linear-gradient(135deg,#B45309,#F59E0B)}.c-purple{--svc-tone:linear-gradient(135deg,#5B21B6,#7C3AED)}.c-rose{--svc-tone:linear-gradient(135deg,#9F1239,#E11D48)}.c-green{--svc-tone:linear-gradient(135deg,#065F46,#15803D)}.c-blue{--svc-tone:linear-gradient(135deg,#1E40AF,#3B82F6)}.c-indigo{--svc-tone:linear-gradient(135deg,#312E81,#6366F1)}.c-orange{--svc-tone:linear-gradient(135deg,#7C2D12,#F97316)}@media (max-width:560px){.svc-grid-hero{grid-template-columns:repeat(2,1fr);gap:10px}.svc-tile-hero{padding:14px 12px 12px}.svc-tile-hero h3{font-size:14px}.svc-tile-hero .e{font-size:34px}}</style>
+  <style>.svc-grid-hero{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));}.svc-tile-hero{position:relative;background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px 16px 16px;text-decoration:none;color:var(--text);transition:transform .18s ease,box-shadow .18s ease,border-color .18s;overflow:visible;}.svc-tile-hero::before{content:"";position:absolute;inset:0;background:var(--svc-tone,linear-gradient(135deg,#0F766E,#14B8A6));opacity:0;transition:opacity .25s;pointer-events:none;border-radius:18px;}.svc-tile-hero:hover{transform:translateY(-4px);box-shadow:0 14px 32px rgba(15,23,42,.10);border-color:transparent}.svc-tile-hero:hover::before{opacity:.06}.svc-tile-hero .e{font-size:42px;line-height:1;margin-bottom:8px;transition:transform .18s ease;display:inline-block;}.svc-tile-hero:hover .e{transform:scale(1.15) rotate(-5deg)}.svc-tile-hero h3{margin:4px 0 2px;font-size:16px;font-weight:800;letter-spacing:-.01em}.svc-tile-hero small{color:var(--muted);font-size:12px;display:block;line-height:1.4}.svc-tile-hero .price{color:#0F766E;font-weight:600;font-size:13px;margin-top:8px}.svc-tile-hero .price b{font-weight:800;font-size:15px;color:#0F172A}.svc-tile-hero .popular{position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.04em;box-shadow:0 2px 6px rgba(245,158,11,.3);z-index:2;}.svc-tile-hero .tile-action{position:absolute;top:8px;right:8px;z-index:5;display:inline-block;}.svc-tile-hero .tile-action-btn{width:32px;height:32px;border-radius:50%;border:0;background:#0F766E;color:#fff;font-size:20px;font-weight:700;cursor:pointer;box-shadow:0 4px 10px rgba(15,23,42,.25);display:flex;align-items:center;justify-content:center;line-height:1;padding:0;transition:transform .15s,background .15s;}.svc-tile-hero .tile-action-btn:hover,.svc-tile-hero .tile-action.open .tile-action-btn{background:#0F172A;transform:scale(1.08);}.svc-tile-hero .tile-action-menu{position:absolute;top:38px;right:0;min-width:170px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(15,23,42,.18);padding:6px;display:none;text-align:left;}.svc-tile-hero .tile-action-menu a,.svc-tile-hero .tile-action-menu button{display:block;width:100%;text-align:left;padding:9px 12px;background:transparent;border:0;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--text);text-decoration:none;border-radius:8px;font-family:inherit;}.svc-tile-hero .tile-action-menu a:hover,.svc-tile-hero .tile-action-menu button:hover{background:#F0FDFA;color:#0F766E;}.svc-tile-hero .tile-action.open .tile-action-menu{display:block;}@media (hover:hover){.svc-tile-hero .tile-action:hover .tile-action-menu{display:block;}}.c-teal{--svc-tone:linear-gradient(135deg,#0F766E,#14B8A6)}.c-amber{--svc-tone:linear-gradient(135deg,#B45309,#F59E0B)}.c-purple{--svc-tone:linear-gradient(135deg,#5B21B6,#7C3AED)}.c-rose{--svc-tone:linear-gradient(135deg,#9F1239,#E11D48)}.c-green{--svc-tone:linear-gradient(135deg,#065F46,#15803D)}.c-blue{--svc-tone:linear-gradient(135deg,#1E40AF,#3B82F6)}.c-indigo{--svc-tone:linear-gradient(135deg,#312E81,#6366F1)}.c-orange{--svc-tone:linear-gradient(135deg,#7C2D12,#F97316)}@media (max-width:560px){.svc-grid-hero{grid-template-columns:repeat(2,1fr);gap:10px}.svc-tile-hero{padding:14px 12px 12px}.svc-tile-hero h3{font-size:14px}.svc-tile-hero .e{font-size:34px}.svc-tile-hero .tile-action-menu{min-width:150px;right:auto;left:0;}}</style>
+  <script>(function(){document.addEventListener('click',function(e){var btn=e.target.closest&&e.target.closest('.tile-action-btn');if(btn){e.preventDefault();e.stopPropagation();var wrap=btn.closest('.tile-action');var wasOpen=wrap.classList.contains('open');document.querySelectorAll('.tile-action.open').forEach(function(w){w.classList.remove('open');w.querySelector('.tile-action-btn').setAttribute('aria-expanded','false');});if(!wasOpen){wrap.classList.add('open');btn.setAttribute('aria-expanded','true');}return;}var bundle=e.target.closest&&e.target.closest('.tile-action-menu [data-bundle]');if(bundle){e.preventDefault();e.stopPropagation();if(window.serviaAddToBundle)window.serviaAddToBundle({service_id:bundle.dataset.bundle});bundle.closest('.tile-action').classList.remove('open');return;}if(!e.target.closest||!e.target.closest('.tile-action')){document.querySelectorAll('.tile-action.open').forEach(function(w){w.classList.remove('open');});}});})();</script>
 </section>
 <!-- COMPACT LIVE-COVERAGE STRIP (replaces the heavy blob map; full map at /coverage.html) -->
 <section style="padding:18px 16px;background:#F0FDFA;border-bottom:1px solid var(--border)">
