@@ -221,8 +221,26 @@
 <div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36" alt="Servia" decoding="async"></a>
-  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-ghost" href="/">← Home</a></div>
+  <a href="/" aria-label="Servia home"><img src="/logo.svg" width="124" height="40" alt="Servia" decoding="async"></a>
+  <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
+  <div class="nav-links">
+    <a href="/services.html" data-i18n="nav_services">Services</a>
+    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
+    <a href="/blog">Blog</a>
+    <a href="/me.html" data-i18n="nav_my_account">My account</a>
+  </div>
+  <div class="nav-cta">
+    <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
+    <select class="lang-dropdown notranslate" translate="no" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
+      <option value="en">🇬🇧 EN</option><option value="ar">🇦🇪 AR</option><option value="ur">🇵🇰 UR</option>
+      <option value="hi">🇮🇳 HI</option><option value="bn">🇧🇩 BN</option><option value="ta">TA</option><option value="ml">ML</option>
+      <option value="tl">🇵🇭 TL</option><option value="ps">🇦🇫 PS</option><option value="ne">🇳🇵 NE</option>
+      <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
+      <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
+    </select>
+    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
+    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
+  </div>
 </div></nav>
 
 <main class="auth-shell">
@@ -420,7 +438,43 @@
   </section>
 </main>
 
-<footer style="background:#0F172A;color:#fff;padding:48px 24px"><div class="container"></div></footer>
+<footer><div class="container">
+  <div>
+    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+    <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+  </div>
+  <div><h3>Customers</h3>
+    <a href="/services.html">All services</a><br>
+    <a href="/book.html">Book online</a><br>
+    <a href="/coverage.html">Coverage map</a><br>
+    <a href="/me.html">My account</a><br>
+    <a href="/faq.html">FAQ</a>
+  </div>
+  <div><h3>Service areas</h3>
+    <a href="/area.html?city=dubai">Dubai</a><br>
+    <a href="/area.html?city=sharjah">Sharjah</a><br>
+    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
+    <a href="/area.html?city=ajman">Ajman</a><br>
+    <a href="/area.html?city=ras-al-khaimah">RAK</a>
+  </div>
+  <div><h3>Apps &amp; AI</h3>
+    <a href="/install.html">Install app</a><br>
+    <a href="/smart-speakers.html">Voice booking</a><br>
+    <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">ChatGPT GPT</a><br>
+    <a href="/videos.html">Videos</a><br>
+    <a href="/blog">Blog</a>
+  </div>
+  <div><h3>Legal</h3>
+    <a href="/terms.html">Terms</a><br>
+    <a href="/privacy.html">Privacy</a><br>
+    <a href="/refund.html">Refund</a>
+  </div>
+  <div><h3>Contact</h3>
+    <a href="/contact.html">Contact us</a><br>
+    <a href="mailto:support@servia.ae">support@servia.ae</a><br>
+    <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
+  </div>
+</div></footer>
 
 <script src="/app.js" defer></script>
 <script>
