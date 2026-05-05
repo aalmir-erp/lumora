@@ -250,10 +250,11 @@ function __serviaBannerInit() {
   }, period);
 }
 // Reserve banner layout space EARLY so when init() injects content there's
-// no layout jerk. The previous "wait 11s or first interaction" path made
-// the banner feel broken — users would render the page, then much later
-// (or on their first click) a teal bar would suddenly slide in above the
-// nav. The 0.05 CLS we saved that way wasn't worth a UX that looks broken.
+// no layout jerk. Each public page now ALSO inlines a static
+// `<div id="servia-topbanner">` placeholder right after <body> in the HTML
+// — that's what kills the jerk-on-first-interaction the user complained
+// about, because the JS-driven stub never ran until first paint. We keep
+// this fallback for any page that didn't get the inline edit.
 function __serviaBannerReserveSlot() {
   const path = location.pathname;
   if (/^\/(admin|vendor|portal-vendor|pay)/.test(path)) return null;
@@ -278,19 +279,19 @@ function __serviaBannerReserveSlot() {
 }
 __serviaBannerReserveSlot();
 
-// Init runs early — well before 11s — so the banner is interactive when
-// the user shows up. We still defer past LCP via requestIdleCallback (or a
-// tiny setTimeout fallback), and still fire on first interaction in case
-// rIC takes its time.
+// Init runs IMMEDIATELY now. The placeholder div (either inlined in HTML
+// or reserved by __serviaBannerReserveSlot above) already locks the 44px
+// of vertical space, so populating it doesn't shift anything below.
+// Previously we waited on requestIdleCallback (up to 1.5s timeout); on
+// slower devices that meant users saw an empty teal bar for over a second
+// before the first slide appeared, which felt like the page was frozen.
 let _bannerFired = false;
 const _bannerGo = () => {
   if (_bannerFired) return; _bannerFired = true;
   __serviaBannerInit();
 };
-if ("requestIdleCallback" in window) {
-  requestIdleCallback(_bannerGo, { timeout: 1500 });
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", _bannerGo, { once:true });
 } else {
-  setTimeout(_bannerGo, 600);
+  _bannerGo();
 }
-["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
-  addEventListener(ev, _bannerGo, { once: true, passive: true }));
