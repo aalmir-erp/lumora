@@ -71,14 +71,19 @@
     const fab = document.createElement("button");
     fab.id = "servia-install-fab";
     fab.type = "button";
-    fab.innerHTML = "📲 <span>Get the Servia app</span>";
+    fab.title = "Install the Servia app";
+    fab.setAttribute("aria-label", "Install the Servia app");
+    fab.innerHTML = "📲";
+    // Compact 44px circular icon — no more "Get the Servia app" pill that
+    // ate horizontal space and overlapped page content. Sits left-side
+    // above the cart badge (which is at bottom:78). Both vertically stacked.
     fab.style.cssText =
-      // Install FAB lives at bottom-CENTER on mobile / bottom-LEFT-ABOVE-cart on desktop
-      // so it never collides with the cart-badge (left,bottom:78) or chat (right,bottom:24).
-      "position:fixed;bottom:128px;left:14px;z-index:997;background:linear-gradient(135deg,#0F766E,#F59E0B);" +
-      "color:#fff;border:0;padding:12px 18px;border-radius:999px;font-weight:700;font-size:14px;" +
-      "cursor:pointer;box-shadow:0 8px 24px rgba(15,23,42,.22);display:flex;gap:8px;align-items:center;" +
-      "transition:transform .15s";
+      "position:fixed;bottom:128px;left:14px;z-index:997;" +
+      "background:linear-gradient(135deg,#0F766E,#F59E0B);color:#fff;" +
+      "width:44px;height:44px;border:0;border-radius:50%;font-size:20px;" +
+      "cursor:pointer;box-shadow:0 8px 22px rgba(15,23,42,.28);" +
+      "display:inline-flex;align-items:center;justify-content:center;line-height:1;" +
+      "transition:transform .12s, box-shadow .12s";
     fab.addEventListener("mouseover", () => fab.style.transform = "translateY(-2px)");
     fab.addEventListener("mouseout", () => fab.style.transform = "");
     fab.onclick = openModal;
@@ -267,4 +272,77 @@
 
   // Public API for any "Install" button on the site
   window.serviaShowInstall = openModal;
+
+  // ---------- Floating UI session-minimize ----------
+  // The user complained that floating FABs (cart, install, search, chat)
+  // crowd the screen. This adds a tiny ✕ master toggle at the corner —
+  // tap once to hide ALL floating elements for the rest of the session.
+  // SessionStorage so it resets on next visit.
+  const KEY_FLOATS_HIDDEN = "servia.floats.hidden";
+  const FLOAT_SELECTORS = [
+    "#servia-cart-badge",
+    "#servia-cart-pop",
+    "#servia-install-fab",
+    ".cmdk-fab",          // search palette FAB from search-widget.js
+    ".us-launcher",       // chat FAB from widget.js
+    ".servia-chat-online", // online presence badge if loaded
+    "#servia-proof",      // social-proof toast if loaded
+  ];
+  function setFloatsHidden(hidden) {
+    try { sessionStorage.setItem(KEY_FLOATS_HIDDEN, hidden ? "1" : "0"); } catch(_) {}
+    FLOAT_SELECTORS.forEach(s => {
+      document.querySelectorAll(s).forEach(el => {
+        el.style.display = hidden ? "none" : "";
+      });
+    });
+    document.getElementById("servia-floats-hide").style.display = hidden ? "none" : "";
+    document.getElementById("servia-floats-show").style.display = hidden ? "inline-flex" : "none";
+  }
+
+  function injectFloatToggle() {
+    if (document.getElementById("servia-floats-hide")) return;
+    const css = document.createElement("style");
+    css.textContent = `
+      #servia-floats-hide, #servia-floats-show {
+        position:fixed; right:6px; bottom:6px; z-index:1000;
+        width:24px; height:24px; border-radius:50%; border:0;
+        background:rgba(15,23,42,.55); color:#fff; font-size:12px;
+        cursor:pointer; padding:0; line-height:1;
+        display:inline-flex; align-items:center; justify-content:center;
+        opacity:.45; transition:opacity .15s;
+      }
+      #servia-floats-hide:hover, #servia-floats-show:hover { opacity:1 }
+      .mobile-nav ~ #servia-floats-hide,
+      .mobile-nav ~ #servia-floats-show { bottom:74px }
+    `;
+    document.head.appendChild(css);
+    const hide = document.createElement("button");
+    hide.id = "servia-floats-hide"; hide.type = "button"; hide.title = "Hide floating buttons for this session";
+    hide.setAttribute("aria-label", "Hide floating buttons");
+    hide.textContent = "✕";
+    hide.onclick = () => setFloatsHidden(true);
+    const show = document.createElement("button");
+    show.id = "servia-floats-show"; show.type = "button"; show.title = "Show floating buttons";
+    show.setAttribute("aria-label", "Show floating buttons");
+    show.textContent = "+"; show.style.display = "none";
+    show.onclick = () => setFloatsHidden(false);
+    document.body.appendChild(hide);
+    document.body.appendChild(show);
+    // Restore session state
+    try {
+      if (sessionStorage.getItem(KEY_FLOATS_HIDDEN) === "1") setFloatsHidden(true);
+    } catch(_) {}
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectFloatToggle);
+  } else {
+    injectFloatToggle();
+  }
+  // Re-apply after a delay to catch lazily-loaded floats (chat widget,
+  // social-proof toast — they appear after first interaction).
+  setTimeout(() => {
+    try {
+      if (sessionStorage.getItem(KEY_FLOATS_HIDDEN) === "1") setFloatsHidden(true);
+    } catch(_) {}
+  }, 4000);
 })();

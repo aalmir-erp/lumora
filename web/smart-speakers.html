@@ -138,6 +138,25 @@
 <script src="/lazy-loaders.js" defer></script>
 <script src="/conv.js" defer></script>
 <script src="/search-widget.js" defer></script>
+<style id="servia-gt-fix">
+/* Google Translate sanity overrides — keep content visible on RTL languages
+ * (Arabic, Urdu, Persian, Hebrew, Pashto). Loaded inline so it applies on
+ * first paint regardless of cache / SW state. */
+.goog-te-banner-frame, .goog-te-banner-frame *,
+#goog-gt-tt, #goog-te-balloon-frame,
+.goog-te-spinner-pos, .goog-tooltip { display:none !important; visibility:hidden !important; }
+body { top:0 !important; position:static !important; visibility:visible !important; }
+html.translated-ltr, html.translated-rtl { margin-top:0 !important; }
+html.translated-ltr body, html.translated-rtl body {
+  top:0 !important; position:static !important;
+  visibility:visible !important; opacity:1 !important; display:block !important; }
+html.translated-rtl body > * { visibility:visible !important; opacity:1 !important; }
+.goog-te-gadget { font-size:0; height:0; overflow:hidden; }
+.goog-te-gadget > span { display:none; }
+#google_translate_element {
+  position:absolute !important; left:-9999px !important; top:-9999px !important;
+  width:1px !important; height:1px !important; overflow:hidden !important; }
+</style>
 </head><body>
 <div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
@@ -251,16 +270,29 @@
       <button class="btn disabled" disabled>🔜 Coming soon</button>
     </div>
 
-    <!-- 4. GOOGLE ASSISTANT ROUTINE - LIVE TODAY (no dev work) -->
+    <!-- 4. GOOGLE / ANDROID — long-press shortcuts via PWA install -->
     <div class="vs-card" id="google">
-      <span class="vs-status live">LIVE NOW · 1 MIN SETUP</span>
+      <span class="vs-status live">LIVE NOW · ANDROID</span>
       <div class="vs-ico">🟩</div>
-      <h2>Google Assistant Routine</h2>
+      <h2>Android quick-actions + Google Routine</h2>
       <div class="vs-quote">"Hey Google, book Servia"</div>
-      <p>Same idea as Siri Shortcut, on Android / Nest Hub / Pixel. Set up a Google Assistant Routine that opens Servia when you say a trigger. No skill build needed.</p>
-      <p style="background:rgba(167,139,250,.15);border-inline-start:3px solid #A78BFA;padding:8px 12px;border-radius:0 8px 8px 0;font-size:13px;color:#A78BFA">
-        Native Alexa Skill + Google Action SDK still planned for Q3 2026 (richer flows). The Routine below works on every device today.
+      <p style="background:rgba(167,139,250,.15);border-inline-start:3px solid #A78BFA;padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#A78BFA;line-height:1.55">
+        <b>Honest scope:</b> Google doesn't expose a one-tap routine import API the way Apple does for Siri. There's no <code>.routine</code> file we can host. The closest two paths that DO work today on Android:
       </p>
+
+      <h3 style="margin:14px 0 6px;font-size:14px;color:#FCD34D">⚡ Path 1 — PWA install ➜ long-press the icon (one tap setup)</h3>
+      <p style="font-size:13px;color:#CBD5E1;margin:0 0 6px;line-height:1.55">
+        Install Servia from the home page (or <a href="/install.html" style="color:#FCD34D">Install page</a>). On Android, <b>long-press the Servia app icon</b> on your home screen — these 4 quick-actions appear instantly:
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:12.5px;margin:6px 0">
+        <div style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;font-weight:700">🔍 Search</div>
+        <div style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;font-weight:700">📋 Book a service</div>
+        <div style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;font-weight:700">📍 Track booking</div>
+        <div style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;font-weight:700">💬 Talk to Servia</div>
+      </div>
+      <p style="font-size:11.5px;color:#94A3B8;margin:6px 0 14px">Already declared in <code>manifest.webmanifest</code>. Works on Chrome / Edge / Samsung Browser on Android. No keyboard shortcut creation needed.</p>
+
+      <h3 style="margin:8px 0 6px;font-size:14px;color:#FCD34D">⚡ Path 2 — Google Assistant Routine (manual, but works on Pixel / Nest)</h3>
       <details style="margin-top:8px;font-size:12.5px;color:#CBD5E1">
         <summary style="cursor:pointer;color:#FCD34D;font-weight:700">Setup steps (1 minute)</summary>
         <ol style="margin-top:8px">

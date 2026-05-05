@@ -72,6 +72,25 @@
 <script src="/lazy-loaders.js" defer></script>
 <script src="/conv.js" defer></script>
 <script src="/search-widget.js" defer></script>
+<style id="servia-gt-fix">
+/* Google Translate sanity overrides — keep content visible on RTL languages
+ * (Arabic, Urdu, Persian, Hebrew, Pashto). Loaded inline so it applies on
+ * first paint regardless of cache / SW state. */
+.goog-te-banner-frame, .goog-te-banner-frame *,
+#goog-gt-tt, #goog-te-balloon-frame,
+.goog-te-spinner-pos, .goog-tooltip { display:none !important; visibility:hidden !important; }
+body { top:0 !important; position:static !important; visibility:visible !important; }
+html.translated-ltr, html.translated-rtl { margin-top:0 !important; }
+html.translated-ltr body, html.translated-rtl body {
+  top:0 !important; position:static !important;
+  visibility:visible !important; opacity:1 !important; display:block !important; }
+html.translated-rtl body > * { visibility:visible !important; opacity:1 !important; }
+.goog-te-gadget { font-size:0; height:0; overflow:hidden; }
+.goog-te-gadget > span { display:none; }
+#google_translate_element {
+  position:absolute !important; left:-9999px !important; top:-9999px !important;
+  width:1px !important; height:1px !important; overflow:hidden !important; }
+</style>
 </head><body>
 <div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
