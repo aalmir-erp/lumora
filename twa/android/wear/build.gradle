@@ -12,10 +12,24 @@ android {
         versionCode 1
         versionName "1.0.0"
     }
+    // signingConfigs are required for -P injected signing to work. Values
+    // come from environment via gradle.properties at build time. Without
+    // declaring this here, AGP produces unsigned APKs and our find for
+    // app-release-signed.apk fails.
+    signingConfigs {
+        release {
+            // These are placeholders — actual values supplied via gradle
+            // -Pandroid.injected.signing.* properties at build time.
+            storeFile file("../../../servia.jks")
+            storePassword "placeholder"
+            keyAlias "servia"
+            keyPassword "placeholder"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
-            // Signing handled by gradle properties at command line.
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {

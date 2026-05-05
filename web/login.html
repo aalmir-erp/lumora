@@ -13,6 +13,12 @@
 <link rel="preload" as="style" href="/widget.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css"></noscript>
 <style>
   body { background:#FAFAFA; }
+  /* Hide all floating buttons on the login page — they overlap the form on
+   * narrow viewports (the user's screenshot showed the cart-badge sitting on
+   * top of the OTP "Verify & sign in" button). */
+  #servia-cart-badge, #servia-cart-pop, #servia-install-fab, #servia-install-banner,
+  .cmdk-fab, .us-launcher, .servia-chat-online, #servia-proof,
+  #servia-floats-hide, #servia-floats-show { display:none !important; }
   .auth-shell {
     display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
     min-height:calc(100vh - 60px); max-width:1280px; margin:0 auto;
@@ -435,21 +441,38 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
         <!-- Phone OTP -->
         <div class="panel active" id="cs-phone-pane">
           <div class="row">
-            <label for="cphone-num">Mobile number</label>
+            <label for="cphone-num">Mobile number (UAE)</label>
             <div class="phone-row">
-              <select id="cphone-cc" aria-label="Country code">
-                <option value="+971">🇦🇪 +971</option>
-                <option value="+966">🇸🇦 +966</option>
-                <option value="+91">🇮🇳 +91</option>
-                <option value="+92">🇵🇰 +92</option>
-                <option value="+880">🇧🇩 +880</option>
-                <option value="+63">🇵🇭 +63</option>
-                <option value="+44">🇬🇧 +44</option>
-                <option value="+1">🇺🇸 +1</option>
-              </select>
-              <input id="cphone-num" type="tel" inputmode="numeric" placeholder="50 123 4567" autocomplete="tel-national">
+              <span id="cphone-cc-display"
+                    style="display:flex;align-items:center;justify-content:center;background:#F0FDFA;border:1.5px solid #99F6E4;border-radius:12px;font-weight:700;color:#0F766E">
+                🇦🇪 +971
+              </span>
+              <input id="cphone-num" type="tel" inputmode="numeric"
+                     maxlength="9"
+                     placeholder="50 123 4567"
+                     autocomplete="tel-national"
+                     pattern="[0-9 ]*">
             </div>
+            <div id="cphone-error" style="display:none;color:#B91C1C;font-size:12px;margin-top:6px"></div>
+            <label style="display:flex;gap:6px;align-items:center;font-weight:normal;font-size:12.5px;margin-top:8px;cursor:pointer">
+              <input type="checkbox" id="cphone-tourist" onchange="toggleTouristMode(this.checked)">
+              I'm a tourist / visitor with a non-UAE number
+            </label>
           </div>
+          <select id="cphone-cc" aria-label="Country code (tourist mode)" style="display:none;width:100%;margin-bottom:10px;padding:10px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px">
+            <option value="+971">🇦🇪 +971 — UAE</option>
+            <option value="+966">🇸🇦 +966 — Saudi Arabia</option>
+            <option value="+91">🇮🇳 +91 — India</option>
+            <option value="+92">🇵🇰 +92 — Pakistan</option>
+            <option value="+880">🇧🇩 +880 — Bangladesh</option>
+            <option value="+63">🇵🇭 +63 — Philippines</option>
+            <option value="+44">🇬🇧 +44 — United Kingdom</option>
+            <option value="+1">🇺🇸 +1 — USA / Canada</option>
+            <option value="+33">🇫🇷 +33 — France</option>
+            <option value="+49">🇩🇪 +49 — Germany</option>
+            <option value="+86">🇨🇳 +86 — China</option>
+            <option value="+7">🇷🇺 +7 — Russia</option>
+          </select>
           <button class="btn-auth" type="button" id="btn-send-otp" onclick="sendOtp()">
             <span>Send 6-digit code</span> <span aria-hidden="true">→</span>
           </button>
@@ -767,10 +790,62 @@ function hideMsg() {
   const m = document.getElementById("msg");
   m.className = "auth-msg";
 }
+function isTourist() {
+  const t = document.getElementById("cphone-tourist");
+  return !!(t && t.checked);
+}
+window.toggleTouristMode = function(on) {
+  const ccSelect = document.getElementById("cphone-cc");
+  const ccDisplay = document.getElementById("cphone-cc-display");
+  const num = document.getElementById("cphone-num");
+  const err = document.getElementById("cphone-error");
+  err.style.display = "none";
+  if (on) {
+    ccSelect.style.display = "";
+    ccDisplay.style.display = "none";
+    num.maxLength = 14;
+    num.placeholder = "Phone number";
+  } else {
+    ccSelect.style.display = "none";
+    ccSelect.value = "+971";
+    ccDisplay.style.display = "flex";
+    num.maxLength = 9;
+    num.placeholder = "50 123 4567";
+  }
+};
+// Validate UAE phone format on input
+(function () {
+  const num = document.getElementById("cphone-num");
+  if (!num) return;
+  num.addEventListener("input", () => {
+    const err = document.getElementById("cphone-error");
+    err.style.display = "none";
+    if (isTourist()) return;  // skip strict UAE check in tourist mode
+    const digits = num.value.replace(/\D/g, "");
+    if (!digits) return;
+    // UAE mobile: 9 digits starting with 5 (e.g., 501234567 = 050 123 4567).
+    // Carriers: 050/052/054/055/056/058. So second digit ∈ {0,2,4,5,6,8}.
+    if (digits.length === 9 && /^5[02456789]\d{7}$/.test(digits)) return;  // valid
+    if (digits.length >= 9) {
+      err.textContent = "UAE mobile must be 9 digits starting with 5 (e.g. 501234567).";
+      err.style.display = "block";
+    }
+  });
+})();
 function fullPhone() {
-  const cc = document.getElementById("cphone-cc").value.trim();
+  const cc = document.getElementById("cphone-cc").value.trim() || "+971";
   let num = document.getElementById("cphone-num").value.replace(/\D/g, "");
   if (num.startsWith("0")) num = num.slice(1);
+  // Strict UAE check unless tourist mode
+  if (!isTourist()) {
+    if (!/^5[02456789]\d{7}$/.test(num)) {
+      const err = document.getElementById("cphone-error");
+      err.textContent = "Enter a valid UAE mobile (9 digits starting with 5), or check 'tourist' for other countries.";
+      err.style.display = "block";
+      return null;
+    }
+    return "+971" + num;
+  }
   return cc + num;
 }
 
@@ -803,6 +878,7 @@ function fullPhone() {
 // ---------- send OTP ----------
 async function sendOtp() {
   const phone = fullPhone();
+  if (!phone) return;  // fullPhone() already showed inline error
   if (phone.length < 9) return showMsg("Enter a valid mobile number", "error");
   const btn = document.getElementById("btn-send-otp");
   btn.disabled = true; btn.firstElementChild.textContent = "Sending…";
