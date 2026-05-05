@@ -2258,13 +2258,14 @@ async def submit_contact(request: Request):
 # ---------- PWA install tracking (called by /web/install.js) ----------
 @app.post("/api/app-install")
 async def track_app_install(request: Request):
-    """Receives install-funnel events from the front-end. Stores to a small
-    SQLite table for an admin overview (which devices/browsers convert,
-    which source pages drive installs, etc)."""
+    """Receives install-funnel events from the front-end + the installed TWA.
+    Stores everything we can collect (device, version, customer if logged in)
+    so the admin Mobile-App tab can show install metrics. The schema is
+    additive — new fields just get logged into install_meta_json without
+    requiring migrations."""
     from . import db
-    import datetime as _dt, json as _json
+    import datetime as _dt, json as _json, hashlib
     try:
-        # Accept both JSON body and sendBeacon Blob (which arrives as raw bytes)
         try:
             payload = await request.json()
         except Exception:
@@ -2278,18 +2279,58 @@ async def track_app_install(request: Request):
         referrer = (payload.get("referrer") or "")[:300]
         platform = (payload.get("platform") or "")[:40]
         ip = (request.client.host if request.client else "")[:64]
+        # Extra rich fields (TWA reports these via the installed app)
+        app_version = (payload.get("app_version") or "")[:40]
+        device_model = (payload.get("device_model") or "")[:80]
+        os_version = (payload.get("os_version") or "")[:80]
+        screen = (payload.get("screen") or "")[:40]
+        language = (payload.get("language") or "")[:16]
+        # Stable device fingerprint — first/last installs from the same
+        # device collapse to one record so we can count unique installs
+        device_id = (payload.get("device_id") or "")[:64]
+        # If the front-end included an auth bearer in the request (web logged-in
+        # user OR TWA wrapping a logged-in session), look up the customer.
+        customer_id = None
+        try:
+            auth_h = request.headers.get("authorization", "")
+            if auth_h.lower().startswith("bearer "):
+                from . import auth_users
+                u = auth_users.lookup_session(auth_h[7:].strip())
+                if u and u.user_type == "customer":
+                    customer_id = u.user_id
+        except Exception: pass
         with db.connect() as c:
             try:
                 c.execute("""
                   CREATE TABLE IF NOT EXISTS app_installs(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     event TEXT, user_agent TEXT, source_page TEXT,
-                    referrer TEXT, platform TEXT, ip TEXT, created_at TEXT)""")
+                    referrer TEXT, platform TEXT, ip TEXT, created_at TEXT,
+                    app_version TEXT, device_model TEXT, os_version TEXT,
+                    screen TEXT, language TEXT, device_id TEXT,
+                    customer_id INTEGER)""")
             except Exception: pass
+            # Idempotent migrations for existing deployments
+            for stmt in (
+                "ALTER TABLE app_installs ADD COLUMN app_version TEXT",
+                "ALTER TABLE app_installs ADD COLUMN device_model TEXT",
+                "ALTER TABLE app_installs ADD COLUMN os_version TEXT",
+                "ALTER TABLE app_installs ADD COLUMN screen TEXT",
+                "ALTER TABLE app_installs ADD COLUMN language TEXT",
+                "ALTER TABLE app_installs ADD COLUMN device_id TEXT",
+                "ALTER TABLE app_installs ADD COLUMN customer_id INTEGER",
+            ):
+                try: c.execute(stmt)
+                except Exception: pass
             c.execute(
-                "INSERT INTO app_installs(event, user_agent, source_page, referrer, platform, ip, created_at) "
-                "VALUES(?,?,?,?,?,?,?)",
-                (event, ua, source, referrer, platform, ip, _dt.datetime.utcnow().isoformat()+"Z"))
+                "INSERT INTO app_installs(event, user_agent, source_page, referrer, "
+                "platform, ip, created_at, app_version, device_model, os_version, "
+                "screen, language, device_id, customer_id) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (event, ua, source, referrer, platform, ip,
+                 _dt.datetime.utcnow().isoformat()+"Z",
+                 app_version, device_model, os_version, screen, language,
+                 device_id, customer_id))
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}

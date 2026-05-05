@@ -964,6 +964,21 @@
       <!-- Live build status -->
       <div id="twa-build-status" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13.5px"></div>
 
+      <!-- Install analytics (rich device telemetry from /api/app-install) -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+          <h3 style="margin:0 0 4px;font-size:16px">📊 Install metrics</h3>
+          <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="loadTwaInstalls()">↻ Refresh</button>
+        </div>
+        <p style="margin:0 0 14px;color:var(--muted);font-size:13px">
+          Live install funnel + device breakdown. Each launch of the installed app pings <code>/api/app-install</code> once per day per device.
+        </p>
+        <div id="twa-install-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px"></div>
+        <div id="twa-install-detail" style="display:grid;grid-template-columns:1fr 1fr;gap:14px"></div>
+        <h4 style="margin:18px 0 6px;font-size:13.5px">Recent installs (last 50)</h4>
+        <div id="twa-install-recent" style="max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:10px;font-size:12px"></div>
+      </div>
+
       <!-- Step 1: Keystore credentials -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
         <h3 style="margin:0 0 10px;font-size:16px">🔐 Production keystore credentials</h3>
@@ -1937,7 +1952,7 @@ function show(tab) {
   if (tab==="ailisting") loadAIListings();
   if (tab==="socimg")    loadSocImages();
   if (tab==="sitemap")   loadSitemapList();
-  if (tab==="twa")       loadTwaCreds();
+  if (tab==="twa")       { loadTwaCreds(); loadTwaInstalls(); }
 }
 async function adm(path, opts={}) {
   try {
@@ -4853,6 +4868,77 @@ async function twaCopy(i) {
   } catch (e) {
     toast("Could not copy: " + e.message, true);
   }
+}
+
+async function loadTwaInstalls() {
+  const sumEl = document.getElementById("twa-install-summary");
+  const detailEl = document.getElementById("twa-install-detail");
+  const recEl = document.getElementById("twa-install-recent");
+  if (!sumEl) return;
+  sumEl.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center">Loading…</div>';
+  let r;
+  try { r = await adm("/api/admin/twa/installs"); } catch (e) {
+    sumEl.innerHTML = '<div style="grid-column:1/-1;color:#991B1B">Failed: '+(e.message||e)+'</div>';
+    return;
+  }
+  // Top tiles
+  const totals = r.totals || {};
+  const tiles = [
+    { label:"📲 Launched", value: totals.launched || 0, sub:"distinct days × devices" },
+    { label:"✓ Installed", value: totals.installed || 0, sub:"reported install events" },
+    { label:"📱 Unique devices", value: r.unique_devices || 0, sub:"by stable device id" },
+    { label:"👤 Logged-in users", value: r.linked_customers || 0, sub:"matched to a customer" },
+    { label:"👀 FAB shown", value: totals.fab_shown || 0, sub:"" },
+    { label:"📋 Banner shown", value: totals.banner_shown || 0, sub:"" },
+  ];
+  sumEl.innerHTML = tiles.map(t => `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase">${t.label}</div>
+      <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-top:2px">${t.value.toLocaleString()}</div>
+      ${t.sub ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${t.sub}</div>` : ''}
+    </div>
+  `).join("");
+  // By version + by platform two-column breakdowns
+  function bd(title, rows, key) {
+    if (!rows.length) return `<div style="background:var(--bg);padding:10px;border-radius:10px"><b>${title}</b><br><span style="color:var(--muted);font-size:12px">no data yet</span></div>`;
+    const max = Math.max(...rows.map(r => r.n));
+    return `<div style="background:var(--bg);padding:10px;border-radius:10px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px">${title}</div>
+      ${rows.map(row => `
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px">
+          <code style="font-family:ui-monospace,monospace;color:#0F172A;flex-shrink:0;min-width:80px">${(row[key]||"unknown").slice(0,24)}</code>
+          <div style="flex:1;background:#fff;border-radius:4px;height:14px;overflow:hidden">
+            <div style="background:linear-gradient(90deg,#0F766E,#14B8A6);height:100%;width:${(row.n/max*100).toFixed(0)}%"></div>
+          </div>
+          <span style="font-weight:700;min-width:34px;text-align:end">${row.n}</span>
+        </div>`).join("")}
+    </div>`;
+  }
+  detailEl.innerHTML = bd("By app version", r.by_version || [], "app_version") + bd("By platform", r.by_platform || [], "platform");
+  // Recent installs table
+  if (!r.recent || !r.recent.length) {
+    recEl.innerHTML = '<div style="padding:14px;text-align:center;color:var(--muted)">No installs yet.</div>';
+    return;
+  }
+  recEl.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr style="background:var(--bg);position:sticky;top:0">' +
+    ['Time','Event','User','Platform','Version','Device'].map(h => `<th style="text-align:start;padding:6px 8px;font-weight:700">${h}</th>`).join('') +
+    '</tr></thead><tbody>' +
+    r.recent.map(row => {
+      const t = row.created_at ? row.created_at.replace("T"," ").slice(0,16) : "";
+      const who = row.customer_name
+        ? `<b>${escapeHtml(row.customer_name)}</b><br><span style="color:var(--muted)">${escapeHtml(row.customer_phone||row.customer_email||"")}</span>`
+        : `<span style="color:var(--muted)">guest · ${escapeHtml((row.device_id||"").slice(0,8))}…</span>`;
+      const dev = [row.device_model, row.os_version].filter(Boolean).join(" · ") ||
+                  (row.user_agent||"").slice(0, 60);
+      return `<tr style="border-top:1px solid var(--border)">
+        <td style="padding:6px 8px;white-space:nowrap;font-family:ui-monospace,monospace;color:var(--muted)">${t}</td>
+        <td style="padding:6px 8px"><span style="background:#ECFDF5;color:#065F46;padding:1px 6px;border-radius:999px;font-weight:700;font-size:11px">${escapeHtml(row.event||"")}</span></td>
+        <td style="padding:6px 8px">${who}</td>
+        <td style="padding:6px 8px">${escapeHtml(row.platform||"")}</td>
+        <td style="padding:6px 8px;font-family:ui-monospace,monospace">${escapeHtml(row.app_version||"")}</td>
+        <td style="padding:6px 8px;color:var(--muted)">${escapeHtml(dev)}</td>
+      </tr>`;
+    }).join('') + '</tbody></table>';
 }
 
 async function twaTriggerBuild() {

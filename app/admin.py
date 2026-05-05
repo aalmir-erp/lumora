@@ -2473,3 +2473,64 @@ def twa_trigger_build(body: TwaWorkflowReq):
         }
     except Exception as e:
         return {"ok": False, "error": str(e), "manual_url": fallback}
+
+
+@router.get("/twa/installs")
+def twa_installs():
+    """Aggregate install funnel metrics for the admin Mobile-App tab —
+    total events by type, by app version, by device, recent installs
+    (with linked customer name/phone if known)."""
+    from datetime import datetime, timedelta
+    out = {"totals": {}, "by_version": [], "by_platform": [],
+           "recent": [], "unique_devices": 0, "linked_customers": 0}
+    with db.connect() as c:
+        # Make sure the table exists
+        try:
+            c.execute("CREATE TABLE IF NOT EXISTS app_installs("
+                      "id INTEGER PRIMARY KEY AUTOINCREMENT, event TEXT,"
+                      "created_at TEXT)")
+        except Exception: pass
+        try:
+            cnt = c.execute("SELECT event, COUNT(*) AS n FROM app_installs "
+                            "GROUP BY event ORDER BY n DESC").fetchall()
+            out["totals"] = {r["event"]: r["n"] for r in cnt}
+        except Exception: pass
+        try:
+            ver = c.execute(
+                "SELECT app_version, COUNT(*) AS n FROM app_installs "
+                "WHERE app_version IS NOT NULL AND app_version != '' "
+                "GROUP BY app_version ORDER BY n DESC LIMIT 10").fetchall()
+            out["by_version"] = [dict(r) for r in ver]
+        except Exception: pass
+        try:
+            plat = c.execute(
+                "SELECT platform, COUNT(*) AS n FROM app_installs "
+                "WHERE platform IS NOT NULL AND platform != '' "
+                "GROUP BY platform ORDER BY n DESC LIMIT 10").fetchall()
+            out["by_platform"] = [dict(r) for r in plat]
+        except Exception: pass
+        try:
+            ud = c.execute(
+                "SELECT COUNT(DISTINCT device_id) AS n FROM app_installs "
+                "WHERE device_id IS NOT NULL AND device_id != ''").fetchone()
+            out["unique_devices"] = ud["n"] if ud else 0
+        except Exception: pass
+        try:
+            lc = c.execute(
+                "SELECT COUNT(DISTINCT customer_id) AS n FROM app_installs "
+                "WHERE customer_id IS NOT NULL").fetchone()
+            out["linked_customers"] = lc["n"] if lc else 0
+        except Exception: pass
+        # Recent installs with customer details where available
+        try:
+            recent = c.execute(
+                "SELECT i.event, i.app_version, i.device_model, i.os_version, "
+                "i.platform, i.device_id, i.customer_id, i.created_at, "
+                "i.user_agent, i.source_page, "
+                "c.name AS customer_name, c.phone AS customer_phone, "
+                "c.email AS customer_email "
+                "FROM app_installs i LEFT JOIN customers c ON c.id=i.customer_id "
+                "ORDER BY i.id DESC LIMIT 50").fetchall()
+            out["recent"] = [dict(r) for r in recent]
+        except Exception: pass
+    return out
