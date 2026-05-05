@@ -81,12 +81,18 @@ PROPS
 echo ""
 echo "=== Building Wear OS APK ==="
 cd "$BUILD_DIR"
-./gradlew --no-daemon \
+./gradlew --no-daemon --stacktrace --info \
     -Pandroid.injected.signing.store.file="$KS_PATH" \
     -Pandroid.injected.signing.store.password="${KEYSTORE_PASS}" \
     -Pandroid.injected.signing.key.alias="${KEY_ALIAS}" \
     -Pandroid.injected.signing.key.password="${KEY_PASS}" \
-    bundleRelease assembleRelease
+    bundleRelease assembleRelease 2>&1 | tail -200
+GRADLE_EXIT=${PIPESTATUS[0]}
+echo "gradle exit code: $GRADLE_EXIT"
+if [ "$GRADLE_EXIT" != "0" ]; then
+  echo "::error::Wear OS gradle build FAILED with exit $GRADLE_EXIT"
+  exit "$GRADLE_EXIT"
+fi
 
 echo ""
 echo "=== Listing all build outputs ==="

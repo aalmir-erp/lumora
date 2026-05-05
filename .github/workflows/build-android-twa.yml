@@ -318,9 +318,41 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      # Wear OS build deferred: gradle wear-build silently produces no APK
-      # in CI — needs local Android SDK debugging to find the cause.
-      # Source files remain at twa/android/wear/ for future workflow.
+      # -----------------------------------------------------------------
+      # Wear OS standalone APK build (v1.22.83 re-enabled).
+      #
+      # Previous attempts produced no APK because the deprecated
+      # com.google.android.support:wearable artifact silently failed
+      # dependency resolution. Now using a minimal plain-Android project
+      # — no androidx.wear, no support-wearable — only compileOnly
+      # wearable jar for the <uses-library> manifest entry.
+      #
+      # `continue-on-error: true` so a broken Wear build never tanks the
+      # primary phone APK release. Phone APK is the must-ship artefact.
+      # -----------------------------------------------------------------
+      - name: Build Wear OS standalone APK
+        id: wear_build
+        continue-on-error: true
+        env:
+          KS_PATH: ${{ runner.temp }}/servia.jks
+        run: |
+          chmod +x .scripts/build-wear-apk.sh
+          .scripts/build-wear-apk.sh "$KS_PATH" || {
+            echo "::warning::Wear OS build FAILED — continuing without watch APK."
+            mkdir -p twa/android/wear-build/_artifacts
+            echo "Wear build failed in CI run ${{ github.run_id }}." \
+              > twa/android/wear-build/_artifacts/_BUILD_FAILED.txt
+            exit 0
+          }
+
+      - name: Upload Wear OS APK + AAB
+        if: always() && hashFiles('twa/android/wear-build/_artifacts/*.apk') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: servia-android-wear
+          path: twa/android/wear-build/_artifacts/*
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Print install + Play Store instructions
         run: |
