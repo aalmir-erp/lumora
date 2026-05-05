@@ -221,20 +221,39 @@
     s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     s.async = true; document.head.appendChild(s);
     const css = document.createElement("style");
-    /* Hide ONLY the Google-Translate-injected chrome (banner iframe, tooltip
-     * balloon, spinner). The earlier ".skiptranslate { display:none }"
-     * was way too broad — Google adds the "skiptranslate" class to every
-     * element we'd marked with class="notranslate" or translate="no", and
-     * on some inner pages GT also adds it to layout containers it can't
-     * translate. Hiding all of them would blank the page. */
-    css.textContent =
-      "iframe.goog-te-banner-frame, " +
-      "#goog-gt-tt, " +
-      "#goog-te-balloon-frame, " +
-      ".goog-te-spinner-pos { display:none !important } " +
-      "body { top:0 !important } " +
-      ".goog-te-gadget { font-size:0 } " +
-      ".goog-te-gadget > span { display:none }";
+    /* Hide every Google-Translate-injected chrome element (banner wrapper +
+     * inner iframe + tooltip + balloon + spinner). Earlier we tried two
+     * extremes:
+     *
+     *   1. `.skiptranslate { display:none }` — too broad, GT applies that
+     *      class to OUR notranslate-marked elements too, blanking content.
+     *   2. `iframe.goog-te-banner-frame` — too narrow, missed the wrapper
+     *      `<div class="goog-te-banner-frame">` that GT now injects in
+     *      newer versions, so the banner started leaking through.
+     *
+     * Targeted selector list below catches every GT wrapper without
+     * touching our content. Also: force body visibility / position to
+     * prevent GT's CSS from pushing content off-screen on RTL languages
+     * (Arabic / Urdu) where it'd otherwise blank the viewport. */
+    css.textContent = [
+      // GT's own UI chrome — hide aggressively
+      ".goog-te-banner-frame, .goog-te-banner-frame * { display:none !important; visibility:hidden !important; }",
+      "#goog-gt-tt, #goog-te-balloon-frame, .goog-te-spinner-pos, .goog-tooltip { display:none !important; }",
+      // GT pushes body down by 40px to clear its banner. We're hiding the
+      // banner so undo the push. BUT: in RTL, GT also sometimes flips the
+      // display, so be very explicit.
+      "body { top:0 !important; position:static !important; visibility:visible !important; }",
+      "html.translated-ltr, html.translated-rtl { margin-top:0 !important; }",
+      "html.translated-ltr body, html.translated-rtl body { top:0 !important; position:static !important; visibility:visible !important; opacity:1 !important; display:block !important; }",
+      // RTL safety: GT sometimes adds inline styles that nudge body off-screen
+      // on Arabic / Urdu. Pin everything inside body to visible.
+      "html.translated-rtl body > * { visibility:visible !important; opacity:1 !important; }",
+      // The minimal inline gadget container should be invisible (we don't
+      // use it — we trigger translation via cookie only).
+      ".goog-te-gadget { font-size:0; height:0; overflow:hidden; }",
+      ".goog-te-gadget > span { display:none; }",
+      "#google_translate_element { position:absolute !important; left:-9999px !important; top:-9999px !important; width:1px !important; height:1px !important; overflow:hidden !important; }",
+    ].join("\n");
     document.head.appendChild(css);
   }
   // Load it only if (a) saved language is non-English, OR (b) user clicks the picker.
