@@ -32,14 +32,20 @@
         #servia-cart-badge {
           position:fixed;left:14px;bottom:78px;z-index:998;
           background:linear-gradient(135deg,#0F766E,#F59E0B);color:#fff;
-          border-radius:999px;padding:11px 16px;font-weight:800;font-size:13.5px;
-          box-shadow:0 10px 26px rgba(15,23,42,.28);text-decoration:none;
-          display:inline-flex;align-items:center;gap:7px;line-height:1;
-          transition:transform .12s, box-shadow .12s; cursor:pointer;
+          width:44px;height:44px;border-radius:50%;
+          box-shadow:0 8px 22px rgba(15,23,42,.28);text-decoration:none;
+          display:inline-flex;align-items:center;justify-content:center;font-size:20px;
+          transition:transform .12s, box-shadow .12s, opacity .15s; cursor:pointer;
         }
-        #servia-cart-badge:hover { transform:translateY(-2px); box-shadow:0 14px 30px rgba(15,23,42,.32) }
-        #servia-cart-badge .cb-n { background:#fff;color:#7C2D12;border-radius:999px;
-          padding:1px 7px;font-weight:800;font-size:11.5px;min-width:18px;text-align:center }
+        #servia-cart-badge:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.32) }
+        #servia-cart-badge .cb-n {
+          position:absolute;top:-4px;inset-inline-end:-4px;background:#FCD34D;color:#7C2D12;
+          border-radius:999px;padding:1px 6px;font-weight:800;font-size:10.5px;min-width:16px;
+          text-align:center;border:2px solid #fff;line-height:1.3 }
+        #servia-cart-badge .cb-disc-mini {
+          position:absolute;bottom:-4px;inset-inline-end:-4px;background:#FCD34D;color:#7C2D12;
+          border-radius:999px;padding:1px 5px;font-weight:800;font-size:9.5px;
+          border:1.5px solid #fff;line-height:1.2 }
         #servia-cart-pop {
           position:fixed;left:14px;bottom:130px;z-index:999;width:300px;max-width:calc(100vw - 28px);
           background:#fff;border-radius:14px;box-shadow:0 18px 44px rgba(15,23,42,.30);
@@ -87,10 +93,10 @@
       const items = read();
       const n = items.length;
       const disc = discountPctFor(n);
-      el.innerHTML = '🛒 ' + (n === 0
-        ? '<span>Build a bundle</span>'
-        : '<span>Bundle</span><span class="cb-n">' + n + '</span>'
-          + (disc ? '<span style="font-size:11px;background:#FCD34D;color:#7C2D12;padding:1px 7px;border-radius:999px;font-weight:800">−' + disc + '%</span>' : ''));
+      el.title = n === 0 ? "Build a bundle (save up to 15%)" : `Cart · ${n} item${n>1?"s":""}${disc?` · ${disc}% off`:""}`;
+      el.innerHTML = '🛒'
+        + (n > 0 ? '<span class="cb-n">' + n + '</span>' : '')
+        + (disc ? '<span class="cb-disc-mini">−' + disc + '%</span>' : '');
 
       // Popover
       let body;
