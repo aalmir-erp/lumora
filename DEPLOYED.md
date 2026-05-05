@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"hc04xuGKRyKEX9VK0_TJvA"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"E4v44kUrQVSz_Joqc9o55Q"}`
 
 ## Build logs
 ```
@@ -32,9 +32,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NmNhODc5MDQ0MTJkYTJmNDUxNTg3YTMxZjY1MDQ2MmY1YTA0ODI0ZjA5NDliMmI4NzAxMTlmMWViZDVkOTNiNCIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNVQwOToxMDoyOVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:9c56a89429f7038dbebb4f978a457170595194ea5f03fa6861c43cdd34088376
-containerimage.digest: sha256:6ca87904412da2f451587a31f650462f5a04824f0949b2b870119f1ebd5d93b4
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6M2ZlYzIzOTIyMzJmNTRiN2E1OWUxZGM0OTU0NWM0NTAyMWE1YmUyMWUxMjIyZTk5NjQyMGE1OGRjZjFhMGY3YyIsInNpemUiOjI5NTcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNVQwOToyNjowN1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:975bf73ca47e3bdd0817a80b37d08b0cdb09c878a5ef6b40e35a9ddfebd21fd5
+containerimage.digest: sha256:3fec2392232f54b7a59e1dc49545c45021a5be21e1222e996420a58dcf1a0f7c
 image push
 image push
 
@@ -50,7 +50,7 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/12c9c8ff-a256-4f77-b230-92ddb2fcfeff/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/2614c8ed-2659-4581-aa2a-fa0790dee9b8/vol_onr647rhdeir9di9
 Starting Container
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
@@ -59,25 +59,12 @@ INFO:     Started server process [1]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:54665 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.2:35583 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:52508 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:50876 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:60708 - "GET /redoc HTTP/1.1" 404 Not Found
-INFO:     100.64.0.3:60708 - "GET /sw.js HTTP/1.1" 200 OK
-INFO:     100.64.0.3:14340 - "GET //docs HTTP/1.1" 404 Not Found
-INFO:     100.64.0.3:14340 - "GET /sw.js HTTP/1.1" 304 Not Modified
-INFO:     100.64.0.3:14340 - "GET /docs HTTP/1.1" 404 Not Found
-INFO:     100.64.0.3:14340 - "GET /sw.js HTTP/1.1" 304 Not Modified
-INFO:     100.64.0.3:41332 - "GET /openapi.json HTTP/1.1" 200 OK
-INFO:     100.64.0.3:41332 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     100.64.0.3:56512 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.4:56582 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 301 Moved Permanently
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:24178 - "GET /docs HTTP/1.1" 404 Not Found
-INFO:     100.64.0.3:24178 - "GET /favicon.ico HTTP/1.1" 404 Not Found
-INFO:     100.64.0.3:24178 - "GET /redoc HTTP/1.1" 404 Not Found
-INFO:     100.64.0.3:24178 - "GET /favicon.ico HTTP/1.1" 404 Not Found
-INFO:     100.64.0.3:24178 - "GET /redoc HTTP/1.1" 404 Not Found
-INFO:     100.64.0.3:24178 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:18306 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.4:40562 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.3:25386 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 301 Moved Permanently
 ```
