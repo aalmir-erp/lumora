@@ -55,7 +55,7 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "additionalTrustedOrigins": [
-    "www.servia.ae"
+    "https://www.servia.ae"
   ],
   "retainedBundles": [],
   "fullScopeUrl": "https://servia.ae/"
