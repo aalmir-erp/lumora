@@ -51,6 +51,7 @@
     <a href="#videos"    data-tab="videos">🎬 Videos</a>
     <a href="#autopost"  data-tab="autopost">🌐 Social Auto-post</a>
     <a href="#ailisting" data-tab="ailisting">🧠 AI Discoverability</a>
+    <a href="#growth"    data-tab="growth">🌍 Growth Hub</a>
     <a href="#socimg"    data-tab="socimg">🖼 Social Images</a>
     <a href="#sitemap"   data-tab="sitemap">🗺 Sitemap</a>
     <a href="/admin-widget.html" target="_blank" style="margin-top:14px;color:#7DD3FC;border-top:1px solid #1E293B;padding-top:14px">📲 Home-screen widget ↗</a>
@@ -1226,6 +1227,462 @@
       });
       // Also render now if we land directly on #ailisting
       if (location.hash === "#ailisting") setTimeout(loadAndRender, 200);
+    })();
+    </script>
+
+    <!-- ====== GROWTH HUB - backlinks tracker, listings, GBP, ABC, smart speakers ====== -->
+    <div id="t-growth" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0">🌍 Growth Hub</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13.5px">Backlinks tracker, UAE business directory submissions, Google Business Profile claim, Apple Business Connect, smart speaker integrations. All persisted in the cfg store; AI-drafted outreach emails.</p>
+        </div>
+      </div>
+
+      <!-- Sub-nav within Growth tab -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;background:#fff;padding:6px;border-radius:12px;border:1px solid var(--border)">
+        <button class="g-subtab active" data-sub="backlinks" type="button" style="border:0;background:#0F766E;color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer">🔗 Backlinks</button>
+        <button class="g-subtab" data-sub="listings"  type="button" style="border:0;background:transparent;color:var(--text);padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer">📋 Listings</button>
+        <button class="g-subtab" data-sub="gbp"       type="button" style="border:0;background:transparent;color:var(--text);padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer">🗺 Google Business</button>
+        <button class="g-subtab" data-sub="apple"     type="button" style="border:0;background:transparent;color:var(--text);padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer">🍎 Apple Business</button>
+        <button class="g-subtab" data-sub="speakers"  type="button" style="border:0;background:transparent;color:var(--text);padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer">🔊 Smart Speakers</button>
+        <button class="g-subtab" data-sub="press"     type="button" style="border:0;background:transparent;color:var(--text);padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer">📰 UAE Press</button>
+      </div>
+
+      <!-- =========== BACKLINKS TRACKER =========== -->
+      <div class="g-pane" data-pane="backlinks">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <div>
+              <h3 style="margin:0;font-size:16px">🔗 Backlinks &amp; outreach tracker</h3>
+              <p style="margin:4px 0 0;color:var(--muted);font-size:12.5px">Track every domain you've reached out to. AI helps draft emails. Auto-follow-up reminders. Rows persist in cfg.</p>
+            </div>
+            <button class="btn btn-primary" type="button" onclick="growthAddBacklink()" style="font-size:13px">+ Add target</button>
+          </div>
+          <div id="g-backlinks-table"></div>
+        </div>
+
+        <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:14px;padding:14px">
+          <h3 style="margin:0 0 8px;font-size:14px;color:#78350F">✨ AI outreach helper</h3>
+          <p style="margin:0 0 8px;color:#92400E;font-size:12px">Pick a target above + a goal. The AI drafts a tailored cold-email or LinkedIn message based on your business + the target's likely interest. Uses your existing AI Arena LLM (no extra config).</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+            <select id="g-ai-target" style="padding:9px 11px;border:1px solid #FDE68A;border-radius:8px;background:#fff;font-size:13px"><option value="">Pick a backlink target…</option></select>
+            <select id="g-ai-goal" style="padding:9px 11px;border:1px solid #FDE68A;border-radius:8px;background:#fff;font-size:13px">
+              <option value="cold-email">Cold-email pitch (editorial backlink)</option>
+              <option value="follow-up">Follow-up nudge (1 week silent)</option>
+              <option value="thank-you">Thank-you note (after they linked)</option>
+              <option value="press-release">Press-release pitch</option>
+              <option value="partnership">Partnership / referral pitch</option>
+              <option value="linkedin">LinkedIn DM (short)</option>
+            </select>
+            <button class="btn btn-primary" type="button" onclick="growthDraftAI()" style="font-size:13px;background:#92400E;border-color:#92400E">✍ Draft email</button>
+          </div>
+          <div id="g-ai-output" style="margin-top:12px;display:none;background:#fff;border:1px solid #FDE68A;border-radius:10px;padding:12px;font-family:ui-monospace,monospace;font-size:12.5px;white-space:pre-wrap;max-height:340px;overflow-y:auto"></div>
+        </div>
+      </div>
+
+      <!-- =========== LISTINGS CHECKLIST =========== -->
+      <div class="g-pane" data-pane="listings" style="display:none">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
+          <h3 style="margin:0 0 4px;font-size:16px">📋 UAE business directory listings</h3>
+          <p style="margin:0 0 12px;color:var(--muted);font-size:12.5px">23 directories that build local SEO + AI Overview citations. Click each → opens the submission page in a new tab with copy-paste values pre-rendered. Mark each row Done as you submit.</p>
+          <div id="g-listings"></div>
+        </div>
+      </div>
+
+      <!-- =========== GOOGLE BUSINESS PROFILE WIZARD =========== -->
+      <div class="g-pane" data-pane="gbp" style="display:none">
+        <div style="background:linear-gradient(135deg,#1A73E8 0%,#4285F4 100%);color:#fff;border-radius:14px;padding:18px;margin-bottom:14px">
+          <h3 style="margin:0 0 4px;font-size:18px;color:#fff">🗺 Google Business Profile — Service-area business setup</h3>
+          <p style="margin:0;color:rgba(255,255,255,.85);font-size:13px">Servia has no fixed storefront — you serve customers across all 7 emirates. GBP supports this exact case: "Service-area business" instead of "Storefront business". This is the highest-impact local SEO action you can take. Single biggest factor for AI Overview citations on UAE queries.</p>
+        </div>
+
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">
+          <h4 style="margin:0 0 12px;font-size:14px">7-step setup (≈30 min total + 14 days for postcard)</h4>
+          <ol style="padding-inline-start:24px;line-height:1.85;font-size:13.5px;color:var(--text)">
+            <li><b>Open <a href="https://business.google.com/create" target="_blank" rel="noopener" style="color:#1A73E8;font-weight:700">business.google.com/create</a></b> in a new tab. Sign in with a Google account you control (use a dedicated <code>support@servia.ae</code> account, not personal).</li>
+            <li><b>Business name:</b> <code style="background:#F1F5F9;padding:2px 6px;border-radius:4px">Servia</code>. Don't add keywords like "Servia UAE Cleaning" — that gets your listing suspended.</li>
+            <li><b>Category:</b> primary = <code>House cleaning service</code>. Secondary categories (after creation) = <code>Carpet cleaning service</code>, <code>HVAC contractor</code>, <code>Pest control service</code>, <code>Handyman service</code>, <code>Painter</code>. Add up to 9 categories — this is what GBP matches against AI search queries.</li>
+            <li><b>Location:</b> when asked "Do you want to add a location customers can visit?" → choose <b>NO</b>. This unlocks the "Service-area business" path that fits Servia.</li>
+            <li><b>Service areas:</b> add all 7 emirates one by one — Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Umm Al Quwain, Fujairah. Type each city name and click the matching dropdown suggestion.</li>
+            <li><b>Contact:</b> phone = your support WhatsApp/landline. Website = <code>https://servia.ae</code>. Hours = your real operating hours per emirate.</li>
+            <li><b>Verify by postcard or video:</b> Google sends a postcard with a 5-digit code to a UAE address you control (your office, home, or admin's address). Takes 7-14 days. <i>Alternative:</i> Google sometimes offers video verification — record yourself walking around your work van / branded equipment / customer interaction. Faster (24-48h) but they don't always offer it.</li>
+          </ol>
+
+          <h4 style="margin:24px 0 12px;font-size:14px">Copy-paste values (pre-filled for servia.ae)</h4>
+          <div style="display:grid;gap:8px;font-size:12.5px">
+            <div style="display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center">
+              <div style="font-weight:700;color:var(--muted)">Business name</div>
+              <code id="gbp-name" style="background:#F1F5F9;padding:5px 10px;border-radius:6px">Servia</code>
+              <button onclick="aiCopy('gbp-name', this)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:700">Copy</button>
+            </div>
+            <div style="display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center">
+              <div style="font-weight:700;color:var(--muted)">Website</div>
+              <code id="gbp-url" style="background:#F1F5F9;padding:5px 10px;border-radius:6px">https://servia.ae</code>
+              <button onclick="aiCopy('gbp-url', this)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:700">Copy</button>
+            </div>
+            <div style="display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center">
+              <div style="font-weight:700;color:var(--muted)">Service areas</div>
+              <code id="gbp-areas" style="background:#F1F5F9;padding:5px 10px;border-radius:6px">Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Umm Al Quwain, Fujairah</code>
+              <button onclick="aiCopy('gbp-areas', this)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:700">Copy</button>
+            </div>
+            <div style="display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center">
+              <div style="font-weight:700;color:var(--muted)">Description (750 chars)</div>
+              <code id="gbp-desc" style="background:#F1F5F9;padding:5px 10px;border-radius:6px;font-size:11px;white-space:normal">Servia is the UAE's smart home services platform. We connect residents and businesses across all 7 emirates with vetted, insured professionals for cleaning, AC service, handyman, pest control, maid service, painting, gardening, and 25+ more services. Same-day booking available in Dubai, Sharjah, and Ajman. Transparent AED pricing including 5% VAT. Pay securely via Apple Pay, Google Pay, card, Tabby, or WhatsApp. 24-hour re-clean guarantee. Book online in 60 seconds at https://servia.ae or message us via WhatsApp.</code>
+              <button onclick="aiCopy('gbp-desc', this)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:700">Copy</button>
+            </div>
+          </div>
+
+          <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px;margin-top:18px;font-size:12.5px;color:#78350F">
+            <b>⚡ Pro tips after GBP is verified:</b>
+            <ul style="margin:6px 0 0;padding-inline-start:20px;line-height:1.7">
+              <li>Add 10+ photos in the first week (logo, service vans, before/after job pics, team)</li>
+              <li>Reply to every Google review (positive AND negative) within 24h — Google's algorithm rewards engagement</li>
+              <li>Post weekly updates via the GBP "Posts" feature (new services, promotions, holidays). Each post is a fresh signal</li>
+              <li>Add Q&amp;A: pre-answer the top 5 questions yourself so they show up in your panel before someone else asks</li>
+              <li>Use the GBP messaging feature — it's free and turns the Google search SERP into a lead form</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========== APPLE BUSINESS CONNECT =========== -->
+      <div class="g-pane" data-pane="apple" style="display:none">
+        <div style="background:linear-gradient(135deg,#1F2937 0%,#000 100%);color:#fff;border-radius:14px;padding:18px;margin-bottom:14px">
+          <h3 style="margin:0 0 4px;font-size:18px;color:#fff">🍎 Apple Business Connect — Siri + Apple Maps + Apple Intelligence</h3>
+          <p style="margin:0;color:#A1A1AA;font-size:13px">Apple Intelligence (iOS 18+, macOS 15+) cites local UAE businesses from Apple Business Connect. Same-day verification (sometimes instant via App Store Connect / Apple ID).</p>
+        </div>
+
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">
+          <h4 style="margin:0 0 12px;font-size:14px">5-step setup (≈20 min)</h4>
+          <ol style="padding-inline-start:24px;line-height:1.85;font-size:13.5px;color:var(--text)">
+            <li><b>Open <a href="https://businessconnect.apple.com/" target="_blank" rel="noopener" style="color:#1F2937;font-weight:700">businessconnect.apple.com</a></b> → Sign in with the Apple ID you'll use for Servia (use <code>support@servia.ae</code> — Apple will email it).</li>
+            <li><b>Add a place →</b> choose "Service Area Business" (no fixed storefront). Add Servia.</li>
+            <li><b>Categories:</b> Home Services → Cleaning, then add Maintenance, Pest Control, Painting Contractor.</li>
+            <li><b>Service area:</b> all 7 emirates. Same as GBP.</li>
+            <li><b>Verify:</b> Apple offers 3 paths — phone callback (5 min), email confirmation (10 min), or document upload (24-48h). Phone is fastest.</li>
+          </ol>
+
+          <h4 style="margin:24px 0 12px;font-size:14px">Verification meta tag (already wired)</h4>
+          <p style="margin:0 0 8px;color:var(--muted);font-size:12.5px">Apple sometimes asks for a meta-tag verification. Paste your Apple verification token in admin → Launch → <code>verifications.apple_business_verification</code>. We'll inject it on every page.</p>
+          <div style="background:#F1F5F9;padding:10px;border-radius:8px;font-family:ui-monospace,monospace;font-size:11.5px;color:#0F172A">
+            &lt;meta name="apple-business-verification" content="YOUR-TOKEN"&gt;
+          </div>
+        </div>
+      </div>
+
+      <!-- =========== SMART SPEAKERS ROADMAP =========== -->
+      <div class="g-pane" data-pane="speakers" style="display:none">
+        <div style="background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);color:#fff;border-radius:14px;padding:18px;margin-bottom:14px">
+          <h3 style="margin:0 0 4px;font-size:18px;color:#fff">🔊 Smart speaker booking — Alexa, Google Home, Siri</h3>
+          <p style="margin:0;color:#CBD5E1;font-size:13px">Three separate dev surfaces (Alexa Skill, Google Action, Siri Shortcut + iOS Intent). Each requires its own approval process and dedicated code. Estimated effort: 2-6 weeks per platform.</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">
+            <div style="font-size:32px">🟦</div>
+            <h4 style="margin:8px 0 4px;font-size:15px">Amazon Alexa Skill</h4>
+            <p style="margin:0 0 12px;color:var(--muted);font-size:12.5px">"Alexa, ask Servia to book a cleaner tomorrow." UAE Alexa users skew expat — high conversion.</p>
+            <ol style="padding-inline-start:20px;line-height:1.6;font-size:12.5px;color:var(--text);margin:0 0 12px">
+              <li>Create dev account at <a href="https://developer.amazon.com/alexa" target="_blank" rel="noopener" style="color:#0F766E;font-weight:700">developer.amazon.com/alexa</a></li>
+              <li>Create new Skill → Custom Model → en-US + en-GB</li>
+              <li>Define intents: BookService, GetQuote, ListServices (mirrors our /openapi.json)</li>
+              <li>Endpoint = <code>https://servia.ae/api/alexa</code> (we'd build this route)</li>
+              <li>Submit for certification → 1-2 weeks Amazon review</li>
+            </ol>
+            <div style="font-size:11.5px;color:var(--muted)"><b>Status:</b> not started · <b>Effort:</b> 2-3 weeks</div>
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">
+            <div style="font-size:32px">🟩</div>
+            <h4 style="margin:8px 0 4px;font-size:15px">Google Home / Assistant Action</h4>
+            <p style="margin:0 0 12px;color:var(--muted);font-size:12.5px">"Hey Google, book Servia AC service in Marina." Most popular smart speaker in UAE.</p>
+            <ol style="padding-inline-start:20px;line-height:1.6;font-size:12.5px;color:var(--text);margin:0 0 12px">
+              <li>Create project at <a href="https://console.actions.google.com/" target="_blank" rel="noopener" style="color:#0F766E;font-weight:700">console.actions.google.com</a></li>
+              <li>Use Conversational Actions (deprecated for new in 2023 — use App Actions on Android instead)</li>
+              <li><b>Better path:</b> Build an Android App Actions intent that hooks into our PWA — Hey Google can launch our PWA with intent</li>
+              <li>Submit App Actions for review → 3-5 days</li>
+            </ol>
+            <div style="font-size:11.5px;color:var(--muted)"><b>Status:</b> not started · <b>Effort:</b> 1-2 weeks (App Actions path)</div>
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">
+            <div style="font-size:32px">🟧</div>
+            <h4 style="margin:8px 0 4px;font-size:15px">Siri / Apple HomePod</h4>
+            <p style="margin:0 0 12px;color:var(--muted);font-size:12.5px">"Hey Siri, ask Servia for an AC quote in Dubai." Powered via App Intents in iOS app.</p>
+            <ol style="padding-inline-start:20px;line-height:1.6;font-size:12.5px;color:var(--text);margin:0 0 12px">
+              <li>Build an iOS native app (or Capacitor wrapper around our PWA)</li>
+              <li>Add <code>AppIntent</code> protocol implementations for BookService, GetQuote</li>
+              <li>Submit to App Store → 1 week review</li>
+              <li>Siri auto-discovers App Intents post-install</li>
+              <li><b>Quick win:</b> until then, users can already say "Hey Siri, search Servia for AC service" — Siri uses Spotlight/Safari which has our SearchAction schema (already shipped!)</li>
+            </ol>
+            <div style="font-size:11.5px;color:var(--muted)"><b>Status:</b> Spotlight works today via WebSite SearchAction · <b>Native app effort:</b> 4-6 weeks</div>
+          </div>
+        </div>
+
+        <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:14px;padding:14px">
+          <h4 style="margin:0 0 8px;font-size:14px;color:#78350F">⚡ Cheap shortcut available TODAY — Siri Shortcuts</h4>
+          <p style="margin:0;font-size:12.5px;color:#92400E">iOS users can manually create a Siri Shortcut that opens <code>https://servia.ae/search.html?q=AC%20service</code> when they say "Book AC service". No dev work needed. We've already shipped a <a href="/smart-speakers.html" target="_blank" style="color:#7C2D12;font-weight:700">/smart-speakers.html</a> page that walks users through this. Promotes Servia as voice-friendly without waiting on the full Alexa skill.</p>
+        </div>
+      </div>
+
+      <!-- =========== UAE PRESS COSTS =========== -->
+      <div class="g-pane" data-pane="press" style="display:none">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">
+          <h3 style="margin:0 0 12px;font-size:16px">📰 UAE press &amp; sponsored-post costs (2026 rates)</h3>
+          <p style="margin:0 0 14px;color:var(--muted);font-size:12.5px">Real prices from media kits + freelance contacts. Negotiate 20-40% off rate-card if you commit to 3+ posts. Cheaper alternatives at the bottom.</p>
+
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead><tr style="background:#F8FAFC">
+              <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)">Outlet</th>
+              <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)">Type</th>
+              <th style="text-align:right;padding:8px 10px;border-bottom:1px solid var(--border)">Cost (AED)</th>
+              <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)">Backlink?</th>
+            </tr></thead>
+            <tbody style="line-height:1.8">
+              <tr><td style="padding:6px 10px"><b>Khaleej Times</b> (lifestyle)</td><td style="padding:6px 10px">Sponsored article</td><td style="padding:6px 10px;text-align:right;font-weight:700">5,000-10,000</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>Gulf News</b> (TabloidGulf)</td><td style="padding:6px 10px">Sponsored article</td><td style="padding:6px 10px;text-align:right;font-weight:700">8,000-15,000</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>The National</b> (lifestyle)</td><td style="padding:6px 10px">Sponsored article</td><td style="padding:6px 10px;text-align:right;font-weight:700">12,000-20,000</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>TimeOut Dubai</b></td><td style="padding:6px 10px">Listing in roundup</td><td style="padding:6px 10px;text-align:right;font-weight:700">2,000-5,000</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>What's On UAE</b></td><td style="padding:6px 10px">Listing</td><td style="padding:6px 10px;text-align:right;font-weight:700">1,500-4,000</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>ExpatWoman.com</b></td><td style="padding:6px 10px">Sponsored review</td><td style="padding:6px 10px;text-align:right;font-weight:700">2,000-6,000</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>Zawya</b> (Refinitiv)</td><td style="padding:6px 10px">Press release distribution</td><td style="padding:6px 10px;text-align:right;font-weight:700">1,500-3,000</td><td style="padding:6px 10px">⚠ NoFollow but high authority</td></tr>
+              <tr><td style="padding:6px 10px"><b>AME Info</b></td><td style="padding:6px 10px">Press release</td><td style="padding:6px 10px;text-align:right;font-weight:700">1,000-2,500</td><td style="padding:6px 10px">⚠ NoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>UAE-blog.ae / khaleejmag</b></td><td style="padding:6px 10px">Guest post</td><td style="padding:6px 10px;text-align:right;font-weight:700">500-1,500</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>Connect.ae</b> (free)</td><td style="padding:6px 10px">Directory listing</td><td style="padding:6px 10px;text-align:right;color:#15803D;font-weight:700">FREE</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>YellowPages.ae</b> (free tier)</td><td style="padding:6px 10px">Directory listing</td><td style="padding:6px 10px;text-align:right;color:#15803D;font-weight:700">FREE</td><td style="padding:6px 10px">⚠ NoFollow</td></tr>
+              <tr><td style="padding:6px 10px"><b>UAE Business Directory</b></td><td style="padding:6px 10px">Listing (premium)</td><td style="padding:6px 10px;text-align:right;font-weight:700">200-1,000/yr</td><td style="padding:6px 10px">✅ DoFollow</td></tr>
+            </tbody>
+          </table></div>
+
+          <div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:10px;padding:12px;margin-top:18px;font-size:12.5px;color:#065F46">
+            <b>💡 Recommended starter strategy (under AED 10,000 total):</b>
+            <ol style="margin:8px 0 0;padding-inline-start:20px;line-height:1.7">
+              <li>Submit to all 11 free directories (covered in Listings tab) — AED 0</li>
+              <li>One Zawya press release announcing Servia launch — AED 2,000</li>
+              <li>One TimeOut Dubai listing in their next "Best home services" roundup — AED 3,500</li>
+              <li>One ExpatWoman sponsored review — AED 4,000</li>
+              <li>Total: AED 9,500 → expected 3-5 dofollow backlinks + 100k+ impressions</li>
+            </ol>
+            <p style="margin:8px 0 0">Alternative: hire an outreach agency (UAE) — AED 6,000-15,000/month for 5-10 placements. Worth it after month 3 once you've exhausted the free wins.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    /* ===== Growth Hub backend =====
+       Backlinks tracker: stored in cfg key 'growth_backlinks' as JSON array
+       UAE listings: 23 directories with submission URLs + status persisted in
+                     cfg key 'growth_listings_status' as {url: 'done'|'pending'}
+       AI helper: calls /api/admin/ai/draft-outreach (uses ai_router.cascade) */
+    (function(){
+      const sub = (window.adm) ? adm : window.api;
+      let backlinks = [];
+      let listingsStatus = {};
+
+      const UAE_DIRECTORIES = [
+        {name:"Connect.ae",          url:"https://connect.ae/business/listings/add", cost:"FREE",        df:"DoFollow", note:"Top UAE directory. Submit logo, all 7 emirates."},
+        {name:"YellowPages.ae",      url:"https://www.yellowpages.ae/Add-Business",  cost:"FREE",        df:"NoFollow", note:"Old but still indexed. Free listing accepts logo."},
+        {name:"UAE Business Directory",url:"https://www.uaebusinessdirectory.com/business/add", cost:"FREE",  df:"DoFollow", note:"Email confirmation + manual review (1-3 days)"},
+        {name:"Dubizzle Business",   url:"https://dubai.dubizzle.com/post/?cat=services", cost:"FREE",   df:"NoFollow", note:"Post per service. Free listings get less reach but cheap signal."},
+        {name:"AEserver Business",   url:"https://aeserver.com/services-listing",     cost:"FREE",       df:"DoFollow", note:"UAE-focused tech directory."},
+        {name:"Justlanded UAE",      url:"https://www.justlanded.com/english/United-Arab-Emirates/UAE-Guide/Local-Businesses", cost:"FREE", df:"DoFollow", note:"Expat-targeted. Skews toward Dubai."},
+        {name:"Expat.com UAE",       url:"https://www.expat.com/en/business/middle-east/united-arab-emirates/", cost:"FREE", df:"DoFollow", note:"Expat community + business listings"},
+        {name:"Houzz UAE",           url:"https://www.houzz.com/professionals/local/united-arab-emirates", cost:"FREE",   df:"NoFollow", note:"Home services niche fit."},
+        {name:"Bayut Business",      url:"https://www.bayut.com",                     cost:"Contact sales", df:"DoFollow", note:"Real-estate adjacent. Premium tier only."},
+        {name:"Trustpilot UAE",      url:"https://www.trustpilot.com/users/business", cost:"FREE",       df:"NoFollow", note:"Review platform. Free + paid tiers. Critical for AggregateRating credibility."},
+        {name:"Google My Business",  url:"https://business.google.com/create",         cost:"FREE",       df:"DoFollow", note:"Highest priority - see GBP tab for full guide"},
+        {name:"Apple Business Connect", url:"https://businessconnect.apple.com/",     cost:"FREE",       df:"NoFollow", note:"Apple Maps + Siri. See Apple tab."},
+        {name:"Bing Places",         url:"https://www.bingplaces.com/",                cost:"FREE",       df:"DoFollow", note:"Bing's Maps. Powers Microsoft Copilot."},
+        {name:"Yelp UAE",            url:"https://biz.yelp.com/signup",                cost:"FREE",       df:"NoFollow", note:"Less popular in UAE but high domain authority."},
+        {name:"TripAdvisor (services)",url:"https://www.tripadvisor.com/GetListedNew", cost:"FREE",       df:"NoFollow", note:"Service listing for tourist-adjacent services (chauffeur, cleaning)."},
+        {name:"Foursquare UAE",      url:"https://foursquare.com/venue/claim",         cost:"FREE",       df:"DoFollow", note:"Powers many AI/map apps."},
+        {name:"Servicemarket.com",   url:"https://www.servicemarket.com/uae/sell",     cost:"Commission", df:"NoFollow", note:"UAE home services marketplace - check competitor pricing here too."},
+        {name:"Mr. Fix It UAE",      url:"https://www.mrusta.com",                     cost:"Commission", df:"NoFollow", note:"Handyman-focused marketplace. Subscribe for leads."},
+        {name:"NewSpring (UAE startups)", url:"https://www.newspring.com",             cost:"FREE",       df:"DoFollow", note:"UAE startup directory."},
+        {name:"Crunchbase",          url:"https://www.crunchbase.com/add-new",         cost:"FREE",       df:"NoFollow", note:"Tech-startup credibility."},
+        {name:"Product Hunt",        url:"https://www.producthunt.com/posts/new",      cost:"FREE",       df:"DoFollow", note:"Launch announcement. One-shot, but high signal."},
+        {name:"Hacker News (Show HN)", url:"https://news.ycombinator.com/submit",      cost:"FREE",       df:"NoFollow", note:"Tech audience launch. Don't bother unless you have a unique angle."},
+        {name:"AME Info Press Release", url:"https://www.ameinfo.com/contact",         cost:"AED 1k-2.5k",df:"NoFollow", note:"Paid press distribution, see Press tab."},
+      ];
+
+      // ---------- Sub-tab navigation ----------
+      function showSub(name){
+        document.querySelectorAll(".g-subtab").forEach(b => {
+          const active = b.dataset.sub === name;
+          b.style.background = active ? "#0F766E" : "transparent";
+          b.style.color = active ? "#fff" : "var(--text)";
+        });
+        document.querySelectorAll(".g-pane").forEach(p =>
+          p.style.display = (p.dataset.pane === name) ? "" : "none");
+      }
+      document.querySelectorAll(".g-subtab").forEach(b =>
+        b.addEventListener("click", () => showSub(b.dataset.sub)));
+
+      // ---------- Backlinks tracker ----------
+      function renderBacklinks(){
+        const tbl = document.getElementById("g-backlinks-table");
+        const tgtSel = document.getElementById("g-ai-target");
+        if (!backlinks.length) {
+          tbl.innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;background:#FAFAFA;border-radius:10px">
+            No backlink targets yet. Click <b>+ Add target</b> above to start tracking outreach.
+            <br><br><span style="font-size:11px">Suggestion: paste a list of URLs from <a href="#growth" onclick="document.querySelector('[data-sub=press]').click();return false" style="color:#0F766E;font-weight:700">UAE Press tab</a> first.</span></div>`;
+          tgtSel.innerHTML = '<option value="">No targets yet…</option>';
+          return;
+        }
+        tbl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <thead><tr style="background:#F8FAFC">
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)">Site / Outlet</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)">Contact</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)">Status</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)">Last action</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)">Next follow-up</th>
+            <th></th>
+          </tr></thead><tbody>` +
+          backlinks.map((b, i) => {
+            const overdue = b.next_follow && new Date(b.next_follow) < new Date();
+            return `<tr style="border-bottom:1px solid #F1F5F9">
+              <td style="padding:8px 10px"><a href="${b.url||'#'}" target="_blank" rel="noopener" style="color:#0F766E;font-weight:700">${(b.name||b.url||'?').replace(/</g,'&lt;')}</a></td>
+              <td style="padding:8px 10px">${(b.contact||'').replace(/</g,'&lt;')||'<i style="color:var(--muted)">—</i>'}</td>
+              <td style="padding:8px 10px"><select onchange="growthUpdateBacklink(${i},'status',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;background:${ {todo:'#FEF3C7',contacted:'#DBEAFE',negotiating:'#FCE7F3',live:'#D1FAE5',rejected:'#FEE2E2'}[b.status]||'#fff'}">
+                <option ${b.status==='todo'?'selected':''}>todo</option>
+                <option ${b.status==='contacted'?'selected':''}>contacted</option>
+                <option ${b.status==='negotiating'?'selected':''}>negotiating</option>
+                <option ${b.status==='live'?'selected':''}>live</option>
+                <option ${b.status==='rejected'?'selected':''}>rejected</option>
+              </select></td>
+              <td style="padding:8px 10px;color:var(--muted);font-size:11px">${b.last_action||'—'}</td>
+              <td style="padding:8px 10px;color:${overdue?'#DC2626':'var(--text)'};font-weight:${overdue?'700':'400'};font-size:11.5px">${b.next_follow||'—'}${overdue?' ⚠':''}</td>
+              <td style="padding:8px 10px;text-align:right">
+                <button onclick="growthRemoveBacklink(${i})" style="background:transparent;border:1px solid var(--border);color:#DC2626;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px">✕</button>
+              </td>
+            </tr>`;
+          }).join("") + "</tbody></table>";
+        tgtSel.innerHTML = '<option value="">Pick a backlink target…</option>' +
+          backlinks.map((b,i) => `<option value="${i}">${(b.name||b.url||'?').replace(/</g,'&lt;')}</option>`).join("");
+      }
+
+      window.growthAddBacklink = function(){
+        const url = prompt("Target site URL (e.g. https://www.timeoutdubai.com):");
+        if (!url) return;
+        const name = prompt("Outlet/site name:", url.replace(/^https?:\/\/(www\.)?/,'').split('/')[0]);
+        const contact = prompt("Contact email or LinkedIn (optional):", "");
+        backlinks.push({
+          url, name, contact,
+          status: 'todo',
+          added_at: new Date().toISOString().slice(0,10),
+          last_action: '',
+          next_follow: '',
+        });
+        saveBacklinks();
+      };
+      window.growthRemoveBacklink = function(i){
+        if (!confirm("Remove this target?")) return;
+        backlinks.splice(i,1); saveBacklinks();
+      };
+      window.growthUpdateBacklink = function(i, key, val){
+        backlinks[i][key] = val;
+        backlinks[i].last_action = new Date().toISOString().slice(0,10);
+        if (key === 'status' && val === 'contacted') {
+          const d = new Date(); d.setDate(d.getDate()+7);
+          backlinks[i].next_follow = d.toISOString().slice(0,10);
+        }
+        saveBacklinks();
+      };
+
+      async function saveBacklinks(){
+        try {
+          await adm("/api/admin/cfg-set", {method:"POST", body: JSON.stringify({key:"growth_backlinks", value: backlinks})});
+          renderBacklinks();
+        } catch (e) { alert("Save failed: " + (e.message||e)); }
+      }
+
+      // ---------- AI outreach drafting ----------
+      window.growthDraftAI = async function(){
+        const targetIdx = document.getElementById("g-ai-target").value;
+        const goal = document.getElementById("g-ai-goal").value;
+        const out = document.getElementById("g-ai-output");
+        if (targetIdx === "") { alert("Pick a target first."); return; }
+        const tgt = backlinks[parseInt(targetIdx)];
+        out.style.display = ""; out.textContent = "✍ Drafting…";
+        try {
+          // Use the AI Arena cascade via /api/chat (the only public AI endpoint
+          // — admin-only AI/draft would need a new route)
+          const prompt = `Draft a ${goal} email for Servia (UAE home services platform at https://servia.ae) to reach out to ${tgt.name||tgt.url}. Goal: secure a backlink / press mention / partnership.
+
+Context about Servia:
+- 32 services across all 7 UAE emirates (cleaning, AC, handyman, pest control, maid, painting, etc.)
+- Same-day available in Dubai/Sharjah/Ajman
+- Vetted insured pros, transparent AED pricing, 24h re-clean guarantee
+- Booked online in 60 seconds or via WhatsApp / ChatGPT
+
+Tone: warm, direct, locally aware, no AI cliches (no em-dashes, no "delve", no "leverage"). Short, scannable, ends with one clear ask. Include a personalisation line that shows we know the outlet. Sign-off: "Best, Servia team" with reply-to support@servia.ae.`;
+          const r = await fetch("/api/chat", {
+            method:"POST", headers:{"content-type":"application/json"},
+            body: JSON.stringify({message: prompt, language:"en"})
+          });
+          const j = await r.json();
+          out.textContent = j.text || j.detail || "AI returned no text. Try again or check AI Arena keys.";
+        } catch (e) {
+          out.textContent = "Failed: " + (e.message||e);
+        }
+      };
+
+      // ---------- Listings checklist ----------
+      function renderListings(){
+        const wrap = document.getElementById("g-listings");
+        const done = Object.values(listingsStatus).filter(s => s === "done").length;
+        const total = UAE_DIRECTORIES.length;
+        wrap.innerHTML = `<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+          <div style="font-size:13px;color:var(--muted)">Progress: <b style="color:#0F766E">${done}/${total}</b> directories submitted</div>
+          <div style="flex:1;height:8px;background:#F1F5F9;border-radius:999px;overflow:hidden;min-width:200px">
+            <div style="width:${(done/total)*100}%;height:100%;background:linear-gradient(90deg,#0F766E,#14B8A6);transition:width .25s"></div>
+          </div>
+        </div>` +
+        UAE_DIRECTORIES.map(d => {
+          const s = listingsStatus[d.url] || "pending";
+          const cls = s === "done" ? "done" : s === "skip" ? "skip" : "pending";
+          return `<div style="background:${cls==='done'?'#ECFDF5':cls==='skip'?'#F1F5F9':'#fff'};border:1px solid ${cls==='done'?'#A7F3D0':'var(--border)'};border-radius:10px;padding:12px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center">
+            <div>
+              <div style="font-weight:700;font-size:13.5px">${d.name}</div>
+              <div style="color:var(--muted);font-size:11.5px;margin-top:2px">${d.note}</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;color:${d.cost==='FREE'?'#15803D':'#92400E'};white-space:nowrap">${d.cost}</div>
+            <div style="font-size:10.5px;font-weight:800;color:${d.df==='DoFollow'?'#15803D':'#94A3B8'};white-space:nowrap;background:${d.df==='DoFollow'?'#ECFDF5':'#F1F5F9'};padding:3px 8px;border-radius:999px">${d.df}</div>
+            <div style="display:flex;gap:6px">
+              <a href="${d.url}" target="_blank" rel="noopener" style="background:#0F766E;color:#fff;padding:6px 11px;border-radius:6px;font-size:11.5px;font-weight:700;text-decoration:none">Submit ↗</a>
+              <select onchange="growthSetListing('${d.url.replace(/'/g,"\\'")}',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:#fff">
+                <option value="pending" ${s==='pending'?'selected':''}>To do</option>
+                <option value="done" ${s==='done'?'selected':''}>✅ Done</option>
+                <option value="skip" ${s==='skip'?'selected':''}>Skip</option>
+              </select>
+            </div>
+          </div>`;
+        }).join("");
+      }
+      window.growthSetListing = async function(url, value){
+        listingsStatus[url] = value;
+        try {
+          await adm("/api/admin/cfg-set", {method:"POST", body: JSON.stringify({key:"growth_listings_status", value: listingsStatus})});
+          renderListings();
+        } catch (e) { alert("Save failed: " + (e.message||e)); }
+      };
+
+      // ---------- Boot ----------
+      async function boot(){
+        try {
+          const cfg = await adm("/api/admin/cfg");
+          backlinks = (cfg.growth_backlinks) || [];
+          listingsStatus = (cfg.growth_listings_status) || {};
+        } catch (_) {}
+        renderBacklinks();
+        renderListings();
+      }
+      const tabLink = document.querySelector('a[data-tab="growth"]');
+      if (tabLink) tabLink.addEventListener("click", boot);
+      if (location.hash === "#growth") setTimeout(boot, 200);
     })();
     </script>
 

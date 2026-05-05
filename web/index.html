@@ -33,7 +33,7 @@
 <link rel="apple-touch-icon" href="/icon-192.svg">
 <!-- Critical above-fold CSS inlined — kills the render-blocking round-trip.
      style.css + widget.css load asynchronously below. -->
-<style>:root{--bg:#FAFAFA;--surface:#FFFFFF;--text:#0F172A;--muted:#64748B;--border:#E2E8F0;--primary:#0D9488;--primary-dark:#0F766E;--accent:#F59E0B;}*,*::before,*::after{box-sizing:border-box;}html,body{margin:0;padding:0;overflow-x:hidden;max-width:100vw;}body{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--text);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;width:100%;max-width:100vw;}img,svg{max-width:100%;height:auto;display:block;}a{color:var(--primary-dark);}.uae-flag-strip{height:4px;width:100%;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%);}.nav{background:#fff;border-bottom:1px solid var(--border);}.nav-inner{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;}.nav-links{display:flex;gap:18px;margin-inline-start:auto;}.nav-links a{color:var(--text);font-weight:600;font-size:14px;text-decoration:none;}.nav-cta{display:flex;gap:8px;align-items:center;}.btn{padding:11px 18px;min-height:44px;border-radius:999px;border:1px solid var(--border);font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;background:var(--surface);color:var(--text);display:inline-flex;align-items:center;justify-content:center;line-height:1.2;}.btn-primary{background:var(--primary-dark);color:#fff;border-color:var(--primary-dark);}.btn-ghost{background:transparent;}.container{max-width:1180px;margin:0 auto;padding:0 20px;}.hero-shell{position:relative;padding:56px 24px 80px;overflow:hidden;color:#fff;background:linear-gradient(160deg,#0F766E 0%,#0D9488 35%,#14B8A6 100%);contain:layout paint;}.hero-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center;position:relative;z-index:1;}@media(max-width:880px){.hero-grid{grid-template-columns:1fr;gap:24px;}}.hero-h1{font-size:56px;font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:14px 0 18px;color:#fff;min-height:200px;contain:layout style;}@media(max-width:720px){.hero-h1{font-size:36px;min-height:160px;}}.hero-sub{font-size:19px;color:#ECFDF5;margin:0 0 28px;max-width:540px;line-height:1.5;min-height:84px;}.mascot-frame{position:relative;width:280px;height:280px;margin:0 auto;aspect-ratio:1/1;}.live-strip{padding:12px 0;min-height:46px;overflow:hidden;}.stats-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:18px;padding:32px 24px;max-width:1100px;margin:0 auto;}.stat{text-align:center;padding:20px;min-height:120px;background:var(--surface);border:1px solid var(--border);border-radius:18px;}.steps-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}.step{background:var(--surface);border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border);min-height:180px;}.mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#fff;border-top:1px solid var(--border);display:none;}.mobile-nav-inner{display:flex;max-width:540px;margin:0 auto;}.mobile-nav a{flex:1;text-align:center;padding:10px 6px;min-height:56px;text-decoration:none;color:var(--text);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;}.mobile-nav .ico{display:block;font-size:22px;margin-bottom:2px;}@media (max-width:720px){.mobile-nav{display:block;}body{padding-bottom:64px;}}#lumora-version{display:inline-block;min-width:48px;text-align:center;}.us-launcher{min-width:56px !important;min-height:56px !important;}footer{background:#0F172A;color:#fff;padding:48px 24px;min-height:240px;}footer .container{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:32px;max-width:1180px;margin:0 auto;}footer h3{color:#fff;font-size:13px;margin:0 0 12px;font-weight:700;}footer a{color:#CBD5E1;font-size:13px;text-decoration:none;line-height:2;}footer a:hover{color:#fff;}.btn-bigwa{background:#075E54 !important;color:#fff !important;min-height:48px;padding:14px 24px;border-radius:999px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:10px;}.btn-bigbook{background:#fff;color:var(--primary-dark);padding:14px 24px;border-radius:999px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:10px;min-height:48px;}.wa-fab{min-width:56px !important;min-height:56px !important;}.rotator{display:block;width:100%;height:1.15em;min-height:1.15em;max-height:1.15em;overflow:hidden;position:relative;line-height:1.1;contain:layout style paint size;will-change:contents;}.rotator>span{display:block;width:100%;line-height:1.1;background:linear-gradient(90deg,#FCD34D 30%,#fff 50%,#FCD34D 70%);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% auto;position:absolute;left:0;right:0;top:0;opacity:0;transform:translateY(20px);transition:opacity .45s ease,transform .45s ease;pointer-events:none;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;}.rotator>span.active{opacity:1;transform:translateY(0);}.rotator>span.exiting{opacity:0;transform:translateY(-20px);}@media (prefers-reduced-motion:reduce){.rotator>span{transition:none}}.svc-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start;margin:14px 0 8px}.svc-chips span{display:inline-flex;gap:4px;align-items:center;background:rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:5px 10px;font-size:11.5px;font-weight:600;line-height:1;text-shadow:0 1px 0 rgba(0,0,0,.18)}.svc-chips span b{font-weight:800;color:#FCD34D}@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important;}}@media (max-width:720px){.live-strip,.hero-shell .float-icon,.wa-fab{animation:none !important;}.live-strip .row{animation:none !important;}.live-strip{display:none;}.hero-shell .float-icon{display:none;}.hero-shell::before,.hero-shell::after{display:none;}.mascot-frame::after{display:none;}}</style>
+<style>:root{--bg:#FAFAFA;--surface:#FFFFFF;--text:#0F172A;--muted:#64748B;--border:#E2E8F0;--primary:#0D9488;--primary-dark:#0F766E;--accent:#F59E0B;}*,*::before,*::after{box-sizing:border-box;}html,body{margin:0;padding:0;overflow-x:hidden;max-width:100vw;}body{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--text);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;width:100%;max-width:100vw;}img,svg{max-width:100%;height:auto;display:block;}a{color:var(--primary-dark);}.uae-flag-strip{height:4px;width:100%;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%);}.nav{background:#fff;border-bottom:1px solid var(--border);}.nav-inner{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;}.nav-links{display:flex;gap:18px;margin-inline-start:auto;}.nav-links a{color:var(--text);font-weight:600;font-size:14px;text-decoration:none;}.nav-cta{display:flex;gap:8px;align-items:center;}.btn{padding:11px 18px;min-height:44px;border-radius:999px;border:1px solid var(--border);font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;background:var(--surface);color:var(--text);display:inline-flex;align-items:center;justify-content:center;line-height:1.2;}.btn-primary{background:var(--primary-dark);color:#fff;border-color:var(--primary-dark);}.btn-ghost{background:transparent;}.container{max-width:1180px;margin:0 auto;padding:0 20px;}.hero-shell{position:relative;padding:56px 24px 80px;overflow:hidden;color:#fff;background:linear-gradient(160deg,#0F766E 0%,#0D9488 35%,#14B8A6 100%);contain:layout paint;}.hero-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center;position:relative;z-index:1;}@media(max-width:880px){.hero-grid{grid-template-columns:1fr;gap:24px;}}.hero-h1{font-size:56px;font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:14px 0 18px;color:#fff;min-height:200px;contain:layout style;}@media(max-width:720px){.hero-h1{font-size:36px;min-height:160px;}}.hero-sub{font-size:19px;color:#ECFDF5;margin:0 0 28px;max-width:540px;line-height:1.5;min-height:84px;}.mascot-frame{position:relative;width:280px;height:280px;margin:0 auto;aspect-ratio:1/1;}.live-strip{padding:12px 0;min-height:46px;overflow:hidden;}.stats-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:18px;padding:32px 24px;max-width:1100px;margin:0 auto;}.stat{text-align:center;padding:20px;min-height:120px;background:var(--surface);border:1px solid var(--border);border-radius:18px;}.steps-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}.step{background:var(--surface);border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border);min-height:180px;}.mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#fff;border-top:1px solid var(--border);display:none;}.mobile-nav-inner{display:flex;max-width:540px;margin:0 auto;}.mobile-nav a{flex:1;text-align:center;padding:10px 6px;min-height:56px;text-decoration:none;color:var(--text);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;}.mobile-nav .ico{display:block;font-size:22px;margin-bottom:2px;}@media (max-width:720px){.mobile-nav{display:block;}body{padding-bottom:64px;}}#lumora-version{display:inline-block;min-width:48px;text-align:center;}.us-launcher{min-width:56px !important;min-height:56px !important;}footer{background:#0F172A;color:#fff;padding:48px 24px;min-height:240px;}footer .container{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:32px;max-width:1180px;margin:0 auto;}footer h3{color:#fff;font-size:13px;margin:0 0 12px;font-weight:700;}footer a{color:#CBD5E1;font-size:13px;text-decoration:none;line-height:2;}footer a:hover{color:#fff;}.btn-bigwa{background:#075E54 !important;color:#fff !important;min-height:48px;padding:14px 24px;border-radius:999px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:10px;}.btn-bigbook{background:#fff;color:var(--primary-dark);padding:14px 24px;border-radius:999px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:10px;min-height:48px;}.wa-fab{min-width:56px !important;min-height:56px !important;}.rotator{display:block;width:100%;height:1.15em;min-height:1.15em;max-height:1.15em;overflow:hidden;position:relative;line-height:1.1;contain:layout style paint size;will-change:contents;}.rotator>span{display:block;width:100%;line-height:1.1;background:linear-gradient(90deg,#FCD34D 30%,#fff 50%,#FCD34D 70%);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% auto;position:absolute;left:0;right:0;top:0;opacity:0;transform:translateY(20px);transition:opacity .45s ease,transform .45s ease;pointer-events:none;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;}.rotator>span.active{opacity:1;transform:translateY(0);}.rotator>span.exiting{opacity:0;transform:translateY(-20px);}@media (prefers-reduced-motion:reduce){.rotator>span{transition:none}}.svc-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start;margin:14px 0 8px}.svc-chips span{display:inline-flex;gap:4px;align-items:center;background:rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:5px 10px;font-size:11.5px;font-weight:600;line-height:1;text-shadow:0 1px 0 rgba(0,0,0,.18)}.svc-chips span b{font-weight:800;color:#FCD34D}.hero-search-wrap{position:relative;margin:6px 0 14px;max-width:580px;}.hero-search-box{display:flex;align-items:center;background:#fff;border-radius:16px;padding:6px 8px 6px 18px;box-shadow:0 18px 48px rgba(0,0,0,.22);}.hero-search-box .hsr-ico{font-size:18px;margin-inline-end:8px;color:#0F766E;flex-shrink:0;}.hero-search-box input{flex:1;border:0;outline:none;font-size:15px;padding:14px 4px;background:transparent;color:#0F172A;min-width:0;font-family:inherit;}.hero-search-box input::placeholder{color:#94A3B8;}.hero-search-box .hsr-mic{background:transparent;border:0;width:40px;height:40px;border-radius:10px;cursor:pointer;font-size:18px;color:#475569;display:flex;align-items:center;justify-content:center;flex-shrink:0;}.hero-search-box .hsr-mic:hover{background:#F0FDFA;color:#0F766E;}.hero-search-box .hsr-mic.listening{background:#DC2626;color:#fff;animation:hsrpulse 1s ease-in-out infinite;}@keyframes hsrpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}.hero-search-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:14px;box-shadow:0 18px 48px rgba(0,0,0,.28);max-height:60vh;overflow-y:auto;z-index:50;color:#0F172A;}.hero-search-dropdown:not([hidden]){display:block;animation:hsrpop .15s ease-out;}@keyframes hsrpop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}.hero-search-dropdown .hsr-section{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#94A3B8;padding:10px 14px 4px;}.hero-search-dropdown .hsr-row{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;text-decoration:none;color:#0F172A;}.hero-search-dropdown .hsr-row:hover,.hero-search-dropdown .hsr-row.sel{background:#F0FDFA;}.hero-search-dropdown .hsr-row .ic{font-size:16px;flex-shrink:0;width:22px;text-align:center;}.hero-search-dropdown .hsr-row .b{flex:1;min-width:0;}.hero-search-dropdown .hsr-row .t{font-size:13px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.hero-search-dropdown .hsr-row .s{font-size:11px;color:#64748B;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.hero-search-dropdown .hsr-row .k{font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:999px;background:#F1F5F9;color:#475569;flex-shrink:0;}.hero-search-dropdown .hsr-row .k.service{background:#ECFDF5;color:#065F46}.hero-search-dropdown .hsr-row .k.area{background:#EFF6FF;color:#1E40AF}.hero-search-dropdown .hsr-row .k.faq{background:#F3E8FF;color:#5B21B6}.hero-search-dropdown .hsr-row .k.blog{background:#FEF3C7;color:#92400E}.hero-search-dropdown .hsr-row mark{background:#FEF3C7;color:#7C2D12;padding:0 2px;border-radius:3px;}.hero-search-dropdown .hsr-foot{display:flex;gap:6px;padding:8px 10px;border-top:1px solid #F1F5F9;background:#FAFAFA;border-radius:0 0 14px 14px;flex-wrap:wrap;}.hero-search-dropdown .hsr-foot a{background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:5px 10px;font-size:11.5px;font-weight:700;color:#475569;text-decoration:none;}.hero-search-dropdown .hsr-foot a.gpt{background:linear-gradient(135deg,#5B21B6,#7C3AED);color:#fff;border-color:transparent;}.hero-search-dropdown .hsr-foot .sp{flex:1;}.hero-svc-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0 18px;max-width:580px;}.hero-svc-quick .hsq{background:rgba(255,255,255,.14);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.26);border-radius:12px;padding:10px 12px;text-decoration:none;color:#fff;display:flex;align-items:center;gap:8px;transition:transform .15s,background .15s,border-color .15s;}.hero-svc-quick .hsq:hover{transform:translateY(-2px);background:rgba(255,255,255,.24);border-color:#FCD34D;}.hero-svc-quick .hsq .e{font-size:18px;line-height:1;flex-shrink:0;}.hero-svc-quick .hsq>span:nth-child(2){flex:1;font-weight:700;font-size:13px;line-height:1.2;}.hero-svc-quick .hsq .p{font-size:10.5px;font-weight:800;color:#FCD34D;background:rgba(0,0,0,.22);padding:2px 7px;border-radius:999px;flex-shrink:0;}.hero-svc-quick .hsq.more{background:rgba(252,211,77,.22);border-color:#FCD34D;}@media (max-width:720px){.hero-svc-quick{grid-template-columns:repeat(2,1fr)}.hero-svc-quick .hsq{padding:9px 10px;font-size:12px}}@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important;}}@media (max-width:720px){.live-strip,.hero-shell .float-icon,.wa-fab{animation:none !important;}.live-strip .row{animation:none !important;}.live-strip{display:none;}.hero-shell .float-icon{display:none;}.hero-shell::before,.hero-shell::after{display:none;}.mascot-frame::after{display:none;}}</style>
 <link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
 <link rel="preload" as="style" href="/widget.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css"></noscript>
 
@@ -259,14 +259,35 @@
         <span style="font-size:0.62em;font-weight:600;color:#FCD34D" data-i18n="hero_h1_post">in 60 seconds — same day.</span>
       </h1>
       <p class="hero-sub" data-i18n="hero_sub">One app for your home, business and life across all 7 emirates. Vetted pros · transparent prices · pay securely in advance · arrival ETA on WhatsApp.</p>
-      <div class="svc-chips" aria-hidden="true">
-        <span>🏠 <b>Home</b></span>
-        <span>🏢 <b>Business</b></span>
-        <span>🚗 <b>On-the-road</b></span>
-        <span>📱 <b>Tech repair</b></span>
-        <span>👨‍🔧 32 services</span>
-        <span>📍 7 emirates</span>
+
+      <!-- Prominent search bar - the primary entry point for users who land
+           on the home page. Same combobox UX as nav + /search.html (one
+           click and they're navigated/answered). Powered by hero-search.js
+           inline below. -->
+      <div class="hero-search-wrap" id="hero-search-wrap">
+        <div class="hero-search-box">
+          <span class="hsr-ico">🔍</span>
+          <input id="hero-search" type="search" autocomplete="off"
+                 placeholder="What do you need? Try 'AC service Sharjah' or 'deep cleaning JLT'…"
+                 aria-label="Search Servia services">
+          <button type="button" class="hsr-mic" id="hero-search-mic" title="Voice search" aria-label="Voice search">🎤</button>
+        </div>
+        <div class="hero-search-dropdown" id="hero-search-dropdown" hidden></div>
       </div>
+
+      <!-- Top services CLICKABLE in hero - users see services immediately.
+           Picks the 8 most-booked services. Each one routes to /book.html?service=<id>. -->
+      <div class="hero-svc-quick">
+        <a href="/book.html?service=deep_cleaning"  class="hsq"><span class="e">✨</span><span>Deep Cleaning</span><span class="p">AED 350+</span></a>
+        <a href="/book.html?service=ac_cleaning"    class="hsq"><span class="e">❄️</span><span>AC Service</span><span class="p">AED 75+</span></a>
+        <a href="/book.html?service=maid_service"   class="hsq"><span class="e">👤</span><span>Maid Service</span><span class="p">AED 25/hr</span></a>
+        <a href="/book.html?service=handyman"       class="hsq"><span class="e">🔧</span><span>Handyman</span><span class="p">AED 100+</span></a>
+        <a href="/book.html?service=pest_control"   class="hsq"><span class="e">🪲</span><span>Pest Control</span><span class="p">AED 200+</span></a>
+        <a href="/book.html?service=sofa_carpet"    class="hsq"><span class="e">🛋️</span><span>Sofa &amp; Carpet</span><span class="p">AED 120+</span></a>
+        <a href="/book.html?service=window_cleaning"class="hsq"><span class="e">🪟</span><span>Window Clean</span><span class="p">AED 80+</span></a>
+        <a href="/services.html"                    class="hsq more"><span class="e">→</span><span>All 32 services</span><span class="p">Browse →</span></a>
+      </div>
+
       <div class="hero-cta-row">
         <a class="btn-bigwa" id="hero-wa" href="/contact.html" target="_blank">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3.5A11.95 11.95 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.8 1.4 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3z"/></svg>
@@ -1188,6 +1209,221 @@ setTimeout(() => {
     setTimeout(() => cur.classList.remove('exiting'), 500);
     i = (i + 1) % items.length;
   }, cycle);
+})();
+</script>
+
+<script>
+/* ===== Hero search bar - same combobox UX as nav + /search.html =====
+   Standalone (no dependency on search-widget.js for the index logic).
+   Shows quick suggestions on focus, lives-filters as user types,
+   navigates on Enter/click. Uses voice input. Autosaves recent
+   searches to localStorage. */
+(function(){
+  const input = document.getElementById("hero-search");
+  const dd    = document.getElementById("hero-search-dropdown");
+  const wrap  = document.getElementById("hero-search-wrap");
+  const mic   = document.getElementById("hero-search-mic");
+  if (!input || !dd) return;
+
+  const RECENT_KEY = "servia.search.recent.v1";
+  const GPT_URL = "https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper";
+  let docs = [];
+  let nav = []; let selIdx = 0;
+
+  // Static index (matches search-widget.js + /search.html so all 3
+  // surfaces show consistent results). Loaded synchronously so the
+  // first focus has data even before the API fetch.
+  const STATIC = [
+    {kind:"service", title:"Deep Cleaning",      body:"Top-to-bottom · 2-6h · from AED 350",       url:"/service.html?id=deep_cleaning"},
+    {kind:"service", title:"AC Service",          body:"Pre-summer · 90 min · from AED 75/unit",   url:"/service.html?id=ac_cleaning"},
+    {kind:"service", title:"Maid Service",        body:"By the hour · same-day · from AED 25/hr",  url:"/service.html?id=maid_service"},
+    {kind:"service", title:"Handyman",            body:"Plumbing, electric, paint · from AED 100", url:"/service.html?id=handyman"},
+    {kind:"service", title:"Pest Control",        body:"Cockroach, bed bugs, ants · from AED 200", url:"/service.html?id=pest_control"},
+    {kind:"service", title:"Sofa & Carpet",       body:"Steam shampoo · 2-3h · from AED 120",      url:"/service.html?id=sofa_carpet"},
+    {kind:"service", title:"Move-in / Move-out",  body:"Deposit-saving deep clean · from AED 400", url:"/service.html?id=move_in_out"},
+    {kind:"service", title:"Window Cleaning",     body:"Inside + balcony glass · from AED 80",     url:"/service.html?id=window_cleaning"},
+    {kind:"service", title:"General Cleaning",    body:"Weekly · 2-3h · from AED 89",              url:"/service.html?id=general_cleaning"},
+    {kind:"service", title:"Office Cleaning",     body:"Daily / weekly contracts · from AED 150",  url:"/service.html?id=office_cleaning"},
+    {kind:"service", title:"Wall Painting",       body:"Per room · primer + 2 coats · AED 350+",   url:"/service.html?id=painting"},
+    {kind:"service", title:"Marble Polishing",    body:"Crystallise · diamond grind · AED 12/sqm", url:"/service.html?id=marble_polish"},
+    {kind:"service", title:"Laundry & Ironing",   body:"Pickup + delivery · 24h · AED 30/load",    url:"/service.html?id=laundry"},
+    {kind:"service", title:"Car Wash & Detail",   body:"Doorstep · interior + wax · AED 50+",      url:"/service.html?id=car_wash"},
+    {kind:"service", title:"Pool Maintenance",    body:"Weekly chemicals + skim · AED 250+",       url:"/service.html?id=swimming_pool"},
+    {kind:"service", title:"Smart Home Setup",    body:"Alexa · cameras · lighting · AED 200+",    url:"/service.html?id=smart_home"},
+    {kind:"area", title:"Dubai",          body:"Marina JLT Downtown Business Bay JVC Mirdif",  url:"/area.html?city=dubai"},
+    {kind:"area", title:"Abu Dhabi",      body:"Khalifa City Yas Reem Saadiyat Raha Mussafah", url:"/area.html?city=abu-dhabi"},
+    {kind:"area", title:"Sharjah",        body:"Al Khan Al Majaz Nahda Muwaileh Aljada",        url:"/area.html?city=sharjah"},
+    {kind:"area", title:"Ajman",          body:"Al Nuaimiya Rashidiya Rawda Corniche",          url:"/area.html?city=ajman"},
+    {kind:"faq", title:"How much for deep cleaning a 2-bed in Dubai?", body:"AED 350-450 depending on add-ons", url:"/faq.html"},
+    {kind:"faq", title:"Which UAE areas does Servia cover?",            body:"All 7 emirates same-day Dubai Sharjah Ajman", url:"/faq.html"},
+    {kind:"faq", title:"What is the cancellation policy?",              body:"Free cancellation up to 4 hours before booking", url:"/faq.html"},
+    {kind:"faq", title:"Are cleaners insured and background-checked?",  body:"Yes ID-verified insured female crews on request", url:"/faq.html"},
+  ];
+  docs = STATIC.slice();
+
+  function escapeRe(s){ return (s||"").replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+  function score(d, terms){
+    if (!terms.length) return 0;
+    const t = (d.title||"").toLowerCase(); const b = (d.body||"").toLowerCase();
+    let s = 0;
+    for (const term of terms) {
+      const re = new RegExp(`\\b${escapeRe(term)}\\b`);
+      if (re.test(t)) s += 12; else if (t.includes(term)) s += 6;
+      if (re.test(b)) s += 3; else if (b.includes(term)) s += 1;
+    }
+    return s;
+  }
+  function highlight(text, terms){
+    if (!terms.length || !text) return (text||"").replace(/</g,"&lt;");
+    let out = (text||"").replace(/</g,"&lt;");
+    for (const term of terms) {
+      if (!term || term.length < 2) continue;
+      out = out.replace(new RegExp("("+escapeRe(term)+")","ig"), "<mark>$1</mark>");
+    }
+    return out;
+  }
+  function loadRecent(){ try { return JSON.parse(localStorage.getItem(RECENT_KEY)||"[]"); } catch(_){ return []; } }
+  function saveRecent(q){
+    if (!q || q.length < 2) return;
+    let r = loadRecent().filter(x => x.toLowerCase() !== q.toLowerCase());
+    r.unshift(q);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(r.slice(0,8))); } catch(_){}
+  }
+
+  function renderEmpty(){
+    const recent = loadRecent();
+    let html = "";
+    if (recent.length) {
+      html += `<div class="hsr-section">⏱ Recent</div>`;
+      html += recent.slice(0, 3).map(r =>
+        `<a class="hsr-row" data-q="${r.replace(/"/g,'&quot;')}" href="#">
+          <span class="ic">⏱</span><div class="b"><div class="t">${r.replace(/</g,'&lt;')}</div><div class="s">Recent search</div></div>
+        </a>`).join("");
+    }
+    html += `<div class="hsr-section">⚡ Most-booked services</div>`;
+    html += STATIC.filter(d => d.kind === "service").slice(0, 5).map(d => `
+      <a class="hsr-row" href="${d.url}">
+        <span class="ic">${ {deep_cleaning:'✨',ac_cleaning:'❄️',maid_service:'👤',handyman:'🔧',pest_control:'🪲'}[d.url.split('=')[1]] || '✨'}</span>
+        <div class="b"><div class="t">${d.title}</div><div class="s">${d.body}</div></div>
+        <span class="k ${d.kind}">${d.kind}</span>
+      </a>`).join("");
+    html += `<div class="hsr-foot">
+      <a href="${GPT_URL}" target="_blank" rel="noopener" class="gpt">🚀 Ask Servia GPT</a>
+      <a href="/search.html">Full search →</a>
+      <span class="sp"></span>
+      <a href="/install.html">📲 Install</a>
+    </div>`;
+    dd.innerHTML = html;
+    nav = Array.from(dd.querySelectorAll(".hsr-row"));
+    selIdx = 0; updateSel();
+    bindRecent();
+  }
+  function renderQuery(q){
+    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    let scored = docs.map(d => ({...d, _s: score(d, terms)})).filter(d => d._s > 0);
+    scored.sort((a,b) => b._s - a._s);
+    const top = scored.slice(0, 8);
+    if (!top.length) {
+      dd.innerHTML = `<div style="padding:16px;text-align:center;color:#64748B;font-size:13px">
+        No matches for "${q.replace(/</g,'&lt;')}". <br>
+        <a href="${GPT_URL}?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" style="color:#5B21B6;font-weight:700;text-decoration:none">Ask Servia GPT instead →</a>
+      </div>
+      <div class="hsr-foot">
+        <a href="/search.html?q=${encodeURIComponent(q)}">Try full AI search →</a>
+        <span class="sp"></span>
+        <a href="${GPT_URL}?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" class="gpt">🚀 GPT</a>
+      </div>`;
+      nav = []; return;
+    }
+    const ICONS = {service:"✨", area:"📍", faq:"❓", blog:"📰", page:"📄"};
+    dd.innerHTML = top.map(d => `
+      <a class="hsr-row" href="${d.url}">
+        <span class="ic">${ICONS[d.kind] || "📄"}</span>
+        <div class="b"><div class="t">${highlight(d.title, terms)}</div><div class="s">${highlight(d.body || "", terms).slice(0, 80)}</div></div>
+        <span class="k ${d.kind}">${d.kind}</span>
+      </a>`).join("") + `
+      <div class="hsr-foot">
+        <a href="/search.html?q=${encodeURIComponent(q)}">All matches →</a>
+        <span class="sp"></span>
+        <a href="${GPT_URL}?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" class="gpt">🚀 GPT</a>
+      </div>`;
+    nav = Array.from(dd.querySelectorAll(".hsr-row"));
+    selIdx = 0; updateSel();
+  }
+  function updateSel(){ nav.forEach((r,i) => r.classList.toggle("sel", i === selIdx)); }
+  function bindRecent(){
+    dd.querySelectorAll(".hsr-row[data-q]").forEach(r => r.addEventListener("click", e => {
+      e.preventDefault();
+      input.value = r.dataset.q;
+      renderQuery(r.dataset.q); input.focus();
+    }));
+  }
+
+  // Lazy-load full /api/services + /api/blog/list on first focus
+  let firstFocus = true;
+  async function lazyExtend(){
+    if (!firstFocus) return; firstFocus = false;
+    try {
+      const r = await fetch("/api/blog/list?limit=80");
+      if (r.ok) {
+        const j = await r.json();
+        const blogs = (j.posts||[]).map(p => ({
+          kind:"blog", title:p.topic||p.slug, body:p.emirate||"",
+          url:`/blog/${p.slug}`}));
+        docs = [...STATIC, ...blogs];
+      }
+    } catch(_) {}
+  }
+
+  input.addEventListener("focus", () => {
+    dd.hidden = false; renderEmpty(); lazyExtend();
+  });
+  input.addEventListener("input", () => {
+    const q = input.value.trim();
+    dd.hidden = false;
+    if (!q) { renderEmpty(); return; }
+    renderQuery(q);
+  });
+  input.addEventListener("keydown", e => {
+    if (e.key === "Escape") { dd.hidden = true; input.blur(); return; }
+    if (e.key === "ArrowDown") { e.preventDefault(); if (selIdx < nav.length - 1) selIdx++; updateSel(); nav[selIdx]?.scrollIntoView({block:"nearest"}); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); if (selIdx > 0) selIdx--; updateSel(); nav[selIdx]?.scrollIntoView({block:"nearest"}); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      const sel = nav[selIdx];
+      if (sel) {
+        if (sel.dataset.q) { input.value = sel.dataset.q; renderQuery(sel.dataset.q); }
+        else { saveRecent(input.value.trim()); location.href = sel.href; }
+      } else if (input.value.trim()) {
+        location.href = "/search.html?q=" + encodeURIComponent(input.value.trim());
+      }
+    }
+  });
+  document.addEventListener("click", e => {
+    if (!wrap.contains(e.target)) dd.hidden = true;
+  });
+
+  // Voice input
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (Recognition) {
+    const rec = new Recognition();
+    rec.continuous = false; rec.interimResults = true;
+    rec.lang = (navigator.language || "en-US");
+    let listening = false;
+    mic.addEventListener("click", () => {
+      if (listening) { rec.stop(); return; }
+      try { rec.start(); } catch(_){}
+    });
+    rec.onstart = () => { listening = true; mic.classList.add("listening"); mic.textContent = "🔴"; };
+    rec.onend   = () => { listening = false; mic.classList.remove("listening"); mic.textContent = "🎤"; };
+    rec.onerror = () => { listening = false; mic.classList.remove("listening"); mic.textContent = "🎤"; };
+    rec.onresult = e => {
+      input.value = Array.from(e.results).map(r => r[0].transcript).join("");
+      dd.hidden = false; renderQuery(input.value);
+    };
+  } else {
+    mic.style.display = "none";
+  }
 })();
 </script>
 </body>
