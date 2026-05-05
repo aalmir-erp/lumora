@@ -155,11 +155,16 @@
     render();
     setTimeout(() => qInput.focus(), 50);
     document.body.style.overflow = "hidden";
+    if (typeof lazyLoadIndex === "function") lazyLoadIndex();
   }
   function close(){
     overlay.classList.remove("open");
     document.body.style.overflow = "";
   }
+  // Public hooks so other UI (universal-nav search icon, etc.) can drive the
+  // palette without poking internals.
+  window.serviaOpenSearch = open;
+  window.serviaCloseSearch = close;
   overlay.querySelectorAll("[data-close]").forEach(el => el.addEventListener("click", close));
 
   function setMode(next){
@@ -479,6 +484,11 @@
     // already there or if no anchor.
     const ncta = document.querySelector(".nav-cta");
     if (!ncta || ncta.querySelector(".ssn-wrap")) return;
+    // The universal-nav.js drops a 🔍 icon button (#unav-search) into
+    // .nav-cta that opens the same Cmd+K palette. When that's present, skip
+    // the inline combobox — one search affordance in the nav is enough,
+    // and the icon-only version reads cleaner on mobile.
+    if (ncta.querySelector("#unav-search")) return;
 
     const wrap = document.createElement("div");
     wrap.className = "ssn-wrap";

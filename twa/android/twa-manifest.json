@@ -1,0 +1,62 @@
+{
+  "packageId": "ae.servia.app",
+  "host": "servia.ae",
+  "name": "Servia — UAE Home Services",
+  "launcherName": "Servia",
+  "display": "standalone",
+  "orientation": "default",
+  "themeColor": "#0D9488",
+  "navigationColor": "#0D9488",
+  "navigationColorDark": "#0F172A",
+  "navigationDividerColor": "#0D9488",
+  "navigationDividerColorDark": "#0F172A",
+  "backgroundColor": "#F8FAFC",
+  "enableNotifications": true,
+  "startUrl": "/?source=twa",
+  "iconUrl": "https://servia.ae/brand/servia-icon-2048x2048.png",
+  "maskableIconUrl": "https://servia.ae/brand/servia-icon-2048x2048.png",
+  "monochromeIconUrl": "https://servia.ae/brand/servia-icon-2048x2048.png",
+  "splashScreenFadeOutDuration": 300,
+  "appVersionName": "1.22.60",
+  "appVersionCode": 1226001,
+  "shortcuts": [
+    {
+      "name": "Search",
+      "shortName": "Search",
+      "url": "/search.html?source=twa",
+      "iconUrl": "https://servia.ae/brand/servia-icon-1024x1024.png",
+      "chosenIdx": 0
+    },
+    {
+      "name": "Book a service",
+      "shortName": "Book",
+      "url": "/book.html?source=twa",
+      "iconUrl": "https://servia.ae/brand/servia-icon-1024x1024.png",
+      "chosenIdx": 0
+    },
+    {
+      "name": "Track booking",
+      "shortName": "Track",
+      "url": "/me.html?source=twa",
+      "iconUrl": "https://servia.ae/brand/servia-icon-1024x1024.png",
+      "chosenIdx": 0
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://servia.ae/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": { "enabled": true },
+    "playBilling": { "enabled": false },
+    "appsFlyer": { "enabled": false }
+  },
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "additionalTrustedOrigins": [
+    "www.servia.ae"
+  ],
+  "retainedBundles": [],
+  "fullScopeUrl": "https://servia.ae/"
+}
