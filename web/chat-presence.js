@@ -116,15 +116,24 @@
   waitForChatFab();
 
   // Listen for events the widget fires (or fall back to DOM watching).
-  // widget.js currently emits no custom events — observe DOM mutations
-  // for the panel open class + the typing indicator inside it.
-  const observer = new MutationObserver(() => {
+  // widget.js currently emits no custom events — observe the panel directly
+  // (only once it exists) and debounce, so heavy DOM rewrites by other tools
+  // (e.g. Google Translate translating every text node on lang-switch) don't
+  // pummel us with thousands of synchronous callbacks.
+  let lastState = "";
+  let debounceTimer = null;
+  function evalPanelState() {
+    debounceTimer = null;
     const panel = document.querySelector(".us-panel, .servia-chat-panel");
     if (!panel) return;
     const isOpen = panel.classList.contains("open");
-    try { localStorage.setItem(OPEN_KEY, isOpen ? "1" : "0"); } catch (_) {}
     const typing = panel.querySelector(".us-typing, .servia-chat-typing");
-    if (typing && getComputedStyle(typing).display !== "none") {
+    const typingActive = typing && getComputedStyle(typing).display !== "none";
+    const state = (typingActive ? "T" : "_") + (isOpen ? "O" : "_");
+    if (state === lastState) return;
+    lastState = state;
+    try { localStorage.setItem(OPEN_KEY, isOpen ? "1" : "0"); } catch (_) {}
+    if (typingActive) {
       setStatus("typing");
     } else if (isOpen) {
       try { localStorage.setItem(UNREAD_KEY, "0"); } catch (_) {}
@@ -132,11 +141,34 @@
     } else {
       setStatus("unread");
     }
-  });
-  // Watch the whole body for the panel + class changes - cheap because the
-  // observer only fires when *something* changes, not every frame.
-  observer.observe(document.body, { childList:true, subtree:true,
-                                     attributes:true, attributeFilter:["class","style"] });
+  }
+  function scheduleEval() {
+    if (debounceTimer) return;
+    debounceTimer = setTimeout(evalPanelState, 200);
+  }
+
+  // Wait for the panel to exist, then observe ONLY the panel (not the whole
+  // body subtree). This is dramatically cheaper and immune to Google Translate
+  // mutating every text node in <body> on language change.
+  let panelObserver = null;
+  function attachPanelObserver() {
+    if (panelObserver) return;
+    const panel = document.querySelector(".us-panel, .servia-chat-panel");
+    if (!panel) return;
+    panelObserver = new MutationObserver(scheduleEval);
+    panelObserver.observe(panel, { attributes:true, attributeFilter:["class","style"], childList:true, subtree:false });
+    // Also observe the typing indicator container if present.
+    const typing = panel.querySelector(".us-typing, .servia-chat-typing");
+    if (typing) panelObserver.observe(typing, { attributes:true, attributeFilter:["style","class"] });
+    evalPanelState();
+  }
+  // Poll for the panel for up to 12s, then stop. Cheap.
+  let panelAttempts = 0;
+  (function waitForPanel() {
+    if (panelObserver) return;
+    attachPanelObserver();
+    if (!panelObserver && ++panelAttempts < 60) setTimeout(waitForPanel, 200);
+  })();
 
   // Listen for the conv.js custom event so we can flag unread without
   // depending on widget.js internals. When a bot reply arrives while panel
