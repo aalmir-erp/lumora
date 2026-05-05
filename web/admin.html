@@ -1139,7 +1139,7 @@
         const ok = confirm("Ping IndexNow with every URL in the sitemap?\n\nThis tells Bing / Yandex / Seznam / Naver / Yep about every page at once. Use after a content refresh.");
         if (!ok) return;
         try {
-          const r = await api("/api/admin/seo/indexnow-submit", { method: "POST", body: JSON.stringify({}) });
+          const r = await adm("/api/admin/seo/indexnow-submit", { method: "POST", body: JSON.stringify({}) });
           alert("IndexNow response:\n" + JSON.stringify(r, null, 2));
         } catch (e) {
           alert("IndexNow ping failed: " + (e.message || e));
@@ -1150,7 +1150,7 @@
         // Pull the IndexNow key + render the per-domain values into the steps
         let key = "", keyUrl = "";
         try {
-          const k = await api("/api/admin/seo/indexnow-key");
+          const k = await adm("/api/admin/seo/indexnow-key");
           key = k.key || ""; keyUrl = k.key_url || "";
           const ke = document.getElementById("ai-indexnow-key");
           const ku = document.getElementById("ai-indexnow-keyurl");
