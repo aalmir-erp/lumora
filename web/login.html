@@ -498,6 +498,17 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
         <!-- Social -->
         <div class="panel" id="cs-social-pane">
           <p class="subhead" style="margin-top:0">Use an account you already have. We never post on your behalf.</p>
+
+          <!-- Biometric / fingerprint sign-in (only shows when device supports it) -->
+          <button type="button" class="btn-social" id="bio-signin-btn" onclick="biometricSignin()" style="display:none;background:linear-gradient(135deg,#0F766E,#14B8A6);color:#fff;border-color:transparent;width:100%;margin-bottom:10px;min-height:54px">
+            <span class="ic">🔒</span> <span><b>Sign in with fingerprint / Face ID</b><br><small style="opacity:.85;font-weight:400">One tap, no password needed</small></span>
+          </button>
+
+          <!-- UAE PASS sign-in -->
+          <button type="button" class="btn-social" id="uaepass-btn" onclick="uaePassSignin()" style="background:linear-gradient(135deg,#005A48,#00A36C);color:#fff;border-color:transparent;width:100%;margin-bottom:10px">
+            <span class="ic">🇦🇪</span> Sign in with UAE PASS
+          </button>
+
           <div class="social-row">
             <button type="button" class="btn-social" onclick="socialAuth('google')">
               <span class="ic">🇬</span> Google
@@ -876,6 +887,96 @@ async function verifyMagicLink() {
 }
 
 // ---------- social auth ----------
+// ---------- biometric sign-in (WebAuthn / Face ID / Fingerprint) ----------
+//
+// Two flows:
+// (a) If the user has previously linked a passkey to their account on this
+//     device, tap → auto-pulls credential → backend verifies → signed in.
+// (b) If no passkey but they're already logged in via OTP/email, the
+//     "Save fingerprint for next time" prompt offers to register one.
+//
+// Browser API: navigator.credentials.get/create with publicKey, AKA WebAuthn.
+// Supported in iOS Safari 16+, Android Chrome, Edge, Firefox 60+. We detect
+// availability on load and only show the button if the device has a
+// platform authenticator (built-in fingerprint / Face ID).
+async function biometricSignin() {
+  const msg = (m, ok=true) => showMsg(m, ok ? "info" : "error");
+  if (!window.PublicKeyCredential) {
+    return msg("Your browser doesn't support biometric sign-in. Use phone or email.", false);
+  }
+  try {
+    msg("Authenticating with biometrics…");
+    // Request a challenge from the server. If the user has a stored passkey,
+    // backend includes their allowCredentials list.
+    const r = await fetch("/api/auth/webauthn/challenge", {method:"POST"});
+    const challengeData = await r.json();
+    if (!challengeData.ok) return msg(challengeData.error || "Could not start biometric flow", false);
+
+    const credential = await navigator.credentials.get({
+      publicKey: {
+        challenge: Uint8Array.from(atob(challengeData.challenge), c => c.charCodeAt(0)),
+        timeout: 60000,
+        userVerification: "required",
+        allowCredentials: (challengeData.allow_credentials || []).map(c => ({
+          id: Uint8Array.from(atob(c.id), b => b.charCodeAt(0)),
+          type: "public-key",
+        })),
+      },
+    });
+    if (!credential) return msg("Biometric prompt cancelled", false);
+
+    // Send the assertion back for verification.
+    const verify = await api("/api/auth/webauthn/verify", {method:"POST", body:{
+      credential_id: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+      authenticator_data: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
+      client_data_json: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
+      signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
+    }});
+    if (verify.token) {
+      localStorage.setItem(TOK, verify.token);
+      localStorage.setItem(UTYPE, "customer");
+      msg("✓ Signed in with biometrics. Redirecting…");
+      setTimeout(() => location.replace("/me.html"), 400);
+    } else {
+      msg(verify.error || "Verification failed", false);
+    }
+  } catch (e) {
+    msg("Biometric sign-in failed: " + (e.message || e), false);
+  }
+}
+
+// Auto-detect if the device has a platform biometric authenticator and
+// reveal the biometric button if so. Safe to call before WebAuthn is
+// even tried — just gates UI visibility.
+(async function () {
+  if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+    try {
+      const has = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (has) document.getElementById("bio-signin-btn").style.display = "";
+    } catch (_) {}
+  }
+})();
+
+// ---------- UAE PASS sign-in ----------
+// Real UAE PASS integration uses the OAuth-2.0/OIDC flow at id.uaepass.ae —
+// requires registering the app at the UAE PASS Developer Portal
+// (https://developer.uaepass.ae) for a client_id + redirect_uri.
+// Backend endpoint /api/auth/uaepass/start kicks off the flow if configured.
+async function uaePassSignin() {
+  try {
+    const r = await fetch("/api/auth/uaepass/start", {method:"POST"});
+    const j = await r.json();
+    if (j.authorize_url) {
+      // Real flow: redirect to UAE PASS
+      location.href = j.authorize_url;
+      return;
+    }
+    showMsg(j.detail || "UAE PASS sign-in is not yet enabled. Contact support to register Servia with the UAE PASS Developer Portal.", "info");
+  } catch (e) {
+    showMsg("UAE PASS unavailable right now: " + e.message, "error");
+  }
+}
+
 function socialAuth(provider) {
   // Google / Apple OAuth aren't wired to a real flow yet — show a clear
   // message rather than silently failing. WhatsApp / Telegram bots can

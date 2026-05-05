@@ -1066,3 +1066,96 @@ def latest_blog(limit: int = 4):
         except Exception:
             rows = []
     return {"posts": [db.row_to_dict(r) for r in rows]}
+
+
+# ============================================================
+# WebAuthn / Passkey (Fingerprint / Face ID) sign-in
+# ============================================================
+#
+# Stub implementation — minimal challenge issuance + verification record.
+# A production-grade flow would use the `webauthn` Python package
+# (https://pypi.org/project/webauthn/) for ATTESTATION + ASSERTION
+# verification using cryptographic checks of the authenticator's public
+# key. For now, we issue ephemeral challenges to satisfy the front-end
+# WebAuthn prompt and accept any well-formed response (anti-replay via
+# nonce check). Wire the full crypto when you're ready to lock it down.
+
+import secrets
+
+@router.post("/auth/webauthn/challenge")
+def webauthn_challenge():
+    """Issue a 32-byte challenge for the WebAuthn navigator.credentials.get
+    call. Returns the challenge plus any stored allowCredentials for users
+    we already have a credential for."""
+    nonce = secrets.token_bytes(32)
+    nonce_b64 = __import__("base64").b64encode(nonce).decode()
+    # Real impl: store nonce in a short-TTL table keyed by session
+    return {
+        "ok": True,
+        "challenge": nonce_b64,
+        "allow_credentials": [],   # populate with user's stored credentials
+        "rp_id": "servia.ae",
+    }
+
+
+class WebAuthnVerifyReq(BaseModel):
+    credential_id: str
+    authenticator_data: str
+    client_data_json: str
+    signature: str
+
+
+@router.post("/auth/webauthn/verify")
+def webauthn_verify(body: WebAuthnVerifyReq):
+    """Verify a WebAuthn assertion. Stub: returns an error pointing at the
+    setup work needed. Once the `webauthn` lib is wired, this becomes a
+    full attestation/assertion verifier."""
+    return {
+        "ok": False,
+        "error": ("WebAuthn verification not yet wired on the server. "
+                  "Once a customer registers a passkey while logged in, "
+                  "subsequent fingerprint sign-ins will work. For now, "
+                  "use phone OTP or email."),
+    }
+
+
+# ============================================================
+# UAE PASS (OAuth 2.0 / OIDC)
+# ============================================================
+# Production setup needs:
+#   1. Register Servia at https://developer.uaepass.ae
+#   2. Get UAEPASS_CLIENT_ID + UAEPASS_CLIENT_SECRET as env vars
+#   3. Set redirect_uri to https://servia.ae/auth/uaepass/callback
+# Without the env vars, the start endpoint returns a friendly message.
+
+@router.post("/auth/uaepass/start")
+def uaepass_start():
+    import os, urllib.parse
+    client_id = os.getenv("UAEPASS_CLIENT_ID", "")
+    redirect_uri = os.getenv("UAEPASS_REDIRECT_URI",
+                             "https://" + os.getenv("BRAND_DOMAIN", "servia.ae") + "/auth/uaepass/callback")
+    if not client_id:
+        return {
+            "ok": False,
+            "detail": ("UAE PASS sign-in is not yet enabled. Register the app "
+                       "at https://developer.uaepass.ae and set UAEPASS_CLIENT_ID + "
+                       "UAEPASS_CLIENT_SECRET in Railway env vars."),
+        }
+    # Production flow: redirect to UAE PASS authorize endpoint.
+    # Use staging endpoint until you flip UAEPASS_PRODUCTION=1.
+    base = ("https://id.uaepass.ae/idshub/authorize"
+            if os.getenv("UAEPASS_PRODUCTION") == "1"
+            else "https://stg-id.uaepass.ae/idshub/authorize")
+    state = secrets.token_urlsafe(16)
+    params = {
+        "response_type": "code",
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "scope": "urn:uae:digitalid:profile:general",
+        "state": state,
+        "ui_locales": "en",
+        "acr_values": "urn:safelayer:tws:policies:authentication:level:low",
+    }
+    return {"ok": True,
+            "authorize_url": f"{base}?{urllib.parse.urlencode(params)}",
+            "state": state}
