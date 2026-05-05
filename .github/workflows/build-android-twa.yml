@@ -329,12 +329,14 @@ jobs:
           # Always upload the log even if it succeeded, for diagnostics.
           ls -la "${GITHUB_WORKSPACE}/twa/android/wear-build/_artifacts/" 2>&1 || true
 
-      - name: Upload Wear build log on failure
-        if: failure()
+      - name: Upload Wear build log (ALWAYS, for debugging)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wear-build-log
-          path: /tmp/wear-build.log
+          path: |
+            /tmp/wear-build.log
+            twa/android/wear-build/app/build/outputs/**
           if-no-files-found: warn
 
       - name: Upload Wear OS APK + AAB
