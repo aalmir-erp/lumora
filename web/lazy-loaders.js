@@ -12,25 +12,44 @@
   const queue = (window.__lazyLoadQueue || []).slice();
   if (!queue.length) return;
   let fired = false;
+
+  // Inject ONE script per idle frame instead of all 5 in the same task.
+  // The old version did a synchronous forEach that fetched + parsed +
+  // executed everything in one tick, which on first interaction blocked
+  // the main thread for hundreds of ms — that's the freeze the user saw.
+  // Staggering across requestIdleCallback frames keeps every step short
+  // and lets the browser render in between.
+  function injectOne(item) {
+    if (item.id && document.getElementById("lazy-" + item.id)) return;
+    const s = document.createElement("script");
+    s.src = item.src;
+    s.async = (item.type !== "defer");
+    s.defer = (item.type === "defer");
+    if (item.id) s.id = "lazy-" + item.id;
+    document.body.appendChild(s);
+  }
+  function drain() {
+    const item = queue.shift();
+    if (!item) return;
+    injectOne(item);
+    if (queue.length) {
+      if ("requestIdleCallback" in window) {
+        requestIdleCallback(drain, { timeout: 500 });
+      } else {
+        setTimeout(drain, 60);
+      }
+    }
+  }
   function go() {
     if (fired) return; fired = true;
-    queue.forEach(item => {
-      if (item.id && document.getElementById("lazy-" + item.id)) return;
-      const s = document.createElement("script");
-      s.src = item.src;
-      s.async = (item.type !== "defer");
-      s.defer = (item.type === "defer");
-      if (item.id) s.id = "lazy-" + item.id;
-      document.body.appendChild(s);
-    });
+    drain();
     ["pointerdown","touchstart","scroll","keydown","mousemove"].forEach(ev =>
       removeEventListener(ev, go, { passive: true, capture: true }));
   }
-  // Plain setTimeout(8s) — past PSI's ~10s headless window. requestIdleCallback
-  // fires during LCP rendering when CPU briefly idles, which ended up putting
-  // analytics scripts back into the network dependency tree. Real users hit
-  // the interaction listeners well before 8s.
-  setTimeout(go, 8000);
+  // Cut the safety-net wait from 8s to 4s — users typically interact well
+  // before either fires, but if they don't, 8s left the page weirdly
+  // half-loaded for too long.
+  setTimeout(go, 4000);
   ["pointerdown","touchstart","scroll","keydown","mousemove"].forEach(ev =>
     addEventListener(ev, go, { passive: true, capture: true, once: true }));
 })();
