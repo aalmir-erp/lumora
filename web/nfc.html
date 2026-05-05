@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="servia-page" content="nfc">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F59E0B">
+<title>Servia NFC Tap-to-Book — UAE's first one-tap home services tag</title>
+<meta name="description" content="Stick a Servia NFC tag in your kitchen, car, AC unit or pool — tap your phone once, repeat your favourite service in 2 seconds. Free in UAE. No tracking, no battery, GDPR-style privacy.">
+<link rel="canonical" href="https://servia.ae/nfc.html">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Servia NFC Tap-to-Book — UAE's first one-tap home services tag">
+<meta property="og:description" content="Stick a Servia NFC tag in your kitchen, car, AC, pool — tap your phone once, repeat the service in 2 seconds. Free in UAE.">
+<meta property="og:url" content="https://servia.ae/nfc.html">
+<meta property="og:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
+<meta property="og:site_name" content="Servia">
+<meta property="og:locale" content="en_AE">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Servia NFC Tap-to-Book">
+<meta name="twitter:description" content="Tap once. Booked. UAE's first NFC home services tag.">
+
+<!-- HowTo schema — Gemini / SGE love this for "how to use NFC for home services" queries -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo",
+ "name":"How to use a Servia NFC tag to book home services in one tap",
+ "description":"Stick a Servia NFC sticker in any room and tap your phone to instantly re-book the service for that room. No app required. UAE-wide.",
+ "totalTime":"PT2S",
+ "estimatedCost":{"@type":"MonetaryAmount","currency":"AED","value":"0"},
+ "supply":[
+  {"@type":"HowToSupply","name":"Any NFC-enabled smartphone (iPhone XS+ / Android since 2018)"},
+  {"@type":"HowToSupply","name":"A Servia NFC sticker, card or keychain (free)"}],
+ "step":[
+  {"@type":"HowToStep","position":1,"name":"Order your tag",
+   "text":"Sign in to Servia, choose the service the tag will trigger (kitchen clean, AC service, car wash, pool, etc.), choose the size (sticker, credit-card, keychain). Free in UAE — couriered or handed over with your next visit."},
+  {"@type":"HowToStep","position":2,"name":"Stick it where the service happens",
+   "text":"Inside the kitchen cabinet, on the AC unit, on the dashboard, on the pool tile, on the office wall. NFC tags are passive — no battery, no broadcast, no tracking."},
+  {"@type":"HowToStep","position":3,"name":"Tap your phone",
+   "text":"Hold your phone's back to the tag. Servia opens with the linked service pre-selected and your saved address ready. One confirm tap and the booking is placed."}]}
+</script>
+
+<!-- Product schema for the NFC tag itself -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Product",
+ "name":"Servia NFC Tap-to-Book Tag",
+ "image":"https://servia.ae/brand/servia-icon-1024x1024.png",
+ "description":"Passive NFC tag (NTAG213) bound to your Servia account. Tap to instantly re-book a home service.",
+ "brand":{"@type":"Brand","name":"Servia"},
+ "offers":{"@type":"Offer","priceCurrency":"AED","price":"0","availability":"https://schema.org/InStock",
+   "url":"https://servia.ae/nfc.html","areaServed":"AE"}}
+</script>
+
+<!-- FAQPage schema — this is the SEO + AI-answer engine for NFC privacy/use questions -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+ {"@type":"Question","name":"Does the Servia NFC tag track me or my location?",
+  "acceptedAnswer":{"@type":"Answer","text":"No. NFC tags are passive — they have no battery, no GPS, no microphone, and no internet connection. They are silent until your phone physically taps them. The tag does nothing on its own. The exact same privacy model as a phone-number sticker on a fridge magnet."}},
+ {"@type":"Question","name":"Can someone else read my NFC tag if they tap it?",
+  "acceptedAnswer":{"@type":"Answer","text":"They will reach a Servia booking page that requires sign-in. We never reveal your name, phone or address to a non-owner — only the masked last-4-digits of the linked phone."}},
+ {"@type":"Question","name":"Which phones work with Servia NFC?",
+  "acceptedAnswer":{"@type":"Answer","text":"Every iPhone since iPhone XS (2018) and most Android phones since 2018. NFC is built in, no app required, no setup. Tap and the browser opens automatically."}},
+ {"@type":"Question","name":"How is NFC different from a QR code?",
+  "acceptedAnswer":{"@type":"Answer","text":"QR code = open camera, frame the code, focus, tap a notification — 4 steps and 5–8 seconds. NFC = tap once, 2 seconds. NFC also works in the dark, doesn't need a clean line of sight, and you can stick it in a place a camera can't reach (inside a cabinet)."}},
+ {"@type":"Question","name":"Can I have multiple Servia NFC tags?",
+  "acceptedAnswer":{"@type":"Answer","text":"Yes. One per service is typical: a kitchen tag for maid service, an AC tag for AC service, a car tag for car wash, a pool tag for pool care. Each is bound to your account but to a different service."}},
+ {"@type":"Question","name":"Is this an NDEF tag — can I write my own data?",
+  "acceptedAnswer":{"@type":"Answer","text":"Yes — Servia tags are standard NTAG213 chips. We pre-write the URL https://servia.ae/t/<your-slug>. You're free to overwrite them with apps like NFC Tools if you ever stop using Servia. We will not lock your tag."}},
+ {"@type":"Question","name":"Where do I get the tag?",
+  "acceptedAnswer":{"@type":"Answer","text":"Order from servia.ae/nfc.html or from your Servia account. We can either (1) include it free with your next service visit, or (2) courier it to you free in 1–2 days anywhere in the UAE."}}]}
+</script>
+
+<!-- BreadcrumbList -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"https://servia.ae/"},
+  {"@type":"ListItem","position":2,"name":"NFC Tap-to-Book","item":"https://servia.ae/nfc.html"}]}
+</script>
+
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
+
+<style>
+  body { background:#FAFAFA; min-height:100vh; }
+
+  /* HERO ---------------------------------------------------------------- */
+  .nfc-hero {
+    background:radial-gradient(ellipse at 50% 30%, #F59E0B 0%, #FCD34D 35%, #FEF3C7 70%, #FFFBEB 100%);
+    padding:64px 20px 48px; text-align:center; overflow:hidden; position:relative;
+  }
+  .nfc-hero h1 {
+    font-size:48px; font-weight:800; letter-spacing:-.03em; margin:14px auto 8px;
+    line-height:1.05; max-width:820px; color:#7C2D12;
+  }
+  .nfc-hero h1 .accent {
+    background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .nfc-hero p.lead { font-size:19px; color:#7C2D12; max-width:640px; margin:0 auto 20px; line-height:1.55; opacity:.9; }
+  .nfc-hero .ux { font-size:13px; color:#92400E; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+                  background:rgba(255,255,255,.5); display:inline-block; padding:5px 14px; border-radius:999px;
+                  border:1px solid rgba(124,45,18,.18); }
+  @media (max-width:720px) { .nfc-hero h1 { font-size:34px } .nfc-hero p.lead { font-size:15px } }
+
+  /* TAP ANIMATION ------------------------------------------------------- */
+  .tap-stage { position:relative; width:280px; height:280px; margin:24px auto 0; }
+  @media (max-width:540px) { .tap-stage { width:240px; height:240px; } }
+
+  .tap-tag {
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:120px; height:75px; border-radius:12px;
+    background:linear-gradient(135deg,#0F766E 0%,#14B8A6 100%);
+    box-shadow:0 12px 30px rgba(15,23,42,.22), inset 0 1px 0 rgba(255,255,255,.18);
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    font-weight:800; font-size:13px; letter-spacing:.06em;
+    z-index:2;
+  }
+  .tap-tag::before {
+    content:""; position:absolute; left:14px; top:14px;
+    width:14px; height:14px; border-radius:50%;
+    background:rgba(252,211,77,.7); box-shadow:0 0 0 3px rgba(252,211,77,.25);
+  }
+  /* Pulsing radio waves emanating from tag */
+  .tap-tag::after {
+    content:""; position:absolute; inset:-30%; border-radius:50%;
+    border:2px solid rgba(15,118,110,.4); pointer-events:none;
+    animation:tapwave 2.4s ease-out infinite;
+  }
+  @keyframes tapwave {
+    0%   { transform:scale(.55); opacity:1 }
+    100% { transform:scale(1.7);  opacity:0 }
+  }
+  /* The phone that taps the tag */
+  .tap-phone {
+    position:absolute; right:0; top:50%; transform:translate(8px,-50%) rotate(-12deg);
+    width:84px; height:148px; border-radius:14px;
+    background:linear-gradient(170deg,#1F2937 0%,#374151 100%);
+    box-shadow:0 14px 32px rgba(15,23,42,.32), inset 0 0 0 2px #111827;
+    z-index:3; animation:phonebounce 3.2s ease-in-out infinite;
+  }
+  .tap-phone::before {
+    content:""; position:absolute; inset:6px 5px; border-radius:9px;
+    background:linear-gradient(180deg,#FCD34D 0%,#F59E0B 60%,#0F766E 100%);
+  }
+  .tap-phone::after {
+    content:"📲"; position:absolute; left:0; right:0; top:50%; transform:translateY(-50%);
+    text-align:center; font-size:32px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));
+  }
+  @keyframes phonebounce {
+    0%,100% { transform:translate(8px,-50%) rotate(-12deg); }
+    45%     { transform:translate(-58px,-50%) rotate(-2deg); }
+    55%     { transform:translate(-58px,-50%) rotate(-2deg); }
+  }
+  /* Confirmation flash that fires when phone meets tag */
+  .tap-flash {
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.2);
+    width:160px; height:160px; border-radius:50%;
+    background:radial-gradient(circle,#FCD34D 0%,transparent 70%);
+    opacity:0; pointer-events:none;
+    animation:tapflash 3.2s ease-out infinite;
+  }
+  @keyframes tapflash {
+    0%,40%   { opacity:0; transform:translate(-50%,-50%) scale(.2) }
+    50%      { opacity:.95; transform:translate(-50%,-50%) scale(1.0) }
+    65%,100% { opacity:0; transform:translate(-50%,-50%) scale(1.4) }
+  }
+
+  /* USE-CASE GRID ------------------------------------------------------- */
+  .nfc-uses { padding:48px 20px; max-width:1100px; margin:0 auto; }
+  .nfc-uses h2 { text-align:center; font-size:30px; letter-spacing:-.02em; margin:0 0 6px; color:#0F172A; }
+  .nfc-uses p.sub { text-align:center; color:#475569; font-size:15px; max-width:600px; margin:0 auto 28px; }
+  .nfc-uses .grid {
+    display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  }
+  .uc {
+    background:#fff; border:1px solid #E2E8F0; border-radius:18px; padding:18px;
+    transition:transform .2s, box-shadow .2s, border-color .2s;
+    position:relative; overflow:hidden;
+  }
+  .uc:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(15,23,42,.1); border-color:#FCD34D; }
+  .uc .em { font-size:42px; line-height:1; }
+  .uc h3 { margin:8px 0 4px; font-size:16px; }
+  .uc p { margin:0; color:#475569; font-size:13px; line-height:1.5; }
+  .uc .price { display:inline-block; margin-top:10px; background:#F0FDFA; color:#0F766E;
+               padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:700;
+               border:1px solid #99F6E4; }
+  .uc::before {
+    content:""; position:absolute; inset:auto 0 0 0; height:3px;
+    background:linear-gradient(90deg,#FCD34D,#F59E0B,#FCD34D);
+    transform:translateX(-100%); transition:transform .35s ease;
+  }
+  .uc:hover::before { transform:translateX(0); }
+
+  /* HOW IT WORKS -------------------------------------------------------- */
+  .nfc-how { padding:48px 20px; background:#fff; }
+  .nfc-how .inner { max-width:1000px; margin:0 auto; }
+  .nfc-how h2 { text-align:center; font-size:30px; margin:0 0 28px; letter-spacing:-.02em; color:#0F172A; }
+  .nfc-how .steps { display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+  .step {
+    position:relative; background:linear-gradient(180deg,#F0FDFA 0%,#fff 100%);
+    border:1px solid #99F6E4; border-radius:18px; padding:22px;
+  }
+  .step .num { position:absolute; top:-14px; left:18px;
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg,#FCD34D,#F59E0B); color:#7C2D12;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;
+    box-shadow:0 4px 12px rgba(245,158,11,.4);
+  }
+  .step .ico { font-size:36px; line-height:1; margin-bottom:8px; }
+  .step h3 { margin:0 0 6px; font-size:17px; color:#0F172A; }
+  .step p { margin:0; color:#475569; font-size:13.5px; line-height:1.55; }
+
+  /* PRIVACY ------------------------------------------------------------- */
+  .nfc-privacy {
+    padding:48px 20px; background:linear-gradient(180deg,#F8FAFC 0%,#fff 100%);
+  }
+  .nfc-privacy .inner { max-width:880px; margin:0 auto; }
+  .nfc-privacy h2 { text-align:center; font-size:28px; margin:0 0 8px; color:#0F172A; }
+  .nfc-privacy p.sub { text-align:center; color:#475569; max-width:640px; margin:0 auto 24px; font-size:15px; }
+  .nfc-privacy .matrix {
+    background:#fff; border:1px solid #E2E8F0; border-radius:16px; padding:0;
+    overflow:hidden;
+  }
+  .nfc-privacy .row { display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:0; }
+  .nfc-privacy .row > div { padding:14px 18px; border-bottom:1px solid #F1F5F9; font-size:14px; }
+  .nfc-privacy .row.h > div {
+    background:#F0FDFA; color:#0F766E; font-weight:800; font-size:12px;
+    text-transform:uppercase; letter-spacing:.06em;
+  }
+  .nfc-privacy .row .ok { color:#15803D; font-weight:700; }
+  .nfc-privacy .row .no { color:#B91C1C; font-weight:700; }
+  .nfc-privacy .citations {
+    margin-top:18px; font-size:12.5px; color:#64748B; line-height:1.7;
+    background:#F1F5F9; padding:14px 18px; border-radius:12px;
+  }
+  .nfc-privacy .citations a { color:#0F766E; font-weight:600; text-decoration:none; }
+  .nfc-privacy .citations a:hover { text-decoration:underline; }
+
+  /* ORDER FORM ---------------------------------------------------------- */
+  .nfc-order { padding:48px 20px; background:linear-gradient(180deg,#F0FDFA,#fff); }
+  .nfc-order .card {
+    max-width:640px; margin:0 auto; background:#fff; border:1px solid #E2E8F0;
+    border-radius:24px; padding:28px; box-shadow:0 20px 50px rgba(15,118,110,.08);
+  }
+  .nfc-order h2 { margin:0 0 6px; font-size:24px; color:#0F172A; }
+  .nfc-order p.sub { color:#475569; margin:0 0 20px; font-size:14px; }
+  .nfc-order label { display:block; font-size:11.5px; color:#475569; font-weight:800;
+                     letter-spacing:.05em; text-transform:uppercase; margin:14px 0 6px; }
+  .nfc-order select, .nfc-order input { width:100%; padding:12px 14px; border:1.5px solid #E2E8F0;
+                                          border-radius:12px; font-size:14px; font-family:inherit;
+                                          box-sizing:border-box; }
+  .nfc-order .sizes { display:grid; gap:10px; grid-template-columns:repeat(3,1fr); }
+  .nfc-order .sz { padding:14px 10px; border:1.5px solid #E2E8F0; border-radius:12px; cursor:pointer;
+                    text-align:center; font-size:13px; transition:.15s; user-select:none; }
+  .nfc-order .sz.active { border-color:#0F766E; background:#F0FDFA; color:#0F766E; font-weight:700; }
+  .nfc-order .sz .em { font-size:24px; display:block; margin-bottom:6px; }
+  .nfc-order button { margin-top:18px; width:100%; padding:14px;
+                       background:linear-gradient(135deg,#0F766E,#14B8A6); color:#fff;
+                       border:0; border-radius:12px; font-size:15px; font-weight:800;
+                       cursor:pointer; }
+  .nfc-order button:hover { background:linear-gradient(135deg,#0F172A,#0F766E); }
+  .nfc-order .login-hint { background:#FFF7ED; color:#9A3412; padding:12px; border-radius:10px;
+                            font-size:13px; margin-top:14px; border:1px solid #FDE68A; }
+
+  /* FAQ ----------------------------------------------------------------- */
+  .nfc-faq { padding:48px 20px; max-width:880px; margin:0 auto; }
+  .nfc-faq h2 { text-align:center; font-size:28px; margin:0 0 24px; color:#0F172A; }
+  .nfc-faq details { background:#fff; border:1px solid #E2E8F0; border-radius:14px;
+                      padding:14px 18px; margin-bottom:10px; transition:.15s; }
+  .nfc-faq details[open] { border-color:#0F766E; box-shadow:0 8px 20px rgba(15,118,110,.08); }
+  .nfc-faq summary { font-weight:700; font-size:15px; cursor:pointer; color:#0F172A;
+                      display:flex; gap:10px; align-items:center; }
+  .nfc-faq summary::after { content:"›"; margin-inline-start:auto; transition:.2s; font-size:20px; color:#0F766E; }
+  .nfc-faq details[open] summary::after { transform:rotate(90deg); }
+  .nfc-faq details > div { margin-top:10px; color:#475569; font-size:14px; line-height:1.65; }
+  .nfc-faq details > div a { color:#0F766E; font-weight:600; }
+</style>
+<script src="/banner.js" defer></script>
+<script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
+  {src:"/_snippets.js",id:"snippets"}, {src:"/cart-badge.js",id:"cart-badge"},
+  {src:"/location-bar.js",id:"location-bar"}, {src:"/about-app.js",id:"about-app"}
+]);</script>
+<script src="/universal-nav.js" defer></script>
+<script src="/lazy-loaders.js" defer></script>
+
+<style id="servia-banner-hide">
+html.hide-topbanner #servia-topbanner { display:none !important; height:0 !important; min-height:0 !important; }
+html.hide-install-banner #servia-install-banner { display:none !important; }
+</style>
+</head><body>
+<div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#F59E0B,#FCD34D,#F59E0B)" aria-hidden="true"></div>
+<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav"><div class="nav-inner">
+  <a href="/" aria-label="Servia home"><img src="/logo.svg" width="124" height="40" alt="Servia"></a>
+  <div class="nav-links">
+    <a href="/services.html">Services</a>
+    <a href="/coverage.html">Coverage</a>
+    <a href="/blog">Blog</a>
+    <a href="/me.html">My account</a>
+  </div>
+  <div class="nav-cta">
+    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in">👤</a>
+    <a class="btn btn-primary" href="#order">Get my tag →</a>
+  </div>
+</div></nav>
+
+<main id="main">
+
+<section class="nfc-hero">
+  <span class="ux">⚡ UAE-first · Free · No app</span>
+  <h1>Tap once. <span class="accent">Booked.</span></h1>
+  <p class="lead">Stick a Servia NFC sticker in your kitchen, car, AC unit, or pool. Tap your phone — the same service you booked last time is queued in 2 seconds. No QR scanning. No app login. No fumbling at midnight when you spot a leak.</p>
+  <div class="tap-stage" aria-hidden="true">
+    <div class="tap-tag">SERVIA</div>
+    <div class="tap-flash"></div>
+    <div class="tap-phone"></div>
+  </div>
+  <div style="margin-top:14px">
+    <a href="#order" class="btn btn-primary" style="background:#0F172A;color:#fff;padding:13px 26px;border-radius:999px;font-weight:800;text-decoration:none;font-size:15px;display:inline-block">Get my free tag →</a>
+    <a href="#how" style="margin-inline-start:10px;color:#7C2D12;font-weight:700;text-decoration:none;font-size:14px">See how it works</a>
+  </div>
+</section>
+
+<section class="nfc-uses">
+  <h2>Where you stick it = what gets booked</h2>
+  <p class="sub">One sticker, one service, one tap. Some popular pairings — pick any service, the tag links to it permanently:</p>
+  <div class="grid">
+    <div class="uc"><div class="em">🍳</div><h3>Kitchen</h3><p>Inside the cabinet door. Saw a mess? Tap → maid + deep clean queued.</p><span class="price">Maid · Deep clean</span></div>
+    <div class="uc"><div class="em">🚗</div><h3>Car dashboard</h3><p>Stick on the dashboard or glove box. Tap → car wash at your parking slot.</p><span class="price">Car wash</span></div>
+    <div class="uc"><div class="em">❄️</div><h3>AC unit</h3><p>Stick on the indoor unit. Tap when it sounds noisy or smells musty.</p><span class="price">AC service</span></div>
+    <div class="uc"><div class="em">🏊</div><h3>Pool tile</h3><p>By the equipment pad. Tap → pool maintenance with chemical balance.</p><span class="price">Pool care</span></div>
+    <div class="uc"><div class="em">🌿</div><h3>Garden gate</h3><p>Tap → trim, mow, weed, fertilise. Weekly or one-off.</p><span class="price">Gardening</span></div>
+    <div class="uc"><div class="em">🛋️</div><h3>Living-room sofa</h3><p>Stick under the cushion. Tap → sofa shampoo + carpet steam.</p><span class="price">Sofa &amp; carpet</span></div>
+    <div class="uc"><div class="em">👶</div><h3>Nursery wall</h3><p>Tap → vetted nanny / babysitter for tonight or this weekend.</p><span class="price">Babysitting</span></div>
+    <div class="uc"><div class="em">🪲</div><h3>Pantry shelf</h3><p>Saw an ant? Cockroach? Tap → MOH-licensed pest control, 30-day warranty.</p><span class="price">Pest control</span></div>
+    <div class="uc"><div class="em">🏢</div><h3>Office desk</h3><p>Tap → office cleaning, after hours. Recurring weekly contract.</p><span class="price">Office cleaning</span></div>
+    <div class="uc"><div class="em">🪟</div><h3>Window frame</h3><p>Tap → inside + outside window cleaning, frames + tracks.</p><span class="price">Window cleaning</span></div>
+    <div class="uc"><div class="em">🔧</div><h3>Toolbox lid</h3><p>Tap → handyman with full kit. Plumbing, electrical, lock, leak.</p><span class="price">Handyman</span></div>
+    <div class="uc"><div class="em">📦</div><h3>Move-out box</h3><p>Final week. Tap → deposit-saving deep clean + photos for the landlord.</p><span class="price">Move-out clean</span></div>
+  </div>
+</section>
+
+<section class="nfc-how" id="how">
+  <div class="inner">
+    <h2>3 steps. 60 seconds total.</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="num">1</span>
+        <div class="ico">📦</div>
+        <h3>Order your tag</h3>
+        <p>Pick the service the tag triggers (kitchen → maid, car → wash, etc.). Pick size: <b>sticker</b> (free), <b>credit-card</b> (looks great in a wallet), or <b>keychain</b> (always with you). Free in UAE, courier or with-next-visit delivery.</p>
+      </div>
+      <div class="step">
+        <span class="num">2</span>
+        <div class="ico">🪟</div>
+        <h3>Stick it where it makes sense</h3>
+        <p>Inside a cabinet door, on the dashboard, on the AC unit, on a pool tile. NFC tags are passive — no battery, no GPS, no broadcast. Lasts ~10 years.</p>
+      </div>
+      <div class="step">
+        <span class="num">3</span>
+        <div class="ico">📲</div>
+        <h3>Tap your phone</h3>
+        <p>Hold your phone's back to the tag (NFC is on by default since 2018). Servia opens with the linked service ready, your address pre-filled. One confirm tap → job posted.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="nfc-privacy">
+  <div class="inner">
+    <h2>🔒 Privacy: it's just a sticker</h2>
+    <p class="sub">A Servia NFC tag is the simplest electronic device on earth. It does nothing until you tap it. We've made the privacy comparison explicit:</p>
+    <div class="matrix">
+      <div class="row h"><div>Capability</div><div>Servia NFC tag</div><div>A QR code</div></div>
+      <div class="row"><div>Tracks your location?</div><div class="no">No — no GPS, no battery</div><div class="no">No</div></div>
+      <div class="row"><div>Has internet access?</div><div class="no">No — pure passive chip</div><div class="no">No</div></div>
+      <div class="row"><div>Records anything on its own?</div><div class="no">No — silent until tapped</div><div class="no">No</div></div>
+      <div class="row"><div>Identifies you to strangers?</div><div class="ok">No — masked phone digits only</div><div class="ok">No</div></div>
+      <div class="row"><div>Cost / battery?</div><div class="ok">$0 / no battery, lasts ~10 years</div><div class="ok">$0 / paper</div></div>
+      <div class="row"><div>Who controls the data when you tap?</div><div class="ok">You — sign-in required to see address</div><div class="ok">You</div></div>
+    </div>
+    <div class="citations">
+      <b>Verified by:</b>
+      <a href="https://en.wikipedia.org/wiki/Near-field_communication" target="_blank" rel="noopener">Wikipedia: Near-field communication</a> ·
+      <a href="https://nfc-forum.org/learn/nfc-technology/" target="_blank" rel="noopener">NFC Forum technical brief</a> ·
+      <a href="https://support.apple.com/guide/iphone/use-iphone-with-other-devices-iph2ed53d0/ios" target="_blank" rel="noopener">Apple — iPhone NFC support</a> ·
+      <a href="https://support.google.com/android/answer/9058764" target="_blank" rel="noopener">Google — Android NFC settings</a> ·
+      <a href="https://gdpr-info.eu/" target="_blank" rel="noopener">GDPR</a> ·
+      <a href="https://u.ae/en/about-the-uae/digital-uae/data" target="_blank" rel="noopener">UAE PDPL data-protection law</a>
+    </div>
+  </div>
+</section>
+
+<section class="nfc-order" id="order">
+  <div class="card">
+    <h2>📦 Order your tag — free</h2>
+    <p class="sub">Sign in to order. Tag arrives with your next service visit, or by free courier in 1-2 days.</p>
+    <div id="order-form">
+      <label>What service should this tag trigger?</label>
+      <select id="nfc-service">
+        <option value="deep_cleaning">✨ Deep Cleaning · from AED 350</option>
+        <option value="ac_cleaning">❄️ AC Service · from AED 75/unit</option>
+        <option value="maid_service">👤 Maid Service · from AED 25/hr</option>
+        <option value="handyman">🔧 Handyman · from AED 100</option>
+        <option value="pest_control">🪲 Pest Control · from AED 200</option>
+        <option value="sofa_carpet">🛋️ Sofa &amp; Carpet · from AED 120</option>
+        <option value="window_cleaning">🪟 Window Cleaning · from AED 80</option>
+        <option value="move_in_out">📦 Move In/Out Clean · from AED 400</option>
+        <option value="painting">🎨 Painting · from AED 350</option>
+        <option value="laundry">👕 Laundry · from AED 30</option>
+        <option value="babysitting">👶 Babysitting · from AED 35/hr</option>
+        <option value="garden">🌿 Gardening · from AED 120</option>
+        <option value="pool">🏊 Pool Care · from AED 250</option>
+        <option value="car_wash">🚗 Car Wash · from AED 50</option>
+      </select>
+
+      <label>Where will you stick it? <small style="font-weight:400;color:#94A3B8;text-transform:none;letter-spacing:0">(optional, helps us label the tag)</small></label>
+      <input id="nfc-location" placeholder="e.g. Kitchen sink, glove box, pool tile">
+
+      <label>Tag size</label>
+      <div class="sizes" id="nfc-sizes">
+        <div class="sz active" data-size="sticker"><span class="em">🏷️</span>Sticker<br><small style="color:#94A3B8;font-size:11px">25mm round</small></div>
+        <div class="sz" data-size="card"><span class="em">💳</span>Credit-card<br><small style="color:#94A3B8;font-size:11px">85×54mm</small></div>
+        <div class="sz" data-size="keychain"><span class="em">🔑</span>Keychain<br><small style="color:#94A3B8;font-size:11px">40mm fob</small></div>
+      </div>
+
+      <label>Delivery</label>
+      <select id="nfc-delivery">
+        <option value="next_visit">🚚 Free — with my next service visit</option>
+        <option value="courier">📦 Free courier — 1-2 days, UAE-wide</option>
+      </select>
+
+      <button type="button" id="nfc-order-btn">Order my free tag →</button>
+      <div id="nfc-order-result"></div>
+    </div>
+  </div>
+</section>
+
+<section class="nfc-faq">
+  <h2>Frequently asked questions</h2>
+
+  <details>
+    <summary>Does the NFC tag track me or share data with anyone?</summary>
+    <div>No. NFC tags are passive — no GPS, no battery, no microphone. They are silent until you physically tap them. Same privacy model as a phone-number sticker. Verified by <a href="https://en.wikipedia.org/wiki/Near-field_communication" target="_blank">Wikipedia</a> and the <a href="https://nfc-forum.org/learn/nfc-technology/" target="_blank">NFC Forum</a>.</div>
+  </details>
+  <details>
+    <summary>What if a guest taps my tag — will they see my address?</summary>
+    <div>No. They reach a Servia booking page that shows only the masked last-4-digits of the linked phone number. Your name, full phone and address are hidden until the page sees a sign-in token belonging to you (the owner).</div>
+  </details>
+  <details>
+    <summary>Which phones work with NFC tap?</summary>
+    <div>iPhone XS (2018) and newer · most Android phones since 2018 · all Samsung Galaxy S6+ · all Pixel and Pixel Watch · all Galaxy Watch 4+. NFC is on by default. No app required — your browser opens automatically.</div>
+  </details>
+  <details>
+    <summary>What's the difference between NFC and a QR code?</summary>
+    <div>QR = open camera, frame, focus, tap notification — 4 steps and 5–8 seconds. NFC = tap once, ~2 seconds. NFC works in the dark, in tight spaces, and you can hide it behind a cabinet door where a camera can't see it. QR is great for printed posters; NFC wins for repeat actions.</div>
+  </details>
+  <details>
+    <summary>Can I have multiple NFC tags?</summary>
+    <div>Yes — that's actually the recommended setup. One per service: kitchen tag for maid, AC tag for AC service, car tag for car wash, pool tag for pool care, etc. Each is bound to your same account but to a different service.</div>
+  </details>
+  <details>
+    <summary>What if I lose a tag?</summary>
+    <div>Sign in to your Servia account → My tags → Deactivate. Whoever finds it can't use it. We'll send you a replacement free.</div>
+  </details>
+  <details>
+    <summary>Is this an open standard? Can I overwrite the tag?</summary>
+    <div>Yes — Servia tags are standard <b>NTAG213</b> chips (the NFC industry default). We pre-write a single URL to it — you can read or rewrite it any time with a free app like <a href="https://play.google.com/store/apps/details?id=com.wakdev.wdnfc" target="_blank">NFC Tools</a>. We never lock the tag.</div>
+  </details>
+  <details>
+    <summary>How long does a tag last?</summary>
+    <div>NTAG213 chips are rated for 100,000 writes and ~10 years of read cycles. The plastic / paper substrate fails first; sticker version typically survives 3–5 years on a kitchen cabinet, longer in a wallet (card) or keychain.</div>
+  </details>
+  <details>
+    <summary>Where can I read more about NFC technology and privacy?</summary>
+    <div>
+      <a href="https://en.wikipedia.org/wiki/Near-field_communication" target="_blank" rel="noopener">Wikipedia: NFC</a> ·
+      <a href="https://nfc-forum.org/" target="_blank" rel="noopener">NFC Forum</a> ·
+      <a href="https://www.nxp.com/products/rfid-nfc/nfc-hf/ntag-for-tags-labels:NTAG-FOR-TAGS-AND-LABELS" target="_blank" rel="noopener">NXP NTAG datasheet</a> ·
+      <a href="https://support.apple.com/guide/iphone/use-iphone-with-other-devices-iph2ed53d0/ios" target="_blank" rel="noopener">Apple iPhone NFC docs</a> ·
+      <a href="https://support.google.com/android/answer/9058764" target="_blank" rel="noopener">Android NFC settings</a> ·
+      <a href="https://gdpr-info.eu/" target="_blank" rel="noopener">GDPR</a> ·
+      <a href="https://u.ae/en/about-the-uae/digital-uae/data" target="_blank" rel="noopener">UAE Personal Data Protection Law</a>.
+    </div>
+  </details>
+</section>
+
+<footer style="background:#0F172A;color:#cbd5e1;padding:48px 24px;margin-top:0">
+  <div style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px">
+    <div><img src="/logo.svg" width="124" height="40" alt="Servia"><p style="margin:12px 0 0;font-size:13px;opacity:.85">UAE's first NFC home-service tag.</p></div>
+    <div><h4 style="color:#fff;font-size:13px;margin:0 0 12px;font-weight:700">NFC Tap-to-Book</h4>
+      <a href="/nfc.html#how" style="color:#cbd5e1;font-size:13px">How it works</a><br>
+      <a href="/nfc.html#order" style="color:#cbd5e1;font-size:13px">Order a tag</a><br>
+      <a href="/me.html" style="color:#cbd5e1;font-size:13px">My tags</a><br>
+      <a href="/contact.html" style="color:#cbd5e1;font-size:13px">Help with NFC</a>
+    </div>
+    <div><h4 style="color:#fff;font-size:13px;margin:0 0 12px;font-weight:700">Servia</h4>
+      <a href="/services.html" style="color:#cbd5e1;font-size:13px">All services</a><br>
+      <a href="/coverage.html" style="color:#cbd5e1;font-size:13px">Coverage</a><br>
+      <a href="/blog" style="color:#cbd5e1;font-size:13px">Blog</a><br>
+      <a href="/install.html" style="color:#cbd5e1;font-size:13px">Install app</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Order form interactions */
+(function(){
+  const sizes = document.getElementById("nfc-sizes");
+  let selectedSize = "sticker";
+  if (sizes) sizes.addEventListener("click", e => {
+    const sz = e.target.closest(".sz");
+    if (!sz) return;
+    sizes.querySelectorAll(".sz").forEach(x => x.classList.remove("active"));
+    sz.classList.add("active");
+    selectedSize = sz.dataset.size;
+  });
+
+  const btn = document.getElementById("nfc-order-btn");
+  if (btn) btn.addEventListener("click", async () => {
+    const out = document.getElementById("nfc-order-result");
+    out.innerHTML = "";
+    const tok = localStorage.getItem("lumora.user.tok");
+    if (!tok) {
+      out.innerHTML = `<div class="login-hint">📲 You need to <a href="/login.html?next=/nfc.html%23order" style="color:#0F766E;font-weight:700">sign in</a> first to order an NFC tag (we need to bind it to your account).</div>`;
+      return;
+    }
+    const body = {
+      service_id: document.getElementById("nfc-service").value,
+      location_label: document.getElementById("nfc-location").value || null,
+      size: selectedSize,
+      delivery: document.getElementById("nfc-delivery").value,
+    };
+    btn.disabled = true; btn.textContent = "Ordering…";
+    try {
+      const r = await fetch("/api/nfc/order", {
+        method: "POST",
+        headers: {"content-type":"application/json", "Authorization":"Bearer "+tok},
+        body: JSON.stringify(body),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || "Failed");
+      out.innerHTML = `<div style="background:#ECFDF5;color:#065F46;padding:14px;border-radius:10px;margin-top:14px;border:1px solid #A7F3D0">
+        <b>✅ Tag queued — slug ${j.slug}</b><br>
+        Tap-URL: <code style="background:rgba(0,0,0,.05);padding:1px 6px;border-radius:4px;font-size:12px">${j.tap_url}</code><br>
+        ${j.message}<br>
+        <a href="/me.html#nfc-tags" style="color:#0F766E;font-weight:700;margin-top:8px;display:inline-block">View my tags →</a>
+      </div>`;
+      btn.textContent = "Order another →";
+    } catch (e) {
+      out.innerHTML = `<div style="background:#FEE2E2;color:#991B1B;padding:14px;border-radius:10px;margin-top:14px;border:1px solid #FCA5A5">
+        ✗ ${e.message || e}</div>`;
+      btn.textContent = "Order my free tag →";
+    } finally { btn.disabled = false; }
+  });
+})();
+</script>
+
+</main>
+</body></html>

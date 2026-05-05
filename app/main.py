@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, ai_router, cart, db, demo_brain, kb, launch, live_visitors, llm, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, selftest, social_publisher, staff_portraits, tools, videos, visibility, whatsapp
+from . import admin, ai_router, cart, db, demo_brain, kb, launch, live_visitors, llm, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, selftest, social_publisher, staff_portraits, tools, videos, visibility, whatsapp
 from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
 
@@ -53,6 +53,8 @@ app.include_router(_vs.router)
 app.include_router(_vo.router)
 app.include_router(_si.admin_router)
 app.include_router(_si.public_router)
+app.include_router(_nfc_mod.router)            # /api/nfc/*  + /api/admin/nfc/*
+app.include_router(_nfc_mod.public_router)     # /t/<slug> tap handler
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)
@@ -3180,10 +3182,10 @@ class _CustomerPwdLogin(BaseModel):
 
 @app.post("/api/auth/customer/login")
 def customer_login_pwd(body: _CustomerPwdLogin):
-    """Login a customer with email+password. Returns a JWT-style token
-    compatible with the existing OTP-issued token (auth.py issue_token)."""
+    """Login a customer with email+password. Issues a session token via
+    auth_users.create_session — same shape as the OTP/passkey flows so
+    the token is interchangeable across all customer endpoints."""
     from . import auth_users as _au
-    from .auth import issue_token
     email = (body.email or "").strip().lower()
     pwd = body.password or ""
     if not email or not pwd:
@@ -3198,7 +3200,7 @@ def customer_login_pwd(body: _CustomerPwdLogin):
         raise HTTPException(403, "Account suspended — contact support")
     if not _au.verify_password(pwd, row["password_hash"]):
         raise HTTPException(401, "Invalid email or password")
-    tok = issue_token({"sub": str(row["id"]), "kind": "customer", "phone": row["phone"]})
+    tok = _au.create_session("customer", int(row["id"]))
     db.log_event("auth", str(row["id"]), "customer_pwd_login", actor=row["phone"])
     return {"ok": True, "token": tok, "user": {
         "id": row["id"], "name": row["name"] or "", "email": row["email"] or "",
