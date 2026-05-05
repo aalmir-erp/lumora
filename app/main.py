@@ -845,6 +845,26 @@ async def stripe_webhook(request: Request):
         if invoice_id:
             from . import quotes as _q
             _q.mark_invoice_paid(invoice_id, source="stripe")
+            # v1.22.93 — auto-credit Servia wallet for WALLET-* invoices.
+            # When the customer paid a top-up via Stripe, the invoice id
+            # starts with "WALLET-<customer_id>-<ts>" — parse + bump balance.
+            if invoice_id.startswith("WALLET-"):
+                try:
+                    parts = invoice_id.split("-")
+                    cust_id = int(parts[1])
+                    with db.connect() as c:
+                        inv = c.execute(
+                            "SELECT amount_aed FROM invoices WHERE id=?", (invoice_id,)
+                        ).fetchone()
+                    if inv:
+                        from . import nfc as _nfc_mod
+                        _nfc_mod.credit_wallet(cust_id, float(inv["amount_aed"]),
+                                                ref=invoice_id, note="topup paid (stripe)")
+                        db.log_event("wallet", str(cust_id), "auto_credit",
+                                      actor="stripe", details={"invoice": invoice_id,
+                                                                  "amount": inv["amount_aed"]})
+                except Exception as e:  # noqa: BLE001
+                    print(f"[wallet auto-credit] failed: {e}", flush=True)
             # Confirm the booking now that payment is in
             with db.connect() as c:
                 r = c.execute("SELECT booking_id FROM invoices WHERE id=?", (invoice_id,)).fetchone()

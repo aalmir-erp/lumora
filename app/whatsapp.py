@@ -58,6 +58,43 @@ def inbound(msg: InboundMsg):
     sid = _phone_to_session(msg.from_number)
     _persist(sid, "user", msg.text, phone=msg.from_number)
 
+    # v1.22.93 — short-circuit NFC tap-confirm codes ("NFCABCD …") BEFORE
+    # invoking LLM / agent routing. The customer just hit Send on the
+    # pre-filled WhatsApp message → we deduct the wallet, confirm booking,
+    # and reply with a confirmation. Saves LLM tokens + is deterministic.
+    import re as _re
+    if _re.search(r"\bNFC[A-Z0-9]{4}\b", (msg.text or "").upper()):
+        try:
+            from . import nfc as _nfc_mod
+            class _MockBody:
+                pass
+            body = _MockBody()
+            body.from_phone = msg.from_number
+            body.text = msg.text
+            result = _nfc_mod.wa_code_inbound(body)
+            reply = (result.get("message") or
+                     "✅ Your Servia tap booking is confirmed.")
+            _persist(sid, "assistant", reply, phone=msg.from_number)
+            # Send the reply back via the WA bridge if configured
+            try:
+                from .whatsapp_bridge import send_message  # type: ignore
+                send_message(msg.from_number, reply)
+            except Exception:
+                pass
+            return {"ok": True, "handled": "nfc_wallet_confirm",
+                    "deducted_aed": result.get("deducted_aed")}
+        except HTTPException as e:
+            err = f"⚠ Servia: {e.detail}"
+            _persist(sid, "assistant", err, phone=msg.from_number)
+            try:
+                from .whatsapp_bridge import send_message  # type: ignore
+                send_message(msg.from_number, err)
+            except Exception: pass
+            return {"ok": True, "error": e.detail}
+        except Exception as e:  # noqa: BLE001
+            print(f"[wa nfc-confirm] failed: {e}", flush=True)
+            # Fall through to normal LLM routing if NFC handler crashed
+
     # If a human has taken over, do not auto-reply.
     with db.connect() as c:
         t = c.execute(
