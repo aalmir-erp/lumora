@@ -183,8 +183,7 @@
 <script>window.__lazyLoadQueue = [
   { src: "/_snippets.js",    id: "snippets" },
   { src: "/cart-badge.js",   id: "cart-badge" },
-  { src: "/social-strip.js", id: "social-strip" },
-  { src: "/social-proof.js", id: "social-proof" }
+  { src: "/social-strip.js", id: "social-strip" }
 ];</script>
 <script src="/universal-nav.js" defer></script>
 <script src="/lazy-loaders.js" defer></script>
@@ -193,7 +192,7 @@
 </head>
 <body>
 
-<div id="servia-topbanner" style="min-height:44px;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
+<div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
 <div class="uae-flag-strip"></div>
 <nav class="nav"><div class="nav-inner">
   <a href="/" aria-label="Home"><img src="/logo.svg" width="124" height="40" alt="Servia" fetchpriority="high" decoding="sync"></a>
@@ -1039,32 +1038,32 @@ document.querySelectorAll("[data-count]").forEach(n => countObs.observe(n));
     if (hour >= 0 && hour < 5)   return [
       `${e} ${n} chatting with our AI to book <b>${s}</b> for tomorrow morning · just now`,
       `${e} ${n} planning <b>${s}</b> in ${a} · 5 min ago`,
-      `${e} Servia AI handled a midnight quote for <b>${s}</b> in ${a}`,
+      `${e} Servia AI handled a midnight quote for <b>${s}</b> in ${a}`
     ];
     if (hour >= 5 && hour < 9)   return [
       `${e} ${n} booked <b>${s}</b> in ${a} for 9am · 2 min ago`,
       `${e} Crew dispatched to ${a} for ${s} · 4 min ago`,
-      `${e} ${n} starting their day with <b>${s}</b> in ${a}`,
+      `${e} ${n} starting their day with <b>${s}</b> in ${a}`
     ];
     if (hour >= 9 && hour < 13)  return [
       `${e} ${n} booked <b>${s}</b> in ${a} · ${1 + Math.floor(Math.random()*8)} min ago`,
       `${e} Crew arrived at ${a} for ${s}`,
-      `${e} ${n} added <b>${s}</b> to today's schedule in ${a}`,
+      `${e} ${n} added <b>${s}</b> to today's schedule in ${a}`
     ];
     if (hour >= 13 && hour < 17) return [
       `${e} Just completed <b>${s}</b> at ${a} · ${5 + Math.floor(Math.random()*15)} min ago`,
       `${e} ${n} booked <b>${s}</b> for this evening in ${a}`,
-      `${e} ${n} rated 5★ for <b>${s}</b> in ${a}`,
+      `${e} ${n} rated 5★ for <b>${s}</b> in ${a}`
     ];
     if (hour >= 17 && hour < 22) return [
       `${e} ${n} just rated <b>${s}</b> 5★ in ${a}`,
       `${e} ${n} booked <b>${s}</b> for tomorrow morning in ${a}`,
-      `${e} Crew finishing <b>${s}</b> in ${a} · ${1 + Math.floor(Math.random()*5)} min ago`,
+      `${e} Crew finishing <b>${s}</b> in ${a} · ${1 + Math.floor(Math.random()*5)} min ago`
     ];
     return [  // 22-24
       `${e} ${n} booked <b>${s}</b> in ${a} for tomorrow · ${1 + Math.floor(Math.random()*15)} min ago`,
       `${e} ${n} chatting with Servia AI about <b>${s}</b> in ${a}`,
-      `${e} ${n} scheduled weekly <b>${s}</b> in ${a}`,
+      `${e} ${n} scheduled weekly <b>${s}</b> in ${a}`
     ];
   };
 
@@ -1289,7 +1288,7 @@ setTimeout(() => {
     {kind:"faq", title:"How much for deep cleaning a 2-bed in Dubai?", body:"AED 350-450 depending on add-ons", url:"/faq.html"},
     {kind:"faq", title:"Which UAE areas does Servia cover?",            body:"All 7 emirates same-day Dubai Sharjah Ajman", url:"/faq.html"},
     {kind:"faq", title:"What is the cancellation policy?",              body:"Free cancellation up to 4 hours before booking", url:"/faq.html"},
-    {kind:"faq", title:"Are cleaners insured and background-checked?",  body:"Yes ID-verified insured female crews on request", url:"/faq.html"},
+    {kind:"faq", title:"Are cleaners insured and background-checked?",  body:"Yes ID-verified insured female crews on request", url:"/faq.html"}
   ];
   docs = STATIC.slice();
 

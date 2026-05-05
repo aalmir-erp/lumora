@@ -158,7 +158,7 @@
   // ---------- service worker ----------
   // One-time purge: existing visitors are stuck on the old cache-first SW
   // (lumora-v0.2.0). Force a clean re-register so they pick up new deploys.
-  const SW_RESET_KEY = "servia.sw.reset.v1.7.0";
+  const SW_RESET_KEY = "servia.sw.reset.v1.22.65";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {
@@ -237,10 +237,14 @@
       ".goog-te-gadget > span { display:none }";
     document.head.appendChild(css);
   }
-  // Load it only if (a) saved language is non-English, OR (b) user clicks the picker
+  // Load it only if (a) saved language is non-English, OR (b) user clicks the picker.
+  // Used to wait up to 4s on requestIdleCallback so PSI didn't penalise us. But
+  // for users who'd already chosen a non-English language, that meant inner
+  // pages rendered in English for several seconds before the translation
+  // kicked in — which they perceived as blank / broken. Now we load GT on the
+  // next animation frame for non-English so the gap is unnoticeable.
   if (currentLang && currentLang !== "en") {
-    if ("requestIdleCallback" in window) requestIdleCallback(loadGoogleTranslate, { timeout: 4000 });
-    else setTimeout(loadGoogleTranslate, 2000);
+    requestAnimationFrame(loadGoogleTranslate);
   }
   document.addEventListener("change", function _gtPicker(e) {
     if (e.target.closest(".lang-pick") && e.target.value !== "en") loadGoogleTranslate();
