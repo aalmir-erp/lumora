@@ -1,0 +1,284 @@
+/* Servia "About this app" floating button + sheet.
+ *
+ * Shows version, reset/logout, check-for-update, banner-permission reset,
+ * and a quick reset-all-cache option. Loaded on every public page so
+ * users can find it whether they're in the TWA or browser.
+ *
+ * Trigger: small ⓘ icon in the bottom-right corner (under the floats-hide
+ * toggle from install.js). Tap → bottom sheet with all the settings.
+ */
+(function () {
+  if (window.__servia_about_app) return;
+  window.__servia_about_app = true;
+
+  // Skip on admin / vendor / payment pages
+  if (/^\/(admin|vendor|portal|pay|invoice)/.test(location.pathname)) return;
+
+  const css = document.createElement("style");
+  css.textContent = `
+    #servia-about-fab {
+      position:fixed; right:6px; bottom:34px; z-index:1000;
+      width:24px; height:24px; border-radius:50%;
+      background:rgba(15,23,42,.5); color:#fff; font-size:12px;
+      border:0; cursor:pointer; padding:0; line-height:1;
+      display:inline-flex; align-items:center; justify-content:center;
+      opacity:.45; transition:opacity .15s;
+    }
+    .mobile-nav ~ #servia-about-fab { bottom:102px }
+    #servia-about-fab:hover { opacity:1 }
+
+    #servia-about-modal {
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
+      backdrop-filter:blur(4px); z-index:99998;
+      display:flex; align-items:flex-end; justify-content:center;
+      animation:abfade .2s;
+    }
+    @keyframes abfade { from { opacity:0 } to { opacity:1 } }
+    #servia-about-modal .sheet {
+      background:#fff; width:100%; max-width:520px;
+      border-radius:24px 24px 0 0; padding:22px 22px 30px;
+      max-height:88vh; overflow:auto;
+      box-shadow:0 -16px 40px rgba(15,23,42,.18);
+      animation:abup .25s ease;
+    }
+    @keyframes abup { from { transform:translateY(40px) } to { transform:translateY(0) } }
+    .ab-head {
+      display:flex; gap:14px; align-items:center; padding-bottom:14px;
+      border-bottom:1px solid #E2E8F0; margin-bottom:14px;
+    }
+    .ab-head img { width:54px; height:54px; border-radius:14px; }
+    .ab-head h3 { margin:0; font-size:18px; }
+    .ab-head .v {
+      font-size:11.5px; font-weight:700; color:#0F766E;
+      background:#F0FDFA; padding:2px 10px; border-radius:999px;
+      display:inline-block; margin-top:4px; font-family:ui-monospace,monospace;
+    }
+    .ab-row {
+      display:flex; align-items:center; gap:14px; padding:12px 6px;
+      border-bottom:1px solid #F1F5F9; cursor:pointer;
+      transition:background .12s; user-select:none;
+    }
+    .ab-row:hover { background:#F8FAFC }
+    .ab-row .ic {
+      width:38px; height:38px; border-radius:10px; background:#F0FDFA;
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; flex-shrink:0;
+    }
+    .ab-row .body { flex:1; min-width:0 }
+    .ab-row .body b { font-size:14px; color:#0F172A; display:block }
+    .ab-row .body small { font-size:12px; color:#64748B; line-height:1.4 }
+    .ab-row .arrow { color:#94A3B8 }
+    .ab-row.danger .ic { background:#FEF2F2 }
+    .ab-row.danger b { color:#B91C1C }
+    .ab-foot {
+      text-align:center; font-size:11px; color:#94A3B8; margin-top:14px; line-height:1.6;
+    }
+  `;
+  document.head.appendChild(css);
+
+  const fab = document.createElement("button");
+  fab.id = "servia-about-fab";
+  fab.type = "button";
+  fab.title = "About this app & settings";
+  fab.setAttribute("aria-label", "About this app");
+  fab.textContent = "ⓘ";
+  fab.onclick = openSheet;
+
+  function attachFab() {
+    if (document.getElementById("servia-about-fab")) return;
+    if (document.body) document.body.appendChild(fab);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", attachFab);
+  } else {
+    attachFab();
+  }
+
+  async function fetchVersion() {
+    try {
+      const r = await fetch("/api/health");
+      const j = await r.json();
+      return j.version || "?";
+    } catch (_) {
+      return "?";
+    }
+  }
+
+  async function openSheet() {
+    if (document.getElementById("servia-about-modal")) return;
+    const ver = await fetchVersion();
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+                      || window.navigator.standalone === true;
+    const loggedIn = !!localStorage.getItem("lumora.user.tok");
+    const userPhone = (function () {
+      try {
+        const loc = JSON.parse(localStorage.getItem("servia.user.location.v1") || "null");
+        return loc?.contact_phone || "";
+      } catch (_) { return ""; }
+    })();
+    const m = document.createElement("div");
+    m.id = "servia-about-modal";
+    m.innerHTML = `
+      <div class="sheet">
+        <div class="ab-head">
+          <img src="/brand/servia-icon-512x512.png" alt="" onerror="this.style.display='none'">
+          <div>
+            <h3>About this app</h3>
+            <div class="v">v${escapeHtml(ver)} ${isStandalone ? "· installed" : "· browser"}</div>
+          </div>
+        </div>
+
+        <div class="ab-row" data-action="check-update">
+          <div class="ic">🔄</div>
+          <div class="body"><b>Check for updates</b><small>Pull the latest version from servia.ae</small></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="ab-row" data-action="install-app" ${isStandalone ? 'style="display:none"' : ''}>
+          <div class="ic">📲</div>
+          <div class="body"><b>Install Servia app</b><small>Add to home screen for one-tap access</small></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="ab-row" data-action="reset-banners">
+          <div class="ic">🔔</div>
+          <div class="body"><b>Reset banner preferences</b><small>Show all dismissed top banners and install prompts again</small></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="ab-row" data-action="reset-floats">
+          <div class="ic">👁</div>
+          <div class="body"><b>Show floating buttons</b><small>Restore minimized cart / install / chat / search</small></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="ab-row" data-action="reset-location">
+          <div class="ic">📍</div>
+          <div class="body"><b>Reset saved location</b><small>Re-detect or re-enter your address</small></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="ab-row" data-action="reset-language">
+          <div class="ic">🌐</div>
+          <div class="body"><b>Language: <span id="ab-lang">EN</span></b><small>Tap to change UI language</small></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="ab-row" data-action="logout" ${loggedIn ? '' : 'style="display:none"'}>
+          <div class="ic">👤</div>
+          <div class="body"><b>Log out</b><small>${escapeHtml(userPhone || "Sign back in next time")}</small></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="ab-row danger" data-action="reset-all">
+          <div class="ic">🗑</div>
+          <div class="body"><b>Reset everything</b><small>Clears all preferences, addresses, sessions. The app reloads.</small></div>
+          <div class="arrow">›</div>
+        </div>
+
+        <div class="ab-foot">
+          Servia FZ-LLC · Dubai, UAE<br>
+          <a href="/privacy.html" style="color:#0F766E">Privacy</a> ·
+          <a href="/terms.html" style="color:#0F766E">Terms</a> ·
+          <a href="/contact.html" style="color:#0F766E">Contact</a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(m);
+    m.addEventListener("click", e => {
+      if (e.target === m) m.remove();
+    });
+    m.querySelectorAll(".ab-row").forEach(row => {
+      row.addEventListener("click", () => handleAction(row.dataset.action, m));
+    });
+    // Show current language
+    try {
+      const cur = localStorage.getItem("lumora.lang") || "en";
+      const lng = m.querySelector("#ab-lang");
+      if (lng) lng.textContent = cur.toUpperCase();
+    } catch (_) {}
+  }
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;","'":"&#39;"}[c]));
+  }
+
+  async function handleAction(action, modal) {
+    switch (action) {
+      case "check-update":
+        try {
+          if (navigator.serviceWorker) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.update()));
+          }
+        } catch (_) {}
+        location.reload();
+        break;
+      case "install-app":
+        if (window.serviaShowInstall) window.serviaShowInstall();
+        else location.href = "/install.html";
+        break;
+      case "reset-banners":
+        try {
+          localStorage.removeItem("servia.topbanner.dismissed_at");
+          localStorage.removeItem("servia.install.dismissed");
+          localStorage.removeItem("servia.install.dismissed_at");
+          document.documentElement.classList.remove("hide-topbanner", "hide-install-banner");
+        } catch (_) {}
+        toast("✓ Banner preferences reset");
+        location.reload();
+        break;
+      case "reset-floats":
+        try { sessionStorage.removeItem("servia.floats.hidden"); } catch (_) {}
+        toast("✓ Floating buttons restored");
+        location.reload();
+        break;
+      case "reset-location":
+        try { localStorage.removeItem("servia.user.location.v1"); } catch (_) {}
+        toast("✓ Saved location cleared");
+        location.reload();
+        break;
+      case "reset-language":
+        if (window.lumoraSetLang) {
+          // Cycle through common langs as a quick demo
+          const next = prompt("Language code (en, ar, ur, hi, fr, ru, es, …)", localStorage.getItem("lumora.lang") || "en");
+          if (next) window.lumoraSetLang(next.trim().toLowerCase());
+        }
+        break;
+      case "logout":
+        if (!confirm("Log out of Servia on this device?")) return;
+        try {
+          localStorage.removeItem("lumora.user.tok");
+          localStorage.removeItem("lumora.user.type");
+        } catch (_) {}
+        toast("✓ Logged out");
+        location.href = "/login.html";
+        break;
+      case "reset-all":
+        if (!confirm("This clears EVERYTHING — saved addresses, sessions, preferences. Continue?")) return;
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+          if (navigator.serviceWorker) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+          }
+          if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+        } catch (_) {}
+        location.replace("/");
+        break;
+    }
+    if (modal && action !== "reset-language") modal.remove();
+  }
+
+  function toast(t) {
+    const el = document.createElement("div");
+    el.textContent = t;
+    el.style.cssText = "position:fixed;bottom:50%;left:50%;transform:translate(-50%,50%);background:#0F172A;color:#fff;padding:14px 22px;border-radius:999px;z-index:99999;font-weight:700;font-size:14px;box-shadow:0 12px 28px rgba(15,23,42,.32);animation:abfade .2s";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2200);
+  }
+})();

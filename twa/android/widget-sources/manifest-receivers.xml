@@ -1,11 +1,10 @@
 <!-- Servia widget receivers — injected into the generated AndroidManifest.xml
-     by the workflow's "Inject widgets" step. These declare the two
-     AppWidgetProviders (QuickBookWidget, TrackBookingWidget) so Android's
-     widget picker shows them under "Servia" when the user long-presses the
-     home screen. -->
+     by the workflow's "Inject home-screen widgets" step. Each receiver
+     declares a separate AppWidgetProvider so the user gets multiple
+     pickable widgets in Android's "Widgets" menu under "Servia". -->
 <receiver android:name=".QuickBookWidget"
           android:exported="true"
-          android:label="Servia Quick Book">
+          android:label="Servia · Quick book">
     <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
     </intent-filter>
@@ -14,10 +13,55 @@
 </receiver>
 <receiver android:name=".TrackBookingWidget"
           android:exported="true"
-          android:label="Servia Track Booking">
+          android:label="Servia · Track booking">
     <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
     </intent-filter>
     <meta-data android:name="android.appwidget.provider"
                android:resource="@xml/servia_track_widget_info" />
+</receiver>
+<receiver android:name=".UpcomingBookingWidget"
+          android:exported="true"
+          android:label="Servia · Upcoming visit">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_upcoming_widget_info" />
+</receiver>
+<receiver android:name=".WhatsAppSupportWidget"
+          android:exported="true"
+          android:label="Servia · WhatsApp support">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_whatsapp_widget_info" />
+</receiver>
+<receiver android:name=".LoyaltyPointsWidget"
+          android:exported="true"
+          android:label="Servia · Ambassador tier">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_loyalty_widget_info" />
+</receiver>
+<receiver android:name=".DailyTipWidget"
+          android:exported="true"
+          android:label="Servia · Daily tip">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_dailytip_widget_info" />
+</receiver>
+<receiver android:name=".QuickQuoteWidget"
+          android:exported="true"
+          android:label="Servia · Quick quote">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_quote_widget_info" />
 </receiver>
