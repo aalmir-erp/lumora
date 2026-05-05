@@ -20,7 +20,16 @@ from .auth import ADMIN_TOKEN
 from .config import get_settings
 
 settings = get_settings()
-app = FastAPI(title=settings.BRAND_NAME, version=settings.APP_VERSION)
+# openapi_url=None disables FastAPI's auto-generated /openapi.json. We serve
+# our own curated public spec at /openapi.json + /openapi-public.json instead
+# (defined further below). Auto-gen was crashing with a Pydantic v2 ForwardRef
+# error on a 'Request' annotation, returning 500 to every AI crawler that hit
+# /openapi.json. The curated spec also keeps admin / vendor / payment internals
+# out of the public surface ChatGPT / Copilot / You.com see.
+# /docs + /redoc go away with openapi_url=None — they were broken anyway and
+# we don't want to expose Swagger UI on a public production domain.
+app = FastAPI(title=settings.BRAND_NAME, version=settings.APP_VERSION,
+              openapi_url=None, docs_url=None, redoc_url=None)
 
 app.add_middleware(
     CORSMiddleware,
@@ -1795,14 +1804,12 @@ def ai_plugin_manifest():
     })
 
 
-@app.get("/openapi-public.json")
-def openapi_public():
-    """Trimmed OpenAPI spec exposing only the customer-facing booking +
-    services endpoints. AI plugins read this to know what they can call.
-    Keeps admin / vendor / payment internals out of the spec."""
-    from fastapi.responses import JSONResponse
+def _openapi_public_spec():
+    """Curated public OpenAPI spec — exposes only the customer-facing booking
+    + services endpoints AI assistants should be allowed to call. Keeps admin
+    / vendor / payment internals out of the spec entirely."""
     domain = settings.BRAND_DOMAIN or "servia.ae"
-    return JSONResponse({
+    return {
         "openapi": "3.1.0",
         "info": {
             "title": "Servia Public API",
@@ -1840,7 +1847,26 @@ def openapi_public():
                 }
             },
         }
-    })
+    }
+
+
+@app.get("/openapi.json")
+def openapi_json():
+    """Standard /openapi.json path — serves the curated public spec.
+    FastAPI's auto-gen at this path was disabled (Pydantic v2 ForwardRef
+    crash on a 'Request' annotation) and was leaking admin endpoints
+    anyway. AI tooling expects this path so we keep it as the canonical
+    URL."""
+    from fastapi.responses import JSONResponse
+    return JSONResponse(_openapi_public_spec())
+
+
+@app.get("/openapi-public.json")
+def openapi_public():
+    """Alias for /openapi.json kept for back-compat with anything we've
+    already submitted to AI directories under this URL."""
+    from fastapi.responses import JSONResponse
+    return JSONResponse(_openapi_public_spec())
 
 
 @app.get("/llms.txt", response_class=HTMLResponse)
