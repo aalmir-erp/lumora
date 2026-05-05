@@ -30,6 +30,12 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  # `contents: write` lets actions/upload-artifact and softprops/action-gh-release
+  # create a GitHub Release with the signed APK + AAB attached. Without this
+  # the GITHUB_TOKEN can only read; release-creation 403's.
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -358,6 +364,30 @@ jobs:
           path: twa/android/wear-build/_artifacts/*
           if-no-files-found: warn
           retention-days: 30
+
+      # Push the Wear gradle log + dirtree to a debug branch so it's
+      # readable via `git pull origin ci-wear-debug` from the development
+      # sandbox (which can't reach the GH artifact CDN). Only the small
+      # log files are pushed — no APKs.
+      - name: Push Wear log to ci-wear-debug branch
+        if: always() && hashFiles('twa/android/wear-build/_artifacts/wear-gradle-tail.txt') != ''
+        run: |
+          set -e
+          mkdir -p _ci_wear_log
+          cp -v twa/android/wear-build/_artifacts/wear-gradle-tail.txt _ci_wear_log/ 2>/dev/null || true
+          cp -v twa/android/wear-build/_artifacts/wear-found.txt       _ci_wear_log/ 2>/dev/null || true
+          cp -v twa/android/wear-build/_artifacts/wear-dirtree.txt     _ci_wear_log/ 2>/dev/null || true
+          ls -la _ci_wear_log/
+          git config user.email "ci-bot@servia.ae"
+          git config user.name  "Servia CI"
+          git checkout --orphan ci-wear-debug
+          git rm -rf . 2>/dev/null || true
+          mv _ci_wear_log/* . 2>/dev/null || true
+          rmdir _ci_wear_log 2>/dev/null || true
+          echo "Run: ${{ github.run_id }}  Tag: ${{ github.ref_name }}  $(date -u)" > _RUN.txt
+          git add -A
+          git commit -m "ci-wear-debug ${{ github.ref_name }} run ${{ github.run_id }}" || true
+          git push -f origin ci-wear-debug || echo "::warning::push to ci-wear-debug failed"
 
       - name: Print install + Play Store instructions
         run: |

@@ -52,8 +52,11 @@ android {
 }
 
 dependencies {
+    // Smallest possible dependency surface that compiles to a watchable
+    // standalone APK. NO androidx.wear, NO compileOnly wearable jar
+    // (delisted from Maven, was the silent dependency-resolution failure
+    // that produced 0 outputs in CI). Watch-app status is signalled by
+    // <uses-feature android:name="android.hardware.type.watch"> +
+    // <meta-data wearable.standalone=true> in the manifest.
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    // No androidx.wear / no support-wearable — layout uses plain Android views.
-    // The wearable system jar is provided at runtime by the watch.
-    compileOnly 'com.google.android.wearable:wearable:2.9.0'
 }

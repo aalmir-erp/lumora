@@ -16,10 +16,10 @@
         android:allowBackup="true"
         android:supportsRtl="true">
 
-        <!-- Required for Wear OS to recognise this is a watch app -->
-        <uses-library
-            android:name="com.google.android.wearable"
-            android:required="true" />
+        <!-- We intentionally DO NOT declare <uses-library com.google.android.wearable>.
+             That would require the now-delisted com.google.android.wearable:wearable
+             compileOnly artifact and is no longer the recommended way to mark a
+             Wear OS app. Modern signal: <uses-feature watch> + standalone metadata. -->
 
         <!-- Tell Play Store this is standalone (works without phone app) -->
         <meta-data
