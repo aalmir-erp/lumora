@@ -447,10 +447,140 @@ async def _cascade_via_router(prompt: str, history: list[dict], lang: str) -> di
     return None
 
 
+# ---------- chat helpers: auto language detect + job filter ----------
+
+def _detect_lang_from_text(text: str) -> str | None:
+    """Best-effort language detection from the user's message body so the
+    bot replies in whatever language they wrote in, not just whatever the
+    UI dropdown says. Uses Unicode script ranges for high-confidence
+    classes (Arabic, Devanagari, Cyrillic, etc.) since those are visually
+    unambiguous; latin-script languages need text content (English wins
+    by default for short messages, which is fine for the UAE)."""
+    if not text or len(text.strip()) < 2:
+        return None
+    s = text.strip()
+    # Tally script counts from the first 200 chars
+    counts = {}
+    for ch in s[:200]:
+        cp = ord(ch)
+        if 0x0600 <= cp <= 0x06FF or 0x0750 <= cp <= 0x077F:  # Arabic + Arabic Suppl
+            # Urdu uses Arabic script. Distinguish via Urdu-only chars.
+            if ch in "ٹڈڑںھہۂۃۄۅۆۇۈۉۊۋیۍێېے":
+                counts["ur"] = counts.get("ur", 0) + 1
+            else:
+                counts["ar"] = counts.get("ar", 0) + 1
+        elif 0x0900 <= cp <= 0x097F:  # Devanagari (Hindi, Marathi)
+            counts["hi"] = counts.get("hi", 0) + 1
+        elif 0x0980 <= cp <= 0x09FF:  # Bengali
+            counts["bn"] = counts.get("bn", 0) + 1
+        elif 0x0B80 <= cp <= 0x0BFF:  # Tamil
+            counts["ta"] = counts.get("ta", 0) + 1
+        elif 0x0D00 <= cp <= 0x0D7F:  # Malayalam
+            counts["ml"] = counts.get("ml", 0) + 1
+        elif 0x0400 <= cp <= 0x04FF:  # Cyrillic (Russian)
+            counts["ru"] = counts.get("ru", 0) + 1
+        elif 0x4E00 <= cp <= 0x9FFF:  # CJK (Chinese)
+            counts["zh"] = counts.get("zh", 0) + 1
+    if counts:
+        # Top script wins if it covers >=20% of the message
+        top = max(counts.items(), key=lambda kv: kv[1])
+        if top[1] >= max(2, len(s) * 0.2):
+            return top[0]
+    # Latin-script: simple keyword heuristic for Filipino / French / Spanish.
+    low = s.lower()
+    if any(t in low for t in [" ang ", " ng ", " ako ", " mo "]):
+        return "tl"
+    if any(t in low for t in ["bonjour", "merci", "où ", "c'est "]):
+        return "fr"
+    if any(t in low for t in ["hola ", "gracias", "dónde", "puede"]):
+        return "es"
+    return None  # fall back to UI-supplied language
+
+
+# Job-recruitment patterns. We get a steady stream of "looking for a job",
+# "do you have vacancies", "what's the salary" etc — running every one
+# through the LLM costs 4-6¢ each. These get a canned reply that's polite
+# but firm: we're not hiring through chat. Saves ~$50/mo at current volume.
+_JOB_PATTERNS = [
+    r"\b(looking|searching|need)\s+(for\s+)?(a\s+)?(job|work|employment|vacancy|position|career|opening|opportunity)",
+    r"\b(any|have|got|got\s+any)\s+(jobs?|vacancy|vacancies|openings?|positions?|hiring)",
+    r"\b(are\s+you|servia\s+is)\s+hiring",
+    r"\b(want\s+to|can\s+i|how\s+to|how\s+do\s+i)\s+(join|work|apply|get\s+hired)\s+(as|at|with|for)",
+    r"\b(apply|application)\s+(for|to)\s+(a\s+)?(job|work|position|vacancy)",
+    r"\b(send|sending|share|sharing|attach|attaching).{0,30}(cv|resume|biodata|portfolio)",
+    r"\b(my\s+)?(cv|resume|biodata)\b",
+    r"\b(salary|wage|pay|stipend)\s+(for|at|of|range|expectation)",
+    r"\b(internship|trainee|apprentice)\s+(opportunity|opening|program)",
+    r"\b(hr|human\s+resources?)\s+(team|department|email|contact)",
+    r"\b(work\s+permit|labor\s+card|visa\s+sponsor|sponsorship)",
+    r"\bhiring\s+(driver|cleaner|technician|maid|nanny|engineer|developer)",
+    r"\b(part[\s-]?time|full[\s-]?time)\s+(job|work|position|opportunity)",
+    r"\b(how\s+much\s+do\s+you\s+pay|salary\s+(?:is|of))",
+    r"\b(can\s+i\s+work|i\s+want\s+(?:to\s+)?work)\s+(?:for|with|at)\s+(?:you|servia)",
+    r"\b(i'?m\s+a|i\s+am\s+a)\s+(driver|cleaner|technician|maid|nanny|electrician|plumber|carpenter|painter|tailor|chef|cook|babysitter|gardener|labor(?:er)?|worker)\b",
+]
+_JOB_RX = [_re.compile(p, _re.I) for p in _JOB_PATTERNS]
+
+# Canned replies in 8 common UAE languages. Short, friendly, redirects to a
+# proper careers channel without burning LLM tokens.
+_JOB_REPLIES = {
+    "en": ("👋 Thanks for reaching out! Servia connects customers with home-service pros — "
+           "we don't hire individual technicians here. If you're a service provider, "
+           "join our partner network at https://servia.ae/login.html?as=partner — set "
+           "your prices, claim jobs in your area, get paid 80% on every completed visit. "
+           "For anything else, ask me about cleaning, AC, handyman, or any of our 32 services."),
+    "ar": ("👋 شكراً لتواصلك! Servia تربط العملاء بمحترفي الخدمات المنزلية — "
+           "لا نوظف فنيين بشكل فردي هنا. إذا كنت مزود خدمات، انضم إلى شبكة شركائنا "
+           "على https://servia.ae/login.html?as=partner — حدد أسعارك واستلم 80% من قيمة "
+           "كل زيارة مكتملة. لأي شيء آخر، اسألني عن التنظيف أو التكييف أو السباكة أو أي من خدماتنا الـ 32."),
+    "ur": ("👋 رابطہ کرنے کا شکریہ! Servia صارفین کو ہوم سروس پروز سے جوڑتا ہے — "
+           "ہم انفرادی ٹیکنیشنز کو یہاں ہائر نہیں کرتے۔ اگر آپ سروس فراہم کرنے والے ہیں، "
+           "ہمارے پارٹنر نیٹ ورک میں شامل ہوں https://servia.ae/login.html?as=partner — "
+           "اپنی قیمتیں مقرر کریں، ہر مکمل وزٹ پر 80% حاصل کریں۔ کسی اور چیز کے لیے، "
+           "صفائی، AC، یا ہماری 32 خدمات کے بارے میں پوچھیں۔"),
+    "hi": ("👋 संपर्क करने के लिए धन्यवाद! Servia ग्राहकों को होम-सर्विस प्रोफेशनल्स से जोड़ता है — "
+           "हम यहाँ व्यक्तिगत टेक्निशियन हायर नहीं करते। अगर आप सेवा प्रदाता हैं, "
+           "हमारे पार्टनर नेटवर्क में शामिल हों https://servia.ae/login.html?as=partner — "
+           "अपनी कीमतें तय करें, हर पूर्ण विज़िट पर 80% पाएँ। किसी और चीज़ के लिए, "
+           "क्लीनिंग, AC, हैंडीमैन, या हमारी 32 सेवाओं में से कोई भी पूछें।"),
+    "bn": ("👋 যোগাযোগ করার জন্য ধন্যবাদ! Servia গ্রাহকদের হোম-সার্ভিস পেশাদারদের সাথে সংযুক্ত করে — "
+           "আমরা এখানে ব্যক্তিগত প্রযুক্তিবিদ নিয়োগ করি না। আপনি যদি সেবা প্রদানকারী হন, "
+           "আমাদের পার্টনার নেটওয়ার্কে যোগ দিন https://servia.ae/login.html?as=partner"),
+    "tl": ("👋 Salamat sa pakikipag-ugnayan! Servia ay nag-uugnay ng mga customer sa mga home-service pro — "
+           "hindi kami direktang nag-hire ng mga technician dito. Kung ikaw ay service provider, "
+           "sumali sa partner network namin sa https://servia.ae/login.html?as=partner — "
+           "magtakda ng iyong presyo, makatanggap ng 80% sa bawat natapos na visit."),
+    "ru": ("👋 Спасибо за обращение! Servia связывает клиентов с профессионалами по уходу за домом — "
+           "мы не нанимаем отдельных техников через чат. Если вы поставщик услуг, "
+           "присоединитесь к нашей партнёрской сети на https://servia.ae/login.html?as=partner — "
+           "устанавливайте свои цены, получайте 80% за каждый завершённый визит."),
+    "fr": ("👋 Merci de nous contacter ! Servia met en relation les clients avec des pros à domicile — "
+           "nous n'embauchons pas de techniciens individuels via le chat. Si vous êtes prestataire, "
+           "rejoignez notre réseau de partenaires à https://servia.ae/login.html?as=partner — "
+           "fixez vos prix, recevez 80% sur chaque visite complétée."),
+}
+
+
+def _maybe_job_reply(text: str, lang: str | None) -> str | None:
+    """Return a canned job-recruitment reply if the message looks like one,
+    in the user's language. None means 'pass through to LLM'."""
+    if not text: return None
+    s = text.strip()
+    if any(rx.search(s) for rx in _JOB_RX):
+        return _JOB_REPLIES.get((lang or "en"), _JOB_REPLIES["en"])
+    return None
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(req: ChatRequest, request: Request):
     sid = req.session_id or _new_sid()
-    lang = (req.language or "en").lower()[:2]
+    ui_lang = (req.language or "en").lower()[:2]
+    # Auto-detect the script of the user's message — overrides the UI lang
+    # when confident. Means a Hindi user typing "AC saaf karna hai" gets
+    # an English reply (since their text is Latin), but typing "एसी साफ
+    # करना है" gets a Hindi reply, regardless of what the dropdown says.
+    detected = _detect_lang_from_text(req.message or "")
+    lang = detected or ui_lang
 
     # Capture browser/IP for the admin Conversations view.
     user_agent = (request.headers.get("user-agent") or "")[:300]
@@ -464,6 +594,16 @@ def chat(req: ChatRequest, request: Request):
         msg = (msg + f"\n[attached image: {req.attachment_url}]").strip()
     _persist(sid, "user", msg, phone=req.phone,
              user_agent=user_agent, ip=ip, attachment_url=req.attachment_url)
+
+    # Job-recruitment short-circuit — no LLM tokens spent on "do you have
+    # any vacancies" etc. Friendly canned reply in the user's language
+    # that points service providers at the partner-onboarding flow.
+    job_reply = _maybe_job_reply(req.message, lang)
+    if job_reply:
+        _persist(sid, "assistant", job_reply, phone=req.phone,
+                 model_used="canned-job-filter")
+        return ChatResponse(session_id=sid, text=job_reply,
+                            tool_calls=[], mode="canned-job", usage={})
 
     # Fast-path for explicit booking commands — saves a 10-15s LLM round-trip
     fast = _try_fast_book(req.message)
