@@ -51,8 +51,14 @@ jobs:
         uses: actions/setup-node@v4
         with: { node-version: "20" }
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli@latest
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      - name: Install Bubblewrap CLI + Python deps
+        run: |
+          npm install -g @bubblewrap/cli@latest
+          python3 -m pip install --quiet cryptography
 
       - name: Pre-configure Bubblewrap to use the runner's JDK + SDK
         run: |
@@ -108,7 +114,9 @@ jobs:
           # CI works without setting any secrets.
           ADMIN_TOKEN_RUNTIME: ${{ secrets.ADMIN_TOKEN || 'lumora-admin-test' }}
         run: |
-          pip install --quiet cryptography
+          python3 --version
+          which python3
+          python3 -c "import cryptography; print('cryptography', cryptography.__version__)"
           python3 "${GITHUB_WORKSPACE}/.scripts/decrypt-keystore.py" "$RUNNER_TEMP/servia.jks"
           ls -la $RUNNER_TEMP/servia.jks
 
