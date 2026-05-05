@@ -176,11 +176,73 @@
 
   launcher.onclick = () => {
     panel.classList.add("open");
-    if (!body.children.length) greet();
+    // First-time? Show greeting. Returning user with a saved session?
+    // Restore the full conversation history so the chat doesn't feel
+    // like it's "restarting" every time they reopen the panel or change
+    // pages. We fetch /api/chat/poll with since_id=0 to grab everything
+    // for this session_id.
+    if (!body.children.length) {
+      if (sessionId) {
+        restoreHistory().then(restored => {
+          if (!restored) greet();
+        });
+      } else {
+        greet();
+      }
+    }
     setTimeout(() => input.focus(), 150);
     startPolling();
+    try { sessionStorage.setItem("servia.chat.open.v1", "1"); } catch(_) {}
   };
-  panel.querySelector(".us-close").onclick = () => panel.classList.remove("open");
+  panel.querySelector(".us-close").onclick = () => {
+    panel.classList.remove("open");
+    try { sessionStorage.setItem("servia.chat.open.v1", "0"); } catch(_) {}
+  };
+
+  // Reopen panel automatically on the next page if user had it open.
+  // Stored in sessionStorage so it resets on tab close.
+  setTimeout(() => {
+    try {
+      if (sessionStorage.getItem("servia.chat.open.v1") === "1" && !panel.classList.contains("open")) {
+        launcher.click();
+      }
+    } catch(_) {}
+  }, 800);
+
+  // Pull conversation history for the current session from the server and
+  // render every message in order. Returns true if any messages were
+  // restored, false if nothing exists (caller should show greet).
+  async function restoreHistory() {
+    if (!sessionId) return false;
+    try {
+      const r = await fetch(API_BASE + "/api/chat/poll?session_id=" +
+                            encodeURIComponent(sessionId) + "&since_id=0");
+      if (!r.ok) return false;
+      const d = await r.json();
+      const msgs = d.messages || [];
+      if (!msgs.length) return false;
+      for (const m of msgs) {
+        if (m.role === "user" || m.role === "assistant") {
+          addMsg(m.role === "user" ? "user" : "bot", m.content || "",
+                 null, !!m.agent_handled);
+        }
+        if (typeof m.id === "number" && m.id > since) {
+          since = m.id;
+          try { localStorage.setItem(SINCE_KEY, String(since)); } catch(_) {}
+        }
+      }
+      // Mark chat as started so the quick-action chips stay collapsed
+      chatStarted = true;
+      userMsgCount = Math.max(userMsgCount, 1);
+      try { localStorage.setItem(STARTED_KEY, "1"); } catch(_) {}
+      // Hide first-time greeting card if it had been shown
+      quickWrap.style.display = "none";
+      return true;
+    } catch (e) {
+      console.warn("[chat] restoreHistory failed", e);
+      return false;
+    }
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -224,12 +286,20 @@
     busy = true; sendBtn.disabled = true;
     const typing = showTyping();
     try {
+      // Resolve current UI language. Order: lumoraLang() (set by app.js
+      // when user picks from the dropdown) → localStorage 'lumora.lang'
+      // (in case app.js hasn't initialized yet) → 'en' as last resort.
+      let lang = "en";
+      try {
+        if (window.lumoraLang) lang = window.lumoraLang();
+        else lang = localStorage.getItem("lumora.lang") || "en";
+      } catch(_) {}
       const resp = await fetch(API_BASE + "/api/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text || (attachment ? "(photo)" : ""),
           session_id: sessionId,
-          language: window.lumoraLang ? window.lumoraLang() : "en",
+          language: lang,
           attachment_url: attachment ? attachment.url : null,
         }),
       });
