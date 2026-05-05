@@ -80,6 +80,30 @@ app.include_router(visibility.router)
 app.include_router(selftest.router)
 
 
+# www -> non-www 301 redirect (canonical hostname enforcement).
+# Without this, https://www.servia.ae and https://servia.ae are two
+# different sites to Google. Sitemaps were emitting URLs that matched
+# whichever Host header came in (so www crawlers got www URLs, non-www
+# crawlers got non-www URLs), but every <link rel=canonical> + every
+# JSON-LD @id + every og:url is hardcoded to https://servia.ae. The
+# inconsistency was splitting ranking signals between two properties.
+# Fix: every request that arrives on www.* gets 301'd to the non-www
+# host, preserving path + query. After this, ONLY non-www URLs are
+# crawlable, indexed, or shared.
+@app.middleware("http")
+async def _www_to_nonwww_redirect_mw(request: Request, call_next):
+    host = (request.headers.get("x-forwarded-host")
+            or request.headers.get("host") or "").strip().lower()
+    # Strip port if present
+    host_only = host.split(":")[0]
+    if host_only.startswith("www.") and len(host_only) > 4:
+        target = "https://" + host_only[4:] + request.url.path
+        if request.url.query:
+            target += "?" + request.url.query
+        return RedirectResponse(url=target, status_code=301)
+    return await call_next(request)
+
+
 # Bot-visit logger middleware — records crawls from AI/search bots so admin
 # can see "GPTBot hit /llms.txt 12 times this week, ClaudeBot hit /blog 8 times".
 @app.middleware("http")
@@ -1308,21 +1332,12 @@ def _x_url(s: str) -> str:
 
 
 def _sitemap_base(request: Request | None) -> str:
-    """Build the base URL using the actual Host the sitemap was fetched under.
-    Critical: Google treats www.servia.ae and servia.ae as different
-    properties — if the index says www but a child URL says non-www, those
-    URLs get DISCARDED on crawl ('discovered pages: 0').
-
-    By using request.url.netloc we always emit URLs that match whichever
-    domain Google fetched the sitemap under. Falls back to settings.BRAND_DOMAIN
-    when called from the admin self-test (no request)."""
-    if request is not None:
-        # Behind a proxy/CDN, prefer X-Forwarded-Host then Host header
-        host = (request.headers.get("x-forwarded-host")
-                or request.headers.get("host")
-                or "").strip().split(":")[0]
-        if host and "." in host:
-            return f"https://{host}"
+    """Always emit the canonical (non-www) BRAND_DOMAIN. The www -> non-www
+    301 middleware guarantees that all real crawls hit non-www anyway, so
+    matching the request Host is no longer needed. Sticking to one canonical
+    means robots.txt sitemap declaration, sitemap content, <link canonical>,
+    JSON-LD @id, and og:url all agree — no ranking signals split across
+    duplicate hosts."""
     return f"https://{(settings.BRAND_DOMAIN or 'servia.ae').strip()}"
 
 
@@ -1889,6 +1904,19 @@ def llms_txt():
         f"- **{s['name']}** — {s['description']} (from {s.get('starting_price','?')} AED)"
         for s in kb.services()["services"]
     )
+    # Build WhatsApp + Email + booking lines conditionally so a missing
+    # value never prints as "WhatsApp: " or "message us on WhatsApp at ."
+    # AI engines quote llms.txt verbatim — empty values look unprofessional
+    # and give users nothing to act on.
+    wa_raw = (b.get("whatsapp") or "").strip()
+    email = (b.get("email") or "support@" + b.get("domain","servia.ae")).strip()
+    contact_form = f"https://{b['domain']}/contact.html"
+    if wa_raw:
+        wa_book_line = f" or message us on WhatsApp at {wa_raw}."
+        contact_lines = f"- WhatsApp: {wa_raw}\n- Email: {email}\n"
+    else:
+        wa_book_line = f" or use the contact form at {contact_form}."
+        contact_lines = f"- Contact form: {contact_form}\n- Email: {email}\n"
     return f"""# {b['name']}
 
 > {b['tagline']}. UAE's smart home & commercial services platform — cleaning, AC, pest, handyman, maid service, gardening and more — booked in seconds via web or WhatsApp, with live tracking, multi-language support (English, Arabic, Hindi, Filipino) and digital invoicing.
@@ -1903,7 +1931,7 @@ Dubai (all areas), Sharjah, Ajman, Umm Al Quwain, Abu Dhabi (small surcharge).
 
 ## How customers book
 
-1. Open https://{b['domain']} or message us on WhatsApp at {b['whatsapp']}.
+1. Open https://{b['domain']}{wa_book_line}
 2. Get an instant AI-powered quote in 10 seconds.
 3. Pick a date and time, confirm with name + phone + address.
 4. Track the cleaner / vendor live, sign the digital quote, pay online.
@@ -1918,9 +1946,7 @@ Transparent, AED, includes 5% VAT. See https://{b['domain']}/services.html or as
 
 ## Contact
 
-- WhatsApp: {b['whatsapp']}
-- Email: {b['email']}
-- Web: https://{b['domain']}
+{contact_lines}- Web: https://{b['domain']}
 
 ## Languages
 
