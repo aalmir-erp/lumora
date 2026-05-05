@@ -323,10 +323,19 @@ jobs:
           KS_PATH: ${{ runner.temp }}/servia.jks
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.scripts/build-wear-apk.sh"
-          "${GITHUB_WORKSPACE}/.scripts/build-wear-apk.sh" "$KS_PATH" || {
-            echo "::warning::Wear OS build failed — phone APK still produced. See log."
-            exit 0
-          }
+          # No || exit 0 here — if Wear build fails, the run goes red
+          # and we can see the actual gradle error in the log.
+          "${GITHUB_WORKSPACE}/.scripts/build-wear-apk.sh" "$KS_PATH" 2>&1 | tee /tmp/wear-build.log
+          # Always upload the log even if it succeeded, for diagnostics.
+          ls -la "${GITHUB_WORKSPACE}/twa/android/wear-build/_artifacts/" 2>&1 || true
+
+      - name: Upload Wear build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wear-build-log
+          path: /tmp/wear-build.log
+          if-no-files-found: warn
 
       - name: Upload Wear OS APK + AAB
         uses: actions/upload-artifact@v4
