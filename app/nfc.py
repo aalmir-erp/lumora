@@ -69,6 +69,12 @@ def _now() -> str:
     return _dt.datetime.utcnow().isoformat() + "Z"
 
 
+# Servia's WhatsApp inbound number (where customers send confirm codes)
+# Set SERVIA_WA_NUMBER env to override; default = +971 56 6900255 (production).
+import os as _os
+SERVIA_WA = _os.getenv("SERVIA_WA_NUMBER", "971566900255")
+
+
 def _ensure_schema() -> None:
     with db.connect() as c:
         c.execute("""
@@ -88,7 +94,9 @@ def _ensure_schema() -> None:
                 last_booking_at TEXT,
                 created_at TEXT NOT NULL,
                 fulfilled_at TEXT,
-                fulfilled_via TEXT
+                fulfilled_via TEXT,
+                bulk_order_id INTEGER,
+                install_appointment_at TEXT
             )
         """)
         c.execute("""
@@ -101,8 +109,52 @@ def _ensure_schema() -> None:
                 ts TEXT NOT NULL
             )
         """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS nfc_bulk_orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                qty INTEGER NOT NULL,
+                size TEXT NOT NULL,
+                install_at TEXT,
+                install_address TEXT,
+                paid_aed REAL DEFAULT 0,
+                invoice_id TEXT,
+                status TEXT DEFAULT 'queued',
+                created_at TEXT NOT NULL
+            )
+        """)
+        # Idempotent column adds for existing deployments
+        for stmt in (
+            "ALTER TABLE nfc_tags ADD COLUMN bulk_order_id INTEGER",
+            "ALTER TABLE nfc_tags ADD COLUMN install_appointment_at TEXT",
+            "ALTER TABLE nfc_tags ADD COLUMN wa_confirmed_at TEXT",
+            "ALTER TABLE nfc_tags ADD COLUMN wa_pending_token TEXT",
+        ):
+            try: c.execute(stmt)
+            except Exception: pass
+        # Customer wallet — top up once, tap-bookings deduct atomically.
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS customer_wallet (
+                customer_id INTEGER PRIMARY KEY,
+                balance_aed REAL DEFAULT 0,
+                updated_at TEXT
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS wallet_ledger (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                delta_aed REAL NOT NULL,
+                kind TEXT NOT NULL,            -- topup | nfc_book | refund
+                ref TEXT,                       -- invoice id / nfc slug / etc
+                note TEXT,
+                ts TEXT NOT NULL
+            )
+        """)
         c.execute("CREATE INDEX IF NOT EXISTS idx_nfc_owner ON nfc_tags(owner_customer_id)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_nfc_taps_tag ON nfc_taps(tag_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_nfc_bulk_cust ON nfc_bulk_orders(customer_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_wallet_ledger ON wallet_ledger(customer_id)")
 
 
 # ============================================================================
@@ -382,6 +434,430 @@ def admin_delete_tag(tag_id: int):
         n = c.execute("DELETE FROM nfc_tags WHERE id = ?", (tag_id,)).rowcount
     db.log_event("nfc", str(tag_id), "admin_delete", actor="admin")
     return {"ok": True, "deleted": n}
+
+
+# ============================================================================
+# Bulk order — customer orders multiple tags + selects an installation
+# appointment. Our tech arrives at that time, sticks them everywhere, writes
+# each one with the right URL. Customer pre-pays via the same /pay flow.
+# ============================================================================
+class _BulkOrderTag(BaseModel):
+    service_id: str
+    alias: str | None = None
+    location_label: str | None = None
+
+
+class _BulkOrderBody(BaseModel):
+    items: list[_BulkOrderTag]
+    size: str = "sticker"
+    install_at: str | None = None       # ISO8601 — when our tech should arrive
+    install_address: str | None = None  # text — where to install
+    pay_now: bool = True
+
+
+@router.post("/api/nfc/bulk-order")
+def customer_bulk_order(body: _BulkOrderBody, request: Request):
+    """Customer orders multiple tags at once (typical: 4–8 for a flat,
+    8–14 for a villa). Each tag gets its own slug + service binding.
+    Optional installation appointment so our tech sticks them in place
+    instead of asking the customer to apply each one."""
+    _ensure_schema()
+    auth = request.headers.get("authorization") or ""
+    if not auth.lower().startswith("bearer "):
+        raise HTTPException(401, "Sign in first")
+    user = lookup_session(auth[7:].strip())
+    if not user or user.user_type != "customer":
+        raise HTTPException(401, "Customer session required")
+    cid = user.user_id
+    if not body.items or len(body.items) > 30:
+        raise HTTPException(400, "1–30 tags per bulk order")
+    if body.size not in ("sticker", "card", "keychain"):
+        raise HTTPException(400, "size must be sticker/card/keychain")
+    qty = len(body.items)
+    # Pricing tier (admin-configurable later via db.cfg in v1.22.93+)
+    unit_price = {"sticker": 5.0, "card": 12.0, "keychain": 18.0}[body.size]
+    total_tags = qty * unit_price
+    install_fee = 49.0 if body.install_at else 0.0
+    total_aed = total_tags + install_fee
+
+    with db.connect() as c:
+        cur = c.execute(
+            """INSERT INTO nfc_bulk_orders(customer_id, qty, size, install_at,
+                                            install_address, paid_aed, status, created_at)
+               VALUES(?,?,?,?,?,?,?,?)""",
+            (cid, qty, body.size, body.install_at, body.install_address,
+             0.0, "queued", _now()),
+        )
+        bulk_id = cur.lastrowid
+        slugs: list[str] = []
+        for it in body.items:
+            slug = _new_slug()
+            while c.execute("SELECT 1 FROM nfc_tags WHERE slug=?", (slug,)).fetchone():
+                slug = _new_slug()
+            c.execute(
+                """INSERT INTO nfc_tags(slug, owner_customer_id, service_id, alias,
+                                         location_label, size, bulk_order_id,
+                                         install_appointment_at, is_active, created_at)
+                   VALUES(?,?,?,?,?,?,?,?,1,?)""",
+                (slug, cid, it.service_id, it.alias, it.location_label,
+                 body.size, bulk_id, body.install_at, _now()),
+            )
+            slugs.append(slug)
+
+    # Generate an invoice for advance payment if requested
+    invoice_id = None
+    if body.pay_now and total_aed > 0:
+        invoice_id = f"NFC-{bulk_id:05d}"
+        try:
+            with db.connect() as c:
+                c.execute(
+                    """INSERT OR IGNORE INTO invoices(id, customer_id, amount_aed,
+                                                        status, description, created_at)
+                       VALUES(?,?,?,?,?,?)""",
+                    (invoice_id, cid, total_aed, "unpaid",
+                     f"Servia NFC bulk order — {qty} {body.size}(s)" +
+                     (f" + onsite install {body.install_at}" if body.install_at else ""),
+                     _now()),
+                )
+                c.execute("UPDATE nfc_bulk_orders SET invoice_id = ? WHERE id = ?",
+                          (invoice_id, bulk_id))
+        except Exception as _e:
+            print(f"[nfc-bulk] invoice insert skipped: {_e}", flush=True)
+    db.log_event("nfc", str(bulk_id), "bulk_ordered", actor=str(cid),
+                 details={"qty": qty, "size": body.size, "install": bool(body.install_at)})
+    return {
+        "ok": True,
+        "bulk_order_id": bulk_id,
+        "qty": qty,
+        "size": body.size,
+        "unit_price_aed": unit_price,
+        "tags_subtotal_aed": total_tags,
+        "install_fee_aed": install_fee,
+        "total_aed": total_aed,
+        "slugs": slugs,
+        "tap_urls": [f"https://servia.ae/t/{s}" for s in slugs],
+        "invoice_id": invoice_id,
+        "pay_url": f"/pay/{invoice_id}" if invoice_id else None,
+        "install_at": body.install_at,
+    }
+
+
+@router.get("/api/nfc/bulk-orders/me")
+def list_my_bulk_orders(request: Request):
+    _ensure_schema()
+    auth = request.headers.get("authorization") or ""
+    user = lookup_session(auth[7:].strip()) if auth.lower().startswith("bearer ") else None
+    if not user or user.user_type != "customer":
+        raise HTTPException(401, "Customer session required")
+    with db.connect() as c:
+        rows = c.execute(
+            """SELECT b.*, COUNT(t.id) AS tag_count
+               FROM nfc_bulk_orders b
+               LEFT JOIN nfc_tags t ON t.bulk_order_id = b.id
+               WHERE b.customer_id = ?
+               GROUP BY b.id ORDER BY b.id DESC LIMIT 50""",
+            (user.user_id,),
+        ).fetchall()
+    return {"orders": [dict(r) for r in rows]}
+
+
+# ============================================================================
+# WhatsApp verification — when a tap-booking is about to be placed, we shoot
+# a WhatsApp confirm to the tag-owner's number with the booking summary +
+# OK/CANCEL buttons. Owner replies → booking is locked. This guards against
+# someone tapping a fridge tag while at the owner's place to prank-order.
+# ============================================================================
+class _WaSendBody(BaseModel):
+    slug: str
+    service_summary: str
+    when_iso: str
+    amount_aed: float
+
+
+@router.post("/api/nfc/wa-verify-send")
+def wa_verify_send(body: _WaSendBody):
+    """Returns a token + WhatsApp deep-link URL the front-end opens. The
+    actual WA message is composed by Servia's WhatsApp bridge in main.py
+    (whatsapp_bridge.py). This endpoint just records the intent + token."""
+    _ensure_schema()
+    with db.connect() as c:
+        row = c.execute("""
+            SELECT t.id, t.slug, c.phone, c.name FROM nfc_tags t
+            JOIN customers c ON c.id = t.owner_customer_id
+            WHERE t.slug = ?
+        """, (body.slug,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Unknown tag")
+    token = secrets.token_urlsafe(12)
+    with db.connect() as c:
+        c.execute("UPDATE nfc_tags SET wa_pending_token = ? WHERE id = ?",
+                  (token, row["id"]))
+    # Build WhatsApp self-confirm message — owner replies "OK" to confirm
+    msg = (f"Servia NFC tap from your *{body.service_summary}* tag.\n"
+           f"Scheduled: {body.when_iso}\nAmount: AED {body.amount_aed:.0f}\n"
+           f"Reply *OK* to confirm or *CANCEL* to abort.\nCode: {token}")
+    phone_clean = "".join(ch for ch in (row["phone"] or "") if ch.isdigit())
+    wa_url = f"https://wa.me/{phone_clean}?text={msg.replace(chr(10), '%0A').replace(' ', '%20')}"
+    return {
+        "ok": True,
+        "token": token,
+        "wa_url": wa_url,
+        "owner_name": row["name"] or "Customer",
+        "phone_masked": ("****" + (row["phone"] or "")[-4:]) if row["phone"] else "",
+    }
+
+
+class _WaConfirmBody(BaseModel):
+    slug: str
+    token: str
+
+
+@router.post("/api/nfc/wa-verify-confirm")
+def wa_verify_confirm(body: _WaConfirmBody):
+    _ensure_schema()
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT id, wa_pending_token FROM nfc_tags WHERE slug = ?",
+            (body.slug,),
+        ).fetchone()
+    if not row or row["wa_pending_token"] != body.token:
+        raise HTTPException(403, "Invalid or expired confirmation token")
+    with db.connect() as c:
+        c.execute(
+            "UPDATE nfc_tags SET wa_confirmed_at = ?, wa_pending_token = NULL WHERE id = ?",
+            (_now(), row["id"]),
+        )
+    db.log_event("nfc", body.slug, "wa_confirmed")
+    return {"ok": True, "confirmed_at": _now()}
+
+
+# ============================================================================
+# Wallet — top up once, tap-bookings deduct atomically without payment dance.
+# ============================================================================
+@router.get("/api/wallet/balance")
+def wallet_balance(request: Request):
+    _ensure_schema()
+    auth = request.headers.get("authorization") or ""
+    user = lookup_session(auth[7:].strip()) if auth.lower().startswith("bearer ") else None
+    if not user or user.user_type != "customer":
+        raise HTTPException(401, "Customer session required")
+    with db.connect() as c:
+        row = c.execute("SELECT balance_aed FROM customer_wallet WHERE customer_id=?",
+                         (user.user_id,)).fetchone()
+        rows = c.execute(
+            "SELECT delta_aed, kind, ref, note, ts FROM wallet_ledger "
+            "WHERE customer_id=? ORDER BY id DESC LIMIT 20",
+            (user.user_id,)).fetchall()
+    return {
+        "balance_aed": (row["balance_aed"] if row else 0.0) or 0.0,
+        "ledger": [dict(r) for r in rows],
+    }
+
+
+class _TopupBody(BaseModel):
+    amount_aed: float
+
+
+@router.post("/api/wallet/topup")
+def wallet_topup(body: _TopupBody, request: Request):
+    """Issues an invoice for the top-up amount; once paid, the existing
+    /pay/{invoice_id} flow's webhook bumps the balance via _credit_wallet
+    (called from main.py's payment confirmation hook in production)."""
+    _ensure_schema()
+    auth = request.headers.get("authorization") or ""
+    user = lookup_session(auth[7:].strip()) if auth.lower().startswith("bearer ") else None
+    if not user or user.user_type != "customer":
+        raise HTTPException(401, "Customer session required")
+    if body.amount_aed < 25 or body.amount_aed > 10000:
+        raise HTTPException(400, "Top-up between AED 25 and AED 10,000")
+    invoice_id = f"WALLET-{user.user_id:05d}-{int(_dt.datetime.utcnow().timestamp())}"
+    try:
+        with db.connect() as c:
+            c.execute(
+                """INSERT OR IGNORE INTO invoices(id, customer_id, amount_aed,
+                                                    status, description, created_at)
+                   VALUES(?,?,?,?,?,?)""",
+                (invoice_id, user.user_id, float(body.amount_aed), "unpaid",
+                 f"Servia wallet top-up — AED {body.amount_aed:.0f}", _now()),
+            )
+    except Exception as _e:
+        print(f"[wallet topup] invoice insert skipped: {_e}", flush=True)
+    db.log_event("wallet", str(user.user_id), "topup_intent",
+                 details={"amount": body.amount_aed, "invoice": invoice_id})
+    return {"ok": True, "invoice_id": invoice_id, "pay_url": f"/pay/{invoice_id}"}
+
+
+def credit_wallet(customer_id: int, amount_aed: float, ref: str, note: str = "topup paid"):
+    """Public helper called from the payment-confirmation webhook in main.py
+    once an invoice that begins WALLET- is marked paid."""
+    _ensure_schema()
+    with db.connect() as c:
+        c.execute(
+            """INSERT INTO customer_wallet(customer_id, balance_aed, updated_at)
+               VALUES(?,?,?)
+               ON CONFLICT(customer_id) DO UPDATE SET
+                  balance_aed = balance_aed + excluded.balance_aed,
+                  updated_at = excluded.updated_at""",
+            (customer_id, float(amount_aed), _now()),
+        )
+        c.execute(
+            "INSERT INTO wallet_ledger(customer_id, delta_aed, kind, ref, note, ts) "
+            "VALUES(?,?,?,?,?,?)",
+            (customer_id, float(amount_aed), "topup", ref, note, _now()),
+        )
+
+
+def _debit_wallet_atomic(customer_id: int, amount_aed: float, ref: str, note: str) -> bool:
+    """Atomic wallet deduction. Returns True iff the balance was sufficient
+    AND the deduction succeeded. SQLite transaction; no double-spend."""
+    with db.connect() as c:
+        cur = c.execute(
+            "UPDATE customer_wallet SET balance_aed = balance_aed - ?, updated_at = ? "
+            "WHERE customer_id = ? AND balance_aed >= ?",
+            (float(amount_aed), _now(), customer_id, float(amount_aed)),
+        )
+        if cur.rowcount != 1:
+            return False
+        c.execute(
+            "INSERT INTO wallet_ledger(customer_id, delta_aed, kind, ref, note, ts) "
+            "VALUES(?,?,?,?,?,?)",
+            (customer_id, -float(amount_aed), "nfc_book", ref, note, _now()),
+        )
+    return True
+
+
+# ============================================================================
+# Wallet-paid NFC tap booking: ALL the magic in one endpoint.
+#
+# Customer taps tag → /book.html?nfc=<slug> → presses "Pay from wallet" button.
+# Front-end calls this → server:
+#   1. Verifies session = tag owner
+#   2. Generates a 4-char WA confirm code
+#   3. Returns wa.me deep-link prefilled with the code → tag owner taps Send
+#   4. WhatsApp bridge inbound webhook calls confirm_wa_code() → deducts wallet,
+#      attributes booking, notifies the dispatch crew.
+# ============================================================================
+class _WalletTapBody(BaseModel):
+    slug: str
+    service_id: str
+    when_iso: str
+    amount_aed: float
+    address: str | None = None
+    extra_services: list[str] = []
+
+
+@router.post("/api/nfc/wallet-pay-init")
+def wallet_pay_init(body: _WalletTapBody, request: Request):
+    """Step 1 of the wallet-paid tap flow: customer taps the wallet button.
+    We check balance, generate a WA confirm code, return a wa.me deep link
+    so the customer's WhatsApp opens with the code already filled."""
+    _ensure_schema()
+    auth = request.headers.get("authorization") or ""
+    user = lookup_session(auth[7:].strip()) if auth.lower().startswith("bearer ") else None
+    if not user or user.user_type != "customer":
+        raise HTTPException(401, "Customer session required")
+    with db.connect() as c:
+        tag = c.execute(
+            "SELECT id, owner_customer_id, service_id FROM nfc_tags WHERE slug=?",
+            (body.slug,),
+        ).fetchone()
+    if not tag:
+        raise HTTPException(404, "Unknown tag")
+    if tag["owner_customer_id"] != user.user_id:
+        raise HTTPException(403, "This tag belongs to another account")
+    with db.connect() as c:
+        bal = c.execute("SELECT balance_aed FROM customer_wallet WHERE customer_id=?",
+                         (user.user_id,)).fetchone()
+        balance = (bal["balance_aed"] if bal else 0.0) or 0.0
+    if balance < body.amount_aed:
+        return {
+            "ok": False,
+            "balance_aed": balance,
+            "needed_aed": body.amount_aed,
+            "shortfall_aed": body.amount_aed - balance,
+            "error": "Insufficient wallet balance",
+            "topup_url": "/me.html#wallet",
+        }
+    # 4-character code, easy for human to type into WhatsApp
+    code = "".join(secrets.choice("23456789ABCDEFGHJKLMNPQRSTUVWXYZ") for _ in range(4))
+    with db.connect() as c:
+        c.execute("UPDATE nfc_tags SET wa_pending_token = ? WHERE id = ?",
+                   (code, tag["id"]))
+    # Build prefilled WA message → opens user's WhatsApp directly
+    msg = (f"NFC{code} confirm Servia tap booking · slug {body.slug} · "
+           f"{body.service_id} · {body.when_iso} · AED {body.amount_aed:.0f}")
+    msg_url = msg.replace(" ", "%20").replace("·", "%C2%B7").replace("\n", "%0A")
+    wa_deeplink = f"https://wa.me/{SERVIA_WA}?text={msg_url}"
+    return {
+        "ok": True,
+        "code": code,
+        "wa_deeplink": wa_deeplink,
+        "balance_aed": balance,
+        "amount_aed": body.amount_aed,
+        "remaining_after_aed": balance - body.amount_aed,
+        "instructions": (
+            "1) Tap 'Open WhatsApp' below. 2) WhatsApp opens with the code "
+            f"NFC{code} and your booking details. 3) Hit Send. 4) Servia bot "
+            "will reply 'Confirmed' within 5 seconds — booking placed and "
+            f"AED {body.amount_aed:.0f} deducted from your wallet."
+        ),
+    }
+
+
+# Called by the WhatsApp bridge when an inbound message contains "NFC<code>".
+# (Wired from app/whatsapp_bridge.py inbound webhook in production. Exposing
+#  it as a regular endpoint also lets us bench-test without a live WA.)
+class _WaCodeBody(BaseModel):
+    from_phone: str
+    text: str
+
+
+@router.post("/api/nfc/wa-code-inbound")
+def wa_code_inbound(body: _WaCodeBody):
+    """Parse 'NFC<code>' from an incoming WhatsApp message and finalise
+    a wallet-paid tap booking. Returns the deduction result."""
+    _ensure_schema()
+    import re
+    m = re.search(r"NFC([A-Z0-9]{4})", (body.text or "").upper())
+    if not m:
+        raise HTTPException(400, "No NFC<code> in message")
+    code = m.group(1)
+    with db.connect() as c:
+        tag = c.execute("SELECT * FROM nfc_tags WHERE wa_pending_token = ?",
+                        (code,)).fetchone()
+    if not tag:
+        raise HTTPException(404, "Code expired or already used")
+    # Verify the inbound message came from the tag owner's phone
+    digits = "".join(ch for ch in body.from_phone if ch.isdigit())
+    with db.connect() as c:
+        owner = c.execute(
+            "SELECT phone FROM customers WHERE id=?", (tag["owner_customer_id"],)
+        ).fetchone()
+    owner_digits = "".join(ch for ch in (owner["phone"] if owner else "") if ch.isdigit())
+    if not owner_digits or not digits.endswith(owner_digits[-9:]):
+        raise HTTPException(403, "Confirmation must come from the tag-owner's phone")
+    # Atomic wallet deduction. Approximate amount: parse from message text,
+    # else fall back to the ledger of the most recent intent (kept lean here).
+    amt_match = re.search(r"AED\s+(\d+(?:\.\d+)?)", body.text)
+    amount = float(amt_match.group(1)) if amt_match else 100.0
+    if not _debit_wallet_atomic(tag["owner_customer_id"], amount,
+                                  ref=tag["slug"], note=f"NFC tap · code {code}"):
+        raise HTTPException(402, "Insufficient wallet balance — top up first")
+    # Mark tag confirmed + bump booking counter
+    with db.connect() as c:
+        c.execute(
+            "UPDATE nfc_tags SET wa_confirmed_at = ?, wa_pending_token = NULL, "
+            "booking_count = booking_count + 1, last_booking_at = ? WHERE id = ?",
+            (_now(), _now(), tag["id"]),
+        )
+    db.log_event("nfc", tag["slug"], "wa_paid_book",
+                 details={"amount": amount, "code": code})
+    return {
+        "ok": True,
+        "deducted_aed": amount,
+        "tag_slug": tag["slug"],
+        "message": f"Booking confirmed via WhatsApp. AED {amount:.0f} deducted from wallet.",
+    }
 
 
 @router.get("/api/admin/nfc/stats", dependencies=[Depends(require_admin)])

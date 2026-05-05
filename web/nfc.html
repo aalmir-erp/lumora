@@ -435,6 +435,60 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   </div>
 </section>
 
+<!-- Bulk order: villa / large-flat customers tag every room at once -->
+<section style="padding:48px 20px;background:linear-gradient(135deg,#1E1B4B 0%,#312E81 100%);color:#fff" id="bulk">
+  <div style="max-width:880px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:26px">
+      <span style="background:rgba(252,211,77,.22);color:#FCD34D;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">🏘️ For villas, big flats, and offices</span>
+      <h2 style="margin:14px 0 8px;font-size:30px;letter-spacing:-.02em">Tag your whole place in one visit</h2>
+      <p style="margin:0;color:#CBD5E1;font-size:15px;max-width:560px;margin:0 auto">Order 5–30 NFC tags pre-bound to different services. Pick a date — our tech arrives, sticks each one in the right spot, writes the URL, takes a photo for your records. Done in 20 minutes.</p>
+    </div>
+
+    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:22px">
+      <div style="display:grid;gap:16px;grid-template-columns:1fr 1fr">
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#FCD34D;margin-bottom:8px">📦 Tags + locations</label>
+          <div id="bulk-rows" style="display:grid;gap:8px"></div>
+          <button type="button" id="bulk-add" style="margin-top:8px;background:rgba(255,255,255,.12);color:#fff;border:1px dashed rgba(255,255,255,.4);padding:10px 14px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;width:100%">+ Add another tag</button>
+        </div>
+        <div>
+          <label style="display:block;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#FCD34D;margin-bottom:6px">Tag size</label>
+          <select id="bulk-size" style="width:100%;padding:10px 12px;border-radius:10px;border:0;font-size:14px">
+            <option value="sticker">🏷️ Sticker · AED 5/tag</option>
+            <option value="card">💳 Credit-card · AED 12/tag</option>
+            <option value="keychain">🔑 Keychain · AED 18/tag</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#FCD34D;margin-bottom:6px">📅 Onsite install date · time</label>
+          <div style="display:flex;gap:6px">
+            <input id="bulk-install-date" type="date" style="flex:2;padding:10px;border-radius:10px;border:0;font-size:13px">
+            <input id="bulk-install-time" type="time" value="10:00" style="flex:1;padding:10px;border-radius:10px;border:0;font-size:13px">
+          </div>
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#FCD34D;margin-bottom:6px">Install address</label>
+          <input id="bulk-install-addr" placeholder="Building / villa, area, emirate" style="width:100%;padding:10px 12px;border-radius:10px;border:0;font-size:14px;box-sizing:border-box">
+        </div>
+      </div>
+
+      <div id="bulk-summary" style="margin-top:18px;padding:16px;background:rgba(252,211,77,.1);border:1px solid rgba(252,211,77,.32);border-radius:14px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div style="font-size:13px;color:#FCD34D">
+            <div><b id="bs-qty">0</b> tags × <b id="bs-unit">5</b> AED + <b id="bs-install">49</b> AED install</div>
+          </div>
+          <div style="font-size:24px;font-weight:800">AED <span id="bs-total">0</span></div>
+        </div>
+      </div>
+
+      <button type="button" id="bulk-pay-btn" style="margin-top:14px;width:100%;padding:16px;border-radius:12px;border:0;background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;font-weight:800;font-size:15px;cursor:pointer;letter-spacing:.02em">
+        💳 Place bulk order + pay advance →
+      </button>
+      <p id="bulk-result" style="margin-top:10px;font-size:13px;color:#CBD5E1;min-height:18px"></p>
+    </div>
+  </div>
+</section>
+
 <section class="nfc-faq">
   <h2>Frequently asked questions</h2>
 
@@ -503,7 +557,117 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 </footer>
 
 <script>
-/* Order form interactions */
+/* Bulk order: villa/big-flat tag-everywhere flow */
+(function(){
+  const SERVICES = [
+    ["deep_cleaning","✨ Deep Cleaning"],["ac_cleaning","❄️ AC Service"],
+    ["maid_service","👤 Maid Service"],["handyman","🔧 Handyman"],
+    ["pest_control","🪲 Pest Control"],["sofa_carpet","🛋️ Sofa & Carpet"],
+    ["window_cleaning","🪟 Window Cleaning"],["move_in_out","📦 Move In/Out"],
+    ["painting","🎨 Painting"],["laundry","👕 Laundry"],
+    ["babysitting","👶 Babysitting"],["garden","🌿 Gardening"],
+    ["pool","🏊 Pool Care"],["car_wash","🚗 Car Wash"],
+  ];
+  const PRESETS = [
+    {service:"maid_service",       location:"🍳 Kitchen cabinet"},
+    {service:"sofa_carpet",        location:"🛋️ Living room sofa"},
+    {service:"ac_cleaning",        location:"❄️ AC main unit"},
+    {service:"pest_control",       location:"🪲 Pantry / under sink"},
+  ];
+  const rowsEl = document.getElementById("bulk-rows");
+  const sizeSel = document.getElementById("bulk-size");
+  const summary = document.getElementById("bulk-summary");
+
+  function rowHtml(idx, preset){
+    const opts = SERVICES.map(s =>
+      `<option value="${s[0]}" ${preset && preset.service===s[0]?"selected":""}>${s[1]}</option>`).join("");
+    return `<div class="brow" data-idx="${idx}" style="display:grid;grid-template-columns:1fr 1.4fr 36px;gap:6px;align-items:center">
+      <select class="bsvc" style="padding:9px 8px;border-radius:9px;border:0;font-size:13px">${opts}</select>
+      <input class="bloc" placeholder="Where? e.g. Kitchen / Car / Pool" value="${preset?preset.location:""}"
+             style="padding:9px 10px;border-radius:9px;border:0;font-size:13px">
+      <button class="brm" type="button" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;cursor:pointer;font-size:14px;height:36px">×</button>
+    </div>`;
+  }
+
+  function refreshSummary(){
+    const rows = rowsEl.querySelectorAll(".brow");
+    const qty = rows.length;
+    const unit = {sticker:5,card:12,keychain:18}[sizeSel.value];
+    const install = (document.getElementById("bulk-install-date").value) ? 49 : 0;
+    const total = qty*unit + install;
+    document.getElementById("bs-qty").textContent = qty;
+    document.getElementById("bs-unit").textContent = unit;
+    document.getElementById("bs-install").textContent = install;
+    document.getElementById("bs-total").textContent = total;
+    summary.style.display = qty ? "block" : "none";
+  }
+
+  function addRow(preset){
+    const idx = rowsEl.children.length;
+    const div = document.createElement("div");
+    div.innerHTML = rowHtml(idx, preset);
+    const node = div.firstChild;
+    rowsEl.appendChild(node);
+    node.querySelector(".brm").onclick = () => { node.remove(); refreshSummary(); };
+    refreshSummary();
+  }
+
+  // Preset starting rows
+  PRESETS.forEach(addRow);
+  document.getElementById("bulk-add").onclick = () => addRow();
+  sizeSel.addEventListener("change", refreshSummary);
+  document.getElementById("bulk-install-date").addEventListener("change", refreshSummary);
+
+  // Default install date = day after tomorrow
+  (function(){
+    const d = new Date(); d.setDate(d.getDate()+2);
+    document.getElementById("bulk-install-date").value =
+      `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    refreshSummary();
+  })();
+
+  document.getElementById("bulk-pay-btn").addEventListener("click", async () => {
+    const out = document.getElementById("bulk-result");
+    const tok = localStorage.getItem("lumora.user.tok");
+    if (!tok) {
+      out.innerHTML = `📲 <a href="/login.html?next=/nfc.html%23bulk" style="color:#FCD34D;font-weight:700">Sign in</a> first to place a bulk NFC order.`;
+      return;
+    }
+    const items = [];
+    rowsEl.querySelectorAll(".brow").forEach(b => {
+      items.push({
+        service_id: b.querySelector(".bsvc").value,
+        location_label: b.querySelector(".bloc").value || null,
+      });
+    });
+    if (!items.length) { out.textContent = "Add at least one tag."; return; }
+    const date = document.getElementById("bulk-install-date").value;
+    const time = document.getElementById("bulk-install-time").value || "10:00";
+    const body = {
+      items,
+      size: sizeSel.value,
+      install_at: date ? `${date}T${time}:00` : null,
+      install_address: document.getElementById("bulk-install-addr").value || null,
+      pay_now: true,
+    };
+    out.textContent = "Placing order…";
+    try {
+      const r = await fetch("/api/nfc/bulk-order", {
+        method: "POST",
+        headers: {"content-type":"application/json","Authorization":"Bearer "+tok},
+        body: JSON.stringify(body),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || "Order failed");
+      out.innerHTML = `✅ Bulk order #${j.bulk_order_id} created — <b>${j.qty} tags</b> for AED ${j.total_aed}. Redirecting to payment…`;
+      if (j.pay_url) setTimeout(() => location.href = j.pay_url, 800);
+    } catch (e) {
+      out.innerHTML = `⚠ ${e.message || e}`;
+    }
+  });
+})();
+
+/* Single-tag order form interactions */
 (function(){
   const sizes = document.getElementById("nfc-sizes");
   let selectedSize = "sticker";

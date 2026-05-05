@@ -95,6 +95,7 @@
     <a href="#autopost"  data-tab="autopost">🌐 Social Auto-post</a>
     <a href="#ailisting" data-tab="ailisting">🧠 AI Discoverability</a>
     <a href="#growth"    data-tab="growth">🌍 Growth Hub</a>
+    <a href="#nfc"       data-tab="nfc">📲 NFC tags</a>
     <a href="#socimg"    data-tab="socimg">🖼 Social Images</a>
     <a href="#sitemap"   data-tab="sitemap">🗺 Sitemap</a>
     <a href="#twa"       data-tab="twa">📱 Mobile App / TWA</a>
@@ -1863,6 +1864,101 @@ Tone: warm, direct, locally aware, no AI cliches (no em-dashes, no "delve", no "
     })();
     </script>
 
+    <!-- ====== NFC TAGS ADMIN (v1.22.92) ====== -->
+    <div id="t-nfc" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0">📲 NFC tap-to-book tags</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13.5px">Customers order tags → bound to a service → tap to instantly re-book. Each tag has a slug at <code>servia.ae/t/&lt;slug&gt;</code> that's written to the physical NFC chip.</p>
+        </div>
+      </div>
+
+      <div id="nfc-stats" style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:18px"></div>
+
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+        <input id="nfc-q" placeholder="Search slug / phone / name / alias…" style="flex:1;min-width:220px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px">
+        <label style="font-size:13px;display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="nfc-only-pending"> Pending fulfilment only</label>
+        <button class="btn btn-primary" onclick="loadNfcAdmin()">Refresh</button>
+      </div>
+      <div id="nfc-tags-table"></div>
+
+      <h3 style="margin:30px 0 8px;font-size:16px">📋 How to write a Servia URL onto a physical NFC tag</h3>
+      <ol style="font-size:13.5px;color:var(--muted);line-height:1.7;background:var(--bg);padding:16px 16px 16px 36px;border-radius:12px;border:1px solid var(--border)">
+        <li>Install <a href="https://play.google.com/store/apps/details?id=com.wakdev.wdnfc" target="_blank">NFC Tools (Android)</a> or <a href="https://apps.apple.com/app/nfc-tools/id1252962749" target="_blank">NFC Tools (iOS)</a> — free, ~10MB.</li>
+        <li>Open NFC Tools → <b>Write</b> → <b>Add a record</b> → <b>URL/URI</b>.</li>
+        <li>Paste the slug URL from the table below (e.g. <code>https://servia.ae/t/xqp4m9z</code>) and tap <b>OK</b>.</li>
+        <li>Hold the back of your phone to a blank NTAG213 sticker / card / keychain. Wait for the chime.</li>
+        <li>Test: tap a different phone on it — the Servia booking page should open in 1 second.</li>
+        <li>Mark the tag <b>Fulfilled</b> in the table below so the customer's account shows status: delivered.</li>
+      </ol>
+
+      <script>
+        async function loadNfcAdmin() {
+          try {
+            const stats = await adm("/api/admin/nfc/stats");
+            const s = document.getElementById("nfc-stats");
+            s.innerHTML = `
+              <div class="kpi"><div class="k">Total tags</div><div class="v">${stats.total||0}</div></div>
+              <div class="kpi"><div class="k">Active</div><div class="v" style="color:#15803D">${stats.active||0}</div></div>
+              <div class="kpi"><div class="k">Pending fulfil</div><div class="v" style="color:#B45309">${stats.pending_fulfillment||0}</div></div>
+              <div class="kpi"><div class="k">Total taps</div><div class="v">${stats.total_taps||0}</div></div>
+              <div class="kpi"><div class="k">Bookings via tap</div><div class="v" style="color:#0F766E">${stats.total_bookings||0}</div></div>
+            `;
+            const q = document.getElementById("nfc-q").value;
+            const onlyPending = document.getElementById("nfc-only-pending").checked;
+            const r = await adm(`/api/admin/nfc/tags?${q?"q="+encodeURIComponent(q)+"&":""}only_pending=${onlyPending}`);
+            const tags = r.tags || [];
+            const tableEl = document.getElementById("nfc-tags-table");
+            if (!tags.length) {
+              tableEl.innerHTML = '<div style="padding:24px;color:var(--muted);text-align:center">No NFC tags yet.</div>';
+              return;
+            }
+            tableEl.innerHTML = `<table class="list"><thead><tr>
+              <th>ID</th><th>Slug</th><th>Owner</th><th>Service</th><th>Size</th>
+              <th>Taps</th><th>Booked</th><th>Status</th><th>Created</th><th></th>
+            </tr></thead><tbody>${tags.map(t => `
+              <tr>
+                <td>#${t.id}</td>
+                <td><code style="font-size:12px">${t.slug}</code><br><small><a href="/t/${t.slug}" target="_blank" style="font-size:10.5px">test ▶</a></small></td>
+                <td>${escapeHtml(t.owner_name||'—')}<br><small style="color:var(--muted)">${escapeHtml(t.owner_phone||'')}</small>${t.alias?'<br><small>"'+escapeHtml(t.alias)+'"</small>':''}</td>
+                <td><small>${escapeHtml(t.service_id)}</small></td>
+                <td><small>${t.size}</small></td>
+                <td style="text-align:center">${t.tap_count||0}</td>
+                <td style="text-align:center;color:#0F766E;font-weight:700">${t.booking_count||0}</td>
+                <td>${t.is_active ? (t.fulfilled_at ? '<span class="badge confirmed">Fulfilled</span>' : '<span class="badge pending">Queued</span>') : '<span class="badge cancelled">Off</span>'}</td>
+                <td><small style="color:var(--muted)">${uaeDate(t.created_at)}</small></td>
+                <td style="white-space:nowrap;text-align:end">
+                  <a class="btn btn-ghost" style="font-size:10.5px;padding:3px 8px" href="/api/admin/nfc/tags/${t.id}/print" target="_blank">🖨 Print</a>
+                  ${!t.fulfilled_at ? `<button class="btn btn-ghost" style="font-size:10.5px;padding:3px 8px" onclick="markNfcFulfilled(${t.id})">✓ Fulfil</button>` : ''}
+                  <button class="btn btn-ghost" style="font-size:10.5px;padding:3px 8px" onclick="toggleNfcActive(${t.id}, ${t.is_active})">${t.is_active?'❌ Off':'✓ On'}</button>
+                  <button class="btn btn-ghost" style="font-size:10.5px;padding:3px 8px;color:#B91C1C" onclick="deleteNfc(${t.id})">🗑</button>
+                </td>
+              </tr>`).join("")}</tbody></table>`;
+          } catch (e) {
+            document.getElementById("nfc-tags-table").innerHTML = `<div style="color:#B91C1C;padding:14px">Failed: ${escapeHtml(e.message||e)}</div>`;
+          }
+        }
+        async function markNfcFulfilled(id) {
+          const via = prompt("Fulfilled via? (next_visit / courier / in_store)", "next_visit");
+          if (!via) return;
+          await adm(`/api/admin/nfc/tags/${id}`, {method:"PUT", body: JSON.stringify({fulfilled_via: via})});
+          loadNfcAdmin();
+        }
+        async function toggleNfcActive(id, currently) {
+          await adm(`/api/admin/nfc/tags/${id}`, {method:"PUT", body: JSON.stringify({is_active: currently?0:1})});
+          loadNfcAdmin();
+        }
+        async function deleteNfc(id) {
+          if (!confirm("Delete this NFC tag permanently? Customer's tap-history is preserved.")) return;
+          await adm(`/api/admin/nfc/tags/${id}`, {method:"DELETE"});
+          loadNfcAdmin();
+        }
+        document.getElementById("nfc-q") && document.getElementById("nfc-q").addEventListener("input",
+          () => { clearTimeout(window._nfcDebounce); window._nfcDebounce = setTimeout(loadNfcAdmin, 250); });
+        document.getElementById("nfc-only-pending") && document.getElementById("nfc-only-pending").addEventListener("change", loadNfcAdmin);
+      </script>
+    </div>
+
     <!-- ====== SOCIAL AUTO-POST ====== -->
     <div id="t-autopost" class="tab" style="display:none">
       <h2>🌐 Social Auto-post</h2>
@@ -2011,6 +2107,7 @@ function show(tab) {
   if (tab==="ailisting") loadAIListings();
   if (tab==="socimg")    loadSocImages();
   if (tab==="sitemap")   loadSitemapList();
+  if (tab==="nfc")       loadNfcAdmin();
   if (tab==="twa")       { loadTwaCreds(); loadTwaInstalls(); }
 }
 async function adm(path, opts={}) {

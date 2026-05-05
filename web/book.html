@@ -238,7 +238,30 @@ fetch("/api/services").then(r=>r.json()).then(d=>{
   if (services.length) lockService();
   else { const tries = setInterval(() => { if (services.length) { lockService(); clearInterval(tries); } }, 100); }
 
-  // Big confirm card at top of form
+  // v1.22.92 — Rich tap-confirm card. Pre-fills tomorrow morning date/time
+  // (1-day margin), shows the standard charge for the linked service, lets
+  // the customer adjust both, and finally pushes a WhatsApp self-confirm to
+  // the tag owner's phone before submitting the booking.
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const yyyy = tomorrow.getFullYear();
+  const mm = String(tomorrow.getMonth()+1).padStart(2,"0");
+  const dd = String(tomorrow.getDate()).padStart(2,"0");
+  const defaultDate = `${yyyy}-${mm}-${dd}`;
+  const defaultTime = "10:00";
+
+  // Approximate "from" prices for the tag's service (matches /nfc.html copy).
+  // Used purely for the upfront-charge preview — final price comes from
+  // /api/cart/checkout same as a regular booking.
+  const PRICE_FROM = {
+    deep_cleaning:350, ac_cleaning:75, maid_service:75 /*3hr min*/,
+    handyman:100, pest_control:200, sofa_carpet:120, window_cleaning:80,
+    move_in_out:400, painting:350, laundry:30, babysitting:105 /*3hr min*/,
+    garden:120, pool:250, car_wash:50,
+  };
+  const fromPrice = PRICE_FROM[tag.service_id] || 100;
+  const serviceLabel = (tag.service_id||"").replace(/_/g," ").replace(/\b\w/g, c=>c.toUpperCase());
+
   const card = document.createElement("div");
   card.id = "nfc-confirm-card";
   const ownerLine = tag.owner.is_me
@@ -246,21 +269,227 @@ fetch("/api/services").then(r=>r.json()).then(d=>{
     : `This Servia tag is bound to <b>${escapeHtml(tag.owner.phone||"a customer")}</b>. <a href="/login.html?next=${encodeURIComponent(location.pathname+location.search)}" style="color:#fff;text-decoration:underline;font-weight:700">Sign in</a> to confirm.`;
   card.style.cssText = "background:linear-gradient(135deg,#0F766E 0%,#14B8A6 100%);color:#fff;padding:22px 20px;border-radius:18px;margin-bottom:22px;box-shadow:0 12px 30px rgba(15,118,110,.22)";
   card.innerHTML = `
-    <div style="display:flex;gap:14px;align-items:flex-start">
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
       <div style="font-size:48px;line-height:1">📲</div>
       <div style="flex:1;min-width:0">
         <div style="background:rgba(255,255,255,.18);display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px">⚡ NFC tap detected · ${tag.tap_count}× total</div>
-        <h3 style="margin:0 0 4px;font-size:19px;font-weight:800">Repeat your <span style="color:#FCD34D">${escapeHtml((tag.service_id||"").replace(/_/g," "))}</span> booking?</h3>
-        <p style="margin:0 0 8px;font-size:13.5px;opacity:.92">${ownerLine}${tag.alias ? ` · <em>tagged "${escapeHtml(tag.alias)}"</em>` : ""}</p>
-        <p style="margin:0;font-size:12px;opacity:.78">📍 We'll use your default saved address. Scroll down, fill any service-specific details, then tap <b>Confirm booking</b> below.</p>
+        <h3 style="margin:0 0 4px;font-size:19px;font-weight:800">Confirm <span style="color:#FCD34D">${escapeHtml(serviceLabel)}</span></h3>
+        <p style="margin:0;font-size:13.5px;opacity:.92">${ownerLine}${tag.alias ? ` · <em>tagged "${escapeHtml(tag.alias)}"</em>` : ""}</p>
       </div>
-    </div>`;
-  const formCard = document.querySelector("main, .container, body");
+    </div>
+
+    <div style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="display:grid;gap:10px;grid-template-columns:1fr 1fr">
+        <div>
+          <label style="font-size:10.5px;opacity:.78;font-weight:700;letter-spacing:.05em;text-transform:uppercase">📅 Date</label>
+          <input id="nfc-date" type="date" value="${defaultDate}" min="${defaultDate}"
+                 style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:0;font-family:inherit;font-size:14px;color:#0F172A">
+        </div>
+        <div>
+          <label style="font-size:10.5px;opacity:.78;font-weight:700;letter-spacing:.05em;text-transform:uppercase">🕐 Time</label>
+          <input id="nfc-time" type="time" value="${defaultTime}"
+                 style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:0;font-family:inherit;font-size:14px;color:#0F172A">
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:10.5px;opacity:.78;font-weight:700;letter-spacing:.05em;text-transform:uppercase">Charge (advance)</div>
+          <div style="font-size:22px;font-weight:800;line-height:1.1">AED <span id="nfc-amount">${fromPrice}</span><small style="font-size:11px;opacity:.7;font-weight:500">+5% VAT</small></div>
+        </div>
+        <div style="font-size:11px;opacity:.78;text-align:end;max-width:230px">📍 Default saved address ·<br>edit in form below if needed</div>
+      </div>
+    </div>
+
+    <div id="nfc-multi-cart" style="background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.3);border-radius:12px;padding:10px 14px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div style="font-size:12px;font-weight:700">🛒 More services from this tap?</div>
+        <button type="button" id="nfc-add-more" style="background:#FCD34D;color:#7C2D12;border:0;padding:6px 12px;border-radius:999px;font-weight:800;font-size:12px;cursor:pointer">+ Add another</button>
+      </div>
+      <div id="nfc-multi-list" style="margin-top:8px;font-size:12.5px;display:none"></div>
+    </div>
+
+    <div id="nfc-wallet-card" style="background:rgba(252,211,77,.15);border:1px solid rgba(252,211,77,.4);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:800;color:#FCD34D;letter-spacing:.05em;text-transform:uppercase">💰 Wallet balance</div>
+          <div style="font-size:18px;font-weight:800">AED <span id="nfc-wallet-bal">—</span></div>
+        </div>
+        <button type="button" id="nfc-wallet-pay-btn" style="background:#FCD34D;color:#7C2D12;border:0;padding:10px 18px;border-radius:999px;font-weight:800;font-size:13px;cursor:pointer">⚡ Pay from wallet via WhatsApp</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" id="nfc-wa-btn"
+        style="flex:1;min-width:160px;padding:13px;border-radius:12px;border:0;background:#075E54;color:#fff;font-weight:800;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px">
+        💬 WhatsApp confirm + pay
+      </button>
+      <button type="button" id="nfc-skip-wa-btn"
+        style="padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-weight:700;font-size:13px;cursor:pointer">
+        Skip WA · scroll to form
+      </button>
+    </div>
+    <p id="nfc-wa-status" style="margin:10px 0 0;font-size:12px;opacity:.78;min-height:16px"></p>
+  `;
   const target = document.getElementById("service");
   if (target && target.parentNode) target.parentNode.insertBefore(card, target.parentNode.firstChild);
 
   // Mark booking POST so server can attribute the booking to the tag
   window.__nfc_slug = slug;
+
+  // Multi-tap cart — user can add more services to the same booking
+  // (e.g. tapped sofa → also wants bathroom + fridge clean in one trip).
+  // Reuses servia.cart.v1 storage + /cart.html flow on submit.
+  window.__nfc_extra_items = [];
+  const SERVICE_OPTIONS = [
+    ["deep_cleaning","✨ Deep Cleaning","350"],
+    ["ac_cleaning","❄️ AC Service","75"],
+    ["maid_service","👤 Maid Service","75"],
+    ["handyman","🔧 Handyman","100"],
+    ["pest_control","🪲 Pest Control","200"],
+    ["sofa_carpet","🛋️ Sofa & Carpet","120"],
+    ["window_cleaning","🪟 Window Cleaning","80"],
+    ["move_in_out","📦 Move In/Out","400"],
+    ["painting","🎨 Painting","350"],
+    ["laundry","👕 Laundry","30"],
+    ["babysitting","👶 Babysitting","105"],
+    ["garden","🌿 Gardening","120"],
+    ["pool","🏊 Pool Care","250"],
+    ["car_wash","🚗 Car Wash","50"],
+    ["vehicle_recovery","🚨 Roadside Recovery","250"],
+  ];
+  document.getElementById("nfc-add-more").addEventListener("click", () => {
+    const lines = SERVICE_OPTIONS.map(s => `${s[1]} (from ${s[2]} AED)`).join("\n");
+    const idx = parseInt(prompt(
+      "Pick another service to add to this tap-booking:\n\n" +
+      SERVICE_OPTIONS.map((s,i) => `${i+1}. ${s[1]} from AED ${s[2]}`).join("\n") +
+      "\n\nType the number:", "1"
+    ), 10);
+    if (!idx || idx < 1 || idx > SERVICE_OPTIONS.length) return;
+    const pick = SERVICE_OPTIONS[idx-1];
+    window.__nfc_extra_items.push({service_id: pick[0], _label: pick[1], _from: pick[2]});
+    const list = document.getElementById("nfc-multi-list");
+    list.style.display = "block";
+    list.innerHTML = window.__nfc_extra_items.map((it,i) =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px dashed rgba(255,255,255,.2)"><span>${it._label}</span><span style="opacity:.7">+AED ${it._from}<button data-rm="${i}" style="margin-inline-start:8px;background:transparent;color:#fff;border:0;cursor:pointer;font-size:14px;opacity:.6">×</button></span></div>`
+    ).join("");
+    // Update charge total
+    const baseAmt = fromPrice;
+    const extraAmt = window.__nfc_extra_items.reduce((s,it) => s + parseFloat(it._from||0), 0);
+    document.getElementById("nfc-amount").textContent = (baseAmt + extraAmt).toFixed(0);
+    list.querySelectorAll("[data-rm]").forEach(b => b.onclick = ev => {
+      window.__nfc_extra_items.splice(parseInt(b.dataset.rm,10), 1);
+      const ev2 = new Event("change");
+      document.getElementById("nfc-add-more").dispatchEvent(ev2);  // trigger refresh via re-render
+      // Re-render manually
+      list.innerHTML = window.__nfc_extra_items.map((it,i) =>
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px dashed rgba(255,255,255,.2)"><span>${it._label}</span><span style="opacity:.7">+AED ${it._from}</span></div>`
+      ).join("") || "(no extras)";
+      const newTotal = fromPrice + window.__nfc_extra_items.reduce((s,it) => s + parseFloat(it._from||0), 0);
+      document.getElementById("nfc-amount").textContent = newTotal.toFixed(0);
+    });
+  });
+
+  // Live location capture for vehicle_recovery taps — auto-fills address
+  // with GPS coordinates so the recovery truck dispatches without typing.
+  if (tag.service_id === "vehicle_recovery" || tag.service_id === "car_wash") {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(p => {
+        const addrField = document.querySelector('[id*="address"], textarea[name*="address"]');
+        if (addrField && !addrField.value) {
+          addrField.value = `📍 GPS ${p.coords.latitude.toFixed(5)}, ${p.coords.longitude.toFixed(5)}`;
+          status.innerHTML = "📍 Live location captured — recovery team will be dispatched here.";
+        }
+      }, () => {}, {timeout: 6000, enableHighAccuracy: true});
+    }
+  }
+
+  // Wire WhatsApp verify + advance-pay
+  const waBtn = document.getElementById("nfc-wa-btn");
+  const skipBtn = document.getElementById("nfc-skip-wa-btn");
+  const status = document.getElementById("nfc-wa-status");
+  if (waBtn) waBtn.addEventListener("click", async () => {
+    if (!tag.owner.is_me) {
+      status.textContent = "⚠ Sign in as the tag owner first to use WA confirm.";
+      return;
+    }
+    const date = document.getElementById("nfc-date").value;
+    const time = document.getElementById("nfc-time").value;
+    const amt  = parseFloat(document.getElementById("nfc-amount").textContent) || fromPrice;
+    waBtn.disabled = true; status.textContent = "Generating WhatsApp self-confirm…";
+    try {
+      const r = await fetch("/api/nfc/wa-verify-send", {
+        method: "POST",
+        headers: {"content-type":"application/json"},
+        body: JSON.stringify({
+          slug,
+          service_summary: serviceLabel + (tag.alias ? ` (${tag.alias})` : ""),
+          when_iso: `${date}T${time}:00`,
+          amount_aed: amt,
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || "WA send failed");
+      // Open WhatsApp with pre-filled message; user just taps SEND on WA.
+      window.open(j.wa_url, "_blank");
+      status.innerHTML = `📲 WhatsApp opened on your phone — send the message, " +
+        "then come back and tap <b>Confirm booking</b> at the bottom.`;
+      // Persist token so subsequent booking POST attributes the WA confirm
+      window.__nfc_wa_token = j.token;
+    } catch (e) {
+      status.innerHTML = `⚠ ${escapeHtml(e.message || String(e))}`;
+    } finally { waBtn.disabled = false; }
+  });
+  if (skipBtn) skipBtn.addEventListener("click", () => {
+    document.getElementById("book-btn").scrollIntoView({behavior:"smooth", block:"center"});
+  });
+
+  // Wallet card — only shown when owner is signed in
+  if (tag.owner.is_me) {
+    const wcard = document.getElementById("nfc-wallet-card");
+    const wbal = document.getElementById("nfc-wallet-bal");
+    fetch("/api/wallet/balance", {
+      headers: {"Authorization": "Bearer " + localStorage.getItem("lumora.user.tok")}
+    }).then(r => r.ok && r.json()).then(j => {
+      if (!j) return;
+      wcard.style.display = "block";
+      wbal.textContent = (j.balance_aed||0).toFixed(0);
+    }).catch(()=>{});
+
+    document.getElementById("nfc-wallet-pay-btn").addEventListener("click", async () => {
+      const date = document.getElementById("nfc-date").value;
+      const time = document.getElementById("nfc-time").value;
+      const amt  = parseFloat(document.getElementById("nfc-amount").textContent) || fromPrice;
+      try {
+        const r = await fetch("/api/nfc/wallet-pay-init", {
+          method:"POST",
+          headers:{
+            "content-type":"application/json",
+            "Authorization":"Bearer "+localStorage.getItem("lumora.user.tok"),
+          },
+          body: JSON.stringify({
+            slug, service_id: tag.service_id,
+            when_iso: `${date}T${time}:00`,
+            amount_aed: amt,
+            extra_services: (window.__nfc_extra_items||[]).map(x=>x.service_id),
+          }),
+        });
+        const j = await r.json();
+        if (!j.ok) {
+          if (j.shortfall_aed) {
+            status.innerHTML = `⚠ Wallet short by AED ${j.shortfall_aed.toFixed(0)}. <a href="${j.topup_url}" style="color:#FCD34D;font-weight:700;text-decoration:underline">Top up →</a>`;
+          } else {
+            status.innerHTML = `⚠ ${j.error || "Payment init failed"}`;
+          }
+          return;
+        }
+        // Open WhatsApp with prefilled NFC<code> message → owner just hits Send
+        window.open(j.wa_deeplink, "_blank");
+        status.innerHTML = `📲 WhatsApp opened with code <b>NFC${j.code}</b> already typed. Hit <b>Send</b> in WhatsApp — we'll deduct AED ${j.amount_aed.toFixed(0)} from your wallet (balance after: AED ${j.remaining_after_aed.toFixed(0)}) and confirm the booking automatically.`;
+      } catch(e) {
+        status.innerHTML = `⚠ ${escapeHtml(String(e.message||e))}`;
+      }
+    });
+  }
 })();
 
 // Tiny html escape used by the NFC card

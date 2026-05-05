@@ -386,6 +386,34 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     </div>
   </div>
 </header>
+<!-- 📲 NFC TAP-TO-BOOK highlight (v1.22.92) -->
+<section style="padding:32px 16px;background:linear-gradient(135deg,#1E1B4B 0%,#312E81 50%,#7C3AED 100%);color:#fff;position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;background:radial-gradient(circle at 90% 30%,rgba(252,211,77,.22),transparent 55%);pointer-events:none"></div>
+  <div style="max-width:1180px;margin:0 auto;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center">
+    <div>
+      <span style="background:rgba(252,211,77,.22);color:#FCD34D;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">⚡ UAE FIRST · FREE · NEW</span>
+      <h2 style="margin:14px 0 8px;font-size:28px;letter-spacing:-.02em;color:#fff;line-height:1.15">Tap once. Booked.<br><span style="color:#FCD34D">Servia NFC stickers.</span></h2>
+      <p style="margin:0 0 18px;color:#CBD5E1;font-size:14.5px;line-height:1.55;max-width:480px">Stick a sticker in your kitchen, car, AC, pool, or sofa. Tap your phone — same service queued in 2 seconds. No app login. No QR scanning. Free.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a href="/nfc.html" style="background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:11px 20px;border-radius:999px;font-weight:800;text-decoration:none;font-size:14px;display:inline-flex;align-items:center;gap:6px;box-shadow:0 8px 20px rgba(245,158,11,.35)">📲 See how it works →</a>
+        <a href="/nfc.html#bulk" style="background:rgba(255,255,255,.12);color:#fff;padding:11px 20px;border-radius:999px;font-weight:700;text-decoration:none;font-size:14px;border:1px solid rgba(255,255,255,.22)">Tag whole villa →</a>
+      </div>
+    </div>
+    <div style="text-align:center;display:flex;justify-content:center;align-items:center;min-height:160px">
+      <div style="position:relative;width:200px;height:160px">
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120px;height:75px;border-radius:12px;background:linear-gradient(135deg,#0F766E 0%,#14B8A6 100%);box-shadow:0 12px 30px rgba(15,23,42,.42),inset 0 1px 0 rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:.06em;z-index:2">SERVIA</div>
+        <div style="position:absolute;inset:-30px;border-radius:50%;border:2px solid rgba(252,211,77,.5);animation:nfc-pulse-home 2.4s ease-out infinite;pointer-events:none"></div>
+        <div style="position:absolute;right:-10px;top:50%;transform:translate(0,-50%) rotate(-12deg);width:54px;height:96px;border-radius:9px;background:linear-gradient(170deg,#1F2937,#374151);box-shadow:0 12px 28px rgba(0,0,0,.4);z-index:3;animation:nfc-phone-home 3.2s ease-in-out infinite"></div>
+      </div>
+    </div>
+  </div>
+  <style>
+    @keyframes nfc-pulse-home { 0% { transform:scale(.5);opacity:.9 } 100% { transform:scale(1.5);opacity:0 } }
+    @keyframes nfc-phone-home { 0%,100% { transform:translate(0,-50%) rotate(-12deg) } 50% { transform:translate(-30px,-50%) rotate(-2deg) } }
+    @media (max-width:720px) { section[style*="UAE FIRST"] + * { display:block } }
+  </style>
+</section>
+
 <!-- 🎁 BUNDLE EXPLAINER — make multi-service offer obvious -->
 <section style="padding:18px 16px 0;background:#fff;border-top:1px solid var(--border)">
   <div style="max-width:1180px;margin:0 auto;background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;border-radius:14px;padding:14px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between;box-shadow:0 6px 20px rgba(245,158,11,.22)">
