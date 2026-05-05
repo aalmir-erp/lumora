@@ -536,24 +536,83 @@ def list_addresses(user: a.AuthedUser = Depends(a.current_customer)):
 
 
 class SavedAddress(BaseModel):
-    label: str | None = None
+    # Required: a single human-readable address line (full free-text).
     address: str
-    area: str | None = None
+    # Optional structured / display fields. None of these are required so old
+    # clients sending just `address` keep working.
+    label: str | None = None        # "Home" / "Office" / "Mom's place"
+    area: str | None = None         # "Dubai Marina", "JVC", "Tecom"…
+    building: str | None = None     # tower / villa name
+    apartment: str | None = None    # apt / unit no.
+    street: str | None = None
+    city: str | None = None
+    emirate: str | None = None      # "Dubai", "Sharjah", "Abu Dhabi", …
+    contact_name: str | None = None
+    contact_phone: str | None = None
+    notes: str | None = None        # gate code, "ring once", parking spot, etc.
+    lat: float | None = None
+    lng: float | None = None
     is_default: bool = False
 
 
 @router.post("/me/addresses")
 def add_address(body: SavedAddress, user: a.AuthedUser = Depends(a.current_customer)):
+    now = _dt.datetime.utcnow().isoformat() + "Z"
     with db.connect() as c:
         if body.is_default:
             c.execute("UPDATE saved_addresses SET is_default=0 WHERE customer_id=?",
                       (user.user_id,))
         cur = c.execute(
-            "INSERT INTO saved_addresses(customer_id, label, address, area, is_default, created_at) "
-            "VALUES(?,?,?,?,?,?)",
-            (user.user_id, body.label, body.address, body.area,
-             1 if body.is_default else 0, _dt.datetime.utcnow().isoformat() + "Z"))
+            """INSERT INTO saved_addresses(
+                customer_id, label, address, area, building, apartment, street,
+                city, emirate, contact_name, contact_phone, notes, lat, lng,
+                is_default, created_at, updated_at
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (user.user_id, body.label, body.address, body.area, body.building,
+             body.apartment, body.street, body.city, body.emirate,
+             body.contact_name, body.contact_phone, body.notes,
+             body.lat, body.lng, 1 if body.is_default else 0, now, now))
     return {"ok": True, "id": cur.lastrowid}
+
+
+class AddressPatch(BaseModel):
+    # Same shape as SavedAddress but every field optional, so the UI can do
+    # partial updates ("just toggle default", "update phone only", …).
+    label: str | None = None
+    address: str | None = None
+    area: str | None = None
+    building: str | None = None
+    apartment: str | None = None
+    street: str | None = None
+    city: str | None = None
+    emirate: str | None = None
+    contact_name: str | None = None
+    contact_phone: str | None = None
+    notes: str | None = None
+    lat: float | None = None
+    lng: float | None = None
+    is_default: bool | None = None
+
+
+@router.patch("/me/addresses/{aid}")
+def update_address(aid: int, body: AddressPatch,
+                   user: a.AuthedUser = Depends(a.current_customer)):
+    fields, vals = [], []
+    payload = body.model_dump(exclude_none=True)
+    if not payload:
+        return {"ok": True, "noop": True}
+    with db.connect() as c:
+        if payload.pop("is_default", False):
+            c.execute("UPDATE saved_addresses SET is_default=0 WHERE customer_id=?",
+                      (user.user_id,))
+            fields.append("is_default=?"); vals.append(1)
+        for k, v in payload.items():
+            fields.append(f"{k}=?"); vals.append(v)
+        fields.append("updated_at=?"); vals.append(_dt.datetime.utcnow().isoformat() + "Z")
+        vals.extend([aid, user.user_id])
+        c.execute(f"UPDATE saved_addresses SET {', '.join(fields)} "
+                  f"WHERE id=? AND customer_id=?", vals)
+    return {"ok": True}
 
 
 @router.delete("/me/addresses/{aid}")
@@ -561,6 +620,95 @@ def delete_address(aid: int, user: a.AuthedUser = Depends(a.current_customer)):
     with db.connect() as c:
         c.execute("DELETE FROM saved_addresses WHERE id=? AND customer_id=?",
                   (aid, user.user_id))
+    return {"ok": True}
+
+
+# ============================================================
+# CUSTOMER payment methods
+#
+# We store ONLY display metadata (brand + last4 + expiry) plus an opaque
+# Stripe payment-method ID. Full PANs / CVVs never touch our database — this
+# avoids dragging us into PCI-DSS scope. Charging happens via Stripe
+# (stripe.PaymentIntent.create with payment_method=stripe_pm_id), or via
+# alternative method types like cash-on-delivery or WhatsApp pay.
+# ============================================================
+
+ALLOWED_METHOD_TYPES = {"card", "cod", "whatsapp_pay", "apple_pay", "google_pay", "bank"}
+
+
+@router.get("/me/payment-methods")
+def list_payment_methods(user: a.AuthedUser = Depends(a.current_customer)):
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT id, method_type, label, card_brand, card_last4, card_expiry, "
+            "holder_name, is_default, created_at "
+            "FROM customer_payment_methods WHERE customer_id=? "
+            "ORDER BY is_default DESC, id DESC",
+            (user.user_id,)).fetchall()
+    return {"payment_methods": db.rows_to_dicts(rows)}
+
+
+class SavedPaymentMethod(BaseModel):
+    method_type: str  # one of ALLOWED_METHOD_TYPES
+    label: str | None = None
+    # Card-only display metadata (never the full PAN). UI sends these from
+    # whatever Stripe Elements / collected card form returns.
+    card_brand: str | None = None  # "visa" | "mastercard" | "amex" | "discover"
+    card_last4: str | None = None  # 4-digit string
+    card_expiry: str | None = None # "MM/YY"
+    holder_name: str | None = None
+    stripe_pm_id: str | None = None
+    is_default: bool = False
+
+
+@router.post("/me/payment-methods")
+def add_payment_method(body: SavedPaymentMethod,
+                       user: a.AuthedUser = Depends(a.current_customer)):
+    if body.method_type not in ALLOWED_METHOD_TYPES:
+        raise HTTPException(400, f"method_type must be one of {sorted(ALLOWED_METHOD_TYPES)}")
+    if body.method_type == "card":
+        if not (body.card_last4 and len(body.card_last4) == 4 and body.card_last4.isdigit()):
+            raise HTTPException(400, "card_last4 must be 4 digits")
+        if not body.card_brand:
+            raise HTTPException(400, "card_brand required for cards")
+    now = _dt.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        if body.is_default:
+            c.execute("UPDATE customer_payment_methods SET is_default=0 WHERE customer_id=?",
+                      (user.user_id,))
+        cur = c.execute(
+            """INSERT INTO customer_payment_methods(
+                customer_id, method_type, label, card_brand, card_last4,
+                card_expiry, holder_name, stripe_pm_id, is_default, created_at
+            ) VALUES(?,?,?,?,?,?,?,?,?,?)""",
+            (user.user_id, body.method_type, body.label, body.card_brand,
+             body.card_last4, body.card_expiry, body.holder_name,
+             body.stripe_pm_id, 1 if body.is_default else 0, now))
+    return {"ok": True, "id": cur.lastrowid}
+
+
+@router.post("/me/payment-methods/{pid}/default")
+def set_default_payment_method(pid: int,
+                               user: a.AuthedUser = Depends(a.current_customer)):
+    with db.connect() as c:
+        # Verify ownership before flipping defaults
+        row = c.execute(
+            "SELECT id FROM customer_payment_methods WHERE id=? AND customer_id=?",
+            (pid, user.user_id)).fetchone()
+        if not row:
+            raise HTTPException(404, "payment method not found")
+        c.execute("UPDATE customer_payment_methods SET is_default=0 WHERE customer_id=?",
+                  (user.user_id,))
+        c.execute("UPDATE customer_payment_methods SET is_default=1 WHERE id=?", (pid,))
+    return {"ok": True}
+
+
+@router.delete("/me/payment-methods/{pid}")
+def delete_payment_method(pid: int,
+                          user: a.AuthedUser = Depends(a.current_customer)):
+    with db.connect() as c:
+        c.execute("DELETE FROM customer_payment_methods WHERE id=? AND customer_id=?",
+                  (pid, user.user_id))
     return {"ok": True}
 
 

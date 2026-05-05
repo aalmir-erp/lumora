@@ -1,11 +1,213 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="servia-page" content="default"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sign in • Servia</title><meta name="theme-color" content="#0D9488">
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="servia-page" content="default">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<title>Sign in to Servia · UAE home services</title>
+<meta name="description" content="Sign in to Servia in seconds. Use your phone (WhatsApp OTP), email magic link, or social login. Your saved addresses, payment methods, and bookings all in one place.">
+<link rel="canonical" href="https://servia.ae/login.html">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
 <link rel="preload" as="style" href="/widget.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css"></noscript>
+<style>
+  body { background:#FAFAFA; }
+  .auth-shell {
+    display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+    min-height:calc(100vh - 60px); max-width:1280px; margin:0 auto;
+    padding:0; gap:0;
+  }
+  @media (max-width:880px) { .auth-shell { grid-template-columns:1fr; } }
+
+  /* LEFT — brand panel */
+  .auth-brand {
+    background:linear-gradient(160deg,#0F766E 0%,#0D9488 35%,#14B8A6 100%);
+    color:#fff; padding:48px 44px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  @media (max-width:880px) { .auth-brand { padding:32px 24px; min-height:280px; } }
+  .auth-brand::before, .auth-brand::after {
+    content:""; position:absolute; border-radius:50%;
+    background:rgba(255,255,255,.06); pointer-events:none;
+  }
+  .auth-brand::before { width:380px; height:380px; top:-140px; right:-160px; }
+  .auth-brand::after  { width:280px; height:280px; bottom:-120px; left:-80px;
+                        background:radial-gradient(circle,rgba(252,211,77,.18),transparent 70%); }
+  .auth-brand .logo { display:flex; align-items:center; gap:10px; position:relative; z-index:2; }
+  .auth-brand .logo img { width:auto; height:42px; filter:brightness(0) invert(1); }
+  .auth-brand .logo .vbadge { font-size:10px; padding:3px 8px; border-radius:999px;
+    background:rgba(255,255,255,.18); font-weight:700; }
+  .auth-brand h1 {
+    font-size:38px; line-height:1.1; letter-spacing:-.02em; margin:36px 0 14px;
+    position:relative; z-index:2;
+  }
+  @media (max-width:880px) { .auth-brand h1 { font-size:28px; margin-top:18px; } }
+  .auth-brand h1 em { font-style:normal; color:#FCD34D; }
+  .auth-brand .lead {
+    font-size:16px; color:#ECFDF5; line-height:1.55; max-width:440px;
+    position:relative; z-index:2;
+  }
+  .usp-list { list-style:none; padding:0; margin:24px 0 0; position:relative; z-index:2; }
+  .usp-list li { display:flex; gap:10px; align-items:flex-start; margin-bottom:10px;
+    font-size:14px; color:#ECFDF5; }
+  .usp-list li .ic { background:#FCD34D; color:#78350F; width:24px; height:24px;
+    border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:13px; flex-shrink:0; }
+  .auth-brand .testi {
+    background:rgba(255,255,255,.12); padding:14px 18px; border-radius:14px;
+    font-size:13px; line-height:1.5; position:relative; z-index:2; margin-top:24px;
+    backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.18);
+  }
+  .auth-brand .testi b { color:#FCD34D; }
+  .auth-brand .float-mascot {
+    position:absolute; bottom:14px; right:14px; width:84px; opacity:.95;
+    z-index:1; animation:auth-float 4s ease-in-out infinite;
+    filter:drop-shadow(0 12px 24px rgba(0,0,0,.22));
+  }
+  @keyframes auth-float {
+    0%,100% { transform:translateY(0) rotate(-3deg); }
+    50%     { transform:translateY(-12px) rotate(3deg); }
+  }
+  @media (max-width:880px) { .auth-brand .float-mascot { width:64px; bottom:8px; right:8px; } }
+
+  /* RIGHT — form panel */
+  .auth-form-wrap {
+    padding:48px 44px; display:flex; align-items:center;
+    background:#fff;
+  }
+  @media (max-width:880px) { .auth-form-wrap { padding:28px 20px; } }
+  .auth-form { width:100%; max-width:440px; margin:0 auto; }
+
+  .auth-tabs {
+    display:flex; background:#F1F5F9; border-radius:14px; padding:4px;
+    margin-bottom:22px; gap:2px;
+  }
+  .auth-tabs button {
+    flex:1; border:0; background:transparent; padding:11px 8px;
+    font-size:13px; font-weight:700; color:#475569; cursor:pointer;
+    border-radius:10px; display:flex; align-items:center; gap:6px;
+    justify-content:center; line-height:1; transition:all .15s ease;
+  }
+  .auth-tabs button.active { background:#fff; color:#0F766E;
+    box-shadow:0 4px 14px rgba(15,23,42,.08); }
+  .auth-tabs button:not(.active):hover { color:#0F172A; }
+
+  .auth-form h2 { font-size:24px; letter-spacing:-.01em; margin:0 0 6px; }
+  .auth-form .subhead { color:#64748B; font-size:14px; margin:0 0 22px; }
+
+  .auth-form .row { margin-bottom:14px; }
+  .auth-form label { display:block; font-size:12px; font-weight:700; color:#475569;
+    margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
+  .auth-form input, .auth-form select {
+    width:100%; padding:13px 14px; font-size:15px;
+    border:1.5px solid #E2E8F0; border-radius:12px;
+    font-family:inherit; transition:border .15s, box-shadow .15s;
+    background:#fff; color:#0F172A; box-sizing:border-box;
+  }
+  .auth-form input:focus, .auth-form select:focus {
+    outline:none; border-color:#0D9488; box-shadow:0 0 0 3px rgba(13,148,136,.12);
+  }
+
+  .phone-row { display:grid; grid-template-columns:120px 1fr; gap:8px; }
+  .phone-row select { padding:13px 8px; font-size:14px; }
+
+  .btn-auth {
+    width:100%; padding:14px 16px; font-size:15px; font-weight:700;
+    border:0; border-radius:12px; background:linear-gradient(135deg,#0F766E,#14B8A6);
+    color:#fff; cursor:pointer; line-height:1; min-height:52px;
+    transition:transform .15s, box-shadow .15s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-auth:hover:not(:disabled) {
+    transform:translateY(-1px); box-shadow:0 8px 22px rgba(13,148,136,.32);
+  }
+  .btn-auth:disabled { opacity:.55; cursor:wait; }
+
+  .auth-divider {
+    display:flex; align-items:center; gap:10px; color:#94A3B8;
+    font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    margin:18px 0;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content:""; flex:1; height:1px; background:#E2E8F0;
+  }
+
+  .social-row { display:grid; gap:8px; grid-template-columns:1fr 1fr; }
+  @media (max-width:380px) { .social-row { grid-template-columns:1fr; } }
+  .btn-social {
+    background:#fff; border:1.5px solid #E2E8F0; padding:11px 12px;
+    border-radius:12px; font-size:13px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    color:#0F172A; transition:all .15s; min-height:46px; line-height:1;
+    text-decoration:none;
+  }
+  .btn-social:hover { border-color:#0F766E; transform:translateY(-1px); }
+  .btn-social .ic { font-size:18px; line-height:1; }
+  .btn-social.gpt { background:linear-gradient(135deg,#1F2937,#111827);
+    color:#fff; border-color:transparent; }
+  .btn-social.gpt:hover { background:linear-gradient(135deg,#374151,#1F2937); }
+
+  .otp-grid {
+    display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:14px 0;
+  }
+  .otp-grid input {
+    text-align:center; font-size:22px; font-weight:700; padding:14px 0;
+    font-variant-numeric:tabular-nums; min-height:56px;
+  }
+
+  .auth-msg {
+    margin-top:14px; padding:10px 14px; border-radius:10px; font-size:13px;
+    line-height:1.45; display:none;
+  }
+  .auth-msg.show { display:block; }
+  .auth-msg.success { background:#ECFDF5; color:#065F46; border:1px solid #6EE7B7; }
+  .auth-msg.error   { background:#FEF2F2; color:#991B1B; border:1px solid #FCA5A5; }
+  .auth-msg.info    { background:#EFF6FF; color:#1E40AF; border:1px solid #93C5FD; }
+
+  .auth-foot {
+    margin-top:18px; text-align:center; font-size:13px; color:#64748B;
+  }
+  .auth-foot a { color:#0F766E; font-weight:700; text-decoration:none; }
+
+  /* Subtab pill (Phone | Email) inside Customer panel */
+  .sub-pills {
+    display:flex; gap:6px; margin-bottom:18px;
+    background:#F8FAFC; padding:4px; border-radius:10px;
+  }
+  .sub-pills button {
+    flex:1; border:0; background:transparent; padding:9px 6px;
+    font-size:12.5px; font-weight:700; color:#64748B; cursor:pointer;
+    border-radius:8px; line-height:1;
+  }
+  .sub-pills button.active { background:#fff; color:#0F766E;
+    box-shadow:0 2px 8px rgba(15,23,42,.06); }
+
+  .biometric-hint {
+    background:#F0FDFA; border:1px solid #99F6E4; padding:10px 12px;
+    border-radius:10px; margin-top:14px; font-size:12.5px; color:#0F766E;
+    display:flex; align-items:center; gap:8px;
+  }
+  .biometric-hint .ic { font-size:20px; }
+
+  .vendor-pane label, .vendor-pane input { font-size:14px; }
+
+  .panel { display:none; }
+  .panel.active { display:block; animation:authfadein .25s ease; }
+  @keyframes authfadein {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .countdown { font-size:12px; color:#94A3B8; margin-top:8px; text-align:center; }
+  .countdown b { color:#0F766E; }
+
+  /* Trust strip below form */
+  .trust-strip { display:flex; gap:14px; flex-wrap:wrap; justify-content:center;
+    color:#94A3B8; font-size:11px; margin-top:24px; }
+  .trust-strip span { display:inline-flex; align-items:center; gap:4px; }
+</style>
 <script src="/banner.js" defer></script>
-<!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
   {src:"/_snippets.js",id:"snippets"},
   {src:"/cart-badge.js",id:"cart-badge"},
@@ -20,136 +222,251 @@
 </head><body>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <nav class="nav"><div class="nav-inner">
-  <a href="/"><img src="/logo.svg" height="36" decoding="async"></a><small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;letter-spacing:0.5px;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
-  <div class="nav-cta">
-    <select class="lang-dropdown notranslate" translate="no" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
-      <option value="en">🇬🇧 English</option>
-      <option value="ar">🇦🇪 العربية</option>
-      <option value="ur">🇵🇰 اردو</option>
-      <option value="hi">🇮🇳 हिन्दी</option>
-      <option value="bn">🇧🇩 বাংলা</option>
-      <option value="ta">தமிழ்</option>
-      <option value="ml">മലയാളം</option>
-      <option value="tl">🇵🇭 Filipino</option>
-      <option value="ps">🇦🇫 پښتو</option>
-      <option value="ne">🇳🇵 नेपाली</option>
-      <option value="ru">🇷🇺 Русский</option>
-      <option value="fa">🇮🇷 فارسی</option>
-      <option value="fr">🇫🇷 Français</option>
-      <option value="zh">🇨🇳 中文</option>
-      <option value="es">🇪🇸 Español</option>
-    </select>
-<a class="btn btn-ghost" href="/">Home</a></div>
+  <a href="/"><img src="/logo.svg" height="36" alt="Servia" decoding="async"></a>
+  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-ghost" href="/">← Home</a></div>
 </div></nav>
 
-<section><div class="container" style="max-width:480px">
-  <div class="form">
-    <h2 style="margin:0 0 4px">Sign in</h2>
-    <p class="sub" id="lead">Customers sign in with phone (we'll send a code).
-       Partners use email & password.</p>
-
-    <div style="display:flex;gap:6px;margin-bottom:18px;background:var(--bg);border-radius:10px;padding:4px">
-      <button id="tab-c" class="btn btn-primary" style="flex:1;font-size:13px" onclick="setTab('c')">👤 Customer</button>
-      <button id="tab-v" class="btn btn-ghost"   style="flex:1;font-size:13px" onclick="setTab('v')">🤝 Partner</button>
-      <button id="tab-a" class="btn btn-ghost"   style="flex:1;font-size:13px" onclick="setTab('a')">🛠 Admin</button>
+<main class="auth-shell">
+  <!-- LEFT: brand panel -->
+  <aside class="auth-brand">
+    <div class="logo">
+      <img src="/logo.svg" alt="Servia" height="42">
+      <span class="vbadge">UAE · 7 emirates</span>
     </div>
-
-    <!-- ADMIN FLOW -->
-    <div id="adm" style="display:none">
-      <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px">
-        <b>🛠 Admin access</b><br>
-        Sign in to <a href="/admin.html">/admin.html</a> with the bearer token.<br><br>
-        <b>Default test token (until you set <code>ADMIN_TOKEN</code> in Railway):</b><br>
-        <code style="background:#fff;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;user-select:all">lumora-admin-test</code>
-        <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;margin-inline-start:6px" onclick="navigator.clipboard.writeText('lumora-admin-test');this.textContent='✓ copied'">Copy</button>
+    <div>
+      <h1>Welcome back to <em>Servia</em></h1>
+      <p class="lead">Sign in once and your saved addresses, payment methods, and bookings follow you across web, app, ChatGPT and voice assistants.</p>
+      <ul class="usp-list">
+        <li><span class="ic">✓</span> One-tap re-booking with stored addresses</li>
+        <li><span class="ic">✓</span> Track live ETA on every visit</li>
+        <li><span class="ic">✓</span> Same login across web, app and @servia GPT</li>
+        <li><span class="ic">✓</span> 4.9★ from 2,400+ UAE families</li>
+      </ul>
+      <div class="testi">
+        <b>“I book my deep clean in 30 seconds now.”</b><br>
+        <span style="opacity:.85">— Mariam K., Dubai Marina · 18 bookings</span>
       </div>
-      <a class="btn btn-primary btn-block" href="/admin.html" style="text-align:center">Open admin panel →</a>
     </div>
+    <img class="float-mascot" src="/brand/servia-mascot-1024x1024.png"
+         alt="" decoding="async" loading="lazy" onerror="this.style.display='none'">
+  </aside>
 
-    <!-- CUSTOMER FLOW -->
-    <div id="cust">
-      <label>Phone (with country code)</label>
-      <input id="cphone" placeholder="+971501234567">
-      <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="sendOtp()">Send code</button>
-
-      <div id="otp-box" style="display:none;margin-top:18px">
-        <label>6-digit code</label>
-        <input id="cotp" placeholder="123456" maxlength="6">
-        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="verifyOtp()">Verify &amp; sign in</button>
-      </div>
-      <div id="dev-otp" style="margin-top:14px;color:var(--muted);font-size:13px"></div>
-    </div>
-
-    <!-- VENDOR FLOW -->
-    <div id="vend" style="display:none">
-      <div id="vendor-tabs" style="display:flex;gap:6px;margin-bottom:14px">
-        <button id="vt-l" class="btn btn-ghost" style="flex:1;font-size:13px" onclick="vTab('l')">Sign in</button>
-        <button id="vt-r" class="btn btn-ghost" style="flex:1;font-size:13px" onclick="vTab('r')">Register</button>
+  <!-- RIGHT: form panel -->
+  <section class="auth-form-wrap">
+    <div class="auth-form">
+      <!-- Top tabs: Customer / Partner / Admin -->
+      <div class="auth-tabs" role="tablist" aria-label="Account type">
+        <button id="tab-c" class="active" role="tab" aria-selected="true" onclick="setTab('c')">👤 <span>Customer</span></button>
+        <button id="tab-v"                role="tab" aria-selected="false" onclick="setTab('v')">🤝 <span>Partner</span></button>
+        <button id="tab-a"                role="tab" aria-selected="false" onclick="setTab('a')">🛠 <span>Admin</span></button>
       </div>
 
-      <div id="v-login">
-        <label>Email</label><input id="vemail" type="email">
-        <label>Password</label><input id="vpw" type="password">
-        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="vendorLogin()">Sign in</button>
-        <div style="margin-top:14px;padding:10px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;font-size:12px">
-          <b>🧪 Test partner login</b> — any seeded vendor works. Try:<br>
-          <code style="user-select:all">ops@justmop.lumora</code> / <code>lumora-vendor-default</code>
-          <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;margin-inline-start:6px" onclick="document.getElementById('vemail').value='ops@justmop.lumora';document.getElementById('vpw').value='lumora-vendor-default';">Fill</button>
+      <!-- ---------- CUSTOMER PANEL ---------- -->
+      <div class="panel active" id="p-c">
+        <h2>Sign in or create account</h2>
+        <p class="subhead">No password to remember. Pick the method you prefer.</p>
+
+        <div class="sub-pills" role="tablist" aria-label="Sign-in method">
+          <button class="active" id="cs-phone" onclick="custSub('phone')">📱 Phone</button>
+          <button id="cs-email"                onclick="custSub('email')">✉️ Email</button>
+          <button id="cs-social"               onclick="custSub('social')">🌐 Social</button>
+        </div>
+
+        <!-- Phone OTP -->
+        <div class="panel active" id="cs-phone-pane">
+          <div class="row">
+            <label for="cphone-num">Mobile number</label>
+            <div class="phone-row">
+              <select id="cphone-cc" aria-label="Country code">
+                <option value="+971">🇦🇪 +971</option>
+                <option value="+966">🇸🇦 +966</option>
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+92">🇵🇰 +92</option>
+                <option value="+880">🇧🇩 +880</option>
+                <option value="+63">🇵🇭 +63</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+1">🇺🇸 +1</option>
+              </select>
+              <input id="cphone-num" type="tel" inputmode="numeric" placeholder="50 123 4567" autocomplete="tel-national">
+            </div>
+          </div>
+          <button class="btn-auth" type="button" id="btn-send-otp" onclick="sendOtp()">
+            <span>Send 6-digit code</span> <span aria-hidden="true">→</span>
+          </button>
+
+          <!-- OTP entry — appears after code sent -->
+          <div id="otp-area" style="display:none;margin-top:18px">
+            <label>Enter the 6-digit code</label>
+            <div class="otp-grid" id="otp-grid">
+              <input maxlength="1" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1">
+              <input maxlength="1" inputmode="numeric" aria-label="Digit 2">
+              <input maxlength="1" inputmode="numeric" aria-label="Digit 3">
+              <input maxlength="1" inputmode="numeric" aria-label="Digit 4">
+              <input maxlength="1" inputmode="numeric" aria-label="Digit 5">
+              <input maxlength="1" inputmode="numeric" aria-label="Digit 6">
+            </div>
+            <button class="btn-auth" type="button" id="btn-verify-otp" onclick="verifyOtp()">
+              Verify &amp; sign in
+            </button>
+            <div class="countdown" id="otp-countdown"></div>
+          </div>
+
+          <div class="biometric-hint" id="bio-hint" style="display:none">
+            <span class="ic">🔐</span>
+            <div>Next time, use Face ID / Touch ID — we'll save your device.</div>
+          </div>
+        </div>
+
+        <!-- Email magic link -->
+        <div class="panel" id="cs-email-pane">
+          <div class="row">
+            <label for="cemail">Email</label>
+            <input id="cemail" type="email" placeholder="you@example.com" autocomplete="email">
+          </div>
+          <button class="btn-auth" type="button" onclick="sendMagicLink()">
+            <span>Send magic link</span> <span aria-hidden="true">✨</span>
+          </button>
+          <p class="auth-foot" style="margin-top:14px">We'll email you a one-tap sign-in link. Valid for 10 minutes.</p>
+
+          <div id="ml-token-area" style="display:none;margin-top:14px">
+            <label>Or paste the code from the email</label>
+            <input id="ml-code" placeholder="abc123…" autocomplete="off">
+            <button class="btn-auth" type="button" style="margin-top:10px" onclick="verifyMagicLink()">Sign in with code</button>
+          </div>
+        </div>
+
+        <!-- Social -->
+        <div class="panel" id="cs-social-pane">
+          <p class="subhead" style="margin-top:0">Use an account you already have. We never post on your behalf.</p>
+          <div class="social-row">
+            <button type="button" class="btn-social" onclick="socialAuth('google')">
+              <span class="ic">🇬</span> Google
+            </button>
+            <button type="button" class="btn-social" onclick="socialAuth('apple')">
+              <span class="ic"></span> Apple
+            </button>
+            <button type="button" class="btn-social" onclick="socialAuth('whatsapp')">
+              <span class="ic">💬</span> WhatsApp
+            </button>
+            <button type="button" class="btn-social" onclick="socialAuth('telegram')">
+              <span class="ic">✈️</span> Telegram
+            </button>
+          </div>
+          <a class="btn-social gpt" href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener" style="grid-column:span 2;margin-top:8px">
+            <span class="ic">🚀</span> Continue in ChatGPT (@servia)
+          </a>
+        </div>
+
+        <!-- Shared message bar -->
+        <div class="auth-msg" id="msg"></div>
+
+        <!-- Trust strip -->
+        <div class="trust-strip">
+          <span>🔒 256-bit TLS</span>
+          <span>🇦🇪 PDPL compliant</span>
+          <span>🤝 No spam</span>
+          <span>👥 2,400+ active</span>
         </div>
       </div>
 
-      <div id="v-register" style="display:none">
-        <div style="background:#ECFDF5;border:1px solid #6EE7B7;padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px"><b>Why join Servia?</b><br>✓ Get instant job leads in your area<br>✓ Set your own per-service prices<br>✓ 80% payout on every completed job<br>✓ Free promotion via our platform</div>
-        <label>Full name</label><input id="rname">
-        <label>Email</label><input id="remail" type="email">
-        <label>Password</label><input id="rpw" type="password" placeholder="6+ characters">
-        <label>Phone (optional)</label><input id="rphone">
-        <label>Company (optional)</label><input id="rcompany">
-        <label>Services you offer (tap to toggle)</label>
-        <div id="svc-pick" style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"></div>
-        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="vendorRegister()">Create account</button>
+      <!-- ---------- PARTNER (vendor) PANEL ---------- -->
+      <div class="panel vendor-pane" id="p-v">
+        <h2>Partner sign-in</h2>
+        <p class="subhead">For UAE service pros. <a href="/vendor.html" style="color:#0F766E;font-weight:700">Why join Servia →</a></p>
+        <div class="sub-pills">
+          <button class="active" id="vt-l" onclick="vTab('l')">Sign in</button>
+          <button id="vt-r"                onclick="vTab('r')">Register</button>
+        </div>
+
+        <div class="panel active" id="v-login">
+          <div class="row"><label>Email</label><input id="vemail" type="email" autocomplete="email"></div>
+          <div class="row"><label>Password</label><input id="vpw" type="password" autocomplete="current-password"></div>
+          <button class="btn-auth" type="button" onclick="vendorLogin()">Sign in →</button>
+          <div class="auth-msg info show" style="margin-top:14px">
+            <b>🧪 Test partner</b><br>
+            <code style="user-select:all">ops@justmop.lumora</code> / <code>lumora-vendor-default</code>
+            <button class="btn-social" style="margin-top:8px;width:100%" onclick="document.getElementById('vemail').value='ops@justmop.lumora';document.getElementById('vpw').value='lumora-vendor-default';">Auto-fill</button>
+          </div>
+        </div>
+
+        <div class="panel" id="v-register">
+          <div class="auth-msg info show" style="margin-bottom:14px">
+            <b>Why join Servia?</b><br>✓ Instant job leads in your area<br>✓ Set your own per-service prices<br>✓ 80% payout on every completed job
+          </div>
+          <div class="row"><label>Full name</label><input id="rname"></div>
+          <div class="row"><label>Email</label><input id="remail" type="email"></div>
+          <div class="row"><label>Password</label><input id="rpw" type="password" placeholder="6+ characters"></div>
+          <div class="row"><label>Phone (optional)</label><input id="rphone"></div>
+          <div class="row"><label>Company (optional)</label><input id="rcompany"></div>
+          <div class="row"><label>Services you offer</label>
+            <div id="svc-pick" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+          <button class="btn-auth" type="button" onclick="vendorRegister()">Create account →</button>
+        </div>
+      </div>
+
+      <!-- ---------- ADMIN PANEL ---------- -->
+      <div class="panel" id="p-a">
+        <h2>Admin access</h2>
+        <p class="subhead">Internal use only. Sign in with your bearer token.</p>
+        <div class="auth-msg info show">
+          <b>🛠 Default test token</b> — used while <code>ADMIN_TOKEN</code> env var is unset on Railway:<br>
+          <code id="adm-tok" style="background:#fff;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:6px;user-select:all">lumora-admin-test</code>
+          <button class="btn-social" style="margin-top:8px;width:100%" onclick="navigator.clipboard.writeText(document.getElementById('adm-tok').textContent.trim());this.textContent='✓ Copied'">Copy token</button>
+        </div>
+        <a class="btn-auth" href="/admin.html" style="text-decoration:none;margin-top:14px">Open admin panel →</a>
+        <p class="auth-foot">Set a strong <code>ADMIN_TOKEN</code> in Railway → Variables to override the default.</p>
       </div>
     </div>
+  </section>
+</main>
 
-    <!-- ADMIN FLOW -->
-    <div id="adm" style="display:none">
-      <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px">
-        <b>Internal access only.</b><br>
-        Operations team with the admin token can sign in here. Use the bearer token configured in Railway as <code>ADMIN_TOKEN</code>.
-      </div>
-      <a class="btn btn-primary btn-block" href="/admin.html" style="text-align:center">Go to admin panel →</a>
-    </div>
+<footer style="background:#0F172A;color:#fff;padding:48px 24px"><div class="container"></div></footer>
 
-    <div id="msg" style="margin-top:14px;font-size:13px"></div>
-  </div>
-</div></section>
-
-<script src="/app.js"></script>
+<script src="/app.js" defer></script>
 <script>
 const TOK = "lumora.user.tok";
 const UTYPE = "lumora.user.type";
-let pickedServices = new Set();
-let vTabState = "l";
 
+// Already signed in? Skip the form.
 if (localStorage.getItem(TOK)) {
   const t = localStorage.getItem(UTYPE);
   location.replace(t === "vendor" ? "/vendor.html" : "/me.html");
 }
 
+let pickedServices = new Set();
+let otpCountdownTimer = null;
+
+// ---------- top tabs ----------
 function setTab(t) {
   for (const k of ["c","v","a"]) {
-    const b = document.getElementById("tab-"+k);
-    b.className = "btn " + (t===k ? "btn-primary" : "btn-ghost");
-    b.style.fontSize = "13px"; b.style.flex = "1";
+    const btn = document.getElementById("tab-"+k);
+    btn.classList.toggle("active", t === k);
+    btn.setAttribute("aria-selected", t === k ? "true" : "false");
+    document.getElementById("p-"+k).classList.toggle("active", t === k);
   }
-  document.getElementById("cust").style.display = t==="c" ? "" : "none";
-  document.getElementById("vend").style.display = t==="v" ? "" : "none";
-  document.getElementById("adm").style.display  = t==="a" ? "" : "none";
-  if (t==="v" && !pickedServices.size) loadServices();
+  if (t === "v" && !pickedServices.size) loadServices();
 }
 
-// Honor ?as=partner / ?as=admin and prefill outreach signup
-(function(){
+// ---------- customer sub-tabs ----------
+function custSub(name) {
+  ["phone","email","social"].forEach(n => {
+    document.getElementById("cs-"+n).classList.toggle("active", n === name);
+    document.getElementById("cs-"+n+"-pane").classList.toggle("active", n === name);
+  });
+  hideMsg();
+}
+
+// ---------- vendor sub-tabs ----------
+function vTab(t) {
+  document.getElementById("vt-l").classList.toggle("active", t === "l");
+  document.getElementById("vt-r").classList.toggle("active", t === "r");
+  document.getElementById("v-login").classList.toggle("active", t === "l");
+  document.getElementById("v-register").classList.toggle("active", t === "r");
+}
+
+// ---------- ?as= query param ----------
+(function () {
   const sp = new URLSearchParams(location.search);
   const q = sp.get("as");
   if (q === "partner" || q === "vendor") {
@@ -167,72 +484,187 @@ function setTab(t) {
       };
       tryToggle();
     }
-  }
-  else if (q === "admin") setTab("a");
+  } else if (q === "admin") setTab("a");
   function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
 })();
 
-function vTab(t) {
-  vTabState = t;
-  document.getElementById("vt-l").className = "btn " + (t==="l"?"btn-primary":"btn-ghost");
-  document.getElementById("vt-r").className = "btn " + (t==="r"?"btn-primary":"btn-ghost");
-  document.getElementById("v-login").style.display    = t==="l" ? "" : "none";
-  document.getElementById("v-register").style.display = t==="r" ? "" : "none";
+// ---------- helpers ----------
+function showMsg(text, kind) {
+  const m = document.getElementById("msg");
+  m.className = "auth-msg show " + (kind || "info");
+  m.textContent = text;
+}
+function hideMsg() {
+  const m = document.getElementById("msg");
+  m.className = "auth-msg";
+}
+function fullPhone() {
+  const cc = document.getElementById("cphone-cc").value.trim();
+  let num = document.getElementById("cphone-num").value.replace(/\D/g, "");
+  if (num.startsWith("0")) num = num.slice(1);
+  return cc + num;
 }
 
-async function loadServices() {
-  const r = await fetch("/api/services").then(x=>x.json());
-  const wrap = document.getElementById("svc-pick");
-  wrap.innerHTML = r.services.map(s =>
-    `<button type="button" class="btn btn-ghost" data-sid="${s.id}" style="font-size:12px;padding:6px 10px" onclick="toggleSvc(this)">${s.name}</button>`).join("");
-}
-function toggleSvc(btn) {
-  const id = btn.dataset.sid;
-  if (pickedServices.has(id)) { pickedServices.delete(id); btn.className = "btn btn-ghost"; }
-  else { pickedServices.add(id); btn.className = "btn btn-primary"; }
-  btn.style.fontSize = "12px"; btn.style.padding = "6px 10px";
-}
+// ---------- OTP grid behavior — auto-advance + paste ----------
+(function () {
+  const grid = document.getElementById("otp-grid");
+  if (!grid) return;
+  const inputs = grid.querySelectorAll("input");
+  inputs.forEach((inp, i) => {
+    inp.addEventListener("input", () => {
+      inp.value = inp.value.replace(/\D/g, "");
+      if (inp.value && i < inputs.length - 1) inputs[i + 1].focus();
+      // Auto-submit when all 6 are filled
+      if ([...inputs].every(x => x.value)) verifyOtp();
+    });
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Backspace" && !inp.value && i > 0) inputs[i - 1].focus();
+    });
+    inp.addEventListener("paste", e => {
+      const txt = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "");
+      if (txt.length === 6) {
+        e.preventDefault();
+        inputs.forEach((x, j) => x.value = txt[j] || "");
+        verifyOtp();
+      }
+    });
+  });
+})();
 
+// ---------- send OTP ----------
 async function sendOtp() {
-  const phone = document.getElementById("cphone").value.trim();
-  if (!phone) return msg("Phone required", true);
-  msg("Sending code…");
+  const phone = fullPhone();
+  if (phone.length < 9) return showMsg("Enter a valid mobile number", "error");
+  const btn = document.getElementById("btn-send-otp");
+  btn.disabled = true; btn.firstElementChild.textContent = "Sending…";
+  hideMsg();
   try {
-    const r = await api("/api/auth/customer/start", { method:"POST", body:{ phone }});
-    document.getElementById("otp-box").style.display = "";
+    const r = await api("/api/auth/customer/start", {method:"POST", body:{phone}});
+    document.getElementById("otp-area").style.display = "";
+    document.getElementById("otp-grid").querySelector("input").focus();
     if (r.dev_otp) {
-      document.getElementById("dev-otp").innerHTML =
-        `Demo mode — your code: <b style="font-size:18px;color:var(--primary)">${r.dev_otp}</b><br>` +
-        `<small>Set up the WhatsApp bridge to send via WA instead.</small>`;
+      showMsg("📲 Demo mode — your code: " + r.dev_otp + " (production sends via WhatsApp)", "info");
     } else {
-      msg(`Code sent via ${r.delivered_via}`);
+      showMsg("Code sent via " + (r.delivered_via || "WhatsApp"), "success");
     }
-  } catch(e) { msg("Error: "+e.message, true); }
+    startCountdown(60);
+  } catch (e) {
+    showMsg("Could not send: " + e.message, "error");
+  } finally {
+    btn.disabled = false; btn.firstElementChild.textContent = "Send 6-digit code";
+  }
 }
 
+function startCountdown(sec) {
+  clearInterval(otpCountdownTimer);
+  const el = document.getElementById("otp-countdown");
+  function tick() {
+    if (sec <= 0) {
+      clearInterval(otpCountdownTimer);
+      el.innerHTML = `Didn't receive it? <a href="#" onclick="event.preventDefault();sendOtp()" style="color:#0F766E;font-weight:700">Resend</a>`;
+      return;
+    }
+    el.innerHTML = "Resend in <b>" + sec + "s</b>";
+    sec--;
+  }
+  tick();
+  otpCountdownTimer = setInterval(tick, 1000);
+}
+
+// ---------- verify OTP ----------
 async function verifyOtp() {
-  const phone = document.getElementById("cphone").value.trim();
-  const code = document.getElementById("cotp").value.trim();
+  const phone = fullPhone();
+  const code = [...document.querySelectorAll("#otp-grid input")].map(x => x.value).join("");
+  if (code.length !== 6) return;
+  const btn = document.getElementById("btn-verify-otp");
+  btn.disabled = true;
+  hideMsg();
   try {
-    const r = await api("/api/auth/customer/verify", { method:"POST", body:{ phone, code }});
+    const r = await api("/api/auth/customer/verify", {method:"POST", body:{phone, code}});
+    localStorage.setItem(TOK, r.token);
+    localStorage.setItem(UTYPE, "customer");
+    showMsg("✓ Signed in. Redirecting…", "success");
+    setTimeout(() => location.replace("/me.html"), 400);
+  } catch (e) {
+    showMsg("Wrong code or expired. Try again.", "error");
+    btn.disabled = false;
+  }
+}
+
+// ---------- email magic link ----------
+async function sendMagicLink() {
+  const email = document.getElementById("cemail").value.trim();
+  if (!email || !email.includes("@")) return showMsg("Enter a valid email", "error");
+  hideMsg();
+  try {
+    await api("/api/auth/magic-link", {method:"POST", body:{email}});
+    showMsg("✓ Check your inbox — link valid for 10 minutes.", "success");
+    document.getElementById("ml-token-area").style.display = "";
+  } catch (e) {
+    showMsg("Could not send: " + e.message, "error");
+  }
+}
+async function verifyMagicLink() {
+  const code = document.getElementById("ml-code").value.trim();
+  if (!code) return;
+  try {
+    const r = await api("/api/auth/magic-link/verify", {method:"POST", body:{token: code}});
     localStorage.setItem(TOK, r.token);
     localStorage.setItem(UTYPE, "customer");
     location.replace("/me.html");
-  } catch(e) { msg("Error: "+e.message, true); }
+  } catch (e) {
+    showMsg("Invalid or expired code", "error");
+  }
+}
+
+// ---------- social auth ----------
+function socialAuth(provider) {
+  // Google / Apple OAuth aren't wired to a real flow yet — show a clear
+  // message rather than silently failing. WhatsApp / Telegram bots can
+  // deep-link to start an OTP flow with the captured phone.
+  if (provider === "whatsapp") {
+    location.href = "https://wa.me/971507000000?text=" + encodeURIComponent("Sign me in to Servia");
+    return;
+  }
+  if (provider === "telegram") {
+    location.href = "https://t.me/serviauaebot?start=signin";
+    return;
+  }
+  showMsg(provider.charAt(0).toUpperCase() + provider.slice(1) +
+    " sign-in is coming soon. Use phone or email for now — same account either way.", "info");
+}
+
+// ---------- vendor flow ----------
+async function loadServices() {
+  const r = await fetch("/api/services").then(x => x.json());
+  const wrap = document.getElementById("svc-pick");
+  wrap.innerHTML = r.services.map(s =>
+    `<button type="button" class="btn-social" data-sid="${s.id}" style="font-size:12px;padding:5px 10px;flex:0 0 auto;width:auto" onclick="toggleSvc(this)">${s.name}</button>`).join("");
+}
+function toggleSvc(btn) {
+  const id = btn.dataset.sid;
+  if (pickedServices.has(id)) {
+    pickedServices.delete(id);
+    btn.style.background = "#fff"; btn.style.color = "#0F172A"; btn.style.borderColor = "#E2E8F0";
+  } else {
+    pickedServices.add(id);
+    btn.style.background = "linear-gradient(135deg,#0F766E,#14B8A6)"; btn.style.color = "#fff"; btn.style.borderColor = "transparent";
+  }
 }
 
 async function vendorLogin() {
   const email = document.getElementById("vemail").value.trim();
   const password = document.getElementById("vpw").value;
   try {
-    const r = await api("/api/auth/vendor/login", { method:"POST", body:{ email, password }});
-    if (!r.approved) return msg("Account pending approval. Contact admin.", true);
+    const r = await api("/api/auth/vendor/login", {method:"POST", body:{email, password}});
+    if (!r.approved) return showMsg("Account pending approval. Contact admin.", "error");
     localStorage.setItem(TOK, r.token);
     localStorage.setItem(UTYPE, "vendor");
     location.replace("/vendor.html");
-  } catch(e) { msg("Error: "+e.message, true); }
+  } catch (e) {
+    showMsg("Sign-in failed: " + e.message, "error");
+  }
 }
-
 async function vendorRegister() {
   const body = {
     name: document.getElementById("rname").value.trim(),
@@ -242,25 +674,24 @@ async function vendorRegister() {
     company: document.getElementById("rcompany").value.trim(),
     services: [...pickedServices],
   };
-  if (!body.name || !body.email || !body.password) return msg("Name + email + password required", true);
+  if (!body.name || !body.email || !body.password)
+    return showMsg("Name + email + password required", "error");
   try {
-    const r = await api("/api/auth/vendor/register", { method:"POST", body });
+    const r = await api("/api/auth/vendor/register", {method:"POST", body});
     if (r.approval_required) {
-      msg("Account created — pending admin approval. We'll WhatsApp you when approved.");
+      showMsg("✓ Account created — pending admin approval. We'll WhatsApp you when approved.", "success");
     } else {
-      msg("Account created. Please sign in.");
+      showMsg("Account created. Please sign in.", "success");
       vTab("l");
       document.getElementById("vemail").value = body.email;
     }
-  } catch(e) { msg("Error: "+e.message, true); }
-}
-
-function msg(t, err) {
-  const m = document.getElementById("msg");
-  m.style.color = err ? "#DC2626" : "var(--primary)";
-  m.textContent = t;
+  } catch (e) {
+    showMsg("Could not register: " + e.message, "error");
+  }
 }
 </script>
-<script src="/theme.js"></script>
+
+<script src="/theme.js" defer></script>
+<script src="/install.js" defer></script>
 <script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 </body></html>

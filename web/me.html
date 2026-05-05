@@ -96,7 +96,8 @@
   <!-- Tabs -->
   <div style="display:flex;gap:6px;margin-bottom:18px;background:var(--bg);padding:4px;border-radius:10px;flex-wrap:wrap">
     <button class="btn btn-primary" id="t-bookings-btn" onclick="setTab('bookings')">📋 My bookings</button>
-    <button class="btn btn-ghost" id="t-addresses-btn" onclick="setTab('addresses')">📍 Saved addresses</button>
+    <button class="btn btn-ghost" id="t-addresses-btn" onclick="setTab('addresses')">📍 Addresses</button>
+    <button class="btn btn-ghost" id="t-payments-btn" onclick="setTab('payments')">💳 Payment methods</button>
     <button class="btn btn-ghost" id="t-profile-btn" onclick="setTab('profile')">👤 Profile</button>
     <button class="btn btn-ghost" id="t-referral-btn" onclick="setTab('referral')">🎁 Ambassador</button>
     <button class="btn btn-ghost" onclick="location.href='/cart.html'">🛒 New bundle</button>
@@ -119,22 +120,102 @@
 
   <!-- Saved addresses tab -->
   <div id="t-addresses" style="display:none">
-    <h2>Saved addresses</h2>
-    <p class="sub">For one-tap booking next time. Mark one as default.</p>
-    <div id="addr-list" style="margin-bottom:18px"></div>
-    <div class="form" style="max-width:480px">
-      <h4 style="margin:0 0 12px">Add new address</h4>
-      <label>Label (e.g. Home, Office)</label>
-      <input id="ad-label" placeholder="Home">
-      <label>Area / Emirate</label>
-      <input id="ad-area" placeholder="Dubai Marina">
-      <label>Full address</label>
-      <textarea id="ad-address" placeholder="Tower / villa, apartment, street, area"></textarea>
-      <label style="display:flex;gap:6px;align-items:center;margin-top:10px;font-weight:normal">
-        <input type="checkbox" id="ad-default"> Set as default
-      </label>
-      <button class="btn btn-primary btn-block" type="button" onclick="addAddress()" style="margin-top:12px">Save address</button>
-    </div>
+    <h2>📍 Saved addresses</h2>
+    <p class="sub">Tag each location and store the contact person at every address — one-tap booking next time, no re-typing.</p>
+    <div id="addr-list" style="margin-bottom:18px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+
+    <details style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;max-width:680px" id="addr-form-wrap">
+      <summary style="cursor:pointer;font-weight:700;color:var(--primary-dark);list-style:none;display:flex;align-items:center;gap:6px">
+        <span style="font-size:18px">＋</span> Add new address
+      </summary>
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:11.5px;color:var(--muted);font-weight:700">LABEL</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            <button type="button" class="btn btn-ghost addr-tag" data-tag="Home" onclick="pickAddrTag(this)" style="font-size:12px;padding:5px 12px">🏠 Home</button>
+            <button type="button" class="btn btn-ghost addr-tag" data-tag="Office" onclick="pickAddrTag(this)" style="font-size:12px;padding:5px 12px">💼 Office</button>
+            <button type="button" class="btn btn-ghost addr-tag" data-tag="Friend" onclick="pickAddrTag(this)" style="font-size:12px;padding:5px 12px">👥 Friend</button>
+            <button type="button" class="btn btn-ghost addr-tag" data-tag="Other" onclick="pickAddrTag(this)" style="font-size:12px;padding:5px 12px">📌 Other</button>
+          </div>
+          <input id="ad-label" placeholder="Custom label">
+        </div>
+        <div>
+          <label style="font-size:11.5px;color:var(--muted);font-weight:700">EMIRATE</label>
+          <select id="ad-emirate">
+            <option value="">— select —</option>
+            <option>Dubai</option>
+            <option>Abu Dhabi</option>
+            <option>Sharjah</option>
+            <option>Ajman</option>
+            <option>Ras Al Khaimah</option>
+            <option>Umm Al Quwain</option>
+            <option>Fujairah</option>
+          </select>
+        </div>
+        <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">AREA</label><input id="ad-area" placeholder="Dubai Marina, JVC, Tecom…"></div>
+        <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">CITY</label><input id="ad-city" placeholder="Dubai"></div>
+        <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">BUILDING / VILLA</label><input id="ad-building" placeholder="Marina Tower 3"></div>
+        <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">APARTMENT / UNIT</label><input id="ad-apartment" placeholder="2104"></div>
+        <div style="grid-column:1/-1"><label style="font-size:11.5px;color:var(--muted);font-weight:700">STREET</label><input id="ad-street" placeholder="Al Marsa Street"></div>
+        <div style="grid-column:1/-1"><label style="font-size:11.5px;color:var(--muted);font-weight:700">FULL ADDRESS LINE (free text)</label><textarea id="ad-address" placeholder="Building, apartment, street, area — anything that helps the pro find you"></textarea></div>
+        <hr style="grid-column:1/-1;border:0;border-top:1px solid var(--border);margin:6px 0">
+        <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">CONTACT NAME</label><input id="ad-contact-name" placeholder="Mom"></div>
+        <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">CONTACT PHONE</label><input id="ad-contact-phone" placeholder="+971501234567" inputmode="tel"></div>
+        <div style="grid-column:1/-1"><label style="font-size:11.5px;color:var(--muted);font-weight:700">NOTES (gate code, parking, “ring once”)</label><input id="ad-notes" placeholder="Gate 4242, parking P-12, ring once"></div>
+        <label style="grid-column:1/-1;display:flex;gap:6px;align-items:center;font-weight:normal;margin-top:6px">
+          <input type="checkbox" id="ad-default"> Set as default address
+        </label>
+        <button class="btn btn-primary" type="button" onclick="addAddress()" style="grid-column:1/-1;margin-top:8px">Save address</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- Payment methods tab -->
+  <div id="t-payments" style="display:none">
+    <h2>💳 Payment methods</h2>
+    <p class="sub">Stored cards, COD, Apple Pay, WhatsApp pay — pick a default for one-tap checkout.</p>
+    <div id="pay-list" style="margin-bottom:18px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))"></div>
+
+    <details style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;max-width:680px">
+      <summary style="cursor:pointer;font-weight:700;color:var(--primary-dark);list-style:none;display:flex;align-items:center;gap:6px">
+        <span style="font-size:18px">＋</span> Add payment method
+      </summary>
+      <div style="margin-top:14px">
+        <label style="font-size:11.5px;color:var(--muted);font-weight:700">METHOD TYPE</label>
+        <div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-bottom:14px">
+          <button type="button" class="btn btn-ghost pay-type" data-pt="card" onclick="pickPmType(this)" style="font-size:12.5px;padding:10px 8px;text-align:center"><b>💳 Card</b><br><small style="color:var(--muted)">Visa / MC / Amex</small></button>
+          <button type="button" class="btn btn-ghost pay-type" data-pt="cod" onclick="pickPmType(this)" style="font-size:12.5px;padding:10px 8px;text-align:center"><b>💵 COD</b><br><small style="color:var(--muted)">Cash on arrival</small></button>
+          <button type="button" class="btn btn-ghost pay-type" data-pt="whatsapp_pay" onclick="pickPmType(this)" style="font-size:12.5px;padding:10px 8px;text-align:center"><b>💬 WhatsApp</b><br><small style="color:var(--muted)">WhatsApp pay link</small></button>
+          <button type="button" class="btn btn-ghost pay-type" data-pt="apple_pay" onclick="pickPmType(this)" style="font-size:12.5px;padding:10px 8px;text-align:center"><b> Pay</b><br><small style="color:var(--muted)">iPhone / Mac</small></button>
+          <button type="button" class="btn btn-ghost pay-type" data-pt="google_pay" onclick="pickPmType(this)" style="font-size:12.5px;padding:10px 8px;text-align:center"><b>🇬 Pay</b><br><small style="color:var(--muted)">Android</small></button>
+        </div>
+
+        <!-- Card details (show only when method=card) -->
+        <div id="pm-card-fields" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="grid-column:1/-1"><label style="font-size:11.5px;color:var(--muted);font-weight:700">CARDHOLDER NAME</label><input id="pm-holder" placeholder="As printed on the card"></div>
+            <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">CARD BRAND</label>
+              <select id="pm-brand">
+                <option value="visa">Visa</option>
+                <option value="mastercard">Mastercard</option>
+                <option value="amex">American Express</option>
+                <option value="discover">Discover</option>
+              </select>
+            </div>
+            <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">EXPIRY (MM/YY)</label><input id="pm-expiry" placeholder="04/27" inputmode="numeric" maxlength="5"></div>
+            <div style="grid-column:1/-1"><label style="font-size:11.5px;color:var(--muted);font-weight:700">LAST 4 DIGITS</label><input id="pm-last4" placeholder="4242" inputmode="numeric" maxlength="4">
+              <small style="color:var(--muted);font-size:11.5px;display:block;margin-top:4px">For PCI safety we store only the last 4 digits + brand. The full card is collected by Stripe when you actually pay — we never see it.</small>
+            </div>
+          </div>
+        </div>
+
+        <div><label style="font-size:11.5px;color:var(--muted);font-weight:700">LABEL (optional)</label><input id="pm-label" placeholder="My personal Visa"></div>
+        <label style="display:flex;gap:6px;align-items:center;margin-top:10px;font-weight:normal">
+          <input type="checkbox" id="pm-default"> Set as default
+        </label>
+        <button class="btn btn-primary btn-block" type="button" onclick="addPaymentMethod()" style="margin-top:12px">Save payment method</button>
+      </div>
+    </details>
   </div>
 
   <!-- Profile tab -->
@@ -308,19 +389,15 @@ let _user = null;
 })();
 
 function setTab(t) {
-  for (const k of ["bookings","addresses","profile","referral"]) {
+  for (const k of ["bookings","addresses","payments","profile","referral"]) {
     const el = document.getElementById("t-"+k);
     const btn = document.getElementById("t-"+k+"-btn");
     if (el) el.style.display = t===k ? "" : "none";
     if (btn) { btn.className = "btn " + (t===k ? "btn-primary" : "btn-ghost"); }
   }
   if (t==="referral") loadReferral();
-  return;
-  for (const x of ["bookings","addresses","profile"]) {
-    document.getElementById("t-"+x).style.display = (x===t ? "" : "none");
-    document.getElementById("t-"+x+"-btn").className = "btn " + (x===t ? "btn-primary" : "btn-ghost");
-  }
   if (t==="addresses") loadAddresses();
+  if (t==="payments") loadPaymentMethods();
   if (t==="profile") loadProfile();
 }
 
@@ -491,37 +568,80 @@ window.confirmReview = async (bid) => {
 };
 
 // ---- Saved addresses ----
+const ADDR_TAGS = {Home:"🏠", Office:"💼", Friend:"👥", Other:"📌"};
+
+window.pickAddrTag = function(btn) {
+  document.querySelectorAll(".addr-tag").forEach(b =>
+    b.className = "btn btn-ghost addr-tag");
+  btn.className = "btn btn-primary addr-tag";
+  document.getElementById("ad-label").value = btn.dataset.tag;
+};
+
 async function loadAddresses() {
   const r = await authd("/api/me/addresses");
   const wrap = document.getElementById("addr-list");
   if (!r.addresses.length) {
-    wrap.innerHTML = '<div class="form" style="color:var(--muted);text-align:center">No saved addresses yet — add your first below.</div>';
+    wrap.innerHTML = '<div class="form" style="color:var(--muted);text-align:center;grid-column:1/-1">No saved addresses yet — add your first below.</div>';
     return;
   }
-  wrap.innerHTML = r.addresses.map(a => `
-    <div class="form" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px">
-      <div>
-        <div style="font-weight:600">${escapeHtml(a.label || "Untitled")} ${a.is_default?'<span class="badge confirmed" style="margin-inline-start:4px">default</span>':''}</div>
-        <div style="font-size:13px;color:var(--muted)">${escapeHtml(a.address)}</div>
-        ${a.area?`<div style="font-size:12px;color:var(--muted)">📍 ${escapeHtml(a.area)}</div>`:''}
+  wrap.innerHTML = r.addresses.map(a => {
+    const icon = ADDR_TAGS[a.label] || "📍";
+    const lines = [];
+    if (a.building || a.apartment) lines.push([a.building, a.apartment].filter(Boolean).join(" · "));
+    if (a.street) lines.push(a.street);
+    if (a.area) lines.push(a.area + (a.emirate ? ", " + a.emirate : ""));
+    if (!lines.length) lines.push(a.address);
+    const contactBlock = a.contact_name || a.contact_phone
+      ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
+           👤 ${escapeHtml(a.contact_name || "Contact")} ${a.contact_phone?'· <a href="tel:'+escapeHtml(a.contact_phone)+'" style="color:var(--primary-dark);font-weight:600">'+escapeHtml(a.contact_phone)+'</a>':''}
+         </div>` : "";
+    const notesBlock = a.notes
+      ? `<div style="margin-top:6px;font-size:12px;color:var(--muted);background:#FEF3C7;border-inline-start:3px solid #F59E0B;padding:6px 10px;border-radius:0 6px 6px 0">📝 ${escapeHtml(a.notes)}</div>` : "";
+    return `<div class="form" style="position:relative;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-weight:700;font-size:15px">${icon} ${escapeHtml(a.label || "Address")}
+          ${a.is_default?' <span style="background:#0F766E;color:#fff;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-inline-start:4px">DEFAULT</span>':''}
+        </div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;color:#DC2626" onclick="delAddress(${a.id})" aria-label="Delete address">✕</button>
       </div>
-      <button class="btn btn-ghost" style="color:#DC2626" onclick="delAddress(${a.id})">Delete</button>
-    </div>`).join("");
+      <div style="margin-top:6px;font-size:13px;line-height:1.5;color:var(--text)">
+        ${lines.map(l => escapeHtml(l)).join("<br>")}
+      </div>
+      ${contactBlock}${notesBlock}
+      ${!a.is_default?`<button class="btn btn-ghost" style="font-size:11.5px;padding:4px 10px;margin-top:8px" onclick="setDefaultAddr(${a.id})">Make default</button>`:''}
+    </div>`;
+  }).join("");
 }
 window.addAddress = async () => {
   const body = {
     label: document.getElementById("ad-label").value || null,
-    address: document.getElementById("ad-address").value.trim(),
+    address: document.getElementById("ad-address").value.trim()
+             || [document.getElementById("ad-building").value,
+                 document.getElementById("ad-apartment").value,
+                 document.getElementById("ad-street").value,
+                 document.getElementById("ad-area").value,
+                 document.getElementById("ad-emirate").value]
+                .map(s => (s || "").trim()).filter(Boolean).join(", "),
     area: document.getElementById("ad-area").value || null,
+    building: document.getElementById("ad-building").value || null,
+    apartment: document.getElementById("ad-apartment").value || null,
+    street: document.getElementById("ad-street").value || null,
+    city: document.getElementById("ad-city").value || null,
+    emirate: document.getElementById("ad-emirate").value || null,
+    contact_name: document.getElementById("ad-contact-name").value || null,
+    contact_phone: document.getElementById("ad-contact-phone").value || null,
+    notes: document.getElementById("ad-notes").value || null,
     is_default: document.getElementById("ad-default").checked,
   };
   if (!body.address) { alert("Address is required"); return; }
   try {
     await authd("/api/me/addresses", {method:"POST", body});
-    document.getElementById("ad-label").value = "";
-    document.getElementById("ad-area").value = "";
-    document.getElementById("ad-address").value = "";
+    ["ad-label","ad-area","ad-address","ad-building","ad-apartment",
+     "ad-street","ad-city","ad-emirate","ad-contact-name","ad-contact-phone",
+     "ad-notes"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
     document.getElementById("ad-default").checked = false;
+    document.querySelectorAll(".addr-tag").forEach(b => b.className = "btn btn-ghost addr-tag");
+    document.getElementById("addr-form-wrap").open = false;
     loadAddresses();
   } catch(e) { alert("Error: "+e.message); }
 };
@@ -529,6 +649,102 @@ window.delAddress = async (id) => {
   if (!confirm("Delete this address?")) return;
   await authd("/api/me/addresses/"+id, {method:"DELETE"});
   loadAddresses();
+};
+window.setDefaultAddr = async (id) => {
+  await authd("/api/me/addresses/"+id, {method:"PATCH", body:{is_default:true}});
+  loadAddresses();
+};
+
+// ---- Payment methods ----
+const PM_BRANDS = {visa:"💳 VISA", mastercard:"💳 MASTERCARD", amex:"💳 AMEX", discover:"💳 DISCOVER"};
+const PM_TYPES = {
+  card:        {ic:"💳", lbl:"Card"},
+  cod:         {ic:"💵", lbl:"Cash on delivery"},
+  whatsapp_pay:{ic:"💬", lbl:"WhatsApp Pay"},
+  apple_pay:   {ic:"", lbl:"Apple Pay"},
+  google_pay:  {ic:"🇬", lbl:"Google Pay"},
+  bank:        {ic:"🏦", lbl:"Bank transfer"},
+};
+let _pickedPmType = "";
+
+window.pickPmType = function(btn) {
+  _pickedPmType = btn.dataset.pt;
+  document.querySelectorAll(".pay-type").forEach(b => b.className = "btn btn-ghost pay-type");
+  btn.className = "btn btn-primary pay-type";
+  // Show / hide card-specific fields
+  document.getElementById("pm-card-fields").style.display = _pickedPmType === "card" ? "" : "none";
+};
+
+async function loadPaymentMethods() {
+  const r = await authd("/api/me/payment-methods");
+  const wrap = document.getElementById("pay-list");
+  if (!r.payment_methods.length) {
+    wrap.innerHTML = '<div class="form" style="color:var(--muted);text-align:center;grid-column:1/-1">No payment methods yet — add one below for one-tap checkout.</div>';
+    return;
+  }
+  wrap.innerHTML = r.payment_methods.map(p => {
+    const meta = PM_TYPES[p.method_type] || {ic:"💳", lbl:p.method_type};
+    let title;
+    if (p.method_type === "card") {
+      title = `${(PM_BRANDS[p.card_brand]||"💳").replace("💳","").trim()} •••• ${p.card_last4 || ""}`;
+    } else {
+      title = meta.lbl;
+    }
+    const sub = [];
+    if (p.method_type === "card") {
+      if (p.holder_name) sub.push(p.holder_name);
+      if (p.card_expiry) sub.push("Expires " + p.card_expiry);
+    }
+    return `<div class="form" style="position:relative;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-weight:700;font-size:15px">${meta.ic} ${escapeHtml(p.label || title)}
+          ${p.is_default?' <span style="background:#0F766E;color:#fff;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-inline-start:4px">DEFAULT</span>':''}
+        </div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;color:#DC2626" onclick="delPaymentMethod(${p.id})" aria-label="Delete payment method">✕</button>
+      </div>
+      <div style="margin-top:4px;font-size:13px;color:var(--muted)">${escapeHtml(sub.join(" · "))}</div>
+      ${!p.is_default?`<button class="btn btn-ghost" style="font-size:11.5px;padding:4px 10px;margin-top:8px" onclick="setDefaultPm(${p.id})">Make default</button>`:''}
+    </div>`;
+  }).join("");
+}
+
+window.addPaymentMethod = async () => {
+  if (!_pickedPmType) { alert("Pick a method type first"); return; }
+  const body = {
+    method_type: _pickedPmType,
+    label: document.getElementById("pm-label").value || null,
+    is_default: document.getElementById("pm-default").checked,
+  };
+  if (_pickedPmType === "card") {
+    body.holder_name = document.getElementById("pm-holder").value.trim() || null;
+    body.card_brand = document.getElementById("pm-brand").value;
+    body.card_expiry = document.getElementById("pm-expiry").value.trim() || null;
+    body.card_last4 = document.getElementById("pm-last4").value.replace(/\D/g,"").slice(0,4);
+    if (!body.card_last4 || body.card_last4.length !== 4) {
+      alert("Last 4 digits required for cards");
+      return;
+    }
+  }
+  try {
+    await authd("/api/me/payment-methods", {method:"POST", body});
+    ["pm-label","pm-holder","pm-expiry","pm-last4"].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = "";
+    });
+    document.getElementById("pm-default").checked = false;
+    document.querySelectorAll(".pay-type").forEach(b => b.className = "btn btn-ghost pay-type");
+    document.getElementById("pm-card-fields").style.display = "none";
+    _pickedPmType = "";
+    loadPaymentMethods();
+  } catch(e) { alert("Error: "+e.message); }
+};
+window.delPaymentMethod = async (id) => {
+  if (!confirm("Delete this payment method?")) return;
+  await authd("/api/me/payment-methods/"+id, {method:"DELETE"});
+  loadPaymentMethods();
+};
+window.setDefaultPm = async (id) => {
+  await authd("/api/me/payment-methods/"+id+"/default", {method:"POST"});
+  loadPaymentMethods();
 };
 
 // ---- Profile ----
