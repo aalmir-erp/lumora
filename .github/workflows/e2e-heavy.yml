@@ -1,0 +1,70 @@
+name: E2E heavy (Playwright) — UI/SEO/auth/NFC
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+  schedule:
+    - cron: '37 */12 * * *'  # twice daily
+
+permissions: { contents: write }
+concurrency: { group: e2e-heavy, cancel-in-progress: true }
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+
+      - name: Install Playwright + browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest >/dev/null 2>&1
+          npx playwright install chromium >/dev/null 2>&1
+
+      - name: Run heavy Playwright sweep
+        env:
+          SERVIA_BASE: https://servia.ae
+        run: |
+          node tests/e2e-heavy.mjs 2>&1 | tee /tmp/e2e-heavy.log
+          # Extract structured findings JSON
+          grep "FINDINGS-JSON:" /tmp/e2e-heavy.log | tail -1 | sed 's/^FINDINGS-JSON://' > /tmp/findings.json || true
+          python3 -c "
+import json, os
+try:
+    with open('/tmp/findings.json') as f:
+        d = json.load(f)
+    md = '# E2E Heavy Test Results\n\n'
+    md += f'- ✅ Pass: {d[\"pass\"]}\n- ⚠️ Warn: {d[\"warn\"]}\n- ❌ Fail: {d[\"fail\"]}\n\n## Items\n\n'
+    for item in d['items']:
+        icon = {'pass':'✅','warn':'⚠️','fail':'❌'}.get(item['status'],'•')
+        md += f'- {icon} **{item[\"name\"]}** — {item[\"detail\"]}\n'
+    open('TEST_RESULTS_HEAVY.md','w').write(md)
+    print(f'pass={d[\"pass\"]} warn={d[\"warn\"]} fail={d[\"fail\"]}')
+except Exception as e:
+    print(f'parse failed: {e}')
+"
+
+      - name: Commit results to repo
+        if: always()
+        run: |
+          git config user.email "e2e-heavy@github-actions"
+          git config user.name "E2E Heavy bot"
+          git add TEST_RESULTS_HEAVY.md /tmp/findings.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "e2e-heavy: $(date +%Y-%m-%d_%H:%M)"
+          git push origin HEAD:main || true
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-heavy-results
+          path: |
+            TEST_RESULTS_HEAVY.md
+            /tmp/findings.json
+            /tmp/e2e-heavy.log
+          if-no-files-found: warn
+          retention-days: 14

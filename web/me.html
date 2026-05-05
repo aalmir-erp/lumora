@@ -433,7 +433,14 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 const TOK = "lumora.user.tok";
 const UTYPE = "lumora.user.type";
 const tok = localStorage.getItem(TOK);
-if (!tok || localStorage.getItem(UTYPE) !== "customer") location.replace("/login.html");
+// v1.22.94 — DON'T auto-redirect when impersonating (admin "View as customer"):
+// the impersonate flag means we have a valid customer token. Without this guard,
+// me.html bounced impersonators back to login (the "appears for a while and goes"
+// banner the user reported). Real-customer flow unchanged.
+const isImpersonating = localStorage.getItem("lumora.user.impersonated") === "1";
+if (!tok || (localStorage.getItem(UTYPE) !== "customer" && !isImpersonating)) {
+  location.replace("/login.html");
+}
 
 async function authd(p, o={}) {
   return api(p, {...o, headers:{...(o.headers||{}), Authorization:"Bearer "+tok}});

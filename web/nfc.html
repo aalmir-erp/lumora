@@ -435,6 +435,38 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   </div>
 </section>
 
+<!-- 🤖 NFC consultation bot — friendly LLM advisor (v1.22.94) -->
+<section style="padding:48px 20px;background:#0F172A;color:#fff" id="advisor">
+  <div style="max-width:780px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:22px">
+      <span style="background:rgba(124,58,237,.22);color:#A78BFA;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">🤖 1-min chat · 0 spam</span>
+      <h2 style="margin:14px 0 8px;font-size:30px;letter-spacing:-.02em">Not sure what to tag?<br>Chat with the consultant.</h2>
+      <p style="margin:0;color:#CBD5E1;font-size:15px">Tell our advisor about your place — it suggests the perfect tag set, sizes, where to stick them, and places the order with one tap. Free.</p>
+    </div>
+
+    <div id="advisor-card" style="background:#1E293B;border:1px solid #334155;border-radius:18px;overflow:hidden">
+      <div id="advisor-msgs" style="padding:18px;min-height:240px;max-height:480px;overflow-y:auto;font-size:14px;line-height:1.55"></div>
+      <div style="border-top:1px solid #334155;padding:10px;display:flex;gap:8px;background:#0F172A">
+        <input id="advisor-in" type="text" placeholder="Tell me about your home or office…"
+               style="flex:1;background:#1E293B;border:1px solid #334155;border-radius:10px;color:#fff;padding:10px 14px;font-family:inherit;font-size:14px">
+        <button id="advisor-send" type="button"
+                style="background:linear-gradient(135deg,#7C3AED,#A78BFA);color:#fff;border:0;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px">Send</button>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-size:12.5px;color:#94A3B8">
+      <button class="adv-quick" data-q="I live in a 2BR flat in Dubai Marina, mostly cooking + AC concerns"
+              style="background:#1E293B;color:#CBD5E1;border:1px solid #334155;padding:6px 12px;border-radius:99px;font-size:11.5px;cursor:pointer">2BR flat</button>
+      <button class="adv-quick" data-q="I have a 4BR villa with pool and garden in Khalifa City"
+              style="background:#1E293B;color:#CBD5E1;border:1px solid #334155;padding:6px 12px;border-radius:99px;font-size:11.5px;cursor:pointer">Villa + pool</button>
+      <button class="adv-quick" data-q="I run a small office with 8 desks in Business Bay"
+              style="background:#1E293B;color:#CBD5E1;border:1px solid #334155;padding:6px 12px;border-radius:99px;font-size:11.5px;cursor:pointer">Office</button>
+      <button class="adv-quick" data-q="I drive a lot, need car wash + breakdown on dashboard, plus kitchen at home"
+              style="background:#1E293B;color:#CBD5E1;border:1px solid #334155;padding:6px 12px;border-radius:99px;font-size:11.5px;cursor:pointer">Driver setup</button>
+    </div>
+  </div>
+</section>
+
 <!-- Bulk order: villa / large-flat customers tag every room at once -->
 <section style="padding:48px 20px;background:linear-gradient(135deg,#1E1B4B 0%,#312E81 100%);color:#fff" id="bulk">
   <div style="max-width:880px;margin:0 auto">
@@ -557,6 +589,95 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 </footer>
 
 <script>
+/* NFC consultation bot — chat widget on /nfc.html */
+(function(){
+  const msgsEl = document.getElementById("advisor-msgs");
+  const input  = document.getElementById("advisor-in");
+  const send   = document.getElementById("advisor-send");
+  if (!msgsEl) return;
+  const history = [];
+  // Greeting
+  pushMsg("bot", "👋 Hey! I'm your Servia NFC tag advisor. Tell me about your place "
+                   + "(flat / villa / office) and the tasks that come up most. I'll suggest "
+                   + "the perfect tag set, sizes, and where to stick them.");
+
+  function escapeHtml(s){return String(s||"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[c]));}
+  function pushMsg(role, text, action){
+    const d = document.createElement("div");
+    const isBot = role === "bot";
+    d.style.cssText = `display:flex;margin:8px 0;${isBot?"":"justify-content:flex-end"}`;
+    d.innerHTML = `<div style="max-width:88%;padding:10px 14px;border-radius:14px;${isBot
+      ? "background:#0F172A;border:1px solid #334155;color:#E2E8F0"
+      : "background:linear-gradient(135deg,#7C3AED,#A78BFA);color:#fff"}">
+      ${isBot ? text.replace(/\n/g,"<br>").replace(/```json[\s\S]*?```/g,"<small style='opacity:.6'>(order details ready)</small>") : escapeHtml(text)}
+      ${action ? `<div style="margin-top:10px"><button id="adv-place-order" style="background:#FCD34D;color:#7C2D12;border:0;padding:8px 16px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px">📲 Place this order →</button></div>` : ""}
+    </div>`;
+    msgsEl.appendChild(d);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    if (action) {
+      d.querySelector("#adv-place-order").addEventListener("click", () => placeOrderFromAction(action));
+    }
+  }
+
+  async function placeOrderFromAction(action){
+    const tok = localStorage.getItem("lumora.user.tok");
+    if (!tok) {
+      pushMsg("bot", "📲 Sign in first → <a href='/login.html?next=/nfc.html%23advisor' style='color:#FCD34D'>servia.ae/login</a> — then come back and I'll place it.");
+      return;
+    }
+    pushMsg("bot", "Placing your order…");
+    try {
+      const r = await fetch("/api/nfc/bulk-order", {
+        method: "POST",
+        headers: {"content-type":"application/json","Authorization":"Bearer "+tok},
+        body: JSON.stringify({
+          items: action.items || [],
+          size: action.size || "sticker",
+          install_at: action.install_at || null,
+          install_address: action.install_address || null,
+          pay_now: true,
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || "Order failed");
+      pushMsg("bot", `✅ Done! ${j.qty} tags ordered for AED ${j.total_aed}. Redirecting to payment…`);
+      if (j.pay_url) setTimeout(() => location.href = j.pay_url, 1200);
+    } catch(e){
+      pushMsg("bot", "⚠ " + (e.message || e));
+    }
+  }
+
+  async function sendMsg(text){
+    if (!text || !text.trim()) return;
+    pushMsg("user", text);
+    history.push({role:"user", content: text});
+    input.value = "";
+    send.disabled = true; input.disabled = true;
+    pushMsg("bot", "<em style='opacity:.5'>thinking…</em>");
+    const thinking = msgsEl.lastChild;
+    try {
+      const r = await fetch("/api/nfc/consult", {
+        method: "POST",
+        headers: {"content-type":"application/json"},
+        body: JSON.stringify({messages: history}),
+      });
+      const j = await r.json();
+      thinking.remove();
+      pushMsg("bot", j.text || "(no response)", j.action && j.action.action === "place_order" ? j.action : null);
+      history.push({role:"assistant", content: j.text || ""});
+    } catch(e){
+      thinking.remove();
+      pushMsg("bot", "⚠ Bot error — try again, or skip me and use the bulk-order form below.");
+    } finally {
+      send.disabled = false; input.disabled = false; input.focus();
+    }
+  }
+
+  send.addEventListener("click", () => sendMsg(input.value));
+  input.addEventListener("keydown", e => { if (e.key === "Enter") sendMsg(input.value); });
+  document.querySelectorAll(".adv-quick").forEach(b => b.addEventListener("click", () => sendMsg(b.dataset.q)));
+})();
+
 /* Bulk order: villa/big-flat tag-everywhere flow */
 (function(){
   const SERVICES = [

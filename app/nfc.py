@@ -860,6 +860,107 @@ def wa_code_inbound(body: _WaCodeBody):
     }
 
 
+# ============================================================================
+# NFC consultation bot — friendly LLM-backed advisor that helps customers
+# pick how many tags, what services to bind, where to stick them, what size.
+# Available on /nfc.html as a chat widget. Saves token on a /api/nfc/consult
+# session, finalises by calling the existing /api/nfc/bulk-order.
+# ============================================================================
+class _ConsultMsg(BaseModel):
+    role: str
+    content: str
+
+
+class _ConsultBody(BaseModel):
+    messages: list[_ConsultMsg]
+
+
+_CONSULT_SYSTEM_PROMPT = (
+    "You are Servia's NFC tap-to-book consultant — friendly, pragmatic, brief.\n"
+    "Your job: chat with the customer, understand their home/lifestyle, "
+    "recommend a tailored set of NFC tags, then summarise the order.\n\n"
+    "WHAT YOU KNOW:\n"
+    "- Servia services: deep_cleaning, ac_cleaning, maid_service, handyman, "
+    "pest_control, sofa_carpet, window_cleaning, move_in_out, painting, "
+    "laundry, babysitting, garden, pool, car_wash, vehicle_recovery.\n"
+    "- Tag sizes: sticker (AED 5), card (AED 12), keychain (AED 18).\n"
+    "- Onsite installation by Servia tech: AED 49 flat.\n"
+    "- Tags are passive NFC, no battery, last ~10 years, NTAG213 chip.\n"
+    "- Recommendations:\n"
+    "  * Studio / 1BR flat → 3-4 tags is ideal\n"
+    "  * 2-3BR flat       → 5-7 tags\n"
+    "  * Villa / 4BR+     → 8-14 tags\n"
+    "  * Office           → 2-4 tags\n"
+    "  * Always include 1 kitchen tag (most-used) + AC tag (summer).\n"
+    "  * Drivers: car wash + vehicle recovery on dashboard.\n"
+    "  * Pool owners: pool tag near equipment pad.\n"
+    "  * Parents: babysitter tag in nursery.\n\n"
+    "STYLE:\n"
+    "- Ask 1-2 questions per turn, never a wall of text.\n"
+    "- Use bullet points for recommendations.\n"
+    "- After 4-6 turns max, summarise the proposed list and ask "
+    "'Shall I place the order? You can edit before paying.'\n"
+    "- When the customer says 'yes' / 'place it' / 'book it', respond with a "
+    "JSON code block (and ONLY that JSON in the last message) of shape:\n"
+    "```json\n"
+    "{\"action\":\"place_order\",\"items\":["
+    "{\"service_id\":\"deep_cleaning\",\"location_label\":\"Kitchen\","
+    "\"alias\":\"Kitchen tag\"}],\"size\":\"sticker\",\"install_at\":null}\n"
+    "```\n"
+    "Anything else: plain conversational text.\n\n"
+    "Currency: AED. Be kind. Be brief. Never make up information; "
+    "if asked something off-topic, redirect to bookings@servia.ae."
+)
+
+
+@router.post("/api/nfc/consult")
+def nfc_consult(body: _ConsultBody, request: Request):
+    """LLM-backed consultation chat. Stateless — front-end keeps history.
+    Re-uses Servia's primary LLM router (Anthropic by default) so no extra
+    API key needed. Returns the assistant's next message + a parsed
+    `action` if the assistant emitted a JSON block."""
+    # Late import: ai_router has heavy deps + needs API keys
+    try:
+        from . import ai_router as _ai
+    except Exception as e:
+        raise HTTPException(503, f"AI router unavailable: {e}")
+
+    msgs = [{"role": m.role, "content": m.content} for m in body.messages]
+    if not msgs:
+        return {"text": "👋 Hi! I'm your Servia tag consultant. Tell me a bit about "
+                         "your home (flat, villa, office?) and what tasks come up most. "
+                         "I'll suggest a tailored set of NFC tags."}
+    # Prepend system prompt
+    full = [{"role": "system", "content": _CONSULT_SYSTEM_PROMPT}] + msgs
+    try:
+        # ai_router exposes chat(...) — best-effort
+        if hasattr(_ai, "chat"):
+            resp = _ai.chat(full, max_tokens=400, temperature=0.6)
+        elif hasattr(_ai, "complete"):
+            resp = _ai.complete(full, max_tokens=400)
+        else:
+            # Direct fallback to llm.py if present
+            from . import llm as _llm
+            resp = _llm.chat(full, max_tokens=400) if hasattr(_llm, "chat") else None
+        text = resp if isinstance(resp, str) else (resp or {}).get("text", "")
+    except Exception as e:
+        print(f"[nfc-consult] LLM call failed: {e}", flush=True)
+        text = ("Sorry, I'm having trouble thinking right now. As a quick "
+                "starter: 4 tags (kitchen / car / AC / pool) is the most "
+                "popular bundle — total AED 20 + free with next visit.")
+
+    # Parse JSON action block if present
+    action = None
+    import re as _re, json as _json
+    m = _re.search(r"```json\s*({.+?})\s*```", text, _re.DOTALL)
+    if m:
+        try:
+            action = _json.loads(m.group(1))
+        except Exception:
+            action = None
+    return {"text": text.strip(), "action": action}
+
+
 @router.get("/api/admin/nfc/stats", dependencies=[Depends(require_admin)])
 def admin_stats():
     _ensure_schema()

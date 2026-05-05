@@ -3062,6 +3062,18 @@ def _auto_seed_market_vendors_if_empty():
 
 # ---------- v1.22.88: seed test customer + vendor accounts on first deploy ----------
 @app.on_event("startup")
+def _seed_demo_data_if_enabled():
+    """v1.22.94 — comprehensive demo data seed (10 customers + 7 vendors +
+    bookings/invoices/nfc/wallet) when ADMIN_SEED_DEMO_DATA=1. Idempotent:
+    INSERT OR IGNORE on phone-keyed rows."""
+    try:
+        from . import seed_demo as _sd
+        _sd.seed_demo_data()
+    except Exception as e:  # noqa: BLE001
+        print(f"[seed-demo] startup hook failed: {e}", flush=True)
+
+
+@app.on_event("startup")
 def _seed_test_user_accounts():
     """Idempotent seed of two test accounts so admins can log in as a real
     user / vendor without triggering OTP or passkey flows. Skipped in pure
