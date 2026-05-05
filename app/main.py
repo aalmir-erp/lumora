@@ -803,7 +803,7 @@ def api_pay_start(body: PayStartBody):
                         "unit_amount": int(float(inv["amount"]) * 100),
                         "product_data": {"name": f"Servia booking {inv.get('booking_id') or inv['id']}"},
                     }, "quantity": 1}],
-                    success_url=f"{base}/me.html?b={inv.get('booking_id','')}&paid=1",
+                    success_url=f"{base}/booked.html?id={inv.get('booking_id','')}&paid=1",
                     cancel_url=f"{base}/pay/{inv['id']}",
                     metadata={"invoice_id": inv["id"], "booking_id": inv.get("booking_id") or "",
                               "customer_id": str(cid), "method": method},
@@ -1001,20 +1001,148 @@ def robots_txt():
         "Disallow: /vendor\n"
         "Disallow: /portal-vendor\n"
         "\n"
-        # AI crawlers also blocked from admin/private
-        "User-agent: GPTBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
-        "User-agent: ClaudeBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
-        "User-agent: PerplexityBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
-        "User-agent: Google-Extended\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
-        "User-agent: anthropic-ai\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
-        "User-agent: cohere-ai\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
-        "User-agent: CCBot\nAllow: /\nDisallow: /admin\nDisallow: /admin-login.html\nDisallow: /api/admin/\nDisallow: /pay/\n\n"
-        f"Sitemap: {base}/sitemap.xml\n"
+        # AI crawlers — explicitly ALLOWED for public surfaces, blocked from
+        # admin/private. Listed individually so that adding a global Disallow
+        # later doesn't accidentally muzzle the ones we want answering questions
+        # about Servia in their products.
     )
+    _ai_allow = (
+        # OpenAI
+        "GPTBot",          # ChatGPT training crawler
+        "OAI-SearchBot",   # ChatGPT search index (separate from training)
+        "ChatGPT-User",    # live ChatGPT 'browse the web' fetcher
+        # Anthropic
+        "ClaudeBot",       # Claude training crawler
+        "anthropic-ai",    # legacy Anthropic UA
+        "Claude-Web",      # claude.ai 'fetch this URL' on user request
+        # Google
+        "Google-Extended", # Bard/Gemini training opt-in (separate from Googlebot)
+        # Perplexity
+        "PerplexityBot",   # Perplexity index + answer engine
+        # Apple
+        "Applebot-Extended",  # Apple Intelligence / Siri training opt-in
+        # Amazon
+        "Amazonbot",       # Alexa / Amazon Q
+        # DuckDuckGo
+        "DuckAssistBot",   # DuckDuckGo Duck.ai
+        # You.com
+        "YouBot",          # You.com search + chat
+        # Meta
+        "Meta-ExternalAgent",  # Meta AI training
+        "FacebookBot",     # Facebook open graph + Meta AI
+        # Cohere
+        "cohere-ai",
+        # Common Crawl (powers many open LLMs)
+        "CCBot",
+    )
+    for ua in _ai_allow:
+        body += (f"User-agent: {ua}\nAllow: /\n"
+                 "Disallow: /admin\nDisallow: /admin-login.html\n"
+                 "Disallow: /api/admin/\nDisallow: /api/portal/\n"
+                 "Disallow: /pay/\nDisallow: /me.html\n\n")
+    # ByteDance's Bytespider is notoriously aggressive (10k+ req/min, ignores
+    # crawl-delay). Block it entirely. Same for any unknown 'AI training'
+    # crawler that hasn't published a UA we recognise.
+    body += "User-agent: Bytespider\nDisallow: /\n\n"
+    body += f"Sitemap: {base}/sitemap.xml\n"
     # robots.txt MUST be served as text/plain — Googlebot rejects text/html.
     # Previously we declared response_class=HTMLResponse which broke GSC's
     # robots fetcher.
     return _Resp(content=body, media_type="text/plain; charset=utf-8")
+
+
+# ---------- IndexNow ----------------------------------------------------------
+# IndexNow is a free protocol that lets us notify Bing, Yandex, Seznam, Naver
+# and Yep about new/changed URLs with a single POST. One ping reaches every
+# participating engine, including Bing's index — which Microsoft Copilot uses
+# directly. This is the single highest-ROI submission for AI discoverability
+# after the open AI crawlers.
+#
+# Spec: https://www.indexnow.org/documentation
+#
+# Setup:
+#   1. We generate a stable per-domain key (32 hex chars, deterministic from
+#      BRAND_DOMAIN so it survives deploys and isn't rotating on each restart).
+#   2. We host that key as plain text at /<key>.txt — IndexNow verifies the
+#      key by fetching this URL.
+#   3. We POST a JSON body with up to 10,000 URLs to api.indexnow.org.
+def _indexnow_key() -> str:
+    """Stable 32-hex-char IndexNow key derived from BRAND_DOMAIN. Doesn't
+    rotate per deploy. Override via env INDEXNOW_KEY for a custom one."""
+    import os as _os, hashlib as _hl
+    k = (_os.getenv("INDEXNOW_KEY", "") or "").strip()
+    if k and len(k) >= 8: return k
+    seed = f"servia-indexnow-{(settings.BRAND_DOMAIN or 'servia.ae').lower()}"
+    return _hl.sha256(seed.encode()).hexdigest()[:32]
+
+
+@app.get("/{key}.txt", include_in_schema=False)
+def indexnow_key_file(key: str):
+    """Serve the IndexNow verification file. Only the configured key returns
+    plain text; anything else falls through to the static-file handler."""
+    from fastapi.responses import Response as _R, PlainTextResponse
+    if key == _indexnow_key():
+        return PlainTextResponse(key, media_type="text/plain; charset=utf-8")
+    raise HTTPException(404, "not found")
+
+
+def indexnow_submit(urls: list[str]) -> dict:
+    """POST a batch of URLs to IndexNow. Returns the API status. Safe to call
+    fire-and-forget; logs the result without raising."""
+    if not urls: return {"ok": False, "reason": "no urls"}
+    host = (settings.BRAND_DOMAIN or "servia.ae").strip()
+    key = _indexnow_key()
+    payload = {
+        "host": host,
+        "key": key,
+        "keyLocation": f"https://{host}/{key}.txt",
+        "urlList": urls[:10000],
+    }
+    try:
+        import httpx as _httpx
+        r = _httpx.post("https://api.indexnow.org/indexnow",
+                        json=payload, timeout=20.0,
+                        headers={"Content-Type": "application/json; charset=utf-8"})
+        ok = r.status_code in (200, 202)
+        out = {"ok": ok, "status": r.status_code, "submitted": len(payload["urlList"])}
+        print(f"[indexnow] {out} for {len(urls)} URLs", flush=True)
+        return out
+    except Exception as e:  # noqa: BLE001
+        print(f"[indexnow] error: {e}", flush=True)
+        return {"ok": False, "error": str(e)[:200]}
+
+
+@app.get("/api/admin/seo/indexnow-key")
+def admin_indexnow_key():
+    """Show the IndexNow key + verification URL so admin can confirm Bing
+    Webmaster's check would pass."""
+    host = (settings.BRAND_DOMAIN or "servia.ae").strip()
+    k = _indexnow_key()
+    return {"key": k, "key_url": f"https://{host}/{k}.txt",
+            "submit_url": "https://api.indexnow.org/indexnow"}
+
+
+class _IndexNowBody(BaseModel):
+    urls: list[str] | None = None
+
+
+@app.post("/api/admin/seo/indexnow-submit")
+def admin_indexnow_submit(body: _IndexNowBody | None = None):
+    """Submit a batch of URLs to IndexNow. If `urls` is omitted, submits the
+    full sitemap (every public-facing page). Use after a content refresh —
+    Bing typically re-crawls within 30 minutes vs. 7-14 days organically."""
+    urls = (body.urls if body else None) or []
+    if not urls:
+        # Default: pull every URL from our combined sitemap-full.xml
+        try:
+            import xml.etree.ElementTree as _ET
+            resp = sitemap_full_legacy()
+            xml = (resp.body if hasattr(resp, "body") else b"").decode("utf-8", "replace")
+            root = _ET.fromstring(xml)
+            urls = [e.text for e in root.iter() if e.tag.endswith("}loc") and e.text]
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": f"sitemap parse failed: {e}"}
+    return indexnow_submit(urls)
 
 
 # --- Sitemap self-test endpoint (admin-only) ----------------------------------
@@ -1381,7 +1509,7 @@ def sitemap_videos_xml(request: Request = None):
             title = (r["title"] or slug.replace("-", " ").title())[:100]
             page = f"{base}/api/videos/play/{slug}"     # landing page (loc)
             embed = f"{base}/api/videos/embed/{slug}"   # embeddable player (player_loc)
-            poster = f"{base}/api/videos/poster/{slug}.svg"
+            poster = f"{base}/api/videos/poster/{slug}.png"
             parts.append(
                 f'  <url><loc>{_x_url(page)}</loc>'
                 f'<lastmod>{today}</lastmod>'
@@ -1580,7 +1708,7 @@ def _sitemap_xml_inner():
             title = _x(slug.replace('-',' ').replace('_',' ').title())
             # Per-video poster (auto-generated SVG mascot scene). Falls back to
             # generic mascot if the per-video endpoint isn't available yet.
-            thumb = _x(f"{base}/api/videos/poster/{slug}.svg")
+            thumb = _x(f"{base}/api/videos/poster/{slug}.png")
             player = _x(f"{base}{u}")
             page_loc = _x(f"{base}/videos.html#{slug}")
             body += "    <video:video>\n"
@@ -2273,6 +2401,15 @@ try:
         _db.log_event("autoblog", slug, "published", actor="cron",
                       details={"emirate": em, "service": sv, "slant": slant, "len": len(body)})
         print(f"[autoblog] published {slug}", flush=True)
+        # Ping IndexNow so Bing / Copilot index the new article within minutes
+        # instead of waiting for organic re-crawl. Fire-and-forget — failures
+        # are logged but never block the publish path.
+        try:
+            host = (settings.BRAND_DOMAIN or 'servia.ae').strip()
+            indexnow_submit([f"https://{host}/blog/{slug}",
+                             f"https://{host}/blog",
+                             f"https://{host}/sitemap-blog.xml"])
+        except Exception: pass
         try:
             from . import admin_alerts as _aa
             _aa.notify_admin(

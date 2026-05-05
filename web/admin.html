@@ -974,13 +974,206 @@
           <div>🔌 <a href="/.well-known/ai-plugin.json" target="_blank" style="color:#0F766E;font-weight:600">/.well-known/ai-plugin.json</a> — ChatGPT/Bing plugin manifest</div>
           <div>📋 <a href="/openapi-public.json" target="_blank" style="color:#0F766E;font-weight:600">/openapi-public.json</a> — OpenAPI spec</div>
           <div>🗺 <a href="/sitemap.xml" target="_blank" style="color:#0F766E;font-weight:600">/sitemap.xml</a> — sitemap-index</div>
-          <div>🤖 <a href="/robots.txt" target="_blank" style="color:#0F766E;font-weight:600">/robots.txt</a> — GPTBot/ClaudeBot/etc allowed</div>
+          <div>🤖 <a href="/robots.txt" target="_blank" style="color:#0F766E;font-weight:600">/robots.txt</a> — 12 AI crawlers explicitly allowed</div>
           <div>🏷 <a href="https://validator.schema.org/?url=https://servia.ae/" target="_blank" style="color:#0F766E;font-weight:600">Schema.org validator</a> — verify JSON-LD on /</div>
         </div>
       </div>
 
+      <!-- 8-platform submission checklist — copy-paste URLs pre-rendered.
+           These are the highest-leverage one-time submissions for Servia to
+           appear in ChatGPT, Copilot, Perplexity, You.com, Apple Intelligence,
+           Bing, etc. Each step has its destination link, what to paste, and
+           what success looks like. -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <div>
+            <h3 style="margin:0;font-size:16px">📋 8-step submission checklist (one-time, ~30 min total)</h3>
+            <p style="margin:4px 0 0;color:var(--muted);font-size:12.5px">Each row opens the right page in a new tab + shows exactly what to paste. Copy buttons next to every value. Do them in order — Bing Webmaster (#1) unlocks Copilot, IndexNow (#2) propagates to all of them within 30 min.</p>
+          </div>
+          <button class="btn btn-primary" onclick="aiSubmitNowAll()" style="background:#0F766E">⚡ Ping IndexNow now</button>
+        </div>
+
+        <!-- IndexNow key auto-loaded from /api/admin/seo/indexnow-key -->
+        <div style="background:#FFFBEB;border:1px solid #FCD34D;color:#78350F;padding:10px 12px;border-radius:10px;margin-bottom:14px;font-size:12.5px">
+          <b>🔑 Your IndexNow key</b> (deterministic, never rotates):
+          <code id="ai-indexnow-key" style="background:#fff;padding:3px 8px;border-radius:6px;font-size:12px;margin:0 6px">loading…</code>
+          <button onclick="aiCopy('ai-indexnow-key', this)" style="background:transparent;border:1px solid #FCD34D;color:#78350F;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:11.5px;font-weight:700">Copy key</button>
+          <button onclick="aiCopy('ai-indexnow-keyurl', this)" style="background:transparent;border:1px solid #FCD34D;color:#78350F;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:11.5px;font-weight:700;margin-left:6px">Copy key file URL</button>
+          <span id="ai-indexnow-keyurl" style="display:none">https://servia.ae/loading.txt</span>
+          <div style="margin-top:6px;font-size:11.5px;opacity:.85">Bing Webmaster → Settings → IndexNow → paste this key once. Done forever.</div>
+        </div>
+
+        <ol id="ai-submission-list" style="margin:0;padding-left:0;list-style:none;display:grid;gap:10px"></ol>
+      </div>
+
       <div id="ai-list"></div>
     </div>
+
+    <script>
+    /* ===== AI Discoverability submission checklist =====
+       Renders 8 high-ROI submissions with destination + paste-values.
+       Auto-loads the IndexNow key from /api/admin/seo/indexnow-key so
+       the admin can copy it without leaving the page. */
+    (function(){
+      const STEPS = [
+        { num:1, badge:"#0EA5E9", title:"Bing Webmaster Tools",
+          why:"Bing's index powers Microsoft Copilot. This is the single highest-ROI submission — one verification unlocks Copilot answers + IndexNow ingestion.",
+          go:"https://www.bing.com/webmasters",
+          paste:[
+            { label:"Site to add", val:"https://servia.ae" },
+            { label:"Sitemap to submit", val:"https://servia.ae/sitemap.xml" },
+            { label:"IndexNow key (paste in Settings → IndexNow)", val:"INDEXNOW_KEY" },
+            { label:"Verification meta (paste your token in admin → Launch → bing_verification)", val:"<meta name=\"msvalidate.01\" content=\"YOUR-TOKEN\">" }
+          ],
+          done:"Sites overview shows servia.ae with green check + 'IndexNow: Active'." },
+        { num:2, badge:"#10B981", title:"IndexNow first manual ping",
+          why:"Tells Bing/Yandex/Seznam/Naver/Yep about every URL on the site at once. After Bing accepts the key from step 1, ping IndexNow to fast-track the entire sitemap.",
+          go:"javascript:aiSubmitNowAll()",
+          goLabel:"⚡ Ping all sitemap URLs now",
+          paste:[
+            { label:"What you're pinging", val:"every URL in https://servia.ae/sitemap-full.xml" },
+            { label:"After this", val:"Auto-pings happen on every new blog post — no further action needed." }
+          ],
+          done:"Response shows {ok:true, status:200, submitted:N}. Bing typically re-crawls within 30 min." },
+        { num:3, badge:"#7C3AED", title:"Custom GPT (ChatGPT)",
+          why:"Lets ChatGPT users invoke Servia booking actions directly inside the chat. Reuses our existing ai-plugin.json + openapi.json — zero extra config.",
+          go:"https://chat.openai.com/gpts/editor",
+          paste:[
+            { label:"Name", val:"Servia UAE Helper" },
+            { label:"Description", val:"Book home services across UAE — cleaning, AC, handyman, pest control. 32 services, all 7 emirates." },
+            { label:"Configure → Actions → Import from URL", val:"https://servia.ae/.well-known/ai-plugin.json" },
+            { label:"OpenAPI URL (auto-resolved from manifest)", val:"https://servia.ae/openapi-public.json" }
+          ],
+          done:"GPT shows in your 'My GPTs' list with a green 'Test' button that successfully calls /api/services." },
+        { num:4, badge:"#3B82F6", title:"Copilot Plugin (Bing)",
+          why:"Same manifest as the Custom GPT, but for Microsoft Copilot users. Also requires Bing Webmaster verification (step 1) first.",
+          go:"https://www.bing.com/webmasters/copilot",
+          paste:[
+            { label:"Plugin manifest URL", val:"https://servia.ae/.well-known/ai-plugin.json" },
+            { label:"OpenAPI URL", val:"https://servia.ae/openapi-public.json" },
+            { label:"Categories", val:"Local Services · Home & Garden · UAE" }
+          ],
+          done:"Status changes from 'In review' to 'Available in Copilot' — typically 3-7 days." },
+        { num:5, badge:"#F59E0B", title:"Gemini Gem (Google)",
+          why:"Public Gem appears in Gemini's directory + can be invoked directly with @ServiaUAE. Uses our /llms.txt as the knowledge source.",
+          go:"https://gemini.google.com/gems",
+          paste:[
+            { label:"Gem name", val:"Servia UAE Helper" },
+            { label:"Knowledge source 1 (paste URL)", val:"https://servia.ae/llms.txt" },
+            { label:"Knowledge source 2", val:"https://servia.ae/sitemap.xml" },
+            { label:"Description", val:"Book home services across UAE in 60 seconds. Vetted pros, transparent prices, same-day across all 7 emirates." },
+            { label:"Visibility", val:"Public — Anyone with link" }
+          ],
+          done:"Gem URL shareable, returns Servia content when asked about UAE home services." },
+        { num:6, badge:"#EC4899", title:"Perplexity Publisher Program",
+          why:"Adds Servia to Perplexity's citation network so we get attributed when answering UAE-services queries. PerplexityBot already indexes us — this gets you in their publisher dashboard with traffic stats.",
+          go:"https://www.perplexity.ai/business/publishers",
+          paste:[
+            { label:"Domain", val:"servia.ae" },
+            { label:"Sitemap", val:"https://servia.ae/sitemap.xml" },
+            { label:"Content type", val:"Local services + UAE home/business guides (auto-blog)" },
+            { label:"Verification meta (paste in admin → Launch → perplexity_verification)", val:"<meta name=\"perplexity-verify\" content=\"YOUR-TOKEN\">" }
+          ],
+          done:"Status: 'Verified publisher'. Citations start appearing within 1-2 weeks." },
+        { num:7, badge:"#0F766E", title:"You.com Source Directory",
+          why:"You.com's chat + search both pull from registered sources. Submission unlocks the App marketplace (think: 'install Servia in You.com to book home services').",
+          go:"https://about.you.com/publishers",
+          paste:[
+            { label:"Site URL", val:"https://servia.ae" },
+            { label:"OpenAPI / API spec", val:"https://servia.ae/openapi-public.json" },
+            { label:"Plugin manifest", val:"https://servia.ae/.well-known/ai-plugin.json" },
+            { label:"Categories", val:"Local Services · UAE · Home Services" }
+          ],
+          done:"Email confirmation 'Servia listed in You.com source directory'." },
+        { num:8, badge:"#0EA5E9", title:"Apple Business Connect (Siri + Maps)",
+          why:"Lists Servia in Apple Maps + Siri results across UAE. Apple Intelligence (iOS 18+) cites local businesses from this directory when answering 'find me a cleaner in Dubai' type queries.",
+          go:"https://businessconnect.apple.com/",
+          paste:[
+            { label:"Business name", val:"Servia" },
+            { label:"Website", val:"https://servia.ae" },
+            { label:"Categories", val:"Home Services · Cleaning · Maintenance" },
+            { label:"Service area", val:"All 7 UAE emirates" }
+          ],
+          done:"'Verified' badge on businessconnect.apple.com dashboard. Listings appear in Apple Maps within 2-5 days." },
+      ];
+
+      function rowHTML(s){
+        const goBtn = s.go.startsWith("javascript:")
+          ? `<button onclick="${s.go.slice(11)}" style="background:${s.badge};color:#fff;border:0;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px">${s.goLabel||"Open →"}</button>`
+          : `<a href="${s.go}" target="_blank" rel="noopener" style="background:${s.badge};color:#fff;border-radius:8px;padding:9px 14px;font-weight:700;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px">Open →</a>`;
+        const paste = s.paste.map((p,i) => {
+          const id = `aip-${s.num}-${i}`;
+          return `<div style="display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;margin:4px 0">
+            <div style="font-size:11.5px;color:var(--muted);font-weight:700">${p.label}</div>
+            <code id="${id}" style="background:#F1F5F9;padding:4px 8px;border-radius:6px;font-size:11.5px;word-break:break-all;font-family:ui-monospace,monospace">${p.val.replace(/</g,'&lt;')}</code>
+            <button onclick="aiCopy('${id}', this)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text)">Copy</button>
+          </div>`;
+        }).join("");
+        return `<li style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;display:grid;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <div style="background:${s.badge};color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">${s.num}</div>
+              <div>
+                <div style="font-weight:800;font-size:14px">${s.title}</div>
+                <div style="font-size:12px;color:var(--muted);max-width:560px;line-height:1.45;margin-top:2px">${s.why}</div>
+              </div>
+            </div>
+            ${goBtn}
+          </div>
+          <div style="border-top:1px dashed var(--border);padding-top:6px;margin-top:2px">${paste}</div>
+          <div style="font-size:11.5px;color:#15803D;background:#F0FDF4;border-radius:6px;padding:5px 8px"><b>✓ Done when:</b> ${s.done}</div>
+        </li>`;
+      }
+
+      window.aiCopy = function(id, btn){
+        const el = document.getElementById(id);
+        if (!el) return;
+        const txt = (el.innerText || el.textContent || "").trim();
+        navigator.clipboard.writeText(txt).then(() => {
+          const old = btn.textContent; btn.textContent = "✓ Copied"; btn.style.background = "#15803D"; btn.style.color = "#fff"; btn.style.borderColor = "#15803D";
+          setTimeout(() => { btn.textContent = old; btn.style.background = "transparent"; btn.style.color = ""; btn.style.borderColor = ""; }, 1400);
+        });
+      };
+
+      window.aiSubmitNowAll = async function(){
+        const ok = confirm("Ping IndexNow with every URL in the sitemap?\n\nThis tells Bing / Yandex / Seznam / Naver / Yep about every page at once. Use after a content refresh.");
+        if (!ok) return;
+        try {
+          const r = await api("/api/admin/seo/indexnow-submit", { method: "POST", body: JSON.stringify({}) });
+          alert("IndexNow response:\n" + JSON.stringify(r, null, 2));
+        } catch (e) {
+          alert("IndexNow ping failed: " + (e.message || e));
+        }
+      };
+
+      async function loadAndRender(){
+        // Pull the IndexNow key + render the per-domain values into the steps
+        let key = "", keyUrl = "";
+        try {
+          const k = await api("/api/admin/seo/indexnow-key");
+          key = k.key || ""; keyUrl = k.key_url || "";
+          const ke = document.getElementById("ai-indexnow-key");
+          const ku = document.getElementById("ai-indexnow-keyurl");
+          if (ke) ke.textContent = key || "(unavailable)";
+          if (ku) ku.textContent = keyUrl || "";
+        } catch (_) {}
+        // Substitute INDEXNOW_KEY placeholder in step 1
+        STEPS.forEach(s => s.paste.forEach(p => {
+          if (p.val === "INDEXNOW_KEY") p.val = key || "(load failed — refresh page)";
+        }));
+        const list = document.getElementById("ai-submission-list");
+        if (list) list.innerHTML = STEPS.map(rowHTML).join("");
+      }
+
+      // Render when the AI Discoverability tab opens (lazy)
+      const tabLink = document.querySelector('a[data-tab="ailisting"]');
+      if (tabLink) tabLink.addEventListener("click", () => {
+        if (!document.getElementById("ai-submission-list")?.children.length) loadAndRender();
+      });
+      // Also render now if we land directly on #ailisting
+      if (location.hash === "#ailisting") setTimeout(loadAndRender, 200);
+    })();
+    </script>
 
     <!-- ====== SOCIAL AUTO-POST ====== -->
     <div id="t-autopost" class="tab" style="display:none">
