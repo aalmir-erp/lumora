@@ -188,6 +188,7 @@
 ];</script>
 <script src="/lazy-loaders.js" defer></script>
 <script src="/conv.js" defer></script>
+<script src="/search-widget.js" defer></script>
 </head>
 <body>
 
@@ -309,6 +310,65 @@
     </div>
     <a href="/cart.html" style="background:#0F172A;color:#fff;padding:9px 16px;border-radius:999px;font-weight:800;text-decoration:none;font-size:13px;white-space:nowrap">View bundle →</a>
   </div>
+</section>
+
+<!-- 🤖 SERVIA EVERYWHERE - animated banner showing how to use Servia in
+     ChatGPT (@servia mention), as a PWA, and via voice/Cmd+K. Drives
+     install + GPT engagement without taking over the page. -->
+<section style="padding:32px 16px;background:linear-gradient(135deg,#312E81 0%,#1E1B4B 100%);color:#fff;position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;background:radial-gradient(circle at 80% 30%,rgba(124,58,237,.4),transparent 50%),radial-gradient(circle at 20% 70%,rgba(15,118,110,.3),transparent 50%);pointer-events:none"></div>
+  <div style="max-width:1180px;margin:0 auto;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center">
+    <div>
+      <p style="margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A78BFA">🚀 SERVIA EVERYWHERE</p>
+      <h2 style="margin:0 0 12px;font-size:32px;letter-spacing:-.02em;color:#fff;line-height:1.15">Talk to Servia<br>wherever <em style="color:#FCD34D;font-style:normal">you</em> are</h2>
+      <p style="margin:0 0 20px;color:#CBD5E1;font-size:15.5px;line-height:1.55;max-width:520px">
+        Mention <code style="background:rgba(255,255,255,.12);padding:2px 8px;border-radius:6px;font-family:ui-monospace,monospace;color:#FCD34D;font-weight:700">@servia</code> in any ChatGPT chat for instant booking + quotes. Or install Servia as an app on your phone or desktop. Or hit <kbd style="background:rgba(255,255,255,.12);padding:3px 8px;border-radius:5px;font-family:ui-monospace,monospace;font-size:12px;color:#fff;border:1px solid rgba(255,255,255,.25)">Cmd+K</kbd> from any page on this site for AI-powered search.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener" data-event="open_chatgpt_gpt"
+           style="background:linear-gradient(135deg,#7C3AED,#A78BFA);color:#fff;padding:13px 22px;border-radius:999px;font-weight:700;text-decoration:none;font-size:14px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(124,58,237,.4)">🚀 Open Servia GPT</a>
+        <a href="/install.html" data-event="open_install_page"
+           style="background:rgba(255,255,255,.12);color:#fff;padding:13px 22px;border-radius:999px;font-weight:700;text-decoration:none;font-size:14px;display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.22)">📲 Install app</a>
+        <a href="/search.html" data-event="open_search_page"
+           style="background:rgba(255,255,255,.12);color:#fff;padding:13px 22px;border-radius:999px;font-weight:700;text-decoration:none;font-size:14px;display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.22)">🔍 AI Search</a>
+      </div>
+    </div>
+
+    <!-- Animated ChatGPT chat preview -->
+    <div class="gpt-chat-demo" style="background:#0F0E1F;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.4);max-width:480px;justify-self:center;width:100%">
+      <div style="display:flex;gap:10px;align-items:center;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px">
+        <img src="/brand/servia-icon-1024x1024.png" width="36" height="36" alt="" loading="lazy" decoding="async" style="border-radius:8px">
+        <div>
+          <div style="font-size:13.5px;font-weight:700">Servia UAE Helper</div>
+          <div style="font-size:11px;color:#94A3B8">via ChatGPT · type <b style="color:#FCD34D">@servia</b> in any chat</div>
+        </div>
+        <span style="margin-inline-start:auto;font-size:10px;background:#10B981;color:#fff;padding:2px 8px;border-radius:999px;font-weight:700">LIVE</span>
+      </div>
+      <div class="gpt-bubble user" style="background:#7C3AED;color:#fff;padding:9px 13px;border-radius:14px;border-bottom-right-radius:4px;font-size:13.5px;line-height:1.45;margin-inline-start:auto;max-width:85%;margin-bottom:8px;animation:gpt-in .4s .2s backwards;width:fit-content">
+        Hey <span style="background:rgba(0,0,0,.34);padding:1px 7px;border-radius:5px;font-weight:700">@servia</span> how much is 2bhk clean?
+      </div>
+      <div class="gpt-bubble bot" style="background:rgba(255,255,255,.08);color:#fff;padding:9px 13px;border-radius:14px;border-bottom-left-radius:4px;font-size:13.5px;line-height:1.45;max-width:85%;margin-bottom:8px;animation:gpt-in .4s 1.2s backwards;width:fit-content">
+        <span class="dots" style="display:inline-flex;gap:3px;vertical-align:middle"><span style="width:5px;height:5px;background:rgba(255,255,255,.6);border-radius:50%;animation:gpt-dot 1.2s ease-in-out infinite"></span><span style="width:5px;height:5px;background:rgba(255,255,255,.6);border-radius:50%;animation:gpt-dot 1.2s .15s ease-in-out infinite"></span><span style="width:5px;height:5px;background:rgba(255,255,255,.6);border-radius:50%;animation:gpt-dot 1.2s .3s ease-in-out infinite"></span></span>
+      </div>
+      <div class="gpt-bubble bot" style="background:rgba(255,255,255,.08);color:#fff;padding:9px 13px;border-radius:14px;border-bottom-left-radius:4px;font-size:13.5px;line-height:1.45;max-width:90%;animation:gpt-in .4s 2.6s backwards">
+        Deep cleaning a 2-bed apartment in Dubai is around <b style="color:#FCD34D">AED 350–450</b>, depending on add-ons (oven, fridge, balcony glass).<br>Same-day if booked before noon. Want me to lock a slot?
+      </div>
+      <div class="gpt-bubble user" style="background:#7C3AED;color:#fff;padding:9px 13px;border-radius:14px;border-bottom-right-radius:4px;font-size:13.5px;line-height:1.45;margin-inline-start:auto;max-width:85%;margin-top:8px;animation:gpt-in .4s 4.2s backwards;width:fit-content">
+        Yes, tomorrow 10am, Marina Crown
+      </div>
+      <div class="gpt-bubble bot" style="background:rgba(255,255,255,.08);color:#fff;padding:9px 13px;border-radius:14px;border-bottom-left-radius:4px;font-size:13.5px;line-height:1.45;max-width:90%;margin-top:8px;animation:gpt-in .4s 5.4s backwards">
+        ✅ Done — booking <b style="color:#FCD34D">LM-D8X4F2</b> locked. Pay-link sent to your WhatsApp 🔗
+      </div>
+    </div>
+  </div>
+  <style>
+    @keyframes gpt-in { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+    @keyframes gpt-dot { 0%,80%,100% { opacity:.3 } 40% { opacity:1 } }
+    @media (max-width:880px) {
+      section .gpt-chat-demo { max-width:100% }
+      section[style*='SERVIA EVERYWHERE'], section[style*='312E81'] > div { grid-template-columns:1fr !important }
+    }
+  </style>
 </section>
 
 <!-- 🎯 POPULAR SERVICES — visible above the fold, the moment hero ends -->
