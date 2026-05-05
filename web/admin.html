@@ -1017,6 +1017,13 @@
         <p style="margin:0 0 12px;color:var(--muted);font-size:13px">
           Compose a styled push notification and broadcast it to subscribed devices. Each recipient sees an Android / iOS native notification on their phone (and on any paired Wear OS / Apple Watch automatically).
         </p>
+        <!-- Subscriber audience summary — populated by loadTwaInstalls() -->
+        <div id="pn-audience-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;font-size:12px">
+          <div style="background:#F0FDFA;padding:8px 10px;border-radius:8px"><b id="pn-aud-total">…</b><br><span style="color:var(--muted)">total subs</span></div>
+          <div style="background:#F0FDFA;padding:8px 10px;border-radius:8px"><b id="pn-aud-cust">…</b><br><span style="color:var(--muted)">customers</span></div>
+          <div style="background:#F0FDFA;padding:8px 10px;border-radius:8px"><b id="pn-aud-vend">…</b><br><span style="color:var(--muted)">vendors</span></div>
+          <div style="background:#F1F5F9;padding:8px 10px;border-radius:8px"><b id="pn-aud-anon">…</b><br><span style="color:var(--muted)">anonymous</span></div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <label style="font-size:11.5px;color:var(--muted);font-weight:700">TITLE</label>
@@ -4958,7 +4965,23 @@ async function sendTestPush() {
   }
 }
 
+async function loadPushAudience() {
+  try {
+    const r = await adm("/api/admin/push/subscribers/summary");
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v.toLocaleString(); };
+    set("pn-aud-total", r.total || 0);
+    set("pn-aud-cust",  r.customers || 0);
+    set("pn-aud-vend",  r.vendors || 0);
+    set("pn-aud-anon",  r.anonymous || 0);
+  } catch (e) {
+    ["pn-aud-total","pn-aud-cust","pn-aud-vend","pn-aud-anon"].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = "—";
+    });
+  }
+}
+
 async function loadTwaInstalls() {
+  loadPushAudience();   // populate the subscriber-count tiles in the push composer
   const sumEl = document.getElementById("twa-install-summary");
   const detailEl = document.getElementById("twa-install-detail");
   const recEl = document.getElementById("twa-install-recent");

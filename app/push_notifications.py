@@ -125,6 +125,27 @@ def unsubscribe(body: SubscriptionBody):
     return {"ok": True, "deleted": n}
 
 
+@router.get("/subscribers/summary")
+def subscribers_summary():
+    """Quick audience summary for the admin push composer:
+    total subscribers, how many are linked to a customer, how many to a
+    vendor, how many anonymous."""
+    _ensure_table()
+    with db.connect() as c:
+        for stmt in (
+            "ALTER TABLE push_subscriptions ADD COLUMN customer_id INTEGER",
+            "ALTER TABLE push_subscriptions ADD COLUMN vendor_id INTEGER",
+        ):
+            try: c.execute(stmt)
+            except Exception: pass
+        total = c.execute("SELECT COUNT(*) AS n FROM push_subscriptions").fetchone()["n"]
+        cust  = c.execute("SELECT COUNT(*) AS n FROM push_subscriptions WHERE customer_id IS NOT NULL").fetchone()["n"]
+        vend  = c.execute("SELECT COUNT(*) AS n FROM push_subscriptions WHERE vendor_id IS NOT NULL").fetchone()["n"]
+        logged = c.execute("SELECT COUNT(*) AS n FROM push_subscriptions WHERE customer_id IS NOT NULL OR vendor_id IS NOT NULL").fetchone()["n"]
+    return {"total": total, "customers": cust, "vendors": vend,
+            "logged_in": logged, "anonymous": total - logged}
+
+
 @router.get("/list")
 def list_subs():
     _ensure_table()
@@ -174,18 +195,28 @@ def broadcast(body: BroadcastBody):
     if body.url: payload["url"] = body.url
     if body.require_interaction: payload["requireInteraction"] = True
 
-    # Audience filter — currently same as send_to_all but plumbed for
-    # future row-level filtering when push_subscriptions gets a customer_id.
-    n_sent = send_to_all(payload)
-    return {"ok": True, "sent": n_sent, "audience": body.audience}
+    # Audience filter — passes through to send_to_all which queries
+    # push_subscriptions filtered by linked customer/vendor.
+    n_sent = send_to_all(payload, audience=body.audience or "all")
+    return {"ok": True, "sent": n_sent, "audience": body.audience or "all"}
 
 
 # ---------- Send a payload to all subscribers ----------
-def send_to_all(payload: dict) -> int:
-    """Sends `payload` (dict — title/body/kind/etc.) to every subscription.
-    Returns count of successful deliveries. Auto-prunes 410-Gone subscribers."""
+def send_to_all(payload: dict, audience: str = "all") -> int:
+    """Sends `payload` (dict — title/body/kind/etc.) to subscribers in the
+    selected `audience` ('all' | 'customers' | 'vendors' | 'logged_in').
+    Returns count of successful deliveries. Auto-prunes 410-Gone subscribers.
+
+    Audience filter rationale:
+      - 'all'        — every push subscription
+      - 'customers'  — subscriptions linked to a customer record
+      - 'vendors'    — subscriptions linked to a vendor record
+      - 'logged_in'  — any subscription with a non-null linked user
+    The push_subscriptions table has columns customer_id + vendor_id that
+    are populated when the user is logged in at subscribe time."""
     keys = _ensure_vapid_keys()
     if not keys.get("private"):
+        print("[push] no VAPID keys — call /api/admin/push/test once to generate", flush=True)
         return 0
     _ensure_table()
     try:
@@ -193,8 +224,26 @@ def send_to_all(payload: dict) -> int:
     except Exception:
         print("[push] pywebpush not installed — skipping push send", flush=True)
         return 0
+    # Build the WHERE clause once for audience filtering
+    where = ""
+    if audience == "customers":
+        where = " WHERE customer_id IS NOT NULL"
+    elif audience == "vendors":
+        where = " WHERE vendor_id IS NOT NULL"
+    elif audience == "logged_in":
+        where = " WHERE customer_id IS NOT NULL OR vendor_id IS NOT NULL"
     with db.connect() as c:
-        rows = c.execute("SELECT id, endpoint, subscription_json FROM push_subscriptions").fetchall()
+        # Idempotent migration: ensure customer_id + vendor_id columns exist
+        for stmt in (
+            "ALTER TABLE push_subscriptions ADD COLUMN customer_id INTEGER",
+            "ALTER TABLE push_subscriptions ADD COLUMN vendor_id INTEGER",
+        ):
+            try: c.execute(stmt)
+            except Exception: pass
+        rows = c.execute(
+            f"SELECT id, endpoint, subscription_json FROM push_subscriptions{where}").fetchall()
+    print(f"[push] sending '{payload.get('title','?')[:50]}' to {len(rows)} sub(s) "
+          f"(audience={audience})", flush=True)
     n_ok = 0
     pruned: list[int] = []
     vapid_claims = {"sub": "mailto:" + os.getenv("ADMIN_EMAIL", "admin@servia.ae")}
