@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="servia-page" content="default">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D9488">
+<title>Book by voice • Servia on Alexa, Google Home, Siri &amp; ChatGPT</title>
+<meta name="description" content="Book Servia home services hands-free. Talk to Alexa, Google Assistant, Siri, or ChatGPT to quote and book cleaning, AC, handyman across the UAE.">
+<link rel="canonical" href="https://servia.ae/smart-speakers.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Servia">
+<meta property="og:locale" content="en_AE">
+<meta property="og:title" content="Book Servia by voice — Alexa, Google, Siri, ChatGPT">
+<meta property="og:description" content="Book home services hands-free with any voice assistant.">
+<meta property="og:url" content="https://servia.ae/smart-speakers.html">
+<meta property="og:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Book Servia by voice — Alexa, Google, Siri, ChatGPT">
+<meta name="twitter:description" content="Book home services hands-free with any voice assistant.">
+<meta name="twitter:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo",
+ "name":"Book Servia home services by voice",
+ "description":"Three ways to book Servia hands-free — ChatGPT @servia mention (live now), Siri Shortcut (live now), Alexa / Google Home (in development).",
+ "totalTime":"PT45S",
+ "supply":[{"@type":"HowToSupply","name":"Phone or smart speaker"}],
+ "step":[
+  {"@type":"HowToStep","name":"ChatGPT (@servia)","text":"Type or say '@servia' in any ChatGPT chat to invoke our GPT mid-conversation.","url":"https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper"},
+  {"@type":"HowToStep","name":"Siri Shortcut","text":"Add a one-tap Siri Shortcut on iPhone that opens Servia's quote page when you say 'Hey Siri, book a cleaner'.","url":"https://servia.ae/smart-speakers.html#siri"},
+  {"@type":"HowToStep","name":"Alexa Skill","text":"Coming soon. 'Alexa, ask Servia to quote AC service in Dubai Marina'.","url":"https://servia.ae/smart-speakers.html#alexa"},
+  {"@type":"HowToStep","name":"Google Home","text":"Coming soon. 'Hey Google, ask Servia for a deep cleaning quote'.","url":"https://servia.ae/smart-speakers.html#google"}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"https://servia.ae/"},
+  {"@type":"ListItem","position":2,"name":"Voice booking","item":"https://servia.ae/smart-speakers.html"}]}
+</script>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
+<style>
+  body { background:#0F0E1F; color:#fff; min-height:100vh }
+  .vs-shell { max-width:1180px; margin:0 auto; padding:32px 16px 80px }
+  .vs-hero { text-align:center; padding:32px 0 16px; position:relative }
+  .vs-eyebrow { display:inline-block; background:linear-gradient(90deg,#7C3AED 0%,#0F766E 100%);
+    color:#fff; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+    padding:5px 12px; border-radius:999px; margin-bottom:14px }
+  .vs-hero h1 { font-size:42px; letter-spacing:-.02em; margin:8px 0 12px;
+    background:linear-gradient(90deg,#FCD34D 0%,#fff 50%,#FCD34D 100%); background-size:200% auto;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:vsshine 6s linear infinite }
+  @keyframes vsshine { 0% {background-position:0% center} 100% {background-position:200% center} }
+  .vs-hero p { color:#CBD5E1; font-size:16.5px; margin:0 auto 24px; max-width:680px; line-height:1.55 }
+
+  /* Animated voice waveform - replaces the "professional video" placeholder.
+     Pure SVG + CSS, no external assets needed. */
+  .vs-demo { background:linear-gradient(135deg,#1E1B4B 0%,#312E81 100%);
+    border-radius:22px; padding:32px 24px; max-width:720px; margin:0 auto 36px;
+    box-shadow:0 24px 80px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08); position:relative; overflow:hidden }
+  .vs-demo::before { content:""; position:absolute; inset:0;
+    background:radial-gradient(circle at 30% 30%,rgba(124,58,237,.25),transparent 50%),
+               radial-gradient(circle at 70% 70%,rgba(20,184,166,.2),transparent 50%);
+    pointer-events:none }
+  .vs-demo-inner { position:relative }
+  .vs-mic-circle { width:120px; height:120px; border-radius:50%;
+    background:linear-gradient(135deg,#7C3AED,#A78BFA); margin:0 auto 18px;
+    display:flex; align-items:center; justify-content:center; font-size:54px; line-height:1;
+    box-shadow:0 12px 40px rgba(124,58,237,.5);
+    animation:vs-pulse 2s ease-in-out infinite }
+  @keyframes vs-pulse {
+    0%,100% { transform:scale(1); box-shadow:0 12px 40px rgba(124,58,237,.5) }
+    50% { transform:scale(1.05); box-shadow:0 18px 56px rgba(124,58,237,.7) }
+  }
+  .vs-mic-circle::after { content:""; position:absolute; width:140px; height:140px; border-radius:50%;
+    border:2px solid rgba(167,139,250,.4); animation:vs-ring 2s ease-out infinite }
+  .vs-mic-circle::before { content:""; position:absolute; width:170px; height:170px; border-radius:50%;
+    border:2px solid rgba(167,139,250,.2); animation:vs-ring 2s ease-out .5s infinite }
+  @keyframes vs-ring { 0% { transform:scale(.8); opacity:1 } 100% { transform:scale(1.2); opacity:0 } }
+
+  .vs-bubble { padding:11px 16px; border-radius:16px; font-size:15px; line-height:1.5;
+    max-width:88%; margin-bottom:10px; opacity:0; animation:vsbubble .5s ease-out forwards }
+  .vs-bubble.user { background:#7C3AED; color:#fff; margin-inline-start:auto;
+    border-bottom-right-radius:5px; width:fit-content }
+  .vs-bubble.bot  { background:rgba(255,255,255,.1); color:#fff;
+    border-bottom-left-radius:5px; backdrop-filter:blur(6px); width:fit-content }
+  .vs-bubble.bot  b { color:#FCD34D }
+  .vs-bubble:nth-child(1) { animation-delay:.3s }
+  .vs-bubble:nth-child(2) { animation-delay:1.4s }
+  .vs-bubble:nth-child(3) { animation-delay:2.6s }
+  .vs-bubble:nth-child(4) { animation-delay:4.0s }
+  @keyframes vsbubble { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+
+  /* Cards grid */
+  .vs-grid { display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:36px }
+  .vs-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:18px;
+    padding:22px; backdrop-filter:blur(8px); display:flex; flex-direction:column; gap:12px;
+    transition:transform .15s, border-color .15s }
+  .vs-card:hover { transform:translateY(-3px); border-color:#FCD34D }
+  .vs-card .vs-status { font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+    padding:4px 10px; border-radius:999px; align-self:flex-start; display:inline-flex; gap:5px; align-items:center }
+  .vs-card .vs-status.live { background:#10B981; color:#fff }
+  .vs-card .vs-status.live::before { content:""; width:6px; height:6px; background:#fff; border-radius:50%; animation:vsblink 1.4s infinite }
+  .vs-card .vs-status.soon { background:#F59E0B; color:#7C2D12 }
+  .vs-card .vs-status.dev  { background:#475569; color:#fff }
+  @keyframes vsblink { 0%,100% { opacity:1 } 50% { opacity:.4 } }
+  .vs-card .vs-ico { font-size:38px; line-height:1 }
+  .vs-card h2 { margin:0; font-size:18px; color:#fff; letter-spacing:-.01em }
+  .vs-card .vs-quote { background:rgba(255,255,255,.05); border-inline-start:3px solid #FCD34D;
+    padding:8px 12px; font-style:italic; color:#FCD34D; font-size:13px; border-radius:0 8px 8px 0 }
+  .vs-card p { margin:0; color:#CBD5E1; font-size:13.5px; line-height:1.55 }
+  .vs-card ol { padding-inline-start:20px; margin:0; line-height:1.7; font-size:13px; color:#E2E8F0 }
+  .vs-card kbd { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+    padding:1px 6px; border-radius:4px; font-family:ui-monospace,monospace; font-size:11px; color:#FCD34D }
+  .vs-card .btn { margin-top:auto; align-self:flex-start; padding:10px 18px; border-radius:999px;
+    font-weight:700; text-decoration:none; font-size:13.5px; transition:.15s; cursor:pointer; border:0;
+    display:inline-flex; gap:6px; align-items:center }
+  .vs-card .btn.gpt { background:linear-gradient(135deg,#5B21B6,#7C3AED); color:#fff }
+  .vs-card .btn.gpt:hover { background:linear-gradient(135deg,#4C1D95,#6D28D9) }
+  .vs-card .btn.siri { background:linear-gradient(135deg,#0F766E,#14B8A6); color:#fff }
+  .vs-card .btn.disabled { background:rgba(255,255,255,.08); color:#94A3B8; cursor:not-allowed; pointer-events:none }
+
+  .vs-foot { text-align:center; margin-top:48px; color:#94A3B8; font-size:13.5px }
+  .vs-foot a { color:#FCD34D; text-decoration:none; font-weight:700 }
+
+  @media (max-width:560px) {
+    .vs-hero h1 { font-size:30px }
+    .vs-mic-circle { width:96px; height:96px; font-size:42px }
+    .vs-mic-circle::after { width:120px; height:120px }
+    .vs-mic-circle::before { width:150px; height:150px }
+  }
+</style>
+<script src="/banner.js" defer></script>
+<script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
+  {src:"/_snippets.js",id:"snippets"},
+  {src:"/cart-badge.js",id:"cart-badge"}
+]);</script>
+<script src="/lazy-loaders.js" defer></script>
+<script src="/conv.js" defer></script>
+<script src="/search-widget.js" defer></script>
+</head><body>
+<div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<nav class="nav" style="background:rgba(15,14,31,.85);border-bottom-color:rgba(255,255,255,.08)"><div class="nav-inner">
+  <a href="/" aria-label="Home"><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"></a>
+  <div class="nav-cta" style="margin-inline-start:auto">
+    <a class="btn btn-primary" href="/book.html">Book now</a>
+  </div>
+</div></nav>
+
+<main class="vs-shell">
+  <div class="vs-hero">
+    <span class="vs-eyebrow">🎙️ HANDS-FREE BOOKING</span>
+    <h1>Book Servia by voice</h1>
+    <p>Talk to ChatGPT, Siri, Alexa, or Google Home — anywhere in the UAE — and Servia will quote, schedule, and book a vetted pro for you. No app to open. No form to fill.</p>
+  </div>
+
+  <!-- Animated voice booking demo (replaces "professional video") -->
+  <div class="vs-demo">
+    <div class="vs-demo-inner" style="text-align:center;position:relative">
+      <div class="vs-mic-circle" aria-hidden="true">🎙️</div>
+      <div style="font-size:13px;color:#A78BFA;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px">LIVE VOICE BOOKING DEMO</div>
+    </div>
+    <div class="vs-bubble user">"Hey ChatGPT, ask <b style="background:rgba(0,0,0,.32);padding:1px 6px;border-radius:4px;color:#FCD34D">@servia</b> for a deep cleaning quote in Dubai Marina"</div>
+    <div class="vs-bubble bot">Deep cleaning a 2-bed apartment in Dubai Marina runs <b>AED 350–450</b>. Same-day if booked before noon. Want me to lock the slot?</div>
+    <div class="vs-bubble user">"Yes, tomorrow 10am, my number is +971501234567"</div>
+    <div class="vs-bubble bot">Done — booking <b>LM-D8X4F2</b> confirmed. Pay-link sent to your WhatsApp. Your pro will arrive at 10am sharp 🚐</div>
+  </div>
+
+  <div class="vs-grid">
+
+    <!-- 1. CHATGPT - LIVE NOW -->
+    <div class="vs-card" id="chatgpt">
+      <span class="vs-status live">LIVE NOW</span>
+      <div class="vs-ico">🚀</div>
+      <h2>ChatGPT (@servia)</h2>
+      <div class="vs-quote">"Hey ChatGPT, ask @servia how much for AC service in Sharjah"</div>
+      <p>Already working. Type or speak <kbd>@servia</kbd> in any ChatGPT conversation. Our GPT shows up mid-chat with quotes + bookings.</p>
+      <ol>
+        <li>Open ChatGPT (chat.openai.com or the app)</li>
+        <li>In any message, type or say <kbd>@servia</kbd></li>
+        <li>Ask anything — quotes, services, areas</li>
+      </ol>
+      <a class="btn gpt" href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener" data-event="open_chatgpt_gpt">🚀 Open Servia GPT →</a>
+    </div>
+
+    <!-- 2. SIRI SHORTCUT - LIVE TODAY (no dev work) -->
+    <div class="vs-card" id="siri">
+      <span class="vs-status live">LIVE NOW</span>
+      <div class="vs-ico">🍏</div>
+      <h2>Siri Shortcut (iPhone)</h2>
+      <div class="vs-quote">"Hey Siri, book Servia AC service"</div>
+      <p>Works on every iPhone today. Add a Siri Shortcut once and Siri opens Servia's quote page when you ask. No app install needed.</p>
+      <ol>
+        <li>Open the <b>Shortcuts</b> app on your iPhone</li>
+        <li>Tap <b>+</b> → <b>Add Action</b> → choose <b>"Open URL"</b></li>
+        <li>URL: <kbd>https://servia.ae/search.html?q=AC%20service</kbd></li>
+        <li>Tap the trigger phrase, set it to <em>"Book Servia AC service"</em></li>
+        <li>Now say "Hey Siri, book Servia AC service" — done</li>
+      </ol>
+      <a class="btn siri" href="/install.html#siri">Set up Siri Shortcut →</a>
+    </div>
+
+    <!-- 3. ALEXA - COMING SOON -->
+    <div class="vs-card" id="alexa">
+      <span class="vs-status soon">COMING Q3 2026</span>
+      <div class="vs-ico">🟦</div>
+      <h2>Amazon Alexa Skill</h2>
+      <div class="vs-quote">"Alexa, ask Servia to book a cleaner tomorrow"</div>
+      <p>Native Alexa Skill in development. Will support quoting, booking, and re-scheduling for every service across all 7 emirates. Estimated launch: Q3 2026.</p>
+      <ol>
+        <li>Skill name: <b>Servia</b></li>
+        <li>Locales: en-US, en-GB, en-AE</li>
+        <li>Intents: BookService, GetQuote, RescheduleBooking, ListServices, TrackVisit</li>
+        <li>Will auto-link to your Amazon account for handsfree payment via Alexa Pay</li>
+      </ol>
+      <button class="btn disabled" disabled>🔜 Coming soon</button>
+    </div>
+
+    <!-- 4. GOOGLE HOME - COMING SOON -->
+    <div class="vs-card" id="google">
+      <span class="vs-status soon">COMING Q3 2026</span>
+      <div class="vs-ico">🟩</div>
+      <h2>Google Home / Assistant</h2>
+      <div class="vs-quote">"Hey Google, ask Servia for an AC quote in Marina"</div>
+      <p>Google App Action integration. Hey Google launches our PWA with the right intent. Most popular smart speaker in UAE.</p>
+      <ol>
+        <li>Will work on Nest Hub, Pixel speakers, Android phones</li>
+        <li>Triggers our existing PWA via App Action intent</li>
+        <li>Voice → instant quote → "Yes" to book</li>
+      </ol>
+      <button class="btn disabled" disabled>🔜 Coming soon</button>
+    </div>
+
+    <!-- 5. SAMSUNG WATCH - COMING SOON -->
+    <div class="vs-card" id="samsung">
+      <span class="vs-status soon">COMING Q4 2026</span>
+      <div class="vs-ico">⌚</div>
+      <h2>Samsung Galaxy Watch app</h2>
+      <div class="vs-quote">Tap watch → "Cleaner now" → done</div>
+      <p>One-tap booking from your wrist. Native Tizen app for Galaxy Watch 4/5/6/7 + Wear OS. Get notification when your pro is 5 min away.</p>
+      <ol>
+        <li>Tap-to-rebook your last service</li>
+        <li>Live ETA tracking on watch face</li>
+        <li>Voice quoting via Bixby</li>
+        <li>Push notifications for booking updates</li>
+      </ol>
+      <button class="btn disabled" disabled>🔜 Coming soon</button>
+    </div>
+
+    <!-- 6. APPLE WATCH - VIA PWA -->
+    <div class="vs-card" id="apple-watch">
+      <span class="vs-status dev">DEV PARTIAL</span>
+      <div class="vs-ico">⌚</div>
+      <h2>Apple Watch (via iPhone PWA)</h2>
+      <div class="vs-quote">Notifications + Siri</div>
+      <p>If you've installed the Servia iPhone PWA + paired with an Apple Watch, you already get booking notifications on your wrist. Native watchOS app planned for 2027.</p>
+      <ol>
+        <li>Install Servia PWA on iPhone first (<a href="/install.html" style="color:#FCD34D">/install.html</a>)</li>
+        <li>Apple Watch mirrors notifications</li>
+        <li>Reply to confirmation prompts from your wrist</li>
+      </ol>
+      <a class="btn siri" href="/install.html">Install on iPhone →</a>
+    </div>
+  </div>
+
+  <p class="vs-foot">
+    Want voice booking sooner?<br>
+    Use <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">Servia GPT in ChatGPT</a> — it's already live and supports voice via the ChatGPT mobile app's microphone.
+  </p>
+</main>
+</body></html>
