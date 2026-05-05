@@ -1128,6 +1128,33 @@ def indexnow_key_file(key: str):
     raise HTTPException(404, "not found")
 
 
+@app.get("/.well-known/assetlinks.json", include_in_schema=False)
+def android_assetlinks():
+    """Digital Asset Links — Android TWA needs this served from the website
+    root with the SHA-256 of the signed APK so Chrome can verify ownership
+    and launch the TWA without a URL bar. File lives at
+    web/.well-known/assetlinks.json and is hand-edited after the first
+    Bubblewrap build to drop in the real fingerprint."""
+    from fastapi.responses import FileResponse
+    p = settings.WEB_DIR / ".well-known" / "assetlinks.json"
+    if not p.exists():
+        raise HTTPException(404, "not found")
+    return FileResponse(str(p), media_type="application/json")
+
+
+@app.get("/.well-known/apple-app-site-association", include_in_schema=False)
+def apple_app_site_association():
+    """Universal Links manifest. Same idea as assetlinks.json but for iOS.
+    Empty stub until we publish to the App Store; once we do, replace this
+    file with the real Team ID + Bundle ID."""
+    from fastapi.responses import FileResponse, JSONResponse
+    p = settings.WEB_DIR / ".well-known" / "apple-app-site-association"
+    if p.exists():
+        return FileResponse(str(p), media_type="application/json")
+    # Sensible empty default — won't trigger any deep-link handlers.
+    return JSONResponse({"applinks": {"apps": [], "details": []}})
+
+
 def indexnow_submit(urls: list[str]) -> dict:
     """POST a batch of URLs to IndexNow. Returns the API status. Safe to call
     fire-and-forget; logs the result without raising."""
