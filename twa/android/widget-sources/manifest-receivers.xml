@@ -1,0 +1,23 @@
+<!-- Servia widget receivers — injected into the generated AndroidManifest.xml
+     by the workflow's "Inject widgets" step. These declare the two
+     AppWidgetProviders (QuickBookWidget, TrackBookingWidget) so Android's
+     widget picker shows them under "Servia" when the user long-presses the
+     home screen. -->
+<receiver android:name=".QuickBookWidget"
+          android:exported="true"
+          android:label="Servia Quick Book">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_quick_book_widget_info" />
+</receiver>
+<receiver android:name=".TrackBookingWidget"
+          android:exported="true"
+          android:label="Servia Track Booking">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/servia_track_widget_info" />
+</receiver>

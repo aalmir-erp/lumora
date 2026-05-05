@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="servia_quick_book_widget_desc">Servia quick-book — 4 most-used services in one tap</string>
+    <string name="servia_track_widget_desc">Servia booking tracker — live ETA + crew status</string>
+</resources>
