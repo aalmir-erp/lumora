@@ -177,8 +177,12 @@
   }
 
   function run() {
-    replaceNav();
-    replaceFooter();
+    // Defensively wrap in try/catch — a single thrown exception here would
+    // abort the IIFE before subsequent listeners and other scripts run,
+    // and a half-built nav can manifest as a blank-looking page on some
+    // routes. Better to log and continue with the per-page nav untouched.
+    try { replaceNav(); }    catch (e) { console.warn("[unav] nav replace failed", e); }
+    try { replaceFooter(); } catch (e) { console.warn("[unav] footer replace failed", e); }
   }
 
   if (document.readyState === "loading") {

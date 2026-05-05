@@ -23,7 +23,7 @@
     return i18n;
   }
 
-  function applyLang(lang) {
+  function applyLang(lang, triggeredByUser) {
     if (!i18n[lang]) lang = "en";
     currentLang = lang;
     localStorage.setItem(LS_LANG, lang);
@@ -64,8 +64,13 @@
       } else {
         setCookie("googtrans", "/en/" + lang);
       }
-      const prev = sessionStorage.getItem("servia.last.applied.lang");
-      if (prev !== lang) {
+      // Only reload when the user EXPLICITLY changed the language (clicked the
+      // dropdown). The previous "reload if sessionStorage prev !== lang"
+      // pattern fired on every fresh tab (sessionStorage is empty per tab),
+      // and on every inner-page navigation that hadn't yet seen this lang in
+      // its sessionStorage — which manifested as inner pages going blank
+      // because GT and our scripts raced during the reload.
+      if (triggeredByUser) {
         sessionStorage.setItem("servia.last.applied.lang", lang);
         location.reload();
         return;
@@ -122,7 +127,7 @@
     return (i18n && i18n[currentLang] && i18n[currentLang][key]) || fallback || key;
   };
   window.lumoraLang = function () { return currentLang; };
-  window.lumoraSetLang = function (lang) { applyLang(lang); };
+  window.lumoraSetLang = function (lang) { applyLang(lang, true); };
 
   // ---------- API helper ----------
   window.api = async function (path, opts = {}) {
@@ -188,7 +193,7 @@
   // ---------- language picker ----------
   document.addEventListener("change", (e) => {
     const t = e.target.closest(".lang-pick");
-    if (t) applyLang(t.value);
+    if (t) applyLang(t.value, true);
   });
 
   // ---------- Google Translate widget — LAZY LOAD ONLY ----------
@@ -216,7 +221,20 @@
     s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     s.async = true; document.head.appendChild(s);
     const css = document.createElement("style");
-    css.textContent = ".goog-te-banner-frame, .skiptranslate { display:none !important } body { top:0 !important } .goog-te-gadget { font-size:0 } .goog-te-gadget > span { display:none }";
+    /* Hide ONLY the Google-Translate-injected chrome (banner iframe, tooltip
+     * balloon, spinner). The earlier ".skiptranslate { display:none }"
+     * was way too broad — Google adds the "skiptranslate" class to every
+     * element we'd marked with class="notranslate" or translate="no", and
+     * on some inner pages GT also adds it to layout containers it can't
+     * translate. Hiding all of them would blank the page. */
+    css.textContent =
+      "iframe.goog-te-banner-frame, " +
+      "#goog-gt-tt, " +
+      "#goog-te-balloon-frame, " +
+      ".goog-te-spinner-pos { display:none !important } " +
+      "body { top:0 !important } " +
+      ".goog-te-gadget { font-size:0 } " +
+      ".goog-te-gadget > span { display:none }";
     document.head.appendChild(css);
   }
   // Load it only if (a) saved language is non-English, OR (b) user clicks the picker

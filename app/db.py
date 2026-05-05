@@ -200,6 +200,27 @@ CREATE TABLE IF NOT EXISTS saved_addresses (
 );
 CREATE INDEX IF NOT EXISTS idx_addr_customer ON saved_addresses(customer_id);
 
+-- Stored payment methods. We never store full card numbers — only the
+-- display metadata (brand, last4, expiry) so the UI can render
+-- "VISA •••• 4242". Real charging goes through Stripe payment_method tokens
+-- (stripe_pm_id), which is what's required by PCI-DSS scope. method_type:
+--   'card' | 'cod' | 'whatsapp_pay' | 'apple_pay' | 'google_pay' | 'bank'
+CREATE TABLE IF NOT EXISTS customer_payment_methods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL,
+    method_type TEXT NOT NULL,
+    label TEXT,
+    card_brand TEXT,
+    card_last4 TEXT,
+    card_expiry TEXT,
+    holder_name TEXT,
+    stripe_pm_id TEXT,
+    is_default INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_pm_customer ON customer_payment_methods(customer_id);
+
 CREATE TABLE IF NOT EXISTS reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     booking_id TEXT NOT NULL,
@@ -233,6 +254,19 @@ def init_db() -> None:
             "ALTER TABLE bookings ADD COLUMN photos_json TEXT",
             "ALTER TABLE bookings ADD COLUMN cancelled_at TEXT",
             "ALTER TABLE bookings ADD COLUMN cancellation_reason TEXT",
+            # Extended saved-address fields (modern address book UX with
+            # contact person + building/apt/emirate + map pin + delivery notes).
+            "ALTER TABLE saved_addresses ADD COLUMN building TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN apartment TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN street TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN city TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN emirate TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN contact_name TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN contact_phone TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN notes TEXT",
+            "ALTER TABLE saved_addresses ADD COLUMN lat REAL",
+            "ALTER TABLE saved_addresses ADD COLUMN lng REAL",
+            "ALTER TABLE saved_addresses ADD COLUMN updated_at TEXT",
         ):
             try:
                 c.execute(stmt)

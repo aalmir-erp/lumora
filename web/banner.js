@@ -165,9 +165,13 @@ function __serviaBannerInit() {
     document.head.appendChild(css);
   }
 
-  // Build banner DOM
-  const wrap = document.createElement("div");
+  // Build banner DOM. If a stub was already inserted (see __serviaBannerReserveSlot
+  // at the bottom of this file), reuse it so there's no layout shift between
+  // "blank stub" → "real banner". Otherwise create a fresh element.
+  const existing = document.getElementById("servia-topbanner");
+  const wrap = existing || document.createElement("div");
   wrap.id = "servia-topbanner";
+  wrap.innerHTML = "";  // clear stub content if reused
   wrap.style.background = TONES[slides[0].tone] || TONES.teal;
   const track = document.createElement("div");
   track.className = "b-track";
@@ -212,15 +216,19 @@ function __serviaBannerInit() {
   };
   wrap.appendChild(x);
 
-  // Inject above the flag strip if present, else top of body
-  const insertNow = () => {
-    const flag = document.querySelector(".uae-flag-strip");
-    const target = flag && flag.parentNode === document.body ? flag : document.body.firstChild;
-    if (target) document.body.insertBefore(wrap, target);
-    else document.body.appendChild(wrap);
-  };
-  if (document.body) insertNow();
-  else document.addEventListener("DOMContentLoaded", insertNow, { once: true });
+  // Inject above the flag strip if present, else top of body — but ONLY if
+  // we created a fresh node. If we reused an existing stub it's already in
+  // the DOM at the right place.
+  if (!existing) {
+    const insertNow = () => {
+      const flag = document.querySelector(".uae-flag-strip");
+      const target = flag && flag.parentNode === document.body ? flag : document.body.firstChild;
+      if (target) document.body.insertBefore(wrap, target);
+      else document.body.appendChild(wrap);
+    };
+    if (document.body) insertNow();
+    else document.addEventListener("DOMContentLoaded", insertNow, { once: true });
+  }
 
   // Cycle slides every 4s
   let i = 0;
@@ -241,15 +249,48 @@ function __serviaBannerInit() {
     wrap.style.background = TONES[slides[i].tone] || TONES.teal;
   }, period);
 }
-// Hold the banner until AFTER the PSI test window (~10s) OR until the user
-// interacts. Headless Lighthouse never scrolls / clicks, so this keeps the
-// banner out of CLS / forced-reflow / touch-target audits while still firing
-// for real users on their first scroll. Saves ~165ms reflow + 0.05 CLS.
+// Reserve banner layout space EARLY so when init() injects content there's
+// no layout jerk. The previous "wait 11s or first interaction" path made
+// the banner feel broken — users would render the page, then much later
+// (or on their first click) a teal bar would suddenly slide in above the
+// nav. The 0.05 CLS we saved that way wasn't worth a UX that looks broken.
+function __serviaBannerReserveSlot() {
+  const path = location.pathname;
+  if (/^\/(admin|vendor|portal-vendor|pay)/.test(path)) return null;
+  try {
+    const last = parseInt(localStorage.getItem("servia.topbanner.dismissed_at") || "0", 10);
+    if (Date.now() - last < 24 * 3600 * 1000) return null;
+  } catch (_) {}
+  if (document.getElementById("servia-topbanner")) return null;
+  const stub = document.createElement("div");
+  stub.id = "servia-topbanner";
+  stub.style.cssText = "min-height:44px;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)";
+  const insert = () => {
+    if (document.getElementById("servia-topbanner") && stub.parentNode) return;
+    const flag = document.querySelector(".uae-flag-strip");
+    const target = flag && flag.parentNode === document.body ? flag : document.body.firstChild;
+    if (target) document.body.insertBefore(stub, target);
+    else document.body.appendChild(stub);
+  };
+  if (document.body) insert();
+  else document.addEventListener("DOMContentLoaded", insert, { once:true });
+  return stub;
+}
+__serviaBannerReserveSlot();
+
+// Init runs early — well before 11s — so the banner is interactive when
+// the user shows up. We still defer past LCP via requestIdleCallback (or a
+// tiny setTimeout fallback), and still fire on first interaction in case
+// rIC takes its time.
 let _bannerFired = false;
 const _bannerGo = () => {
   if (_bannerFired) return; _bannerFired = true;
   __serviaBannerInit();
 };
-setTimeout(_bannerGo, 11000);
+if ("requestIdleCallback" in window) {
+  requestIdleCallback(_bannerGo, { timeout: 1500 });
+} else {
+  setTimeout(_bannerGo, 600);
+}
 ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
   addEventListener(ev, _bannerGo, { once: true, passive: true }));
