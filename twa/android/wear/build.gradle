@@ -2,6 +2,19 @@ plugins {
     id 'com.android.application'
 }
 
+// Servia Wear OS standalone build.
+//
+// History: previous CI attempts produced no APK because the older
+// `com.google.android.support:wearable` artifact has been delisted from
+// google()'s Maven mirror. AGP 8.5 silently fails dependency resolution
+// in some configurations and exits 0 — we lose the build with no logs.
+//
+// v1.22.83 fix: drop both the deprecated support-wearable AND the
+// androidx.wear widget (BoxInsetLayout). Layout uses plain FrameLayout
+// + manual padding for round-screen safety. compileOnly wearable jar is
+// kept solely so <uses-library> resolves at compile time — the watch
+// system provides it at runtime.
+
 android {
     namespace 'ae.servia.wear'
     compileSdk 34
@@ -12,15 +25,12 @@ android {
         versionCode 1
         versionName "1.0.0"
     }
-    // signingConfigs are required for -P injected signing to work. Values
-    // come from environment via gradle.properties at build time. Without
-    // declaring this here, AGP produces unsigned APKs and our find for
-    // app-release-signed.apk fails.
     signingConfigs {
         release {
-            // These are placeholders — actual values supplied via gradle
-            // -Pandroid.injected.signing.* properties at build time.
-            storeFile file("../../../servia.jks")
+            // Real values supplied at runtime via -Pandroid.injected.signing.*
+            // (see .scripts/build-wear-apk.sh). These placeholders only
+            // exist to keep the gradle config valid before injection.
+            storeFile file("placeholder.jks")
             storePassword "placeholder"
             keyAlias "servia"
             keyPassword "placeholder"
@@ -29,6 +39,9 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
             signingConfig signingConfigs.release
         }
     }
@@ -40,8 +53,7 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.wear:wear:1.3.0'
-    // Optional but useful: BoxInsetLayout helps avoid the round-screen edges.
-    implementation 'com.google.android.support:wearable:2.9.0'
+    // No androidx.wear / no support-wearable — layout uses plain Android views.
+    // The wearable system jar is provided at runtime by the watch.
     compileOnly 'com.google.android.wearable:wearable:2.9.0'
 }
