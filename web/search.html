@@ -4,19 +4,19 @@
 <meta name="servia-page" content="default">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D9488">
-<title>Search • Servia</title>
-<meta name="description" content="Search every service, blog post, FAQ and area page on Servia in one place.">
+<title>Search Servia AI • Voice, instant results, 32 services across UAE</title>
+<meta name="description" content="Modern AI search across every Servia service, blog, FAQ, area and video. Voice input, instant suggestions, AI-mode answers, and one-tap booking. Cmd+K from anywhere.">
 <link rel="canonical" href="https://servia.ae/search.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Servia">
 <meta property="og:locale" content="en_AE">
-<meta property="og:title" content="Search • Servia">
-<meta property="og:description" content="Search every service, blog post, FAQ and area page on Servia.">
+<meta property="og:title" content="Search Servia AI">
+<meta property="og:description" content="Voice + AI search across every Servia service. Cmd+K from anywhere.">
 <meta property="og:url" content="https://servia.ae/search.html">
 <meta property="og:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Search • Servia">
-<meta name="twitter:description" content="Search every service, blog post, FAQ and area page on Servia.">
+<meta name="twitter:title" content="Search Servia AI">
+<meta name="twitter:description" content="Voice + AI search across every Servia service.">
 <meta name="twitter:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"Servia","url":"https://servia.ae",
@@ -32,52 +32,123 @@
 <link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
 <style>
   body { background:linear-gradient(180deg,#F0FDFA,#FFFFFF); min-height:100vh }
-  .search-shell { max-width:760px; margin:32px auto; padding:0 16px }
-  .search-hero { text-align:center; padding:24px 0 16px }
-  .search-hero h1 { font-size:32px; letter-spacing:-.02em; margin:8px 0 4px }
-  .search-hero p { color:var(--muted); font-size:14px; margin:0 }
-  .search-box { position:relative; margin:18px auto 8px; max-width:620px }
-  .search-box input { width:100%; padding:16px 56px 16px 48px; font-size:16px;
-    border:2px solid #BAE6FD; border-radius:999px; background:#fff;
-    box-shadow:0 4px 16px rgba(15,23,42,.06); outline:none; transition:border-color .15s,box-shadow .15s }
-  .search-box input:focus { border-color:#0F766E; box-shadow:0 4px 20px rgba(15,118,110,.18) }
-  .search-box .ico { position:absolute; left:18px; top:50%; transform:translateY(-50%); font-size:18px; color:#64748B }
-  .search-box .clear { position:absolute; right:14px; top:50%; transform:translateY(-50%);
-    background:#F1F5F9; border:0; width:32px; height:32px; border-radius:50%;
-    cursor:pointer; font-size:14px; color:#475569; display:none; align-items:center; justify-content:center }
-  .search-box.has-text .clear { display:flex }
-  .search-meta { text-align:center; color:var(--muted); font-size:13px; margin:4px 0 18px }
-  .search-meta b { color:var(--text) }
-  .filters { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:6px 0 18px }
-  .filters .chip { background:#fff; border:1px solid var(--border); padding:5px 12px;
+  .ss-shell { max-width:880px; margin:24px auto; padding:0 16px }
+  .ss-hero { text-align:center; padding:24px 0 16px }
+  .ss-eyebrow { display:inline-block; background:linear-gradient(90deg,#0F766E,#14B8A6);
+    color:#fff; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+    padding:5px 12px; border-radius:999px; margin-bottom:10px }
+  .ss-hero h1 { font-size:34px; letter-spacing:-.02em; margin:6px 0 6px;
+    background:linear-gradient(90deg,#0F766E 0%,#14B8A6 50%,#0F766E 100%); background-size:200% auto;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:gshine 6s linear infinite }
+  @keyframes gshine { 0% {background-position:0% center} 100% {background-position:200% center} }
+  .ss-hero p { color:var(--muted); font-size:14.5px; margin:0; max-width:580px; margin-inline:auto }
+
+  .ss-tabs { display:flex; gap:6px; justify-content:center; margin:18px auto 6px; max-width:380px }
+  .ss-tab { flex:1; padding:9px 14px; border:1px solid var(--border); background:#fff;
+    border-radius:999px; font-weight:700; font-size:13px; color:var(--text); cursor:pointer;
+    display:inline-flex; gap:6px; align-items:center; justify-content:center; transition:.12s }
+  .ss-tab.active { background:#0F766E; color:#fff; border-color:#0F766E; box-shadow:0 4px 14px rgba(15,118,110,.3) }
+  .ss-tab:hover:not(.active) { background:#F0FDFA; border-color:#0F766E }
+  .ss-tab .kbd { font-size:10px; opacity:.7; background:rgba(0,0,0,.08); padding:1px 5px; border-radius:4px; font-family:ui-monospace,monospace }
+  .ss-tab.active .kbd { background:rgba(255,255,255,.22) }
+
+  .ss-box { position:relative; margin:14px auto 0; max-width:680px }
+  .ss-input { width:100%; padding:18px 110px 18px 50px; font-size:17px;
+    border:2px solid #BAE6FD; border-radius:18px; background:#fff;
+    box-shadow:0 8px 24px rgba(15,23,42,.08); outline:none;
+    transition:border-color .15s, box-shadow .15s }
+  .ss-input:focus { border-color:#0F766E; box-shadow:0 8px 30px rgba(15,118,110,.18) }
+  .ss-ico { position:absolute; left:18px; top:50%; transform:translateY(-50%); font-size:20px; color:#64748B; pointer-events:none }
+  .ss-actions { position:absolute; right:8px; top:50%; transform:translateY(-50%); display:flex; gap:4px; align-items:center }
+  .ss-mic, .ss-clear, .ss-send {
+    background:transparent; border:0; width:38px; height:38px; border-radius:10px;
+    cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center;
+    color:#475569; transition:.12s
+  }
+  .ss-mic:hover, .ss-clear:hover, .ss-send:hover { background:#F0FDFA; color:#0F766E }
+  .ss-mic.listening { background:#DC2626; color:#fff; animation:micpulse 1s ease-in-out infinite }
+  @keyframes micpulse { 0%,100% { transform:translateY(0) scale(1) } 50% { transform:translateY(0) scale(1.1) } }
+  .ss-send { background:#0F766E; color:#fff; padding:0 14px; width:auto; min-width:64px; font-weight:700; font-size:13px }
+  .ss-send:hover { background:#0F172A; color:#fff }
+  .ss-clear { display:none } .ss-box.has-text .ss-clear { display:flex }
+
+  .ss-meta { text-align:center; color:var(--muted); font-size:13px; margin:14px 0 0; min-height:18px }
+  .ss-meta b { color:var(--text) }
+
+  /* Trending / popular chip rail */
+  .ss-chips-row { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:14px 0 8px }
+  .ss-chip { background:#fff; border:1px solid var(--border); padding:7px 13px; border-radius:999px;
+    font-size:12.5px; font-weight:600; cursor:pointer; color:var(--text);
+    display:inline-flex; gap:5px; align-items:center; transition:.12s; text-decoration:none }
+  .ss-chip:hover { background:#F0FDFA; border-color:#0F766E; color:#0F766E }
+  .ss-chip .e { font-size:14px; line-height:1 }
+  .ss-chip-section { font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); margin:18px 0 8px; text-align:center }
+
+  /* Filter chips */
+  .ss-filters { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:8px 0 14px }
+  .ss-filters .chip { background:#fff; border:1px solid var(--border); padding:5px 12px;
     border-radius:999px; font-size:12px; font-weight:700; cursor:pointer; color:var(--text);
     display:inline-flex; align-items:center; gap:5px }
-  .filters .chip.active { background:#0F766E; color:#fff; border-color:#0F766E }
-  .filters .chip .count { background:rgba(255,255,255,.25); padding:1px 7px; border-radius:999px; font-size:10px; font-weight:800 }
-  .filters .chip:not(.active) .count { background:#F1F5F9; color:var(--muted) }
-  .results { display:flex; flex-direction:column; gap:10px; padding-bottom:64px }
-  .result { background:#fff; border:1px solid var(--border); border-radius:14px;
+  .ss-filters .chip.active { background:#0F766E; color:#fff; border-color:#0F766E }
+  .ss-filters .chip .count { background:rgba(255,255,255,.25); padding:1px 7px; border-radius:999px; font-size:10px; font-weight:800 }
+  .ss-filters .chip:not(.active) .count { background:#F1F5F9; color:var(--muted) }
+
+  /* Results */
+  .ss-results { display:flex; flex-direction:column; gap:8px; padding-bottom:64px; max-width:760px; margin:0 auto }
+  .ss-result { background:#fff; border:1px solid var(--border); border-radius:14px;
     padding:14px 16px; text-decoration:none; color:var(--text); display:block;
-    transition:transform .12s,box-shadow .12s,border-color .12s }
-  .result:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.08); border-color:transparent }
-  .result .kind { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+    transition:transform .12s,box-shadow .12s,border-color .12s; position:relative }
+  .ss-result:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.08); border-color:transparent }
+  .ss-result .kind { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
     padding:3px 9px; border-radius:999px; margin-bottom:8px }
-  .result .kind.service { background:#ECFDF5; color:#065F46 }
-  .result .kind.area { background:#EFF6FF; color:#1E40AF }
-  .result .kind.blog { background:#FEF3C7; color:#92400E }
-  .result .kind.faq { background:#F3E8FF; color:#5B21B6 }
-  .result .kind.video { background:#FCE7F3; color:#9F1239 }
-  .result .kind.page { background:#F1F5F9; color:#475569 }
-  .result h3 { margin:0 0 4px; font-size:17px; letter-spacing:-.01em; color:var(--text) }
-  .result p { margin:0; color:var(--muted); font-size:13.5px; line-height:1.45 }
-  .result mark { background:#FEF3C7; color:#7C2D12; padding:0 2px; border-radius:3px }
-  .empty { text-align:center; padding:48px 16px; color:var(--muted) }
-  .empty .ico { font-size:56px; line-height:1; margin-bottom:12px }
-  .empty h2 { font-size:20px; margin:0 0 6px; color:var(--text) }
-  .empty .sg { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px; max-width:520px; margin-left:auto; margin-right:auto }
-  .empty .sg a { background:#fff; border:1px solid var(--border); padding:8px 14px; border-radius:999px;
-    font-size:13px; font-weight:600; color:var(--primary-dark); text-decoration:none }
-  .empty .sg a:hover { background:#F0FDFA; border-color:#0F766E }
+  .ss-result .kind.service { background:#ECFDF5; color:#065F46 }
+  .ss-result .kind.area { background:#EFF6FF; color:#1E40AF }
+  .ss-result .kind.blog { background:#FEF3C7; color:#92400E }
+  .ss-result .kind.faq { background:#F3E8FF; color:#5B21B6 }
+  .ss-result .kind.video { background:#FCE7F3; color:#9F1239 }
+  .ss-result .kind.page { background:#F1F5F9; color:#475569 }
+  .ss-result h3 { margin:0 0 4px; font-size:17px; letter-spacing:-.01em; color:var(--text) }
+  .ss-result p { margin:0; color:var(--muted); font-size:13.5px; line-height:1.45 }
+  .ss-result mark { background:#FEF3C7; color:#7C2D12; padding:0 2px; border-radius:3px }
+  .ss-result .arrow { position:absolute; right:16px; top:50%; transform:translateY(-50%); color:#94A3B8; font-size:14px; opacity:0; transition:.12s }
+  .ss-result:hover .arrow { opacity:1; transform:translateY(-50%) translateX(4px); color:#0F766E }
+
+  /* AI Mode */
+  .ss-ai-shell { max-width:760px; margin:0 auto 64px; display:none; flex-direction:column; gap:14px }
+  .ss-ai-shell.active { display:flex }
+  .ss-msg { padding:14px 18px; border-radius:18px; font-size:15px; line-height:1.55; max-width:92%; white-space:pre-wrap }
+  .ss-msg.user { background:#0F766E; color:#fff; align-self:flex-end; border-bottom-right-radius:6px }
+  .ss-msg.bot { background:#fff; border:1px solid var(--border); color:var(--text); align-self:flex-start; border-bottom-left-radius:6px;
+    box-shadow:0 4px 14px rgba(15,23,42,.04) }
+  .ss-msg.bot .typing { display:inline-flex; gap:3px }
+  .ss-msg.bot .typing span { width:6px; height:6px; background:#94A3B8; border-radius:50%; animation:typing 1.2s ease-in-out infinite }
+  .ss-msg.bot .typing span:nth-child(2) { animation-delay:.15s }
+  .ss-msg.bot .typing span:nth-child(3) { animation-delay:.3s }
+  @keyframes typing { 0%,80%,100% { opacity:.3; transform:translateY(0) } 40% { opacity:1; transform:translateY(-3px) } }
+
+  /* GPT + Install banner at top */
+  .ss-tools { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:12px 0 0 }
+  .ss-tool { background:rgba(15,23,42,.04); border:1px solid var(--border); padding:7px 12px;
+    border-radius:999px; font-size:12px; font-weight:700; color:var(--text);
+    text-decoration:none; display:inline-flex; gap:6px; align-items:center; transition:.12s }
+  .ss-tool:hover { background:#F0FDFA; border-color:#0F766E; color:#0F766E }
+  .ss-tool.gpt { background:linear-gradient(135deg,#5B21B6,#7C3AED); color:#fff; border-color:transparent }
+  .ss-tool.gpt:hover { background:linear-gradient(135deg,#4C1D95,#6D28D9); color:#fff }
+  .ss-tool.install { background:linear-gradient(135deg,#0F766E,#14B8A6); color:#fff; border-color:transparent }
+  .ss-tool.install:hover { background:linear-gradient(135deg,#0F172A,#0F766E); color:#fff }
+
+  .ss-empty { text-align:center; padding:32px 16px; color:var(--muted); max-width:520px; margin:0 auto }
+  .ss-empty .ico { font-size:56px; line-height:1; margin-bottom:12px }
+  .ss-empty h2 { font-size:20px; margin:0 0 6px; color:var(--text) }
+
+  @media (max-width:560px) {
+    .ss-hero h1 { font-size:26px }
+    .ss-input { padding:15px 100px 15px 44px; font-size:16px }
+    .ss-tools { gap:6px }
+    .ss-tool { font-size:11px; padding:6px 10px }
+  }
 </style>
 <script src="/banner.js" defer></script>
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
@@ -86,6 +157,7 @@
 ]);</script>
 <script src="/lazy-loaders.js" defer></script>
 <script src="/conv.js" defer></script>
+<script src="/search-widget.js" defer></script>
 </head><body>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <nav class="nav"><div class="nav-inner">
@@ -95,51 +167,149 @@
   </div>
 </div></nav>
 
-<main class="search-shell">
-  <div class="search-hero">
-    <div style="font-size:48px;line-height:1">🔎</div>
-    <h1>Search Servia</h1>
-    <p>One box, every service, blog post, FAQ, video and area page across all 7 emirates.</p>
+<main class="ss-shell">
+  <div class="ss-hero">
+    <span class="ss-eyebrow">🔮 Servia AI Search</span>
+    <h1>Ask Servia anything</h1>
+    <p>Search 32 services, 50+ areas, blog posts, FAQs and videos in one box. Or switch to AI mode and ask in plain English. Voice 🎤 works too.</p>
+    <div class="ss-tools">
+      <a class="ss-tool gpt" href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener" data-event="open_chatgpt_gpt">🚀 Open in ChatGPT</a>
+      <a class="ss-tool install" href="/install.html" data-event="open_install_page">📲 Install Servia app</a>
+      <a class="ss-tool" href="/contact.html">💬 Talk to a human</a>
+    </div>
   </div>
 
-  <div class="search-box" id="sbox">
-    <span class="ico">🔍</span>
-    <input id="q" type="search" placeholder="Try 'AC service Sharjah', 'deep cleaning price', 'pest control'…"
-           autocomplete="off" autofocus>
-    <button class="clear" type="button" id="qc" aria-label="Clear search">✕</button>
+  <div class="ss-tabs">
+    <button class="ss-tab active" data-mode="search" type="button">🔍 Search <span class="kbd">/</span></button>
+    <button class="ss-tab"        data-mode="ai"     type="button">✨ Ask AI <span class="kbd">Tab</span></button>
   </div>
 
-  <p class="search-meta" id="meta"></p>
-  <div class="filters" id="filters"></div>
-  <div class="results" id="results"></div>
+  <form class="ss-box" id="sbox" role="search" onsubmit="event.preventDefault();">
+    <span class="ss-ico">🔍</span>
+    <input id="q" type="search"
+           placeholder="Try 'AC service Sharjah', 'how much for deep cleaning JLT', 'pest control Dubai Marina'"
+           autocomplete="off" autofocus aria-label="Search Servia">
+    <div class="ss-actions">
+      <button class="ss-mic" id="qmic" type="button" title="Voice search (Web Speech API)" aria-label="Voice search">🎤</button>
+      <button class="ss-clear" id="qc" type="button" title="Clear" aria-label="Clear search">✕</button>
+      <button class="ss-send" id="qsend" type="submit" title="Send to AI" aria-label="Send to AI" style="display:none">Send</button>
+    </div>
+  </form>
+
+  <p class="ss-meta" id="meta"></p>
+
+  <!-- Recent + Popular suggestions (shown when query is empty) -->
+  <div id="suggestions">
+    <div class="ss-chip-section" id="recent-section" style="display:none">⏱ Your recent searches</div>
+    <div class="ss-chips-row" id="recent"></div>
+
+    <div class="ss-chip-section">🔥 Trending searches</div>
+    <div class="ss-chips-row" id="trending"></div>
+
+    <div class="ss-chip-section">⚡ Popular shortcuts</div>
+    <div class="ss-chips-row" id="popular"></div>
+  </div>
+
+  <!-- Search-mode results -->
+  <div class="ss-filters" id="filters" style="display:none"></div>
+  <div class="ss-results" id="results"></div>
+
+  <!-- AI-mode chat -->
+  <div class="ss-ai-shell" id="ai">
+    <div class="ss-msg bot">Hi! I'm Servia AI. Ask me anything about UAE home services. I'll quote, advise, and help you book.<br><br>
+      Try: <em>"How much is deep cleaning a 2-bed apartment in Dubai Marina?"</em></div>
+  </div>
 </main>
 
 <script>
+/* ---------- Modern AI Search ----------
+   - Two modes: Search (instant fuzzy across services/blog/FAQ/areas/videos)
+                AI (chat with our /api/chat endpoint, multi-language)
+   - Voice input via Web Speech API (Chrome/Edge/Safari/iOS)
+   - Recent searches in localStorage
+   - Trending + popular chips
+   - Cmd/Ctrl + K opens this page from anywhere (bound at site-wide level
+     in /search-widget.js)
+   - / shortcut focuses input
+   - Tab toggles between modes
+*/
 (async function(){
-  const q = document.getElementById("q");
-  const sbox = document.getElementById("sbox");
-  const qc = document.getElementById("qc");
-  const meta = document.getElementById("meta");
-  const filtersEl = document.getElementById("filters");
-  const resultsEl = document.getElementById("results");
-  let docs = []; let activeKind = "all";
-  const KIND_LABEL = {all:"All",service:"Services",area:"Areas",blog:"Blog",faq:"FAQs",video:"Videos",page:"Pages"};
+  const q       = document.getElementById("q");
+  const sbox    = document.getElementById("sbox");
+  const qc      = document.getElementById("qc");
+  const qmic    = document.getElementById("qmic");
+  const qsend   = document.getElementById("qsend");
+  const meta    = document.getElementById("meta");
+  const sugg    = document.getElementById("suggestions");
+  const recentEl   = document.getElementById("recent");
+  const recentSec  = document.getElementById("recent-section");
+  const trendingEl = document.getElementById("trending");
+  const popularEl  = document.getElementById("popular");
+  const filtersEl  = document.getElementById("filters");
+  const resultsEl  = document.getElementById("results");
+  const aiEl       = document.getElementById("ai");
+  const tabs       = document.querySelectorAll(".ss-tab");
 
-  const urlQ = (new URLSearchParams(location.search).get("q") || "").trim();
-  if (urlQ) { q.value = urlQ; sbox.classList.add("has-text"); }
+  let docs = [];
+  let activeKind = "all";
+  let mode = "search";          // "search" | "ai"
+  let aiSession = null;
+  const KIND_LABEL = {all:"All",service:"Services",area:"Areas",blog:"Blog",faq:"FAQs",video:"Videos",page:"Pages"};
+  const RECENT_KEY = "servia.search.recent.v1";
+  const TRENDING = [
+    {label:"AC service Dubai Marina",  emoji:"❄️"},
+    {label:"Deep cleaning 2-bed price",emoji:"✨"},
+    {label:"Pest control Sharjah",     emoji:"🪲"},
+    {label:"Handyman JLT same-day",    emoji:"🔧"},
+    {label:"Maid service hourly",       emoji:"👤"},
+    {label:"Move-out cleaning Abu Dhabi",emoji:"📦"},
+    {label:"Pool maintenance villa",   emoji:"🏊"},
+    {label:"Sofa shampoo price",       emoji:"🛋️"},
+  ];
+  const POPULAR_LINKS = [
+    {label:"All 32 services",   url:"/services.html",     emoji:"📋"},
+    {label:"Coverage map",      url:"/coverage.html",     emoji:"🗺️"},
+    {label:"FAQ",               url:"/faq.html",          emoji:"❓"},
+    {label:"Latest blog",       url:"/blog",              emoji:"📰"},
+    {label:"Watch videos",      url:"/videos.html",       emoji:"🎬"},
+    {label:"Refer & earn",      url:"/share-rewards.html",emoji:"🎁"},
+    {label:"My account",        url:"/me.html",           emoji:"👤"},
+    {label:"Contact us",        url:"/contact.html",      emoji:"💬"},
+  ];
+
+  function loadRecent(){ try { return JSON.parse(localStorage.getItem(RECENT_KEY)||"[]"); } catch(_) { return []; } }
+  function saveRecent(arr){ try { localStorage.setItem(RECENT_KEY, JSON.stringify(arr.slice(0, 8))); } catch(_) {} }
+  function pushRecent(query){
+    if (!query || query.length < 2) return;
+    const r = loadRecent().filter(x => x.toLowerCase() !== query.toLowerCase());
+    r.unshift(query);
+    saveRecent(r);
+  }
+
+  function escapeRe(s){ return (s||"").replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+  function score(doc, terms){
+    if (!terms.length) return 0;
+    const t = (doc.title||"").toLowerCase(); const b = (doc.body||"").toLowerCase();
+    let s = 0;
+    for (const term of terms) {
+      if (!term) continue;
+      const re = new RegExp(`\\b${escapeRe(term)}\\b`);
+      if (re.test(t)) s += 12; else if (t.includes(term)) s += 6;
+      if (re.test(b)) s += 3; else if (b.includes(term)) s += 1;
+    }
+    return s;
+  }
+  function highlight(text, terms){
+    if (!terms.length || !text) return (text||"").replace(/</g,"&lt;");
+    let out = (text||"").replace(/</g,"&lt;");
+    for (const term of terms) {
+      if (!term || term.length < 2) continue;
+      out = out.replace(new RegExp("("+escapeRe(term)+")","ig"), "<mark>$1</mark>");
+    }
+    return out;
+  }
 
   async function loadIndex(){
-    const tasks = [
-      fetch("/api/services").then(r=>r.json()).then(j => (j.services||[]).map(s => ({
-        kind:"service", title:s.name, body:(s.description||"")+" "+(s.category||""),
-        url:`/service.html?id=${s.id}` }))).catch(()=>[]),
-      fetch("/api/blog/list?limit=200").then(r=>r.ok?r.json():null).then(j => j ? (j.posts||[]).map(p => ({
-        kind:"blog", title:p.topic||p.slug, body:(p.emirate||"")+" "+(p.service_id||""),
-        url:`/blog/${p.slug}` })) : []).catch(()=>[]),
-      fetch("/api/videos/list?limit=200").then(r=>r.ok?r.json():null).then(j => j ? (j.videos||[]).map(v => ({
-        kind:"video", title:v.title||v.slug, body:(v.tone||""),
-        url:`/api/videos/play/${v.slug}` })) : []).catch(()=>[]),
-    ];
     const STATIC = [
       {kind:"page",  title:"All services",          body:"home services UAE 32 services catalogue", url:"/services.html"},
       {kind:"page",  title:"Book a service",        body:"book online quote pay schedule",          url:"/book.html"},
@@ -153,6 +323,7 @@
       {kind:"page",  title:"Refund policy",         body:"refund cancellation return money",        url:"/refund.html"},
       {kind:"page",  title:"Terms of Service",      body:"terms conditions legal",                  url:"/terms.html"},
       {kind:"page",  title:"Privacy",               body:"data privacy gdpr",                       url:"/privacy.html"},
+      {kind:"page",  title:"Install Servia app",    body:"PWA installable iOS Android desktop ChatGPT GPT", url:"/install.html"},
       {kind:"area", title:"Dubai",          body:"jumeirah marina jlt downtown business bay jvc mirdif palm", url:"/area.html?city=dubai"},
       {kind:"area", title:"Abu Dhabi",      body:"khalifa city yas reem saadiyat raha mussafah corniche",     url:"/area.html?city=abu-dhabi"},
       {kind:"area", title:"Sharjah",        body:"al khan al majaz nahda muwaileh qasimia taawun aljada",      url:"/area.html?city=sharjah"},
@@ -168,38 +339,65 @@
       {kind:"faq", title:"Languages supported on chat and WhatsApp?",              body:"English Arabic Hindi Filipino",                  url:"/faq.html"},
       {kind:"faq", title:"Does Servia offer a re-clean guarantee?",                body:"24 hour re-clean satisfaction guarantee",        url:"/faq.html"},
     ];
+    const tasks = [
+      fetch("/api/services").then(r=>r.json()).then(j => (j.services||[]).map(s => ({
+        kind:"service", title:s.name, body:(s.description||"")+" "+(s.category||""),
+        url:`/service.html?id=${s.id}` }))).catch(()=>[]),
+      fetch("/api/blog/list?limit=200").then(r=>r.ok?r.json():null).then(j => j ? (j.posts||[]).map(p => ({
+        kind:"blog", title:p.topic||p.slug, body:(p.emirate||"")+" "+(p.service_id||""),
+        url:`/blog/${p.slug}` })) : []).catch(()=>[]),
+      fetch("/api/videos/list?limit=200").then(r=>r.ok?r.json():null).then(j => j ? (j.videos||[]).map(v => ({
+        kind:"video", title:v.title||v.slug, body:(v.tone||""),
+        url:`/api/videos/play/${v.slug}` })) : []).catch(()=>[]),
+    ];
     const results = await Promise.allSettled(tasks);
     const dynamic = results.flatMap(r => r.status === "fulfilled" ? r.value : []);
     docs = [...STATIC, ...dynamic];
   }
 
-  function escapeRe(s){ return (s||"").replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
-  function score(doc, terms){
-    if (!terms.length) return 0;
-    const t = (doc.title || "").toLowerCase();
-    const b = (doc.body || "").toLowerCase();
-    let s = 0;
-    for (const term of terms) {
-      if (!term) continue;
-      const re = new RegExp(`\\b${escapeRe(term)}\\b`);
-      if (re.test(t)) s += 12;
-      else if (t.includes(term)) s += 6;
-      if (re.test(b)) s += 3;
-      else if (b.includes(term)) s += 1;
+  function setMode(next){
+    mode = next;
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.mode === next));
+    qsend.style.display = (next === "ai") ? "flex" : "none";
+    aiEl.classList.toggle("active", next === "ai");
+    sugg.style.display = (next === "search") ? "" : "none";
+    filtersEl.style.display = (next === "search" && q.value.trim()) ? "" : "none";
+    resultsEl.style.display = (next === "search") ? "" : "none";
+    if (next === "ai") {
+      q.placeholder = "Ask anything: 'I need a cleaner in JVC tomorrow morning'";
+    } else {
+      q.placeholder = "Try 'AC service Sharjah', 'how much for deep cleaning JLT', 'pest control Dubai Marina'";
     }
-    return s;
+    if (next === "search") render();
   }
-  function highlight(text, terms){
-    if (!terms.length || !text) return (text||"").replace(/</g,"&lt;");
-    let out = (text||"").replace(/</g,"&lt;");
-    for (const term of terms) {
-      if (!term || term.length < 2) continue;
-      out = out.replace(new RegExp("("+escapeRe(term)+")","ig"), "<mark>$1</mark>");
-    }
-    return out;
+  tabs.forEach(t => t.addEventListener("click", () => setMode(t.dataset.mode)));
+
+  function renderChips(){
+    const recent = loadRecent();
+    if (recent.length) {
+      recentSec.style.display = "";
+      recentEl.innerHTML = recent.map(r =>
+        `<a class="ss-chip" href="?q=${encodeURIComponent(r)}" data-q="${r.replace(/"/g,'&quot;')}"><span class="e">⏱</span>${r.replace(/</g,'&lt;')}</a>`
+      ).join("");
+    } else { recentSec.style.display = "none"; recentEl.innerHTML = ""; }
+    trendingEl.innerHTML = TRENDING.map(t =>
+      `<a class="ss-chip" href="?q=${encodeURIComponent(t.label)}" data-q="${t.label}"><span class="e">${t.emoji}</span>${t.label}</a>`
+    ).join("");
+    popularEl.innerHTML = POPULAR_LINKS.map(p =>
+      `<a class="ss-chip" href="${p.url}"><span class="e">${p.emoji}</span>${p.label}</a>`
+    ).join("");
+    // Wire chip-as-search clicks (only if data-q present)
+    document.querySelectorAll(".ss-chip[data-q]").forEach(c => c.addEventListener("click", e => {
+      e.preventDefault();
+      q.value = c.dataset.q;
+      sbox.classList.add("has-text");
+      render();
+      q.focus();
+    }));
   }
 
   function render(){
+    if (mode !== "search") return;
     const query = q.value.trim();
     sbox.classList.toggle("has-text", !!query);
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -210,45 +408,139 @@
     const top = scored.slice(0, 50);
 
     const counts = {all:0,service:0,area:0,blog:0,faq:0,video:0,page:0};
-    const matchedAll = (terms.length ? docs.filter(d => score(d, terms) > 0) : docs);
+    const matchedAll = (terms.length ? docs.filter(d => score(d, terms) > 0) : []);
     counts.all = matchedAll.length;
     matchedAll.forEach(d => { if (counts[d.kind] !== undefined) counts[d.kind]++; });
-    filtersEl.innerHTML = Object.keys(counts).filter(k => k === "all" || counts[k] > 0).map(k =>
-      `<button class="chip ${k===activeKind?"active":""}" data-kind="${k}">${KIND_LABEL[k]} <span class="count">${counts[k]}</span></button>`
-    ).join("");
-    filtersEl.querySelectorAll(".chip").forEach(c => c.onclick = () => { activeKind = c.dataset.kind; render(); });
 
-    if (!terms.length) meta.innerHTML = `Type to search ${docs.length} pages.`;
-    else meta.innerHTML = `Found <b>${counts.all}</b> result${counts.all===1?"":"s"} for "${query.replace(/</g,"&lt;")}"`;
+    if (terms.length) {
+      filtersEl.style.display = "";
+      filtersEl.innerHTML = Object.keys(counts).filter(k => k === "all" || counts[k] > 0).map(k =>
+        `<button class="chip ${k===activeKind?"active":""}" type="button" data-kind="${k}">${KIND_LABEL[k]} <span class="count">${counts[k]}</span></button>`
+      ).join("");
+      filtersEl.querySelectorAll(".chip").forEach(c => c.onclick = () => { activeKind = c.dataset.kind; render(); });
+    } else {
+      filtersEl.style.display = "none";
+    }
+
+    if (!terms.length) { meta.innerHTML = ""; sugg.style.display = ""; resultsEl.innerHTML = ""; return; }
+    sugg.style.display = "none";
+    meta.innerHTML = `Found <b>${counts.all}</b> result${counts.all===1?"":"s"} for "${query.replace(/</g,"&lt;")}"`;
 
     const u = new URL(location.href);
     if (query) u.searchParams.set("q", query); else u.searchParams.delete("q");
     history.replaceState(null, "", u.toString());
 
     if (!top.length) {
-      if (terms.length) {
-        resultsEl.innerHTML = `<div class="empty"><div class="ico">🤔</div>
-          <h2>No results for "${query.replace(/</g,"&lt;")}"</h2>
-          <p>Try a different keyword, or pick one of these:</p>
-          <div class="sg">
-            <a href="/services.html">All services →</a>
-            <a href="/coverage.html">Coverage map →</a>
-            <a href="/faq.html">FAQ →</a>
-            <a href="/contact.html">Talk to us →</a>
-          </div></div>`;
-      } else { resultsEl.innerHTML = ""; }
+      resultsEl.innerHTML = `<div class="ss-empty"><div class="ico">🤔</div>
+        <h2>No results for "${query.replace(/</g,"&lt;")}"</h2>
+        <p>Try fewer keywords, switch to <b>Ask AI</b> mode (Tab key), or <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener" style="color:#5B21B6;font-weight:700">ask Servia GPT directly</a>.</p></div>`;
       return;
     }
     resultsEl.innerHTML = top.map(d => `
-      <a class="result" href="${d.url}">
+      <a class="ss-result" href="${d.url}">
         <span class="kind ${d.kind}">${d.kind}</span>
         <h3>${highlight(d.title, terms)}</h3>
-        ${d.body ? `<p>${highlight(d.body, terms).slice(0, 220)}${d.body.length > 220 ? "…" : ""}</p>` : ""}
+        ${d.body ? `<p>${highlight(d.body, terms).slice(0, 200)}${d.body.length > 200 ? "…" : ""}</p>` : ""}
+        <span class="arrow">→</span>
       </a>`).join("");
+
+    // Persist this query as recent (debounced — only after user pauses 1.2s)
+    clearTimeout(window.__ssRecTimer);
+    window.__ssRecTimer = setTimeout(() => pushRecent(query), 1200);
   }
 
-  q.addEventListener("input", render);
+  // ---------- AI mode (calls /api/chat) ----------
+  async function aiSend(text){
+    if (!text || !text.trim()) return;
+    const userMsg = document.createElement("div");
+    userMsg.className = "ss-msg user"; userMsg.textContent = text;
+    aiEl.appendChild(userMsg);
+    const botMsg = document.createElement("div");
+    botMsg.className = "ss-msg bot";
+    botMsg.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+    aiEl.appendChild(botMsg);
+    aiEl.scrollIntoView({behavior:"smooth", block:"end"});
+    try {
+      const r = await fetch("/api/chat", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body: JSON.stringify({ message: text, session_id: aiSession || undefined,
+                               language: (navigator.language||"en").slice(0,2) })
+      });
+      const j = await r.json();
+      aiSession = j.session_id || aiSession;
+      botMsg.textContent = j.text || j.detail || "Sorry, no response.";
+    } catch (e) {
+      botMsg.textContent = "Couldn't reach Servia AI right now. Try /contact.html or open Servia GPT on ChatGPT instead.";
+    }
+    pushRecent(text);
+    aiEl.scrollIntoView({behavior:"smooth", block:"end"});
+  }
+
+  // Wire input & form
+  q.addEventListener("input", () => { if (mode === "search") render(); });
+  q.addEventListener("keydown", e => {
+    if (e.key === "Tab" && !e.shiftKey) {
+      e.preventDefault();
+      setMode(mode === "search" ? "ai" : "search");
+    } else if (e.key === "Escape") {
+      q.value = ""; render(); q.focus();
+    } else if (e.key === "Enter" && mode === "ai") {
+      e.preventDefault();
+      const v = q.value.trim();
+      if (v) { aiSend(v); q.value = ""; render(); }
+    }
+  });
   qc.addEventListener("click", () => { q.value = ""; q.focus(); render(); });
+  qsend.addEventListener("click", () => {
+    if (mode === "ai") {
+      const v = q.value.trim();
+      if (v) { aiSend(v); q.value = ""; render(); }
+    }
+  });
+  // / key focuses input from anywhere on the page (when not typing)
+  document.addEventListener("keydown", e => {
+    if ((e.key === "/" || e.key === "?") && document.activeElement !== q) {
+      const tag = (document.activeElement?.tagName || "").toLowerCase();
+      if (tag !== "input" && tag !== "textarea" && tag !== "select") {
+        e.preventDefault(); q.focus();
+      }
+    }
+  });
+
+  // ---------- Voice input (Web Speech API) ----------
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (Recognition) {
+    const rec = new Recognition();
+    rec.continuous = false; rec.interimResults = true;
+    rec.lang = (navigator.language || "en-US");
+    let listening = false;
+    qmic.addEventListener("click", () => {
+      if (listening) { rec.stop(); return; }
+      try { rec.start(); } catch(_) {}
+    });
+    rec.onstart = () => { listening = true; qmic.classList.add("listening"); qmic.textContent = "🔴"; };
+    rec.onend   = () => { listening = false; qmic.classList.remove("listening"); qmic.textContent = "🎤"; };
+    rec.onerror = () => { listening = false; qmic.classList.remove("listening"); qmic.textContent = "🎤"; };
+    rec.onresult = e => {
+      const transcript = Array.from(e.results).map(r => r[0].transcript).join("");
+      q.value = transcript;
+      sbox.classList.add("has-text");
+      if (mode === "search") render();
+      // If final + AI mode, send it
+      if (mode === "ai" && e.results[0].isFinal) {
+        const v = q.value.trim();
+        if (v) { aiSend(v); q.value = ""; render(); }
+      }
+    };
+  } else {
+    qmic.style.display = "none";
+  }
+
+  // ---------- Bootstrap ----------
+  const urlQ = (new URLSearchParams(location.search).get("q") || "").trim();
+  if (urlQ) { q.value = urlQ; sbox.classList.add("has-text"); }
+  renderChips();
   await loadIndex();
   render();
 })();
