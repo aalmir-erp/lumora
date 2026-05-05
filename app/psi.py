@@ -27,7 +27,7 @@ MAX_HISTORY = 30
 def _domain() -> str:
     from .config import get_settings
     s = get_settings()
-    return f"https://{s.BRAND_DOMAIN or 'www.servia.ae'}"
+    return f"https://{s.BRAND_DOMAIN or 'servia.ae'}"
 
 
 async def _run_one(url: str, strategy: str) -> dict[str, Any]:
