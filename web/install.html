@@ -124,6 +124,35 @@ html.translated-rtl body > * { visibility:visible !important; opacity:1 !importa
   position:absolute !important; left:-9999px !important; top:-9999px !important;
   width:1px !important; height:1px !important; overflow:hidden !important; }
 </style>
+<script>
+/* Hide top-banner / install-banner placeholders pre-paint when dismissed.
+ * Runs synchronously in <head> before body renders so there's no flash
+ * of an empty teal stripe while JS catches up. Mirrors the logic in
+ * banner.js (6h suppression) and install.js (7-day TTL via dismissed_at). */
+(function(){
+  try {
+    var now = Date.now();
+    var topD = parseInt(localStorage.getItem("servia.topbanner.dismissed_at")||"0",10);
+    if (topD && now - topD < 6*3600*1000) {
+      document.documentElement.classList.add("hide-topbanner");
+    }
+    if (localStorage.getItem("servia.install.dismissed") === "banner") {
+      var insD = parseInt(localStorage.getItem("servia.install.dismissed_at")||"0",10);
+      // No timestamp = legacy permanent dismiss; treat as still-dismissed.
+      if (!insD || now - insD < 7*24*3600*1000) {
+        document.documentElement.classList.add("hide-install-banner");
+      }
+    }
+    if (localStorage.getItem("servia.install.completed")) {
+      document.documentElement.classList.add("hide-install-banner");
+    }
+  } catch(_) {}
+})();
+</script>
+<style id="servia-banner-hide">
+html.hide-topbanner #servia-topbanner { display:none !important; height:0 !important; min-height:0 !important; }
+html.hide-install-banner #servia-install-banner { display:none !important; }
+</style>
 </head><body>
 <div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
