@@ -184,19 +184,32 @@
 
     <!-- 2. SIRI SHORTCUT - LIVE TODAY (no dev work) -->
     <div class="vs-card" id="siri">
-      <span class="vs-status live">LIVE NOW</span>
+      <span class="vs-status live">LIVE NOW · 30 SEC SETUP</span>
       <div class="vs-ico">🍏</div>
       <h2>Siri Shortcut (iPhone)</h2>
-      <div class="vs-quote">"Hey Siri, book Servia AC service"</div>
-      <p>Works on every iPhone today. Add a Siri Shortcut once and Siri opens Servia's quote page when you ask. No app install needed.</p>
-      <ol>
-        <li>Open the <b>Shortcuts</b> app on your iPhone</li>
-        <li>Tap <b>+</b> → <b>Add Action</b> → choose <b>"Open URL"</b></li>
-        <li>URL: <kbd>https://servia.ae/search.html?q=AC%20service</kbd></li>
-        <li>Tap the trigger phrase, set it to <em>"Book Servia AC service"</em></li>
-        <li>Now say "Hey Siri, book Servia AC service" — done</li>
-      </ol>
-      <a class="btn siri" href="/install.html#siri">Set up Siri Shortcut →</a>
+      <div class="vs-quote">"Hey Siri, book Servia"</div>
+      <p>One-tap setup. Works on every iPhone with iOS 13+. No app to install, no developer account, nothing technical.</p>
+      <p style="background:rgba(252,211,77,.15);border-inline-start:3px solid #FCD34D;padding:8px 12px;border-radius:0 8px 8px 0;font-size:13px;color:#FCD34D">
+        <b>Easiest path:</b> tap any link below on your iPhone (Safari) — Siri auto-suggests "Add to Siri" the first 3 times you visit. Done.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:12.5px;margin-top:6px">
+        <a href="/search.html?q=deep+cleaning" style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700">✨ Deep cleaning</a>
+        <a href="/search.html?q=AC+service" style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700">❄️ AC service</a>
+        <a href="/search.html?q=maid+service" style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700">👤 Maid</a>
+        <a href="/search.html?q=handyman" style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700">🔧 Handyman</a>
+        <a href="/search.html?q=pest+control" style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700">🪲 Pest control</a>
+        <a href="/search.html?q=move+out" style="background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700">📦 Move-out</a>
+      </div>
+      <details style="margin-top:8px;font-size:12.5px;color:#CBD5E1">
+        <summary style="cursor:pointer;color:#FCD34D;font-weight:700">Manual setup (any iPhone)</summary>
+        <ol style="margin-top:8px">
+          <li>Open the <b>Shortcuts</b> app (built-in to iOS)</li>
+          <li>Tap <b>+</b> → search "URL" → tap <b>Open URLs</b></li>
+          <li>Paste: <kbd>https://servia.ae/search.html?q=AC%20service</kbd></li>
+          <li>Tap "Add to Siri" → record phrase: <em>"Book Servia"</em></li>
+        </ol>
+      </details>
+      <a class="btn siri" href="/install.html#siri">More iPhone tips →</a>
     </div>
 
     <!-- 3. ALEXA - COMING SOON -->
@@ -215,19 +228,42 @@
       <button class="btn disabled" disabled>🔜 Coming soon</button>
     </div>
 
-    <!-- 4. GOOGLE HOME - COMING SOON -->
+    <!-- 4. GOOGLE ASSISTANT ROUTINE - LIVE TODAY (no dev work) -->
     <div class="vs-card" id="google">
-      <span class="vs-status soon">COMING Q3 2026</span>
+      <span class="vs-status live">LIVE NOW · 1 MIN SETUP</span>
       <div class="vs-ico">🟩</div>
-      <h2>Google Home / Assistant</h2>
-      <div class="vs-quote">"Hey Google, ask Servia for an AC quote in Marina"</div>
-      <p>Google App Action integration. Hey Google launches our PWA with the right intent. Most popular smart speaker in UAE.</p>
+      <h2>Google Assistant Routine</h2>
+      <div class="vs-quote">"Hey Google, book Servia"</div>
+      <p>Same idea as Siri Shortcut, on Android / Nest Hub / Pixel. Set up a Google Assistant Routine that opens Servia when you say a trigger. No skill build needed.</p>
+      <p style="background:rgba(167,139,250,.15);border-inline-start:3px solid #A78BFA;padding:8px 12px;border-radius:0 8px 8px 0;font-size:13px;color:#A78BFA">
+        Native Alexa Skill + Google Action SDK still planned for Q3 2026 (richer flows). The Routine below works on every device today.
+      </p>
+      <details style="margin-top:8px;font-size:12.5px;color:#CBD5E1">
+        <summary style="cursor:pointer;color:#FCD34D;font-weight:700">Setup steps (1 minute)</summary>
+        <ol style="margin-top:8px">
+          <li>Open Google Home app (or Assistant settings on Android)</li>
+          <li>Routines → <b>+ Add a routine</b></li>
+          <li>Trigger: "When I say <em>'Hey Google, book Servia'</em>"</li>
+          <li>Action: choose <b>Open app or website</b> → paste <kbd>https://servia.ae/search.html</kbd></li>
+          <li>Save → say it. Done.</li>
+        </ol>
+      </details>
+      <a class="btn siri" style="background:linear-gradient(135deg,#34A853,#0F766E)" href="https://search.google.com/local/writereview?placeid=" target="_blank" rel="noopener">Set up routine →</a>
+    </div>
+
+    <!-- 5. HEY GEMINI - LIVE NOW (works on Android 14+ / Pixel / Galaxy S24+) -->
+    <div class="vs-card" id="gemini">
+      <span class="vs-status live">LIVE NOW</span>
+      <div class="vs-ico">💎</div>
+      <h2>Hey Gemini (Android)</h2>
+      <div class="vs-quote">"Hey Gemini, ask Servia how much for AC service in Sharjah"</div>
+      <p>Gemini on Android (Pixel 8+, Galaxy S24+, Android 14+) reads our llms.txt + schema and answers Servia questions natively. Same flow as ChatGPT @servia, but on Android.</p>
       <ol>
-        <li>Will work on Nest Hub, Pixel speakers, Android phones</li>
-        <li>Triggers our existing PWA via App Action intent</li>
-        <li>Voice → instant quote → "Yes" to book</li>
+        <li>Long-press the home button OR say "Hey Gemini"</li>
+        <li>Ask anything about UAE home services with the word "Servia"</li>
+        <li>Gemini cites our content with the live AED price + booking link</li>
       </ol>
-      <button class="btn disabled" disabled>🔜 Coming soon</button>
+      <a class="btn siri" style="background:linear-gradient(135deg,#4285F4,#A78BFA)" href="https://gemini.google.com" target="_blank" rel="noopener">Try Gemini Web →</a>
     </div>
 
     <!-- 5. SAMSUNG WATCH - COMING SOON -->
