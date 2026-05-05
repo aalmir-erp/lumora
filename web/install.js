@@ -49,18 +49,63 @@
     return window.matchMedia("(display-mode: standalone)").matches ||
            window.navigator.standalone === true;
   }
-  function track(event, extra) {
+  // Stable device fingerprint — first/last installs from the same device
+  // collapse to one record. localStorage is per-origin, so this works for
+  // PWA + TWA + plain web on the same servia.ae origin.
+  function deviceId() {
     try {
-      navigator.sendBeacon
-        ? navigator.sendBeacon("/api/app-install",
-            new Blob([JSON.stringify({ event, ...(extra||{}),
-              user_agent: navigator.userAgent, source: location.pathname,
-              referrer: document.referrer })], { type: "application/json" }))
-        : fetch("/api/app-install", { method:"POST",
-            headers:{"content-type":"application/json"}, keepalive:true,
-            body: JSON.stringify({ event, ...(extra||{}),
-              user_agent: navigator.userAgent, source: location.pathname,
-              referrer: document.referrer }) }).catch(()=>{});
+      let id = localStorage.getItem("servia.device.id");
+      if (!id) {
+        // Random 16 hex chars — not a privacy concern, just collapse-key.
+        id = (crypto.randomUUID ? crypto.randomUUID().replace(/-/g,"") : Math.random().toString(36).slice(2)+Date.now().toString(36)).slice(0,32);
+        localStorage.setItem("servia.device.id", id);
+      }
+      return id;
+    } catch (_) { return ""; }
+  }
+  function detectPlatform() {
+    if (window.matchMedia("(display-mode: standalone)").matches) return "twa-or-pwa";
+    if (window.navigator.standalone === true) return "ios-pwa";
+    return "browser";
+  }
+  function track(event, extra) {
+    const body = {
+      event, ...(extra||{}),
+      user_agent: navigator.userAgent,
+      source: location.pathname,
+      referrer: document.referrer,
+      // Rich device telemetry — populated on every install event so the
+      // admin Mobile-App tab can show "X installs from Pixel 8 / Android 14"
+      // without us needing to update the APK or any future migration.
+      app_version: (document.querySelector("meta[name=app-version]")||{}).content
+                || (window.__servia_app_version || "")
+                || (location.search.match(/[?&]app=([\w.-]+)/)||[])[1] || "",
+      device_model: navigator.userAgentData ? (navigator.userAgentData.platform || "") : "",
+      os_version: navigator.platform || "",
+      screen: (window.screen ? `${window.screen.width}x${window.screen.height}` : ""),
+      language: navigator.language || "",
+      device_id: deviceId(),
+      platform: detectPlatform(),
+    };
+    // Forward an Authorization header if the user is logged in — backend
+    // links the install event to the customer record.
+    let headers = {"content-type":"application/json"};
+    try {
+      const tok = localStorage.getItem("lumora.user.tok");
+      if (tok && localStorage.getItem("lumora.user.type") === "customer") {
+        headers["Authorization"] = "Bearer " + tok;
+      }
+    } catch (_) {}
+    try {
+      // sendBeacon doesn't support Authorization headers in most browsers,
+      // so fall back to fetch when we have an auth token.
+      if (navigator.sendBeacon && !headers["Authorization"]) {
+        navigator.sendBeacon("/api/app-install",
+          new Blob([JSON.stringify(body)], { type: "application/json" }));
+      } else {
+        fetch("/api/app-install",
+          { method:"POST", headers, keepalive:true, body: JSON.stringify(body) }).catch(()=>{});
+      }
     } catch {}
   }
 
@@ -272,6 +317,19 @@
 
   // Public API for any "Install" button on the site
   window.serviaShowInstall = openModal;
+
+  // Fire a `launched` event whenever the app loads in standalone (TWA / PWA)
+  // mode — the admin Mobile-App tab uses these to count installs in the wild.
+  // Once-per-day per device to avoid flooding.
+  try {
+    if (isStandalone()) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem("servia.launched.today") !== today) {
+        localStorage.setItem("servia.launched.today", today);
+        track("launched");
+      }
+    }
+  } catch (_) {}
 
   // ---------- Floating UI session-minimize ----------
   // The user complained that floating FABs (cart, install, search, chat)

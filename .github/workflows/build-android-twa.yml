@@ -74,20 +74,66 @@ jobs:
       - name: Decide signing mode
         id: sign
         run: |
+          # Three modes, in priority order:
+          # (1) GitHub Secrets ANDROID_* set        → production-via-secrets
+          # (2) Encrypted blob in repo + ADMIN_TOKEN → production-via-blob
+          # (3) Neither → auto-generate debug keystore (URL-bar build)
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "Mode: production (using ANDROID_* secrets)"
-            echo "mode=production" >> $GITHUB_OUTPUT
+            echo "Mode: production (GitHub Secrets)"
+            echo "mode=production-secrets" >> $GITHUB_OUTPUT
+          elif [ -f "${GITHUB_WORKSPACE}/app/data/twa_credentials.enc" ]; then
+            echo "Mode: production (encrypted blob in repo)"
+            echo "mode=production-blob" >> $GITHUB_OUTPUT
           else
-            echo "Mode: debug (auto-generating temporary keystore for sideload testing)"
+            echo "Mode: debug (auto-generating)"
             echo "mode=debug" >> $GITHUB_OUTPUT
           fi
 
-      - name: Restore production keystore
-        if: steps.sign.outputs.mode == 'production'
+      - name: Restore production keystore from GitHub Secrets
+        if: steps.sign.outputs.mode == 'production-secrets'
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           echo "$KS" | base64 -d > $RUNNER_TEMP/servia.jks
+          echo "KEYSTORE_PASS=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_PASS=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV
+          ls -la $RUNNER_TEMP/servia.jks
+
+      - name: Restore production keystore from encrypted repo blob
+        if: steps.sign.outputs.mode == 'production-blob'
+        env:
+          # ADMIN_TOKEN is the encryption key (PBKDF2 input). Falls back to the
+          # default "lumora-admin-test" used on Railway when env var unset, so
+          # CI works without setting any secrets.
+          ADMIN_TOKEN_RUNTIME: ${{ secrets.ADMIN_TOKEN || 'lumora-admin-test' }}
+        run: |
+          # Install crypto deps + decrypt blob into a real keystore file.
+          pip install --quiet cryptography
+          python3 - <<'PY'
+          import base64, hashlib, json, os
+          from cryptography.fernet import Fernet
+          token = os.environ['ADMIN_TOKEN_RUNTIME']
+          salt = b'servia.twa.creds.v1'
+          kb = hashlib.pbkdf2_hmac('sha256', token.encode(), salt, 100_000, dklen=32)
+          fkey = base64.urlsafe_b64encode(kb)
+          enc = open(os.environ['GITHUB_WORKSPACE'] + '/app/data/twa_credentials.enc', 'rb').read()
+          data = json.loads(Fernet(fkey).decrypt(enc))
+          # Drop the keystore file
+          ks_path = os.environ['RUNNER_TEMP'] + '/servia.jks'
+          open(ks_path, 'wb').write(base64.b64decode(data['keystore_base64']))
+          # Export passwords as workflow env vars (masked)
+          ge = open(os.environ['GITHUB_ENV'], 'a')
+          ge.write(f"KEYSTORE_PASS={data['keystore_password']}\n")
+          ge.write(f"KEY_PASS={data['key_password']}\n")
+          ge.write(f"KEY_ALIAS={data['key_alias']}\n")
+          # Mask passwords from the workflow log
+          print(f"::add-mask::{data['keystore_password']}")
+          print(f"::add-mask::{data['key_password']}")
+          print(f"Decrypted {len(data['keystore_base64'])//4*3} bytes of keystore")
+          print(f"  alias: {data['key_alias']}")
+          print(f"  SHA-256: {data.get('sha256_fingerprint','(unknown)')}")
+          PY
           ls -la $RUNNER_TEMP/servia.jks
 
       - name: Generate debug keystore
@@ -100,9 +146,9 @@ jobs:
             -storepass servia-debug-pass \
             -keypass servia-debug-pass \
             -dname "CN=Servia Debug, OU=Servia, O=Servia, L=Dubai, ST=Dubai, C=AE"
-          echo "Debug keystore created at $RUNNER_TEMP/servia.jks"
-          # Print the SHA-256 so the user can update assetlinks.json if they
-          # want this APK to launch full-screen (otherwise URL bar appears).
+          echo "KEYSTORE_PASS=servia-debug-pass" >> $GITHUB_ENV
+          echo "KEY_PASS=servia-debug-pass" >> $GITHUB_ENV
+          echo "KEY_ALIAS=servia" >> $GITHUB_ENV
           keytool -list -v -keystore $RUNNER_TEMP/servia.jks \
             -storepass servia-debug-pass -alias servia | grep "SHA256" || true
 
@@ -151,24 +197,83 @@ jobs:
           if [ -d app ]; then echo "--- app/ ---"; ls -la app/; fi
 
 
+      - name: Inject Android permissions into AndroidManifest
+        working-directory: twa/android/generated/app/src/main
+        run: |
+          # Pre-declare every Android permission the app might EVER need.
+          # CRITICAL: declared permissions in the APK don't require Play
+          # Store re-submission later — getUserMedia() / Geolocation /
+          # File API / Push from the website all just work as long as the
+          # APK declares the corresponding android.permission.* upfront.
+          # Without this, future website features that ask for camera /
+          # mic / files would silently fail in TWA mode.
+          if [ ! -f AndroidManifest.xml ]; then
+            echo "ERROR: AndroidManifest.xml not found"; exit 1
+          fi
+          echo "=== Original AndroidManifest.xml head ==="
+          head -25 AndroidManifest.xml
+          # Build a permission-block to inject right after <manifest ...> tag.
+          PERMS='
+          <uses-permission android:name="android.permission.INTERNET" />
+          <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+          <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+          <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+          <uses-permission android:name="android.permission.VIBRATE" />
+          <uses-permission android:name="android.permission.WAKE_LOCK" />
+          <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+          <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+          <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+          <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+          <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+          <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+          <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+          <uses-permission android:name="android.permission.CAMERA" />
+          <uses-permission android:name="android.permission.RECORD_AUDIO" />
+          <uses-permission android:name="android.permission.READ_CONTACTS" />
+          <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+          <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+          <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+          <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+          <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+          <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+          <uses-permission android:name="android.permission.CALL_PHONE" />
+          <uses-feature android:name="android.hardware.camera" android:required="false" />
+          <uses-feature android:name="android.hardware.location" android:required="false" />
+          <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+          <uses-feature android:name="android.hardware.microphone" android:required="false" />
+          <uses-feature android:name="android.hardware.fingerprint" android:required="false" />'
+          # Inject permissions block after <manifest ...> opening tag
+          # using awk for predictable whitespace handling.
+          awk -v perms="$PERMS" '
+            /<manifest[^>]*>/ && !injected {
+              print $0
+              print perms
+              injected = 1
+              next
+            }
+            { print }
+          ' AndroidManifest.xml > AndroidManifest.tmp.xml
+          mv AndroidManifest.tmp.xml AndroidManifest.xml
+          # Also add tools:ignore namespace if missing
+          if ! grep -q "xmlns:tools" AndroidManifest.xml; then
+            sed -i 's|<manifest |<manifest xmlns:tools="http://schemas.android.com/tools" |' AndroidManifest.xml
+          fi
+          echo ""
+          echo "=== AndroidManifest.xml after injection (first 60 lines) ==="
+          head -60 AndroidManifest.xml
+
       - name: Build AAB + APK via gradle (non-interactive)
         env:
           KS_PATH:  ${{ runner.temp }}/servia.jks
-          # In production mode, use the user's secret values. In debug mode,
-          # the keystore was generated with these fixed values above.
-          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'servia' }}
-          KS_PASS:  ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'servia-debug-pass' }}
-          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD || 'servia-debug-pass' }}
         working-directory: twa/android/generated
         run: |
           chmod +x ./gradlew
-          # Bubblewrap's generated build.gradle reads signing config from
-          # gradle properties at build time. We pass them via -P so there's
-          # no interactive prompt and no plaintext password on disk.
+          # KEYSTORE_PASS / KEY_PASS / KEY_ALIAS are exported by the
+          # signing-mode step above and live in $GITHUB_ENV.
           ./gradlew --no-daemon \
             -Pandroid.injected.signing.store.file="$KS_PATH" \
-            -Pandroid.injected.signing.store.password="$KS_PASS" \
-            -Pandroid.injected.signing.key.alias="$KS_ALIAS" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASS" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASS" \
             bundleRelease assembleRelease
           echo ""
@@ -179,13 +284,11 @@ jobs:
         working-directory: twa/android/generated
         env:
           KS_PATH: ${{ runner.temp }}/servia.jks
-          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || 'servia-debug-pass' }}
-          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'servia' }}
         run: |
           # Extract SHA-256 of the signed APK's cert + emit assetlinks.json
           # the user can drop into web/.well-known/ if the fingerprint differs
           # from the one we baked in.
-          SHA=$(keytool -list -v -keystore "$KS_PATH" -storepass "$KS_PASS" -alias "$KS_ALIAS" 2>/dev/null \
+          SHA=$(keytool -list -v -keystore "$KS_PATH" -storepass "$KEYSTORE_PASS" -alias "$KEY_ALIAS" 2>/dev/null \
                 | grep "SHA256:" | head -1 | awk '{print $2}')
           echo "[" > assetlinks.json
           echo "  {" >> assetlinks.json

@@ -43,6 +43,45 @@ const fs = require("fs");
   tm.appVersion = "1.0.0";
   tm.appVersionCode = 1;
   tm.fallbackType = "customtabs";
+  // Brand the splash screen — teal background instead of generic white.
+  // Without this the splash flashes a white card with a small icon, which
+  // looks unfinished. Teal matches the brand and makes the launch feel
+  // intentional.
+  tm.backgroundColor = "#0D9488";   // teal — matches the navigation chrome
+  tm.themeColor = "#0D9488";
+  tm.themeColorDark = "#0F172A";
+  tm.navigationColor = "#0D9488";
+  tm.navigationColorDark = "#0F172A";
+  tm.splashScreenFadeOutDuration = 300;
+
+  // Rewrite shortcut URLs to absolute https://servia.ae paths. Bubblewrap
+  // resolved them against the localhost manifest URL, which would make the
+  // TWA's long-press shortcuts point at localhost:8080 — broken on real
+  // phones. Without this fix, every long-press shortcut just opens the
+  // home page (404 → fallback).
+  if (Array.isArray(tm.shortcuts)) {
+    tm.shortcuts = tm.shortcuts.map(s => {
+      const sc = Object.assign({}, s);
+      if (sc.url) {
+        try {
+          const u = new URL(sc.url);
+          // Replace whatever host the URL has with servia.ae.
+          u.protocol = "https:";
+          u.host = "servia.ae";
+          sc.url = u.toString();
+        } catch (_) {}
+      }
+      // Same for shortcut iconUrl — it'll fail to download otherwise.
+      if (sc.chosenIconUrl) {
+        try {
+          const u = new URL(sc.chosenIconUrl);
+          u.protocol = "https:"; u.host = "servia.ae";
+          sc.chosenIconUrl = u.toString();
+        } catch (_) {}
+      }
+      return sc;
+    });
+  }
   // Force HTTPS scheme on origin URLs so post-init updates work cleanly.
   tm.fullScopeUrl = new URL("https://servia.ae/");
   // KEEP webManifestUrl pointing at the localhost server while bubblewrap
