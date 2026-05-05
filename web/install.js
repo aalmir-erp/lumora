@@ -189,14 +189,35 @@
   }
 
   // ---------- Hooks ----------
+  // Show the FAB + top banner on every page load (subject to the same
+  // dismissed/installed/standalone guards inside each function). Used to
+  // gate this on `beforeinstallprompt`, but that event is browser-
+  // engagement-heuristic-driven — after a service-worker wipe (like the
+  // one v1.22.65 forced) Chrome can take a load or two to re-fire it,
+  // making the install CTAs disappear for stretches. The modal that
+  // opens from the FAB already handles "no deferred prompt" (iOS path
+  // or generic instructions), so we don't need beforeinstallprompt to
+  // surface the CTA — just to enable one-tap programmatic install.
+  function surfaceInstallCTAs() {
+    if (isStandalone() || localStorage.getItem(KEY_INSTALLED)) return;
+    if (localStorage.getItem(KEY_DISMISSED) !== "banner") injectBanner();
+    injectFAB();
+  }
+
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferred = e;
     track("eligible");
-    // If they haven't dismissed, surface CTA
-    if (localStorage.getItem(KEY_DISMISSED) !== "banner") injectBanner();
-    injectFAB();
+    // Re-run surface in case we were called too early — the FAB now also
+    // gets the deferred prompt wired up via openModal() when clicked.
+    surfaceInstallCTAs();
   });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", surfaceInstallCTAs);
+  } else {
+    surfaceInstallCTAs();
+  }
   window.addEventListener("appinstalled", () => {
     localStorage.setItem(KEY_INSTALLED, "1");
     track("installed");
