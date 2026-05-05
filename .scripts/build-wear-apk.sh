@@ -89,8 +89,18 @@ cd "$BUILD_DIR"
     bundleRelease assembleRelease
 
 echo ""
-echo "=== Wear OS outputs ==="
+echo "=== Listing all build outputs ==="
+find app/build -type f \( -name "*.apk" -o -name "*.aab" \) 2>/dev/null || echo "no build outputs found"
+echo ""
+echo "=== Tree of build dir ==="
+find app/build -type d 2>/dev/null | head -30 || true
+echo ""
+echo "=== Wear OS artifacts ==="
 mkdir -p _artifacts
-find app/build/outputs -name "*.apk" -exec cp {} _artifacts/servia-wear-signed.apk \;
-find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-wear-bundle.aab \;
+find app/build/outputs -name "*.apk" -exec cp {} _artifacts/servia-wear-signed.apk \; 2>&1 || true
+find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-wear-bundle.aab \; 2>&1 || true
 ls -la _artifacts/
+if [ ! -f _artifacts/servia-wear-signed.apk ]; then
+  echo "::error::Wear OS APK was NOT produced. Inspect logs above for gradle error."
+  exit 1
+fi
