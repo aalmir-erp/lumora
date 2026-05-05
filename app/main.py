@@ -2522,12 +2522,16 @@ try:
                 return tpl.format(em=em, sv=sv, area=area, slant=slant, topic=topic)
             except Exception: pass
         # Default — area-aware. NO em-dashes (AI tell) and lots of UAE specifics.
+        # Updated to require scannable structure: bullets, callout boxes, and
+        # an explicit "Key takeaways" section so articles never read as walls
+        # of text. Renderer (blog_render.py) extracts these into a card at
+        # the top automatically.
         return (
-            f"Write a 700-word blog post for Servia (UAE home services).\n\n"
+            f"Write a 700-800-word blog post for Servia (UAE home services).\n\n"
             f"Title: {topic}\n"
             f"Emirate: {em.replace('-',' ').title()}  Neighborhood: {area}  Service: {sv.replace('_',' ')}\n"
             f"Season: {slant}\n\n"
-            "WRITE LIKE A REAL UAE TRADESPERSON. NO AI WRITING TELLS. Hard rules:\n"
+            "WRITE LIKE A REAL UAE TRADESPERSON TALKING TO A NEIGHBOR. Hard rules:\n"
             "1. NEVER use em-dashes. Use periods, commas, or 'and' instead.\n"
             "2. NEVER use the en-dash for ranges. Write '5 to 7' not '5-7'.\n"
             "3. NEVER use semicolons. Split into two sentences.\n"
@@ -2538,16 +2542,37 @@ try:
             "'iconic', 'stunning'.\n"
             "5. Use contractions: don't, won't, isn't, you'll, we've.\n"
             "6. Vary sentence length wildly. Short. Then long ones that ramble a bit.\n"
-            f"7. Be specific to {area}. Mention real towers / streets / landmarks in {area} "
+            "7. Address the reader directly with 'you'. Speak to one specific person.\n"
+            f"8. Be specific to {area}. Mention real towers / streets / landmarks in {area} "
             f"({em.replace('-',' ').title()}). Real prices in AED. Real timings.\n"
-            f"8. Open with a 1-line hook tied to {area}, not generic 'In the UAE...'.\n"
-            "9. Include 2 to 3 personal stories. Use 'I' freely. Make it sound like you've "
+            f"9. Open with a 1-line hook tied to {area} that names a real problem the "
+            f"reader is probably feeling RIGHT NOW. Not 'In the UAE...'. Something like "
+            f"'It's 6pm in {area} and your AC just made that grinding sound again, didn't it?'\n"
+            "10. Include 2 to 3 personal stories. Use 'I' freely. Make it sound like you've "
             "done this work in that specific neighborhood last week.\n"
-            "10. 2 to 3 H2 headings (## in markdown). Short and direct.\n"
-            "11. Mention Servia 2 or 3 times, naturally.\n"
-            "12. End with a one-line CTA pointing to https://servia.ae/book.html.\n"
-            "13. Include a 3-question FAQ at the end with short direct answers.\n"
-            "14. Output ONLY the markdown article. No preamble, no explanation."
+            "\n"
+            "STRUCTURE — STRICT (this is what makes the article scannable, not a wall of text):\n"
+            "A. NO long paragraphs. Maximum 3 sentences per paragraph.\n"
+            "B. After the hook intro, output an explicit '## Key takeaways' section with "
+            "5 dash-bullet points (each one short — 12 words max). The renderer auto-promotes "
+            "this to a teal scannable card at the top of the page.\n"
+            "C. Then 3 to 4 H2 sections (## in markdown). Short, scannable headings, "
+            "ideally posed as questions: '## How long does deep cleaning actually take?'\n"
+            "D. Inside each section: lead with one tight paragraph, then a bulleted "
+            "list of 3 to 5 specifics. Always at least one bulleted list per section.\n"
+            "E. Sprinkle 1 to 2 callout boxes using this exact markdown syntax:\n"
+            "    > 💡 Pro tip: ...\n"
+            "    > ⚠️ Common mistake: ...\n"
+            "    > ✅ What to check first: ...\n"
+            "    The renderer turns these into colored boxes. Use them for the most "
+            "useful piece of information in the article.\n"
+            "F. Mention Servia 2 to 3 times naturally. Don't sell. Just say 'Servia '\n"
+            "    techs do X' or 'we usually find Y in {area}'.\n"
+            "G. End with a one-line CTA pointing to https://servia.ae/book.html.\n"
+            "H. Append a '## Frequently asked' section with 3 questions and short direct "
+            "answers (2 sentences max each).\n"
+            "\n"
+            "Output ONLY the markdown article. No preamble, no explanation."
         )
 
     def _autoblog_tick(slot: str = "morning"):

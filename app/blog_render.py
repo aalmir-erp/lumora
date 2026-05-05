@@ -102,11 +102,25 @@ def _infer_service_from_slug(slug: str) -> str:
 
 
 def _md_to_html(md: str) -> str:
-    """Light markdown → HTML. Headings, bold, paragraphs."""
+    """Light markdown → HTML. Headings get anchor IDs (for inline TOC),
+    `> 💡 ...` lines become callout boxes, and the rest of the standard
+    bold/heading/list/paragraph rules apply."""
     body = _html.escape(md or "")
-    body = _re.sub(r"^## (.+)$", r"</p><h2>\1</h2><p>", body, flags=_re.M)
+    def _h2_with_anchor(m):
+        title = m.group(1).strip()
+        slug = _re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+        return f'</p><h2 id="{slug}"><a href="#{slug}" class="anchor">#</a> {title}</h2><p>'
+    body = _re.sub(r"^## (.+)$", _h2_with_anchor, body, flags=_re.M)
     body = _re.sub(r"^# (.+)$", r"</p><h1>\1</h1><p>", body, flags=_re.M)
     body = _re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", body)
+    # Callout boxes: lines starting with `> 💡|⚠️|✅|❌|🔥|⭐`
+    body = _re.sub(
+        r"^&gt;\s*(💡|⚠️|✅|❌|🔥|⭐)\s*(.+)$",
+        lambda m: '</p><aside class="callout cb-' + m.group(1)[0] + '">'
+                  '<span class="ic">' + m.group(1) + '</span>'
+                  '<div>' + m.group(2) + '</div></aside><p>',
+        body, flags=_re.M,
+    )
     body = _re.sub(r"^[\-\*]\s+(.+)$", r"<li>\1</li>", body, flags=_re.M)
     body = _re.sub(r"(<li>.+?</li>(?:\s*<li>.+?</li>)*)",
                    lambda m: "<ul>" + m.group(1) + "</ul>", body, flags=_re.S)
@@ -117,6 +131,71 @@ def _md_to_html(md: str) -> str:
 def _reading_minutes(text: str) -> int:
     n = len((text or "").split())
     return max(1, round(n / 220))
+
+
+def _extract_key_takeaways(body: str, max_bullets: int = 6) -> list[str]:
+    """Extract scannable key takeaways from the article body. We look for an
+    explicit '## Key takeaways' / 'TL;DR' section first; if absent, we
+    synthesize 3-6 bullets from the first sentence of each `##` section
+    + the first bullet under each section. Gives every article a
+    'scannable keypoints' card at the top — fixes the user's complaint
+    that articles read as walls of text."""
+    if not body:
+        return []
+    # Explicit summary section in the markdown
+    m = _re.search(
+        r"^##\s+(?:Key\s+takeaway[s]?|Key\s+points?|TL;?DR|Summary)\s*$([\s\S]*?)(?=^##|\Z)",
+        body, flags=_re.M | _re.I,
+    )
+    if m:
+        bullets = _re.findall(r"^\s*[\-\*]\s+(.+?)\s*$", m.group(1), flags=_re.M)
+        if bullets:
+            return [b.strip() for b in bullets[:max_bullets]]
+    # Synthesized: first bullet (or first sentence) from each ## section
+    out: list[str] = []
+    for section in _re.finditer(r"^##\s+(.+?)\s*$([\s\S]*?)(?=^##|\Z)", body, flags=_re.M):
+        heading = section.group(1).strip()
+        sec_body = section.group(2)
+        bullet_match = _re.search(r"^\s*[\-\*]\s+(.+?)\s*$", sec_body, flags=_re.M)
+        if bullet_match:
+            out.append(bullet_match.group(1).strip())
+        elif heading.lower() not in {"introduction", "intro", "overview"}:
+            first_sent = _re.match(r"\s*([^.!?\n]+[.!?])", sec_body)
+            if first_sent:
+                out.append(heading + ": " + first_sent.group(1).strip())
+        if len(out) >= max_bullets:
+            break
+    return out
+
+
+def _render_takeaways_card(bullets: list[str]) -> str:
+    if not bullets:
+        return ""
+    items = "".join(
+        '<li><span class="kt-check">✓</span><span>' + _html.escape(b) + '</span></li>'
+        for b in bullets
+    )
+    return (
+        '<aside class="kt-card" aria-labelledby="kt-title">'
+        '<h2 id="kt-title">⚡ Key takeaways</h2>'
+        '<ul>' + items + '</ul></aside>'
+    )
+
+
+def _build_toc(body: str) -> str:
+    headings = _re.findall(r"^##\s+(.+?)\s*$", body or "", flags=_re.M)
+    if len(headings) < 3:
+        return ""  # not worth a TOC for short articles
+    items = []
+    for h in headings:
+        slug = _re.sub(r"[^a-z0-9]+", "-", h.lower()).strip("-")
+        items.append('<li><a href="#' + slug + '">' + _html.escape(h) + '</a></li>')
+    return (
+        '<nav class="article-toc" aria-label="In this article">'
+        '<details open><summary>📑 In this article (' + str(len(headings)) + ' sections)</summary>'
+        '<ol>' + "".join(items) + '</ol>'
+        '</details></nav>'
+    )
 
 
 def hero_svg_for_slug(slug: str) -> str:
@@ -332,7 +411,11 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
     sv_meta = SERVICE_META.get(service_id, SERVICE_META["deep_cleaning"])
     sv_name = sv_meta["name"]
     reading = post.get("reading_minutes") or _reading_minutes(body)
-    body_h = _md_to_html(body)
+    # NEW: prepend a Key Takeaways scannable card and an inline Table-of-
+    # Contents above the body so users get the gist + can jump sections.
+    takeaways_html = _render_takeaways_card(_extract_key_takeaways(body))
+    toc_html = _build_toc(body)
+    body_h = takeaways_html + toc_html + _md_to_html(body)
 
     # Internal links — related services + emirate page + other posts
     with db.connect() as c:
@@ -421,6 +504,49 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
   article .body p {{ font-size:16.5px; line-height:1.75; color:#1E293B; margin:0 0 14px }}
   article .body ul {{ font-size:16px; line-height:1.7; color:#1E293B; padding-inline-start:22px; margin:8px 0 16px }}
   article .body strong {{ font-weight:700; color:#0F172A }}
+  article .body h2 a.anchor {{ color:#94A3B8; text-decoration:none; font-weight:600;
+    margin-inline-end:6px; opacity:0; transition:opacity .15s }}
+  article .body h2:hover a.anchor {{ opacity:1 }}
+
+  /* Key takeaways scannable card — the "what's in this article" block at top */
+  .kt-card {{ background:linear-gradient(135deg,#0F766E,#14B8A6); color:#fff;
+    border-radius:18px; padding:22px 24px; margin:22px 0 28px;
+    box-shadow:0 12px 32px rgba(15,118,110,.18); position:relative; overflow:hidden }}
+  .kt-card::before {{ content:""; position:absolute; right:-40px; top:-40px;
+    width:140px; height:140px; border-radius:50%;
+    background:radial-gradient(circle,rgba(252,211,77,.22),transparent 70%); pointer-events:none }}
+  .kt-card h2 {{ margin:0 0 12px !important; font-size:18px !important;
+    color:#FCD34D !important; border:0 !important; padding:0 !important;
+    letter-spacing:.04em; font-weight:800 !important }}
+  .kt-card ul {{ list-style:none !important; padding:0 !important; margin:0 !important }}
+  .kt-card li {{ display:flex !important; gap:10px; align-items:flex-start;
+    padding:6px 0; font-size:15px; line-height:1.55; color:#fff }}
+  .kt-card .kt-check {{ color:#FCD34D; font-weight:800; flex-shrink:0; font-size:16px;
+    width:18px; text-align:center }}
+
+  /* Inline article TOC */
+  .article-toc {{ background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px;
+    padding:6px 16px; margin:18px 0 22px; font-size:14px }}
+  .article-toc summary {{ cursor:pointer; padding:8px 0; font-weight:700;
+    color:#0F766E; list-style:none; user-select:none }}
+  .article-toc summary::-webkit-details-marker {{ display:none }}
+  .article-toc[open] summary {{ border-bottom:1px solid #E2E8F0; margin-bottom:6px }}
+  .article-toc ol {{ margin:6px 0 6px; padding-inline-start:26px; line-height:2 }}
+  .article-toc a {{ color:#475569; text-decoration:none; font-weight:500 }}
+  .article-toc a:hover {{ color:#0F766E; text-decoration:underline }}
+
+  /* Callout boxes — '> 💡 Pro tip:' or '> ⚠️ Common mistake:' in markdown */
+  .callout {{ display:flex; gap:14px; align-items:flex-start;
+    padding:14px 18px; border-radius:12px; margin:18px 0;
+    background:#FEF3C7; border-inline-start:4px solid #F59E0B; font-size:15px; line-height:1.6 }}
+  .callout .ic {{ font-size:22px; flex-shrink:0; line-height:1.2 }}
+  .callout div {{ flex:1; color:#1E293B }}
+  .callout.cb-💡, .callout.cb-\\1F4A1 {{ background:#EFF6FF; border-color:#3B82F6 }}
+  .callout.cb-⚠️, .callout.cb-\\26A0 {{ background:#FEF3C7; border-color:#F59E0B }}
+  .callout.cb-✅, .callout.cb-\\2705 {{ background:#ECFDF5; border-color:#10B981 }}
+  .callout.cb-❌, .callout.cb-\\274C {{ background:#FEE2E2; border-color:#DC2626 }}
+  .callout.cb-🔥, .callout.cb-\\1F525 {{ background:#FFEDD5; border-color:#EA580C }}
+  .callout.cb-⭐, .callout.cb-\\2B50 {{ background:#FFFBEB; border-color:#FCD34D }}
   .pull-stat {{ background:linear-gradient(135deg,#0F766E,#0D9488); color:#fff;
     padding:18px 22px; border-radius:14px; margin:22px 0;
     font-size:15px; line-height:1.55 }}
