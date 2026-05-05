@@ -255,6 +255,40 @@
       "#google_translate_element { position:absolute !important; left:-9999px !important; top:-9999px !important; width:1px !important; height:1px !important; overflow:hidden !important; }",
     ].join("\n");
     document.head.appendChild(css);
+
+    // Active JS-side guard: GT writes inline styles to <body> via JS that
+    // can beat our external CSS even with !important. Watch for those
+    // mutations and revert. Only runs while GT is loaded so it has zero
+    // cost on English pages.
+    function clobberBodyStyle() {
+      try {
+        const b = document.body;
+        if (!b) return;
+        const s = b.style;
+        // GT loves setting these — reset whatever it nudged us into.
+        if (s.top && s.top !== "0px") s.top = "0px";
+        if (s.position && s.position !== "static" && s.position !== "") s.position = "static";
+        if (s.visibility === "hidden") s.visibility = "visible";
+        if (s.display === "none") s.display = "block";
+        if (s.opacity && parseFloat(s.opacity) < 1) s.opacity = "1";
+        if (s.transform && s.transform !== "none") s.transform = "none";
+        if (s.marginTop && s.marginTop !== "0px") s.marginTop = "0px";
+      } catch(_) {}
+    }
+    // Run once on the next frame, then observe body for inline-style changes
+    // and re-clobber as needed.
+    requestAnimationFrame(clobberBodyStyle);
+    try {
+      const obs = new MutationObserver(clobberBodyStyle);
+      obs.observe(document.body, { attributes:true, attributeFilter:["style","class"] });
+      // Also run after each paint for the first 5 seconds — GT's body-style
+      // writes can come late, after multiple async chunks load.
+      let ticks = 0;
+      const id = setInterval(() => {
+        clobberBodyStyle();
+        if (++ticks >= 50) clearInterval(id);  // 50 × 100ms = 5s
+      }, 100);
+    } catch(_) {}
   }
   // Load it only if (a) saved language is non-English, OR (b) user clicks the picker.
   // Used to wait up to 4s on requestIdleCallback so PSI didn't penalise us. But
