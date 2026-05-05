@@ -54,6 +54,23 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli@latest
 
+      - name: Pre-configure Bubblewrap to use the runner's JDK + SDK
+        run: |
+          # Without this file, `bubblewrap init` prompts:
+          #   "Do you want Bubblewrap to install the JDK (recommended)?"
+          # Our `yes |` pipe answered Y, which made Bubblewrap try to
+          # download its own JDK over and over and eventually fail.
+          # Writing the config up-front makes it skip both prompts.
+          mkdir -p ~/.bubblewrap
+          cat > ~/.bubblewrap/config.json <<EOF
+          {
+            "jdkPath": "${JAVA_HOME}",
+            "androidSdkPath": "${ANDROID_HOME}"
+          }
+          EOF
+          echo "Bubblewrap config:"
+          cat ~/.bubblewrap/config.json
+
       - name: Decide signing mode
         id: sign
         run: |
@@ -94,14 +111,17 @@ jobs:
           mkdir -p twa/android/generated
           cd twa/android/generated
           # `init` scaffolds the Android Studio project from twa-manifest.json.
-          # It asks several Y/N questions during init; we feed unlimited Y via
-          # yes(1). --skipPwaValidation avoids fetching the live manifest.
-          yes | bubblewrap init --manifest=../twa-manifest.json --skipPwaValidation
+          # With ~/.bubblewrap/config.json pre-written above, the JDK / SDK
+          # prompts are skipped. `bubblewrap init` may still ask a few
+          # confirmation questions ("display name", "icon URL", etc.) — we
+          # accept each with newline (default value).
+          printf '\n\n\n\n\n\n\n\n\n\n' | bubblewrap init \
+            --manifest=../twa-manifest.json \
+            --skipPwaValidation
           echo ""
           echo "Generated project structure:"
           ls -la
-          echo ""
-          ls -la app/
+          if [ -d app ]; then ls -la app/; fi
 
       - name: Build AAB + APK via gradle (non-interactive)
         env:
