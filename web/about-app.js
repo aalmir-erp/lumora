@@ -17,15 +17,24 @@
   const css = document.createElement("style");
   css.textContent = `
     #servia-about-fab {
-      position:fixed; right:6px; bottom:34px; z-index:1000;
-      width:24px; height:24px; border-radius:50%;
-      background:rgba(15,23,42,.5); color:#fff; font-size:12px;
-      border:0; cursor:pointer; padding:0; line-height:1;
+      /* v1.22.90: moved AWAY from the chat-launcher (.us-launcher at
+         right:18 bottom:18, ~56x56). Chat overlaps with the prior
+         right:6 bottom:34 placement, hijacking taps. New position is
+         far above the chat button — bottom:160px — well clear of it. */
+      position:fixed; right:14px; bottom:160px; z-index:1001;
+      width:32px; height:32px; border-radius:50%;
+      background:#0F172A; color:#fff; font-size:14px;
+      border:2px solid rgba(255,255,255,.85);
+      box-shadow:0 4px 12px rgba(15,23,42,.35);
+      cursor:pointer; padding:0; line-height:1;
       display:inline-flex; align-items:center; justify-content:center;
-      opacity:.45; transition:opacity .15s;
+      opacity:.92; transition:opacity .15s, transform .15s;
     }
-    .mobile-nav ~ #servia-about-fab { bottom:102px }
-    #servia-about-fab:hover { opacity:1 }
+    /* When mobile-nav is on screen, push ⓘ even higher above the bar */
+    .mobile-nav ~ #servia-about-fab { bottom:226px }
+    #servia-about-fab:hover, #servia-about-fab:active {
+      opacity:1; transform:scale(1.08);
+    }
 
     #servia-about-modal {
       position:fixed; inset:0; background:rgba(15,23,42,.55);
@@ -82,7 +91,26 @@
   fab.title = "About this app & settings";
   fab.setAttribute("aria-label", "About this app");
   fab.textContent = "ⓘ";
-  fab.onclick = openSheet;
+  fab.onclick = (e) => {
+    // v1.22.90: prevent the chat launcher (positioned bottom-right, large
+    // hit-area) from receiving the same tap. Also auto-minimize the chat
+    // panel if it's open, so the about-modal isn't covered by chat UI.
+    e.stopPropagation();
+    e.preventDefault();
+    try {
+      // Close chat panel if open (servia-chat-widget)
+      const chatPanel = document.querySelector(".us-panel, .servia-chat-panel, [data-chat-panel]");
+      if (chatPanel && (chatPanel.classList.contains("open") ||
+                         getComputedStyle(chatPanel).display !== "none")) {
+        chatPanel.classList.remove("open");
+        chatPanel.style.display = "none";
+      }
+      // Hide chat launcher temporarily so it can't be tapped behind the modal
+      const launcher = document.querySelector(".us-launcher");
+      if (launcher) launcher.dataset.preAboutDisplay = launcher.style.display || "";
+    } catch (_) {}
+    openSheet();
+  };
 
   function attachFab() {
     if (document.getElementById("servia-about-fab")) return;

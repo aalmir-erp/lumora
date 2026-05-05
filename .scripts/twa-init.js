@@ -49,6 +49,13 @@ const fs = require("fs");
   try {
     const { Color } = require(path.join(corePath, "../../color/index.js"));
     tm.backgroundColor = new Color("#0D9488");
+    // v1.22.90: themeColor sets the OS status-bar tint in TWA standalone
+    // mode. Match it to the topbanner's amber so the status bar visually
+    // flows into the rotating banner instead of looking like an extra
+    // empty teal strip above it.
+    tm.themeColor = new Color("#F59E0B");
+    tm.navigationColor = new Color("#0F172A");
+    tm.navigationDividerColor = new Color("#0F172A");
   } catch (_) {
     // Fallback: rely on the manifest's background_color value as-is.
   }
