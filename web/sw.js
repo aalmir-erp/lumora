@@ -1,5 +1,5 @@
 /* Servia service worker — network-first for HTML/JS so deploys are seen instantly. */
-const CACHE = "servia-v1.22.44";
+const CACHE = "servia-v1.22.45";
 const SHELL = [
   "/logo.svg", "/avatar.svg", "/icon-192.svg", "/icon-512.svg",
   "/manifest.webmanifest"
