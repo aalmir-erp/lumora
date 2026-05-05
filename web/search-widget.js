@@ -375,4 +375,302 @@
       }
     }
   });
+
+  // ===========================================================
+  // Inline nav combobox - expands on hover/focus, shows live
+  // AI predictions + suggestions instantly (no typing needed),
+  // filters as user types. Auto-injected into .nav-cta on every
+  // page so the icon-only static link in the nav becomes a
+  // modern AI search experience.
+  // ===========================================================
+  const inlineCSS = document.createElement("style");
+  inlineCSS.textContent = `
+    .ssn-wrap { position:relative; display:inline-flex; align-items:center; }
+    .ssn-trigger { display:inline-flex; align-items:center; gap:8px;
+      background:#fff; border:1px solid #E2E8F0; border-radius:999px;
+      padding:7px 10px; cursor:text; transition:width .25s cubic-bezier(.2,.9,.3,1.1), border-color .15s, box-shadow .15s;
+      width:42px; min-height:38px; overflow:hidden; }
+    .ssn-trigger:hover, .ssn-wrap.open .ssn-trigger {
+      width:280px; border-color:#0F766E; box-shadow:0 4px 14px rgba(15,118,110,.18); background:#fff; }
+    .ssn-trigger .ico { font-size:14px; color:#0F766E; flex-shrink:0; pointer-events:none; line-height:1 }
+    .ssn-trigger input { flex:1; border:0; outline:none; font-size:13.5px; min-width:0;
+      background:transparent; padding:0; color:#0F172A; font-family:inherit }
+    .ssn-trigger input::placeholder { color:#94A3B8 }
+    .ssn-trigger .kbd { font-size:10px; color:#94A3B8; background:#F1F5F9;
+      padding:2px 6px; border-radius:4px; border:1px solid #E2E8F0;
+      font-family:ui-monospace,monospace; flex-shrink:0; opacity:0; transition:opacity .15s }
+    .ssn-trigger:hover .kbd, .ssn-wrap.open .kbd { opacity:1 }
+    .ssn-dropdown { position:absolute; top:calc(100% + 6px); inset-inline-end:0;
+      width:380px; max-width:calc(100vw - 32px); max-height:60vh; overflow-y:auto;
+      background:#fff; border:1px solid #E2E8F0; border-radius:14px;
+      box-shadow:0 16px 48px rgba(15,23,42,.16); z-index:1000;
+      display:none; padding:6px 0; animation:ssn-pop .14s ease-out }
+    .ssn-wrap.open .ssn-dropdown { display:block }
+    @keyframes ssn-pop { from { opacity:0; transform:translateY(-6px) } to { opacity:1; transform:translateY(0) } }
+    .ssn-section { font-size:10.5px; font-weight:800; letter-spacing:.08em;
+      text-transform:uppercase; color:#94A3B8; padding:8px 14px 4px }
+    .ssn-row { display:flex; align-items:center; gap:10px; padding:8px 14px;
+      cursor:pointer; text-decoration:none; color:#0F172A; transition:background .1s }
+    .ssn-row:hover, .ssn-row.sel { background:#F0FDFA }
+    .ssn-row .icon { font-size:16px; flex-shrink:0; width:22px; text-align:center }
+    .ssn-row .body { flex:1; min-width:0 }
+    .ssn-row .ttl { font-size:13px; font-weight:700; line-height:1.3;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .ssn-row .sub { font-size:11px; color:#64748B; line-height:1.3;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .ssn-row .kind { font-size:9px; font-weight:800; letter-spacing:.04em;
+      text-transform:uppercase; padding:2px 6px; border-radius:999px;
+      background:#F1F5F9; color:#475569; flex-shrink:0 }
+    .ssn-row .kind.service { background:#ECFDF5; color:#065F46 }
+    .ssn-row .kind.area    { background:#EFF6FF; color:#1E40AF }
+    .ssn-row .kind.blog    { background:#FEF3C7; color:#92400E }
+    .ssn-row .kind.faq     { background:#F3E8FF; color:#5B21B6 }
+    .ssn-row .kind.video   { background:#FCE7F3; color:#9F1239 }
+    .ssn-row mark          { background:#FEF3C7; color:#7C2D12; padding:0 2px; border-radius:3px }
+    .ssn-foot { display:flex; gap:6px; padding:8px 10px; border-top:1px solid #F1F5F9;
+      align-items:center; background:#FAFAFA; border-radius:0 0 14px 14px;
+      flex-wrap:wrap }
+    .ssn-foot a, .ssn-foot button { background:transparent; border:1px solid #E2E8F0;
+      border-radius:8px; padding:5px 10px; font-size:11.5px; font-weight:700;
+      cursor:pointer; color:#475569; text-decoration:none;
+      display:inline-flex; align-items:center; gap:5px }
+    .ssn-foot a:hover, .ssn-foot button:hover { background:#0F766E; color:#fff; border-color:#0F766E }
+    .ssn-foot a.gpt { background:linear-gradient(135deg,#5B21B6,#7C3AED); color:#fff; border-color:transparent }
+    .ssn-foot a.gpt:hover { background:linear-gradient(135deg,#4C1D95,#6D28D9) }
+    .ssn-foot .spacer { flex:1 }
+    .ssn-empty { text-align:center; padding:18px 14px; color:#64748B; font-size:12.5px }
+    @media (max-width:720px) {
+      /* Mobile: collapse to icon-only and open Cmd+K palette instead. */
+      .ssn-trigger:hover, .ssn-wrap.open .ssn-trigger { width:42px }
+      .ssn-trigger input, .ssn-trigger .kbd { display:none }
+      .ssn-dropdown { display:none !important }
+    }
+  `;
+  document.head.appendChild(inlineCSS);
+
+  function injectInlineNavSearch(){
+    // Find the nav-cta on this page (every page has one). Don't inject if
+    // already there or if no anchor.
+    const ncta = document.querySelector(".nav-cta");
+    if (!ncta || ncta.querySelector(".ssn-wrap")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "ssn-wrap";
+    wrap.innerHTML = `
+      <div class="ssn-trigger" tabindex="-1">
+        <span class="ico">🔍</span>
+        <input type="search" placeholder="Search Servia…" autocomplete="off" aria-label="Search Servia" data-no-track>
+        <span class="kbd">⌘K</span>
+      </div>
+      <div class="ssn-dropdown" role="listbox"></div>
+    `;
+    // Insert at the START of nav-cta so it appears before the Book button
+    ncta.insertBefore(wrap, ncta.firstChild);
+
+    const trigger = wrap.querySelector(".ssn-trigger");
+    const input   = wrap.querySelector("input");
+    const dd      = wrap.querySelector(".ssn-dropdown");
+    let nav = [];        // currently rendered rows for keyboard nav
+    let selIdx = 0;
+
+    // Mobile: tapping the trigger opens the Cmd+K palette modal instead
+    function isMobile(){ return window.matchMedia("(max-width:720px)").matches; }
+
+    trigger.addEventListener("click", e => {
+      if (isMobile()) {
+        e.preventDefault();
+        if (typeof open === "function") open();
+        if (typeof lazyLoadIndex === "function") lazyLoadIndex();
+        return;
+      }
+      input.focus();
+    });
+
+    function escapeRe(s){ return (s||"").replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+    function score(doc, terms){
+      if (!terms.length) return 0;
+      const t = (doc.title||"").toLowerCase(); const b = (doc.body||"").toLowerCase();
+      let s = 0;
+      for (const term of terms) {
+        const re = new RegExp(`\\b${escapeRe(term)}\\b`);
+        if (re.test(t)) s += 12; else if (t.includes(term)) s += 6;
+        if (re.test(b)) s += 3; else if (b.includes(term)) s += 1;
+      }
+      return s;
+    }
+    function highlight(text, terms){
+      if (!terms.length || !text) return (text||"").replace(/</g,"&lt;");
+      let out = (text||"").replace(/</g,"&lt;");
+      for (const term of terms) {
+        if (!term || term.length < 2) continue;
+        out = out.replace(new RegExp("("+escapeRe(term)+")","ig"), "<mark>$1</mark>");
+      }
+      return out;
+    }
+
+    const SUGGESTIONS = [
+      {kind:"service", title:"Deep Cleaning",      body:"Top-to-bottom · 2 to 6 hrs · from AED 350",  url:"/service.html?id=deep_cleaning",  emoji:"✨"},
+      {kind:"service", title:"AC Service",          body:"Pre-summer urgent · 90 min · from AED 75/unit", url:"/service.html?id=ac_cleaning", emoji:"❄️"},
+      {kind:"service", title:"Maid Service",        body:"By the hour · same-day · from AED 25/hr",    url:"/service.html?id=maid_service",  emoji:"👤"},
+      {kind:"service", title:"Handyman",            body:"Plumbing, electric, paint · from AED 100",   url:"/service.html?id=handyman",      emoji:"🔧"},
+      {kind:"service", title:"Pest Control",        body:"Cockroach, bed bugs, ants · from AED 200",   url:"/service.html?id=pest_control",  emoji:"🪲"},
+    ];
+
+    function renderEmpty(){
+      const recent = (function(){ try { return JSON.parse(localStorage.getItem(RECENT_KEY)||"[]"); } catch(_) { return []; }})();
+      const sections = [];
+      if (recent.length) {
+        sections.push(`<div class="ssn-section">Recent</div>`);
+        sections.push(...recent.slice(0, 3).map(r =>
+          `<a class="ssn-row" data-q="${r.replace(/"/g,'&quot;')}" href="#">
+            <span class="icon">⏱</span>
+            <div class="body"><div class="ttl">${r.replace(/</g,'&lt;')}</div><div class="sub">Recent search</div></div>
+          </a>`));
+      }
+      sections.push(`<div class="ssn-section">⚡ Quick suggestions</div>`);
+      sections.push(...SUGGESTIONS.map(s => `
+        <a class="ssn-row" href="${s.url}">
+          <span class="icon">${s.emoji}</span>
+          <div class="body"><div class="ttl">${s.title}</div><div class="sub">${s.body}</div></div>
+          <span class="kind ${s.kind}">${s.kind}</span>
+        </a>`));
+      sections.push(`<div class="ssn-foot">
+        <a href="${GPT_URL}" target="_blank" rel="noopener" class="gpt" data-event="open_chatgpt_gpt">🚀 ChatGPT GPT</a>
+        <a href="/install.html">📲 Install app</a>
+        <span class="spacer"></span>
+        <a href="/search.html">All search →</a>
+      </div>`);
+      dd.innerHTML = sections.join("");
+      attach();
+    }
+
+    function renderQuery(query){
+      const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+      let scored = docs.map(d => ({...d, _s: score(d, terms)})).filter(d => d._s > 0);
+      scored.sort((a,b) => b._s - a._s);
+      const top = scored.slice(0, 7);
+      if (!top.length) {
+        dd.innerHTML = `<div class="ssn-empty">No results for "<b>${query.replace(/</g,'&lt;')}</b>".<br>
+          Try fewer keywords, or
+          <a href="${GPT_URL}" target="_blank" rel="noopener" style="color:#5B21B6;font-weight:700;text-decoration:none">ask Servia GPT</a>.</div>
+          <div class="ssn-foot">
+            <a href="${GPT_URL}" target="_blank" rel="noopener" class="gpt">🚀 Ask Servia GPT instead</a>
+            <span class="spacer"></span>
+            <a href="/search.html?q=${encodeURIComponent(query)}">Full AI search →</a>
+          </div>`;
+        attach(); return;
+      }
+      const ICONS = {service:"✨", area:"📍", blog:"📰", faq:"❓", video:"🎬", page:"📄"};
+      dd.innerHTML = `<div class="ssn-section">Results for "${query.replace(/</g,'&lt;')}"</div>` +
+        top.map(d => `
+        <a class="ssn-row" href="${d.url}"${d.url.startsWith("/api/videos/")?' target="_blank"':''}>
+          <span class="icon">${ICONS[d.kind] || "📄"}</span>
+          <div class="body">
+            <div class="ttl">${highlight(d.title, terms)}</div>
+            <div class="sub">${highlight(d.body || "", terms).slice(0, 60)}</div>
+          </div>
+          <span class="kind ${d.kind}">${d.kind}</span>
+        </a>`).join("") +
+        `<div class="ssn-foot">
+          <a href="/search.html?q=${encodeURIComponent(query)}">📋 See all matches</a>
+          <a href="${GPT_URL}?q=${encodeURIComponent(query)}" target="_blank" rel="noopener" class="gpt">🚀 Ask Servia GPT</a>
+        </div>`;
+      attach();
+    }
+
+    function attach(){
+      nav = Array.from(dd.querySelectorAll(".ssn-row"));
+      selIdx = 0; updateSel();
+      // Recent-search rows: clicking pre-fills the query rather than navigating
+      dd.querySelectorAll(".ssn-row[data-q]").forEach(r => r.addEventListener("click", e => {
+        e.preventDefault();
+        input.value = r.dataset.q;
+        renderQuery(r.dataset.q);
+        input.focus();
+      }));
+    }
+    function updateSel(){
+      nav.forEach((r, i) => r.classList.toggle("sel", i === selIdx));
+    }
+
+    // Lazy-load full index on first focus
+    let firstFocus = true;
+    input.addEventListener("focus", async () => {
+      wrap.classList.add("open");
+      if (firstFocus) {
+        firstFocus = false;
+        if (typeof lazyLoadIndex === "function") await lazyLoadIndex();
+      }
+      renderEmpty();
+    });
+
+    input.addEventListener("input", () => {
+      const q = input.value.trim();
+      if (!q) { renderEmpty(); return; }
+      renderQuery(q);
+    });
+
+    input.addEventListener("keydown", e => {
+      if (e.key === "Escape") { input.blur(); wrap.classList.remove("open"); return; }
+      if (e.key === "ArrowDown") { e.preventDefault(); if (selIdx < nav.length - 1) selIdx++; updateSel(); nav[selIdx]?.scrollIntoView({block:"nearest"}); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); if (selIdx > 0) selIdx--; updateSel(); nav[selIdx]?.scrollIntoView({block:"nearest"}); }
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        const sel = nav[selIdx];
+        if (sel) {
+          if (sel.dataset.q) { input.value = sel.dataset.q; renderQuery(sel.dataset.q); }
+          else if (sel.target === "_blank") { window.open(sel.href, "_blank"); }
+          else {
+            // Persist to recent + navigate
+            try {
+              const v = input.value.trim();
+              if (v.length >= 2) {
+                let r = JSON.parse(localStorage.getItem(RECENT_KEY)||"[]");
+                r = r.filter(x => x.toLowerCase() !== v.toLowerCase());
+                r.unshift(v);
+                localStorage.setItem(RECENT_KEY, JSON.stringify(r.slice(0,8)));
+              }
+            } catch(_) {}
+            location.href = sel.href;
+          }
+        } else if (input.value.trim()) {
+          // No selection -> jump to full search page with query
+          location.href = "/search.html?q=" + encodeURIComponent(input.value.trim());
+        }
+      }
+    });
+
+    // Click outside closes
+    document.addEventListener("click", e => {
+      if (!wrap.contains(e.target)) wrap.classList.remove("open");
+    });
+
+    // Hover open (desktop only - mobile already collapses dropdown)
+    trigger.addEventListener("mouseenter", () => {
+      if (isMobile()) return;
+      wrap.classList.add("open");
+      if (firstFocus) { firstFocus = false; if (typeof lazyLoadIndex === "function") lazyLoadIndex(); }
+      // Don't focus on hover - that would steal focus from anything else
+      // user is doing. They'll get the dropdown anyway.
+      if (!input.value) renderEmpty();
+    });
+
+    // Hide static legacy /search.html anchor links from .nav-cta (the old
+    // method that just navigated to /search.html on click). Keep the live
+    // combobox we just injected. Looks for href="/search.html".
+    ncta.querySelectorAll('a[href="/search.html"]').forEach(a => {
+      // If the anchor only contains an emoji/icon (the old static button),
+      // hide it. Don't touch if it has descriptive text (might be a
+      // legitimate menu item).
+      const txt = (a.textContent || "").trim();
+      if (txt.length <= 2 || /^[🔍🔎]/.test(txt)) a.style.display = "none";
+    });
+  }
+
+  // Inject as soon as DOM is ready (defer in <script> means doc is parsed)
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectInlineNavSearch);
+  } else {
+    injectInlineNavSearch();
+  }
 })();
