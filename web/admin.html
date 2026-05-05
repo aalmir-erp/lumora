@@ -97,6 +97,7 @@
     <a href="#growth"    data-tab="growth">🌍 Growth Hub</a>
     <a href="#socimg"    data-tab="socimg">🖼 Social Images</a>
     <a href="#sitemap"   data-tab="sitemap">🗺 Sitemap</a>
+    <a href="#twa"       data-tab="twa">📱 Mobile App / TWA</a>
     <a href="/admin-widget.html" target="_blank" style="margin-top:14px;color:#7DD3FC;border-top:1px solid #1E293B;padding-top:14px">📲 Home-screen widget ↗</a>
     <a href="/?edit=1" target="_blank" style="color:#FCD34D" title="Opens the public site with every editable text block highlighted in dashed purple. Click any block to type, then 'Save all'.">✏️ Edit pages inline ↗</a>
     <a href="#" id="logout" style="margin-top:14px;color:#FCA5A5">Logout</a>
@@ -946,6 +947,65 @@
       </div>
       <div id="sitemap-table"></div>
       <div id="sitemap-livetest" style="margin-top:14px"></div>
+    </div>
+
+    <!-- ====== MOBILE APP / TWA ====== -->
+    <div id="t-twa" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0">📱 Mobile App / TWA</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13.5px">
+            Production Android keystore + Play Store build pipeline. The keystore was auto-generated and lives encrypted at rest in <code>app/data/twa_credentials.enc</code> — encrypted with a key derived from <code>ADMIN_TOKEN</code>. <b>Save the values below somewhere safe</b> (1Password / printed) — losing them means you can never update the app on the Play Store.
+          </p>
+        </div>
+        <button class="btn btn-primary" onclick="twaTriggerBuild()">▶ Trigger build</button>
+      </div>
+
+      <!-- Live build status -->
+      <div id="twa-build-status" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13.5px"></div>
+
+      <!-- Step 1: Keystore credentials -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <h3 style="margin:0 0 10px;font-size:16px">🔐 Production keystore credentials</h3>
+        <p style="margin:0 0 14px;color:var(--muted);font-size:13px">
+          Tap "Reveal &amp; copy" to display each value, then paste into GitHub Actions secrets at
+          <a id="twa-secrets-url" target="_blank" style="font-weight:700;color:var(--primary)">Repo → Settings → Secrets → Actions</a>.
+          Once these 4 secrets are saved on GitHub, every TWA build is signed for the Play Store.
+        </p>
+
+        <div id="twa-creds-list" style="display:grid;grid-template-columns:1fr;gap:10px"></div>
+      </div>
+
+      <!-- Step 2: SHA-256 + assetlinks -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <h3 style="margin:0 0 10px;font-size:16px">🔗 Digital Asset Links (SHA-256 fingerprint)</h3>
+        <p style="margin:0 0 10px;color:var(--muted);font-size:13px">
+          Already baked into <code>web/.well-known/assetlinks.json</code> in this repo. Verifies on Android that this APK belongs to <code>servia.ae</code> so the app launches full-screen (no URL bar).
+        </p>
+        <div style="background:#F1F5F9;padding:10px 14px;border-radius:8px;font-family:ui-monospace,monospace;font-size:12px;word-break:break-all" id="twa-sha256">…</div>
+      </div>
+
+      <!-- Step 3: Workflow + run links -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <h3 style="margin:0 0 10px;font-size:16px">⚙️ Build pipeline</h3>
+        <ol style="margin:0;padding-inline-start:18px;font-size:13.5px;line-height:1.7">
+          <li>Tap <b>Trigger build</b> (top-right). If <code>GITHUB_TOKEN</code> isn't set in Railway env vars, you'll get a fallback URL to run it manually on github.com.</li>
+          <li>Wait ~5 min. Go to <a id="twa-runs-url" target="_blank" style="color:var(--primary);font-weight:700">Actions → Build Android TWA</a> → click latest run → scroll to <b>Artifacts</b>.</li>
+          <li>Download <code>servia-android-twa.zip</code>. Unzip → <code>app-release-bundle.aab</code> (Play Store) + <code>app-release-signed.apk</code> (sideload-test).</li>
+          <li>Upload the AAB to <a href="https://play.google.com/console" target="_blank" style="color:var(--primary);font-weight:700">play.google.com/console</a> ($25 one-time fee). Avg review: 1–7 days.</li>
+        </ol>
+      </div>
+
+      <!-- Step 4: Test APK on phone -->
+      <div style="background:linear-gradient(135deg,#0F766E,#14B8A6);color:#fff;border-radius:14px;padding:18px">
+        <h3 style="margin:0 0 8px;font-size:16px">📲 Install the APK on your phone for testing</h3>
+        <ol style="margin:0;padding-inline-start:18px;font-size:13.5px;line-height:1.7">
+          <li>Download the APK from the workflow artifact (above).</li>
+          <li>Email it to yourself or transfer via USB.</li>
+          <li>On Android: Settings → Security → "Install unknown apps" → allow your file manager.</li>
+          <li>Tap the APK file → Install. Servia icon appears on your home screen.</li>
+        </ol>
+      </div>
     </div>
 
     <!-- ====== SOCIAL IMAGES ====== -->
@@ -1877,6 +1937,7 @@ function show(tab) {
   if (tab==="ailisting") loadAIListings();
   if (tab==="socimg")    loadSocImages();
   if (tab==="sitemap")   loadSitemapList();
+  if (tab==="twa")       loadTwaCreds();
 }
 async function adm(path, opts={}) {
   try {
@@ -1971,7 +2032,7 @@ async function boot() {
   // (#dashboard, #live, #bookings, #analytics, etc.) and fall back to dashboard.
   const validTabs = ["dashboard","live","bookings","customers","convos","pricing",
                      "vendors","outreach","prompts","payments","analytics",
-                     "autoblog","brand","whatsapp","launch","aiarena","videos","autopost","ailisting","socimg","sitemap"];
+                     "autoblog","brand","whatsapp","launch","aiarena","videos","autopost","ailisting","socimg","sitemap","twa"];
   let initialTab = (location.hash || "").replace(/^#/, "").trim().toLowerCase();
   if (!validTabs.includes(initialTab)) initialTab = "dashboard";
   show(initialTab);
@@ -4718,6 +4779,107 @@ async function saveAIListingDetails(key, btn) {
     loadAIListings();
   } catch (e) {
     btn.disabled = false; btn.textContent = "💾 Save";
+  }
+}
+
+// ============== MOBILE APP / TWA ==============
+async function loadTwaCreds() {
+  const list = document.getElementById("twa-creds-list");
+  const sha  = document.getElementById("twa-sha256");
+  const repoBase = "https://github.com/aalmir-erp/aalmir_git_new";
+  document.getElementById("twa-secrets-url").href = repoBase + "/settings/secrets/actions";
+  document.getElementById("twa-runs-url").href    = repoBase + "/actions/workflows/build-android-twa.yml";
+  list.innerHTML = '<div style="color:var(--muted);padding:14px;text-align:center">Loading credentials…</div>';
+  let creds;
+  try {
+    creds = await adm("/api/admin/twa/credentials");
+  } catch (e) {
+    list.innerHTML = '<div style="background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;padding:14px;border-radius:10px">' +
+      'Could not load credentials: ' + (e.message || e) +
+      '<br><br>Most likely cause: <code>app/data/twa_credentials.enc</code> hasn\'t been deployed yet (next Railway deploy). Refresh in ~60s.</div>';
+    return;
+  }
+  sha.textContent = creds.sha256_fingerprint || "(unknown)";
+
+  // Render four secret rows — each click reveals the full value with a copy button.
+  const rows = [
+    { secret:"ANDROID_KEYSTORE_BASE64",   value:creds.keystore_base64,
+      blurb:"The signing keystore as base64. ~3.6 KB.", monospace:true, truncate:48 },
+    { secret:"ANDROID_KEYSTORE_PASSWORD", value:creds.keystore_password,
+      blurb:"Random 20-char password. PKCS12 forces the same password for keystore + key.", monospace:true },
+    { secret:"ANDROID_KEY_PASSWORD",      value:creds.key_password,
+      blurb:"Same as the keystore password (PKCS12 limitation).", monospace:true },
+    { secret:"ANDROID_KEY_ALIAS",         value:creds.key_alias || "servia",
+      blurb:"Just the alias name. Can leave as the default 'servia'.", monospace:false },
+  ];
+  list.innerHTML = rows.map((r, i) => `
+    <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:800;color:#0F172A;font-size:13.5px;font-family:ui-monospace,monospace">${r.secret}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.blurb}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-ghost" style="font-size:11.5px;padding:6px 12px" onclick="twaToggleReveal(${i})" id="twa-rev-${i}">👁 Reveal</button>
+          <button class="btn btn-primary" style="font-size:11.5px;padding:6px 12px" onclick="twaCopy(${i})">📋 Copy</button>
+        </div>
+      </div>
+      <div id="twa-val-${i}"
+           style="display:none;margin-top:10px;background:#F1F5F9;padding:10px 12px;border-radius:6px;${r.monospace?'font-family:ui-monospace,monospace;':''}font-size:11px;word-break:break-all;max-height:160px;overflow:auto"></div>
+    </div>`).join("");
+
+  // Stash plaintext on window for the copy/reveal handlers (no XSS risk —
+  // admin-only page, values came over the auth-gated API).
+  window.__twa_creds = rows.map(r => r.value);
+}
+
+function twaToggleReveal(i) {
+  const el = document.getElementById("twa-val-" + i);
+  const btn = document.getElementById("twa-rev-" + i);
+  if (el.style.display === "none") {
+    el.textContent = window.__twa_creds[i] || "";
+    el.style.display = "block";
+    btn.textContent = "🙈 Hide";
+  } else {
+    el.style.display = "none";
+    el.textContent = "";
+    btn.textContent = "👁 Reveal";
+  }
+}
+async function twaCopy(i) {
+  try {
+    await navigator.clipboard.writeText(window.__twa_creds[i] || "");
+    toast("✓ Copied to clipboard");
+  } catch (e) {
+    toast("Could not copy: " + e.message, true);
+  }
+}
+
+async function twaTriggerBuild() {
+  const status = document.getElementById("twa-build-status");
+  status.style.display = "";
+  status.innerHTML = "⏳ Triggering build…";
+  try {
+    const r = await adm("/api/admin/twa/trigger-build", { method:"POST", body:{ ref:"main" }});
+    if (r.ok) {
+      status.style.background = "#ECFDF5";
+      status.style.border = "1px solid #6EE7B7";
+      status.style.color = "#065F46";
+      status.innerHTML = '✅ Build started! '
+        + 'Watch progress at <a href="' + r.view_runs_url + '" target="_blank" style="color:#065F46;font-weight:800">GitHub Actions</a>. '
+        + 'Takes ~5 minutes. When done, download <code>servia-android-twa.zip</code> from the run artifacts.';
+    } else {
+      status.style.background = "#FEF3C7";
+      status.style.border = "1px solid #FCD34D";
+      status.style.color = "#92400E";
+      status.innerHTML = (r.detail || "Could not auto-trigger.") + ' '
+        + 'Open <a href="' + (r.manual_url || "#") + '" target="_blank" style="color:#92400E;font-weight:800">the workflow page</a> and tap "Run workflow" → main → green button.';
+    }
+  } catch (e) {
+    status.style.background = "#FEF2F2";
+    status.style.border = "1px solid #FCA5A5";
+    status.style.color = "#991B1B";
+    status.innerHTML = "Failed: " + (e.message || e);
   }
 }
 

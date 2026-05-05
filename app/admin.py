@@ -2382,3 +2382,94 @@ def list_alerts(limit: int = 50):
 def fire_daily_summary():
     from . import admin_alerts
     return admin_alerts.push_daily_summary()
+
+
+# ============================================================
+# TWA / Mobile App credentials
+#
+# The Servia production Android keystore lives encrypted at rest in
+# app/data/twa_credentials.enc — encrypted with a key derived from
+# ADMIN_TOKEN via PBKDF2-HMAC-SHA256. Decrypting requires both the
+# blob AND the live ADMIN_TOKEN; without one of those the keystore
+# cannot be recovered.
+# ============================================================
+
+@router.get("/twa/credentials")
+def twa_credentials():
+    """Decrypt + return the Servia Android signing keystore + credentials.
+    Used by the admin Mobile-App tab so the operator can copy these into
+    GitHub Actions secrets for the production Play Store build."""
+    import base64, hashlib, json, os
+    from pathlib import Path
+    from cryptography.fernet import Fernet, InvalidToken
+
+    blob_path = Path(__file__).parent / "data" / "twa_credentials.enc"
+    if not blob_path.exists():
+        raise HTTPException(404, "no twa keystore stored — run the bootstrap script")
+
+    admin_token = os.environ.get("ADMIN_TOKEN", "lumora-admin-test")
+    salt = b"servia.twa.creds.v1"
+    key_bytes = hashlib.pbkdf2_hmac("sha256", admin_token.encode(), salt, 100_000, dklen=32)
+    fernet_key = base64.urlsafe_b64encode(key_bytes)
+    f = Fernet(fernet_key)
+
+    encrypted = blob_path.read_bytes()
+    try:
+        decrypted = json.loads(f.decrypt(encrypted))
+    except InvalidToken:
+        raise HTTPException(500,
+            "could not decrypt twa keystore — ADMIN_TOKEN may have been rotated since "
+            "creds were stored. Regenerate via the keystore-rotate endpoint.")
+    return decrypted
+
+
+class TwaWorkflowReq(BaseModel):
+    ref: str = "main"  # tag or branch to trigger workflow on
+
+
+@router.post("/twa/trigger-build")
+def twa_trigger_build(body: TwaWorkflowReq):
+    """Trigger the Build Android TWA GitHub Actions workflow via the GitHub
+    REST API. Requires GITHUB_TOKEN env var with `actions: write` scope on
+    the aalmir-erp/aalmir_git_new repo. Without that, returns the URL the
+    user should visit on their phone to trigger it manually."""
+    import os, json, urllib.request, urllib.error
+    repo = os.environ.get("GITHUB_REPO", "aalmir-erp/aalmir_git_new")
+    workflow = "build-android-twa.yml"
+    url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow}/dispatches"
+    fallback = f"https://github.com/{repo}/actions/workflows/{workflow}"
+
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if not token:
+        return {
+            "ok": False,
+            "manual_url": fallback,
+            "detail": "GITHUB_TOKEN env var not set. Open the URL above on your "
+                      "phone, tap 'Run workflow' → 'main' → green button.",
+        }
+    req = urllib.request.Request(url, method="POST",
+        data=json.dumps({"ref": body.ref}).encode(),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        })
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            r.read()
+        return {
+            "ok": True,
+            "workflow": workflow,
+            "ref": body.ref,
+            "view_runs_url": f"https://github.com/{repo}/actions/workflows/{workflow}",
+        }
+    except urllib.error.HTTPError as e:
+        return {
+            "ok": False,
+            "error": f"GitHub API {e.code}: {e.reason}",
+            "manual_url": fallback,
+            "detail": e.read().decode("utf-8", "replace")[:500],
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e), "manual_url": fallback}
