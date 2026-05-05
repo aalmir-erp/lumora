@@ -456,8 +456,11 @@
     <div id="latest-blog" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;min-height:420px;contain:layout;content-visibility:auto;contain-intrinsic-size:auto 420px"></div>
   </div>
 </section>
-<!-- Pre-reserved space for /api/site/social strip → kills CLS -->
-<section id="servia-social-strip-slot" style="min-height:160px;contain:layout;background:linear-gradient(135deg,#0F766E,#0D9488)"></section>
+<!-- Pre-reserved slot for /api/site/social strip. Hidden by default -
+     becomes visible only when /web/social-strip.js fetches profiles and
+     populates content. Stops the empty teal block above the footer that
+     showed when no social profiles were configured. -->
+<section id="servia-social-strip-slot" style="display:none;contain:layout"></section>
 <footer><div class="container">
   <div>
     <img src="/logo.svg" alt="Servia" width="112" height="36" loading="lazy" decoding="async" style="filter:brightness(0) invert(1)">
