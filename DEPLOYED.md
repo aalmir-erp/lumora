@@ -2,19 +2,21 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"j1cfr7AqQPu0C8Gd-_9nXA"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"6Vgm2YqvTjSBQxVOo3UVLg"}`
 
 ## Build logs
 ```
+[ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[runtime 2/9] WORKDIR /app
+[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [ 9/11] COPY web ./web
 [ 5/11] RUN pip install -r requirements.txt
-[1/5] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[1/5] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[builder 1/5] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[builder 1/5] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
 [internal] load build context
 [internal] load build context
-[internal] load build context
-[2/5] WORKDIR /app
+[runtime 2/9] WORKDIR /app
 [ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 4/11] COPY requirements.txt ./
 [ 5/11] RUN pip install -r requirements.txt
@@ -29,12 +31,10 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
-[2/5] WORKDIR /app
-[2/5] WORKDIR /app
 exporting to docker image format
-containerimage.digest: sha256:cafcda92422e9998b9fc0e11bed663a7ad78158dff1610d88d0b1e919d847f24
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6Y2FmY2RhOTI0MjJlOTk5OGI5ZmMwZTExYmVkNjYzYTdhZDc4MTU4ZGZmMTYxMGQ4OGQwYjFlOTE5ZDg0N2YyNCIsInNpemUiOjI5NTgsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNVQxNDoxMzozNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:46bb057f5d331114fe3f4d7bb971bbed6a3e62759dd3d1ce4ec9866327e76fc6
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODIwNWVhNDY3YjU2YjIxYTI2MjQ4MDJkMjcxNDcyYjgzMzBhOTk4Y2QyMzUwMGQ3MDc5YWMyZmFjNWRkMjE5ZCIsInNpemUiOjI5NTgsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNVQxNDo0MjowMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:2fb15a8eff403ca8ac135da43ae8e0513886ba0e3bcc9364d6a5d86f882ec7d6
+containerimage.digest: sha256:8205ea467b56b21a2624802d271472b8330a998cd23500d7079ac2fac5dd219d
 image push
 image push
 
@@ -50,7 +50,7 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/ed45c580-cc3c-4544-9886-6276aa23268c/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/a4efad87-2c22-4378-a0ac-dd60a3e3605d/vol_onr647rhdeir9di9
 Starting Container
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
@@ -60,8 +60,11 @@ INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:50373 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:44804 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.2:60923 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:59610 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.3:22296 - "GET /brand/servia-icon-1024x1024.png HTTP/1.1" 200 OK
+INFO:     100.64.0.3:22296 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
