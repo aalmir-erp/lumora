@@ -1837,37 +1837,96 @@ def _openapi_public_spec():
         "openapi": "3.1.0",
         "info": {
             "title": "Servia Public API",
-            "version": "1.0.0",
-            "description": "Public booking + services API for Servia, the UAE home-services platform.",
+            "version": "1.1.0",
+            "description": "Public booking + services API for Servia, the UAE home-services platform. Customers can list services, get a quote, create a booking, and chat with the AI concierge.",
+            "contact": {"email": "support@servia.ae", "url": f"https://{domain}/contact.html"},
         },
         "servers": [{"url": f"https://{domain}"}],
+        "components": {
+            "schemas": {
+                "CartItem": {
+                    "type": "object", "required": ["service_id"],
+                    "description": "One service line in the cart. service_id must come from /api/services.",
+                    "properties": {
+                        "service_id": {"type": "string", "description": "Service ID e.g. 'deep_cleaning', 'ac_cleaning', 'maid_service', 'handyman'.", "example": "deep_cleaning"},
+                        "target_date": {"type": "string", "format": "date", "description": "ISO date YYYY-MM-DD.", "example": "2026-05-10"},
+                        "time_slot": {"type": "string", "description": "Time window e.g. '10am-12pm', 'morning', 'afternoon'.", "example": "10am-12pm"},
+                        "bedrooms": {"type": "integer", "description": "Number of bedrooms (cleaning + maid services).", "example": 2},
+                        "hours": {"type": "integer", "description": "Hours requested (hourly maid).", "example": 4},
+                        "units": {"type": "integer", "description": "Number of units (AC units, windows, rooms to paint).", "example": 3},
+                        "addons": {"type": "array", "items": {"type": "string"}, "description": "Optional add-on IDs.", "example": ["fridge", "oven"]},
+                        "notes": {"type": "string", "description": "Free-text notes for the pro."},
+                    },
+                },
+                "CartPayload": {
+                    "type": "object", "required": ["items"],
+                    "description": "Cart payload for quote OR checkout. items is required, all other fields optional for quote, required for checkout.",
+                    "properties": {
+                        "items": {"type": "array", "items": {"$ref": "#/components/schemas/CartItem"}, "minItems": 1, "maxItems": 20},
+                        "customer_name": {"type": "string", "example": "Aisha A."},
+                        "phone": {"type": "string", "description": "UAE mobile starting with +9715. Required for checkout.", "example": "+971501234567"},
+                        "email": {"type": "string", "format": "email"},
+                        "address": {"type": "string", "description": "Full delivery address. Required for checkout.", "example": "Apt 1203, Marina Crown Tower, Dubai Marina"},
+                        "language": {"type": "string", "enum": ["en", "ar", "hi", "tl"], "default": "en"},
+                    },
+                },
+                "ChatRequest": {
+                    "type": "object", "required": ["message"],
+                    "properties": {
+                        "message": {"type": "string", "minLength": 1, "maxLength": 4000, "description": "User's question or instruction.", "example": "How much is deep cleaning a 2-bedroom in Dubai Marina?"},
+                        "session_id": {"type": "string", "description": "Optional. Pass back from previous response to maintain conversation."},
+                        "language": {"type": "string", "enum": ["en", "ar", "hi", "tl"], "default": "en"},
+                        "phone": {"type": "string", "description": "Optional UAE mobile to attach the chat to a customer record."},
+                    },
+                },
+            }
+        },
         "paths": {
             "/api/services": {
                 "get": {
                     "operationId": "listServices",
-                    "summary": "List all home services with starting prices",
-                    "responses": {"200": {"description": "Service catalog"}},
+                    "summary": "List all 32 home services with starting prices",
+                    "description": "Returns the full service catalog. No body needed. Use this first to know valid service_id values for getQuote and createBooking.",
+                    "responses": {"200": {"description": "Full service catalog with id, name, description, starting_price (AED), category."}},
                 }
             },
             "/api/cart/quote": {
                 "post": {
                     "operationId": "getQuote",
-                    "summary": "Get an instant AED quote for a service in a given emirate",
-                    "responses": {"200": {"description": "Price quote"}},
+                    "summary": "Get an instant AED quote for one or more services",
+                    "description": "POST a CartPayload with one or more items. Returns total + per-line breakdown in AED including 5% VAT. Customer details optional for quotes.",
+                    "requestBody": {
+                        "required": True,
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CartPayload"},
+                            "example": {"items": [{"service_id": "deep_cleaning", "bedrooms": 2}]}}},
+                    },
+                    "responses": {"200": {"description": "Quote response with total, currency=AED, breakdown[]."}},
                 }
             },
             "/api/cart/checkout": {
                 "post": {
                     "operationId": "createBooking",
-                    "summary": "Create a booking — name, phone, address, service, date, time",
-                    "responses": {"200": {"description": "Booking confirmation"}},
+                    "summary": "Create a booking for one or more services",
+                    "description": "POST a CartPayload with items + customer_name + phone (UAE mobile) + address. Returns booking IDs + payment URL. After this call, redirect user to the payment_url to complete the booking.",
+                    "requestBody": {
+                        "required": True,
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CartPayload"},
+                            "example": {"items": [{"service_id": "deep_cleaning", "target_date": "2026-05-10", "time_slot": "10am-12pm", "bedrooms": 2}], "customer_name": "Aisha A.", "phone": "+971501234567", "email": "aisha@example.com", "address": "Apt 1203, Marina Crown Tower, Dubai Marina"}}},
+                    },
+                    "responses": {"200": {"description": "Booking created. Returns bookings[], invoice_id, payment_url, total."}},
                 }
             },
             "/api/chat": {
                 "post": {
                     "operationId": "chatWithServia",
-                    "summary": "Talk to the Servia AI concierge (multi-language)",
-                    "responses": {"200": {"description": "Assistant reply"}},
+                    "summary": "Talk to the Servia AI concierge",
+                    "description": "Send a free-text question to Servia's bilingual concierge. Returns text reply + session_id (echo back on next call to keep context).",
+                    "requestBody": {
+                        "required": True,
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ChatRequest"},
+                            "example": {"message": "How much is AC service in Sharjah?", "language": "en"}}},
+                    },
+                    "responses": {"200": {"description": "Reply with text, session_id, mode."}},
                 }
             },
         }
@@ -1947,6 +2006,14 @@ Transparent, AED, includes 5% VAT. See https://{b['domain']}/services.html or as
 ## Contact
 
 {contact_lines}- Web: https://{b['domain']}
+
+## Talk to Servia inside your AI assistant
+
+We have an official integration in every major AI assistant. Pick whichever you already use and you can ask about UAE home services, get quotes, and book directly from chat.
+
+- ChatGPT: https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper
+- ChatGPT plugin manifest: https://{b['domain']}/.well-known/ai-plugin.json
+- OpenAPI spec (for developers / other AI tools): https://{b['domain']}/openapi.json
 
 ## Languages
 
@@ -2868,6 +2935,25 @@ def _generate_seed_articles(target_count: int):
 # Mount("/") is a catch-all that captures every request. Registered here so all
 # explicit @app.get/@app.post routes above (especially /api/activity/live,
 # /api/chat/upload, /blog, /sitemap.xml etc.) are matched first.
+# Custom 404 - serve our pretty /404.html for any unmatched path. Without this,
+# StaticFiles returns FastAPI's plain "{detail: Not Found}" JSON which is ugly
+# and gives users no way forward. Registered BEFORE the static mount so it
+# fires before StaticFiles' default 404.
+@app.exception_handler(404)
+async def _custom_404(request, exc):
+    from fastapi.responses import FileResponse, JSONResponse
+    # API requests get JSON 404 (so AI plugins / programmatic clients still
+    # see proper error responses); browsers asking for HTML get the pretty page.
+    accept = (request.headers.get("accept") or "").lower()
+    if request.url.path.startswith("/api/") or "application/json" in accept:
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    page = settings.WEB_DIR / "404.html"
+    if page.exists():
+        return FileResponse(str(page), status_code=404,
+                            headers={"Cache-Control": "no-cache, must-revalidate"})
+    return JSONResponse({"detail": "Not Found"}, status_code=404)
+
+
 if settings.WEB_DIR.exists():
     app.mount("/widget", StaticFiles(directory=str(settings.WEB_DIR), html=False), name="widget")
     app.mount("/", StaticFiles(directory=str(settings.WEB_DIR), html=True), name="site")
