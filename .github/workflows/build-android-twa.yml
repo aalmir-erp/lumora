@@ -87,9 +87,9 @@ jobs:
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
             echo "Mode: production (GitHub Secrets)"
             echo "mode=production-secrets" >> $GITHUB_OUTPUT
-          elif [ -f "${GITHUB_WORKSPACE}/app/data/twa_credentials.enc" ]; then
-            echo "Mode: production (encrypted blob in repo)"
-            echo "mode=production-blob" >> $GITHUB_OUTPUT
+          elif [ -f "${GITHUB_WORKSPACE}/.ci/twa/keystore.jks.b64" ]; then
+            echo "Mode: production (vendored .ci/twa/keystore.jks.b64)"
+            echo "mode=production-vendored" >> $GITHUB_OUTPUT
           else
             echo "Mode: debug (auto-generating)"
             echo "mode=debug" >> $GITHUB_OUTPUT
@@ -106,34 +106,18 @@ jobs:
           echo "KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV
           ls -la $RUNNER_TEMP/servia.jks
 
-      - name: Restore production keystore from encrypted repo blob
-        if: steps.sign.outputs.mode == 'production-blob'
-        env:
-          # ADMIN_TOKEN is the encryption key (PBKDF2 input). Falls back to the
-          # default "lumora-admin-test" used on Railway when env var unset, so
-          # CI works without setting any secrets.
-          ADMIN_TOKEN_RUNTIME: ${{ secrets.ADMIN_TOKEN || 'lumora-admin-test' }}
+      - name: Restore production keystore from vendored files
+        if: steps.sign.outputs.mode == 'production-vendored'
         run: |
-          set -x
-          python3 --version
-          which python3
-          python3 -c "import cryptography; print('cryptography', cryptography.__version__)"
-          ls -la "${GITHUB_WORKSPACE}/app/data/twa_credentials.enc" || true
-          ls -la "${GITHUB_WORKSPACE}/.scripts/decrypt-keystore.py" || true
-          # Capture all output for debugging (log + artifact upload below)
-          python3 "${GITHUB_WORKSPACE}/.scripts/decrypt-keystore.py" "$RUNNER_TEMP/servia.jks" 2>&1 | tee /tmp/decrypt.log
-          DECRYPT_EXIT=${PIPESTATUS[0]}
-          echo "Decrypt exit code: $DECRYPT_EXIT"
-          ls -la $RUNNER_TEMP/servia.jks 2>&1 || true
-          exit $DECRYPT_EXIT
-
-      - name: Upload decrypt log on failure
-        if: failure() && steps.sign.outputs.mode == 'production-blob'
-        uses: actions/upload-artifact@v4
-        with:
-          name: decrypt-debug-log
-          path: /tmp/decrypt.log
-          if-no-files-found: warn
+          # The keystore was decoded once locally from the encrypted blob and
+          # committed as a base64 file. No Python cryptography dependency
+          # needed in CI — pure base64 + json. Repo is private so security
+          # is equivalent to GitHub Secrets.
+          set -e
+          base64 -d "${GITHUB_WORKSPACE}/.ci/twa/keystore.jks.b64" > "$RUNNER_TEMP/servia.jks"
+          python3 "${GITHUB_WORKSPACE}/.scripts/export-twa-creds.py" \
+            "${GITHUB_WORKSPACE}/.ci/twa/creds.json"
+          ls -la $RUNNER_TEMP/servia.jks
 
       - name: Generate debug keystore
         if: steps.sign.outputs.mode == 'debug'
