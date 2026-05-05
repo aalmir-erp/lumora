@@ -5,8 +5,51 @@
 <meta name="bingbot" content="noindex,nofollow">
 <title>Admin: Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="stylesheet" href="/style.css">
+<style>
+  /* Mobile drawer for the admin sidebar — style.css hides .admin-side on
+   * <=880px with no way to bring it back. Re-introduce it as a slide-out
+   * drawer with a hamburger toggle. Desktop layout (>880px) is untouched. */
+  .admin-burger {
+    display:none; position:fixed; top:12px; inset-inline-start:12px; z-index:120;
+    width:44px; height:44px; border-radius:12px; border:0;
+    background:#0F172A; color:#fff; font-size:22px; cursor:pointer;
+    box-shadow:0 6px 18px rgba(15,23,42,.28); line-height:1;
+    align-items:center; justify-content:center;
+  }
+  .admin-burger:active { transform:scale(.96); }
+  .admin-burger .label {
+    font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    margin-inline-start:6px; display:none;
+  }
+  .admin-backdrop {
+    display:none; position:fixed; inset:0; z-index:115;
+    background:rgba(15,23,42,.55); backdrop-filter:blur(2px);
+    opacity:0; transition:opacity .2s;
+  }
+  .admin-backdrop.show { display:block; opacity:1; }
+
+  @media (max-width:880px) {
+    .admin-burger { display:inline-flex; }
+    /* Override style.css's display:none with a slide-out drawer */
+    .admin-shell .admin-side {
+      display:block !important;
+      position:fixed; top:0; inset-inline-start:0; bottom:0;
+      width:min(78vw, 320px); z-index:118; padding:60px 20px 24px;
+      transform:translateX(-105%); transition:transform .25s ease;
+      overflow-y:auto; box-shadow:6px 0 32px rgba(15,23,42,.32);
+    }
+    html[dir="rtl"] .admin-shell .admin-side { transform:translateX(105%); }
+    .admin-shell.drawer-open .admin-side { transform:translateX(0); }
+    /* Make sure main content has top padding so the burger doesn't overlap headings */
+    .admin-main { padding-top:64px !important; }
+    /* Push burger label visible only when there's room */
+    .admin-burger .label { display:none; }
+  }
+</style>
 </head><body>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+<button id="admin-burger" class="admin-burger" type="button" aria-label="Open admin menu" aria-controls="shell" style="display:none">☰</button>
+<div id="admin-backdrop" class="admin-backdrop" aria-hidden="true"></div>
 <div id="login" class="paystub" style="display:none">
   <div class="card">
     <img src="/logo.svg" height="40" style="margin:0 auto 16px"><br>
@@ -1883,12 +1926,47 @@ document.getElementById("login-btn").onclick = async () => {
 document.getElementById("logout").onclick = () => { localStorage.removeItem(KEY); location.reload(); };
 
 document.querySelectorAll(".admin-side [data-tab]").forEach(a =>
-  a.addEventListener("click", e => { e.preventDefault(); show(a.dataset.tab); }));
+  a.addEventListener("click", e => { e.preventDefault(); show(a.dataset.tab); closeAdminDrawer(); }));
+
+// ---- Mobile drawer toggle (≤880px) ---------------------------------
+function isAdminMobile(){ return window.matchMedia("(max-width:880px)").matches; }
+function openAdminDrawer(){
+  const shell = document.getElementById("shell");
+  const bd = document.getElementById("admin-backdrop");
+  if (!shell) return;
+  shell.classList.add("drawer-open");
+  bd.classList.add("show"); bd.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeAdminDrawer(){
+  const shell = document.getElementById("shell");
+  const bd = document.getElementById("admin-backdrop");
+  if (!shell) return;
+  shell.classList.remove("drawer-open");
+  bd.classList.remove("show"); bd.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+document.getElementById("admin-burger").addEventListener("click", () => {
+  const shell = document.getElementById("shell");
+  if (shell.classList.contains("drawer-open")) closeAdminDrawer();
+  else openAdminDrawer();
+});
+document.getElementById("admin-backdrop").addEventListener("click", closeAdminDrawer);
+// Esc closes the drawer
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeAdminDrawer(); });
+// Hide/show burger when shell visibility flips (login → admin)
+const _showBurger = () => {
+  const burger = document.getElementById("admin-burger");
+  const shellVis = document.getElementById("shell").style.display !== "none";
+  burger.style.display = (shellVis && isAdminMobile()) ? "inline-flex" : "none";
+};
+window.addEventListener("resize", _showBurger);
 
 async function boot() {
   fetch("/api/health").then(r=>r.json()).then(j => { document.getElementById("admin-ver").textContent = "v" + j.version; }).catch(()=>{});
   document.getElementById("login").style.display = "none";
   document.getElementById("shell").style.display = "";
+  _showBurger();
   // Restore the tab the admin was on before refresh — read from URL hash
   // (#dashboard, #live, #bookings, #analytics, etc.) and fall back to dashboard.
   const validTabs = ["dashboard","live","bookings","customers","convos","pricing",
