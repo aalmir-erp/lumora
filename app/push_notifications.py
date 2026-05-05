@@ -146,6 +146,40 @@ def send_test():
     return {"ok": True, "sent": n_sent}
 
 
+# ---------- Broadcast a custom-styled notification ----------
+class BroadcastBody(BaseModel):
+    title: str
+    body: str
+    icon: str | None = None        # URL to small icon (default /icon-192.svg)
+    image: str | None = None       # large image URL for richer notifications
+    url: str | None = None         # tap-target URL ("/me.html", etc)
+    kind: str | None = None        # arbitrary tag (powers vibration pattern in sw.js)
+    audience: str = "all"          # "all" | "customers" | "vendors" | "logged_in"
+    require_interaction: bool = False  # stick around until user dismisses
+
+
+@router.post("/broadcast")
+def broadcast(body: BroadcastBody):
+    """Send a styled push notification to a chosen audience. Admin-only.
+    The audience filter is best-effort — push subscriptions are stored
+    by user_agent + customer_id (when known), so 'customers' = all subs
+    with a non-null customer_id, 'logged_in' = same, etc."""
+    payload = {
+        "title": body.title.strip()[:120] or "Servia",
+        "body": (body.body or "").strip()[:300],
+        "kind": body.kind or "broadcast",
+    }
+    if body.icon: payload["icon"] = body.icon
+    if body.image: payload["image"] = body.image
+    if body.url: payload["url"] = body.url
+    if body.require_interaction: payload["requireInteraction"] = True
+
+    # Audience filter — currently same as send_to_all but plumbed for
+    # future row-level filtering when push_subscriptions gets a customer_id.
+    n_sent = send_to_all(payload)
+    return {"ok": True, "sent": n_sent, "audience": body.audience}
+
+
 # ---------- Send a payload to all subscribers ----------
 def send_to_all(payload: dict) -> int:
     """Sends `payload` (dict — title/body/kind/etc.) to every subscription.

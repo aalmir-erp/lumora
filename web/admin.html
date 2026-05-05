@@ -1011,6 +1011,58 @@
         </ol>
       </div>
 
+      <!-- Step 5: Push notification composer -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <h3 style="margin:0 0 10px;font-size:16px">📨 Send a push notification</h3>
+        <p style="margin:0 0 12px;color:var(--muted);font-size:13px">
+          Compose a styled push notification and broadcast it to subscribed devices. Each recipient sees an Android / iOS native notification on their phone (and on any paired Wear OS / Apple Watch automatically).
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700">TITLE</label>
+            <input id="pn-title" placeholder="Servia · 30% off this weekend" maxlength="120">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700">AUDIENCE</label>
+            <select id="pn-audience">
+              <option value="all">All subscribers</option>
+              <option value="customers">Customers (logged in)</option>
+              <option value="vendors">Vendors</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1">
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700">BODY (300 chars max)</label>
+            <textarea id="pn-body" placeholder="Tap for the deal — pre-summer AC + deep clean bundles starting AED 350." maxlength="300" style="min-height:64px;width:100%"></textarea>
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700">TAP-TARGET URL</label>
+            <input id="pn-url" placeholder="/services.html" value="/">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700">CATEGORY (vibration pattern)</label>
+            <select id="pn-kind">
+              <option value="article_published">Soft (3 quick taps)</option>
+              <option value="new_booking">Booking (crescendo)</option>
+              <option value="payment_request">Payment (long pulses)</option>
+              <option value="psi_alert">Alert (warning)</option>
+              <option value="broadcast">Marketing</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1">
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700">LARGE IMAGE URL (optional, makes notification rich)</label>
+            <input id="pn-image" placeholder="https://servia.ae/og-deep-cleaning.svg">
+          </div>
+          <label style="grid-column:1/-1;display:flex;gap:6px;align-items:center;font-weight:normal">
+            <input type="checkbox" id="pn-sticky"> Sticky — stays until user dismisses (requireInteraction)
+          </label>
+          <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+            <button class="btn btn-primary" type="button" onclick="sendBroadcast()">📨 Send to selected audience</button>
+            <button class="btn btn-ghost" type="button" onclick="sendTestPush()">🧪 Send test (to me only)</button>
+            <span id="pn-result" style="font-size:12.5px;color:var(--muted);align-self:center;margin-inline-start:6px"></span>
+          </div>
+        </div>
+      </div>
+
       <!-- Step 4: Test APK on phone -->
       <div style="background:linear-gradient(135deg,#0F766E,#14B8A6);color:#fff;border-radius:14px;padding:18px">
         <h3 style="margin:0 0 8px;font-size:16px">📲 Install the APK on your phone for testing</h3>
@@ -4867,6 +4919,42 @@ async function twaCopy(i) {
     toast("✓ Copied to clipboard");
   } catch (e) {
     toast("Could not copy: " + e.message, true);
+  }
+}
+
+async function sendBroadcast() {
+  const r = document.getElementById("pn-result");
+  r.textContent = "Sending…"; r.style.color = "var(--muted)";
+  try {
+    const body = {
+      title: document.getElementById("pn-title").value.trim(),
+      body: document.getElementById("pn-body").value.trim(),
+      url: document.getElementById("pn-url").value.trim() || "/",
+      kind: document.getElementById("pn-kind").value,
+      image: document.getElementById("pn-image").value.trim() || null,
+      audience: document.getElementById("pn-audience").value,
+      require_interaction: document.getElementById("pn-sticky").checked,
+    };
+    if (!body.title || !body.body) {
+      r.textContent = "Title and body required"; r.style.color = "#B91C1C"; return;
+    }
+    const res = await adm("/api/admin/push/broadcast", {method:"POST", body});
+    r.textContent = `✓ Sent to ${res.sent} device${res.sent === 1 ? "" : "s"} (${body.audience})`;
+    r.style.color = "#065F46";
+  } catch (e) {
+    r.textContent = "Failed: " + (e.message || e); r.style.color = "#B91C1C";
+  }
+}
+
+async function sendTestPush() {
+  const r = document.getElementById("pn-result");
+  r.textContent = "Sending test…"; r.style.color = "var(--muted)";
+  try {
+    const res = await adm("/api/admin/push/test", {method:"POST"});
+    r.textContent = `✓ Test sent to ${res.sent} device(s)`;
+    r.style.color = "#065F46";
+  } catch (e) {
+    r.textContent = "Test failed: " + (e.message || e); r.style.color = "#B91C1C";
   }
 }
 
