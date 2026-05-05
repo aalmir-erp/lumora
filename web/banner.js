@@ -88,7 +88,8 @@ function __serviaBannerInit() {
     css.id = "servia-banner-css";
     css.textContent = `
       #servia-topbanner {
-        position: relative; width: 100%; min-height: 44px; overflow: hidden;
+        position: relative; width: 100%;
+        height: 44px; min-height: 44px; max-height: 44px; overflow: hidden;
         font-size: 13.5px; font-weight: 600; line-height: 1.35;
         color: #fff; isolation: isolate;
         transition: background 0.7s ease;
@@ -105,9 +106,8 @@ function __serviaBannerInit() {
       }
       #servia-topbanner .b-track {
         position: relative; max-width: 1180px; margin: 0 auto;
-        padding: 8px 40px 8px 14px;
-        display: flex; align-items: center; gap: 10px;
-        flex-wrap: nowrap; min-height: 44px;
+        padding: 8px 40px 8px 14px; height: 44px; box-sizing: border-box;
+        display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;
       }
       #servia-topbanner .b-slide {
         display: flex; align-items: center; gap: 10px; width: 100%;
