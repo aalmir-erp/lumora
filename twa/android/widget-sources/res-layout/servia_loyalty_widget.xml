@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/servia_loyalty_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/servia_loyalty_bg"
+    android:padding="12dp">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💎 AMBASSADOR"
+        android:textSize="9.5sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.1"
+        android:textColor="#7C2D12" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="🥉 Bronze"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#7C2D12" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="5% off every booking"
+        android:textSize="11sp"
+        android:textColor="#92400E" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Refer 3 friends → Silver (10%)"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textColor="#7C2D12" />
+</LinearLayout>
