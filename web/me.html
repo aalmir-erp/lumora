@@ -565,8 +565,17 @@ async function loadNfcTags() {
               <span>servia.ae/t/${t.slug}</span>
               <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;line-height:1" onclick="navigator.clipboard.writeText('https://servia.ae/t/${t.slug}');this.textContent='copied'">copy</button>
             </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--muted);background:#F0FDFA;padding:6px 10px;border-radius:8px;border:1px solid #99F6E4">
+              💳 Mode: <b style="color:#0F766E">${{
+                "manual_pay":"Manual + WA confirm",
+                "auto_wallet":"Auto-wallet + WA",
+                "preconfigured":"⚡ Preconfigured (zero-tap)"
+              }[t.payment_mode||"manual_pay"]||"Manual + WA"}</b>
+              ${t.payment_mode==="preconfigured" ? `<span style="color:#94A3B8"> · cap AED ${t.max_auto_amount_aed||500}</span>` : ""}
+            </div>
             <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
-              <a class="btn btn-ghost" style="font-size:11px;padding:5px 10px;flex:1;text-align:center" href="/t/${t.slug}" target="_blank">▶ Test tap</a>
+              <a class="btn btn-ghost" style="font-size:11px;padding:5px 10px" href="/t/${t.slug}" target="_blank">▶ Test tap</a>
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;flex:1;text-align:center" onclick="configureTag(${t.id})">⚙️ Configure</button>
               ${t.is_active ? `<button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;color:#B91C1C" onclick="deactivateTag(${t.id})">Deactivate</button>` : ""}
             </div>
           </div>`).join("")}
@@ -575,6 +584,61 @@ async function loadNfcTags() {
     list.innerHTML = `<div class="form" style="color:#B91C1C">Failed to load NFC tags: ${escapeHtml(e.message||e)}</div>`;
   }
 }
+
+window.configureTag = async function(id) {
+  const r = await authd("/api/nfc/my-tags");
+  const t = (r.tags||[]).find(x => x.id == id);
+  if (!t) return;
+  // Render modal
+  const m = document.createElement("div");
+  m.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:99999;display:flex;align-items:flex-end;justify-content:center;animation:abfade .2s";
+  m.innerHTML = `<div style="background:#fff;width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:22px;max-height:90vh;overflow:auto;animation:abup .25s">
+    <h3 style="margin:0 0 6px">⚙️ Configure tag <code style="font-size:13px;color:#64748B">${t.slug}</code></h3>
+    <p style="margin:0 0 14px;color:var(--muted);font-size:13px">${escapeHtml(t.alias||"")}${t.location_label?" · "+escapeHtml(t.location_label):""}</p>
+
+    <label style="display:block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0F766E;margin:14px 0 6px">Payment mode</label>
+    <div id="pm-pick" style="display:grid;gap:8px">
+      <label class="pm-opt" style="display:flex;gap:10px;padding:12px;border:2px solid #E2E8F0;border-radius:12px;cursor:pointer">
+        <input type="radio" name="pm" value="manual_pay" ${t.payment_mode!=="auto_wallet"&&t.payment_mode!=="preconfigured"?"checked":""}>
+        <div style="flex:1"><b>📲 Manual pay + WA confirm</b><br><small style="color:#64748B">Tap → confirm card → pick payment → WA send. Most cautious.</small></div>
+      </label>
+      <label class="pm-opt" style="display:flex;gap:10px;padding:12px;border:2px solid #E2E8F0;border-radius:12px;cursor:pointer">
+        <input type="radio" name="pm" value="auto_wallet" ${t.payment_mode==="auto_wallet"?"checked":""}>
+        <div style="flex:1"><b>⚡ Auto-wallet + WA confirm</b><br><small style="color:#64748B">Tap → WA opens with code → hit Send → wallet auto-deducts. Fastest with verification.</small></div>
+      </label>
+      <label class="pm-opt" style="display:flex;gap:10px;padding:12px;border:2px solid #E2E8F0;border-radius:12px;cursor:pointer">
+        <input type="radio" name="pm" value="preconfigured" ${t.payment_mode==="preconfigured"?"checked":""}>
+        <div style="flex:1"><b>🚀 Preconfigured · zero-tap</b><br><small style="color:#64748B">Pre-approved up to a cap. Tap → instantly booked + paid. No WA, no confirm card.</small></div>
+      </label>
+    </div>
+
+    <label style="display:block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0F766E;margin:18px 0 6px">Max auto-pay cap (AED)</label>
+    <input id="pm-cap" type="number" min="50" max="2000" step="50" value="${t.max_auto_amount_aed||500}" style="width:100%;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px">
+    <small style="color:#64748B;font-size:12px">If a tap requires more than this, we'll fall back to WhatsApp confirm even on preconfigured tags.</small>
+
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button type="button" id="pm-cancel" style="flex:1;background:#F1F5F9;border:0;padding:13px;border-radius:12px;font-weight:700;cursor:pointer">Cancel</button>
+      <button type="button" id="pm-save" style="flex:1;background:linear-gradient(135deg,#0F766E,#14B8A6);color:#fff;border:0;padding:13px;border-radius:12px;font-weight:800;cursor:pointer">Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener("click", e => { if (e.target === m) m.remove(); });
+  document.getElementById("pm-cancel").onclick = () => m.remove();
+  document.getElementById("pm-save").onclick = async () => {
+    const mode = document.querySelector('input[name="pm"]:checked').value;
+    const cap = parseFloat(document.getElementById("pm-cap").value) || 500;
+    try {
+      await authd(`/api/nfc/my-tag/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({payment_mode: mode, max_auto_amount_aed: cap})
+      });
+      m.remove();
+      loadNfcTags();
+    } catch (e) {
+      alert("Save failed: " + (e.message||e));
+    }
+  };
+};
 
 window.deactivateTag = async function(id) {
   if (!confirm("Deactivate this NFC tag? Anyone tapping it will see a 'deactivated' page.")) return;

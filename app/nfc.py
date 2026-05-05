@@ -129,6 +129,13 @@ def _ensure_schema() -> None:
             "ALTER TABLE nfc_tags ADD COLUMN install_appointment_at TEXT",
             "ALTER TABLE nfc_tags ADD COLUMN wa_confirmed_at TEXT",
             "ALTER TABLE nfc_tags ADD COLUMN wa_pending_token TEXT",
+            # v1.22.95: per-tag payment mode controls how a tap completes:
+            #   manual_pay     - Owner taps wallet/card on confirm page, after WA code
+            #   auto_wallet    - Auto-deduct from wallet AFTER owner sends WA code
+            #   preconfigured  - Fully hands-off: tap → wallet auto-deducted → done
+            #                     (owner trusts the linked location enough to skip WA)
+            "ALTER TABLE nfc_tags ADD COLUMN payment_mode TEXT DEFAULT 'manual_pay'",
+            "ALTER TABLE nfc_tags ADD COLUMN max_auto_amount_aed REAL DEFAULT 500",
         ):
             try: c.execute(stmt)
             except Exception: pass
@@ -225,6 +232,8 @@ def get_tag_public(slug: str, request: Request):
         "location_label": row["location_label"],
         "tap_count": row["tap_count"],
         "booking_count": row["booking_count"],
+        "payment_mode": row["payment_mode"] if "payment_mode" in row.keys() else "manual_pay",
+        "max_auto_amount_aed": row["max_auto_amount_aed"] if "max_auto_amount_aed" in row.keys() else 500,
         "owner": {
             "is_me": is_owner,
             "name": row["owner_name"] if is_owner else None,
@@ -232,6 +241,55 @@ def get_tag_public(slug: str, request: Request):
         },
         "saved_address_id": row["saved_address_id"] if is_owner else None,
     }
+
+
+# Customer self-service tag configuration (set payment mode + max auto cap)
+class _TagConfigBody(BaseModel):
+    payment_mode: str | None = None       # manual_pay | auto_wallet | preconfigured
+    max_auto_amount_aed: float | None = None
+    alias: str | None = None
+    location_label: str | None = None
+    is_active: int | None = None
+
+
+@router.put("/api/nfc/my-tag/{tag_id}")
+def customer_update_tag(tag_id: int, body: _TagConfigBody, request: Request):
+    """Customer-side tag config: payment mode, alias, location, deactivate.
+    Only the tag's owner can edit it."""
+    _ensure_schema()
+    auth = request.headers.get("authorization") or ""
+    user = lookup_session(auth[7:].strip()) if auth.lower().startswith("bearer ") else None
+    if not user or user.user_type != "customer":
+        raise HTTPException(401, "Customer session required")
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT id, owner_customer_id FROM nfc_tags WHERE id=?", (tag_id,)
+        ).fetchone()
+    if not row:
+        raise HTTPException(404, "Tag not found")
+    if row["owner_customer_id"] != user.user_id:
+        raise HTTPException(403, "Not your tag")
+    if body.payment_mode and body.payment_mode not in ("manual_pay", "auto_wallet", "preconfigured"):
+        raise HTTPException(400, "payment_mode must be manual_pay / auto_wallet / preconfigured")
+    sets, params = [], []
+    if body.payment_mode is not None:
+        sets.append("payment_mode = ?"); params.append(body.payment_mode)
+    if body.max_auto_amount_aed is not None:
+        sets.append("max_auto_amount_aed = ?"); params.append(float(body.max_auto_amount_aed))
+    if body.alias is not None:
+        sets.append("alias = ?"); params.append(body.alias[:80])
+    if body.location_label is not None:
+        sets.append("location_label = ?"); params.append(body.location_label[:80])
+    if body.is_active is not None:
+        sets.append("is_active = ?"); params.append(int(bool(body.is_active)))
+    if not sets:
+        return {"ok": True, "updated": 0}
+    params.append(tag_id)
+    with db.connect() as c:
+        n = c.execute(f"UPDATE nfc_tags SET {', '.join(sets)} WHERE id = ?", params).rowcount
+    db.log_event("nfc", str(tag_id), "customer_config_update", actor=str(user.user_id),
+                 details={"fields": [s.split(" = ")[0] for s in sets]})
+    return {"ok": True, "updated": n}
 
 
 # ============================================================================
@@ -748,9 +806,13 @@ class _WalletTapBody(BaseModel):
 
 @router.post("/api/nfc/wallet-pay-init")
 def wallet_pay_init(body: _WalletTapBody, request: Request):
-    """Step 1 of the wallet-paid tap flow: customer taps the wallet button.
-    We check balance, generate a WA confirm code, return a wa.me deep link
-    so the customer's WhatsApp opens with the code already filled."""
+    """v1.22.95 — branches on tag.payment_mode:
+       - 'preconfigured': fully hands-off. Validates wallet has enough balance
+         within tag's max_auto_amount_aed cap; deducts immediately; returns
+         {ok:True, mode:'auto_completed'}. No WA dance.
+       - 'auto_wallet' / 'manual_pay': sends a WA confirm code, owner taps
+         Send in WhatsApp, wa-code-inbound deducts the wallet (auto_wallet)
+         OR a card link (manual_pay)."""
     _ensure_schema()
     auth = request.headers.get("authorization") or ""
     user = lookup_session(auth[7:].strip()) if auth.lower().startswith("bearer ") else None
@@ -758,8 +820,10 @@ def wallet_pay_init(body: _WalletTapBody, request: Request):
         raise HTTPException(401, "Customer session required")
     with db.connect() as c:
         tag = c.execute(
-            "SELECT id, owner_customer_id, service_id FROM nfc_tags WHERE slug=?",
-            (body.slug,),
+            "SELECT id, owner_customer_id, service_id, slug, "
+            "COALESCE(payment_mode,'manual_pay') AS payment_mode, "
+            "COALESCE(max_auto_amount_aed,500) AS max_auto_amount_aed "
+            "FROM nfc_tags WHERE slug=?", (body.slug,),
         ).fetchone()
     if not tag:
         raise HTTPException(404, "Unknown tag")
@@ -778,7 +842,37 @@ def wallet_pay_init(body: _WalletTapBody, request: Request):
             "error": "Insufficient wallet balance",
             "topup_url": "/me.html#wallet",
         }
-    # 4-character code, easy for human to type into WhatsApp
+    # PRECONFIGURED MODE — instant auto-deduct, no WhatsApp step
+    if tag["payment_mode"] == "preconfigured":
+        if body.amount_aed > tag["max_auto_amount_aed"]:
+            return {
+                "ok": False,
+                "error": (f"Amount AED {body.amount_aed:.0f} exceeds the "
+                          f"max-auto cap (AED {tag['max_auto_amount_aed']:.0f}) "
+                          "you set on this tag. Confirm via WA or raise the cap."),
+                "needs_wa_confirm": True,
+            }
+        if not _debit_wallet_atomic(user.user_id, body.amount_aed,
+                                      ref=tag["slug"], note=f"NFC preconfigured tap"):
+            raise HTTPException(402, "Wallet deduction failed (concurrency)")
+        with db.connect() as c:
+            c.execute(
+                "UPDATE nfc_tags SET booking_count = booking_count + 1, "
+                "last_booking_at = ?, wa_confirmed_at = ? WHERE id = ?",
+                (_now(), _now(), tag["id"]),
+            )
+        db.log_event("nfc", tag["slug"], "preconfigured_tap_paid",
+                     details={"amount": body.amount_aed})
+        return {
+            "ok": True,
+            "mode": "auto_completed",
+            "deducted_aed": body.amount_aed,
+            "balance_aed": balance - body.amount_aed,
+            "message": (f"✅ Service booked & AED {body.amount_aed:.0f} deducted "
+                          f"automatically (you pre-approved this tag for amounts up "
+                          f"to AED {tag['max_auto_amount_aed']:.0f}). Crew dispatched."),
+        }
+    # MANUAL_PAY / AUTO_WALLET — generate WhatsApp code path
     code = "".join(secrets.choice("23456789ABCDEFGHJKLMNPQRSTUVWXYZ") for _ in range(4))
     with db.connect() as c:
         c.execute("UPDATE nfc_tags SET wa_pending_token = ? WHERE id = ?",
@@ -790,6 +884,7 @@ def wallet_pay_init(body: _WalletTapBody, request: Request):
     wa_deeplink = f"https://wa.me/{SERVIA_WA}?text={msg_url}"
     return {
         "ok": True,
+        "mode": tag["payment_mode"],
         "code": code,
         "wa_deeplink": wa_deeplink,
         "balance_aed": balance,

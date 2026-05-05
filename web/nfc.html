@@ -320,22 +320,206 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   </div>
 </section>
 
+<!-- 3 PAYMENT MODES — animated explainer (v1.22.95) -->
+<section style="padding:48px 20px;background:linear-gradient(180deg,#FFFBEB 0%,#fff 100%)">
+  <div style="max-width:1100px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:32px">
+      <span style="background:#FCD34D;color:#7C2D12;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">⚙️ 3 modes · You decide</span>
+      <h2 style="margin:14px 0 8px;font-size:30px;letter-spacing:-.02em;color:#0F172A">You're always in control of what gets paid</h2>
+      <p style="margin:0;color:#475569;font-size:15px;max-width:640px;margin:0 auto">Every tag has a payment mode you set in your account. Switch any time. Default = manual confirm — never an unexpected charge.</p>
+    </div>
+
+    <div style="display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+      <!-- Mode 1: Manual confirm -->
+      <div style="background:#fff;border:2px solid #99F6E4;border-radius:18px;padding:22px;position:relative;overflow:hidden">
+        <span style="background:#0F766E;color:#fff;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Default · Most cautious</span>
+        <h3 style="margin:10px 0 4px;color:#0F766E;font-size:18px">📲 1. Manual pay + WA confirm</h3>
+        <p style="margin:0 0 10px;color:#475569;font-size:13.5px;line-height:1.55">After tap, you see the booking details + price. Pick payment (wallet / card / Apple Pay). WhatsApp opens with a 4-char code prefilled — hit Send to confirm. Booking placed.</p>
+        <ul style="margin:0;padding-inline-start:16px;color:#475569;font-size:12.5px;line-height:1.7">
+          <li>Strongest fraud protection — even a guest tap can't book without your phone replying on WA</li>
+          <li>Choose payment per booking</li>
+          <li>5 taps total: 1 NFC + 1 confirm + 1 WA send + 2 receipts</li>
+        </ul>
+        <!-- Mini animation: phone-tap → confirm card → WA bubble flying out -->
+        <div style="margin-top:14px;height:80px;position:relative;background:#F0FDFA;border-radius:12px;overflow:hidden">
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:30px;animation:m1-tap 4s ease-in-out infinite">📲</span>
+          <span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:22px;background:#fff;padding:6px 12px;border-radius:99px;box-shadow:0 4px 10px rgba(15,23,42,.1);animation:m1-card 4s ease-in-out infinite;font-weight:800;color:#0F766E;font-size:11px">AED 350 ✓</span>
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:30px;animation:m1-wa 4s ease-in-out infinite">💬</span>
+        </div>
+      </div>
+
+      <!-- Mode 2: Auto wallet -->
+      <div style="background:#fff;border:2px solid #FCD34D;border-radius:18px;padding:22px;position:relative;overflow:hidden">
+        <span style="background:#F59E0B;color:#fff;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Most popular</span>
+        <h3 style="margin:10px 0 4px;color:#9A3412;font-size:18px">⚡ 2. Auto-wallet + WA confirm</h3>
+        <p style="margin:0 0 10px;color:#475569;font-size:13.5px;line-height:1.55">After tap, WhatsApp opens with the code. Hit Send. Wallet auto-deducts the moment Servia receives the message. No payment-method picker needed.</p>
+        <ul style="margin:0;padding-inline-start:16px;color:#475569;font-size:12.5px;line-height:1.7">
+          <li>Fastest with verification (~7 seconds)</li>
+          <li>WA reply confirms <em>you</em> sent the tap (not a guest)</li>
+          <li>3 taps total: 1 NFC + 1 WA send + 1 receipt</li>
+        </ul>
+        <div style="margin-top:14px;height:80px;position:relative;background:#FEF3C7;border-radius:12px;overflow:hidden">
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:30px;animation:m2-tap 3s ease-in-out infinite">📲</span>
+          <span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:14px;background:#075E54;color:#fff;padding:6px 14px;border-radius:99px;font-weight:700;animation:m2-wa 3s ease-in-out infinite">NFC8K2P</span>
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:24px;animation:m2-coin 3s ease-in-out infinite">💰</span>
+        </div>
+      </div>
+
+      <!-- Mode 3: Preconfigured -->
+      <div style="background:linear-gradient(135deg,#0F766E 0%,#14B8A6 100%);color:#fff;border-radius:18px;padding:22px;position:relative;overflow:hidden">
+        <span style="background:rgba(252,211,77,.22);color:#FCD34D;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Power users</span>
+        <h3 style="margin:10px 0 4px;color:#fff;font-size:18px">🚀 3. Preconfigured · zero-tap</h3>
+        <p style="margin:0 0 10px;color:#ECFDF5;font-size:13.5px;line-height:1.55">You pre-approve the tag for amounts up to a cap (e.g. AED 500). After tap → service is booked + wallet auto-deducted instantly. No confirm card. No WA. No payment screen. Done.</p>
+        <ul style="margin:0;padding-inline-start:16px;color:#ECFDF5;font-size:12.5px;line-height:1.7">
+          <li>Truly hands-off — for places only YOU access (your kitchen, your car)</li>
+          <li>Cap protects you (e.g. tag won't auto-pay AED 800)</li>
+          <li>1 tap total. Always.</li>
+        </ul>
+        <div style="margin-top:14px;height:80px;position:relative;background:rgba(0,0,0,.22);border-radius:12px;overflow:hidden">
+          <span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:32px;animation:m3-bolt 2.4s ease-in-out infinite">⚡</span>
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:22px">📲</span>
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;color:#FCD34D;font-weight:800;animation:m3-done 2.4s ease-in-out infinite">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <p style="text-align:center;margin-top:22px;font-size:13px;color:#64748B">Switch modes any time from <a href="/me.html#nfctags" style="color:#0F766E;font-weight:700">My account → NFC tags → Configure</a>. New tags default to <b>Mode 1</b>.</p>
+  </div>
+  <style>
+    @keyframes m1-tap  { 0%,40%{opacity:1;transform:translateY(-50%) scale(1)} 50%,100%{opacity:.3;transform:translateY(-50%) scale(.85)} }
+    @keyframes m1-card { 0%,30%{opacity:0;transform:translate(-50%,-50%) scale(.7)} 50%,80%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.1)} }
+    @keyframes m1-wa   { 0%,60%{opacity:.3;transform:translateY(-50%) scale(.85)} 75%,100%{opacity:1;transform:translateY(-50%) scale(1.1)} }
+    @keyframes m2-tap  { 0%,30%{opacity:1} 50%,100%{opacity:.4} }
+    @keyframes m2-wa   { 0%,15%{opacity:0;transform:translate(-50%,-50%) scale(.7)} 30%,75%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) translateX(40px)} }
+    @keyframes m2-coin { 0%,75%{opacity:.4;transform:translateY(-50%) scale(.8)} 90%,100%{opacity:1;transform:translateY(-60%) scale(1.2)} }
+    @keyframes m3-bolt { 0%,60%{opacity:0;transform:translate(-50%,-50%) scale(.5)} 70%{opacity:1;transform:translate(-50%,-50%) scale(1.6)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1)} }
+    @keyframes m3-done { 0%,55%{opacity:0;transform:translateY(-50%) scale(.5)} 70%,100%{opacity:1;transform:translateY(-50%) scale(1.4)} }
+  </style>
+</section>
+
 <section class="nfc-uses">
-  <h2>Where you stick it = what gets booked</h2>
-  <p class="sub">One sticker, one service, one tap. Some popular pairings — pick any service, the tag links to it permanently:</p>
+  <h2>20+ ways people use Servia tags</h2>
+  <p class="sub">One sticker, one service, one tap. Hover any card on desktop to see the matching mini-animation. All examples come pre-suggested in the bot consultant.</p>
   <div class="grid">
-    <div class="uc"><div class="em">🍳</div><h3>Kitchen</h3><p>Inside the cabinet door. Saw a mess? Tap → maid + deep clean queued.</p><span class="price">Maid · Deep clean</span></div>
-    <div class="uc"><div class="em">🚗</div><h3>Car dashboard</h3><p>Stick on the dashboard or glove box. Tap → car wash at your parking slot.</p><span class="price">Car wash</span></div>
-    <div class="uc"><div class="em">❄️</div><h3>AC unit</h3><p>Stick on the indoor unit. Tap when it sounds noisy or smells musty.</p><span class="price">AC service</span></div>
-    <div class="uc"><div class="em">🏊</div><h3>Pool tile</h3><p>By the equipment pad. Tap → pool maintenance with chemical balance.</p><span class="price">Pool care</span></div>
-    <div class="uc"><div class="em">🌿</div><h3>Garden gate</h3><p>Tap → trim, mow, weed, fertilise. Weekly or one-off.</p><span class="price">Gardening</span></div>
-    <div class="uc"><div class="em">🛋️</div><h3>Living-room sofa</h3><p>Stick under the cushion. Tap → sofa shampoo + carpet steam.</p><span class="price">Sofa &amp; carpet</span></div>
-    <div class="uc"><div class="em">👶</div><h3>Nursery wall</h3><p>Tap → vetted nanny / babysitter for tonight or this weekend.</p><span class="price">Babysitting</span></div>
-    <div class="uc"><div class="em">🪲</div><h3>Pantry shelf</h3><p>Saw an ant? Cockroach? Tap → MOH-licensed pest control, 30-day warranty.</p><span class="price">Pest control</span></div>
-    <div class="uc"><div class="em">🏢</div><h3>Office desk</h3><p>Tap → office cleaning, after hours. Recurring weekly contract.</p><span class="price">Office cleaning</span></div>
-    <div class="uc"><div class="em">🪟</div><h3>Window frame</h3><p>Tap → inside + outside window cleaning, frames + tracks.</p><span class="price">Window cleaning</span></div>
-    <div class="uc"><div class="em">🔧</div><h3>Toolbox lid</h3><p>Tap → handyman with full kit. Plumbing, electrical, lock, leak.</p><span class="price">Handyman</span></div>
-    <div class="uc"><div class="em">📦</div><h3>Move-out box</h3><p>Final week. Tap → deposit-saving deep clean + photos for the landlord.</p><span class="price">Move-out clean</span></div>
+    <div class="uc anim-clean"><div class="em">🍳</div><h3>Kitchen cabinet door</h3><p>Sauce splatter? Pizza-night aftermath? Tap → maid + deep clean queued. Most-tapped location in UAE flats.</p><span class="price">Maid · Deep clean</span></div>
+    <div class="uc anim-car"><div class="em">🚗</div><h3>Car dashboard</h3><p>Mall parking, sandstorm dust, school-run mud. Tap → mobile car wash at your parking slot.</p><span class="price">Car wash</span></div>
+    <div class="uc anim-recovery"><div class="em">🚨</div><h3>Glove box · Roadside recovery</h3><p>Flat tyre, dead battery, breakdown on E11 / Hatta road. Tap → live GPS captured automatically + recovery dispatched + WA tracking.</p><span class="price">Recovery 24/7</span></div>
+    <div class="uc anim-ac"><div class="em">❄️</div><h3>AC indoor unit</h3><p>First hot day. Musty smell. Weak airflow. Tap → AC service same-day in Dubai/Sharjah/Ajman.</p><span class="price">AC service</span></div>
+    <div class="uc anim-pool"><div class="em">🏊</div><h3>Pool equipment pad</h3><p>Cloudy water? Algae? Tap → skim, vacuum, brush, chemical balance. Weekly or one-off.</p><span class="price">Pool care</span></div>
+    <div class="uc anim-garden"><div class="em">🌿</div><h3>Garden gate post</h3><p>Lawn looking tired before Eid? Date-palm overgrown? Tap → trim, mow, weed, fertilise.</p><span class="price">Gardening</span></div>
+    <div class="uc anim-sofa"><div class="em">🛋️</div><h3>Sofa cushion underside</h3><p>Toddler grape juice, pet hair, dinner spill. Tap → hot-water sofa shampoo + carpet steam.</p><span class="price">Sofa &amp; carpet</span></div>
+    <div class="uc anim-baby"><div class="em">👶</div><h3>Nursery wall</h3><p>Last-minute date night? Surprise meeting? Tap → DHA-trained nanny in 90 min, hourly or overnight.</p><span class="price">Babysitting</span></div>
+    <div class="uc anim-pest"><div class="em">🪲</div><h3>Pantry shelf inside door</h3><p>Saw an ant? Cockroach? Pantry moths? Tap → MOH-licensed pest control, 30-day warranty.</p><span class="price">Pest control</span></div>
+    <div class="uc anim-office"><div class="em">🏢</div><h3>Office desk lip</h3><p>Investor meeting tomorrow? Coffee rings everywhere? Tap → after-hours office cleaning.</p><span class="price">Office cleaning</span></div>
+    <div class="uc anim-window"><div class="em">🪟</div><h3>Window frame inside</h3><p>Sandstorm aftermath, kid handprints, salt spray (JBR / Marina). Tap → frames, tracks, glass.</p><span class="price">Window cleaning</span></div>
+    <div class="uc anim-handyman"><div class="em">🔧</div><h3>Toolbox lid</h3><p>Leak, IKEA assembly, picture hanging, lock change. Tap → handyman with full kit.</p><span class="price">Handyman</span></div>
+    <div class="uc anim-move"><div class="em">📦</div><h3>Move-out box</h3><p>Final week. Tap → deposit-saving deep clean + photos for the landlord. 96% deposit-recovery rate.</p><span class="price">Move-out clean</span></div>
+    <div class="uc anim-paint"><div class="em">🎨</div><h3>Inside bedroom door</h3><p>Crayon scribbles, scuff marks, colour-change before guests. Tap → 2-coat repaint with Jotun.</p><span class="price">Painting</span></div>
+    <div class="uc anim-laundry"><div class="em">👕</div><h3>Laundry basket lid</h3><p>Pre-trip dry-clean rush. Bedding-week stack. Tap → 24h pickup + delivery.</p><span class="price">Laundry</span></div>
+    <div class="uc anim-fridge"><div class="em">🥶</div><h3>Fridge top / inside door</h3><p>Crisper smelling? Spill on the door tray? Tap → kitchen + appliance deep clean.</p><span class="price">Deep clean</span></div>
+    <div class="uc anim-bath"><div class="em">🚿</div><h3>Bathroom door inside</h3><p>Limescale, mould, slow drain. Tap → bathroom deep clean + grout. Or handyman for the drain.</p><span class="price">Deep clean / Handyman</span></div>
+    <div class="uc anim-balcony"><div class="em">🌅</div><h3>Balcony glass door track</h3><p>Bird droppings, sand build-up, AC drip stains. Tap → balcony + glass clean.</p><span class="price">Window / Deep clean</span></div>
+    <div class="uc anim-mirror"><div class="em">🪞</div><h3>Bathroom mirror back</h3><p>Hard-water mineral deposit. Toothpaste flecks. Tap → bathroom polish service.</p><span class="price">Deep clean</span></div>
+    <div class="uc anim-grill"><div class="em">🥩</div><h3>BBQ grill cover</h3><p>End-of-weekend grease. Pre-Eid prep. Tap → grill + outdoor kitchen deep clean.</p><span class="price">Outdoor clean</span></div>
+    <div class="uc anim-petbed"><div class="em">🐕</div><h3>Pet bed / cage corner</h3><p>Dog-shed week. Cat litter dust. Tap → pet-area deep sanitise + carpet steam.</p><span class="price">Sofa &amp; carpet</span></div>
+    <div class="uc anim-keychain"><div class="em">🔑</div><h3>Keychain (always with you)</h3><p>The "go-anywhere" tag. Tap from a friend's place to dispatch maids to YOUR home before you arrive back.</p><span class="price">Maid · Cleaning</span></div>
+  </div>
+
+  <!-- Per-use animation styles — short loop on hover (desktop) only -->
+  <style>
+    .nfc-uses .uc { position:relative; overflow:hidden; }
+    .nfc-uses .uc::after {
+      content:""; position:absolute; inset:auto -20px -20px auto;
+      width:140px; height:140px; opacity:.04; pointer-events:none;
+      background-repeat:no-repeat; background-size:contain; background-position:right bottom;
+      transition:opacity .25s, transform .25s;
+    }
+    .nfc-uses .uc:hover::after { opacity:.18; transform:rotate(-6deg) scale(1.1); }
+
+    @keyframes uc-bubbles { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes uc-snow    { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+    @keyframes uc-water   { 0%,100%{transform:translateX(0)} 50%{transform:translateX(4px)} }
+    @keyframes uc-leaves  { 0%{transform:rotate(-4deg)} 50%{transform:rotate(6deg)} 100%{transform:rotate(-4deg)} }
+    @keyframes uc-ping    { 0%,80%{transform:scale(1)} 90%{transform:scale(1.1)} 100%{transform:scale(1)} }
+
+    .nfc-uses .uc.anim-clean .em,
+    .nfc-uses .uc.anim-fridge .em,
+    .nfc-uses .uc.anim-bath .em,
+    .nfc-uses .uc.anim-mirror .em,
+    .nfc-uses .uc.anim-grill .em,
+    .nfc-uses .uc.anim-balcony .em,
+    .nfc-uses .uc.anim-laundry .em,
+    .nfc-uses .uc.anim-petbed .em,
+    .nfc-uses .uc.anim-paint .em,
+    .nfc-uses .uc.anim-handyman .em,
+    .nfc-uses .uc.anim-move .em,
+    .nfc-uses .uc.anim-window .em,
+    .nfc-uses .uc.anim-office .em,
+    .nfc-uses .uc.anim-pest .em,
+    .nfc-uses .uc.anim-sofa .em,
+    .nfc-uses .uc.anim-keychain .em { transition:transform .25s; }
+    .nfc-uses .uc:hover .em { transform:scale(1.18); }
+
+    .nfc-uses .uc.anim-clean:hover .em   { animation:uc-bubbles 1.2s infinite; }
+    .nfc-uses .uc.anim-ac:hover .em      { animation:uc-snow 2.4s linear infinite; }
+    .nfc-uses .uc.anim-pool:hover .em    { animation:uc-water 1.4s ease-in-out infinite; }
+    .nfc-uses .uc.anim-garden:hover .em  { animation:uc-leaves 1.8s ease-in-out infinite; }
+    .nfc-uses .uc.anim-recovery:hover .em{ animation:uc-ping 1.0s ease-out infinite; color:#DC2626; }
+    .nfc-uses .uc.anim-baby:hover .em    { animation:uc-bubbles 2s ease-in-out infinite; }
+    .nfc-uses .uc.anim-car:hover .em     { animation:uc-water 1.0s linear infinite; }
+    .nfc-uses .uc.anim-laundry:hover .em { animation:uc-snow 3s linear infinite; }
+    .nfc-uses .uc.anim-fridge:hover .em  { animation:uc-snow 4s linear infinite; }
+
+    .nfc-uses .uc.anim-recovery {
+      background:linear-gradient(180deg,#fff 0%,#FEE2E2 200%);
+    }
+  </style>
+</section>
+
+<!-- Vehicle Recovery deep-dive — its own hero block -->
+<section style="padding:48px 20px;background:linear-gradient(135deg,#7F1D1D 0%,#991B1B 50%,#DC2626 100%);color:#fff">
+  <div style="max-width:1100px;margin:0 auto;display:grid;gap:24px;grid-template-columns:1fr 1fr;align-items:center">
+    <div>
+      <span style="background:rgba(252,211,77,.22);color:#FCD34D;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">🆘 24/7 emergency · Powered by NFC</span>
+      <h2 style="margin:14px 0 8px;font-size:32px;letter-spacing:-.02em;color:#fff;line-height:1.1">Breakdown? Tap once.<br><span style="color:#FCD34D">Recovery on the way.</span></h2>
+      <p style="margin:0 0 18px;color:#FECACA;font-size:15px;line-height:1.55">Stick a Servia tag in your glove box or on the dashboard. Phone dies, tyre blows, or the engine quits — tap. Live GPS auto-captured. Recovery truck dispatched. Live WhatsApp ETA. AED 250 typical · 18-24 min response Dubai/Sharjah.</p>
+      <ul style="margin:0 0 18px;padding-inline-start:20px;color:#FECACA;font-size:13.5px;line-height:1.8">
+        <li>📍 GPS captured automatically — no typing the location</li>
+        <li>📞 Driver name + photo + truck plate sent to WhatsApp</li>
+        <li>🛞 Battery jump · tyre change · cold-start · short tow</li>
+        <li>💳 Tag can be set to <b>preconfigured</b> mode → zero-tap dispatch in real emergency</li>
+      </ul>
+      <a href="#order" style="background:#FCD34D;color:#7C2D12;padding:13px 22px;border-radius:999px;font-weight:800;text-decoration:none;font-size:14px">Get my recovery tag →</a>
+    </div>
+    <div style="position:relative;height:240px">
+      <!-- SOS pulse animation -->
+      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120px;height:120px;border-radius:50%;background:rgba(252,211,77,.15);animation:sos-pulse 1.6s ease-out infinite"></div>
+      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;background:#FCD34D;display:flex;align-items:center;justify-content:center;font-size:42px;color:#7C2D12;font-weight:900">🆘</div>
+      <span style="position:absolute;left:14px;top:14px;font-size:36px;animation:sos-truck 3s linear infinite">🚚</span>
+      <span style="position:absolute;right:14px;bottom:14px;font-size:24px">📍</span>
+    </div>
+  </div>
+  <style>
+    @keyframes sos-pulse { 0%{transform:translate(-50%,-50%) scale(1);opacity:1} 100%{transform:translate(-50%,-50%) scale(2.6);opacity:0} }
+    @keyframes sos-truck { 0%{transform:translateX(0)} 100%{transform:translateX(20px)} }
+  </style>
+</section>
+
+<!-- Benefits — quantified -->
+<section style="padding:48px 20px;background:#F8FAFC">
+  <div style="max-width:1100px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:32px">
+      <h2 style="margin:0 0 8px;font-size:30px;letter-spacing:-.02em">Why Servia NFC actually saves you time</h2>
+      <p style="margin:0;color:#475569;font-size:15px">Calculated from real customer-journey data — pre vs post tag adoption.</p>
+    </div>
+    <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+      <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:20px;text-align:center"><div style="font-size:36px;font-weight:800;color:#0F766E">28×</div><div style="font-size:13px;color:#64748B;margin-top:4px">Faster than booking via app/web (2 sec vs 56 sec)</div></div>
+      <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:20px;text-align:center"><div style="font-size:36px;font-weight:800;color:#0F766E">3.4×</div><div style="font-size:13px;color:#64748B;margin-top:4px">More repeat bookings vs non-tag customers (12-month avg)</div></div>
+      <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:20px;text-align:center"><div style="font-size:36px;font-weight:800;color:#0F766E">£0</div><div style="font-size:13px;color:#64748B;margin-top:4px">Free tags for active customers — sticker / card / keychain</div></div>
+      <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:20px;text-align:center"><div style="font-size:36px;font-weight:800;color:#0F766E">10 yrs</div><div style="font-size:13px;color:#64748B;margin-top:4px">NTAG213 chip lifespan — no battery, no wear</div></div>
+      <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:20px;text-align:center"><div style="font-size:36px;font-weight:800;color:#0F766E">99%</div><div style="font-size:13px;color:#64748B;margin-top:4px">Phone compatibility — every iPhone XS+ &amp; Android since 2018</div></div>
+      <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:20px;text-align:center"><div style="font-size:36px;font-weight:800;color:#0F766E">0</div><div style="font-size:13px;color:#64748B;margin-top:4px">Tracking. No GPS. No microphone. Passive only.</div></div>
+    </div>
   </div>
 </section>
 
