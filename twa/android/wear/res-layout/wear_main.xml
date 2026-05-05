@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.wear.widget.BoxInsetLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F172A"
+    android:padding="6dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_boxedEdges="all">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SERVIA"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.2"
+            android:gravity="center"
+            android:textColor="#FCD34D"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tap to act"
+            android:textSize="9sp"
+            android:gravity="center"
+            android:textColor="#94A3B8"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_track"
+                style="@style/WearTile"
+                android:text="📍\nTrack"
+                android:contentDescription="Track booking" />
+            <TextView
+                android:id="@+id/wear_tile_book"
+                style="@style/WearTile"
+                android:text="📋\nBook"
+                android:contentDescription="Book a service" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_quote"
+                style="@style/WearTile"
+                android:text="💬\nQuote"
+                android:contentDescription="Get a quote" />
+            <TextView
+                android:id="@+id/wear_tile_chat"
+                style="@style/WearTile"
+                android:text="🤖\nChat"
+                android:contentDescription="Talk to Servia" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.wear.widget.BoxInsetLayout>

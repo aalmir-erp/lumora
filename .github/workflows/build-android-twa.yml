@@ -180,6 +180,12 @@ jobs:
           if [ -d app ]; then echo "--- app/ ---"; ls -la app/; fi
 
 
+      - name: Inject home-screen widgets (QuickBook + TrackBooking)
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.scripts/inject-widgets.py"
+          python3 "${GITHUB_WORKSPACE}/.scripts/inject-widgets.py" \
+            "${GITHUB_WORKSPACE}/twa/android/generated"
+
       - name: Inject Android permissions into AndroidManifest
         working-directory: twa/android/generated/app/src/main
         run: |
@@ -304,12 +310,30 @@ jobs:
           echo "Final artifacts:"
           ls -la _artifacts/
 
-      - name: Upload AAB + APK + assetlinks
+      - name: Upload phone AAB + APK + assetlinks
         uses: actions/upload-artifact@v4
         with:
           name: servia-android-twa
           path: twa/android/generated/_artifacts/*
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Build Wear OS standalone APK + AAB
+        env:
+          KS_PATH: ${{ runner.temp }}/servia.jks
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.scripts/build-wear-apk.sh"
+          "${GITHUB_WORKSPACE}/.scripts/build-wear-apk.sh" "$KS_PATH" || {
+            echo "::warning::Wear OS build failed — phone APK still produced. See log."
+            exit 0
+          }
+
+      - name: Upload Wear OS APK + AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: servia-wear-os
+          path: twa/android/wear-build/_artifacts/*
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Print install + Play Store instructions

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/servia_widget_bg"
+    android:padding="6dp">
+    <Button
+        android:id="@+id/servia_btn_deep_clean"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginEnd="3dp"
+        android:text="✨"
+        android:textSize="22sp"
+        android:contentDescription="Book deep cleaning"
+        android:background="@drawable/servia_widget_btn"
+        android:textColor="#FFFFFF" />
+    <Button
+        android:id="@+id/servia_btn_ac"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginHorizontal="3dp"
+        android:text="❄️"
+        android:textSize="22sp"
+        android:contentDescription="Book AC service"
+        android:background="@drawable/servia_widget_btn"
+        android:textColor="#FFFFFF" />
+    <Button
+        android:id="@+id/servia_btn_maid"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginHorizontal="3dp"
+        android:text="👤"
+        android:textSize="22sp"
+        android:contentDescription="Book maid service"
+        android:background="@drawable/servia_widget_btn"
+        android:textColor="#FFFFFF" />
+    <Button
+        android:id="@+id/servia_btn_handyman"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginStart="3dp"
+        android:text="🔧"
+        android:textSize="22sp"
+        android:contentDescription="Book handyman"
+        android:background="@drawable/servia_widget_btn"
+        android:textColor="#FFFFFF" />
+</LinearLayout>
