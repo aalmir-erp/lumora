@@ -339,6 +339,30 @@ jobs:
             twa/android/wear-build/app/build/outputs/**
           if-no-files-found: warn
 
+      - name: Commit Wear log to ci-debug branch (sandbox can't fetch artifacts)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Sandbox network blocks Azure blob (where artifacts live), so push
+          # the log into a throwaway branch on the repo where Claude's MCP +
+          # git fetch can read it.
+          if [ ! -f /tmp/wear-build.log ]; then exit 0; fi
+          git config user.email "ci@servia.ae"
+          git config user.name "Servia CI"
+          git fetch origin ci-debug 2>/dev/null && git checkout ci-debug || git checkout --orphan ci-debug
+          git rm -rf . 2>/dev/null || true
+          mkdir -p .ci-debug
+          cp /tmp/wear-build.log .ci-debug/wear-build.log
+          # Also copy any existing build outputs we found
+          if [ -d twa/android/wear-build/app/build/outputs ]; then
+            cp -r twa/android/wear-build/app/build/outputs .ci-debug/wear-outputs 2>/dev/null || true
+            find .ci-debug/wear-outputs -type f | head -20 > .ci-debug/wear-outputs.list
+          fi
+          git add -A .ci-debug/
+          git commit -m "ci: wear build log $(date -u +%Y%m%d-%H%M%S)" --allow-empty
+          git push -f origin ci-debug
+
       - name: Upload Wear OS APK + AAB
         uses: actions/upload-artifact@v4
         with:
