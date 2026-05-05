@@ -110,6 +110,15 @@ jobs:
         run: |
           mkdir -p twa/android/generated
           cd twa/android/generated
+          # Print manifest contents so any future "Invalid URL" error
+          # at this step is debuggable from the workflow log alone.
+          echo "=== twa-manifest.json contents ==="
+          cat ../twa-manifest.json
+          echo "=== bubblewrap version ==="
+          bubblewrap --version || true
+          echo "=== bubblewrap config ==="
+          cat ~/.bubblewrap/config.json
+          echo "=== running init ==="
           # `init` scaffolds the Android Studio project from twa-manifest.json.
           # With ~/.bubblewrap/config.json pre-written above, the JDK / SDK
           # prompts are skipped. `bubblewrap init` may still ask a few
