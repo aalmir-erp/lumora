@@ -1,0 +1,99 @@
+name: Build Android TWA (AAB for Play Store)
+# Builds servia.ae as a Trusted Web Activity using Bubblewrap and uploads
+# the signed AAB as a workflow artifact you can download and submit to
+# the Play Console. Run manually from the GitHub Actions tab, or on every
+# push of a tag matching v*.
+#
+# Required GitHub secrets (Settings → Secrets and variables → Actions):
+#
+#   ANDROID_KEYSTORE_BASE64   the keystore (.jks/.keystore) base64-encoded
+#   ANDROID_KEY_ALIAS         e.g. "servia"
+#   ANDROID_KEYSTORE_PASSWORD keystore password
+#   ANDROID_KEY_PASSWORD      key password (often the same)
+#
+# To generate a keystore (do this ONCE locally, then save it in 1Password):
+#
+#   keytool -genkeypair -v -keystore servia.jks -keyalg RSA -keysize 2048 \
+#           -validity 10000 -alias servia
+#   base64 servia.jks > servia.jks.b64        # macOS / Linux
+#   # paste contents of servia.jks.b64 into the ANDROID_KEYSTORE_BASE64 secret
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "build-tools;34.0.0 platforms;android-34"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with: { node-version: "20" }
+
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli@latest
+
+      - name: Decode keystore from secret
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > $RUNNER_TEMP/servia.jks
+          ls -la $RUNNER_TEMP/servia.jks
+
+      - name: Initialize Bubblewrap project
+        working-directory: twa/android
+        run: |
+          # --skipPwaValidation avoids fetching the manifest at init time
+          # (we already trust ours); --directory just keeps things in CWD.
+          bubblewrap init --manifest=./twa-manifest.json --directory=./generated --skipPwaValidation || true
+
+      - name: Build signed AAB
+        working-directory: twa/android/generated
+        env:
+          KS_PATH:    ${{ runner.temp }}/servia.jks
+          KS_ALIAS:   ${{ secrets.ANDROID_KEY_ALIAS }}
+          KS_PASS:    ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASS:   ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # Bubblewrap reads these env vars when building so we don't have to
+          # hand-pass them on the CLI (which would log to GitHub Actions stdout).
+          bubblewrap build \
+            --signingKeyPath="$KS_PATH" \
+            --signingKeyAlias="$KS_ALIAS" \
+            --skipPwaValidation
+
+      - name: Upload AAB + APK as workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: servia-android-twa
+          path: |
+            twa/android/generated/app-release-bundle.aab
+            twa/android/generated/app-release-signed.apk
+            twa/android/generated/assetlinks.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Print SHA-256 fingerprint reminder
+        working-directory: twa/android/generated
+        run: |
+          echo ""
+          echo "==================================================="
+          echo "  IMPORTANT: copy the SHA-256 fingerprint from"
+          echo "  assetlinks.json (above) into:"
+          echo "    web/.well-known/assetlinks.json"
+          echo "  on the website. Without it, the TWA opens with"
+          echo "  a URL bar instead of going full-screen."
+          echo "==================================================="
+          cat assetlinks.json || true
