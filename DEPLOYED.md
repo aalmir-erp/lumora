@@ -2,10 +2,11 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"LdD2bd6dTwWc0t38GbGh5g"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"JsAxjKCDTNCV-T-LozsQ6Q"}`
 
 ## Build logs
 ```
+[ 4/11] COPY requirements.txt ./
 [internal] load build context
 [ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 2/11] WORKDIR /app
@@ -21,7 +22,6 @@
 [ 5/11] RUN pip install -r requirements.txt
 [ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
-[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/11] COPY app ./app
 [ 8/11] COPY app ./app
 [ 9/11] COPY web ./web
@@ -32,9 +32,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MGMwNmU2NDIzZWQyMWZlZjYyNGQ4ZDhiYzZkMGYwOGEyODQ0M2VmM2E4ZmY3YTNmYTRlNjZmNDA0ODgxZjA0MCIsInNpemUiOjI5NTgsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNVQxODo1NDoxOVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:d7604bf36917bb5a543e92929af515fca88ff10ce9f1acdc2906b5c3790f9885
-containerimage.digest: sha256:0c06e6423ed21fef624d8d8bc6d0f08a28443ef3a8ff7a3fa4e66f404881f040
+containerimage.digest: sha256:59f0995ba105f77f07b6becd995e77489035e4aac7b14b6f3f32aeb5de96cef1
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NTlmMDk5NWJhMTA1Zjc3ZjA3YjZiZWNkOTk1ZTc3NDg5MDM1ZTRhYWM3YjE0YjZmM2YzMmFlYjVkZTk2Y2VmMSIsInNpemUiOjI5NTgsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNVQxOTowMDoxNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:0d9e5e35ffd6da1be4823008ad5d48235b0e6b67c55cb202d47e63a02b5e06a4
 image push
 image push
 
@@ -50,20 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/1f73e78e-5403-41e1-ae74-dc2d1bdeefc0/vol_onr647rhdeir9di9
-Starting Container
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
-[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:52583 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:47348 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:47420 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:58394 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49626 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49622 - "GET /book.html HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49640 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49646 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49662 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49672 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49676 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49646 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49676 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49676 - "GET /book.html HTTP/1.1" 304 Not Modified
+INFO:     100.64.0.5:49640 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49676 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49622 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49646 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49672 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49662 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49676 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49622 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.5:49640 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.5:60126 - "GET /book.html HTTP/1.1" 304 Not Modified
+INFO:     100.64.0.5:60126 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.5:60128 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.5:60134 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.5:60148 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:60152 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:60158 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.5:60166 - "GET /api/services HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
