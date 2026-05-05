@@ -308,12 +308,27 @@ main.innerHTML += FAQ.map(s => `
       </details>`).join("")}
   </section>`).join("");
 
-// FAQPage JSON-LD with ALL questions for AI engine + Google rich snippets
+// FAQPage JSON-LD with ALL questions for AI engine + Google rich snippets.
+// We have a static FAQPage in <head> for crawlers that don't run JS (the
+// schema.org validator etc.). When JS runs, replace it with a richer
+// version that has every question on the page - otherwise Google sees two
+// FAQPage @types and reports "Duplicate field 'FAQPage'" as a critical
+// error in the Rich Results Test.
+document.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+  try {
+    const obj = JSON.parse(s.textContent || "{}");
+    if (obj && (obj["@type"] === "FAQPage" || obj["@type"] === "BreadcrumbList")) {
+      s.remove();
+    }
+  } catch (_) {}
+});
+
 const allItems = FAQ.flatMap(s => s.items);
 const ld = document.createElement("script");
 ld.type = "application/ld+json";
 ld.textContent = JSON.stringify({
   "@context":"https://schema.org","@type":"FAQPage",
+  name:"Servia FAQ", url:"https://servia.ae/faq.html",
   mainEntity: allItems.map(it => ({"@type":"Question",name:it.q,
     acceptedAnswer:{"@type":"Answer",text:it.a.replace(/<[^>]+>/g,"")}}))
 });
