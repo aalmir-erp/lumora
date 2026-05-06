@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Plain FrameLayout-based layout (no androidx.wear dep) so the build
-     resolves cleanly. Round-screen safe via 8dp uniform padding. -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- v1.24.2 — 6-tile launcher with the new Voice + SOS buttons.
+     Plain ScrollView+LinearLayout (no androidx.wear dep) so the
+     layout resolves cleanly. Round-screen safe via 8dp padding. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0F172A"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical">
 
         <TextView
@@ -33,10 +35,31 @@
             android:textColor="#94A3B8"
             android:layout_marginBottom="6dp" />
 
+        <!-- Row 1: Voice (flagship) + SOS Recovery -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="80dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_voice"
+                style="@style/WearTile"
+                android:background="#F59E0B"
+                android:textColor="#1E293B"
+                android:text="🎙\nTalk"
+                android:contentDescription="Talk to Servia" />
+            <TextView
+                android:id="@+id/wear_tile_sos"
+                style="@style/WearTile"
+                android:background="#DC2626"
+                android:text="🆘\nSOS"
+                android:contentDescription="One-tap recovery" />
+        </LinearLayout>
+
+        <!-- Row 2: Track + Quick book -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="4dp"
             android:orientation="horizontal">
             <TextView
                 android:id="@+id/wear_tile_track"
@@ -47,13 +70,13 @@
                 android:id="@+id/wear_tile_book"
                 style="@style/WearTile"
                 android:text="📋\nBook"
-                android:contentDescription="Book a service" />
+                android:contentDescription="Quick book" />
         </LinearLayout>
 
+        <!-- Row 3: Quote + Chat -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="80dp"
             android:layout_marginTop="4dp"
             android:orientation="horizontal">
             <TextView
@@ -65,7 +88,7 @@
                 android:id="@+id/wear_tile_chat"
                 style="@style/WearTile"
                 android:text="🤖\nChat"
-                android:contentDescription="Talk to Servia" />
+                android:contentDescription="Open chat" />
         </LinearLayout>
     </LinearLayout>
-</FrameLayout>
+</ScrollView>

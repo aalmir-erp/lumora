@@ -77,6 +77,12 @@ _FORCE_MOBILE_SNIPPET = (
     b"}}catch(e){}})();</script>"
 )
 
+# v1.24.2 — universal SOS FAB. Injected on every public page so anyone can
+# summon recovery from any screen (homepage, services, faq, anywhere).
+# Tiny tag pointing at /sos-fab.js (the heavy lifting + styles live there
+# so we don't bloat every HTML response).
+_SOS_FAB_SNIPPET = b"<script src=\"/sos-fab.js\" defer></script>"
+
 
 class _ForceMobileMiddleware(_BHM):
     async def dispatch(self, request, call_next):
@@ -97,6 +103,14 @@ class _ForceMobileMiddleware(_BHM):
             j = body.find(b">", i)
             if j > 0:
                 body = body[: j + 1] + _FORCE_MOBILE_SNIPPET + body[j + 1 :]
+        # v1.24.2 — universal SOS FAB before </body> so it loads after layout.
+        # Skip /sos.html (already a panic page), /admin*, /vendor*, /pay*.
+        path = (request.url.path or "")
+        if (b"sos-fab.js" not in body
+                and not path.startswith(("/admin", "/vendor", "/portal-vendor",
+                                          "/pay", "/sos.html"))):
+            if b"</body>" in body:
+                body = body.replace(b"</body>", _SOS_FAB_SNIPPET + b"</body>", 1)
         from starlette.responses import Response as _R
         new = _R(content=body, status_code=resp.status_code,
                  headers=dict(resp.headers), media_type=resp.media_type)

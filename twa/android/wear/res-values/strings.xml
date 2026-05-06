@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="wear_app_name">Servia</string>
+    <string name="tile_voice_desc">Tap to talk · book · quote · recovery · wallet — all by voice</string>
     <string name="tile_quickbook_desc">One-tap book your most-used Servia service</string>
     <string name="tile_nextbooking_desc">Your next booking with live ETA + crew status</string>
     <string name="tile_recovery_desc">SOS · Sends real GPS, dispatches closest tow truck</string>

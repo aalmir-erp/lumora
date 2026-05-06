@@ -2,9 +2,10 @@ plugins {
     id 'com.android.application'
 }
 
-// Servia Wear OS app v1.24.1 — adds one-tap recovery dispatch.
-// Brings in play-services-location for GPS, and uses HttpsURLConnection
-// (stdlib) for the dispatch POST so we don't pull in OkHttp.
+// Servia Wear OS app v1.24.2 — real voice assistant + chat-driven booking
+// + recovery one-tap. Brings in play-services-location for GPS and uses
+// HttpsURLConnection + system TTS (no OkHttp / no extra deps) so the
+// APK stays under 4 MB.
 //
 // History note: earlier appcompat dep caused kotlin-stdlib duplicate-class
 // errors. We carefully pin the wear-tiles + wear-protolayout deps to a
@@ -17,8 +18,8 @@ android {
         applicationId "ae.servia.wear"
         minSdk 26
         targetSdk 34
-        versionCode 3
-        versionName "1.24.1"
+        versionCode 4
+        versionName "1.24.2"
     }
     signingConfigs {
         release {
