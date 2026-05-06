@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 43
+- ✅ Pass: 44
 - ⚠️ Warn: 1
-- ❌ Fail: 6
+- ❌ Fail: 5
 - ⏭ Skip: 0
 
 ## Items
@@ -14,7 +14,7 @@
 - ✅ **[T05] /blog index loads** — OK
 - ❌ **[T06] Sitemap has /nfc.html** — exception: nfc.html missing
 - ✅ **[T07] robots.txt accessible** — OK
-- ❌ **[T08] /faq.html FAQPage schema** — exception: locator.allInnerTexts: Execution context was destroyed, most likely because of a navigation
+- ✅ **[T08] /faq.html FAQPage schema** — present
 - ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
 - ✅ **[T11] Mobile nav single-row** — Δy=-7
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_C6pQZ9R7m...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_caKheDaws...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,13 +47,13 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.23.1
+- ✅ **[T41] /api/health responds** — v1.23.2
 - ✅ **[T42] /api/services >=10** — 32
-- ✅ **[T43] /api/app/latest works** — apk_v=1.22.99
+- ✅ **[T43] /api/app/latest works** — apk_v=1.23.2
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
-- ✅ **[T46] /book.html renders form** — OK
+- ❌ **[T46] /book.html renders form** — exception: no book button
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
 - ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
-- ❌ **[T49] /cart.html loads** — exception: HTTP 502
+- ✅ **[T49] /cart.html loads** — OK
 - ⚠️ **[T50] Service worker active** — not registered
