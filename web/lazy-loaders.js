@@ -19,10 +19,16 @@
   // the main thread for hundreds of ms — that's the freeze the user saw.
   // Staggering across requestIdleCallback frames keeps every step short
   // and lets the browser render in between.
+  // v1.23.8 — cache-bust the lazy-loaded scripts with the current app
+  // version. JS files have Cache-Control: max-age=1yr immutable so the
+  // only way to invalidate is changing the URL. window.SERVIA_VER is
+  // injected by the server (see /api/health -> inline meta) or falls
+  // back to a 1-min granularity timestamp.
+  const VER = (window.SERVIA_VER || ("" + Math.floor(Date.now() / 60000)));
   function injectOne(item) {
     if (item.id && document.getElementById("lazy-" + item.id)) return;
     const s = document.createElement("script");
-    s.src = item.src;
+    s.src = item.src + (item.src.indexOf("?") === -1 ? "?v=" : "&v=") + VER;
     s.async = (item.type !== "defer");
     s.defer = (item.type === "defer");
     if (item.id) s.id = "lazy-" + item.id;

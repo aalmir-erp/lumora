@@ -8,10 +8,11 @@
     fetch("/api/site/social").then(r => r.ok ? r.json() : null).then(j => {
       const slot = document.getElementById("servia-social-strip-slot");
       if (!j || !j.profiles || !j.profiles.length) {
-        // No profiles configured → make sure the placeholder slot stays
-        // invisible. Avoids the empty teal block that used to sit above
-        // the footer when admin hadn't pasted any social URLs yet.
-        if (slot) slot.style.display = "none";
+        // v1.23.7 — DO NOT hide the slot when no admin profiles exist.
+        // Earlier versions did slot.style.display='none' which nuked the
+        // 8 hardcoded fallback buttons (WhatsApp / Instagram / FB / X /
+        // TikTok / YouTube / LinkedIn / Refer 20%) baked into the HTML.
+        // Now we just return — fallback content stays visible.
         return;
       }
       // Reuse pre-reserved #servia-social-strip-slot placeholder if present
