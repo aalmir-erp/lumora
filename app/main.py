@@ -150,40 +150,24 @@ _RE_MULTI_WS    = _re_minify.compile(rb"\s{2,}")
 _RE_LINEBREAKS  = _re_minify.compile(rb"\n\s*\n+")
 
 
-def _minify_html(body: bytes) -> bytes:
-    """Conservative minify — strips comments + blank lines ONLY.
-    v1.24.19 — earlier version did `\\s{2,}` collapsing which broke
-    JavaScript template literals + multi-line strings inside <script>
-    blocks (caused 'website not loading any data' bug). Now we just do
-    the two operations that are provably safe regardless of context:
-      · strip HTML comments (except IE conditionals)
-      · collapse multiple blank lines to one
-    Saves ~5-8% on most pages without touching script/style/pre content."""
-    if not body or len(body) < 600:
-        return body
-    body = _RE_HTML_COMMENT.sub(b"", body)
-    body = _RE_LINEBREAKS.sub(b"\n", body)
-    return body
-
-
+# v1.24.21 — _MinifyHtmlMiddleware FULLY DISABLED.
+# Customer reported blank-white-screen even in incognito (no SW cache),
+# which means the SERVER is producing broken HTML. The conservative
+# v1.24.19 minify (just strip comments + blank lines) shouldn't have
+# broken anything, but the response-body re-stream path through TWO
+# middlewares (Minify + ForceMobile) plus the GZip middleware appears
+# to be racing in production. Until we have proper instrumentation,
+# the safest bet is no-op the entire middleware. PageSpeed loses
+# ~5-8% on minify (negligible compared to the WebP savings already
+# shipped) but the site STAYS UP.
 class _MinifyHtmlMiddleware(_BHM):
     async def dispatch(self, request, call_next):
-        resp = await call_next(request)
-        ctype = (resp.headers.get("content-type") or "").lower()
-        if "text/html" not in ctype:
-            return resp
-        body = b""
-        async for chunk in resp.body_iterator:
-            body += chunk
-        body = _minify_html(body)
-        from starlette.responses import Response as _R
-        new = _R(content=body, status_code=resp.status_code,
-                 headers=dict(resp.headers), media_type=resp.media_type)
-        new.headers["content-length"] = str(len(body))
-        return new
+        # Pure pass-through — no body consumption, no re-streaming.
+        return await call_next(request)
 
 
-app.add_middleware(_MinifyHtmlMiddleware)
+# Not registering it any more. Keeping the class as a no-op so any
+# existing reference keeps working, but no add_middleware call.
 
 
 # v1.24.12 — www → bare-domain canonical redirect.
