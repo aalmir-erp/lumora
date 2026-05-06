@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 41
+- ✅ Pass: 44
 - ⚠️ Warn: 1
-- ❌ Fail: 8
+- ❌ Fail: 5
 - ⏭ Skip: 0
 
 ## Items
@@ -10,7 +10,7 @@
 - ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
 - ❌ **[T03] /services.html lists services** — exception: only 0 cards
-- ✅ **[T04] /coverage.html renders** — OK
+- ❌ **[T04] /coverage.html renders** — exception: HTTP 502
 - ✅ **[T05] /blog index loads** — OK
 - ❌ **[T06] Sitemap has /nfc.html** — exception: nfc.html missing
 - ✅ **[T07] robots.txt accessible** — OK
@@ -20,7 +20,7 @@
 - ✅ **[T11] Mobile nav single-row** — Δy=-7
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ✅ **[T13] Install banner single row height** — 36px
-- ❌ **[T14] Footer present** — exception: no footer
+- ✅ **[T14] Footer present** — OK
 - ❌ **[T15] /install.html APK card** — exception: no apk-download
 - ❌ **[T16] /install.html Wear OS card** — exception: no wear-download
 - ✅ **[T17] /install.html iOS section** — OK
@@ -38,8 +38,8 @@
 - ✅ **[T29] /api/nfc/consult endpoint** — greets
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
-- ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_kjjIXewdU...
+- ✅ **[T32] /me.html requires auth** — redirected
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_3-cBwk8tx...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,11 +47,11 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.23.8
+- ✅ **[T41] /api/health responds** — v1.23.9
 - ✅ **[T42] /api/services >=10** — 32
-- ✅ **[T43] /api/app/latest works** — apk_v=1.23.6
-- ❌ **[T44] /api/site/social works** — exception: HTTP 502
-- ❌ **[T45] /api/brand works** — exception: HTTP 502
+- ✅ **[T43] /api/app/latest works** — apk_v=1.23.8
+- ✅ **[T44] /api/site/social works** — OK
+- ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book.html renders form** — OK
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
 - ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
