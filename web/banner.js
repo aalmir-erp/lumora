@@ -44,11 +44,11 @@ function __serviaBannerInit() {
   // Each slide: {emoji, text:[head, body], cta:{label,href}, tone}
   const DECKS = {
     default: [
-      // v1.24.8 — flagship slide pitches the "Servia it" verb, building it
-      // into UAE everyday vocabulary the way "Google it" became a verb.
-      { emoji: "🆘", head: "Any problem? Just Servia it.",
+      // v1.24.9 — pitches the "Servia it" verb alongside the universal SOS
+      // cue so customers learn the brand verb without losing the meaning.
+      { emoji: "🆘", head: "SOS — any problem? Just Servia it.",
         body: "Tow · plumber · electrician · maid · handyman · AC · move — one tap, GPS sent, vendor in seconds.",
-        cta: { label: "Servia it →", href: "/sos.html" }, tone: "rose" },
+        cta: { label: "🆘 Servia it →", href: "/sos.html" }, tone: "rose" },
       { emoji: "⚡", head: "Book in 60 seconds", body: "Trusted UAE pros, vetted + insured. Same-day available across all 7 emirates.",
         cta: { label: "Book now →", href: "/book.html" }, tone: "teal" },
       { emoji: "🎁", head: "Become an Ambassador", body: "Refer friends to climb tiers — get up to 20% off every booking.",

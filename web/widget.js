@@ -72,7 +72,12 @@
     el("form", { class: "us-input", autocomplete: "off" },
       el("button", { type: "button", class: "us-attach", "aria-label": "Attach photo", title: "Attach photo" }, "📎"),
       el("button", { type: "button", class: "us-mic", "aria-label": "Voice input", title: "Voice input" }, "🎤"),
-      el("input", { type: "text", placeholder: "Type message, send a voice note 🎤 or photo 📎…", maxlength: "1000" }),
+      // v1.24.9 — location share. Tap → popup with GPS / map pin / address
+      // fields. If the chat context implies a service that needs FROM and TO
+      // (chauffeur, furniture move, recovery tow), the popup shows BOTH
+      // location pickers stacked.
+      el("button", { type: "button", class: "us-loc", "aria-label": "Share location", title: "Share live location or pin on map" }, "📍"),
+      el("input", { type: "text", placeholder: "Type, 🎤 voice, 📎 photo, 📍 location…", maxlength: "1000" }),
       el("button", { type: "submit", class: "us-send", "aria-label": "Send", title: "Send" }, "↑")),
     el("div", { class: "us-mode" }, ""));
   // Hidden file input for image attachment
@@ -129,6 +134,7 @@
   const sendBtn = form.querySelector(".us-send");
   const attachBtn = form.querySelector(".us-attach");
   const micBtn = form.querySelector(".us-mic");
+  const locBtn = form.querySelector(".us-loc");
   const previewWrap = panel.querySelector(".us-attach-preview");
   const modeBadge = panel.querySelector(".us-mode");
   const subtitle = panel.querySelector(".us-mode-line");
@@ -517,6 +523,212 @@
       };
       try { rec.start(); } catch {}
     };
+  }
+
+  // ---------- 📍 Location share (v1.24.9) ----------
+  // Tap → bottom sheet with: 🛰 Use my GPS · 🗺 Pin on map · ✏ Type address.
+  // Detects whether the conversation context implies source+destination
+  // (chauffeur / furniture move / recovery tow) by scanning the last few
+  // user/assistant messages for keywords. If it does, the sheet shows two
+  // location pickers stacked (FROM and TO). Otherwise just one location.
+  locBtn.onclick = () => openLocationSheet(input);
+
+  function openLocationSheet(targetInput) {
+    if (document.getElementById("us-loc-sheet")) return;
+    var needsDest = sniffNeedsDestination();
+    var sheet = el("div", { id: "us-loc-sheet" });
+    sheet.style.cssText =
+      "position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100000;" +
+      "display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)";
+    sheet.innerHTML =
+      '<div style="background:#fff;color:#0F172A;border-radius:24px 24px 0 0;width:100%;max-width:520px;padding:18px 16px 22px;max-height:90vh;overflow:auto;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+        + '<h3 style="margin:0;font-size:18px">📍 Share location</h3>'
+        + '<button id="us-loc-x" style="background:transparent;border:0;font-size:22px;cursor:pointer;color:#64748B" aria-label="Close">✕</button>'
+      + '</div>'
+      + '<p style="margin:0 0 12px;color:#64748B;font-size:12.5px">' + (needsDest
+        ? 'This service needs a pickup AND drop-off.'
+        : 'Use your GPS, pin the spot, or type the address.') + '</p>'
+      + locationBlockHtml("from", needsDest ? "📍 Pickup (FROM)" : "📍 Where")
+      + (needsDest ? locationBlockHtml("to", "🏁 Drop-off (TO)") : "")
+      + '<button id="us-loc-go" style="display:block;width:100%;padding:14px;font-size:15px;font-weight:800;border:0;border-radius:14px;background:#0F766E;color:#fff;cursor:pointer;margin-top:10px">'
+        + 'Send to Servia'
+      + '</button>'
+      + '</div>';
+    document.body.appendChild(sheet);
+    sheet.querySelector("#us-loc-x").onclick = function(){ sheet.remove(); };
+    sheet.addEventListener("click", function(e){ if (e.target === sheet) sheet.remove(); });
+
+    wireLocationBlock(sheet, "from");
+    if (needsDest) wireLocationBlock(sheet, "to");
+
+    sheet.querySelector("#us-loc-go").onclick = function(){
+      var fromTxt = collectLocation(sheet, "from");
+      if (!fromTxt) { alert("Pick or type the location first."); return; }
+      var msg;
+      if (needsDest) {
+        var toTxt = collectLocation(sheet, "to");
+        if (!toTxt) { alert("Add the drop-off too."); return; }
+        msg = "📍 FROM: " + fromTxt + "\n🏁 TO: " + toTxt;
+      } else {
+        msg = "📍 " + fromTxt;
+      }
+      var existing = (targetInput.value || "").trim();
+      targetInput.value = (existing ? existing + "\n" : "") + msg;
+      sheet.remove();
+      // Auto-submit so the chat round-trip starts immediately.
+      try { sendBtn.click(); } catch (_) {}
+    };
+  }
+
+  function locationBlockHtml(prefix, title) {
+    return ''
+    + '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:12px;margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:800;color:#0F766E;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px">' + title + '</div>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'
+        + '<button data-act="gps" data-pre="' + prefix + '" style="flex:1;min-width:120px;padding:9px;border:1px solid #99F6E4;background:#F0FDFA;color:#0F766E;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer">🛰 Use my GPS</button>'
+        + '<button data-act="map" data-pre="' + prefix + '" style="flex:1;min-width:120px;padding:9px;border:1px solid #DDD;background:#fff;color:#0F172A;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer">🗺 Pin on map</button>'
+      + '</div>'
+      + '<input id="us-loc-' + prefix + '-addr" type="text" placeholder="Or type address (Marina Pinnacle, Apt 1204, JLT…)" style="width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:10px;font-size:13px;font-family:inherit;margin-bottom:6px">'
+      + '<input id="us-loc-' + prefix + '-notes" type="text" placeholder="Notes (gate code, parking, etc)" style="width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:10px;font-size:12px;font-family:inherit">'
+      + '<div id="us-loc-' + prefix + '-status" style="font-size:11px;color:#64748B;margin-top:6px;min-height:14px"></div>'
+      + '<input id="us-loc-' + prefix + '-coord" type="hidden">'
+    + '</div>';
+  }
+
+  function wireLocationBlock(sheet, prefix) {
+    var st = sheet.querySelector("#us-loc-" + prefix + "-status");
+    var hidden = sheet.querySelector("#us-loc-" + prefix + "-coord");
+    var addr = sheet.querySelector("#us-loc-" + prefix + "-addr");
+    Array.prototype.forEach.call(
+      sheet.querySelectorAll('button[data-pre="' + prefix + '"]'),
+      function(b){
+        b.onclick = function(){
+          var act = b.getAttribute("data-act");
+          if (act === "gps") {
+            if (!navigator.geolocation) { st.textContent = "Geolocation not available."; return; }
+            st.textContent = "📡 Getting GPS…";
+            navigator.geolocation.getCurrentPosition(function(p){
+              var lat = p.coords.latitude, lng = p.coords.longitude;
+              hidden.value = lat.toFixed(5) + "," + lng.toFixed(5);
+              st.textContent = "✅ GPS captured (±" + Math.round(p.coords.accuracy) + "m)";
+              reverseGeocode(lat, lng, addr);
+            }, function(e){
+              st.textContent = "⚠ " + (e.code === 1 ? "Permission denied — type the address instead." : "Could not get GPS.");
+            }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
+          } else if (act === "map") {
+            openMapPicker(function(lat, lng){
+              hidden.value = lat.toFixed(5) + "," + lng.toFixed(5);
+              st.textContent = "✅ Pin set (" + lat.toFixed(4) + "," + lng.toFixed(4) + ")";
+              reverseGeocode(lat, lng, addr);
+            }, hidden.value);
+          }
+        };
+      });
+  }
+
+  function reverseGeocode(lat, lng, addrInput) {
+    fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lng,
+      {headers:{"Accept-Language":"en"}})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.display_name && !addrInput.value) {
+          addrInput.value = j.display_name.split(",").slice(0,3).join(",");
+        }
+      })
+      .catch(function(){});
+  }
+
+  function collectLocation(sheet, prefix) {
+    var addr = (sheet.querySelector("#us-loc-" + prefix + "-addr").value || "").trim();
+    var coord = (sheet.querySelector("#us-loc-" + prefix + "-coord").value || "").trim();
+    var notes = (sheet.querySelector("#us-loc-" + prefix + "-notes").value || "").trim();
+    if (!addr && !coord) return null;
+    var bits = [];
+    if (addr) bits.push(addr);
+    if (coord) bits.push("(" + coord + ")");
+    if (notes) bits.push("[" + notes + "]");
+    return bits.join(" ");
+  }
+
+  function sniffNeedsDestination() {
+    // Walk the last 6 chat bubbles and look for keywords that imply a
+    // pickup-AND-drop-off service. Conservative — only return true on a
+    // clear signal so single-location services don't see a confusing
+    // 2-block sheet.
+    var bodyText = "";
+    try {
+      var bubbles = panel.querySelectorAll(".us-msg, .us-bubble");
+      var n = Math.min(6, bubbles.length);
+      for (var i = bubbles.length - n; i < bubbles.length; i++) {
+        bodyText += " " + (bubbles[i].textContent || "").toLowerCase();
+      }
+      bodyText += " " + (input.value || "").toLowerCase();
+    } catch (_) {}
+    var rx = /(move|moving|movers|relocation|relocate|chauffeur|driver|tow|towing|recovery|deliver|delivery|airport|drop[- ]?off|pickup|pick[- ]?up|from .* to |destination)/i;
+    return rx.test(bodyText);
+  }
+
+  // ---------- Map pin picker (Leaflet, lazy-loaded) ----------
+  var _picker = null;
+  function openMapPicker(onConfirm, currentCoord) {
+    if (_picker) _picker.remove();
+    _picker = el("div", { id: "us-mappick" });
+    _picker.style.cssText =
+      "position:fixed;inset:0;background:#0F172A;z-index:200000;display:flex;flex-direction:column";
+    _picker.innerHTML =
+      '<header style="padding:10px 14px;background:#0F172A;color:#fff;display:flex;align-items:center;gap:10px">'
+        + '<button id="us-mp-back" style="background:transparent;color:#fff;border:0;font-size:20px;cursor:pointer">←</button>'
+        + '<div style="flex:1"><div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#FCD34D;font-weight:800">Pin location</div>'
+        + '<div style="font-size:13px;font-weight:600">Drag map · centre is your pin</div></div>'
+      + '</header>'
+      + '<div style="position:relative;flex:1;min-height:200px;background:#1E293B">'
+        + '<div id="us-mp-map" style="position:absolute;inset:0;width:100%;height:100%"></div>'
+        + '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);font-size:42px;text-shadow:0 4px 8px rgba(0,0,0,.4);pointer-events:none;z-index:500">📍</div>'
+      + '</div>'
+      + '<div style="padding:10px 12px;background:#fff;display:flex;gap:8px;align-items:center">'
+        + '<input id="us-mp-q" type="text" placeholder="Search e.g. Marina, Burj Khalifa…" style="flex:1;padding:10px;border:1px solid #CBD5E1;border-radius:10px;font-size:14px">'
+        + '<button id="us-mp-srch" style="background:#0F766E;color:#fff;border:0;padding:11px 14px;border-radius:10px;font-weight:800;cursor:pointer">Go</button>'
+        + '<button id="us-mp-ok" style="background:#DC2626;color:#fff;border:0;padding:11px 14px;border-radius:10px;font-weight:800;cursor:pointer">✓ Use</button>'
+      + '</div>';
+    document.body.appendChild(_picker);
+    _picker.querySelector("#us-mp-back").onclick = function(){ _picker.remove(); _picker = null; };
+
+    // Lazy-load Leaflet CSS + JS once
+    function ensureLeaflet(cb){
+      if (window.L) return cb();
+      var css = document.createElement("link"); css.rel = "stylesheet";
+      css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(css);
+      var js = document.createElement("script");
+      js.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      js.onload = function(){ cb(); }; document.head.appendChild(js);
+    }
+    ensureLeaflet(function(){
+      var startCoord = currentCoord ? currentCoord.split(",").map(parseFloat) : [25.2048, 55.2708];
+      var map = L.map("us-mp-map", {zoomControl:true}).setView(startCoord, currentCoord ? 17 : 11);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {maxZoom:19, attribution:"© OpenStreetMap", subdomains:"abc"}).addTo(map);
+      // triple invalidate (Samsung Internet quirk)
+      setTimeout(function(){ map.invalidateSize(true); }, 120);
+      setTimeout(function(){ map.invalidateSize(true); }, 350);
+      setTimeout(function(){ map.invalidateSize(true); }, 800);
+      _picker.querySelector("#us-mp-srch").onclick = function(){
+        var q = _picker.querySelector("#us-mp-q").value.trim();
+        if (!q) return;
+        fetch("https://nominatim.openstreetmap.org/search?format=json&q=" +
+              encodeURIComponent(q + ", United Arab Emirates") + "&limit=1")
+          .then(function(r){ return r.json(); })
+          .then(function(arr){
+            if (!arr.length) return alert("Not found.");
+            map.setView([arr[0].lat, arr[0].lon], 17);
+          });
+      };
+      _picker.querySelector("#us-mp-ok").onclick = function(){
+        var c = map.getCenter();
+        onConfirm(c.lat, c.lng);
+        _picker.remove(); _picker = null;
+      };
+    });
   }
 
   // ---------- Photo attachment with client-side compression ----------

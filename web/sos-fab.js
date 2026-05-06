@@ -40,8 +40,10 @@
       // v1.24.8 — brand-building copy. "Servia it" is the new everyday verb
       // (like "Google it"). The 🆘 icon stays so people still associate it
       // with SOS / emergency, but the word changes the conversation.
-      a.innerHTML = '<span class="dot" aria-hidden="true"></span>🆘 Servia it';
-      a.title = 'Any problem? Servia it — one-tap dispatch · GPS auto-sent · vendor in seconds';
+      // v1.24.9 — show BOTH "SOS" and the new verb "Servia it" so customers
+      // learn the brand verb while still recognising the universal SOS cue.
+      a.innerHTML = '<span class="dot" aria-hidden="true"></span>🆘 SOS · Servia it';
+      a.title = 'SOS / "Servia it" — any problem, one-tap dispatch · GPS auto-sent · vendor in seconds';
       document.body.appendChild(a);
     }
     if (document.body) mount();
