@@ -429,15 +429,25 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     </div>
   </div>
 </header>
-<!-- 📱 ANDROID + WEAR OS showcase (v1.22.96) -->
-<section style="padding:48px 16px;background:linear-gradient(135deg,#0F172A 0%,#1E293B 50%,#312E81 100%);color:#fff;position:relative;overflow:hidden">
-  <div style="position:absolute;inset:0;background:radial-gradient(circle at 10% 90%,rgba(252,211,77,.15),transparent 55%);pointer-events:none"></div>
-  <div style="max-width:1180px;margin:0 auto;position:relative">
-    <div style="text-align:center;margin-bottom:32px">
-      <span style="background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">⚡ Native Android · UAE first</span>
-      <h2 style="margin:14px 0 8px;font-size:32px;letter-spacing:-.02em;color:#fff;line-height:1.1">9 widgets. 1 watch app.<br><span style="color:#FCD34D">Servia is faster than your browser.</span></h2>
-      <p style="margin:0;color:#CBD5E1;font-size:15.5px;max-width:680px;margin:0 auto">Install the signed Servia APK and unlock features Chrome can't show: home-screen widgets, Wear OS pairing, long-press shortcuts, true full-screen with no URL bar, robust push notifications.</p>
+<!-- 📱 ANDROID + WEAR OS — compressed brief card (v1.23.5)
+     Was a tall 8-card section; user said "show some how brief that we
+     have mobile app and wear app feature full and detail page show all". -->
+<section style="padding:24px 16px;background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);color:#fff">
+  <div style="max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between">
+    <div style="flex:1;min-width:240px">
+      <span style="background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase">📱 Native Android + ⌚ Wear OS</span>
+      <h3 style="margin:8px 0 4px;font-size:18px;color:#fff;line-height:1.2">9 widgets · Wear OS app · No URL bar</h3>
+      <p style="margin:0;color:#CBD5E1;font-size:13px">Faster cold-start than the browser, true full-screen, robust push, long-press shortcuts. APK + AAB free.</p>
     </div>
+    <a href="/install.html" style="background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:11px 20px;border-radius:999px;font-weight:800;text-decoration:none;font-size:13.5px;white-space:nowrap">📥 Install + see all features →</a>
+  </div>
+</section>
+<!-- Old detailed feature grid retained for SEO crawlers but visually hidden -->
+<section style="display:none" aria-hidden="true">
+  <div style="text-align:center;margin-bottom:32px">
+    <h2>9 widgets. 1 watch app. Servia is faster than your browser.</h2>
+    <p>Install the signed Servia APK and unlock features Chrome can't show: home-screen widgets, Wear OS pairing, long-press shortcuts, true full-screen with no URL bar, robust push notifications.</p>
+  </div>
 
     <!-- Feature grid -->
     <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:28px">

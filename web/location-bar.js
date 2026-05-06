@@ -306,7 +306,17 @@
     m.innerHTML = `
       <div class="sheet">
         <h3>📍 Where should we send the pro?</h3>
-        <p class="sub">We use this to pre-fill bookings, show area-specific prices, and route the closest crew. Update any time.</p>
+        <p class="sub">Drop your pin on the map below — that's the exact spot our crew arrives. Then fill in the building details.</p>
+
+        <!-- v1.23.5 — Map FIRST, ALWAYS visible at top of modal. Per user
+             request: 'edit address must take exact pin location'. The map
+             is the headline section; form fields are secondary. -->
+        <div id="lm-map-wrap" class="show" style="margin:0 0 14px;border-radius:14px;overflow:hidden;border:2px solid #14B8A6;box-shadow:0 12px 32px rgba(15,118,110,.18)">
+          <div id="lm-map" style="width:100%;height:300px;background:#F0FDFA"></div>
+          <div class="map-hint" style="background:#0F766E;color:#fff;padding:10px 14px;font-size:12.5px;line-height:1.4">
+            <b style="color:#FCD34D">📍 Drag the pin</b> to the exact spot. Address fields below auto-fill from the pin's location.
+          </div>
+        </div>
 
         <div class="row">
           <label>Save as</label>
@@ -367,14 +377,7 @@
           </div>
         </div>
 
-        <div class="map-toggle" id="lm-map-toggle" role="button" tabindex="0">
-          🗺️ Pin location on map <small style="font-weight:500;color:#475569;margin-inline-start:4px">— drag the marker for exact spot</small>
-          <span class="arr">›</span>
-        </div>
-        <div id="lm-map-wrap">
-          <div id="lm-map"></div>
-          <div class="map-hint">Drop the pin where the pro should arrive. Address fields above auto-fill from the pin. <b>Tap "Save"</b> when done.</div>
-        </div>
+        <!-- v1.23.5: old toggle + duplicate map-wrap removed (map is now at TOP of modal, always visible) -->
 
         <div class="actions">
           <button class="skip" type="button" id="lm-skip">Skip for now</button>
@@ -424,27 +427,9 @@
       }
     });
 
-    // Map toggle + lazy init.
-    // v1.23.4 — map is now AUTO-EXPANDED whenever the edit modal opens
-    // (per user: 'must take exact pin location'). Closed by default only
-    // if user collapses it. Pin coordinates are required for save.
-    const mapToggle = document.getElementById("lm-map-toggle");
-    const mapWrap = document.getElementById("lm-map-wrap");
-    function openMap() {
-      mapToggle.classList.add("open");
-      mapWrap.classList.add("show");
-      initMap(saved.lat, saved.lng);
-    }
-    // Auto-open map immediately so the user sees + drops a pin during edit
-    setTimeout(openMap, 60);
-    mapToggle.addEventListener("click", () => {
-      if (mapWrap.classList.contains("show")) {
-        mapToggle.classList.remove("open");
-        mapWrap.classList.remove("show");
-      } else {
-        openMap();
-      }
-    });
+    // v1.23.5 — map is at the TOP of the modal, always visible, no toggle.
+    // Just init it as soon as the modal renders.
+    setTimeout(() => initMap(saved.lat, saved.lng), 80);
 
     document.getElementById("lm-skip").onclick = () => m.remove();
     m.addEventListener("click", e => { if (e.target === m) m.remove(); });

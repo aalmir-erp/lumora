@@ -65,11 +65,19 @@
   .nfc-r-hero h1 .accent{color:#FCD34D}
   .nfc-r-hero p{font-size:18px;color:#FECACA;max-width:600px;margin:0 auto 22px;line-height:1.55}
   @media (max-width:720px){.nfc-r-hero h1{font-size:32px}.nfc-r-hero p{font-size:15px}}
-  .pulse{position:relative;width:140px;height:140px;margin:0 auto 18px}
-  .pulse::before,.pulse::after{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(252,211,77,.22);animation:pl 1.6s ease-out infinite}
-  .pulse::after{animation-delay:.8s}
-  .pulse .core{position:absolute;inset:30px;background:#FCD34D;color:#7C2D12;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900}
-  @keyframes pl{0%{transform:scale(1);opacity:1}100%{transform:scale(2.4);opacity:0}}
+  /* v1.23.5 — proper truck illustration replaces tiny emoji */
+  .truck-stage{position:relative;width:280px;height:200px;margin:24px auto 18px}
+  .truck-stage svg{width:100%;height:100%}
+  .truck-stage .pulse-ring{position:absolute;inset:30px 60px;border-radius:50%;background:radial-gradient(circle,rgba(252,211,77,.35),transparent 70%);animation:pl 1.8s ease-out infinite}
+  @keyframes pl{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.4);opacity:0}}
+  .privacy-call{background:rgba(252,211,77,.12);border:2px solid rgba(252,211,77,.5);border-radius:14px;padding:18px;margin:18px auto;max-width:740px}
+  .privacy-call h3{margin:0 0 6px;color:#FCD34D;font-size:15px}
+  .privacy-call p{margin:0;color:#FECACA;font-size:13.5px;line-height:1.55}
+  .privacy-call b{color:#fff}
+  .video-card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:18px;max-width:880px;margin:24px auto;color:#0F172A}
+  .video-card h3{margin:0 0 8px;color:#0F766E;font-size:16px}
+  .video-card pre{background:#F1F5F9;color:#0F172A;padding:12px;border-radius:10px;font-size:11.5px;line-height:1.55;overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin:8px 0}
+  .video-card code{background:#FEF3C7;color:#7C2D12;padding:1px 6px;border-radius:4px;font-size:11.5px}
   .grid-3{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));max-width:1000px;margin:32px auto;padding:0 20px}
   .card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:18px}
   .card h3{margin:0 0 6px;color:#7C2D12;font-size:16px}
@@ -101,9 +109,61 @@
 
 <section class="nfc-r-hero"><div class="inner">
   <span style="background:rgba(252,211,77,.22);color:#FCD34D;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">🆘 24/7 emergency · UAE first</span>
-  <div class="pulse"><div class="core">🆘</div></div>
   <h1>Breakdown? Tap once. <span class="accent">Recovery on the way.</span></h1>
-  <p>Stick a Servia NFC tag on your dashboard or inside the glove box. Phone dies, tyre blows, engine quits — tap your phone. GPS auto-captured. Recovery truck dispatched. Live WhatsApp ETA. AED 250 typical · 18-min average response in Dubai/Sharjah.</p>
+  <p>Stick a Servia NFC tag on your dashboard or inside the glove box. Phone dies, tyre blows, engine quits — tap your phone. <b>Your phone</b> sends its location to our dispatch (the tag has no GPS). Recovery truck on the way. Live WhatsApp ETA. AED 250 typical · 18-min response in Dubai/Sharjah.</p>
+
+  <!-- v1.23.5 — proper recovery-truck SVG illustration replaces tiny emoji -->
+  <div class="truck-stage" aria-hidden="true">
+    <div class="pulse-ring"></div>
+    <svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Road -->
+      <line x1="0" y1="170" x2="280" y2="170" stroke="rgba(255,255,255,.3)" stroke-width="2" stroke-dasharray="8 8"/>
+      <!-- Broken-down sedan (left) -->
+      <g transform="translate(20, 130)">
+        <rect x="0" y="0" width="60" height="22" rx="4" fill="#F1F5F9"/>
+        <rect x="6" y="-12" width="40" height="14" rx="2" fill="#CBD5E1"/>
+        <circle cx="12" cy="28" r="6" fill="#0F172A"/>
+        <circle cx="48" cy="28" r="6" fill="#0F172A"/>
+        <text x="30" y="-16" font-size="9" fill="#FCD34D" text-anchor="middle">⚠</text>
+      </g>
+      <!-- Tow truck (right, animated) -->
+      <g transform="translate(150, 110)">
+        <!-- Truck body -->
+        <rect x="0" y="20" width="50" height="30" rx="3" fill="#FCD34D"/>
+        <rect x="50" y="0" width="58" height="50" rx="3" fill="#F59E0B"/>
+        <!-- Cab window -->
+        <rect x="56" y="6" width="46" height="20" rx="2" fill="#1E293B"/>
+        <!-- Hook arm -->
+        <path d="M0 28 L-14 12 L-22 12" stroke="#92400E" stroke-width="3" fill="none"/>
+        <circle cx="-22" cy="20" r="4" fill="#92400E"/>
+        <!-- SERVIA branding -->
+        <text x="79" y="38" font-size="9" font-weight="800" fill="#fff" text-anchor="middle">SERVIA</text>
+        <!-- Wheels -->
+        <circle cx="14" cy="55" r="8" fill="#0F172A"/>
+        <circle cx="14" cy="55" r="3" fill="#475569"/>
+        <circle cx="78" cy="55" r="8" fill="#0F172A"/>
+        <circle cx="78" cy="55" r="3" fill="#475569"/>
+        <circle cx="98" cy="55" r="8" fill="#0F172A"/>
+        <circle cx="98" cy="55" r="3" fill="#475569"/>
+        <!-- Flashing roof light -->
+        <rect x="68" y="-6" width="22" height="6" rx="2" fill="#DC2626">
+          <animate attributeName="fill" values="#DC2626;#FCD34D;#DC2626" dur="0.8s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+      <!-- Pin marker (hovering above the broken sedan) -->
+      <g transform="translate(38, 70)">
+        <path d="M 12 0 C 5 0 0 5 0 12 C 0 22 12 36 12 36 C 12 36 24 22 24 12 C 24 5 19 0 12 0 Z" fill="#DC2626"/>
+        <circle cx="12" cy="12" r="5" fill="#fff"/>
+        <animate attributeName="transform" type="translate" values="38,70;38,64;38,70" dur="1.6s" repeatCount="indefinite"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="privacy-call">
+    <h3>🔒 Important: How location actually works</h3>
+    <p>The NFC tag is <b>passive</b> — no battery, no GPS, no broadcast. <b>It does not know where it is or where your car is.</b> When you <b>tap your phone</b> to the tag, your phone's browser opens Servia and (with your permission) shares <b>your phone's GPS</b> for that one dispatch only. The tag is never connected to anything. Same privacy model as a phone-number sticker on a fridge.</p>
+  </div>
+
   <div class="cta-row"><a class="cta" href="/nfc.html#order">📲 Get my free recovery tag →</a></div>
 </div></section>
 
@@ -138,6 +198,85 @@
   <p style="color:#475569;margin:0 0 16px">Free for Servia customers — sticker (AED 5 vs free with first booking), credit-card, or keychain. Stick on dashboard / glove box / sun visor. Lasts ~10 years.</p>
   <a class="cta" href="/nfc.html#order">📲 Order my free recovery tag →</a>
   <a href="/nfc.html" style="display:inline-block;margin-inline-start:8px;color:#7C2D12;font-weight:700;text-decoration:underline;padding:12px 14px;font-size:13px">See all 22 NFC use cases →</a>
+</section>
+
+<!-- v1.23.5 — AI prompts for marketing creatives. Designers/marketers
+     paste these into Veo / Runway / Sora / Midjourney to generate the
+     hero video + image-post for this page's social campaign. -->
+<section style="padding:32px 20px;background:#fff;border-top:1px solid #E2E8F0">
+  <div style="max-width:880px;margin:0 auto">
+    <h2 style="text-align:center;margin:0 0 6px;font-size:24px">📸 Marketing creatives — ready to generate</h2>
+    <p style="text-align:center;color:#475569;font-size:14px;margin:0 0 20px">Three prompts. Paste into the AI tool, click Generate, post.</p>
+
+    <div class="video-card">
+      <h3>🎬 Video prompt — Veo / Runway / Sora · 9:16, 8 seconds</h3>
+      <pre>SCENE: Wide shot of a sandy desert road in UAE, golden hour. A late-model
+SUV is stopped on the shoulder, hazard lights blinking. A woman in a modest
+abaya stands beside the open driver door, clearly stressed, holding her
+phone. Camera slowly dollies in.
+
+ACTION 0–2s: She taps her phone to a small Servia NFC sticker on the
+dashboard. Tiny green flash from the phone screen confirms tap.
+
+ACTION 2–4s: Phone screen close-up — Servia's confirm card appears with
+"📍 Live GPS captured · Recovery dispatched · ETA 18 min · AED 250".
+She taps Confirm.
+
+ACTION 4–6s: Cut to a Servia-branded recovery truck (yellow + teal livery)
+arriving with red roof light flashing. Driver waves.
+
+ACTION 6–8s: End card: "Servia · Tap once. Recovery on the way. ·
+servia.ae/nfc-vehicle-recovery"
+
+STYLE: Cinematic, soft warm light, real human on camera (not animated),
+UAE setting clearly identifiable (date palm at side of road, license
+plate in Arabic numerals).
+
+VOICE-OVER (EN): "When the road stops you, Servia keeps you moving."
+VOICE-OVER (AR): "إذا توقفت السيارة، سيرفيا تواصل تحريكك"
+
+MUSIC: Mid-tempo cinematic, ouds + soft strings, swelling toward the end.</pre>
+      <p style="margin:8px 0 0;font-size:12px;color:#64748B"><b>Output spec:</b> MP4 9:16 · 1080×1920 · 30fps · &lt;15MB · subtitles burned-in EN+AR. Post to Instagram Reels + TikTok + YouTube Shorts.</p>
+    </div>
+
+    <div class="video-card">
+      <h3>🖼️ Image prompt — Midjourney / DALL·E · 1:1 social post</h3>
+      <pre>Photorealistic split-screen image, 1:1 square aspect ratio, UAE highway
+context. Left half: panicked driver next to broken-down SUV in golden-
+hour desert light, tapping their phone to a small Servia NFC sticker on
+the dashboard, soft red warning glow inside the car. Right half: clean
+modern Servia-branded yellow + teal recovery truck arriving with bright
+LED roof light, driver in uniform smiling. Prominent overlay text in
+white sans-serif: "TAP ONCE. RECOVERY ON THE WAY." with smaller
+"Servia · 18-min response · AED 250" subtitle. UAE atmosphere — date
+palm, Arabic-numeral license plate. Color palette: Servia teal #0F766E,
+amber #F59E0B, white. Style: editorial, premium, high contrast.</pre>
+      <p style="margin:8px 0 0;font-size:12px;color:#64748B"><b>Output spec:</b> 1080×1080 PNG. Use as Instagram post, LinkedIn cover, FB feed.</p>
+    </div>
+
+    <div class="video-card">
+      <h3>🎨 Illustrated explainer — Lottie / After Effects · 6 sec loop</h3>
+      <pre>2D illustrated animation, flat-design style. Three-panel storyboard:
+PANEL 1 (0–2s): Smartphone tilts, taps a glowing Servia tag on a
+dashboard. Concentric ring waves emanate from the tap point.
+PANEL 2 (2–4s): Phone screen swivels to camera — large green checkmark +
+"GPS captured" text + map pin animation. Below: "Recovery dispatched."
+PANEL 3 (4–6s): Servia recovery truck zooms in from the right, dust
+trails, roof light flashing red. Yellow + teal branding visible.
+Loops back to panel 1.
+
+Constraint: NO PHOTOREALISM. Flat illustration only. The tag and phone
+are clearly separate objects (the tag is small + passive). The phone's
+GPS is shown as the source of the location ping (rays come from the
+PHONE, not from the tag) — this visually clarifies that the tag itself
+has no GPS / no tracking capability.
+
+Color palette: Servia teal #0F766E, amber #F59E0B, alarm red #DC2626,
+white. Sans-serif Inter for any text labels.
+
+Output: Lottie JSON or MP4 1080×1080 6-sec loop.</pre>
+    </div>
+  </div>
 </section>
 
 <footer style="background:#0F172A;color:#cbd5e1;padding:32px 20px;font-size:13px"><div style="max-width:1100px;margin:0 auto;display:flex;gap:18px;justify-content:space-between;flex-wrap:wrap"><div><b style="color:#fff">Servia</b><br>UAE's first NFC tap-to-book home services</div><div><a href="/nfc.html" style="color:#cbd5e1">All NFC use cases</a> · <a href="/install.html" style="color:#cbd5e1">Install app</a> · <a href="/contact.html" style="color:#cbd5e1">Contact</a></div></div></footer>
