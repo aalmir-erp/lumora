@@ -289,9 +289,152 @@
     <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">NOTES (gate code, parking, etc.)</label>
     <textarea id="cf-notes" rows="2" placeholder="Gate 4242 · parking P-12 · black Toyota Camry" style="width:100%;padding:10px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:13px;font-family:inherit;margin:4px 0 10px"></textarea>
 
+    <!-- v1.24.15 — payment method + PIN safety -->
+    <div style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:12px;padding:10px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:#92400E;letter-spacing:.04em;margin-bottom:6px">💳 PAY WITH</div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 0">
+        <input type="radio" name="cf-pay" value="ask" checked style="accent-color:#0F766E"> 💳 <b>Ask at booking time</b> <span style="color:#64748B;font-size:11px">(use a saved card)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 0">
+        <input type="radio" name="cf-pay" value="wallet" style="accent-color:#0F766E"> ⚡ <b>Use my Servia wallet</b> <span style="color:#64748B;font-size:11px">(falls back to card if balance is low)</span>
+      </label>
+    </div>
+
+    <div style="background:#F0FDFA;border:1.5px solid #99F6E4;border-radius:12px;padding:10px;margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+        <input type="checkbox" id="cf-pin" style="width:16px;height:16px;accent-color:#0F766E"> 🔒 Require PIN before this shortcut dispatches
+      </label>
+      <p style="margin:4px 0 0;font-size:11px;color:#64748B;line-height:1.45">
+        Recommended for shortcuts written to NFC tags or shared via voice. <span id="cf-pin-status">Set your account PIN once on this device — applies to every "PIN-required" shortcut.</span>
+      </p>
+    </div>
+
     <button id="cf-save" class="primary">✓ Save shortcut</button>
     <button class="ghost" onclick="closeCustomForm()" style="margin-top:6px;background:#fff">Cancel</button>
     <p id="cf-status" style="font-size:12px;color:#DC2626;margin:6px 0 0;min-height:14px"></p>
+  </div>
+</div>
+
+<!-- ============ POST-SAVE ACTION SHEET (v1.24.15) — NFC + voice + PIN ============ -->
+<div class="sheet-wrap" id="postsave" hidden>
+  <div class="sheet" style="max-width:480px;position:relative">
+    <button class="close" onclick="closePostSave()" aria-label="Close">✕</button>
+    <h2 style="margin:0 0 4px">✓ Shortcut saved!</h2>
+    <p class="sm" id="ps-summary">Tap your shortcut card any time to dispatch.</p>
+
+    <div style="background:#F0FDFA;border:1.5px solid #99F6E4;border-radius:12px;padding:12px;margin:12px 0">
+      <div style="font-size:11px;font-weight:800;color:#0F766E;letter-spacing:.04em;margin-bottom:4px">🔗 SHARE / TRIGGER URL</div>
+      <code id="ps-url" style="display:block;background:#fff;padding:8px 10px;border-radius:8px;font-size:11px;word-break:break-all;color:#0F172A;border:1px solid #CBD5E1"></code>
+      <button onclick="copyPsUrl()" style="margin-top:6px;background:#0F766E;color:#fff;border:0;padding:6px 12px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer">📋 Copy URL</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:6px">
+      <button onclick="psNfcWrite()" class="ghost" style="background:#FFFBEB;border-color:#FDE68A;color:#7C2D12;text-align:left;padding:11px 14px;font-weight:700">
+        📲 Write this shortcut to an NFC tag
+        <small style="display:block;font-weight:500;color:#64748B;font-size:11px;margin-top:2px">Android only · stick the tag on dashboard / fridge / front door</small>
+      </button>
+      <button onclick="psShowVoiceSetup()" class="ghost" style="background:#fff;text-align:left;padding:11px 14px;font-weight:700">
+        🗣 Voice setup — Google Assistant / Siri / IFTTT
+        <small style="display:block;font-weight:500;color:#64748B;font-size:11px;margin-top:2px">"Hey Google, [shortcut name]" → fires this shortcut</small>
+      </button>
+      <button onclick="psSetPin()" id="ps-pin-btn" class="ghost" style="background:#fff;text-align:left;padding:11px 14px;font-weight:700">
+        🔒 Set / change account PIN
+        <small style="display:block;font-weight:500;color:#64748B;font-size:11px;margin-top:2px" id="ps-pin-sub">Set up the 6-char PIN required for protected shortcuts</small>
+      </button>
+      <button onclick="psTestRun()" class="ghost" style="background:#FEF2F2;border-color:#FECACA;color:#991B1B;text-align:left;padding:11px 14px;font-weight:700">
+        🧪 Test now (does NOT dispatch a real truck)
+        <small style="display:block;font-weight:500;color:#64748B;font-size:11px;margin-top:2px">Verifies the URL works without sending a vendor</small>
+      </button>
+    </div>
+
+    <button onclick="closePostSave()" class="primary" style="margin-top:8px;background:#0F766E">Done</button>
+  </div>
+</div>
+
+<!-- ============ NFC WRITE FLOW (v1.24.15, Android Chrome only) ============ -->
+<div class="sheet-wrap" id="nfcwrite" hidden>
+  <div class="sheet" style="max-width:480px;position:relative">
+    <button class="close" onclick="closeNfcWrite()" aria-label="Close">✕</button>
+    <h2 style="margin:0 0 4px">📲 Write to NFC tag</h2>
+    <p class="sm" id="nfc-step-text">Hold an empty / rewritable NFC tag near the back of your phone.</p>
+    <div id="nfc-android-only" hidden style="background:#FEF2F2;border:1.5px solid #FECACA;border-radius:12px;padding:12px;margin-bottom:8px">
+      <b style="color:#991B1B">⚠ Android Chrome only.</b> Web NFC writing isn't available on iPhone (Apple restriction). On iPhone, use a free app like "NFC Tools" by wakdev: open it → write → URL → paste your shortcut URL.
+    </div>
+    <div id="nfc-progress" style="text-align:center;padding:16px 0">
+      <div id="nfc-step1-icon" style="font-size:48px;margin-bottom:8px">📡</div>
+      <div id="nfc-step-status" style="font-size:13px;color:#0F172A;font-weight:700;line-height:1.55">Ready when you are.</div>
+    </div>
+    <button id="nfc-go" class="primary">📡 Start scanning for tag</button>
+    <button onclick="closeNfcWrite()" class="ghost" style="margin-top:6px;background:#fff">Cancel</button>
+  </div>
+</div>
+
+<!-- ============ PIN SETUP / ENTRY (v1.24.15) ============ -->
+<div class="sheet-wrap" id="pinmodal" hidden>
+  <div class="sheet" style="max-width:380px;position:relative">
+    <button class="close" onclick="closePinModal()" aria-label="Close">✕</button>
+    <h2 id="pin-title" style="margin:0 0 4px">🔒 Set your SOS PIN</h2>
+    <p class="sm" id="pin-sub">4-12 alphanumeric characters. We hash it (scrypt) and never store plaintext. Used only when a "PIN-required" shortcut is triggered.</p>
+    <div id="pin-old-row" style="display:none;margin:6px 0">
+      <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">CURRENT PIN</label>
+      <input id="pin-old" type="password" autocomplete="current-password" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:18px;font-family:inherit;letter-spacing:.3em;text-align:center;margin-top:4px">
+    </div>
+    <label style="display:block;font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em;margin-top:6px">NEW PIN</label>
+    <input id="pin-new" type="password" autocomplete="new-password" maxlength="12" placeholder="••••••" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:18px;font-family:inherit;letter-spacing:.3em;text-align:center;margin-top:4px">
+    <button id="pin-save" class="primary" style="margin-top:14px">Save PIN</button>
+    <button onclick="closePinModal()" class="ghost" style="margin-top:6px;background:#fff">Cancel</button>
+    <p id="pin-status" style="font-size:12px;color:#DC2626;margin:6px 0 0;min-height:14px"></p>
+  </div>
+</div>
+
+<!-- ============ PIN ENTRY (when dispatching a PIN-required shortcut) ============ -->
+<div class="sheet-wrap" id="pinverify" hidden>
+  <div class="sheet" style="max-width:380px;position:relative">
+    <h2 style="margin:0 0 4px">🔒 Enter PIN to dispatch</h2>
+    <p class="sm">This shortcut is PIN-protected. Enter your account PIN to send the truck.</p>
+    <input id="pin-verify-input" type="password" autocomplete="current-password" maxlength="12" placeholder="••••••" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:18px;font-family:inherit;letter-spacing:.3em;text-align:center;margin-top:8px">
+    <button id="pin-verify-go" class="primary" style="margin-top:14px;background:#DC2626">🆘 Verify &amp; dispatch</button>
+    <button onclick="cancelPinVerify()" class="ghost" style="margin-top:6px;background:#fff">Cancel</button>
+    <p id="pin-verify-status" style="font-size:12px;color:#DC2626;margin:6px 0 0;min-height:14px"></p>
+  </div>
+</div>
+
+<!-- ============ VOICE SETUP SHEET (v1.24.15) ============ -->
+<div class="sheet-wrap" id="voicemodal" hidden>
+  <div class="sheet" style="max-width:520px;position:relative">
+    <button class="close" onclick="closeVoiceModal()" aria-label="Close">✕</button>
+    <h2 style="margin:0 0 4px">🗣 Voice trigger setup</h2>
+    <p class="sm">Three ways to fire your shortcut by voice. Each uses the same trigger URL.</p>
+    <details style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:13px" open>
+      <summary style="font-weight:700;cursor:pointer">🅰️ Google Assistant Routine (phone)</summary>
+      <ol style="padding-left:18px;margin:8px 0;color:#475569;line-height:1.6">
+        <li>Open the <b>Google Home</b> app on your phone</li>
+        <li>Tap the <b>Routines</b> tab → <b>+ Add a routine</b></li>
+        <li>Add Starter → "When I say something" → type your trigger phrase (e.g. <b>"Servia tow"</b>)</li>
+        <li>Add Action → <b>Open URL</b> → paste your shortcut URL</li>
+        <li>Save. Now say "Hey Google, Servia tow" anywhere.</li>
+      </ol>
+    </details>
+    <details style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:13px">
+      <summary style="font-weight:700;cursor:pointer">🍎 Apple Shortcut (iPhone / Siri)</summary>
+      <ol style="padding-left:18px;margin:8px 0;color:#475569;line-height:1.6">
+        <li>Open the <b>Shortcuts</b> app</li>
+        <li>Tap <b>+</b> → <b>Add Action</b> → search "Open URL" → paste your URL</li>
+        <li>Tap the title at top → name it (e.g. <b>"Servia tow"</b>)</li>
+        <li>Done. Say "Hey Siri, Servia tow" anywhere.</li>
+      </ol>
+    </details>
+    <details style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:13px">
+      <summary style="font-weight:700;cursor:pointer">🟧 IFTTT (Nest speakers, even without phone)</summary>
+      <ol style="padding-left:18px;margin:8px 0;color:#475569;line-height:1.6">
+        <li>Sign up free at <a href="https://ifttt.com" target="_blank" style="color:#0F766E">ifttt.com</a></li>
+        <li>+ New Applet → If "Google Assistant — Say a simple phrase" → type your trigger</li>
+        <li>Then "Webhooks — Make a web request" → paste your shortcut URL</li>
+        <li>Method: <code>GET</code> · Save. Now any Nest speaker can fire it.</li>
+      </ol>
+    </details>
+    <p style="margin:10px 0 0;font-size:11px;color:#64748B"><b>Heads-up:</b> if your shortcut requires PIN, voice triggers will fail unless you hit the URL on the same phone you've signed in to Servia on. We auto-prompt for PIN there.</p>
+    <button onclick="closeVoiceModal()" class="primary" style="margin-top:10px;background:#0F766E">Got it</button>
   </div>
 </div>
 
@@ -911,6 +1054,10 @@
       if (!lat || !lng) { $("cf-status").textContent = "Pin the location (GPS or map)."; return; }
       $("cf-status").textContent = "⏳ Saving…";
       $("cf-save").disabled = true;
+      // v1.24.15 — payment_method + pin_required
+      var pay = "ask";
+      var radios = document.getElementsByName("cf-pay");
+      for (var i = 0; i < radios.length; i++) if (radios[i].checked) pay = radios[i].value;
       var body = {
         label: label,
         emoji: $("cf-emoji").value || "🛞",
@@ -920,6 +1067,8 @@
         building: $("cf-building").value.trim() || null,
         flat: $("cf-flat").value.trim() || null,
         notes: $("cf-notes").value.trim() || null,
+        payment_method: pay,
+        pin_required: $("cf-pin").checked,
       };
       var url = _editingButtonId ? "/api/sos/custom/" + _editingButtonId : "/api/sos/custom";
       fetch(url, {
@@ -927,10 +1076,12 @@
         headers: {"Content-Type":"application/json", "Authorization": "Bearer " + token()},
         body: JSON.stringify(body)
       }).then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t); }); })
-        .then(function(){
+        .then(function(j){
           $("cf-save").disabled = false;
           closeCustomForm();
           loadMyButtons();
+          // v1.24.15 — open the post-save action sheet with the slug URL
+          if (j && j.share_url) openPostSave(j.button, j.share_url);
         })
         .catch(function(e){
           $("cf-save").disabled = false;
@@ -940,6 +1091,283 @@
   };
 
   $("add-custom-btn").addEventListener("click", openCustomForm);
+
+  // ============ POST-SAVE action sheet (NFC, voice, PIN, test) ============
+  var _psShareUrl = null;
+  var _psButton = null;
+  function openPostSave(btn, shareUrl) {
+    _psButton = btn; _psShareUrl = shareUrl;
+    $("ps-summary").textContent = "🎉 Your shortcut '" + btn.label + "' is live. Tap any time on the SOS page or set up voice / NFC below.";
+    $("ps-url").textContent = shareUrl;
+    $("postsave").hidden = false;
+    refreshPinStatusInUi();
+  }
+  function closePostSave() { $("postsave").hidden = true; }
+  window.closePostSave = closePostSave;
+  function copyPsUrl() {
+    if (!_psShareUrl) return;
+    navigator.clipboard.writeText(_psShareUrl).then(function(){
+      var btn = event.target;
+      var orig = btn.textContent;
+      btn.textContent = "✓ Copied";
+      setTimeout(function(){ btn.textContent = orig; }, 1500);
+    });
+  }
+  window.copyPsUrl = copyPsUrl;
+  function psShowVoiceSetup() { $("voicemodal").hidden = false; }
+  function closeVoiceModal() { $("voicemodal").hidden = true; }
+  window.psShowVoiceSetup = psShowVoiceSetup;
+  window.closeVoiceModal = closeVoiceModal;
+
+  function psTestRun() {
+    if (!_psShareUrl) return;
+    if (!confirm("Open " + _psShareUrl + " — this will land on the SOS page (no truck dispatched)."))
+      return;
+    window.open(_psShareUrl + "?test=1", "_blank");
+  }
+  window.psTestRun = psTestRun;
+
+  // ============ NFC write flow (Android Chrome only — Web NFC API) ============
+  function psNfcWrite() {
+    $("postsave").hidden = true;
+    $("nfcwrite").hidden = false;
+    var supported = ("NDEFReader" in window);
+    $("nfc-android-only").hidden = supported;
+    $("nfc-step-text").textContent = supported
+      ? "Hold an empty / rewritable NFC tag near the back of your phone."
+      : "Web NFC writing isn't supported on this browser. See instructions below.";
+    $("nfc-step-status").textContent = "Ready when you are.";
+    $("nfc-step1-icon").textContent = "📡";
+    $("nfc-go").textContent = "📡 Start scanning for tag";
+    $("nfc-go").disabled = !supported;
+    $("nfc-go").onclick = function(){ runNfcWrite(); };
+  }
+  function closeNfcWrite() { $("nfcwrite").hidden = true; }
+  window.psNfcWrite = psNfcWrite;
+  window.closeNfcWrite = closeNfcWrite;
+
+  async function runNfcWrite() {
+    if (!("NDEFReader" in window)) return;
+    if (!_psShareUrl) return;
+    var go = $("nfc-go");
+    go.disabled = true;
+    $("nfc-step1-icon").textContent = "📡";
+    $("nfc-step-status").textContent = "Step 1 — tap an empty/rewritable NFC tag to your phone…";
+    try {
+      var ndef = new window.NDEFReader();
+      // First read to verify the tag is reachable + writable. If unsupported,
+      // we just go straight to write.
+      try {
+        await ndef.scan();
+        $("nfc-step1-icon").textContent = "✅";
+        $("nfc-step-status").textContent = "Step 2 — tag detected. Writing your shortcut URL…";
+      } catch (e) { /* ignore — go to write */ }
+      await ndef.write({records: [{recordType: "url", data: _psShareUrl}]});
+      $("nfc-step1-icon").textContent = "🎉";
+      $("nfc-step-status").textContent = "✅ Tag written! Test it: tap the same tag again — your phone should open the SOS page.";
+      go.textContent = "✓ Done — close";
+      go.disabled = false;
+      go.onclick = function(){ closeNfcWrite(); };
+    } catch (e) {
+      $("nfc-step1-icon").textContent = "⚠";
+      $("nfc-step-status").textContent = "Write failed: " + (e.message || e) + ". Try a fresh blank tag or retry.";
+      go.textContent = "↻ Retry";
+      go.disabled = false;
+    }
+  }
+
+  // ============ PIN setup / verify ============
+  function psSetPin() {
+    fetch("/api/auth/customer/pin/status", {headers:{"Authorization":"Bearer "+token()}})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        $("postsave").hidden = true;
+        $("pinmodal").hidden = false;
+        if (j.has_pin) {
+          $("pin-title").textContent = "🔒 Change your SOS PIN";
+          $("pin-old-row").style.display = "block";
+        } else {
+          $("pin-title").textContent = "🔒 Set your SOS PIN";
+          $("pin-old-row").style.display = "none";
+        }
+        $("pin-new").value = "";
+        $("pin-old").value = "";
+        $("pin-status").textContent = "";
+        $("pin-save").onclick = function(){
+          var newPin = $("pin-new").value.trim();
+          var oldPin = $("pin-old").value.trim();
+          if (newPin.length < 4) { $("pin-status").textContent = "PIN must be 4-12 chars."; return; }
+          if (!/^[a-zA-Z0-9]+$/.test(newPin)) { $("pin-status").textContent = "PIN must be alphanumeric (a-z 0-9)."; return; }
+          $("pin-save").disabled = true; $("pin-status").textContent = "⏳ Saving…";
+          fetch("/api/auth/customer/pin", {
+            method:"POST",
+            headers:{"Content-Type":"application/json","Authorization":"Bearer "+token()},
+            body: JSON.stringify({pin:newPin, old_pin:oldPin || null})
+          }).then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t); }); })
+            .then(function(){
+              $("pin-save").disabled = false;
+              closePinModal();
+              refreshPinStatusInUi();
+            })
+            .catch(function(e){
+              $("pin-save").disabled = false;
+              $("pin-status").textContent = "⚠ " + (e.message || e);
+            });
+        };
+      });
+  }
+  function closePinModal() { $("pinmodal").hidden = true; }
+  window.psSetPin = psSetPin;
+  window.closePinModal = closePinModal;
+
+  function refreshPinStatusInUi() {
+    if (!token()) return;
+    fetch("/api/auth/customer/pin/status", {headers:{"Authorization":"Bearer "+token()}})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var sub = $("ps-pin-sub");
+        if (sub) sub.textContent = j.has_pin
+          ? "✓ PIN set. Click to change."
+          : "Set up the PIN now — required for any 'PIN-protected' shortcut.";
+        var cs = $("cf-pin-status");
+        if (cs) cs.textContent = j.has_pin
+          ? "✓ Account PIN set. PIN-required shortcuts will prompt before dispatch."
+          : "⚠ No PIN set yet — set one in the success screen after saving.";
+      });
+  }
+
+  // ============ PIN entry on PIN-required dispatch (replaces dispatchCustom) ============
+  // Override the existing dispatchCustom to handle pin_required via the modal.
+  var _pinPendingButtonId = null;
+  var _pinPendingSlug = null;
+  var _pinPendingResolve = null;
+  window.dispatchCustom = function(id, btnRow) {
+    var doIt = function(pin) {
+      showStep("working");
+      $("working-msg").textContent = "🛟 Dispatching your saved shortcut…";
+      fetch("/api/sos/custom/" + id + "/dispatch",
+        {method:"POST",
+         headers:{"Content-Type":"application/json","Authorization":"Bearer "+token()},
+         body: JSON.stringify({pin: pin || null})})
+        .then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t || ("HTTP " + r.status)); }); })
+        .then(renderResult)
+        .catch(function(e){
+          $("failed-msg").textContent = "⚠ " + (e.message || String(e));
+          showStep("failed");
+        });
+    };
+    if (btnRow && btnRow.pin_required) {
+      _pinPendingButtonId = id;
+      $("pinverify").hidden = false;
+      $("pin-verify-input").value = "";
+      $("pin-verify-status").textContent = "";
+      $("pin-verify-go").onclick = function(){
+        var pin = $("pin-verify-input").value.trim();
+        if (!pin) { $("pin-verify-status").textContent = "Enter your PIN."; return; }
+        $("pinverify").hidden = true;
+        doIt(pin);
+      };
+    } else {
+      doIt(null);
+    }
+  };
+  window.cancelPinVerify = function(){ $("pinverify").hidden = true; };
+
+  // Override the custom-button click handler to pass the full row through
+  var _origLoadMyButtons = loadMyButtons;
+  loadMyButtons = function(){
+    if (!token()) return;
+    fetch("/api/sos/custom/me", {headers: {"Authorization": "Bearer " + token()}})
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+      .then(function(j){
+        var items = j.items || [];
+        var grid = $("my-sos-grid");
+        if (!items.length) {
+          $("my-sos").style.display = "block";
+          grid.innerHTML = '<p style="color:#FCA5A5;font-size:11px;grid-column:1/-1;margin:4px 0">No shortcuts yet. Tap <b>+ Create custom</b> to make your first one.</p>';
+          return;
+        }
+        $("my-sos").style.display = "block";
+        grid.innerHTML = items.map(function(b){
+          var color = b.color || "#DC2626";
+          var pinBadge = b.pin_required ? '<span style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.35);color:#fff;font-size:8px;padding:2px 5px;border-radius:999px">🔒 PIN</span>' : '';
+          var stats = b.tap_count ? '<small style="display:block;color:rgba(255,255,255,.7);font-size:10px;margin-top:2px">🔥 used ' + b.tap_count + 'x</small>' : '';
+          return '<button class="tile" style="background:' + escHtml(color) + ';color:#fff;position:relative" data-id="' + b.id + '" data-bnt="custom">'
+            + '<span class="ico" style="font-size:32px">' + escHtml(b.emoji || "🆘") + '</span>'
+            + '<span class="nm">' + escHtml(b.label) + '</span>'
+            + '<span class="sub" style="color:rgba(255,255,255,.85)">' + escHtml((b.service_id || "").replace("_"," ")) + (b.sub_option ? " · " + escHtml(b.sub_option.replace("_"," ")) : "") + '</span>'
+            + stats
+            + '<span style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.25);color:#fff;font-size:8px;padding:2px 5px;border-radius:999px">1-TAP</span>'
+            + pinBadge
+            + '</button>';
+        }).join("");
+        Array.prototype.forEach.call(grid.querySelectorAll('button[data-bnt="custom"]'), function(btnEl){
+          btnEl.addEventListener("click", function(){
+            var btn = items.find(function(x){ return String(x.id) === btnEl.dataset.id; });
+            var name = btnEl.querySelector(".nm").textContent;
+            if (!confirm("Dispatch '" + name + "' now?")) return;
+            window.dispatchCustom(btnEl.dataset.id, btn);
+          });
+        });
+      })
+      .catch(function(){
+        $("my-sos").style.display = "none";
+      });
+  };
+
+  // ============ Slug-URL handler (NFC tag tap / shortcut click) ============
+  // If page loads with ?csos=<slug>, look up the button + auto-dispatch
+  // (after onboarding gate + PIN verify if required).
+  function handleSlugIfPresent() {
+    var m = location.search.match(/[?&]csos=([a-z0-9]+)/i);
+    if (!m) return;
+    var slug = m[1];
+    var test = /[?&]test=1\b/.test(location.search);
+    if (test) {
+      alert("✓ Slug URL works. Real dispatch is skipped (test mode). Open without ?test=1 to actually dispatch.");
+      return;
+    }
+    ensureOnboarded(function(){
+      // Fetch slug → button to know if PIN is required
+      fetch("/api/sos/custom/me", {headers:{"Authorization":"Bearer "+token()}})
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          var btn = (j.items || []).find(function(b){ return b.nfc_slug === slug; });
+          if (!btn) {
+            alert("⚠ This shortcut belongs to a different account. Sign in with the right account first.");
+            return;
+          }
+          var doIt = function(pin) {
+            showStep("working");
+            $("working-msg").textContent = "🛟 Dispatching from NFC tap…";
+            fetch("/api/sos/custom/by-slug/" + slug + "/dispatch", {
+              method:"POST",
+              headers:{"Content-Type":"application/json","Authorization":"Bearer "+token()},
+              body: JSON.stringify({pin: pin || null})
+            }).then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t); }); })
+              .then(renderResult)
+              .catch(function(e){
+                $("failed-msg").textContent = "⚠ " + (e.message || e);
+                showStep("failed");
+              });
+          };
+          if (btn.pin_required) {
+            $("pinverify").hidden = false;
+            $("pin-verify-input").value = "";
+            $("pin-verify-status").textContent = "Shortcut '" + btn.label + "' requires PIN.";
+            $("pin-verify-go").onclick = function(){
+              var pin = $("pin-verify-input").value.trim();
+              if (!pin) { $("pin-verify-status").textContent = "Enter your PIN."; return; }
+              $("pinverify").hidden = true;
+              doIt(pin);
+            };
+          } else {
+            doIt(null);
+          }
+        });
+    });
+  }
+  setTimeout(handleSlugIfPresent, 500);  // run after onboarding modal logic mounts
 
   // ============ Init ============
   renderGrid();

@@ -78,6 +78,17 @@
                   android:label="Welcome"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
                   android:windowSoftInputMode="adjustResize" />
+        <!-- v1.24.15: MySos (user's custom shortcuts) + AllServices (8-svc grid) -->
+        <activity android:name="ae.servia.wear.MySosActivity"
+                  android:exported="true"
+                  android:label="My Servia SOS"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+                  android:windowSoftInputMode="adjustResize" />
+        <activity android:name="ae.servia.wear.AllServicesActivity"
+                  android:exported="true"
+                  android:label="All services"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
         <!-- v1.24.7: SOS category grid (8 tiles, matches website /sos.html).
              Launched by MainActivity SOS button + RecoveryTileService tap. -->
         <activity android:name="ae.servia.wear.SosCategoryGridActivity"
@@ -297,6 +308,51 @@
             </intent-filter>
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                        android:resource="@drawable/tile_preview_handyman" />
+        </service>
+
+        <!-- v1.24.15: HUB tile — 4 actions in ONE tile (replaces 4 separate
+             full-screen tiles per user feedback). Listed FIRST so it shows
+             at the top of the picker. -->
+        <service
+            android:name="ae.servia.wear.tiles.HubTileService"
+            android:label="Servia · Hub (4 actions)"
+            android:description="@string/tile_hub_desc"
+            android:icon="@drawable/tile_preview_hub"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_hub" />
+        </service>
+
+        <!-- v1.24.15: My-SOS (user's custom shortcuts) + All-Services (8-svc grid) -->
+        <service
+            android:name="ae.servia.wear.tiles.MySosTileService"
+            android:label="Servia · My SOS shortcuts"
+            android:description="@string/tile_mysos_desc"
+            android:icon="@drawable/tile_preview_mysos"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.AllServicesTileService"
+            android:label="Servia · All services"
+            android:description="@string/tile_allservices_desc"
+            android:icon="@drawable/tile_preview_allservices"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_allservices" />
         </service>
 
         <!-- Wearable Listener Service for phone↔watch Data Layer sync -->

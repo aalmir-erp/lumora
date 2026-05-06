@@ -101,6 +101,7 @@
     <a href="#socimg"    data-tab="socimg">🖼 Social Images</a>
     <a href="#sitemap"   data-tab="sitemap">🗺 Sitemap</a>
     <a href="#twa"       data-tab="twa">📱 Mobile App / TWA</a>
+    <a href="#voice"     data-tab="voice">🗣 Voice integrations</a>
     <a href="/admin-widget.html" target="_blank" style="margin-top:14px;color:#7DD3FC;border-top:1px solid #1E293B;padding-top:14px">📲 Home-screen widget ↗</a>
     <a href="/?edit=1" target="_blank" style="color:#FCD34D" title="Opens the public site with every editable text block highlighted in dashed purple. Click any block to type, then 'Save all'.">✏️ Edit pages inline ↗</a>
     <a href="#" id="logout" style="margin-top:14px;color:#FCA5A5">Logout</a>
@@ -953,6 +954,118 @@
     </div>
 
     <!-- ====== MOBILE APP / TWA ====== -->
+    <div id="t-voice" class="tab" style="display:none">
+      <h2 style="margin:0 0 4px">🗣 Voice integrations — Google Home / Alexa / Siri</h2>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13.5px">
+        Customers' custom SOS shortcuts can be controlled by voice via Google Home (Smart Home Action),
+        Apple Siri Shortcuts, and IFTTT routines. Servia hosts the OAuth + fulfillment endpoints; setup happens
+        once in Google's Actions Console and then customers self-link in the Google Home app.
+      </p>
+
+      <!-- Servia-side OAuth credentials (auto-generated on first run) -->
+      <div style="background:linear-gradient(135deg,#0F766E 0%,#14B8A6 100%);color:#fff;border-radius:14px;padding:18px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <h3 style="margin:0;font-size:16px;color:#FCD34D">🔐 Cloud-to-cloud OAuth credentials</h3>
+          <button class="btn" style="background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);font-size:12px;padding:6px 12px" onclick="loadGhStatus()">↻ Refresh</button>
+        </div>
+        <div id="gh-status" style="font-size:13px;line-height:1.7">Loading…</div>
+        <p style="margin:10px 0 0;font-size:11px;color:rgba(255,255,255,.85)">
+          ⚠ Treat the client_secret like a password. Anyone with both values can issue Google Home tokens for any Servia customer.
+        </p>
+      </div>
+
+      <!-- Step-by-step Actions on Google setup -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <h3 style="margin:0 0 6px;font-size:16px">📋 One-time setup in Actions on Google</h3>
+        <ol style="padding-left:22px;margin:0;line-height:1.8;font-size:13.5px;color:#0F172A">
+          <li>Go to <a href="https://console.actions.google.com" target="_blank" style="color:#0F766E"><b>console.actions.google.com</b></a> → <b>New project</b> → name it <code>Servia SOS</code>.</li>
+          <li>Pick <b>Smart Home</b> as the project type. Skip the optional fields.</li>
+          <li><b>Develop → Invocation</b>: set display name to <b>Servia</b> (this is what users say: "Hey Google, ask Servia…"). Pick a male voice.</li>
+          <li><b>Develop → Account linking</b>:
+            <ul style="margin:6px 0;line-height:1.6">
+              <li>Account creation: <b>No, only allow account creation on my website</b></li>
+              <li>Linking type: <b>OAuth</b> · Grant type: <b>Authorization code</b></li>
+              <li>Client ID: <span style="background:#F1F5F9;padding:1px 6px;border-radius:4px">paste from above</span></li>
+              <li>Client secret: <span style="background:#F1F5F9;padding:1px 6px;border-radius:4px">paste from above</span></li>
+              <li>Authorization URL: <code>https://servia.ae/oauth/authorize</code></li>
+              <li>Token URL: <code>https://servia.ae/oauth/token</code></li>
+              <li>Scopes: leave blank (or enter <code>shortcuts</code>)</li>
+            </ul>
+          </li>
+          <li><b>Develop → Actions</b> → Add a new Action → <b>Smart Home</b>:
+            <ul style="margin:6px 0">
+              <li>Fulfillment URL: <code>https://servia.ae/api/google-home/fulfillment</code></li>
+            </ul>
+          </li>
+          <li><b>Develop → Account linking → Testing instructions</b>: enter
+            <code>Use any UAE phone number to register at https://servia.ae/sos.html, save 1 SOS shortcut, then link.</code>
+          </li>
+          <li><b>Test</b> tab → <b>Account linking testing</b> → click <b>Test</b>. Google opens our consent UI; approve. The Action should now appear in your Google Home app under "Works with Google → Servia".</li>
+          <li>Open Google Home app → +&nbsp;→&nbsp;Set up device → Works with Google → search <b>Servia</b> → link → all your custom SOS shortcuts appear as scenes.</li>
+          <li>Test voice: "Hey Google, run [your shortcut name]". The shortcut fires; truck dispatched.</li>
+          <li>When happy, hit <b>Deploy → Submit for review</b> in the console. 3-5 day Google review for public listing.</li>
+        </ol>
+      </div>
+
+      <!-- Test sync -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <h3 style="margin:0 0 6px;font-size:16px">🧪 Test SYNC for a customer</h3>
+        <p style="margin:0 0 10px;color:var(--muted);font-size:13px">
+          Simulates Google's SYNC intent for a given customer_id. Use this to verify that customer's
+          shortcuts will surface as Google Home devices BEFORE you submit for review.
+        </p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <input id="gh-test-cid" type="number" min="1" placeholder="customer_id (e.g. 12)" style="padding:8px;border:1.5px solid #CBD5E1;border-radius:8px;width:160px;font-size:13px">
+          <button class="btn btn-primary" onclick="ghTestSync()" style="padding:8px 14px">▶ Run SYNC</button>
+        </div>
+        <pre id="gh-test-out" style="background:#0F172A;color:#A7F3D0;padding:12px;border-radius:10px;margin-top:10px;font-size:11px;line-height:1.5;overflow:auto;max-height:280px;display:none"></pre>
+      </div>
+
+      <!-- Apple Shortcuts + IFTTT pointer -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px">
+        <h3 style="margin:0 0 6px;font-size:16px">🍎 Other ecosystems (no setup required)</h3>
+        <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.7">
+          <b>Apple Shortcuts (iPhone / Siri)</b> and <b>IFTTT</b> work without any admin setup —
+          customers just open the Servia app, save a custom SOS shortcut, and follow the in-app guide on the
+          success screen ("🗣 Voice setup"). The shortcut URL we generate is the trigger — both ecosystems can hit it.
+        </p>
+        <p style="margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.7">
+          <b>Alexa Smart Home Skill</b> uses an almost-identical architecture to Google Home — same OAuth + fulfillment
+          endpoints. After Google Home is approved, we'll wire up the Alexa skill (~2 days) reusing this OAuth.
+        </p>
+      </div>
+
+      <script>
+        async function loadGhStatus() {
+          const j = await adm("/api/admin/google-home/status").catch(() => null);
+          const el = document.getElementById("gh-status");
+          if (!j) { el.textContent = "⚠ Could not load."; return; }
+          el.innerHTML =
+            '<div style="background:rgba(0,0,0,.25);padding:8px 10px;border-radius:8px;font-family:monospace;font-size:11.5px;line-height:1.7">'
+            + '<div><b>client_id</b>: <span style="color:#FCD34D" id="gh-cid">' + j.client_id + '</span> <button onclick="navigator.clipboard.writeText(\'' + j.client_id + '\');this.textContent=\'✓\';setTimeout(()=>this.textContent=\'📋\',1200)" style="background:transparent;border:0;color:#fff;cursor:pointer;font-size:14px">📋</button></div>'
+            + '<div><b>client_secret</b>: <span style="color:#FCD34D">' + j.client_secret + '</span> <button onclick="navigator.clipboard.writeText(\'' + j.client_secret + '\');this.textContent=\'✓\';setTimeout(()=>this.textContent=\'📋\',1200)" style="background:transparent;border:0;color:#fff;cursor:pointer;font-size:14px">📋</button></div>'
+            + '<div style="margin-top:6px"><b>auth URL</b>: ' + j.authorization_url + '</div>'
+            + '<div><b>token URL</b>: ' + j.token_url + '</div>'
+            + '<div><b>fulfillment URL</b>: ' + j.fulfillment_url + '</div>'
+            + '</div>'
+            + '<div style="margin-top:10px;font-size:13px"><b style="color:#FCD34D">📊 Live stats:</b> '
+            + j.linked_customers + ' Google accounts linked · '
+            + j.exposed_devices_total + ' total custom SOS shortcuts in DB</div>';
+        }
+        async function ghTestSync() {
+          const cid = parseInt(document.getElementById("gh-test-cid").value || "0");
+          if (!cid) { alert("enter a customer_id"); return; }
+          const out = document.getElementById("gh-test-out");
+          out.style.display = "block"; out.textContent = "⏳ running…";
+          const j = await adm("/api/admin/google-home/test-sync",
+                              {method:"POST", body:{customer_id: cid}}).catch(e => null);
+          out.textContent = JSON.stringify(j, null, 2);
+        }
+        document.querySelector('[data-tab="voice"]').addEventListener("click", loadGhStatus);
+        if (location.hash === "#voice") loadGhStatus();
+      </script>
+    </div>
+
     <div id="t-twa" class="tab" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div>
@@ -3018,7 +3131,8 @@ async function loadBookings() {
     </tr></thead><tbody>${r.bookings.map(b => `
       <tr>
         <td><input type="checkbox" class="bulk-cb" data-id="${b.id}"></td>
-        <td>${b.id}</td><td>${b.service_id}</td>
+        <td><a href="#" onclick="openBookingDetail('${b.id}');return false" style="color:#0F766E;font-weight:700">${b.id}</a></td>
+        <td>${b.service_id}</td>
         <td>${b.target_date} ${b.time_slot}</td>
         <td>${b.customer_name}<br><small>${b.phone}</small></td>
         <td>${b.estimated_total||'-'}</td>
@@ -3029,6 +3143,7 @@ async function loadBookings() {
           </select>
         </td>
         <td>
+          <button class="btn btn-ghost" onclick="openBookingDetail('${b.id}')" style="font-size:11px;padding:4px 10px;background:#FCD34D;color:#7C2D12;font-weight:800">🔍 Details</button>
           <button class="btn btn-ghost" onclick="makeInvoice('${b.id}')">Invoice</button>
           ${b.status !== 'completed' ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="completeJob('${b.id}')" title="Mark complete + WhatsApp customer the review link">✓ Complete</button>` : ''}
           ${b.customer_id ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="impersonate('customer', ${b.customer_id})" title="Sign in as this customer to see their account">👁 View as customer</button>` : ''}
@@ -3037,6 +3152,104 @@ async function loadBookings() {
       </tr>`).join("")}</tbody></table>`;
   _bulkSetup("#bookings-table", "booking", loadBookings);
 }
+
+// v1.24.15 — admin booking detail modal. Shows EVERYTHING joined.
+async function openBookingDetail(bid) {
+  let d = await adm("/api/admin/bookings/" + encodeURIComponent(bid) + "/detail").catch(e => null);
+  if (!d || !d.ok) { alert("Could not load booking detail."); return; }
+  const b = d.booking, rec = d.recovery_dispatch, a = d.assignment, photos = d.photos || [];
+  const inv = (d.invoices || [])[0];
+  const rev = d.review;
+  const events = d.events || [];
+  let html =
+    '<div id="bd-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;overflow:auto;padding:20px" onclick="if(event.target.id===\'bd-modal\')document.getElementById(\'bd-modal\').remove()">'
+    + '<div style="max-width:880px;margin:0 auto;background:#fff;border-radius:14px;padding:22px;font-family:inherit">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px">'
+        + '<div><h2 style="margin:0;font-size:22px">📋 Booking ' + b.id + '</h2>'
+        + '<small style="color:#64748B">' + (b.service_id || '') + ' · created ' + (b.created_at || '') + ' · status <b>' + (b.status || '') + '</b> · source ' + (b.source || 'web') + '</small></div>'
+        + '<button onclick="document.getElementById(\'bd-modal\').remove()" style="background:transparent;border:0;font-size:24px;cursor:pointer;color:#64748B">✕</button>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
+        // CUSTOMER
+        + '<div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:12px;padding:12px">'
+          + '<div style="font-size:11px;font-weight:800;color:#0F766E;letter-spacing:.04em;margin-bottom:6px">👤 CUSTOMER</div>'
+          + '<div style="font-size:14px;font-weight:700">' + (b.customer_name || '?') + '</div>'
+          + '<div style="font-size:13px;color:#475569">📞 ' + (b.phone || '?') + '</div>'
+          + (b.c_email ? '<div style="font-size:13px;color:#475569">📧 ' + b.c_email + '</div>' : '')
+          + (b.customer_id ? '<button class="btn btn-ghost" style="margin-top:6px;font-size:11px;padding:4px 10px" onclick="impersonate(\'customer\',' + b.customer_id + ')">👁 Sign in as customer</button>' : '<small style="color:#94A3B8">(guest checkout — no account)</small>')
+        + '</div>'
+        // VENDOR
+        + '<div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:12px;padding:12px">'
+          + '<div style="font-size:11px;font-weight:800;color:#92400E;letter-spacing:.04em;margin-bottom:6px">🤝 VENDOR</div>'
+          + (a ? (
+              '<div style="font-size:14px;font-weight:700">' + (a.v_name || 'Unassigned') + '</div>'
+              + (a.v_company ? '<div style="font-size:11px;color:#92400E">' + a.v_company + '</div>' : '')
+              + (a.v_phone ? '<div style="font-size:13px;color:#475569"><a href="tel:' + a.v_phone + '">📞 ' + a.v_phone + '</a></div>' : '')
+              + (a.v_rating ? '<div style="font-size:12px;color:#64748B">★ ' + a.v_rating + ' · ' + (a.v_jobs || 0) + ' jobs</div>' : '')
+              + '<div style="font-size:11px;color:#64748B;margin-top:4px">Status: ' + (a.status || 'assigned') + (a.payout_amount ? ' · payout AED ' + a.payout_amount : '') + '</div>'
+            ) : '<small style="color:#94A3B8">Not yet assigned</small>')
+        + '</div>'
+        // LOCATION
+        + '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px;grid-column:1/-1">'
+          + '<div style="font-size:11px;font-weight:800;color:#0F172A;letter-spacing:.04em;margin-bottom:6px">📍 LOCATION</div>'
+          + '<div style="font-size:13px">' + (b.address || '?') + '</div>'
+          + (rec && rec.lat && rec.lng ? (
+              '<div style="font-size:11px;color:#64748B;margin-top:4px">GPS: ' + rec.lat.toFixed(5) + ', ' + rec.lng.toFixed(5) + (rec.accuracy_m ? ' (±' + Math.round(rec.accuracy_m) + 'm)' : '') + '</div>'
+              + '<a href="https://maps.google.com/?q=' + rec.lat + ',' + rec.lng + '" target="_blank" style="color:#0F766E;font-weight:700;font-size:12px;display:inline-block;margin-top:6px">🗺 Open in Google Maps</a>'
+              + (rec.distance_km ? ' · <span style="color:#64748B">' + rec.distance_km + ' km from vendor</span>' : '')
+              + (rec.eta_min ? ' · <span style="color:#64748B">ETA ' + rec.eta_min + ' min</span>' : '')
+            ) : '')
+        + '</div>'
+        // PAYMENT
+        + '<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:12px">'
+          + '<div style="font-size:11px;font-weight:800;color:#991B1B;letter-spacing:.04em;margin-bottom:6px">💳 PAYMENT</div>'
+          + '<div style="font-size:18px;font-weight:800">AED ' + (b.estimated_total || inv?.amount || '?') + '</div>'
+          + '<div style="font-size:12px;color:#475569;margin-top:2px">'
+            + (inv ? 'Status: <b>' + inv.payment_status + '</b>' + (inv.paid_at ? ' · paid ' + inv.paid_at : '') : 'No invoice yet')
+          + '</div>'
+          + (inv && inv.payment_url ? '<a href="' + inv.payment_url + '" target="_blank" style="color:#0F766E;font-weight:700;font-size:11px">Payment link ↗</a>' : '')
+        + '</div>'
+        // REVIEW
+        + '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px">'
+          + '<div style="font-size:11px;font-weight:800;color:#92400E;letter-spacing:.04em;margin-bottom:6px">⭐ REVIEW</div>'
+          + (rev ? (
+              '<div style="font-size:18px;font-weight:800">' + '★'.repeat(rev.rating || 0) + '</div>'
+              + '<div style="font-size:12px;color:#475569;margin-top:4px">' + (rev.comment || '(no comment)') + '</div>'
+            ) : '<small style="color:#94A3B8">Not yet reviewed</small>')
+        + '</div>'
+        // PHOTOS
+        + (photos.length ? (
+          '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px;grid-column:1/-1">'
+          + '<div style="font-size:11px;font-weight:800;color:#0F172A;letter-spacing:.04em;margin-bottom:6px">📷 PHOTOS (' + photos.length + ')</div>'
+          + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+          + photos.map(function(p){ var url = p.startsWith("http") ? p : p; return '<a href="' + url + '" target="_blank"><img src="' + url + '" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #CBD5E1"></a>'; }).join('')
+          + '</div></div>'
+        ) : '')
+        // NOTES
+        + (b.notes ? (
+          '<div style="background:#F1F5F9;border:1px solid #CBD5E1;border-radius:12px;padding:12px;grid-column:1/-1;font-family:monospace;font-size:11.5px;color:#0F172A;white-space:pre-wrap;line-height:1.55">'
+          + '<div style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em;margin-bottom:4px;font-family:inherit">📝 NOTES</div>'
+          + (b.notes || '').replace(/</g,"&lt;")
+          + '</div>'
+        ) : '')
+        // TIMELINE
+        + '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;grid-column:1/-1">'
+          + '<div style="font-size:11px;font-weight:800;color:#0F172A;letter-spacing:.04em;margin-bottom:6px">📜 TIMELINE (' + events.length + ' events)</div>'
+          + (events.length ? events.map(function(e){
+              return '<div style="padding:6px 0;border-bottom:1px dotted #E2E8F0;font-size:12px">'
+                + '<span style="color:#94A3B8">' + (e.created_at || '') + '</span> · '
+                + '<b>' + (e.action || '') + '</b>'
+                + (e.actor ? ' <small style="color:#64748B">by ' + e.actor + '</small>' : '')
+                + (e.details_json ? '<pre style="margin:4px 0 0;font-size:10.5px;color:#475569;background:#F8FAFC;padding:4px 6px;border-radius:4px">' + e.details_json.replace(/</g,"&lt;") + '</pre>' : '')
+                + '</div>';
+            }).join('') : '<small style="color:#94A3B8">No events logged.</small>')
+        + '</div>'
+      + '</div>'
+    + '</div>'
+    + '</div>';
+  document.body.insertAdjacentHTML("beforeend", html);
+}
+window.openBookingDetail = openBookingDetail;
 async function deleteRow(entity, id, after) {
   if (!confirm("Delete this " + entity + " (#" + id + ")?")) return;
   try {

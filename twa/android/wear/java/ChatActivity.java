@@ -57,6 +57,7 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
     protected TextToSpeech tts;
     protected boolean ttsReady = false;
     protected boolean ttsSpeaking = false;
+    protected EditText _hiddenTypeField;     // v1.24.15: legacy IME-action handle
 
     /** Subclass override: open the mic immediately on launch. */
     protected boolean autoOpenMic() { return false; }
@@ -79,19 +80,57 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
             return;
         }
 
+        // v1.24.15 — Wear OS UX redesign. Earlier layout had 4 buttons
+        // stacked which crowded the small round screen. New layout:
+        //   ┌─────────────────────────┐
+        //   │ 🤖 SERVIA          🗑   │  ← header + tiny clear-icon
+        //   │                         │
+        //   │  scrollable bubbles     │
+        //   │  …                      │
+        //   │                         │
+        //   │  status (10sp)          │
+        //   │  ┌─────────────────┐   │
+        //   │  │ 🎙 SPEAK        │   │  ← big primary, full width
+        //   │  └─────────────────┘   │
+        //   │  ┌─────────────────┐   │
+        //   │  │ ⌨ TYPE          │   │  ← secondary, full width
+        //   │  └─────────────────┘   │
+        //   │  ⏹ Stop voice (only when TTS speaking)
+        //   └─────────────────────────┘
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFF0F172A);
-        root.setPadding(10, 18, 10, 10);
+        root.setPadding(10, 16, 10, 10);
 
+        // Header row: title + tiny clear button
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setGravity(Gravity.CENTER_VERTICAL);
         TextView header = new TextView(this);
         header.setText("🤖 SERVIA");
         header.setTextColor(0xFFFCD34D);
         header.setTextSize(11);
+        header.setTypeface(header.getTypeface(), Typeface.BOLD);
         header.setGravity(Gravity.CENTER);
-        header.setPadding(0, 0, 0, 4);
-        root.addView(header);
+        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        header.setLayoutParams(hlp);
+        headerRow.addView(header);
+        TextView clearBtn = new TextView(this);
+        clearBtn.setText("🗑");
+        clearBtn.setTextColor(0xFF94A3B8);
+        clearBtn.setTextSize(13);
+        clearBtn.setPadding(8, 4, 4, 4);
+        clearBtn.setClickable(true);
+        clearBtn.setOnClickListener(v -> {
+            WearChatHistory.clear();
+            bubbles.removeAllViews();
+            addAssistantBubble(welcomeText());
+        });
+        headerRow.addView(clearBtn);
+        root.addView(headerRow);
 
+        // Scroll area for bubbles — takes max available space
         scroll = new ScrollView(this);
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
@@ -103,47 +142,40 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
 
         spinner = new ProgressBar(this);
         spinner.setIndeterminate(true);
-        LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(36, 36);
+        LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(28, 28);
         pp.gravity = Gravity.CENTER_HORIZONTAL;
-        pp.topMargin = 4;
+        pp.topMargin = 2;
         spinner.setLayoutParams(pp);
         spinner.setVisibility(View.GONE);
         root.addView(spinner);
 
         status = new TextView(this);
         status.setTextColor(0xFFCBD5E1);
-        status.setTextSize(10);
+        status.setTextSize(9);
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, 2, 0, 4);
         root.addView(status);
 
-        TextView mic = button("🎙 Tap & speak", 0xFFFCD34D, 0xFF7C2D12);
-        // v1.24.3 — tapping mic STOPS any speech in progress, then opens recogniser.
-        // Long-press (held >300ms) just stops without opening mic — useful when
-        // user only wants to silence the watch.
+        TextView mic = button("🎙 SPEAK", 0xFFFCD34D, 0xFF7C2D12);
+        mic.setTextSize(13);
         mic.setOnClickListener(v -> { stopSpeaking(); startVoiceInput(); });
         mic.setOnLongClickListener(v -> { stopSpeaking(); return true; });
         root.addView(mic);
 
-        // v1.24.4 — type input alongside the mic. User can pick whichever
-        // input method works best on their watch (Samsung handwriting,
-        // bytecodek/keyboard, voice-to-text via the system IME).
+        // v1.24.15 — TYPE button opens a dedicated fullscreen input sheet
+        // (cleaner than cramming an EditText into the chat view).
+        TextView typeBtn = button("⌨ TYPE", 0xFF14B8A6, 0xFFFFFFFF);
+        typeBtn.setTextSize(12);
+        typeBtn.setOnClickListener(v -> openTypeSheet());
+        root.addView(typeBtn);
+
+        // Hidden EditText kept for IME-action-send compatibility (legacy)
         EditText typeField = new EditText(this);
-        typeField.setHint("…or type your message");
-        typeField.setHintTextColor(0xFF64748B);
-        typeField.setTextColor(0xFFFFFFFF);
-        typeField.setBackgroundColor(0xFF1E293B);
-        typeField.setTextSize(12);
-        typeField.setPadding(10, 10, 10, 10);
+        typeField.setVisibility(View.GONE);
         typeField.setSingleLine();
         typeField.setInputType(InputType.TYPE_CLASS_TEXT
                               | InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
         typeField.setImeOptions(EditorInfo.IME_ACTION_SEND);
-        LinearLayout.LayoutParams tfp = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT);
-        tfp.topMargin = 6;
-        typeField.setLayoutParams(tfp);
         typeField.setOnEditorActionListener((v, actionId, event) -> {
             boolean send = (actionId == EditorInfo.IME_ACTION_SEND
                 || actionId == EditorInfo.IME_ACTION_DONE
@@ -160,26 +192,18 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
             return false;
         });
         root.addView(typeField);
-
-        TextView sendBtn = button("✉ Send typed", 0xFF14B8A6, 0xFFFFFFFF);
-        sendBtn.setTextSize(11);
-        sendBtn.setOnClickListener(v -> {
-            String txt = typeField.getText().toString().trim();
-            if (!txt.isEmpty()) {
-                stopSpeaking();
-                sendUserMessage(txt);
-                typeField.setText("");
-            }
-        });
-        root.addView(sendBtn);
+        _hiddenTypeField = typeField;
 
         // Visible "⏹ Stop" button shown while TTS is speaking; hidden otherwise.
         stopBtn = button("⏹ Stop voice", 0xFF334155, 0xFFFFFFFF);
+        stopBtn.setTextSize(10);
         stopBtn.setOnClickListener(v -> stopSpeaking());
         stopBtn.setVisibility(View.GONE);
         root.addView(stopBtn);
 
-        TextView newChatBtn = button("🗑 New chat", 0xFF334155, 0xFFCBD5E1);
+        // (legacy var kept for compile-only; real new-chat lives in header now)
+        TextView newChatBtn = button("", 0xFF334155, 0xFFCBD5E1);
+        newChatBtn.setVisibility(View.GONE);
         newChatBtn.setTextSize(10);
         newChatBtn.setOnClickListener(v -> {
             WearChatHistory.clear();
@@ -274,6 +298,57 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
         } catch (Exception e) {
             Toast.makeText(this, "Voice not available on this watch", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    /** Open a fullscreen type-input sheet (cleaner than embedding an
+     *  EditText in the cramped chat view). v1.24.15. */
+    protected void openTypeSheet() {
+        final android.app.Dialog dlg = new android.app.Dialog(this,
+            android.R.style.Theme_DeviceDefault_NoActionBar_Fullscreen);
+        LinearLayout sheet = new LinearLayout(this);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setBackgroundColor(0xFF0F172A);
+        sheet.setPadding(14, 22, 14, 14);
+
+        TextView t = new TextView(this);
+        t.setText("⌨ TYPE MESSAGE");
+        t.setTextColor(0xFFFCD34D);
+        t.setTextSize(11);
+        t.setTypeface(t.getTypeface(), Typeface.BOLD);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(0, 0, 0, 8);
+        sheet.addView(t);
+
+        final EditText input = new EditText(this);
+        input.setHint("Type then tap send…");
+        input.setHintTextColor(0xFF64748B);
+        input.setTextColor(0xFFFFFFFF);
+        input.setBackgroundColor(0xFF1E293B);
+        input.setPadding(10, 10, 10, 10);
+        input.setTextSize(13);
+        input.setMinLines(2); input.setMaxLines(4);
+        input.setInputType(InputType.TYPE_CLASS_TEXT
+                          | InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                          | InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+        sheet.addView(input);
+
+        TextView send = button("✉ Send", 0xFF14B8A6, 0xFFFFFFFF);
+        send.setOnClickListener(v -> {
+            String txt = input.getText().toString().trim();
+            if (!txt.isEmpty()) { stopSpeaking(); sendUserMessage(txt); }
+            dlg.dismiss();
+        });
+        sheet.addView(send);
+
+        TextView cancel = button("Cancel", 0xFF334155, 0xFFCBD5E1);
+        cancel.setTextSize(11);
+        cancel.setOnClickListener(v -> dlg.dismiss());
+        sheet.addView(cancel);
+
+        dlg.setContentView(sheet);
+        dlg.show();
+        // Auto-focus the input + show keyboard
+        input.requestFocus();
     }
 
     @Override

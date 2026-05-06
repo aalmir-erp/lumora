@@ -61,6 +61,68 @@ class StatusUpdate(BaseModel):
     status: str
 
 
+@router.get("/bookings/{bid}/detail")
+def booking_detail(bid: str):
+    """v1.24.15 — full join across customer + vendor + assignment +
+    recovery dispatch + invoice + reviews + photos + events for the
+    admin booking-detail modal."""
+    with db.connect() as c:
+        b = c.execute(
+            "SELECT b.*, c.id AS customer_id, c.name AS c_name, c.email AS c_email, "
+            "       c.created_at AS c_created_at, c.last_seen_at AS c_last_seen_at "
+            "FROM bookings b LEFT JOIN customers c ON c.phone = b.phone "
+            "WHERE b.id = ?", (bid,)
+        ).fetchone()
+        if not b:
+            raise HTTPException(404, "booking not found")
+        b = dict(b)
+        rec = c.execute(
+            "SELECT * FROM recovery_dispatches WHERE booking_id=?", (bid,)
+        ).fetchone()
+        rec = dict(rec) if rec else None
+        a = c.execute(
+            "SELECT a.*, v.name AS v_name, v.phone AS v_phone, v.email AS v_email, "
+            "       v.company AS v_company, v.rating AS v_rating, "
+            "       v.completed_jobs AS v_jobs "
+            "FROM assignments a LEFT JOIN vendors v ON v.id = a.vendor_id "
+            "WHERE a.booking_id=? ORDER BY a.id DESC LIMIT 1",
+            (bid,)
+        ).fetchone()
+        a = dict(a) if a else None
+        invs = [dict(r) for r in c.execute(
+            "SELECT * FROM invoices WHERE booking_id=? ORDER BY id DESC", (bid,)
+        ).fetchall()]
+        rev = c.execute(
+            "SELECT * FROM reviews WHERE booking_id=? ORDER BY id DESC LIMIT 1",
+            (bid,)
+        ).fetchone()
+        rev = dict(rev) if rev else None
+        evs = [dict(r) for r in c.execute(
+            "SELECT * FROM events WHERE entity_type IN ('booking','recovery','assignment','invoice') "
+            "  AND (entity_id=? OR entity_id=?) "
+            "ORDER BY id ASC",
+            (bid, str(rec["id"]) if rec else "__none__")
+        ).fetchall()]
+    photos = []
+    if b.get("notes"):
+        for line in (b["notes"] or "").splitlines():
+            for tok in line.split():
+                if tok.startswith("/uploads/") or (tok.startswith("http") and ("/uploads/" in tok or ".jpg" in tok or ".png" in tok)):
+                    photos.append(tok.rstrip(",.;"))
+    if rec and rec.get("photo_url") and rec["photo_url"] not in photos:
+        photos.append(rec["photo_url"])
+    return {
+        "ok": True,
+        "booking": b,
+        "recovery_dispatch": rec,
+        "assignment": a,
+        "invoices": invs,
+        "review": rev,
+        "events": evs,
+        "photos": photos,
+    }
+
+
 @router.post("/bookings/{bid}/status")
 def update_status(bid: str, body: StatusUpdate):
     return tools.update_booking_status(bid, body.status, actor="admin")
