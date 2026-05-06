@@ -424,7 +424,10 @@
       }
     });
 
-    // Map toggle + lazy init
+    // Map toggle + lazy init.
+    // v1.23.4 — map is now AUTO-EXPANDED whenever the edit modal opens
+    // (per user: 'must take exact pin location'). Closed by default only
+    // if user collapses it. Pin coordinates are required for save.
     const mapToggle = document.getElementById("lm-map-toggle");
     const mapWrap = document.getElementById("lm-map-wrap");
     function openMap() {
@@ -432,6 +435,8 @@
       mapWrap.classList.add("show");
       initMap(saved.lat, saved.lng);
     }
+    // Auto-open map immediately so the user sees + drops a pin during edit
+    setTimeout(openMap, 60);
     mapToggle.addEventListener("click", () => {
       if (mapWrap.classList.contains("show")) {
         mapToggle.classList.remove("open");
