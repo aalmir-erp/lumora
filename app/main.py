@@ -102,6 +102,15 @@ class _ForceMobileMiddleware(_BHM):
         ctype = (resp.headers.get("content-type") or "").lower()
         if "text/html" not in ctype:
             return resp
+        # v1.24.22 — defensive: short-circuit if we already see a complete HTML
+        # response that doesn't need our injection. Avoids body re-stream cost
+        # and any potential issues with iterator races.
+        try:
+            cl = int(resp.headers.get("content-length") or "0")
+            if cl > 0 and cl < 200:  # tiny pages (404 redirects etc.) skip
+                return resp
+        except Exception:
+            pass
         # Don't touch anything that's already gzipped (we run BEFORE GZip)
         body = b""
         async for chunk in resp.body_iterator:
@@ -128,9 +137,14 @@ class _ForceMobileMiddleware(_BHM):
             if b"</body>" in body:
                 body = body.replace(b"</body>", _SOS_FAB_SNIPPET + b"</body>", 1)
         from starlette.responses import Response as _R
+        # Drop content-length from cloned headers so the new Response can
+        # correctly set its own — avoids subtle mismatches with proxies.
+        hdrs = {k: v for k, v in resp.headers.items() if k.lower() != "content-length"}
+        # v1.24.22 — explicit no-cache for HTML so any edge / browser cache
+        # doesn't pin a broken page from a previous bad deploy.
+        hdrs["cache-control"] = "no-cache, must-revalidate, max-age=0"
         new = _R(content=body, status_code=resp.status_code,
-                 headers=dict(resp.headers), media_type=resp.media_type)
-        new.headers["content-length"] = str(len(body))
+                 headers=hdrs, media_type=resp.media_type)
         return new
 
 
