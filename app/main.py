@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, ai_router, cart, db, demo_brain, kb, launch, live_visitors, llm, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, selftest, social_publisher, staff_portraits, tools, videos, visibility, whatsapp
+from . import admin, ai_router, cart, db, demo_brain, kb, launch, live_visitors, llm, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, selftest, social_publisher, staff_portraits, tools, videos, visibility, whatsapp
 from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
 
@@ -42,6 +42,70 @@ app.add_middleware(
 # with 30 KiB of saving on the document request alone.
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
+
+# v1.24.1 — Force-mobile injector. When Chrome system-wide "Request Desktop
+# Site" is on, our TWA inherits the desktop layout, which the customer
+# reported as "the mobile app opens desktop view". Bubblewrap's androidbrowser
+# helper has no flag to disable this on the Java side, and the TWA picks up
+# whatever the underlying Chrome thinks. The reliable fix is to detect on
+# the page (touch + small screen.width + UA missing "Mobile") and rewrite
+# the viewport meta + clamp html overflow. We inject this snippet into
+# every HTML response, BEFORE any other CSS/JS so the layout is corrected
+# before first paint. Cost: ~620 bytes per HTML page (gzips to ~280).
+from starlette.middleware.base import BaseHTTPMiddleware as _BHM
+
+
+_FORCE_MOBILE_SNIPPET = (
+    b"<script>(function(){"
+    b"try{var ua=navigator.userAgent||'';"
+    b"var sw=screen.width||window.innerWidth;"
+    b"var hasTouch=('ontouchstart' in window)||(navigator.maxTouchPoints>0);"
+    b"var uaDesktop=!/Mobi|Android.+Mobile|iPhone|iPad|iPod|Wear/.test(ua);"
+    # If touch device with small physical screen but UA reports desktop,
+    # Chrome's "Request Desktop Site" is on -> override viewport.
+    b"if(hasTouch && sw<=820 && uaDesktop){"
+      b"var vp=document.querySelector('meta[name=\"viewport\"]');"
+      b"if(!vp){vp=document.createElement('meta');vp.name='viewport';"
+        b"document.head.insertBefore(vp,document.head.firstChild);}"
+      b"vp.setAttribute('content','width=device-width,initial-scale=1,viewport-fit=cover');"
+      # Hard width clamp + force layout viewport recalc
+      b"var s=document.createElement('style');s.id='_fm';"
+      b"s.textContent='html,body{max-width:100vw!important;overflow-x:hidden!important;}';"
+      b"document.head.appendChild(s);"
+      # Mark so we never reload-loop
+      b"if(!sessionStorage.getItem('_fm')){sessionStorage.setItem('_fm','1');}"
+    b"}}catch(e){}})();</script>"
+)
+
+
+class _ForceMobileMiddleware(_BHM):
+    async def dispatch(self, request, call_next):
+        resp = await call_next(request)
+        ctype = (resp.headers.get("content-type") or "").lower()
+        if "text/html" not in ctype:
+            return resp
+        # Don't touch anything that's already gzipped (we run BEFORE GZip)
+        body = b""
+        async for chunk in resp.body_iterator:
+            body += chunk
+        # Inject right after <head> so it runs before any CSS/JS
+        if b"<head>" in body and b"id='_fm'" not in body:
+            body = body.replace(b"<head>", b"<head>" + _FORCE_MOBILE_SNIPPET, 1)
+        elif b"<head " in body and b"id='_fm'" not in body:
+            # Handle <head attr=...> form
+            i = body.find(b"<head ")
+            j = body.find(b">", i)
+            if j > 0:
+                body = body[: j + 1] + _FORCE_MOBILE_SNIPPET + body[j + 1 :]
+        from starlette.responses import Response as _R
+        new = _R(content=body, status_code=resp.status_code,
+                 headers=dict(resp.headers), media_type=resp.media_type)
+        new.headers["content-length"] = str(len(body))
+        return new
+
+
+app.add_middleware(_ForceMobileMiddleware)
+
 # Routers
 # IMPORTANT: specific admin sub-routers MUST be registered BEFORE
 # admin.router because admin.router has a catch-all DELETE /{entity}/{rid}
@@ -55,6 +119,7 @@ app.include_router(_si.admin_router)
 app.include_router(_si.public_router)
 app.include_router(_nfc_mod.router)            # /api/nfc/*  + /api/admin/nfc/*
 app.include_router(_nfc_mod.public_router)     # /t/<slug> tap handler
+app.include_router(_recovery_mod.router)       # /api/recovery/* one-tap dispatch
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)

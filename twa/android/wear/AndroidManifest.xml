@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Wearable Data Layer requires foreground service when listening -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Recovery one-tap (v1.24.1): real GPS + dial-vendor button -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <application
         android:label="@string/wear_app_name"
@@ -44,6 +49,16 @@
         <activity android:name="ae.servia.wear.ChatActivity"
                   android:exported="false"
                   android:label="Chat" />
+        <!-- v1.24.1: One-tap vehicle-recovery dispatch -->
+        <activity android:name="ae.servia.wear.RecoveryActivity"
+                  android:exported="true"
+                  android:label="SOS Recovery"
+                  android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="ae.servia.wear.action.RECOVERY_SOS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- ============== TILE SERVICES (v1.24.0 - 6 tiles total) ==============
              Each TileService is registered as an exported service the

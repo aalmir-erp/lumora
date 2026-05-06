@@ -2,7 +2,9 @@ plugins {
     id 'com.android.application'
 }
 
-// Servia Wear OS app v1.24.0 — proper native build with Tiles + Data Layer.
+// Servia Wear OS app v1.24.1 — adds one-tap recovery dispatch.
+// Brings in play-services-location for GPS, and uses HttpsURLConnection
+// (stdlib) for the dispatch POST so we don't pull in OkHttp.
 //
 // History note: earlier appcompat dep caused kotlin-stdlib duplicate-class
 // errors. We carefully pin the wear-tiles + wear-protolayout deps to a
@@ -15,8 +17,8 @@ android {
         applicationId "ae.servia.wear"
         minSdk 26
         targetSdk 34
-        versionCode 2
-        versionName "1.24.0"
+        versionCode 3
+        versionName "1.24.1"
     }
     signingConfigs {
         release {
@@ -74,6 +76,9 @@ dependencies {
     // Wearable Data Layer — phone↔watch sync (used for booking state +
     // wallet balance push from phone TWA via a companion service later).
     implementation 'com.google.android.gms:play-services-wearable:18.2.0'
+
+    // Fused location provider — one-tap GPS for Recovery dispatch (v1.24.1).
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
 
     // Guava ListenableFuture — required by tile-builders' callback chain
     implementation 'com.google.guava:guava:33.0.0-android'

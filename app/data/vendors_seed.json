@@ -427,6 +427,43 @@
         "sofa_carpet":      {"price_aed": 33, "price_unit": "per_unit"},
         "curtain_cleaning": {"price_aed": 35, "price_unit": "per_unit"}
       }
+    },
+    {
+      "email": "dispatch@desertroad-recovery.lumora",
+      "name": "Desert Road Recovery",
+      "company": "Desert Road Recovery LLC",
+      "phone": "+971 50 700 8011", "rating": 4.9, "completed_jobs": 412,
+      "services": {
+        "vehicle_recovery": {"price_aed": 250, "price_unit": "fixed", "sla_hours": 1, "notes": "24/7 flatbed + winch. Avg ETA 22 min in Dubai."},
+        "car_wash":         {"price_aed": 60,  "price_unit": "fixed"}
+      }
+    },
+    {
+      "email": "dispatch@swiftow-uae.lumora",
+      "name": "SwifTow UAE",
+      "company": "SwifTow Roadside Assist",
+      "phone": "+971 56 444 7022", "rating": 4.8, "completed_jobs": 285,
+      "services": {
+        "vehicle_recovery": {"price_aed": 270, "price_unit": "fixed", "sla_hours": 1, "notes": "Battery jump-start + flat-tyre + tow. Avg ETA 18 min Sharjah/Dubai."}
+      }
+    },
+    {
+      "email": "dispatch@al-falcon-recovery.lumora",
+      "name": "Al Falcon Recovery",
+      "company": "Al Falcon Auto Services LLC",
+      "phone": "+971 52 901 5544", "rating": 4.7, "completed_jobs": 198,
+      "services": {
+        "vehicle_recovery": {"price_aed": 240, "price_unit": "fixed", "sla_hours": 1, "notes": "Abu Dhabi + Al Ain coverage. Heavy 4x4 capable."}
+      }
+    },
+    {
+      "email": "dispatch@dxbtow24.lumora",
+      "name": "DXB Tow 24",
+      "company": "DXB Tow 24 FZ-LLC",
+      "phone": "+971 55 322 9090", "rating": 4.9, "completed_jobs": 533,
+      "services": {
+        "vehicle_recovery": {"price_aed": 230, "price_unit": "fixed", "sla_hours": 1, "notes": "Largest fleet in Dubai. Avg ETA 14 min in Marina/JLT/Downtown."}
+      }
     }
   ]
 }

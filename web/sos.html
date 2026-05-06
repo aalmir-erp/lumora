@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>SOS · One-tap recovery · Servia</title>
+<meta name="description" content="One tap. Real GPS. Closest tow truck dispatched. Vendor name + phone shown instantly. Servia 24/7 vehicle recovery UAE.">
+<link rel="canonical" href="https://servia.ae/sos.html">
+<meta name="theme-color" content="#DC2626">
+<meta name="robots" content="noindex,nofollow">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       background:#DC2626;color:#fff;min-height:100vh;display:flex;flex-direction:column}
+  header{padding:18px 16px 6px;text-align:center}
+  header h1{margin:0;font-size:14px;letter-spacing:.18em;color:#FCD34D;font-weight:800}
+  main{flex:1;padding:14px 14px 24px;max-width:520px;margin:0 auto;width:100%}
+  .panic{background:#fff;color:#DC2626;border-radius:24px;padding:28px 18px;text-align:center;
+         box-shadow:0 14px 40px rgba(0,0,0,.35);margin-bottom:14px}
+  .panic .big{font-size:38px;font-weight:900;margin:6px 0;line-height:1}
+  .panic .sub{font-size:13px;color:#1f2937;margin:6px 0 0}
+  button.primary{display:block;width:100%;padding:24px 16px;font-size:18px;font-weight:800;
+       border:0;border-radius:18px;background:#FCD34D;color:#0F172A;cursor:pointer;
+       margin-top:10px;letter-spacing:.04em;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+  button.primary:active{transform:scale(.98)}
+  button.ghost{display:block;width:100%;padding:14px;font-size:13px;
+       border:1px solid rgba(255,255,255,.4);border-radius:14px;background:transparent;color:#fff;
+       margin-top:10px;cursor:pointer}
+  .vendor-card{background:#fff;color:#0F172A;border-radius:20px;padding:18px;margin-top:10px;
+       box-shadow:0 14px 40px rgba(0,0,0,.4)}
+  .vendor-card .name{font-size:22px;font-weight:800;margin:0 0 4px}
+  .vendor-card .meta{font-size:12px;color:#475569;margin:0 0 12px}
+  .vendor-card .eta{background:#0F172A;color:#FCD34D;border-radius:14px;padding:14px;text-align:center;
+       margin-bottom:12px}
+  .vendor-card .eta .min{font-size:36px;font-weight:900}
+  .vendor-card .eta .km{font-size:13px;color:#cbd5e1;margin-top:2px}
+  .vendor-card .call{display:block;width:100%;padding:20px;background:#0F766E;color:#fff;
+       border-radius:14px;text-align:center;text-decoration:none;font-size:16px;font-weight:800;
+       margin-bottom:8px}
+  .vendor-card .wa{display:block;width:100%;padding:14px;background:#25D366;color:#fff;
+       border-radius:14px;text-align:center;text-decoration:none;font-size:14px;font-weight:700;
+       margin-bottom:8px}
+  .row{display:flex;gap:8px;margin-top:8px}
+  .row button{flex:1;padding:12px;border:0;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer}
+  .complete{background:#14B8A6;color:#fff}
+  .cancel{background:#334155;color:#fff}
+  .status-msg{background:rgba(0,0,0,.25);border-radius:12px;padding:12px;font-size:13px;
+       text-align:center;margin-top:10px}
+  .status-msg.err{background:#0F172A;color:#FEE2E2}
+  .spinner{display:inline-block;width:36px;height:36px;border:4px solid rgba(255,255,255,.25);
+       border-top-color:#FCD34D;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .safety{font-size:11px;color:rgba(255,255,255,.85);text-align:center;margin-top:10px;line-height:1.55}
+  details{background:rgba(0,0,0,.18);border-radius:10px;padding:10px;font-size:12px;margin-top:10px}
+  details summary{cursor:pointer;font-weight:600}
+  .booking-id{font-size:11px;color:#94A3B8;text-align:center;margin-top:8px}
+</style>
+</head><body>
+<header><h1>🆘 SERVIA RECOVERY</h1></header>
+<main>
+  <div id="initial">
+    <div class="panic">
+      <div style="font-size:11px;letter-spacing:.18em;color:#DC2626;font-weight:700">ROADSIDE EMERGENCY</div>
+      <div class="big">ONE TAP</div>
+      <div class="sub">Sends your real GPS · dispatches closest tow truck · shows vendor name + phone instantly.</div>
+    </div>
+    <button class="primary" id="sos-btn">📍 DISPATCH RECOVERY NOW</button>
+    <button class="ghost" id="hotline-btn">📞 Call hotline +971 56 690 0255</button>
+    <p class="safety">Turn on hazard lights · Stand off the road · Stay behind a barrier if you can.</p>
+    <details>
+      <summary>What happens after I tap?</summary>
+      <p>1. Your phone asks permission to share your location (one time).<br>
+         2. We find the closest Servia recovery vendor and assign your job.<br>
+         3. You see the vendor's name, photo and phone — tap once to call.<br>
+         4. WhatsApp tracking link sent. Mark "recovered" when done.</p>
+    </details>
+  </div>
+
+  <div id="working" hidden style="text-align:center;padding-top:18px">
+    <div class="spinner"></div>
+    <div class="status-msg" id="working-msg">Capturing your exact location…</div>
+  </div>
+
+  <div id="result" hidden></div>
+
+  <div id="failed" hidden>
+    <div class="status-msg err" id="failed-msg"></div>
+    <button class="primary" id="hotline-btn-2" style="margin-top:14px">📞 Call hotline +971 56 690 0255</button>
+    <button class="ghost" id="retry-btn">↻ Retry</button>
+  </div>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var dispatchId = 0, vendorPhone = '';
+  var token = (localStorage.getItem('servia_token') || '');
+
+  function show(id){ ['initial','working','result','failed'].forEach(function(s){
+    var el = $(s); if (el) el.hidden = (s !== id);
+  }); }
+
+  function setStatus(msg){ $('working-msg').textContent = msg; }
+  function fail(msg){ $('failed-msg').textContent = '⚠ ' + msg; show('failed'); }
+
+  function getLocation(){
+    return new Promise(function(resolve, reject){
+      if (!navigator.geolocation) { reject(new Error('Geolocation not available on this device.')); return; }
+      navigator.geolocation.getCurrentPosition(
+        function(p){ resolve({lat:p.coords.latitude, lng:p.coords.longitude, accuracy_m:p.coords.accuracy}); },
+        function(e){
+          var m = e.code === 1 ? 'Location permission denied. Please enable location and try again.'
+                : e.code === 2 ? 'GPS unavailable. Move outdoors and retry.'
+                : e.code === 3 ? 'GPS timed out. Try again.'
+                : 'Could not read your location.';
+          reject(new Error(m));
+        },
+        {enableHighAccuracy:true, timeout:15000, maximumAge:0}
+      );
+    });
+  }
+
+  function dispatch(){
+    show('working'); setStatus('📍 Capturing your exact location…');
+    getLocation().then(function(loc){
+      setStatus('🛟 Finding closest recovery truck…');
+      var headers = {'Content-Type':'application/json'};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return fetch('/api/recovery/dispatch', {
+        method:'POST', headers:headers,
+        body: JSON.stringify({
+          lat: loc.lat, lng: loc.lng, accuracy_m: loc.accuracy_m,
+          source: 'mobile', issue: 'breakdown'
+        })
+      }).then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t || ('HTTP '+r.status)); }); });
+    }).then(renderResult).catch(function(e){ fail(e.message || String(e)); });
+  }
+
+  function renderResult(j){
+    dispatchId = j.dispatch_id || 0;
+    var v = j.vendor || {};
+    vendorPhone = v.phone || '';
+    var html =
+      '<div class="status-msg" style="background:rgba(0,0,0,.25);color:#FCD34D;font-weight:700">'
+        + '✅ TRUCK DISPATCHED — booking ' + (j.booking_id || '') + '</div>'
+      + '<div class="vendor-card">'
+        + '<div class="name">' + esc(v.name || 'Servia partner') + '</div>'
+        + '<div class="meta">★ ' + (v.rating || 4.8) + '  ·  '
+            + (v.completed_jobs || 0) + ' jobs  ·  ' + esc(v.base_label || 'Servia base') + '</div>'
+        + '<div class="eta">'
+            + '<div class="min">⏱ ' + j.eta_min + ' min</div>'
+            + '<div class="km">' + j.distance_km + ' km away · AED ' + (j.price_aed || 250) + '</div>'
+        + '</div>'
+        + '<a class="call" href="' + esc(v.tel_url || ('tel:' + vendorPhone)) + '">📞 CALL ' + esc(vendorPhone) + '</a>'
+        + (v.wa_url ? '<a class="wa" href="' + esc(v.wa_url) + '" target="_blank" rel="noopener">💬 WhatsApp vendor</a>' : '')
+        + '<div class="row">'
+            + '<button class="complete" id="completeBtn">✓ Recovered</button>'
+            + '<button class="cancel" id="cancelBtn">✕ Cancel</button>'
+        + '</div>'
+        + '<div class="booking-id">' + esc(j.message || '') + '</div>'
+      + '</div>'
+      + (j.map_url ? '<a class="ghost" style="text-decoration:none;display:block" href="' + esc(j.map_url)
+            + '" target="_blank" rel="noopener">🗺 Open my GPS in maps</a>' : '');
+    $('result').innerHTML = html;
+    show('result');
+    var c = document.getElementById('completeBtn');
+    if (c) c.addEventListener('click', completeDispatch);
+    var x = document.getElementById('cancelBtn');
+    if (x) x.addEventListener('click', cancelDispatch);
+  }
+
+  function completeDispatch(){
+    if (!dispatchId) return;
+    fetch('/api/recovery/dispatch/' + dispatchId + '/complete',
+      {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({rating:5})}
+    ).finally(function(){
+      $('result').innerHTML = '<div class="status-msg" style="background:#14B8A6;color:#fff;font-weight:700">'
+        + '✓ Marked recovered. Stay safe out there.</div>'
+        + '<button class="ghost" onclick="location.href=\'/\'">← Servia home</button>';
+    });
+  }
+
+  function cancelDispatch(){
+    if (!dispatchId) return;
+    if (!confirm('Cancel this dispatch?')) return;
+    fetch('/api/recovery/dispatch/' + dispatchId + '/cancel',
+      {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}
+    ).finally(function(){
+      $('result').innerHTML = '<div class="status-msg err">Dispatch cancelled.</div>'
+        + '<button class="ghost" onclick="location.href=\'/sos.html\'">↻ Try again</button>';
+    });
+  }
+
+  function esc(s){ return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  document.getElementById('sos-btn').addEventListener('click', dispatch);
+  document.getElementById('hotline-btn').addEventListener('click', function(){
+    location.href = 'tel:+971566900255';
+  });
+  document.getElementById('hotline-btn-2').addEventListener('click', function(){
+    location.href = 'tel:+971566900255';
+  });
+  document.getElementById('retry-btn').addEventListener('click', function(){
+    show('initial');
+  });
+
+  // If URL has ?auto=1 (e.g. NFC tap), fire immediately.
+  if (/[?&]auto=1\b/.test(location.search)) {
+    setTimeout(dispatch, 200);
+  }
+})();
+</script>
+</body></html>

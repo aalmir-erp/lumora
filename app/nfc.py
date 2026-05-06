@@ -170,10 +170,13 @@ def _ensure_schema() -> None:
 @public_router.get("/t/{slug}")
 def nfc_tap(slug: str, request: Request):
     """The URL written onto every NFC sticker. Records the tap and 302s to
-    /book.html?nfc=<slug> where the customer-facing confirm flow takes over."""
+    /book.html?nfc=<slug> (or /sos.html?auto=1 for vehicle_recovery tags so
+    the dispatch fires the moment the screen loads)."""
     _ensure_schema()
     with db.connect() as c:
-        row = c.execute("SELECT id, is_active FROM nfc_tags WHERE slug=?", (slug,)).fetchone()
+        row = c.execute(
+            "SELECT id, is_active, service_id FROM nfc_tags WHERE slug=?", (slug,)
+        ).fetchone()
         if not row:
             return RedirectResponse(f"/nfc-not-found.html?slug={slug}", status_code=302)
         if not row["is_active"]:
@@ -189,7 +192,11 @@ def nfc_tap(slug: str, request: Request):
             "INSERT INTO nfc_taps(tag_id, ip, user_agent, ts) VALUES(?,?,?,?)",
             (row["id"], ip, ua, _now()),
         )
+        svc = row["service_id"] or ""
     db.log_event("nfc", slug, "tap")
+    # Recovery tags skip the booking confirm card and go straight to one-tap dispatch.
+    if svc == "vehicle_recovery":
+        return RedirectResponse(f"/sos.html?auto=1&from=nfc&slug={slug}", status_code=302)
     return RedirectResponse(f"/book.html?nfc={slug}", status_code=302)
 
 

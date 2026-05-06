@@ -85,6 +85,17 @@
       "base_per_bedroom": 280,
       "min_charge": 1100,
       "team_size": 4
+    },
+    "vehicle_recovery": {
+      "callout_flat": 250,
+      "tow_per_km": 8,
+      "min_charge": 250,
+      "notes": "Roadside recovery + flatbed tow. Quoted per km after first 10 km included."
+    },
+    "car_wash": {
+      "base_flat": 60,
+      "deluxe": 120,
+      "min_charge": 60
     }
   },
   "surcharges": {
