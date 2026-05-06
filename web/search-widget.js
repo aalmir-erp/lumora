@@ -339,10 +339,20 @@
     rec.onstart = () => { listening = true; micBtn.classList.add("listening"); micBtn.textContent = "🔴"; };
     rec.onend   = () => { listening = false; micBtn.classList.remove("listening"); micBtn.textContent = "🎤"; };
     rec.onerror = () => { listening = false; micBtn.classList.remove("listening"); micBtn.textContent = "🎤"; };
+    // v1.24.8 — accumulator pattern (e.resultIndex) prevents duplicate text
+    let _searchFinalAcc = "";
     rec.onresult = e => {
-      qInput.value = Array.from(e.results).map(r => r[0].transcript).join("");
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) _searchFinalAcc += e.results[i][0].transcript + " ";
+        else interim += e.results[i][0].transcript;
+      }
+      qInput.value = (_searchFinalAcc + interim).trim();
       if (mode === "search") render();
-      else if (e.results[0].isFinal) { const v = qInput.value.trim(); if (v) { aiSend(v); qInput.value = ""; } }
+      else if (e.results[e.resultIndex] && e.results[e.resultIndex].isFinal) {
+        const v = qInput.value.trim();
+        if (v) { aiSend(v); qInput.value = ""; _searchFinalAcc = ""; }
+      }
     };
   } else {
     micBtn.style.display = "none";

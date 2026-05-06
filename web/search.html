@@ -590,15 +590,20 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     rec.onstart = () => { listening = true; qmic.classList.add("listening"); qmic.textContent = "🔴"; };
     rec.onend   = () => { listening = false; qmic.classList.remove("listening"); qmic.textContent = "🎤"; };
     rec.onerror = () => { listening = false; qmic.classList.remove("listening"); qmic.textContent = "🎤"; };
+    // v1.24.8 — accumulator pattern (e.resultIndex) prevents duplicate text
+    let _searchPgFinalAcc = "";
     rec.onresult = e => {
-      const transcript = Array.from(e.results).map(r => r[0].transcript).join("");
-      q.value = transcript;
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) _searchPgFinalAcc += e.results[i][0].transcript + " ";
+        else interim += e.results[i][0].transcript;
+      }
+      q.value = (_searchPgFinalAcc + interim).trim();
       sbox.classList.add("has-text");
       if (mode === "search") render();
-      // If final + AI mode, send it
-      if (mode === "ai" && e.results[0].isFinal) {
+      if (mode === "ai" && e.results[e.resultIndex] && e.results[e.resultIndex].isFinal) {
         const v = q.value.trim();
-        if (v) { aiSend(v); q.value = ""; render(); }
+        if (v) { aiSend(v); q.value = ""; _searchPgFinalAcc = ""; render(); }
       }
     };
   } else {

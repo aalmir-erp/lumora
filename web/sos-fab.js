@@ -36,9 +36,12 @@
       var a = document.createElement('a');
       a.id = 'servia-sos-fab';
       a.href = '/sos.html';
-      a.setAttribute('aria-label','SOS — one-tap recovery dispatch');
-      a.innerHTML = '<span class="dot" aria-hidden="true"></span>🆘 SOS';
-      a.title = 'One-tap vehicle recovery — sends GPS, dispatches closest tow truck';
+      a.setAttribute('aria-label','Any problem? Servia it — one-tap dispatch');
+      // v1.24.8 — brand-building copy. "Servia it" is the new everyday verb
+      // (like "Google it"). The 🆘 icon stays so people still associate it
+      // with SOS / emergency, but the word changes the conversation.
+      a.innerHTML = '<span class="dot" aria-hidden="true"></span>🆘 Servia it';
+      a.title = 'Any problem? Servia it — one-tap dispatch · GPS auto-sent · vendor in seconds';
       document.body.appendChild(a);
     }
     if (document.body) mount();

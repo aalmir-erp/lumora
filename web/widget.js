@@ -480,7 +480,11 @@
       if (listening && rec) { try { rec.stop(); } catch {} return; }
       const lang = (window.lumoraLang ? lumoraLang() : "en");
       rec = new SR();
-      rec.continuous = true;
+      // v1.24.8 — continuous=false so each click captures ONE utterance.
+      // Continuous mode caused Android Chrome to silently restart recognition
+      // after pauses; the same phrase then got accumulated multiple times in
+      // the input ("I have king size bed... I have king size bed... I have…").
+      rec.continuous = false;
       rec.interimResults = true;
       rec.lang = SR_LANG_MAP[lang] || "en-US";
       rec.onstart = () => { listening = true; micBtn.classList.add("recording");
@@ -490,18 +494,18 @@
       // Capture whatever the user had typed BEFORE clicking the mic, so
       // dictated text is appended (not overwritten).
       const prefix = (input.value || "").trim();
-      // Idempotent rebuild: each onresult REPLACES the dictated portion by
-      // walking ALL e.results[] from index 0 and taking only finals + the
-      // current interim. Prevents Android Chrome's habit of re-firing the
-      // same final result twice and ending up with "hello hello hello".
+      // v1.24.8 — accumulator pattern: finals are added ONCE (using
+      // e.resultIndex to skip already-processed results), interim is the
+      // current pending utterance. Eliminates the dup-text bug.
+      let finalAcc = "";
       rec.onresult = (e) => {
-        let final = "", interim = "";
-        for (let i = 0; i < e.results.length; i++) {
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
           const r = e.results[i];
-          if (r.isFinal) final += r[0].transcript + " ";
-          else if (i === e.results.length - 1) interim = r[0].transcript;
+          if (r.isFinal) finalAcc += r[0].transcript + " ";
+          else interim += r[0].transcript;
         }
-        const dictated = (final + interim).trim();
+        const dictated = (finalAcc + interim).trim();
         input.value = (prefix ? prefix + " " : "") + dictated;
       };
       rec.onerror = (e) => {
