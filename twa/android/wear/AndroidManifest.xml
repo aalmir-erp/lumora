@@ -72,6 +72,23 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <!-- v1.24.4: First-run onboarding (phone + email) -->
+        <activity android:name="ae.servia.wear.OnboardingActivity"
+                  android:exported="false"
+                  android:label="Welcome"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+                  android:windowSoftInputMode="adjustResize" />
+        <!-- v1.24.4: Generic SOS dispatch (used by SosVehicle/Furniture/etc tiles) -->
+        <activity android:name="ae.servia.wear.SosLauncherActivity"
+                  android:exported="true"
+                  android:label="SOS"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+                  android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="ae.servia.wear.action.SOS_DISPATCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- ============== TILE SERVICES (v1.24.0 - 6 tiles total) ==============
              Each TileService is registered as an exported service the
@@ -186,6 +203,89 @@
             <meta-data
                 android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+
+        <!-- ============== v1.24.4: SOS CATEGORY TILES (6 new) ==============
+             Each launches SosLauncherActivity with a different service_id
+             so the user can pick exactly the kind of SOS they want from
+             the watch's tile picker. -->
+        <service
+            android:name="ae.servia.wear.tiles.SosVehicleTileService"
+            android:label="Servia · SOS Vehicle"
+            android:description="@string/tile_sos_vehicle_desc"
+            android:icon="@drawable/tile_preview_sos"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_sos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosFurnitureTileService"
+            android:label="Servia · SOS Furniture"
+            android:description="@string/tile_sos_furniture_desc"
+            android:icon="@drawable/tile_preview_furniture"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_furniture" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosElectricianTileService"
+            android:label="Servia · SOS Electrician"
+            android:description="@string/tile_sos_electrician_desc"
+            android:icon="@drawable/tile_preview_electrician"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_electrician" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosPlumberTileService"
+            android:label="Servia · SOS Plumber"
+            android:description="@string/tile_sos_plumber_desc"
+            android:icon="@drawable/tile_preview_plumber"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_plumber" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosAcTileService"
+            android:label="Servia · SOS AC"
+            android:description="@string/tile_sos_ac_desc"
+            android:icon="@drawable/tile_preview_ac"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_ac" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosHandymanTileService"
+            android:label="Servia · SOS Handyman"
+            android:description="@string/tile_sos_handyman_desc"
+            android:icon="@drawable/tile_preview_handyman"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_handyman" />
         </service>
 
         <!-- Wearable Listener Service for phone↔watch Data Layer sync -->

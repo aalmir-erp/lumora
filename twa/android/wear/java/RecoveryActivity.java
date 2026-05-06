@@ -65,6 +65,19 @@ public class RecoveryActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // v1.24.4 — onboarding gate so the booking is bound to a real
+        // customer (visible in /account.html). For LITERAL emergencies this
+        // adds ~10 sec friction the first time only — phone+email saved
+        // forever after that.
+        if (!WearAuth.hasIdentity(this)) {
+            Intent onb = new Intent(this, OnboardingActivity.class);
+            onb.putExtra("next_class", getClass().getName());
+            startActivity(onb);
+            finish();
+            return;
+        }
+
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFFDC2626);  // RED
@@ -169,13 +182,21 @@ public class RecoveryActivity extends Activity {
             body.put("accuracy_m", loc.getAccuracy());
             body.put("source", "watch");
             body.put("issue", "breakdown");
-            body.put("customer_name", Build.MODEL + " (Wear)");
+            body.put("service_id", "vehicle_recovery");
+            // v1.24.4 — bind to the onboarded customer so the booking
+            // shows up in /account.html bookings tab.
+            body.put("customer_phone", WearAuth.getPhone(this));
+            body.put("customer_email", WearAuth.getEmail(this));
+            String n = WearAuth.getName(this);
+            body.put("customer_name", (n == null || n.isEmpty()) ? Build.MODEL + " (Wear)" : n);
 
             URL u = new URL(API_BASE + "/api/recovery/dispatch");
             HttpURLConnection con = (HttpURLConnection) u.openConnection();
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json");
             con.setRequestProperty("Accept", "application/json");
+            String tok = WearAuth.getToken(this);
+            if (tok != null && !tok.isEmpty()) con.setRequestProperty("Authorization", "Bearer " + tok);
             con.setConnectTimeout(8000);
             con.setReadTimeout(12000);
             con.setDoOutput(true);

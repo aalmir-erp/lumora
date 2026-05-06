@@ -7,9 +7,13 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
+import android.text.InputType;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -64,6 +68,17 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // v1.24.4 — onboarding gate. If we don't yet have a phone we won't be
+        // able to attribute a chat-driven booking back to the customer's
+        // /account.html, so first-run users go through OnboardingActivity.
+        if (!WearAuth.hasIdentity(this)) {
+            Intent onb = new Intent(this, OnboardingActivity.class);
+            onb.putExtra("next_class", getClass().getName());
+            startActivity(onb);
+            finish();
+            return;
+        }
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFF0F172A);
@@ -110,23 +125,96 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
         mic.setOnLongClickListener(v -> { stopSpeaking(); return true; });
         root.addView(mic);
 
+        // v1.24.4 — type input alongside the mic. User can pick whichever
+        // input method works best on their watch (Samsung handwriting,
+        // bytecodek/keyboard, voice-to-text via the system IME).
+        EditText typeField = new EditText(this);
+        typeField.setHint("…or type your message");
+        typeField.setHintTextColor(0xFF64748B);
+        typeField.setTextColor(0xFFFFFFFF);
+        typeField.setBackgroundColor(0xFF1E293B);
+        typeField.setTextSize(12);
+        typeField.setPadding(10, 10, 10, 10);
+        typeField.setSingleLine();
+        typeField.setInputType(InputType.TYPE_CLASS_TEXT
+                              | InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE);
+        typeField.setImeOptions(EditorInfo.IME_ACTION_SEND);
+        LinearLayout.LayoutParams tfp = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
+        tfp.topMargin = 6;
+        typeField.setLayoutParams(tfp);
+        typeField.setOnEditorActionListener((v, actionId, event) -> {
+            boolean send = (actionId == EditorInfo.IME_ACTION_SEND
+                || actionId == EditorInfo.IME_ACTION_DONE
+                || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER));
+            if (send) {
+                String txt = typeField.getText().toString().trim();
+                if (!txt.isEmpty()) {
+                    stopSpeaking();
+                    sendUserMessage(txt);
+                    typeField.setText("");
+                }
+                return true;
+            }
+            return false;
+        });
+        root.addView(typeField);
+
+        TextView sendBtn = button("✉ Send typed", 0xFF14B8A6, 0xFFFFFFFF);
+        sendBtn.setTextSize(11);
+        sendBtn.setOnClickListener(v -> {
+            String txt = typeField.getText().toString().trim();
+            if (!txt.isEmpty()) {
+                stopSpeaking();
+                sendUserMessage(txt);
+                typeField.setText("");
+            }
+        });
+        root.addView(sendBtn);
+
         // Visible "⏹ Stop" button shown while TTS is speaking; hidden otherwise.
         stopBtn = button("⏹ Stop voice", 0xFF334155, 0xFFFFFFFF);
         stopBtn.setOnClickListener(v -> stopSpeaking());
         stopBtn.setVisibility(View.GONE);
         root.addView(stopBtn);
 
+        TextView newChatBtn = button("🗑 New chat", 0xFF334155, 0xFFCBD5E1);
+        newChatBtn.setTextSize(10);
+        newChatBtn.setOnClickListener(v -> {
+            WearChatHistory.clear();
+            bubbles.removeAllViews();
+            addAssistantBubble(welcomeText());
+        });
+        root.addView(newChatBtn);
+
         setContentView(root);
 
         // Initialise TTS in the background — spoken replies kick in once ready.
         tts = new TextToSpeech(getApplicationContext(), this);
 
-        addAssistantBubble("Hi! Ask me anything — book a clean, get a quote, "
-            + "summon recovery, top up wallet. Tap the mic to speak.");
+        // v1.24.4 — restore prior conversation if any. Going back and coming
+        // back no longer wipes the chat.
+        if (WearChatHistory.isEmpty()) {
+            addAssistantBubble(welcomeText());
+        } else {
+            for (WearChatHistory.Bubble b : WearChatHistory.snapshot()) {
+                if (b.side == WearChatHistory.Side.USER)        addBubble(b.text, 0xFF334155, 0xFFFFFFFF, Gravity.RIGHT);
+                else if (b.side == WearChatHistory.Side.SERVIA) addBubble(b.text, 0xFFFCD34D, 0xFF1E293B, Gravity.LEFT);
+                else                                            renderChip(b.text);
+            }
+        }
 
         if (autoOpenMic()) {
             scroll.postDelayed(this::startVoiceInput, 400);
         }
+    }
+
+    private String welcomeText() {
+        String name = WearAuth.getName(this);
+        return (name != null && !name.isEmpty() ? "Hi " + name + "! " : "Hi! ")
+             + "Ask me anything — book a service, get a quote, summon recovery, "
+             + "top up wallet. Speak or type.";
     }
 
     @Override
@@ -204,9 +292,11 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
     public void sendUserMessage(String text) {
         if (text == null || text.trim().isEmpty()) return;
         addUserBubble(text);
+        WearChatHistory.add(WearChatHistory.Side.USER, text);
         spinner.setVisibility(View.VISIBLE);
         status.setText("Servia is thinking…");
-        WearApi.chat(text, new WearApi.Callback() {
+        String phone = WearAuth.getPhone(this);
+        WearApi.chat(this, text, phone, new WearApi.Callback() {
             @Override public void onSuccess(JSONObject j) {
                 spinner.setVisibility(View.GONE);
                 String reply = j.optString("text", "");
@@ -215,7 +305,11 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
                 String chip = summariseTools(tcs);
                 if (reply.isEmpty()) reply = "(no reply)";
                 addAssistantBubble(reply);
-                if (chip != null) addConfirmChip(chip);
+                WearChatHistory.add(WearChatHistory.Side.SERVIA, reply);
+                if (chip != null) {
+                    addConfirmChip(chip);
+                    WearChatHistory.add(WearChatHistory.Side.CHIP, chip);
+                }
                 status.setText(modeLabel(mode));
                 speak(reply);
             }
@@ -223,6 +317,7 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
                 spinner.setVisibility(View.GONE);
                 status.setText("");
                 addAssistantBubble("⚠ " + msg);
+                WearChatHistory.add(WearChatHistory.Side.SERVIA, "⚠ " + msg);
             }
         });
     }
@@ -285,7 +380,9 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
     // ---------------------------------------------------------------- bubbles
     protected void addUserBubble(String text)      { addBubble(text, 0xFF334155, 0xFFFFFFFF, Gravity.RIGHT); }
     protected void addAssistantBubble(String text) { addBubble(text, 0xFFFCD34D, 0xFF1E293B, Gravity.LEFT);  }
-    protected void addConfirmChip(String text) {
+    protected void addConfirmChip(String text) { renderChip(text); }
+
+    protected void renderChip(String text) {
         TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextColor(0xFFD1FAE5);

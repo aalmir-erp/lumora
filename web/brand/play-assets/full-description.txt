@@ -1,0 +1,38 @@
+Servia is the UAE's first one-tap home-services platform. From a stranded car to a leaking sink to a maid who shows up on time, Servia connects you to vetted local pros in seconds — across all 7 emirates.
+
+🆘 ONE-TAP SOS DISPATCH
+• Vehicle recovery — battery, tyre, fuel, lock-out, tow
+• Chauffeur — airport, hotel, late-night
+• Furniture move + assembly — small van or full truck
+• Handyman — wall paint, door, curtains, TV mount
+• Plumber — leaks, clogs, water heater
+• Electrician — no power, breakers, sockets, fans
+• AC fix + clean — gas top-up, deep service, leak fix
+• Cleaning — deep clean, maid hourly, sofa & carpet
+
+⚡ HOW IT WORKS
+1. Pick a service · 2. We send your real GPS · 3. Closest Servia partner is dispatched · 4. You see vendor name + phone instantly · 5. WhatsApp tracking link · 6. Pay only when satisfied (7-day re-do guarantee).
+
+📲 NFC TAGS
+Stick a Servia NFC sticker on your dashboard, kitchen, AC unit, or front door. Tap once → Servia opens with the right service pre-filled.
+
+⌚ WEAR OS COMPANION
+Servia for Wear OS lets you book by voice from your wrist:
+• Mic-first chat with text-to-speech replies
+• 6 SOS tiles (vehicle, furniture, electrician, plumber, AC, handyman) — tap once, GPS sent, vendor in seconds
+• Real bookings linked to your Servia account so they appear in /account.html
+
+🛡 TRUSTED ACROSS THE UAE
+• 4.9★ from 2,400+ UAE families
+• Vetted, insured, English-speaking pros
+• AED 25,000 damage cover on every service
+• 7-day re-do guarantee — pay only when satisfied
+• Apple Pay · Google Pay · Card · Tabby · Wallet
+
+🇦🇪 UAE-WIDE COVERAGE
+Dubai (200+ areas), Abu Dhabi (80+), Sharjah (60+), Ajman, RAK, UAQ, Fujairah, Al Ain.
+
+🔒 PRIVACY-FIRST
+Servia uses your precise GPS only when you tap SOS or Book. No background tracking, no resale, no third-party ads. The NFC tag is passive — no battery, no GPS, no broadcast — your phone shares its location only when you actively tap.
+
+🌐 servia.ae · 📞 +971 56 690 0255 (24/7) · 💬 WhatsApp · 📧 hello@servia.ae

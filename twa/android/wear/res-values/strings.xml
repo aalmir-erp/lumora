@@ -8,4 +8,10 @@
     <string name="tile_loyalty_desc">Your Ambassador tier + savings on next booking</string>
     <string name="tile_wallet_desc">Servia wallet balance + recent activity</string>
     <string name="tile_dailytip_desc">Daily UAE home-services tip from Servia experts</string>
+    <string name="tile_sos_vehicle_desc">SOS · Tow truck dispatched in seconds, GPS auto-sent</string>
+    <string name="tile_sos_furniture_desc">SOS · Movers, fixers, assemblers — closest first</string>
+    <string name="tile_sos_electrician_desc">SOS · Servia electrician dispatched, no power emergencies</string>
+    <string name="tile_sos_plumber_desc">SOS · Plumber dispatched for leaks, clogs, water heater</string>
+    <string name="tile_sos_ac_desc">SOS · HVAC technician for AC not cooling, gas top-up</string>
+    <string name="tile_sos_handyman_desc">SOS · Handyman for paint, doors, curtains, TV mounts</string>
 </resources>

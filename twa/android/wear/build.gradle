@@ -18,8 +18,8 @@ android {
         applicationId "ae.servia.wear"
         minSdk 26
         targetSdk 34
-        versionCode 5
-        versionName "1.24.3"
+        versionCode 6
+        versionName "1.24.4"
     }
     signingConfigs {
         release {

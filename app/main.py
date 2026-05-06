@@ -3489,6 +3489,83 @@ def customer_login_pwd(body: _CustomerPwdLogin):
     }}
 
 
+# ---------- v1.24.4: wear OS / quick-action onboarding ----------
+class _WearInitBody(BaseModel):
+    phone: str
+    email: Optional[str] = None
+    name: Optional[str] = None
+    source: Optional[str] = "wear"
+
+
+@app.post("/api/auth/customer/wear-init")
+def customer_wear_init(body: _WearInitBody):
+    """Create-or-resolve a customer by phone (+optional email/name).
+
+    Used by:
+      - The Wear OS onboarding screen (first-run phone+email collection
+        so a watch booking can be linked to an /account.html identity).
+      - The /sos.html quick-action page when an anonymous visitor lands
+        and we want to bind their dispatch to a real customer.
+
+    Returns the same `{token, user{id,phone,email,name}}` shape as the
+    password login so the wear / web caller can persist it as Bearer
+    auth in subsequent calls (recovery dispatch, /api/chat, etc.).
+    """
+    from . import auth_users as _au, uae_phone as _ph
+    phone = _ph.normalize(body.phone)
+    if not phone:
+        raise HTTPException(400, "valid UAE phone required (e.g. 050 123 4567)")
+    email = (body.email or "").strip().lower() or None
+    name  = (body.name or "").strip() or None
+
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT id, phone, name, email FROM customers WHERE phone = ?",
+            (phone,),
+        ).fetchone()
+        if row:
+            cid = int(row["id"])
+            # Update with anything new the customer just told us
+            c.execute(
+                "UPDATE customers SET "
+                "  email=COALESCE(?,email), "
+                "  name=COALESCE(?,name), "
+                "  last_seen_at=? "
+                "WHERE id=?",
+                (email, name, _now_iso(), cid),
+            )
+            created = False
+        else:
+            cur = c.execute(
+                "INSERT INTO customers(phone, email, name, language, created_at, last_seen_at) "
+                "VALUES(?,?,?,?,?,?)",
+                (phone, email, name or "Servia customer", "en", _now_iso(), _now_iso()),
+            )
+            cid = cur.lastrowid
+            created = True
+        # Re-read to return canonical values
+        row2 = c.execute(
+            "SELECT id, phone, name, email FROM customers WHERE id=?", (cid,)
+        ).fetchone()
+
+    tok = _au.create_session("customer", cid)
+    db.log_event("auth", str(cid),
+                 "wear_init_created" if created else "wear_init_resolved",
+                 actor=body.source or "wear",
+                 details={"phone": phone, "email": email, "name": name})
+    return {"ok": True, "token": tok, "created": created, "user": {
+        "id": int(row2["id"]),
+        "phone": row2["phone"],
+        "email": row2["email"] or "",
+        "name":  row2["name"]  or "",
+    }}
+
+
+def _now_iso() -> str:
+    import datetime as _d
+    return _d.datetime.utcnow().isoformat() + "Z"
+
+
 # ---------- one-shot: backfill 10 articles on first deploy so /blog isn't empty ----------
 @app.on_event("startup")
 def _auto_seed_blog_articles_if_empty():

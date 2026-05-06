@@ -1,5 +1,6 @@
 package ae.servia.wear;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import org.json.JSONObject;
@@ -33,23 +34,27 @@ public class WearApi {
         void onError(String msg);
     }
 
-    /** POST /api/chat → callback runs on UI thread. */
-    public static void chat(String message, Callback cb) {
-        post("/api/chat", buildChatBody(message), cb);
+    /** POST /api/chat → callback runs on UI thread. Pass ctx so the Bearer
+     *  token from WearAuth is attached automatically (links chat history
+     *  + chat-driven bookings to the customer's account). */
+    public static void chat(Context ctx, String message, String phone, Callback cb) {
+        post(ctx, "/api/chat", buildChatBody(message, phone), cb);
     }
 
-    private static JSONObject buildChatBody(String message) {
+    private static JSONObject buildChatBody(String message, String phone) {
         JSONObject b = new JSONObject();
         try {
             b.put("message", message);
             if (sessionId != null) b.put("session_id", sessionId);
             b.put("language", "en");
+            if (phone != null && !phone.isEmpty()) b.put("phone", phone);
         } catch (Exception ignored) {}
         return b;
     }
 
-    /** Generic POST with JSON body. */
-    public static void post(String path, JSONObject body, Callback cb) {
+    /** Generic POST with JSON body. ctx is used to attach Bearer token. */
+    public static void post(Context ctx, String path, JSONObject body, Callback cb) {
+        final String token = ctx == null ? null : WearAuth.getToken(ctx);
         BG.submit(() -> {
             try {
                 URL u = new URL(BASE + path);
@@ -57,7 +62,10 @@ public class WearApi {
                 con.setRequestMethod("POST");
                 con.setRequestProperty("Content-Type", "application/json");
                 con.setRequestProperty("Accept", "application/json");
-                con.setRequestProperty("User-Agent", "Servia-Wear/1.24.2");
+                con.setRequestProperty("User-Agent", "Servia-Wear/1.24.4");
+                if (token != null && !token.isEmpty()) {
+                    con.setRequestProperty("Authorization", "Bearer " + token);
+                }
                 con.setConnectTimeout(8000);
                 con.setReadTimeout(30000);   // chat replies can take ~10s
                 con.setDoOutput(true);

@@ -184,26 +184,34 @@ def _fallback_base_for_vendor_phone(phone: str | None) -> dict:
 # ---------------------------------------------------------------------------
 # Vendor selection
 # ---------------------------------------------------------------------------
-def _find_best_vendor(lat: float, lng: float) -> tuple[dict, dict] | None:
+def _find_best_vendor(lat: float, lng: float, service_id: str = "vehicle_recovery") -> tuple[dict, dict] | None:
     """Return (vendor_row, {distance_km, base_lat, base_lng, base_label}) or None.
 
-    Strategy: pick all active vendors with vehicle_recovery service, score
-    by (distance_km - rating_bonus). Closer + higher rating wins.
+    v1.24.4: accept any service_id (not just vehicle_recovery). If no vendor
+    is found for the requested service we fall back to vehicle_recovery
+    so the user always gets *someone* dispatched.
     """
-    with db.connect() as c:
-        rows = c.execute(
-            "SELECT v.id AS id, v.name AS name, v.phone AS phone, v.email AS email, "
-            "       v.rating AS rating, v.completed_jobs AS jobs, v.company AS company, "
-            "       vs.price_aed AS price_aed, "
-            "       b.lat AS base_lat, b.lng AS base_lng, b.base_label AS base_label "
-            "FROM vendors v "
-            "JOIN vendor_services vs ON vs.vendor_id = v.id "
-            "LEFT JOIN recovery_vendor_base b ON b.vendor_id = v.id "
-            "WHERE vs.service_id = 'vehicle_recovery' "
-            "  AND COALESCE(vs.active, 1) = 1 "
-            "  AND COALESCE(v.is_active, 1) = 1 "
-            "  AND COALESCE(v.is_approved, 1) = 1"
-        ).fetchall()
+    def _query(svc):
+        with db.connect() as c:
+            return c.execute(
+                "SELECT v.id AS id, v.name AS name, v.phone AS phone, v.email AS email, "
+                "       v.rating AS rating, v.completed_jobs AS jobs, v.company AS company, "
+                "       vs.price_aed AS price_aed, "
+                "       b.lat AS base_lat, b.lng AS base_lng, b.base_label AS base_label "
+                "FROM vendors v "
+                "JOIN vendor_services vs ON vs.vendor_id = v.id "
+                "LEFT JOIN recovery_vendor_base b ON b.vendor_id = v.id "
+                "WHERE vs.service_id = ? "
+                "  AND COALESCE(vs.active, 1) = 1 "
+                "  AND COALESCE(v.is_active, 1) = 1 "
+                "  AND COALESCE(v.is_approved, 1) = 1",
+                (svc,)
+            ).fetchall()
+
+    rows = _query(service_id)
+    if not rows and service_id != "vehicle_recovery":
+        # Fallback: any vendor at all
+        rows = _query("vehicle_recovery")
     if not rows:
         return None
 
@@ -241,10 +249,14 @@ class DispatchBody(BaseModel):
     lng: float = Field(..., ge=-180, le=180)
     accuracy_m: Optional[float] = None
     customer_phone: Optional[str] = None
+    customer_email: Optional[str] = None     # v1.24.4 — wear onboarding hook
     customer_name: Optional[str] = None
     issue: Optional[str] = None              # breakdown | accident | flat_tyre | battery | fuel | locked_out | other
     vehicle_make: Optional[str] = None       # "Toyota Camry"
     vehicle_plate: Optional[str] = None      # "Dubai N 12345"
+    notes: Optional[str] = None              # v1.24.4 — free-form details
+    photo_url: Optional[str] = None          # v1.24.4 — uploaded photo URL (mobile only)
+    service_id: Optional[str] = "vehicle_recovery"  # v1.24.4 — multi-SOS (vehicle / furniture / electrician / handyman …)
     source: Optional[str] = "web"            # watch | mobile | web | nfc
 
 
