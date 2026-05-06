@@ -339,19 +339,22 @@
     rec.onstart = () => { listening = true; micBtn.classList.add("listening"); micBtn.textContent = "🔴"; };
     rec.onend   = () => { listening = false; micBtn.classList.remove("listening"); micBtn.textContent = "🎤"; };
     rec.onerror = () => { listening = false; micBtn.classList.remove("listening"); micBtn.textContent = "🎤"; };
-    // v1.24.8 — accumulator pattern (e.resultIndex) prevents duplicate text
-    let _searchFinalAcc = "";
+    // v1.24.11 — REPLACE-ALWAYS pattern (no accumulator). Chrome refines
+    // its interpretation across multiple onresult events; we just take
+    // the latest canonical transcript every time.
     rec.onresult = e => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) _searchFinalAcc += e.results[i][0].transcript + " ";
-        else interim += e.results[i][0].transcript;
+      if (!e.results || !e.results.length) return;
+      let txt = "";
+      let lastFinal = false;
+      for (let i = 0; i < e.results.length; i++) {
+        txt += e.results[i][0].transcript;
+        if (e.results[i].isFinal) { txt += " "; lastFinal = true; }
       }
-      qInput.value = (_searchFinalAcc + interim).trim();
+      qInput.value = txt.trim();
       if (mode === "search") render();
-      else if (e.results[e.resultIndex] && e.results[e.resultIndex].isFinal) {
+      else if (lastFinal) {
         const v = qInput.value.trim();
-        if (v) { aiSend(v); qInput.value = ""; _searchFinalAcc = ""; }
+        if (v) { aiSend(v); qInput.value = ""; }
       }
     };
   } else {

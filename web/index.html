@@ -1752,15 +1752,15 @@ setTimeout(() => {
     rec.onstart = () => { listening = true; mic.classList.add("listening"); mic.textContent = "🔴"; };
     rec.onend   = () => { listening = false; mic.classList.remove("listening"); mic.textContent = "🎤"; };
     rec.onerror = () => { listening = false; mic.classList.remove("listening"); mic.textContent = "🎤"; };
-    // v1.24.8 — accumulator pattern (e.resultIndex) prevents duplicate text
-    let _heroFinalAcc = "";
+    // v1.24.11 — REPLACE-ALWAYS pattern (no accumulator).
     rec.onresult = e => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) _heroFinalAcc += e.results[i][0].transcript + " ";
-        else interim += e.results[i][0].transcript;
+      if (!e.results || !e.results.length) return;
+      let txt = "";
+      for (let i = 0; i < e.results.length; i++) {
+        txt += e.results[i][0].transcript;
+        if (e.results[i].isFinal) txt += " ";
       }
-      input.value = (_heroFinalAcc + interim).trim();
+      input.value = txt.trim();
       dd.hidden = false; renderQuery(input.value);
     };
   } else {

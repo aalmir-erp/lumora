@@ -590,20 +590,21 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     rec.onstart = () => { listening = true; qmic.classList.add("listening"); qmic.textContent = "🔴"; };
     rec.onend   = () => { listening = false; qmic.classList.remove("listening"); qmic.textContent = "🎤"; };
     rec.onerror = () => { listening = false; qmic.classList.remove("listening"); qmic.textContent = "🎤"; };
-    // v1.24.8 — accumulator pattern (e.resultIndex) prevents duplicate text
-    let _searchPgFinalAcc = "";
+    // v1.24.11 — REPLACE-ALWAYS pattern (no accumulator).
     rec.onresult = e => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) _searchPgFinalAcc += e.results[i][0].transcript + " ";
-        else interim += e.results[i][0].transcript;
+      if (!e.results || !e.results.length) return;
+      let txt = "";
+      let lastFinal = false;
+      for (let i = 0; i < e.results.length; i++) {
+        txt += e.results[i][0].transcript;
+        if (e.results[i].isFinal) { txt += " "; lastFinal = true; }
       }
-      q.value = (_searchPgFinalAcc + interim).trim();
+      q.value = txt.trim();
       sbox.classList.add("has-text");
       if (mode === "search") render();
-      if (mode === "ai" && e.results[e.resultIndex] && e.results[e.resultIndex].isFinal) {
+      if (mode === "ai" && lastFinal) {
         const v = q.value.trim();
-        if (v) { aiSend(v); q.value = ""; _searchPgFinalAcc = ""; render(); }
+        if (v) { aiSend(v); q.value = ""; render(); }
       }
     };
   } else {

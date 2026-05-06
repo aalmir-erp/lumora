@@ -500,19 +500,24 @@
       // Capture whatever the user had typed BEFORE clicking the mic, so
       // dictated text is appended (not overwritten).
       const prefix = (input.value || "").trim();
-      // v1.24.8 — accumulator pattern: finals are added ONCE (using
-      // e.resultIndex to skip already-processed results), interim is the
-      // current pending utterance. Eliminates the dup-text bug.
-      let finalAcc = "";
+      // v1.24.11 — REPLACE-ALWAYS pattern. Android Chrome emits multiple
+      // isFinal=true results for the SAME utterance as it refines its
+      // interpretation. Any "accumulator" pattern doubled / tripled the
+      // text. The correct approach: always take the LATEST interpretation
+      // from e.results and replace the dictated portion with it. Never
+      // accumulate. After this click ends (continuous=false), the next
+      // click sees the existing input.value as the new prefix and appends.
       rec.onresult = (e) => {
-        let interim = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const r = e.results[i];
-          if (r.isFinal) finalAcc += r[0].transcript + " ";
-          else interim += r[0].transcript;
+        if (!e.results || !e.results.length) return;
+        // Collect the full transcript from ALL current results (Chrome
+        // maintains this as the canonical evolving interpretation of
+        // the single utterance).
+        let txt = "";
+        for (let i = 0; i < e.results.length; i++) {
+          txt += e.results[i][0].transcript;
+          if (e.results[i].isFinal) txt += " ";
         }
-        const dictated = (finalAcc + interim).trim();
-        input.value = (prefix ? prefix + " " : "") + dictated;
+        input.value = (prefix ? prefix + " " : "") + txt.trim();
       };
       rec.onerror = (e) => {
         listening = false; micBtn.classList.remove("recording");

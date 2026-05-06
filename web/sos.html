@@ -121,6 +121,18 @@
 
 <!-- ============ STEP 1: pick service ============ -->
 <section id="step-pick">
+  <!-- v1.24.11 — User's saved one-tap SOS shortcuts. Loaded from
+       /api/sos/custom/me when authed; tapping any of these dispatches
+       immediately with no extra clicks (location, issue, notes — all
+       stored in the button). "+ Create custom" appears in this row. -->
+  <div id="my-sos" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:6px 2px 4px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#FCD34D;text-transform:uppercase">🎯 My one-tap shortcuts</div>
+      <button id="add-custom-btn" style="background:#FCD34D;color:#7C2D12;border:0;padding:6px 12px;border-radius:999px;font-weight:800;font-size:11px;cursor:pointer">+ Create custom</button>
+    </div>
+    <div class="grid" id="my-sos-grid"></div>
+  </div>
+  <div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#FCD34D;text-transform:uppercase;margin:14px 2px 6px">Or pick a service</div>
   <div class="grid" id="grid"></div>
   <details>
     <summary>How does this work?</summary>
@@ -199,6 +211,87 @@
     <label style="display:block;margin-top:8px">Street / area<input id="ad-street" type="text" placeholder="Marina Walk, Dubai"></label>
     <label style="display:block;margin-top:8px">Notes for the driver<textarea id="ad-notes" rows="2" placeholder="Black Toyota near McDonald's…"></textarea></label>
     <button class="primary" onclick="saveAddr()" style="margin-top:14px">Save details</button>
+  </div>
+</div>
+
+<!-- ============ MANDATORY ONBOARDING MODAL (v1.24.11) ============
+     Pops on first visit when no servia_token exists. Cannot be dismissed
+     without filling name+phone. We need these BEFORE any SOS dispatch
+     because emergencies don't allow time to enter contact info. -->
+<div class="sheet-wrap" id="onboarding" hidden>
+  <div class="sheet" style="max-width:480px">
+    <h2 style="margin:0 0 4px">👋 Welcome to Servia</h2>
+    <p class="sm" style="margin:0 0 14px">30-second setup so we can confirm your bookings + reach you in an emergency. <b>Required.</b></p>
+    <label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:6px 0 4px;letter-spacing:.04em">YOUR NAME</label>
+    <input id="ob-name" type="text" autocomplete="name" placeholder="Mohammed Al…" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:14px;font-family:inherit">
+    <label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:10px 0 4px;letter-spacing:.04em">UAE MOBILE NUMBER</label>
+    <div style="display:flex;gap:6px;align-items:stretch">
+      <span style="background:#F0FDFA;border:1.5px solid #99F6E4;border-radius:10px;padding:11px 12px;font-weight:700;color:#0F766E;white-space:nowrap">🇦🇪 +971</span>
+      <input id="ob-phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="50 123 4567" style="flex:1;min-width:0;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:14px;font-family:inherit">
+    </div>
+    <label style="display:block;font-size:11px;font-weight:800;color:#475569;margin:10px 0 4px;letter-spacing:.04em">EMAIL</label>
+    <input id="ob-email" type="email" autocomplete="email" placeholder="you@example.com" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:14px;font-family:inherit">
+    <button id="ob-save" class="primary" style="margin-top:14px">✓ Save &amp; continue</button>
+    <p id="ob-status" style="font-size:12px;color:#DC2626;margin:8px 0 0;min-height:14px"></p>
+    <p style="font-size:11px;color:#64748B;margin-top:10px;line-height:1.5">🔒 Your phone is used only to confirm your bookings. We never share or sell. <a href="/privacy.html" style="color:#0F766E">Privacy policy</a></p>
+  </div>
+</div>
+
+<!-- ============ CREATE / EDIT CUSTOM SOS SHORTCUT (v1.24.11) ============ -->
+<div class="sheet-wrap" id="customform" hidden>
+  <div class="sheet" style="max-width:480px;position:relative">
+    <button class="close" onclick="closeCustomForm()" aria-label="Close">✕</button>
+    <h2 id="cf-title" style="margin:0 0 4px">+ Create one-tap SOS shortcut</h2>
+    <p class="sm">Pre-configure everything once. After save, tapping the button instantly dispatches with no further clicks.</p>
+
+    <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">LABEL (max 60 chars)</label>
+    <input id="cf-label" type="text" maxlength="60" placeholder="e.g. Marina flat tyre" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:14px;font-family:inherit;margin:4px 0 8px">
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <div>
+        <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">EMOJI</label>
+        <input id="cf-emoji" type="text" maxlength="2" value="🛞" style="width:60px;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:18px;text-align:center;margin-top:4px">
+      </div>
+      <div style="flex:1;min-width:0">
+        <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">SERVICE</label>
+        <select id="cf-service" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:14px;font-family:inherit;margin-top:4px">
+          <option value="vehicle_recovery">🚗 Vehicle recovery</option>
+          <option value="chauffeur">🚙 Chauffeur</option>
+          <option value="furniture_move">📦 Furniture move</option>
+          <option value="handyman">🔧 Handyman</option>
+          <option value="plumber">🚿 Plumber</option>
+          <option value="electrician">🔌 Electrician</option>
+          <option value="ac_cleaning">❄️ AC fix / clean</option>
+          <option value="general_cleaning">🧹 Cleaning</option>
+        </select>
+      </div>
+    </div>
+
+    <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">SPECIFIC ISSUE</label>
+    <select id="cf-sub" style="width:100%;padding:11px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:14px;font-family:inherit;margin:4px 0 10px"></select>
+
+    <div style="background:#F0FDFA;border:1.5px solid #99F6E4;border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:#0F766E;letter-spacing:.04em;margin-bottom:6px">📍 LOCATION (where this shortcut should send help)</div>
+      <div id="cf-loc-status" style="font-size:13px;color:#0F172A;margin-bottom:6px">No pin set yet.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="cfUseGps()" style="flex:1;min-width:120px;padding:9px;border:1px solid #99F6E4;background:#fff;color:#0F766E;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer">🛰 My GPS</button>
+        <button onclick="cfPickMap()" style="flex:1;min-width:120px;padding:9px;border:1px solid #DDD;background:#fff;color:#0F172A;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer">🗺 Pin on map</button>
+      </div>
+      <input id="cf-coord" type="hidden">
+    </div>
+
+    <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">BUILDING / VILLA</label>
+    <input id="cf-building" type="text" placeholder="Marina Pinnacle" style="width:100%;padding:10px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:13px;font-family:inherit;margin:4px 0 6px">
+
+    <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">FLAT / UNIT</label>
+    <input id="cf-flat" type="text" placeholder="2104" style="width:100%;padding:10px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:13px;font-family:inherit;margin:4px 0 6px">
+
+    <label style="font-size:11px;font-weight:800;color:#475569;letter-spacing:.04em">NOTES (gate code, parking, etc.)</label>
+    <textarea id="cf-notes" rows="2" placeholder="Gate 4242 · parking P-12 · black Toyota Camry" style="width:100%;padding:10px;border:1.5px solid #CBD5E1;border-radius:10px;font-size:13px;font-family:inherit;margin:4px 0 10px"></textarea>
+
+    <button id="cf-save" class="primary">✓ Save shortcut</button>
+    <button class="ghost" onclick="closeCustomForm()" style="margin-top:6px;background:#fff">Cancel</button>
+    <p id="cf-status" style="font-size:12px;color:#DC2626;margin:6px 0 0;min-height:14px"></p>
   </div>
 </div>
 
@@ -654,12 +747,217 @@
   }
   window.reset = reset;
 
+  // ============ ONBOARDING (mandatory, v1.24.11) ============
+  // First-visit gate: collect name + phone + email and call wear-init
+  // (which create-or-resolves the customer + returns a 30-day session
+  // token). Without this we can't bind dispatches to a customer or call
+  // them back in an emergency.
+  function token()       { return localStorage.getItem("servia_token") || ""; }
+  function setToken(t)   { localStorage.setItem("servia_token", t); }
+  function customerPhone(){ return localStorage.getItem("servia_phone") || ""; }
+  function setCustomerPhone(p){ localStorage.setItem("servia_phone", p); }
+  function customerName(){ return localStorage.getItem("servia_name") || ""; }
+  function setCustomerName(n){ localStorage.setItem("servia_name", n); }
+  function customerEmail(){ return localStorage.getItem("servia_email") || ""; }
+  function setCustomerEmail(em){ localStorage.setItem("servia_email", em); }
+
+  function ensureOnboarded(thenFn){
+    if (token()) { thenFn(); return; }
+    $("onboarding").hidden = false;
+    $("ob-name").value = customerName();
+    $("ob-phone").value = customerPhone().replace(/^\+?971/, "");
+    $("ob-email").value = customerEmail();
+    $("ob-save").onclick = function(){
+      var nm = $("ob-name").value.trim();
+      var ph = $("ob-phone").value.trim().replace(/[^0-9]/g, "");
+      var em = $("ob-email").value.trim();
+      if (!nm) { $("ob-status").textContent = "Please enter your name."; return; }
+      if (ph.length < 7) { $("ob-status").textContent = "Please enter a valid UAE mobile."; return; }
+      if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { $("ob-status").textContent = "Please enter a valid email or leave it blank."; return; }
+      $("ob-status").textContent = "⏳ Setting up…";
+      $("ob-save").disabled = true;
+      var phoneFull = "+971" + ph.replace(/^0+/, "");
+      fetch("/api/auth/customer/wear-init", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({phone: phoneFull, name: nm, email: em || null, source: "web-sos"})
+      }).then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t); }); })
+        .then(function(j){
+          setToken(j.token);
+          if (j.user) {
+            setCustomerPhone(j.user.phone || phoneFull);
+            setCustomerName(j.user.name || nm);
+            setCustomerEmail(j.user.email || em);
+          }
+          $("onboarding").hidden = true;
+          thenFn();
+        })
+        .catch(function(e){
+          $("ob-save").disabled = false;
+          $("ob-status").textContent = "⚠ " + (e.message || e);
+        });
+    };
+  }
+
+  // ============ MY-SOS shortcut buttons (v1.24.11) ============
+  function loadMyButtons(){
+    if (!token()) return;
+    fetch("/api/sos/custom/me", {headers: {"Authorization": "Bearer " + token()}})
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+      .then(function(j){
+        var items = j.items || [];
+        var grid = $("my-sos-grid");
+        if (!items.length) { $("my-sos").style.display = "block"; grid.innerHTML = '<p style="color:#FCA5A5;font-size:11px;grid-column:1/-1;margin:4px 0">No shortcuts yet. Tap <b>+ Create custom</b> to make your first one — pick service, location, notes once, then tap to dispatch with zero clicks.</p>'; return; }
+        $("my-sos").style.display = "block";
+        grid.innerHTML = items.map(function(b){
+          var color = b.color || "#DC2626";
+          return '<button class="tile" style="background:' + escHtml(color) + ';color:#fff" data-id="' + b.id + '" data-bnt="custom">'
+            + '<span class="ico" style="font-size:32px">' + escHtml(b.emoji || "🆘") + '</span>'
+            + '<span class="nm">' + escHtml(b.label) + '</span>'
+            + '<span class="sub" style="color:rgba(255,255,255,.85)">' + escHtml((b.service_id || "").replace("_"," ")) + (b.sub_option ? " · " + escHtml(b.sub_option.replace("_"," ")) : "") + '</span>'
+            + '<span style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.25);color:#fff;font-size:8px;padding:2px 5px;border-radius:999px;letter-spacing:.06em">1-TAP</span>'
+            + '</button>';
+        }).join("");
+        Array.prototype.forEach.call(grid.querySelectorAll('button[data-bnt="custom"]'), function(btn){
+          btn.addEventListener("click", function(){
+            if (!confirm("Dispatch '" + btn.querySelector(".nm").textContent + "' now?")) return;
+            dispatchCustom(btn.dataset.id);
+          });
+        });
+      })
+      .catch(function(){
+        $("my-sos").style.display = "none";
+      });
+  }
+
+  function dispatchCustom(id){
+    showStep("working");
+    $("working-msg").textContent = "🛟 Dispatching your saved shortcut…";
+    fetch("/api/sos/custom/" + id + "/dispatch",
+      {method:"POST", headers:{"Authorization": "Bearer " + token()}})
+      .then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t || ("HTTP " + r.status)); }); })
+      .then(renderResult)
+      .catch(function(e){
+        $("failed-msg").textContent = "⚠ " + (e.message || String(e));
+        showStep("failed");
+      });
+  }
+
+  // ============ Custom-button create form (v1.24.11) ============
+  var _editingButtonId = null;
+  function openCustomForm(){
+    ensureOnboarded(function(){
+      $("customform").hidden = false;
+      $("cf-status").textContent = "";
+      $("cf-label").value = "";
+      $("cf-emoji").value = "🛞";
+      $("cf-service").value = "vehicle_recovery";
+      cfRefreshSubs();
+      $("cf-coord").value = "";
+      $("cf-loc-status").textContent = "No pin set yet.";
+      $("cf-building").value = ""; $("cf-flat").value = ""; $("cf-notes").value = "";
+      _editingButtonId = null;
+      $("cf-title").textContent = "+ Create one-tap SOS shortcut";
+    });
+  }
+  function closeCustomForm(){ $("customform").hidden = true; }
+  window.closeCustomForm = closeCustomForm;
+
+  function cfRefreshSubs(){
+    var svc = SERVICES.find(function(s){ return s.id === $("cf-service").value; });
+    if (!svc) return;
+    $("cf-sub").innerHTML = svc.subs.map(function(s){
+      return '<option value="' + escHtml(s.v) + '">' + escHtml(s.l) + '</option>';
+    }).join("");
+  }
+  $("cf-service").addEventListener("change", cfRefreshSubs);
+
+  function cfUseGps(){
+    if (!navigator.geolocation) { $("cf-loc-status").textContent = "Geolocation not available."; return; }
+    $("cf-loc-status").textContent = "📡 Getting GPS…";
+    navigator.geolocation.getCurrentPosition(function(p){
+      var lat = p.coords.latitude, lng = p.coords.longitude;
+      $("cf-coord").value = lat.toFixed(5) + "," + lng.toFixed(5);
+      $("cf-loc-status").textContent = "✅ GPS captured (" + lat.toFixed(4) + ", " + lng.toFixed(4) + ")";
+    }, function(e){
+      $("cf-loc-status").textContent = "⚠ " + (e.code === 1 ? "Permission denied — use the map button." : "Could not get GPS.");
+    }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
+  }
+  function cfPickMap(){
+    // Reuse the existing map modal. Need to capture the result and stuff it
+    // back into cf-coord rather than state.loc.
+    var oldLoc = state.loc;
+    state.loc = oldLoc;  // preserve caller's location state across map use
+    var origConfirm = window.confirmPin;
+    window.confirmPin = function(){
+      var c = state.pickmap.getCenter();
+      $("cf-coord").value = c.lat.toFixed(5) + "," + c.lng.toFixed(5);
+      $("cf-loc-status").textContent = "✅ Pin set (" + c.lat.toFixed(4) + ", " + c.lng.toFixed(4) + ")";
+      closeMap();
+      window.confirmPin = origConfirm;
+      state.loc = oldLoc;
+    };
+    openMap();
+  }
+  window.cfUseGps = cfUseGps; window.cfPickMap = cfPickMap;
+
+  $("cf-save").onclick = function(){
+    ensureOnboarded(function(){
+      var label = $("cf-label").value.trim();
+      if (!label) { $("cf-status").textContent = "Give it a label."; return; }
+      var coord = $("cf-coord").value.trim();
+      var lat = null, lng = null;
+      if (coord) { var p = coord.split(","); lat = parseFloat(p[0]); lng = parseFloat(p[1]); }
+      if (!lat || !lng) { $("cf-status").textContent = "Pin the location (GPS or map)."; return; }
+      $("cf-status").textContent = "⏳ Saving…";
+      $("cf-save").disabled = true;
+      var body = {
+        label: label,
+        emoji: $("cf-emoji").value || "🛞",
+        service_id: $("cf-service").value,
+        sub_option: $("cf-sub").value,
+        lat: lat, lng: lng,
+        building: $("cf-building").value.trim() || null,
+        flat: $("cf-flat").value.trim() || null,
+        notes: $("cf-notes").value.trim() || null,
+      };
+      var url = _editingButtonId ? "/api/sos/custom/" + _editingButtonId : "/api/sos/custom";
+      fetch(url, {
+        method: _editingButtonId ? "PUT" : "POST",
+        headers: {"Content-Type":"application/json", "Authorization": "Bearer " + token()},
+        body: JSON.stringify(body)
+      }).then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t); }); })
+        .then(function(){
+          $("cf-save").disabled = false;
+          closeCustomForm();
+          loadMyButtons();
+        })
+        .catch(function(e){
+          $("cf-save").disabled = false;
+          $("cf-status").textContent = "⚠ " + (e.message || e);
+        });
+    });
+  };
+
+  $("add-custom-btn").addEventListener("click", openCustomForm);
+
   // ============ Init ============
   renderGrid();
-  // If URL has ?auto=1 (e.g. NFC tag), open recovery sheet immediately.
+  // Show onboarding if no token yet (lets the user see services first, then
+  // hit them to fill in identity at the moment of first interaction).
+  if (!token()) {
+    // Show the my-sos row anyway with a friendly empty-state hint
+    $("my-sos").style.display = "block";
+    $("my-sos-grid").innerHTML = '<p style="color:#FCA5A5;font-size:11px;grid-column:1/-1;margin:4px 0">Sign in (top-left button) to save one-tap shortcuts. Otherwise tap any service below.</p>';
+  } else {
+    loadMyButtons();
+  }
+  // If URL has ?auto=1 (NFC tag), open recovery sheet immediately AFTER onboarding.
   if (/[?&]auto=1\b/.test(location.search)) {
-    var s = SERVICES[0];
-    setTimeout(function(){ openDetail(s); }, 300);
+    ensureOnboarded(function(){
+      var s = SERVICES[0];
+      setTimeout(function(){ openDetail(s); }, 300);
+    });
   }
 })();
 </script>
