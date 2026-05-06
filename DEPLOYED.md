@@ -2,14 +2,14 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"0A0iFgXvShW9GSRtezItjw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"ppqerpwjSKSNDzNmGbGh5g"}`
 
 ## Build logs
 ```
 [ 2/11] WORKDIR /app
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[internal] load build context
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[internal] load build context
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
@@ -32,9 +32,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:ce392881fee1aff6870ffdad18ce1dfb2e7c7e1aa96b4304bc29f19e81780881
-containerimage.digest: sha256:fd80de28d80408aa980990e6236db0d10a32374642101e94dc5df7ed070f2701
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZmQ4MGRlMjhkODA0MDhhYTk4MDk5MGU2MjM2ZGIwZDEwYTMyMzc0NjQyMTAxZTk0ZGM1ZGY3ZWQwNzBmMjcwMSIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNlQxMTo0NTozNFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OWJmNGNjMTJmOWNjNmFjMGUyZjU0ZTc4OGFiNmY4ODViNGUxMzJmZGY0NjUxZGRhZGQwZTQ0YWVkMjQ0MzQxZiIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNlQxMTo1MjoxNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:6ff55801e5dd8806ed76808764461cf1442e08832a2c925764d3843e04a68f3e
+containerimage.digest: sha256:9bf4cc12f9cc6ac0e2f54e788ab6f885b4e132fdf4651ddadd0e44aed244341f
 image push
 image push
 
@@ -50,9 +50,9 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/777939e5-4d9b-435d-b5c9-1e86bdd452ac/vol_onr647rhdeir9di9
-Starting Container
 [start] launching whatsapp_bridge
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/333a95fd-6364-4120-a969-95cfb5daa206/vol_onr647rhdeir9di9
+Starting Container
 [wa-bridge] listening on :3001
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
 INFO:     Started server process [1]
@@ -60,9 +60,13 @@ INFO:     Waiting for application startup.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:35945 - "GET /api/health HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:56788 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.2:35317 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.3:38144 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.4:32336 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:32336 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:32336 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:32336 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 ```
