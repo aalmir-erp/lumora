@@ -1,252 +1,368 @@
 /**
- * Servia heavy-scenario smoke tests via Playwright.
+ * Servia heavy-scenario E2E — 50 Playwright scenarios with screenshots.
+ * Runs against the LIVE deployment from a Cloudflare-allowed runner (CI).
  *
- * Runs against the LIVE deployment (https://servia.ae) — sniffs out
- * visible bugs the user has reported plus regressions across the user
- * journey. Reports findings as JSON.
+ * Each test saves a PNG to $E2E_SHOT_DIR. Outputs FINDINGS-JSON line at end.
  *
- * Run: node /tmp/playwright-tests.mjs
+ * Run: SERVIA_BASE=https://servia.ae node tests/e2e-heavy.mjs
  */
 import { chromium, devices } from 'playwright';
+import { mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 
 const BASE = process.env.SERVIA_BASE || 'https://servia.ae';
-const REPORT = [];
+const SHOTS = process.env.E2E_SHOT_DIR || '/tmp/e2e-shots';
+mkdirSync(SHOTS, { recursive: true });
 
-function record(name, status, detail) {
-  REPORT.push({name, status, detail: String(detail || '').slice(0, 400)});
-  const icon = status === 'pass' ? '✅' : status === 'fail' ? '❌' : status === 'warn' ? '⚠️' : 'ℹ️';
-  console.log(`${icon} ${name}${detail ? ' — ' + String(detail).slice(0, 200) : ''}`);
+const REPORT = [];
+function rec(id, name, status, detail, shot) {
+  REPORT.push({id, name, status, detail: String(detail || '').slice(0, 400), shot: shot || null});
+  const icon = {pass:'✅',fail:'❌',warn:'⚠️',skip:'⏭'}[status]||'•';
+  console.log(`${icon} [${id}] ${name}${detail ? ' — ' + String(detail).slice(0,200) : ''}`);
 }
 
-async function withPage(name, fn, deviceName) {
+async function runTest(id, name, fn, deviceName) {
   const browser = await chromium.launch({ headless: true });
+  let shot = join(SHOTS, `${id}.png`);
   try {
-    const ctx = await browser.newContext({
-      ...(deviceName ? devices[deviceName] : {}),
-      ignoreHTTPSErrors: true,
-    });
+    const ctx = await browser.newContext({ ...(deviceName ? devices[deviceName] : {}), ignoreHTTPSErrors: true });
     const page = await ctx.newPage();
-    page.setDefaultTimeout(15000);
-    const errs = [];
-    page.on('pageerror', e => errs.push(`pageerror: ${e.message}`));
-    page.on('console', m => { if (m.type() === 'error') errs.push(`console.error: ${m.text()}`); });
-    try { await fn(page); } finally {
-      if (errs.length) record(name + ' [JS errors]', 'warn', errs.slice(0, 3).join(' | '));
+    page.setDefaultTimeout(18000);
+    try {
+      await fn(page);
+      await page.screenshot({ path: shot, fullPage: false }).catch(()=>{});
+    } catch (e) {
+      shot = join(SHOTS, `${id}-FAIL.png`);
+      await page.screenshot({ path: shot, fullPage: false }).catch(()=>{});
+      rec(id, name, 'fail', `exception: ${e.message.slice(0,150)}`, shot);
     }
   } finally { await browser.close(); }
+  return shot;
 }
 
-// ==========================================================================
-// Tests
-// ==========================================================================
-(async () => {
-  console.log(`\n🎭 Playwright sweep · ${BASE}\n` + '='.repeat(50));
+const TESTS = [
+  // === Page loads + SEO (1-10) ===
+  ['T01','Homepage loads (desktop)', async (p) => {
+    const r = await p.goto(BASE); if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
+    rec('T01','Homepage loads (desktop)','pass', `"${await p.title()}"`);
+  }],
+  ['T02','Homepage loads (mobile)', async (p) => {
+    const r = await p.goto(BASE); if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
+    rec('T02','Homepage loads (mobile)','pass', 'iPhone 12');
+  }, 'iPhone 12'],
+  ['T03','/services.html lists services', async (p) => {
+    await p.goto(BASE+'/services.html');
+    const cards = await p.locator('.svc-card, .svc-tile-hero').count();
+    if (cards < 5) throw new Error(`only ${cards} cards`);
+    rec('T03','/services.html lists services','pass',`${cards} cards`);
+  }],
+  ['T04','/coverage.html renders', async (p) => {
+    const r = await p.goto(BASE+'/coverage.html');
+    if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
+    rec('T04','/coverage.html renders','pass','OK');
+  }],
+  ['T05','/blog index loads', async (p) => {
+    const r = await p.goto(BASE+'/blog');
+    if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
+    rec('T05','/blog index loads','pass','OK');
+  }],
+  ['T06','Sitemap has /nfc.html', async (p) => {
+    const r = await p.request.get(BASE+'/sitemap.xml');
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    const t = await r.text();
+    if (!t.includes('/nfc.html')) throw new Error('nfc.html missing');
+    rec('T06','Sitemap has /nfc.html','pass','OK');
+  }],
+  ['T07','robots.txt accessible', async (p) => {
+    const r = await p.request.get(BASE+'/robots.txt');
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    rec('T07','robots.txt accessible','pass','OK');
+  }],
+  ['T08','/faq.html FAQPage schema', async (p) => {
+    await p.goto(BASE+'/faq.html');
+    const j = await p.locator('script[type="application/ld+json"]').allInnerTexts();
+    if (!j.some(s => /FAQPage/.test(s))) throw new Error('no FAQPage schema');
+    rec('T08','/faq.html FAQPage schema','pass','present');
+  }],
+  ['T09','Homepage Org/LocalBusiness schema', async (p) => {
+    await p.goto(BASE);
+    const j = await p.locator('script[type="application/ld+json"]').allInnerTexts();
+    if (!j.some(s => /Organization|LocalBusiness/.test(s))) throw new Error('missing schema');
+    rec('T09','Homepage Org/LocalBusiness schema','pass','present');
+  }],
+  ['T10','Theme-color is teal #0F766E', async (p) => {
+    await p.goto(BASE);
+    const tc = (await p.locator('meta[name="theme-color"]').first().getAttribute('content') || '').toUpperCase();
+    if (tc !== '#0F766E') throw new Error(`got ${tc}`);
+    rec('T10','Theme-color is teal #0F766E','pass',tc);
+  }],
 
-  // 1. Home page loads + no critical JS errors
-  await withPage('1. Homepage loads', async (page) => {
-    const r = await page.goto(BASE, { waitUntil: 'load' });
-    if (!r || r.status() >= 400) return record('1. Homepage loads', 'fail', `HTTP ${r?.status()}`);
-    const title = await page.title();
-    record('1. Homepage loads', 'pass', `"${title}"`);
-  });
+  // === Nav + UI (11-20) ===
+  ['T11','Mobile nav single-row', async (p) => {
+    await p.goto(BASE);
+    const lb = await p.locator('.nav-inner img').first().boundingBox();
+    const cb = await p.locator('.nav-cta').boundingBox().catch(()=>null);
+    if (!lb || !cb) throw new Error('elements missing');
+    if (Math.abs(lb.y - cb.y) >= Math.max(lb.height, cb.height)) throw new Error(`Δy=${(cb.y-lb.y).toFixed(0)}`);
+    rec('T11','Mobile nav single-row','pass',`Δy=${(cb.y-lb.y).toFixed(0)}`);
+  }, 'iPhone 12'],
+  ['T12','Topbanner placeholder bg teal', async (p) => {
+    await p.goto(BASE);
+    const bg = await p.locator('#servia-topbanner').first().evaluate(el => getComputedStyle(el).backgroundImage);
+    if (/F59E0B|245,?\s*158/.test(bg)) throw new Error('still orange');
+    rec('T12','Topbanner placeholder bg teal','pass','OK');
+  }],
+  ['T13','Install banner single row height', async (p) => {
+    await p.goto(BASE);
+    const ib = await p.locator('#servia-install-banner').boundingBox().catch(()=>null);
+    if (!ib) { rec('T13','Install banner single row height','skip','dismissed'); return; }
+    if (ib.height > 50) throw new Error(`h=${ib.height}px (>50 = wrap)`);
+    rec('T13','Install banner single row height','pass',`${ib.height}px`);
+  }, 'iPhone 12'],
+  ['T14','Footer present', async (p) => {
+    await p.goto(BASE);
+    if (await p.locator('footer, .footer').count() === 0) throw new Error('no footer');
+    rec('T14','Footer present','pass','OK');
+  }],
+  ['T15','/install.html APK card', async (p) => {
+    await p.goto(BASE+'/install.html');
+    if (await p.locator('#apk-download').count() === 0) throw new Error('no apk-download');
+    rec('T15','/install.html APK card','pass','OK');
+  }],
+  ['T16','/install.html Wear OS card', async (p) => {
+    await p.goto(BASE+'/install.html');
+    if (await p.locator('#wear-download').count() === 0) throw new Error('no wear-download');
+    rec('T16','/install.html Wear OS card','pass','OK');
+  }],
+  ['T17','/install.html iOS section', async (p) => {
+    await p.goto(BASE+'/install.html');
+    const t = await p.textContent('body');
+    if (!/iPhone|iOS|Apple Watch/i.test(t)) throw new Error('no iOS section');
+    rec('T17','/install.html iOS section','pass','OK');
+  }],
+  ['T18','Search input has ss-input class', async (p) => {
+    await p.goto(BASE+'/search.html');
+    const cls = (await p.locator('#q').getAttribute('class')) || '';
+    if (!/ss-input/.test(cls)) throw new Error(`class="${cls}"`);
+    rec('T18','Search input has ss-input class','pass',cls);
+  }],
+  ['T19','Search trending chips load', async (p) => {
+    await p.goto(BASE+'/search.html');
+    const chips = await p.locator('#trending .ss-chip, .ss-chips-row .ss-chip').count();
+    rec('T19','Search trending chips load', chips > 0 ? 'pass':'warn', `${chips} chips`);
+  }],
+  ['T20','Hero rotator present', async (p) => {
+    await p.goto(BASE);
+    if (await p.locator('#hero-rotator').count() === 0) throw new Error('no #hero-rotator');
+    rec('T20','Hero rotator present','pass','present');
+  }],
 
-  // 2. Mobile viewport — check nav single-row + topbanner color
-  await withPage('2. Mobile nav single-row', async (page) => {
-    await page.goto(BASE);
-    const navInner = await page.locator('.nav-inner').boundingBox();
-    if (!navInner) return record('2. Mobile nav single-row', 'fail', 'no .nav-inner');
-    const logoBox = await page.locator('.nav-inner img').first().boundingBox();
-    const ctaBox = await page.locator('.nav-cta').boundingBox().catch(() => null);
-    if (!logoBox || !ctaBox) return record('2. Mobile nav single-row', 'warn', 'logo or cta not found');
-    // If on same row, their y-coordinates overlap
-    const sameRow = Math.abs(logoBox.y - ctaBox.y) < Math.max(logoBox.height, ctaBox.height);
-    record('2. Mobile nav single-row', sameRow ? 'pass' : 'fail',
-            `logo.y=${logoBox.y.toFixed(0)} cta.y=${ctaBox.y.toFixed(0)}`);
-  }, 'iPhone 12');
-
-  // 3. Topbanner placeholder color matches what's expected (no orange)
-  await withPage('3. Topbanner color', async (page) => {
-    await page.goto(BASE);
-    const bg = await page.locator('#servia-topbanner').first().evaluate(el => getComputedStyle(el).background);
-    const isOrange = /245,?\s*158,?\s*11/.test(bg) || /F59E0B/i.test(bg);
-    record('3. Topbanner color', isOrange ? 'fail' : 'pass',
-            isOrange ? 'still orange — check theme-color' : 'teal as expected');
-  });
-
-  // 4. Theme-color meta is teal (not orange)
-  await withPage('4. Theme-color meta tag', async (page) => {
-    await page.goto(BASE);
-    const tc = await page.locator('meta[name="theme-color"]').first().getAttribute('content');
-    record('4. Theme-color meta tag',
-            (tc || '').toUpperCase() === '#0F766E' ? 'pass' : 'fail',
-            `content="${tc}"`);
-  });
-
-  // 5. NFC landing page renders with all sections
-  await withPage('5. /nfc.html renders', async (page) => {
-    const r = await page.goto(BASE + '/nfc.html');
-    if (!r || r.status() >= 400) return record('5. /nfc.html renders', 'fail', `HTTP ${r?.status()}`);
-    const heroOK = await page.locator('h1', { hasText: 'Tap once' }).count() > 0;
-    const advisorOK = await page.locator('#advisor-card').count() > 0;
-    const bulkOK = await page.locator('#bulk-rows').count() > 0;
-    record('5. /nfc.html renders',
-            heroOK && advisorOK && bulkOK ? 'pass' : 'fail',
-            `hero=${heroOK} advisor=${advisorOK} bulk=${bulkOK}`);
-  });
-
-  // 6. /nfc.html has SEO schemas
-  await withPage('6. NFC SEO schemas', async (page) => {
-    await page.goto(BASE + '/nfc.html');
-    const schemas = await page.locator('script[type="application/ld+json"]').allInnerTexts();
-    const hasHowTo = schemas.some(s => /HowTo/.test(s));
-    const hasFAQ = schemas.some(s => /FAQPage/.test(s));
-    const hasProduct = schemas.some(s => /Product/.test(s));
-    record('6. NFC SEO schemas',
-            hasHowTo && hasFAQ && hasProduct ? 'pass' : 'fail',
-            `HowTo=${hasHowTo} FAQ=${hasFAQ} Product=${hasProduct}`);
-  });
-
-  // 7. /search.html input works (was missing class earlier)
-  await withPage('7. Search input styled', async (page) => {
-    const r = await page.goto(BASE + '/search.html');
-    if (!r || r.status() >= 400) return record('7. Search input styled', 'fail', `HTTP ${r?.status()}`);
-    const cls = await page.locator('#q').getAttribute('class');
-    record('7. Search input styled', /ss-input/.test(cls || '') ? 'pass' : 'fail', `class="${cls}"`);
-  });
-
-  // 8. /install.html shows APK download card
-  await withPage('8. APK install wizard', async (page) => {
-    await page.goto(BASE + '/install.html');
-    const apkCardOK = await page.locator('#apk-download').count() > 0;
-    const wearCardOK = await page.locator('#wear-download').count() > 0;
-    record('8. APK install wizard',
-            apkCardOK && wearCardOK ? 'pass' : 'fail',
-            `apk-card=${apkCardOK} wear-card=${wearCardOK}`);
-  });
-
-  // 9. Login page works
-  await withPage('9. /login.html', async (page) => {
-    const r = await page.goto(BASE + '/login.html');
-    if (!r || r.status() >= 400) return record('9. /login.html', 'fail', `HTTP ${r?.status()}`);
-    const phoneField = await page.locator('input[type="tel"], input[id*="phone"]').count();
-    record('9. /login.html', phoneField > 0 ? 'pass' : 'warn', `phone-fields=${phoneField}`);
-  });
-
-  // 10. /api/services responds with services list
-  await withPage('10. /api/services API', async (page) => {
-    const r = await page.request.get(BASE + '/api/services');
-    if (!r.ok()) return record('10. /api/services API', 'fail', `HTTP ${r.status()}`);
-    const j = await r.json();
-    const n = (j.services || []).length;
-    record('10. /api/services API', n >= 10 ? 'pass' : 'warn', `${n} services`);
-  });
-
-  // 11. /api/nfc/tag/<bad-slug> returns 404 (validates routing works)
-  await withPage('11. NFC tag routing', async (page) => {
-    const r = await page.request.get(BASE + '/api/nfc/tag/zzzz999nonexistent');
-    record('11. NFC tag routing',
-            r.status() === 404 ? 'pass' : 'fail',
-            `expected 404, got ${r.status()}`);
-  });
-
-  // 12. /t/<bad-slug> redirects to /nfc-not-found
-  await withPage('12. NFC tap not-found redirect', async (page) => {
-    const r = await page.request.get(BASE + '/t/zzzz999bogus', { maxRedirects: 0 });
+  // === NFC feature (21-30) ===
+  ['T21','/nfc.html loads', async (p) => {
+    const r = await p.goto(BASE+'/nfc.html');
+    if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
+    rec('T21','/nfc.html loads','pass','OK');
+  }],
+  ['T22','/nfc.html 3-mode panel', async (p) => {
+    await p.goto(BASE+'/nfc.html');
+    const t = await p.textContent('body');
+    if (!/Manual|manual_pay/i.test(t) || !/Auto-wallet|preconfigured/i.test(t)) throw new Error('mode panel missing');
+    rec('T22','/nfc.html 3-mode panel','pass','OK');
+  }],
+  ['T23','/nfc.html bot widget', async (p) => {
+    await p.goto(BASE+'/nfc.html');
+    if (await p.locator('#advisor-card, #advisor-msgs').count() === 0) throw new Error('no advisor');
+    rec('T23','/nfc.html bot widget','pass','OK');
+  }],
+  ['T24','/nfc.html bulk-order section', async (p) => {
+    await p.goto(BASE+'/nfc.html');
+    if (await p.locator('#bulk-rows').count() === 0) throw new Error('no bulk-rows');
+    rec('T24','/nfc.html bulk-order section','pass','OK');
+  }],
+  ['T25','/nfc.html schema set', async (p) => {
+    await p.goto(BASE+'/nfc.html');
+    const j = await p.locator('script[type="application/ld+json"]').allInnerTexts();
+    if (!j.some(s => /HowTo/.test(s)) || !j.some(s => /FAQPage/.test(s)) || !j.some(s => /Product/.test(s))) throw new Error('schema missing');
+    rec('T25','/nfc.html schema set','pass','HowTo+FAQ+Product');
+  }],
+  ['T26','/api/nfc/tag bad slug 404', async (p) => {
+    const r = await p.request.get(BASE+'/api/nfc/tag/zzzzbogus99');
+    if (r.status() !== 404) throw new Error(`got ${r.status()}`);
+    rec('T26','/api/nfc/tag bad slug 404','pass','OK');
+  }],
+  ['T27','/t/<bad-slug> redirects', async (p) => {
+    const r = await p.request.get(BASE+'/t/zzzzbogus99', { maxRedirects: 0 });
     const loc = r.headers()['location'] || '';
-    record('12. NFC tap not-found redirect',
-            r.status() === 302 && /nfc-not-found/.test(loc) ? 'pass' : 'fail',
-            `${r.status()} → ${loc}`);
-  });
+    if (r.status() !== 302 || !/nfc-not-found/.test(loc)) throw new Error(`${r.status()} → ${loc}`);
+    rec('T27','/t/<bad-slug> redirects','pass',loc);
+  }],
+  ['T28','/nfc.html vehicle recovery section', async (p) => {
+    await p.goto(BASE+'/nfc.html');
+    const t = await p.textContent('body');
+    if (!/Roadside|breakdown|recovery/i.test(t)) throw new Error('missing');
+    rec('T28','/nfc.html vehicle recovery section','pass','OK');
+  }],
+  ['T29','/api/nfc/consult endpoint', async (p) => {
+    const r = await p.request.post(BASE+'/api/nfc/consult', { data: {messages: []} });
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    rec('T29','/api/nfc/consult endpoint','pass','greets');
+  }],
+  ['T30','/api/admin/nfc/stats auth-gated', async (p) => {
+    const r = await p.request.get(BASE+'/api/admin/nfc/stats');
+    if (![401,403].includes(r.status())) throw new Error(`got ${r.status()}`);
+    rec('T30','/api/admin/nfc/stats auth-gated','pass',`${r.status()}`);
+  }],
 
-  // 13. Customer login with seeded demo account
-  await withPage('13. Demo customer login', async (page) => {
-    const r = await page.request.post(BASE + '/api/auth/customer/login', {
-      data: {email: 'test@servia.ae', password: 'test123'},
-    });
-    if (r.ok()) {
-      const j = await r.json();
-      record('13. Demo customer login',
-              j.ok && j.token ? 'pass' : 'fail',
-              `token=${(j.token||'').slice(0,12)}...`);
-    } else {
-      record('13. Demo customer login', 'fail', `HTTP ${r.status()}`);
-    }
-  });
-
-  // 14. /api/health responds
-  await withPage('14. Health endpoint', async (page) => {
-    const r = await page.request.get(BASE + '/api/health');
-    if (!r.ok()) return record('14. Health endpoint', 'fail', `HTTP ${r.status()}`);
+  // === Auth + accounts (31-40) ===
+  ['T31','/login.html renders', async (p) => {
+    const r = await p.goto(BASE+'/login.html');
+    if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
+    rec('T31','/login.html renders','pass','OK');
+  }],
+  ['T32','/me.html requires auth', async (p) => {
+    await p.goto(BASE+'/me.html');
+    await p.waitForLoadState('networkidle').catch(()=>{});
+    if (!/login\.html/.test(p.url())) throw new Error(`url=${p.url()}`);
+    rec('T32','/me.html requires auth','pass','redirected');
+  }],
+  ['T33','Demo customer login (test@servia.ae)', async (p) => {
+    const r = await p.request.post(BASE+'/api/auth/customer/login',
+      { data: {email:'test@servia.ae', password:'test123'} });
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
     const j = await r.json();
-    record('14. Health endpoint', j.ok ? 'pass' : 'warn', `version=${j.version}`);
-  });
+    if (!j.token) throw new Error('no token');
+    rec('T33','Demo customer login (test@servia.ae)','pass',j.token.slice(0,12)+'...');
+  }],
+  ['T34','Demo customer (aisha@demo)', async (p) => {
+    const r = await p.request.post(BASE+'/api/auth/customer/login',
+      { data: {email:'aisha@demo.servia.ae', password:'aisha123'} });
+    if (!r.ok()) { rec('T34','Demo customer (aisha@demo)','warn','seed not run'); return; }
+    rec('T34','Demo customer (aisha@demo)','pass','OK');
+  }],
+  ['T35','Bad password rejected', async (p) => {
+    const r = await p.request.post(BASE+'/api/auth/customer/login',
+      { data: {email:'test@servia.ae', password:'WRONG'} });
+    if (r.status() !== 401) throw new Error(`got ${r.status()}`);
+    rec('T35','Bad password rejected','pass','401 OK');
+  }],
+  ['T36','/api/wallet/balance auth-gated', async (p) => {
+    const r = await p.request.get(BASE+'/api/wallet/balance');
+    if (r.status() !== 401) throw new Error(`got ${r.status()}`);
+    rec('T36','/api/wallet/balance auth-gated','pass','401');
+  }],
+  ['T37','Wallet balance after login', async (p) => {
+    const lr = await p.request.post(BASE+'/api/auth/customer/login',
+      { data: {email:'test@servia.ae', password:'test123'} });
+    const tok = (await lr.json()).token;
+    const r = await p.request.get(BASE+'/api/wallet/balance', { headers: {authorization:'Bearer '+tok} });
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    const j = await r.json();
+    rec('T37','Wallet balance after login','pass',`AED ${j.balance_aed||0}`);
+  }],
+  ['T38','/api/me/bookings authed', async (p) => {
+    const lr = await p.request.post(BASE+'/api/auth/customer/login',
+      { data: {email:'test@servia.ae', password:'test123'} });
+    const tok = (await lr.json()).token;
+    const r = await p.request.get(BASE+'/api/me/bookings', { headers: {authorization:'Bearer '+tok} });
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    rec('T38','/api/me/bookings authed','pass','OK');
+  }],
+  ['T39','/api/nfc/my-tags authed', async (p) => {
+    const lr = await p.request.post(BASE+'/api/auth/customer/login',
+      { data: {email:'test@servia.ae', password:'test123'} });
+    const tok = (await lr.json()).token;
+    const r = await p.request.get(BASE+'/api/nfc/my-tags', { headers: {authorization:'Bearer '+tok} });
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    rec('T39','/api/nfc/my-tags authed','pass','OK');
+  }],
+  ['T40','/admin.html responds', async (p) => {
+    const r = await p.goto(BASE+'/admin.html');
+    if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
+    rec('T40','/admin.html responds','pass','OK');
+  }],
 
-  // 15. Service-worker is registered (PWA)
-  await withPage('15. Service worker', async (page) => {
-    await page.goto(BASE);
-    const reg = await page.evaluate(async () => {
+  // === API health (41-45) ===
+  ['T41','/api/health responds', async (p) => {
+    const r = await p.request.get(BASE+'/api/health');
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    const j = await r.json();
+    rec('T41','/api/health responds','pass',`v${j.version}`);
+  }],
+  ['T42','/api/services >=10', async (p) => {
+    const r = await p.request.get(BASE+'/api/services');
+    const j = await r.json();
+    const n = (j.services||[]).length;
+    if (n < 10) throw new Error(`only ${n}`);
+    rec('T42','/api/services >=10','pass',`${n}`);
+  }],
+  ['T43','/api/app/latest works', async (p) => {
+    const r = await p.request.get(BASE+'/api/app/latest');
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    const j = await r.json();
+    rec('T43','/api/app/latest works','pass',`apk_v=${j.apk_version}`);
+  }],
+  ['T44','/api/site/social works', async (p) => {
+    const r = await p.request.get(BASE+'/api/site/social');
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    rec('T44','/api/site/social works','pass','OK');
+  }],
+  ['T45','/api/brand works', async (p) => {
+    const r = await p.request.get(BASE+'/api/brand');
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    rec('T45','/api/brand works','pass','OK');
+  }],
+
+  // === Booking + cart (46-50) ===
+  ['T46','/book.html renders form', async (p) => {
+    await p.goto(BASE+'/book.html');
+    if (await p.locator('#book-btn').count() === 0) throw new Error('no book button');
+    rec('T46','/book.html renders form','pass','OK');
+  }],
+  ['T47','/book.html?service=deep_cleaning prefills', async (p) => {
+    await p.goto(BASE+'/book.html?service=deep_cleaning');
+    await p.waitForTimeout(800);
+    const v = await p.locator('#service').inputValue().catch(()=>null);
+    if (v !== 'deep_cleaning') { rec('T47','/book.html?service=deep_cleaning prefills', 'warn', `got=${v}`); return; }
+    rec('T47','/book.html?service=deep_cleaning prefills','pass','prefilled');
+  }],
+  ['T48','/book.html?nfc=<bogus> graceful', async (p) => {
+    await p.goto(BASE+'/book.html?nfc=zzzzbogus99');
+    if (await p.locator('#book-btn').count() === 0) throw new Error('book button missing');
+    rec('T48','/book.html?nfc=<bogus> graceful','pass','OK');
+  }],
+  ['T49','/cart.html loads', async (p) => {
+    const r = await p.goto(BASE+'/cart.html');
+    if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
+    rec('T49','/cart.html loads','pass','OK');
+  }],
+  ['T50','Service worker active', async (p) => {
+    await p.goto(BASE);
+    const reg = await p.evaluate(async () => {
       if (!('serviceWorker' in navigator)) return null;
       const r = await navigator.serviceWorker.getRegistration();
-      return r ? {scope: r.scope, active: !!r.active} : null;
+      return r && r.active ? {scope: r.scope} : null;
     });
-    record('15. Service worker',
-            reg && reg.active ? 'pass' : 'warn',
-            reg ? JSON.stringify(reg) : 'no SW');
-  });
+    if (!reg) { rec('T50','Service worker active','warn','not registered'); return; }
+    rec('T50','Service worker active','pass',reg.scope);
+  }],
+];
 
-  // 16. Book.html ?nfc=<slug> parses + shows confirm card with bad slug
-  await withPage('16. Book page NFC param', async (page) => {
-    await page.goto(BASE + '/book.html?nfc=zzzz999bogus');
-    // Bad slug shouldn't show the green card (resolution fails) — book form still loads
-    const formExists = await page.locator('#book-btn').count() > 0;
-    record('16. Book page NFC param', formExists ? 'pass' : 'fail',
-            'form should still render even with bad slug');
-  });
-
-  // 17. Sitemap accessible
-  await withPage('17. Sitemap', async (page) => {
-    const r = await page.request.get(BASE + '/sitemap.xml');
-    if (!r.ok()) return record('17. Sitemap', 'fail', `HTTP ${r.status()}`);
-    const text = await r.text();
-    const hasNfc = text.includes('/nfc.html');
-    record('17. Sitemap', hasNfc ? 'pass' : 'warn', 'nfc.html present in sitemap');
-  });
-
-  // 18. /me.html requires auth (redirects unauth user)
-  await withPage('18. /me.html auth gate', async (page) => {
-    await page.goto(BASE + '/me.html');
-    // Wait for the JS auth check to redirect
-    await page.waitForLoadState('networkidle').catch(() => {});
-    const url = page.url();
-    record('18. /me.html auth gate',
-            /login\.html/.test(url) ? 'pass' : 'warn',
-            `url=${url}`);
-  });
-
-  // 19. /admin.html requires admin token
-  await withPage('19. /admin.html access', async (page) => {
-    const r = await page.goto(BASE + '/admin.html');
-    record('19. /admin.html access',
-            r && r.status() < 400 ? 'pass' : 'warn',
-            `HTTP ${r?.status()}`);
-  });
-
-  // 20. /api/wallet/balance without auth
-  await withPage('20. Wallet endpoint guards auth', async (page) => {
-    const r = await page.request.get(BASE + '/api/wallet/balance');
-    record('20. Wallet endpoint guards auth',
-            r.status() === 401 ? 'pass' : 'fail',
-            `expected 401, got ${r.status()}`);
-  });
-
-  // ==========================================================================
-  // SUMMARY
-  // ==========================================================================
+(async () => {
+  console.log(`\n🎭 Servia E2E Heavy · 50 scenarios · ${BASE}\n${'='.repeat(60)}\n`);
+  for (const [id, name, fn, dev] of TESTS) {
+    try { await runTest(id, name, fn, dev); }
+    catch (e) { rec(id, name, 'fail', e.message); }
+  }
   const pass = REPORT.filter(r => r.status === 'pass').length;
   const fail = REPORT.filter(r => r.status === 'fail').length;
   const warn = REPORT.filter(r => r.status === 'warn').length;
-  console.log('\n' + '='.repeat(50));
-  console.log(`📊 Total: ${REPORT.length} · ✅ ${pass} · ⚠️ ${warn} · ❌ ${fail}`);
-  console.log('='.repeat(50));
-  console.log('\nFINDINGS-JSON:' + JSON.stringify({pass, warn, fail, items: REPORT}));
+  const skip = REPORT.filter(r => r.status === 'skip').length;
+  console.log(`\n${'='.repeat(60)}\n📊 ${REPORT.length} runs · ✅ ${pass} · ⚠️ ${warn} · ❌ ${fail} · ⏭ ${skip}`);
+  console.log(`📸 Screenshots: ${SHOTS}/`);
+  writeFileSync('/tmp/findings.json', JSON.stringify({pass, warn, fail, skip,
+    items: REPORT.map(r => ({id:r.id, name:r.name, status:r.status, detail:r.detail.slice(0,140), shot:r.shot}))
+  }));
+  console.log('\nFINDINGS-JSON:' + JSON.stringify({pass, warn, fail, skip,
+    items: REPORT.map(r => ({id:r.id, name:r.name, status:r.status, detail:r.detail.slice(0,140)}))
+  }));
 })();

@@ -96,6 +96,8 @@
     <a href="#ailisting" data-tab="ailisting">🧠 AI Discoverability</a>
     <a href="#growth"    data-tab="growth">🌍 Growth Hub</a>
     <a href="#nfc"       data-tab="nfc">📲 NFC tags</a>
+    <a href="#demo"      data-tab="demo">🧪 Demo accounts</a>
+    <a href="#e2e"       data-tab="e2e">🎭 E2E tests</a>
     <a href="#socimg"    data-tab="socimg">🖼 Social Images</a>
     <a href="#sitemap"   data-tab="sitemap">🗺 Sitemap</a>
     <a href="#twa"       data-tab="twa">📱 Mobile App / TWA</a>
@@ -1959,6 +1961,139 @@ Tone: warm, direct, locally aware, no AI cliches (no em-dashes, no "delve", no "
       </script>
     </div>
 
+    <!-- ====== DEMO ACCOUNTS (v1.22.96) ====== -->
+    <div id="t-demo" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0">🧪 Demo accounts</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13.5px">20 customers + 20 vendors with documented test scenarios. Plaintext passwords visible to admin only. Click <b>Login as</b> to instantly impersonate any of them.</p>
+        </div>
+        <button class="btn btn-primary" type="button" onclick="reseedDemo()">↻ Re-run seed</button>
+      </div>
+      <p id="demo-seeded" style="font-size:12px;color:var(--muted)"></p>
+
+      <h3 style="font-size:14px;margin:18px 0 8px;color:#0F766E">👤 Customers</h3>
+      <div id="demo-cust-table" style="overflow-x:auto"></div>
+
+      <h3 style="font-size:14px;margin:24px 0 8px;color:#0F766E">🤝 Vendors</h3>
+      <div id="demo-vend-table" style="overflow-x:auto"></div>
+
+      <script>
+        async function loadDemoAccounts() {
+          try {
+            const r = await adm("/api/admin/demo-accounts");
+            const seeded = r.seeded_at ? new Date(r.seeded_at).toLocaleString() : "—";
+            document.getElementById("demo-seeded").textContent = "Last seeded: " + seeded;
+
+            const renderTbl = (rows, kind) => {
+              if (!rows.length) return '<div style="padding:18px;color:var(--muted)">No demo '+kind+' yet. Click Re-run seed.</div>';
+              return `<table class="list" style="font-size:12.5px"><thead><tr>
+                <th>#</th><th>Name</th><th>Email/Phone</th><th>Password</th><th>Scenario</th><th></th>
+              </tr></thead><tbody>${rows.map(u => `
+                <tr ${u.is_blocked?'style="opacity:.55"':''}>
+                  <td>#${u.id}</td>
+                  <td>${escapeHtml(u.name||'')}</td>
+                  <td><code style="font-size:11.5px">${escapeHtml(u.email||u.phone||'')}</code><br><small style="color:var(--muted)">${escapeHtml(u.phone||'')}</small></td>
+                  <td><code style="font-size:11.5px;background:#FEF3C7;color:#7C2D12;padding:2px 8px;border-radius:6px">${escapeHtml(u.password||'')}</code>
+                    <button class="btn btn-ghost" style="font-size:10px;padding:1px 6px" onclick="navigator.clipboard.writeText('${u.password||''}');this.textContent='✓'">📋</button></td>
+                  <td><small>${escapeHtml(u.scenario||'')}</small></td>
+                  <td style="white-space:nowrap"><button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="impersonate('${kind==='customers'?'customer':'vendor'}', ${u.id})">👁 Login as</button></td>
+                </tr>`).join("")}</tbody></table>`;
+            };
+            document.getElementById("demo-cust-table").innerHTML = renderTbl(r.customers||[], "customers");
+            document.getElementById("demo-vend-table").innerHTML = renderTbl(r.vendors||[], "vendors");
+          } catch (e) {
+            document.getElementById("demo-cust-table").innerHTML =
+              `<div style="color:#B91C1C">Failed: ${escapeHtml(e.message||e)}</div>`;
+          }
+        }
+        async function reseedDemo() {
+          if (!confirm("Re-run the demo-data seed? Idempotent — won't duplicate existing rows.")) return;
+          try { await adm("/api/admin/seed-demo?force=1", {method:"POST"}); loadDemoAccounts(); }
+          catch (e) { alert("Failed: " + (e.message||e)); }
+        }
+      </script>
+    </div>
+
+    <!-- ====== E2E TESTS (v1.22.96) ====== -->
+    <div id="t-e2e" class="tab" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <h2 style="margin:0">🎭 Playwright E2E tests · 50 scenarios</h2>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:13.5px">Heavy E2E suite running on GitHub Actions (browsers can't reach servia.ae from Railway/sandbox due to Cloudflare). Trigger a fresh run; results commit back to <code>TEST_RESULTS_HEAVY.md</code>.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" type="button" onclick="triggerE2E()">▶ Run all 50</button>
+          <button class="btn btn-ghost" type="button" onclick="loadE2E()">↻ Refresh results</button>
+        </div>
+      </div>
+      <p id="e2e-status" style="font-size:13px;color:var(--muted);min-height:18px"></p>
+
+      <div style="display:grid;gap:18px;grid-template-columns:1fr 1fr">
+        <div>
+          <h3 style="font-size:14px;margin:8px 0;color:#0F766E">📋 Scenarios</h3>
+          <div id="e2e-scenarios" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;max-height:520px;overflow-y:auto"></div>
+        </div>
+        <div>
+          <h3 style="font-size:14px;margin:8px 0;color:#0F766E">📊 Last results</h3>
+          <div id="e2e-results" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;max-height:520px;overflow-y:auto;font-size:12.5px;line-height:1.6"></div>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;margin:18px 0 6px;color:#0F766E">🛠 Setup once</h3>
+      <p style="color:var(--muted);font-size:12.5px;margin:0 0 8px">Add a GitHub Personal Access Token in admin cfg so this panel can dispatch the workflow. <a href="https://github.com/settings/tokens?type=beta" target="_blank">Create one</a> with <code>actions: write</code> on <code>aalmir-erp/lumora</code>.</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="e2e-pat" placeholder="github_pat_..." style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;font-family:ui-monospace,monospace">
+        <button class="btn btn-primary" type="button" onclick="saveE2EToken()">Save token</button>
+      </div>
+
+      <script>
+        async function loadE2E() {
+          try {
+            const s = await adm("/api/admin/e2e/scenarios");
+            document.getElementById("e2e-scenarios").innerHTML = (s.scenarios||[]).map(t =>
+              `<div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;font-size:12.5px">
+                <code style="color:#0F766E;font-weight:700">${t.id}</code>
+                <span style="flex:1">${escapeHtml(t.name)}</span>
+                <span style="background:#F1F5F9;color:#475569;padding:1px 8px;border-radius:99px;font-size:10.5px;font-weight:700">${t.cat}</span>
+              </div>`).join("");
+            const lr = await adm("/api/admin/e2e/last-results").catch(()=>({}));
+            const out = document.getElementById("e2e-results");
+            if (lr.markdown) {
+              out.innerHTML = '<pre style="white-space:pre-wrap;margin:0;font-family:inherit;font-size:12px">' + escapeHtml(lr.markdown) + '</pre>';
+            } else if (lr.json) {
+              const j = lr.json;
+              out.innerHTML = `<div style="margin-bottom:10px">✅ ${j.pass} · ⚠️ ${j.warn} · ❌ ${j.fail}</div>` +
+                (j.items||[]).map(i => `<div style="padding:4px 0;border-bottom:1px solid #F1F5F9">${{pass:'✅',warn:'⚠️',fail:'❌',skip:'⏭'}[i.status]||'•'} <code>${i.id}</code> ${escapeHtml(i.name)} ${i.detail?'<small style=\"color:#94A3B8\"> — '+escapeHtml(i.detail)+'</small>':''}</div>`).join("");
+            } else {
+              out.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px">No results yet — click <b>Run all 50</b> above.</div>';
+            }
+          } catch (e) {
+            document.getElementById("e2e-results").innerHTML = `<div style="color:#B91C1C">${escapeHtml(e.message||e)}</div>`;
+          }
+        }
+        async function triggerE2E() {
+          const s = document.getElementById("e2e-status");
+          s.textContent = "Dispatching workflow…"; s.style.color = "var(--muted)";
+          try {
+            const r = await adm("/api/admin/e2e/trigger", {method:"POST"});
+            s.innerHTML = `🎬 Workflow dispatched. <a href="${r.view_url}" target="_blank" style="color:#0F766E;font-weight:700">Watch live on GitHub Actions →</a> Results auto-commit back to repo + appear here in ~3-5 min.`;
+            s.style.color = "#0F766E";
+          } catch (e) {
+            s.textContent = "Failed: " + (e.message || e); s.style.color = "#B91C1C";
+          }
+        }
+        async function saveE2EToken() {
+          const t = document.getElementById("e2e-pat").value.trim();
+          if (!t) return;
+          try {
+            await adm("/api/admin/cfg", {method:"POST", body: JSON.stringify({key:"github_pat", value: t})});
+            alert("✓ Saved");
+          } catch (e) { alert("Failed: " + (e.message||e)); }
+        }
+      </script>
+    </div>
+
     <!-- ====== SOCIAL AUTO-POST ====== -->
     <div id="t-autopost" class="tab" style="display:none">
       <h2>🌐 Social Auto-post</h2>
@@ -2108,6 +2243,8 @@ function show(tab) {
   if (tab==="socimg")    loadSocImages();
   if (tab==="sitemap")   loadSitemapList();
   if (tab==="nfc")       loadNfcAdmin();
+  if (tab==="demo")      loadDemoAccounts();
+  if (tab==="e2e")       loadE2E();
   if (tab==="twa")       { loadTwaCreds(); loadTwaInstalls(); }
 }
 async function adm(path, opts={}) {

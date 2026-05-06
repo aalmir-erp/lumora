@@ -3062,15 +3062,169 @@ def _auto_seed_market_vendors_if_empty():
 
 # ---------- v1.22.88: seed test customer + vendor accounts on first deploy ----------
 @app.on_event("startup")
-def _seed_demo_data_if_enabled():
-    """v1.22.94 — comprehensive demo data seed (10 customers + 7 vendors +
-    bookings/invoices/nfc/wallet) when ADMIN_SEED_DEMO_DATA=1. Idempotent:
-    INSERT OR IGNORE on phone-keyed rows."""
+def _seed_demo_data_first_run():
+    """v1.22.96 — auto-seed once on the FIRST run (cfg.demo_seeded_at empty)
+    AND when there are < 5 real customer rows, so production never gets
+    blasted. Re-runnable via POST /api/admin/seed-demo with force=1.
+    No env-var dependency — flag lives in db.cfg."""
     try:
+        with db.connect() as c:
+            n = c.execute("SELECT COUNT(*) AS n FROM customers").fetchone()["n"] or 0
+        if n >= 5:
+            # Real users present — don't auto-seed
+            return
         from . import seed_demo as _sd
-        _sd.seed_demo_data()
+        _sd.seed_demo_data(force=False)
     except Exception as e:  # noqa: BLE001
         print(f"[seed-demo] startup hook failed: {e}", flush=True)
+
+
+# ---------- Admin: list demo accounts + trigger re-seed ----------
+@app.post("/api/admin/seed-demo", dependencies=[Depends(require_admin)])
+def admin_seed_demo(force: int = 0):
+    """Force re-run of the demo seed. Idempotent — INSERT OR IGNORE."""
+    try:
+        from . import seed_demo as _sd
+        return _sd.seed_demo_data(force=bool(force))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"seed failed: {type(e).__name__}: {e}")
+
+
+@app.post("/api/admin/e2e/trigger", dependencies=[Depends(require_admin)])
+async def admin_trigger_e2e():
+    """Trigger the GitHub Actions e2e-heavy workflow via workflow_dispatch.
+    Requires GH_PAT cfg key (set once in admin → Brand & Contact)."""
+    try:
+        import httpx
+        token = (db.cfg_get("github_pat", "") or os.getenv("GITHUB_PAT", "") or "").strip()
+        repo = db.cfg_get("github_repo", "") or "aalmir-erp/lumora"
+        if not token:
+            raise HTTPException(400, "Set 'github_pat' in admin cfg first")
+        async with httpx.AsyncClient(timeout=20) as c:
+            r = await c.post(
+                f"https://api.github.com/repos/{repo}/actions/workflows/e2e-heavy.yml/dispatches",
+                headers={"Authorization": f"token {token}",
+                          "Accept": "application/vnd.github+json"},
+                json={"ref": "main"},
+            )
+        if r.status_code not in (200, 204):
+            raise HTTPException(502, f"GitHub said {r.status_code}: {r.text[:200]}")
+        return {"ok": True, "queued": True,
+                "view_url": f"https://github.com/{repo}/actions/workflows/e2e-heavy.yml"}
+    except HTTPException: raise
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"trigger failed: {type(e).__name__}: {e}")
+
+
+@app.get("/api/admin/e2e/last-results", dependencies=[Depends(require_admin)])
+async def admin_e2e_last_results():
+    """Read the latest TEST_RESULTS_HEAVY.md committed by the workflow.
+    Falls back to /tmp/findings.json if available."""
+    p = Path(settings.WEB_DIR.parent / "TEST_RESULTS_HEAVY.md")
+    if p.exists():
+        return {"ok": True, "markdown": p.read_text()[:60000]}
+    fp = Path("/tmp/findings.json")
+    if fp.exists():
+        try:
+            return {"ok": True, "json": json.loads(fp.read_text())}
+        except Exception: pass
+    return {"ok": False, "note": "no e2e results yet — trigger a run first"}
+
+
+@app.get("/api/admin/e2e/scenarios", dependencies=[Depends(require_admin)])
+def admin_e2e_scenarios():
+    """Static list of all 50 scenarios that the heavy suite runs.
+    Sourced from tests/e2e-heavy.mjs (manually curated)."""
+    return {"count": 50, "scenarios": [
+        {"id":"T01","name":"Homepage loads (desktop)","cat":"page-load"},
+        {"id":"T02","name":"Homepage loads (mobile iPhone 12)","cat":"page-load"},
+        {"id":"T03","name":"/services.html lists services","cat":"page-load"},
+        {"id":"T04","name":"/coverage.html renders areas","cat":"page-load"},
+        {"id":"T05","name":"/blog index loads","cat":"page-load"},
+        {"id":"T06","name":"Sitemap valid + has /nfc.html","cat":"seo"},
+        {"id":"T07","name":"robots.txt accessible","cat":"seo"},
+        {"id":"T08","name":"/faq.html FAQPage schema","cat":"seo"},
+        {"id":"T09","name":"Homepage Org/LocalBusiness schema","cat":"seo"},
+        {"id":"T10","name":"Theme-color is teal #0F766E","cat":"ui"},
+        {"id":"T11","name":"Mobile nav single-row","cat":"ui"},
+        {"id":"T12","name":"Topbanner placeholder bg teal (no orange)","cat":"ui"},
+        {"id":"T13","name":"Install banner single row height (≤50px)","cat":"ui"},
+        {"id":"T14","name":"Footer present on home","cat":"ui"},
+        {"id":"T15","name":"/install.html APK card","cat":"ui"},
+        {"id":"T16","name":"/install.html Wear OS card","cat":"ui"},
+        {"id":"T17","name":"/install.html iOS section","cat":"ui"},
+        {"id":"T18","name":"Search input has ss-input class","cat":"ui"},
+        {"id":"T19","name":"Search trending chips load","cat":"ui"},
+        {"id":"T20","name":"Hero rotator present","cat":"ui"},
+        {"id":"T21","name":"/nfc.html loads","cat":"nfc"},
+        {"id":"T22","name":"/nfc.html has 3-mode panel","cat":"nfc"},
+        {"id":"T23","name":"/nfc.html has bot widget","cat":"nfc"},
+        {"id":"T24","name":"/nfc.html bulk-order section","cat":"nfc"},
+        {"id":"T25","name":"/nfc.html HowTo+FAQ+Product schemas","cat":"nfc"},
+        {"id":"T26","name":"/api/nfc/tag bad slug 404","cat":"nfc-api"},
+        {"id":"T27","name":"/t/<bad-slug> 302 redirect","cat":"nfc-api"},
+        {"id":"T28","name":"/nfc.html vehicle recovery section","cat":"nfc"},
+        {"id":"T29","name":"/api/nfc/consult endpoint works","cat":"nfc-api"},
+        {"id":"T30","name":"/api/admin/nfc/stats requires auth","cat":"nfc-api"},
+        {"id":"T31","name":"/login.html renders","cat":"auth"},
+        {"id":"T32","name":"/me.html requires auth (redirect)","cat":"auth"},
+        {"id":"T33","name":"Demo customer login (test@servia.ae)","cat":"auth"},
+        {"id":"T34","name":"Demo customer (aisha@demo.servia.ae)","cat":"auth"},
+        {"id":"T35","name":"Bad password rejected","cat":"auth"},
+        {"id":"T36","name":"/api/wallet/balance auth-gated","cat":"auth"},
+        {"id":"T37","name":"Wallet balance after login","cat":"auth"},
+        {"id":"T38","name":"/api/me/bookings authed","cat":"auth"},
+        {"id":"T39","name":"/api/nfc/my-tags authed","cat":"auth"},
+        {"id":"T40","name":"/admin.html responds","cat":"auth"},
+        {"id":"T41","name":"/api/health responds","cat":"api"},
+        {"id":"T42","name":"/api/services >= 10 services","cat":"api"},
+        {"id":"T43","name":"/api/app/latest works","cat":"api"},
+        {"id":"T44","name":"/api/site/social works","cat":"api"},
+        {"id":"T45","name":"/api/brand works","cat":"api"},
+        {"id":"T46","name":"/book.html renders form","cat":"booking"},
+        {"id":"T47","name":"/book.html?service= prefills","cat":"booking"},
+        {"id":"T48","name":"/book.html?nfc=<bogus> graceful","cat":"booking"},
+        {"id":"T49","name":"/cart.html loads","cat":"booking"},
+        {"id":"T50","name":"Service worker active","cat":"pwa"},
+    ]}
+
+
+@app.get("/api/admin/demo-accounts", dependencies=[Depends(require_admin)])
+def admin_demo_accounts():
+    """Return seeded demo accounts with PLAINTEXT passwords (admin only,
+    require_admin gate). Used by the admin Demo-data tab so admin can copy
+    creds + log in as any of them. Real customers (no _demo_password) are
+    excluded."""
+    try:
+        with db.connect() as c:
+            try: c.execute("ALTER TABLE customers ADD COLUMN _demo_password TEXT")
+            except Exception: pass
+            try: c.execute("ALTER TABLE customers ADD COLUMN scenario_label TEXT")
+            except Exception: pass
+            try: c.execute("ALTER TABLE vendors ADD COLUMN _demo_password TEXT")
+            except Exception: pass
+            try: c.execute("ALTER TABLE vendors ADD COLUMN scenario_label TEXT")
+            except Exception: pass
+            customers = c.execute(
+                "SELECT id, name, phone, email, language, _demo_password AS password, "
+                "scenario_label AS scenario, COALESCE(is_blocked,0) AS is_blocked, "
+                "created_at FROM customers WHERE _demo_password IS NOT NULL "
+                "ORDER BY id ASC"
+            ).fetchall()
+            vendors = c.execute(
+                "SELECT id, name, email, phone, _demo_password AS password, "
+                "scenario_label AS scenario, rating, completed_jobs, "
+                "COALESCE(is_blocked,0) AS is_blocked, created_at "
+                "FROM vendors WHERE _demo_password IS NOT NULL ORDER BY id ASC"
+            ).fetchall()
+        return {
+            "ok": True,
+            "customers": [dict(r) for r in customers],
+            "vendors": [dict(r) for r in vendors],
+            "seeded_at": db.cfg_get("demo_seeded_at", ""),
+        }
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"list failed: {type(e).__name__}: {e}")
 
 
 @app.on_event("startup")
