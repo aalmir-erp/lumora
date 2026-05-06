@@ -44,16 +44,23 @@
   // CSS for the slim bar + modal
   const css = document.createElement("style");
   css.textContent = `
+    /* v1.24.6 — strict single-line bar with ellipsis truncation. Was wrapping
+       to 3 lines on /account.html which the user reported as visual clutter. */
     #servia-loc-bar {
-      position:relative; width:100%; min-height:36px; box-sizing:border-box;
+      position:relative; width:100%; height:36px; min-height:36px; max-height:36px;
+      box-sizing:border-box;
       background:linear-gradient(90deg,#0F766E,#14B8A6);
       color:#fff; font-size:13px; font-weight:600; line-height:1.3;
-      padding:7px 14px; display:flex; gap:10px; align-items:center;
-      flex-wrap:wrap; box-shadow:0 2px 6px rgba(15,23,42,.08);
+      padding:0 12px; display:flex; gap:8px; align-items:center;
+      flex-wrap:nowrap !important; box-shadow:0 2px 6px rgba(15,23,42,.08);
+      overflow:hidden;
     }
-    #servia-loc-bar.compact { padding:6px 14px; min-height:32px; font-size:12.5px; }
-    #servia-loc-bar .pin { font-size:14px; }
-    #servia-loc-bar .label { flex:1; min-width:140px; }
+    #servia-loc-bar.compact { padding:0 12px; height:32px; min-height:32px; max-height:32px; font-size:12.5px; }
+    #servia-loc-bar .pin { font-size:14px; flex-shrink:0; }
+    #servia-loc-bar .label {
+      flex:1 1 auto; min-width:0;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
     #servia-loc-bar .label b { color:#FCD34D; font-weight:800; }
     #servia-loc-bar button {
       background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.28);
@@ -219,9 +226,17 @@
     const edit = document.getElementById("servia-loc-edit");
     const pin = document.getElementById("servia-loc-pin");
     if (saved && saved.area) {
-      const where = [saved.area, saved.emirate].filter(Boolean).join(", ");
+      // v1.24.6 — single-line concise label that ellipsises gracefully.
+      // Show building/flat if we have it (most useful), else just area+emirate.
+      var where;
+      if (saved.full_address && saved.building) {
+        where = saved.building + (saved.flat ? " · " + saved.flat : "")
+              + " · " + saved.area;
+      } else {
+        where = [saved.area, saved.emirate].filter(Boolean).join(", ");
+      }
       const tag = saved.tag ? `<span style="background:rgba(252,211,77,.25);color:#FCD34D;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:800;margin-inline-end:4px">${escapeHtml(saved.tag)}</span>` : "";
-      lbl.innerHTML = `${tag}Servicing <b>${escapeHtml(where)}</b>${saved.full_address ? "" : " · add your full address for one-tap booking"}`;
+      lbl.innerHTML = `${tag}📍 <b>${escapeHtml(where)}</b>${saved.full_address ? "" : " · tap edit"}`;
       grant.style.display = "none";
       edit.style.display = "";
       if (pin) pin.style.display = "";    // v1.23.3 — show map-pin button when we have an area
@@ -484,6 +499,7 @@
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: '© OpenStreetMap',
+      subdomains: "abc",
     }).addTo(_map);
     _marker = L.marker(c, { draggable: true }).addTo(_map);
     _marker.on("dragend", async () => {
@@ -494,7 +510,11 @@
       _marker.setLatLng(e.latlng);
       reverseGeocodePin(e.latlng.lat, e.latlng.lng);
     });
-    setTimeout(() => _map.invalidateSize(), 120);
+    // v1.24.6 — triple invalidateSize so the map renders reliably even
+    // on Samsung Internet / TWA where layout settles late.
+    setTimeout(() => _map && _map.invalidateSize(true), 120);
+    setTimeout(() => _map && _map.invalidateSize(true), 350);
+    setTimeout(() => _map && _map.invalidateSize(true), 800);
   }
 
   async function reverseGeocodePin(lat, lng) {

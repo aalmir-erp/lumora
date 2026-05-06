@@ -35,24 +35,26 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Multi-SOS launcher activity (v1.24.4). One activity, many tiles.
+ * Multi-SOS launcher (v1.24.6).
  *
- * Each SosXTileService passes a service_id via intent extra ("vehicle_recovery",
- * "furniture_move", "electrician", "plumber", "ac_cleaning", "handyman"). We:
- *   1. Gate behind the OnboardingActivity if the user hasn't given us
- *      phone+email yet — so every booking gets linked to a real customer.
- *   2. Capture the watch GPS via FusedLocationProviderClient.
- *   3. Show the user an optional NOTES voice/type field (e.g. "front-right
- *      tyre flat" / "kitchen light fittings cracked") + an optional
- *      "📷 Add photo from phone" deep link.
- *   4. POST to /api/recovery/dispatch with service_id, GPS, notes, customer
- *      auth token. Booking is created on the server with the customer's
- *      phone, so it shows up in /account.html bookings tab automatically.
- *   5. Render vendor card with one-tap CALL.
+ * Two-step UX matching the website's /sos.html flow:
+ *   STEP 1 — pick the specific issue (e.g. for vehicle: battery /
+ *            flat tyre / fuel out / locked out / tow / crash). The
+ *            list of options depends on the service_id passed by the
+ *            tile (Vehicle, Furniture, Electrician, Plumber, AC,
+ *            Handyman).
+ *   STEP 2 — capture GPS, optionally type/speak details, hit
+ *            DISPATCH. Vendor card with one-tap CALL is shown after.
+ *
+ * If the user came in with no service_id (legacy SOS Recovery tile),
+ * we default to vehicle_recovery + still show the issue picker so the
+ * dispatch can be more specific to the vendor.
  */
 public class SosLauncherActivity extends Activity {
 
@@ -60,7 +62,8 @@ public class SosLauncherActivity extends Activity {
     private static final int REQ_VOICE_NOTES = 4712;
 
     private LinearLayout root;
-    private TextView statusView, categoryView, locView;
+    private ScrollView scroll;
+    private TextView statusView, locView;
     private EditText notesField;
     private ProgressBar spinner;
     private FusedLocationProviderClient fused;
@@ -70,8 +73,63 @@ public class SosLauncherActivity extends Activity {
 
     private String serviceId = "vehicle_recovery";
     private String categoryLabel = "🆘 SERVIA SOS";
+    private String chosenIssue = null;          // set when user picks a sub-option in step 1
+    private String chosenIssueLabel = null;
     private long dispatchId = 0;
     private String vendorPhone;
+
+    // ---- Sub-options per service_id (mirrors web /sos.html SERVICES). ----
+    private static final Map<String, String[][]> SUBS = new HashMap<>();
+    static {
+        SUBS.put("vehicle_recovery", new String[][]{
+            {"breakdown",  "❓ Breakdown"},
+            {"battery",    "🔋 Battery dead"},
+            {"flat_tyre",  "🛞 Flat tyre"},
+            {"fuel",       "⛽ Out of fuel"},
+            {"locked_out", "🔑 Locked out"},
+            {"crash",      "🚨 Crash / tow"}
+        });
+        SUBS.put("furniture_move", new String[][]{
+            {"move_small",  "📦 Small move (1 van)"},
+            {"move_big",    "🚚 Big move (truck)"},
+            {"assemble",    "🔩 Assemble (IKEA)"},
+            {"disassemble", "🪛 Disassemble"},
+            {"repair",      "🛠 Repair / fix"},
+            {"hang",        "🖼 Hang on wall"}
+        });
+        SUBS.put("electrician", new String[][]{
+            {"no_power",    "⚡ No power"},
+            {"breaker",     "⚙️ Tripping breaker"},
+            {"install",     "💡 Install fixture"},
+            {"socket",      "🔌 Socket / switch"},
+            {"ceiling_fan", "🌀 Ceiling fan"},
+            {"other",       "🛠 Other"}
+        });
+        SUBS.put("plumber", new String[][]{
+            {"leak",     "💧 Leak"},
+            {"clog",     "🚽 Clog"},
+            {"no_water", "❌ No water"},
+            {"heater",   "🔥 Water heater"},
+            {"install",  "🔧 Install fixture"},
+            {"other",    "🛠 Other"}
+        });
+        SUBS.put("ac_cleaning", new String[][]{
+            {"not_cooling", "🥵 Not cooling"},
+            {"gas_top",     "💨 Gas top-up"},
+            {"service",     "🧹 Full service"},
+            {"noise",       "🔊 Noisy unit"},
+            {"leak",        "💧 Water leak"},
+            {"new_install", "🆕 New install"}
+        });
+        SUBS.put("handyman", new String[][]{
+            {"paint",     "🎨 Wall paint"},
+            {"door_lock", "🚪 Door / lock"},
+            {"curtain",   "🪟 Curtain rod"},
+            {"tv_mount",  "📺 TV mount"},
+            {"shelf",     "📚 Shelves"},
+            {"other",     "🛠 Other"}
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +141,7 @@ public class SosLauncherActivity extends Activity {
             categoryLabel = strExtra(in, "category_label","🆘 SERVIA SOS");
         }
 
-        // First-run gate: if no phone yet, open onboarding then come back.
+        // First-run gate.
         if (!WearAuth.hasIdentity(this)) {
             Intent onb = new Intent(this, OnboardingActivity.class);
             onb.putExtra("next_class", SosLauncherActivity.class.getName());
@@ -94,7 +152,7 @@ public class SosLauncherActivity extends Activity {
             return;
         }
 
-        ScrollView scroll = new ScrollView(this);
+        scroll = new ScrollView(this);
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(colorForService(serviceId));
@@ -103,13 +161,76 @@ public class SosLauncherActivity extends Activity {
         scroll.addView(root);
         setContentView(scroll);
 
-        categoryView = new TextView(this);
-        categoryView.setText(categoryLabel);
-        categoryView.setTextColor(0xFFFCD34D);
-        categoryView.setTextSize(11);
-        categoryView.setGravity(Gravity.CENTER);
-        categoryView.setPadding(0, 0, 0, 4);
-        root.addView(categoryView);
+        showStep1Subs();
+    }
+
+    // ---------- STEP 1: pick the specific issue ----------
+    private void showStep1Subs() {
+        root.removeAllViews();
+
+        TextView header = new TextView(this);
+        header.setText(categoryLabel);
+        header.setTextColor(0xFFFCD34D);
+        header.setTextSize(11);
+        header.setGravity(Gravity.CENTER);
+        header.setPadding(0, 0, 0, 4);
+        root.addView(header);
+
+        TextView prompt = new TextView(this);
+        prompt.setText(promptFor(serviceId));
+        prompt.setTextColor(0xFFFFFFFF);
+        prompt.setTextSize(13);
+        prompt.setGravity(Gravity.CENTER);
+        prompt.setPadding(0, 0, 0, 8);
+        root.addView(prompt);
+
+        String[][] subs = SUBS.get(serviceId);
+        if (subs == null) {
+            // Unknown service id — go straight to step 2 with a generic issue
+            chosenIssue = "general";
+            chosenIssueLabel = "General";
+            showStep2Dispatch();
+            return;
+        }
+        for (final String[] s : subs) {
+            TextView b = button(s[1], 0xFF1E293B, 0xFFFCD34D);
+            b.setOnClickListener(v -> {
+                chosenIssue = s[0];
+                chosenIssueLabel = s[1];
+                showStep2Dispatch();
+            });
+            root.addView(b);
+        }
+
+        TextView call = button("📞 Or call hotline", 0xFF334155, 0xFFFFFFFF);
+        call.setTextSize(11);
+        call.setOnClickListener(v -> dial("+971566900255"));
+        root.addView(call);
+    }
+
+    private String promptFor(String svc) {
+        switch (svc) {
+            case "vehicle_recovery": return "What happened?";
+            case "furniture_move":   return "What do you need?";
+            case "electrician":      return "What's the issue?";
+            case "plumber":          return "What's the issue?";
+            case "ac_cleaning":      return "What's wrong with the AC?";
+            case "handyman":         return "What needs fixing?";
+            default:                 return "Pick the kind of help";
+        }
+    }
+
+    // ---------- STEP 2: GPS + notes + dispatch ----------
+    private void showStep2Dispatch() {
+        root.removeAllViews();
+
+        TextView header = new TextView(this);
+        header.setText(categoryLabel + "  ›  " + chosenIssueLabel);
+        header.setTextColor(0xFFFCD34D);
+        header.setTextSize(10);
+        header.setGravity(Gravity.CENTER);
+        header.setPadding(0, 0, 0, 4);
+        root.addView(header);
 
         spinner = new ProgressBar(this);
         spinner.setIndeterminate(true);
@@ -120,21 +241,20 @@ public class SosLauncherActivity extends Activity {
         root.addView(spinner);
 
         statusView = new TextView(this);
-        statusView.setText("📍 Locating you…");
+        statusView.setText("📍 Getting your location…");
         statusView.setTextColor(0xFFFFFFFF);
-        statusView.setTextSize(12);
+        statusView.setTextSize(11);
         statusView.setGravity(Gravity.CENTER);
         statusView.setPadding(0, 6, 0, 4);
         root.addView(statusView);
 
         locView = new TextView(this);
         locView.setTextColor(0xFFE2E8F0);
-        locView.setTextSize(10);
+        locView.setTextSize(9);
         locView.setGravity(Gravity.CENTER);
         locView.setVisibility(View.GONE);
         root.addView(locView);
 
-        // Optional: notes
         TextView notesLbl = new TextView(this);
         notesLbl.setText("Add details (optional)");
         notesLbl.setTextColor(0xFFFCD34D);
@@ -144,7 +264,7 @@ public class SosLauncherActivity extends Activity {
         root.addView(notesLbl);
 
         notesField = new EditText(this);
-        notesField.setHint("e.g. flat front tyre · paint cracked");
+        notesField.setHint("e.g. front-right tyre, bring jack");
         notesField.setHintTextColor(0xFF94A3B8);
         notesField.setTextColor(0xFFFFFFFF);
         notesField.setBackgroundColor(0x55000000);
@@ -161,6 +281,7 @@ public class SosLauncherActivity extends Activity {
         root.addView(notesField);
 
         TextView micNotes = button("🎙 Speak details", 0xFF334155, 0xFFFCD34D);
+        micNotes.setTextSize(11);
         micNotes.setOnClickListener(v -> {
             try {
                 Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -178,15 +299,15 @@ public class SosLauncherActivity extends Activity {
         dispatchBtn.setOnClickListener(v -> doDispatch());
         root.addView(dispatchBtn);
 
-        TextView callBtn = button("📞 Or call hotline", 0xFF334155, 0xFFFFFFFF);
-        callBtn.setOnClickListener(v -> {
-            try {
-                Intent i = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:+971566900255"));
-                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(i);
-            } catch (Exception ignored) {}
-        });
-        root.addView(callBtn);
+        TextView back = button("← Back to issues", 0xFF334155, 0xFFCBD5E1);
+        back.setTextSize(11);
+        back.setOnClickListener(v -> showStep1Subs());
+        root.addView(back);
+
+        TextView call = button("📞 Or call hotline", 0xFF334155, 0xFFFFFFFF);
+        call.setTextSize(11);
+        call.setOnClickListener(v -> dial("+971566900255"));
+        root.addView(call);
 
         fused = LocationServices.getFusedLocationProviderClient(this);
         if (hasLocationPermission()) {
@@ -228,7 +349,7 @@ public class SosLauncherActivity extends Activity {
         super.onRequestPermissionsResult(requestCode, permissions, grants);
         if (requestCode == REQ_LOCATION) {
             if (hasLocationPermission()) captureLocation();
-            else statusView.setText("⚠ Location permission denied. Tap dispatch to use last-known location, or call hotline.");
+            else statusView.setText("⚠ Location permission denied. Tap Dispatch anyway, or call hotline.");
         }
     }
 
@@ -258,7 +379,7 @@ public class SosLauncherActivity extends Activity {
     private void onLocation(Location loc) {
         currentLoc = loc;
         spinner.setVisibility(View.GONE);
-        statusView.setText("✅ Location captured. Add details above (optional) and tap DISPATCH.");
+        statusView.setText("✅ Location captured. Tap DISPATCH.");
         locView.setText(String.format("%.5f, %.5f  (±%dm)",
             loc.getLatitude(), loc.getLongitude(), Math.round(loc.getAccuracy())));
         locView.setVisibility(View.VISIBLE);
@@ -294,7 +415,7 @@ public class SosLauncherActivity extends Activity {
             body.put("lng", loc.getLongitude());
             body.put("accuracy_m", loc.getAccuracy());
             body.put("source", "watch");
-            body.put("issue", "sos");
+            body.put("issue", chosenIssue == null ? "sos" : chosenIssue);
             body.put("service_id", serviceId);
             body.put("notes", notes == null ? "" : notes);
             body.put("customer_phone", WearAuth.getPhone(this));
@@ -366,17 +487,20 @@ public class SosLauncherActivity extends Activity {
             root.addView(vmeta);
 
             TextView callBtn = button("📞 CALL  " + vendorPhone, 0xFFFCD34D, 0xFF1E293B);
-            callBtn.setOnClickListener(v -> {
-                try {
-                    Intent i = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + vendorPhone.replace(" ", "")));
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(i);
-                } catch (Exception ignored) {}
-            });
+            callBtn.setOnClickListener(v -> dial(vendorPhone));
             root.addView(callBtn);
         } catch (Exception e) {
             statusView.setText("⚠ Could not parse: " + e.getMessage());
         }
+    }
+
+    private void dial(String number) {
+        try {
+            Intent i = new Intent(Intent.ACTION_DIAL,
+                Uri.parse("tel:" + number.replace(" ", "")));
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Exception ignored) {}
     }
 
     private TextView button(String text, int bg, int fg) {
@@ -390,7 +514,7 @@ public class SosLauncherActivity extends Activity {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = 6;
+        lp.topMargin = 4;
         b.setLayoutParams(lp);
         b.setClickable(true);
         return b;

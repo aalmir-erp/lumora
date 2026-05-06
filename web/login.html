@@ -181,8 +181,25 @@
     outline:none; border-color:#0D9488; box-shadow:0 0 0 3px rgba(13,148,136,.12);
   }
 
-  .phone-row { display:grid; grid-template-columns:120px 1fr; gap:8px; }
-  .phone-row select { padding:13px 8px; font-size:14px; }
+  /* v1.24.6 — flex layout + min-width:0 so the phone input can shrink and
+     the +971 chip never eats the input's width. Was 120px+1fr grid which
+     left only ~6 chars of input space when the form-wrap was narrow. */
+  .phone-row { display:flex; gap:8px; align-items:stretch; flex-wrap:nowrap; width:100%; }
+  .phone-row > #cphone-cc-display {
+    flex:0 0 auto; min-width:88px; padding:13px 14px; white-space:nowrap;
+    font-size:15px; height:auto;
+  }
+  .phone-row > input {
+    flex:1 1 auto; min-width:0; width:auto !important; max-width:100%;
+  }
+  .phone-row select { padding:13px 8px; font-size:14px; flex:0 0 110px; }
+  /* Defensive: ensure every input/select inside .row always fills its row,
+     regardless of any parent grid/flex weirdness. */
+  .auth-form .row > input,
+  .auth-form .row > select,
+  .auth-form .row > textarea {
+    width:100% !important; max-width:100%; display:block;
+  }
 
   .btn-auth {
     width:100%; padding:14px 16px; font-size:15px; font-weight:700;
@@ -1023,16 +1040,22 @@ async function biometricSignin() {
   }
 }
 
-// Auto-detect if the device has a platform biometric authenticator and
-// reveal the biometric button if so. Safe to call before WebAuthn is
-// even tried — just gates UI visibility.
+// v1.24.6 — only reveal the biometric/passkey button if the user has
+// ALREADY registered a passkey on this device. Otherwise tapping it
+// triggered Chrome's "No passkeys available for servia.ae" popup which
+// confused first-time visitors. Flag is set after a successful passkey
+// registration (see ensure-passkey on first OTP sign-in).
 (async function () {
-  if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-    try {
-      const has = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-      if (has) document.getElementById("bio-signin-btn").style.display = "";
-    } catch (_) {}
-  }
+  if (!(window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable)) return;
+  try {
+    const hasAuth = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if (!hasAuth) return;
+    const passkeyRegistered = localStorage.getItem("servia.passkey.registered") === "1";
+    if (passkeyRegistered) {
+      const btn = document.getElementById("bio-signin-btn");
+      if (btn) btn.style.display = "";
+    }
+  } catch (_) {}
 })();
 
 // ---------- UAE PASS sign-in ----------
