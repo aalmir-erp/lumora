@@ -1,46 +1,46 @@
 # Servia E2E Test Report
 
 **URL:** https://lumora-production-4071.up.railway.app
-**Run at:** 2026-05-06T15:37:47.519164Z
+**Run at:** 2026-05-06T18:57:57.055186Z
 **Result:** **0/20 scenarios passed**
 
 
 ## ❌ #1: Anonymous: deep clean 2BR quote
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ POST /api/chat | 404 | 196ms | text len=0, has AED: False, has tool_call: False |
+| ✗ POST /api/chat | 404 | 44ms | text len=0, has AED: False, has tool_call: False |
 
 ## ❌ #2: Anonymous: deep clean 3BR with addons (oven, fridge)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ POST /api/chat (with addons) | 404 | 133ms | total: None AED — err: {"status": "error", "code": 404, "message": "Application not found", "request_id": "NYS8lYMQSVCee |
+| ✗ POST /api/chat (with addons) | 404 | 17ms | total: None AED — err: {"status": "error", "code": 404, "message": "Application not found", "request_id": "Tok3cnaIR1aLg |
 
 ## ❌ #3: Anonymous: coverage check Sharjah
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ POST /api/chat (coverage) | 404 | 124ms | Sharjah covered: None |
+| ✗ POST /api/chat (coverage) | 404 | 14ms | Sharjah covered: None |
 
 ## ❌ #4: Public: GET /api/services + /api/brand + /api/i18n
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ GET /api/services | 404 | 166ms | 0 services |
-| ✗ GET /api/brand | 404 | 135ms | phone: None |
-| ✗ GET /api/i18n | 404 | 173ms | 4 languages |
+| ✗ GET /api/services | 404 | 39ms | 0 services |
+| ✗ GET /api/brand | 404 | 21ms | phone: None |
+| ✗ GET /api/i18n | 404 | 168ms | 4 languages |
 
 ## ❌ #5: Anonymous: book general cleaning 2BR via chat
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ POST /api/chat (book) | 404 | 135ms | booking_id: None |
+| ✗ POST /api/chat (book) | 404 | 18ms | booking_id: None |
 
 ## ❌ #6: Anonymous: book AC cleaning 4 units
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ POST /api/chat (AC book) | 404 | 136ms | booking_id: None |
+| ✗ POST /api/chat (AC book) | 404 | 17ms | booking_id: None |
 
 ## ❌ #7: Customer: OTP request + verify (login flow)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ OTP issue | 404 | 155ms | no dev_otp returned (WhatsApp bridge active or production mode) |
+| ✗ OTP issue | 404 | 45ms | no dev_otp returned (WhatsApp bridge active or production mode) |
 
 ## ❌ #8: Customer: update profile (name, email, language)
 | Step | Code | Time | Result |
@@ -75,7 +75,7 @@
 ## ❌ #14: Vendor: login (seeded JustMop)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ POST /auth/vendor/login | 404 | 133ms | vendor_id=None, token len=0 |
+| ✗ POST /auth/vendor/login | 404 | 13ms | vendor_id=None, token len=0 |
 
 ## ❌ #15: Vendor: list available marketplace jobs
 | Step | Code | Time | Result |
@@ -90,25 +90,25 @@
 ## ❌ #17: Admin: GET stats + vendors + services-summary
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ GET /admin/stats | 404 | 170ms | bookings_today=None, total=None |
-| ✗ GET /admin/vendors | 404 | 141ms | 0 vendors |
-| ✗ GET /admin/services-summary | 404 | 117ms | 0 services |
+| ✗ GET /admin/stats | 404 | 22ms | bookings_today=None, total=None |
+| ✗ GET /admin/vendors | 404 | 17ms | 0 vendors |
+| ✗ GET /admin/services-summary | 404 | 42ms | 0 services |
 
 ## ❌ #18: Admin: read brand, no-op patch (preserve existing)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ GET /admin/brand | 404 | 124ms | phone=None |
-| ✗ POST /admin/brand (no-op) | 404 | 132ms | null |
+| ✗ GET /admin/brand | 404 | 17ms | phone=None |
+| ✗ POST /admin/brand (no-op) | 404 | 29ms | null |
 
 ## ❌ #19: Admin: service detail (vendors + pricing)
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ GET /admin/service/deep_cleaning | 404 | 120ms | 0 vendors offering |
+| ✗ GET /admin/service/deep_cleaning | 404 | 18ms | 0 vendors offering |
 
 ## ❌ #20: Public: GET /api/reviews/deep_cleaning
 | Step | Code | Time | Result |
 |---|---|---|---|
-| ✗ GET /api/reviews/deep_cleaning | 404 | 153ms | count=None, avg=None |
+| ✗ GET /api/reviews/deep_cleaning | 404 | 15ms | count=None, avg=None |
 
 ## State captured during run
 ```json
