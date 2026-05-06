@@ -60,6 +60,13 @@ const fs = require("fs");
     // Fallback: rely on the manifest's background_color value as-is.
   }
   tm.splashScreenFadeOutDuration = 300;
+  // v1.23.2 — force portrait orientation in the APK. Bubblewrap maps this
+  // to AndroidManifest.xml's activity android:screenOrientation, so the
+  // TWA never rotates regardless of the device's auto-rotate setting.
+  // (PWA manifest also set to "portrait".) Customer was reporting that
+  // the app rotated to landscape when they tilted the phone even though
+  // their device was locked vertical — caused by the prior "any".
+  tm.orientation = "portrait";
 
   // We DON'T rewrite shortcut URLs to servia.ae here — Bubblewrap fetches
   // shortcut icons during generation from those URLs, and Cloudflare blocks
