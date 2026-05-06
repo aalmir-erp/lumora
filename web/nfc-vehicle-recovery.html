@@ -121,11 +121,16 @@
 
   <!-- v1.24.3 — photo hero (was animated SVG). Real Servia campaign images.
        Loads burj-tap.png as hero + 3 supporting shots in a strip below. -->
-  <div class="recovery-hero"><img src="/img/recovery/burj-tap.png" alt="Tap the Servia NFC tag — recovery on the way" loading="eager" fetchpriority="high" width="760" height="760"></div>
+  <div class="recovery-hero">
+    <picture>
+      <source srcset="/img/recovery/burj-tap.webp" type="image/webp">
+      <img src="/img/recovery/burj-tap.png" alt="Tap the Servia NFC tag — recovery on the way" loading="eager" fetchpriority="high" width="760" height="760">
+    </picture>
+  </div>
   <div class="recovery-strip">
-    <img src="/img/recovery/scene-mercedes.png" alt="Servia tow truck arrives at Mercedes on UAE highway" loading="lazy" width="260" height="260">
-    <img src="/img/recovery/panic-ad.png" alt="Step-by-step: panic + tap, fast arrival" loading="lazy" width="260" height="170">
-    <img src="/img/recovery/hero-split.png" alt="Stranded driver tapping NFC, Servia truck en route" loading="lazy" width="260" height="260">
+    <picture><source srcset="/img/recovery/scene-mercedes.webp" type="image/webp"><img src="/img/recovery/scene-mercedes.png" alt="Servia tow truck arrives at Mercedes on UAE highway" loading="lazy" width="260" height="260"></picture>
+    <picture><source srcset="/img/recovery/panic-ad.webp" type="image/webp"><img src="/img/recovery/panic-ad.png" alt="Step-by-step: panic + tap, fast arrival" loading="lazy" width="260" height="170"></picture>
+    <picture><source srcset="/img/recovery/hero-split.webp" type="image/webp"><img src="/img/recovery/hero-split.png" alt="Stranded driver tapping NFC, Servia truck en route" loading="lazy" width="260" height="260"></picture>
   </div>
   </div>
 

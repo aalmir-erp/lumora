@@ -2064,6 +2064,7 @@ def _sitemap_xml_inner():
         # /nfc.html is the main hub; sub-pages target long-tail queries
         # (vehicle recovery / villa bundle / laptop IT / NFC-vs-QR).
         ("/nfc.html", "0.95", "weekly"),
+        ("/sos.html", "0.95", "weekly"),
         ("/nfc-vehicle-recovery.html", "0.85", "weekly"),
         ("/nfc-villa-bundle.html", "0.80", "weekly"),
         ("/nfc-laptop-it.html", "0.80", "weekly"),
