@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 44
+- ✅ Pass: 41
 - ⚠️ Warn: 1
-- ❌ Fail: 5
+- ❌ Fail: 8
 - ⏭ Skip: 0
 
 ## Items
@@ -19,7 +19,7 @@
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
 - ✅ **[T11] Mobile nav single-row** — Δy=-7
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
-- ✅ **[T13] Install banner single row height** — 36px
+- ❌ **[T13] Install banner single row height** — exception: h=106.375px (>50 = wrap)
 - ✅ **[T14] Footer present** — OK
 - ❌ **[T15] /install.html APK card** — exception: no apk-download
 - ❌ **[T16] /install.html Wear OS card** — exception: no wear-download
@@ -35,11 +35,11 @@
 - ✅ **[T26] /api/nfc/tag bad slug 404** — OK
 - ✅ **[T27] /t/<bad-slug> redirects** — /nfc-not-found.html?slug=zzzzbogus99
 - ✅ **[T28] /nfc.html vehicle recovery section** — OK
-- ✅ **[T29] /api/nfc/consult endpoint** — greets
+- ❌ **[T29] /api/nfc/consult endpoint** — exception: HTTP 502
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
-- ✅ **[T32] /me.html requires auth** — redirected
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_3-cBwk8tx...
+- ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_RGn3aQLz4...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,9 +47,9 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.23.9
+- ✅ **[T41] /api/health responds** — v1.24.0
 - ✅ **[T42] /api/services >=10** — 32
-- ✅ **[T43] /api/app/latest works** — apk_v=1.23.8
+- ✅ **[T43] /api/app/latest works** — apk_v=1.23.9
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book.html renders form** — OK
