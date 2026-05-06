@@ -967,6 +967,75 @@
       <!-- Live build status -->
       <div id="twa-build-status" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13.5px"></div>
 
+      <!-- v1.24.12 — Latest APK / Wear APK download card. Hits /api/app/latest
+           which proxies the most recent GitHub Release. -->
+      <div id="apk-downloads" style="background:linear-gradient(135deg,#0F766E 0%,#14B8A6 100%);color:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 8px 22px rgba(15,118,110,.25)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div>
+            <h3 style="margin:0 0 4px;font-size:16px;color:#FCD34D">📲 Latest APK downloads</h3>
+            <p style="margin:0;color:rgba(255,255,255,.85);font-size:12.5px">Direct from the most recent GitHub Release. Refreshed every 5&nbsp;min.</p>
+          </div>
+          <button class="btn" style="background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);font-size:12px;padding:6px 12px" onclick="loadLatestApk()">↻ Refresh</button>
+        </div>
+        <div id="apk-version" style="font-size:13px;margin-bottom:10px;background:rgba(0,0,0,.2);padding:8px 10px;border-radius:8px">Loading…</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+          <a id="apk-phone-link" href="#" style="background:#FCD34D;color:#7C2D12;padding:14px;border-radius:12px;text-decoration:none;font-weight:800;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;opacity:.55;pointer-events:none">
+            <span>📱 Phone APK<br><small id="apk-phone-meta" style="font-weight:500;font-size:11px;opacity:.85">Loading…</small></span>
+            <span style="font-size:18px">⬇</span>
+          </a>
+          <a id="apk-wear-link" href="#" style="background:#fff;color:#0F766E;padding:14px;border-radius:12px;text-decoration:none;font-weight:800;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;opacity:.55;pointer-events:none">
+            <span>⌚ Wear OS APK<br><small id="apk-wear-meta" style="font-weight:500;font-size:11px;opacity:.7">Loading…</small></span>
+            <span style="font-size:18px">⬇</span>
+          </a>
+          <a id="apk-release-link" href="#" target="_blank" rel="noopener" style="background:rgba(0,0,0,.25);color:#fff;padding:14px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+            <span>📦 All assets (AAB + APK)<br><small style="font-weight:500;font-size:11px;opacity:.85">View release on GitHub</small></span>
+            <span style="font-size:16px">↗</span>
+          </a>
+        </div>
+        <p style="margin:10px 0 0;font-size:11px;color:rgba(255,255,255,.7);line-height:1.5">
+          Phone: install on Android via Settings → Apps → Install unknown apps · or upload <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px">.aab</code> to Play Console for store distribution.<br>
+          Wear: pair watch with Galaxy Wearable app → push APK via WearInstaller 2 / Easy Fire Tools.
+        </p>
+      </div>
+      <script>
+        async function loadLatestApk() {
+          const r = await fetch("/api/app/latest").catch(()=>null);
+          const j = r && r.ok ? await r.json() : null;
+          const v = document.getElementById("apk-version");
+          if (!j) { v.textContent = "⚠ Could not reach /api/app/latest"; return; }
+          v.innerHTML =
+            "<b>" + (j.apk_version || "?") + "</b>"
+            + (j.released_at ? "  ·  released " + new Date(j.released_at).toLocaleString() : "")
+            + (j.web_version ? "  ·  web on v" + j.web_version : "");
+          const ph = document.getElementById("apk-phone-link");
+          const phm = document.getElementById("apk-phone-meta");
+          if (j.apk_url) {
+            ph.href = j.apk_url;
+            ph.style.opacity = ""; ph.style.pointerEvents = "";
+            ph.setAttribute("download", "");
+            phm.textContent = (j.apk_size_mb || "?") + " MB · signed APK";
+          } else {
+            phm.textContent = "Not yet built — push a v* tag";
+          }
+          const we = document.getElementById("apk-wear-link");
+          const wem = document.getElementById("apk-wear-meta");
+          if (j.wear_url) {
+            we.href = j.wear_url;
+            we.style.opacity = ""; we.style.pointerEvents = "";
+            we.setAttribute("download", "");
+            wem.textContent = (j.wear_size_mb || "?") + " MB · signed APK";
+          } else {
+            wem.textContent = "Not yet built — push a v* tag";
+          }
+          const rl = document.getElementById("apk-release-link");
+          rl.href = j.release_url || "https://github.com/aalmir-erp/lumora/releases";
+        }
+        // Auto-load when this tab opens
+        document.querySelector('[data-tab="twa"]').addEventListener("click", loadLatestApk);
+        // Also load if user lands directly on #twa
+        if (location.hash === "#twa") loadLatestApk();
+      </script>
+
       <!-- Install analytics (rich device telemetry from /api/app-install) -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
