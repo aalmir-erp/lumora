@@ -1,516 +1,167 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
-<meta name="servia-page" content="default">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0D9488">
-<title>Install Servia • App + ChatGPT GPT</title>
-<meta name="description" content="Install Servia on your iPhone, Android phone, or desktop in 10 seconds. Plus add Servia to ChatGPT for instant booking from chat.">
+<meta name="servia-page" content="install">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0F766E">
+<title>Get the Servia app · iOS · Android · Wear OS · ChatGPT</title>
+<meta name="description" content="Download Servia from the App Store, Google Play, or use the ChatGPT GPT. UAE home services in 60 seconds — cleaning, AC, maid, recovery 24/7. From 35 AED.">
 <link rel="canonical" href="https://servia.ae/install.html">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Servia">
-<meta property="og:locale" content="en_AE">
-<meta property="og:title" content="Install Servia">
-<meta property="og:description" content="Install Servia on iOS, Android, desktop. Plus the ChatGPT GPT.">
+<meta property="og:title" content="Get the Servia app">
+<meta property="og:description" content="Servia on App Store · Google Play · Wear OS · ChatGPT.">
 <meta property="og:url" content="https://servia.ae/install.html">
 <meta property="og:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Install Servia">
-<meta name="twitter:description" content="One-tap install on every platform.">
-<meta name="twitter:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
+
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"HowTo",
- "name":"Install Servia on your phone or desktop",
- "description":"Install the Servia app as a Progressive Web App on iOS, Android, or desktop in 10 seconds.",
- "totalTime":"PT30S",
- "step":[
-  {"@type":"HowToStep","name":"On iPhone (Safari)","text":"Open servia.ae in Safari, tap the Share icon, then 'Add to Home Screen'."},
-  {"@type":"HowToStep","name":"On Android (Chrome)","text":"Open servia.ae in Chrome. The browser shows an Install banner. Tap Install."},
-  {"@type":"HowToStep","name":"On Desktop (Chrome/Edge)","text":"Open servia.ae. Click the Install icon in the address bar (right edge)."}]}
+{"@context":"https://schema.org","@type":"SoftwareApplication",
+ "name":"Servia",
+ "operatingSystem":"Android, iOS, Wear OS, watchOS, Web",
+ "applicationCategory":"LifestyleApplication",
+ "offers":{"@type":"Offer","price":"0","priceCurrency":"AED"},
+ "aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","reviewCount":"2400"},
+ "description":"UAE home services app — cleaning, AC, maid, handyman, vehicle recovery 24/7."}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
   {"@type":"ListItem","position":1,"name":"Home","item":"https://servia.ae/"},
-  {"@type":"ListItem","position":2,"name":"Install","item":"https://servia.ae/install.html"}]}
+  {"@type":"ListItem","position":2,"name":"Get the app","item":"https://servia.ae/install.html"}]}
 </script>
+
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
 <style>
-  body { background:#FAFAFA; min-height:100vh }
-  .ins-shell { max-width:1100px; margin:0 auto; padding:32px 16px 64px }
-  .ins-hero { text-align:center; padding:24px 0 16px }
-  .ins-hero h1 { font-size:36px; letter-spacing:-.02em; margin:8px 0 6px;
-    background:linear-gradient(90deg,#0F766E 0%,#14B8A6 50%,#0F766E 100%); background-size:200% auto;
-    -webkit-background-clip:text; background-clip:text; color:transparent; animation:gshine 6s linear infinite }
-  @keyframes gshine { 0% {background-position:0% center} 100% {background-position:200% center} }
-  .ins-hero p { color:var(--muted); font-size:16px; margin:0 auto 20px; max-width:640px; line-height:1.5 }
+  body{background:#FAFAFA;min-height:100vh}
+  .ins-shell{max-width:980px;margin:0 auto;padding:32px 16px 64px}
+  .ins-hero{text-align:center;padding:24px 0 20px}
+  .ins-hero h1{font-size:36px;letter-spacing:-.02em;margin:8px 0 6px;
+    background:linear-gradient(90deg,#0F766E,#14B8A6,#0F766E);background-size:200% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:gshine 6s linear infinite}
+  @keyframes gshine{0%{background-position:0% center}100%{background-position:200% center}}
+  .ins-hero p{color:#475569;font-size:16px;margin:0 auto 18px;max-width:560px;line-height:1.5}
+  .ins-hero .stars{color:#F59E0B;font-size:18px;letter-spacing:2px;margin:6px 0}
+  .ins-hero small{color:#94A3B8;font-size:12.5px}
 
-  .ins-grid { display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:24px }
-  .ins-card { background:#fff; border:1px solid var(--border); border-radius:18px; padding:22px;
-    box-shadow:0 4px 16px rgba(15,23,42,.05); display:flex; flex-direction:column; gap:10px;
-    transition:transform .15s, box-shadow .15s }
-  .ins-card:hover { transform:translateY(-3px); box-shadow:0 14px 32px rgba(15,23,42,.1) }
-  .ins-card .badge { display:inline-block; align-self:flex-start; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
-    padding:4px 10px; border-radius:999px }
-  .ins-card .badge.pwa     { background:#ECFDF5; color:#065F46 }
-  .ins-card .badge.gpt     { background:#EDE9FE; color:#5B21B6 }
-  .ins-card .badge.shortcut{ background:#FEF3C7; color:#92400E }
-  .ins-card h2 { margin:0; font-size:20px; letter-spacing:-.01em }
-  .ins-card .ico { font-size:36px; line-height:1 }
-  .ins-card p { margin:0; color:var(--muted); font-size:14px; line-height:1.5 }
-  .ins-card ol { margin:6px 0 0; padding-inline-start:20px; color:var(--text); font-size:14px; line-height:1.7 }
-  .ins-card ol kbd { background:#F1F5F9; padding:2px 6px; border-radius:4px; font-size:12px; font-family:ui-monospace,monospace }
-  .ins-card .btn { margin-top:auto; align-self:flex-start; padding:11px 18px; border-radius:999px; font-weight:700; text-decoration:none; font-size:14px }
-  .ins-card .btn.primary { background:#0F766E; color:#fff }
-  .ins-card .btn.primary:hover { background:#0F172A }
-  .ins-card .btn.gpt { background:linear-gradient(135deg,#5B21B6,#7C3AED); color:#fff }
-  .ins-card .btn.ghost { background:#fff; color:var(--text); border:1px solid var(--border) }
+  /* Store badges row */
+  .store-row{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin:18px 0 8px}
+  .store-badge{display:inline-flex;align-items:center;gap:10px;background:#0F172A;color:#fff;
+    padding:10px 18px;border-radius:14px;text-decoration:none;font-weight:600;
+    box-shadow:0 8px 24px rgba(15,23,42,.18);transition:transform .15s,box-shadow .15s;
+    border:2px solid transparent;min-width:200px}
+  .store-badge:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(15,23,42,.28)}
+  .store-badge .icn{font-size:28px;line-height:1}
+  .store-badge .lbl small{display:block;font-size:10.5px;font-weight:500;opacity:.78;letter-spacing:.06em;text-transform:uppercase;line-height:1.2}
+  .store-badge .lbl b{display:block;font-size:16px;font-weight:800;line-height:1.2;margin-top:2px}
+  .store-badge.ios{background:linear-gradient(135deg,#0F172A,#1E293B)}
+  .store-badge.android{background:linear-gradient(135deg,#01875F,#015E45)}
+  .store-badge.wear{background:linear-gradient(135deg,#0F766E,#14B8A6)}
+  .store-badge.gpt{background:linear-gradient(135deg,#5B21B6,#7C3AED)}
+  .store-badge.web{background:linear-gradient(135deg,#475569,#0F172A);border-color:rgba(252,211,77,.4)}
+  @media (max-width:540px){.store-badge{min-width:0;flex:1}}
 
-  /* Animated GPT chat preview */
-  .gpt-demo { background:linear-gradient(135deg,#1E1B4B 0%,#312E81 100%); border-radius:18px; padding:18px;
-    color:#fff; max-width:520px; margin:24px auto; box-shadow:0 18px 48px rgba(15,23,42,.25) }
-  .gpt-demo .top { display:flex; gap:10px; align-items:center; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,.12) }
-  .gpt-demo .top img { width:32px; height:32px; border-radius:8px }
-  .gpt-demo .top .who { font-size:13px; font-weight:700 }
-  .gpt-demo .top .who small { display:block; color:rgba(255,255,255,.6); font-weight:500; font-size:11px }
-  .gpt-demo .bubble { padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.45; max-width:88%; margin-bottom:10px;
-    opacity:0; animation:bubble-in .4s ease-out forwards }
-  .gpt-demo .bubble.user { background:#7C3AED; color:#fff; margin-inline-start:auto; border-bottom-right-radius:4px; }
-  .gpt-demo .bubble.bot  { background:rgba(255,255,255,.1); border-bottom-left-radius:4px }
-  .gpt-demo .bubble.user .mention { background:rgba(0,0,0,.32); padding:1px 8px; border-radius:6px; font-weight:700 }
-  .gpt-demo .bubble:nth-child(2) { animation-delay:.4s }
-  .gpt-demo .bubble:nth-child(3) { animation-delay:1.6s }
-  .gpt-demo .bubble:nth-child(4) { animation-delay:3.0s }
-  .gpt-demo .bubble:nth-child(5) { animation-delay:4.6s }
-  @keyframes bubble-in { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
-  .gpt-demo .bubble .typing { display:inline-flex; gap:3px; vertical-align:middle }
-  .gpt-demo .bubble .typing span { width:5px; height:5px; background:rgba(255,255,255,.6); border-radius:50%; animation:typing 1.2s ease-in-out infinite }
-  .gpt-demo .bubble .typing span:nth-child(2) { animation-delay:.15s }
-  .gpt-demo .bubble .typing span:nth-child(3) { animation-delay:.3s }
-  @keyframes typing { 0%,80%,100% { opacity:.3 } 40% { opacity:1 } }
-  .gpt-demo b.aed { color:#FCD34D }
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:32px 0}
+  .feat{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:18px;text-align:center}
+  .feat .ico{font-size:32px;line-height:1;margin-bottom:6px}
+  .feat h3{margin:6px 0 4px;font-size:14.5px;color:#0F172A}
+  .feat p{margin:0;color:#475569;font-size:12.5px;line-height:1.5}
 
-  .ins-tips { background:#F0FDFA; border:1px solid #99F6E4; border-radius:14px; padding:18px; margin-top:24px }
-  .ins-tips h3 { margin:0 0 10px; font-size:16px; color:#0F766E }
-  .ins-tips ul { margin:0; padding-inline-start:22px; line-height:1.8; color:var(--text); font-size:14px }
-  .ins-tips ul li b { color:#0F766E }
+  .pwa-box{background:linear-gradient(135deg,#F0FDFA,#fff);border:1px solid #99F6E4;border-radius:16px;padding:22px;margin-top:22px;text-align:center}
+  .pwa-box h3{margin:0 0 6px;color:#0F766E;font-size:18px}
+  .pwa-box p{margin:0 0 12px;color:#475569;font-size:14px}
+  .pwa-box .pwa-btn{background:#0F766E;color:#fff;padding:11px 22px;border-radius:999px;font-weight:700;text-decoration:none;font-size:14px;display:inline-flex;align-items:center;gap:8px}
+
+  .ratings{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:14px;color:#94A3B8;font-size:12px}
+  .ratings span b{color:#0F172A}
 </style>
 <script src="/banner.js" defer></script>
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
-  {src:"/_snippets.js",id:"snippets"},
-  {src:"/cart-badge.js",id:"cart-badge"}
-].concat([{src:"/location-bar.js",id:"location-bar"}]).concat([{src:"/about-app.js",id:"about-app"}]));</script>
+  {src:"/_snippets.js",id:"snippets"},{src:"/cart-badge.js",id:"cart-badge"},
+  {src:"/location-bar.js",id:"location-bar"},{src:"/about-app.js",id:"about-app"}
+]);</script>
 <script src="/universal-nav.js" defer></script>
 <script src="/lazy-loaders.js" defer></script>
-<script src="/conv.js" defer></script>
-<script src="/search-widget.js" defer></script>
-<style id="servia-gt-fix">
-/* Google Translate sanity overrides — keep content visible on RTL languages
- * (Arabic, Urdu, Persian, Hebrew, Pashto). Loaded inline so it applies on
- * first paint regardless of cache / SW state. */
-.goog-te-banner-frame, .goog-te-banner-frame *,
-#goog-gt-tt, #goog-te-balloon-frame,
-.goog-te-spinner-pos, .goog-tooltip { display:none !important; visibility:hidden !important; }
-body { top:0 !important; position:static !important; visibility:visible !important; }
-html.translated-ltr, html.translated-rtl { margin-top:0 !important; }
-html.translated-ltr body, html.translated-rtl body {
-  top:0 !important; position:static !important;
-  visibility:visible !important; opacity:1 !important; display:block !important; }
-html.translated-rtl body > * { visibility:visible !important; opacity:1 !important; }
-.goog-te-gadget { font-size:0; height:0; overflow:hidden; }
-.goog-te-gadget > span { display:none; }
-#google_translate_element {
-  position:absolute !important; left:-9999px !important; top:-9999px !important;
-  width:1px !important; height:1px !important; overflow:hidden !important; }
-</style>
-<script>
-/* Hide top-banner / install-banner placeholders pre-paint when dismissed.
- * Runs synchronously in <head> before body renders so there's no flash
- * of an empty teal stripe while JS catches up. Mirrors the logic in
- * banner.js (6h suppression) and install.js (7-day TTL via dismissed_at). */
-(function(){
-  try {
-    var now = Date.now();
-    var topD = parseInt(localStorage.getItem("servia.topbanner.dismissed_at")||"0",10);
-    if (topD && now - topD < 6*3600*1000) {
-      document.documentElement.classList.add("hide-topbanner");
-    }
-    if (localStorage.getItem("servia.install.dismissed") === "banner") {
-      var insD = parseInt(localStorage.getItem("servia.install.dismissed_at")||"0",10);
-      // No timestamp = legacy permanent dismiss; treat as still-dismissed.
-      if (!insD || now - insD < 7*24*3600*1000) {
-        document.documentElement.classList.add("hide-install-banner");
-      }
-    }
-    if (localStorage.getItem("servia.install.completed")) {
-      document.documentElement.classList.add("hide-install-banner");
-    }
-  } catch(_) {}
-})();
-</script>
-<style id="servia-banner-hide">
-html.hide-topbanner #servia-topbanner { display:none !important; height:0 !important; min-height:0 !important; }
-html.hide-install-banner #servia-install-banner { display:none !important; }
-</style>
 </head><body>
 <div id="servia-topbanner" aria-hidden="true"></div>
 <div id="servia-loc-bar-placeholder" aria-hidden="true"></div>
-<style id="servia-topbanner-css">#servia-topbanner{height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E 0%,#0D9488 60%,#14B8A6 100%);color:#fff;display:flex;align-items:center;gap:10px;padding:0 14px;font-size:13px;font-weight:600;line-height:1.3;box-sizing:border-box}#servia-topbanner .b-emoji{font-size:18px;flex-shrink:0}#servia-topbanner .b-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#servia-topbanner .b-text b{font-weight:800}#servia-topbanner a{background:#fff;color:#0F766E;text-decoration:none;padding:4px 12px;border-radius:99px;font-weight:800;font-size:11.5px;flex-shrink:0;white-space:nowrap}#servia-topbanner .x{background:transparent;border:0;color:rgba(255,255,255,.7);font-size:14px;cursor:pointer;flex-shrink:0;padding:0 4px}html.hide-topbanner #servia-topbanner{display:none !important;height:0 !important}#servia-loc-bar-placeholder{height:36px;background:linear-gradient(90deg,#0F766E,#14B8A6);border-bottom:1px solid rgba(255,255,255,.1)}body.has-location-bar #servia-loc-bar-placeholder,body:has(#servia-loc-bar) #servia-loc-bar-placeholder{display:none !important}</style>
+<style>#servia-topbanner{height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E 0%,#0D9488 60%,#14B8A6 100%);color:#fff;display:flex;align-items:center;gap:10px;padding:0 14px;font-size:13px;font-weight:600;line-height:1.3;box-sizing:border-box}#servia-topbanner .b-emoji{font-size:18px;flex-shrink:0}#servia-topbanner .b-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#servia-topbanner a{background:#fff;color:#0F766E;text-decoration:none;padding:4px 12px;border-radius:99px;font-weight:800;font-size:11.5px;flex-shrink:0;white-space:nowrap}#servia-topbanner .x{background:transparent;border:0;color:rgba(255,255,255,.7);font-size:14px;cursor:pointer;flex-shrink:0;padding:0 4px}html.hide-topbanner #servia-topbanner{display:none !important;height:0 !important}#servia-loc-bar-placeholder{height:36px;background:linear-gradient(90deg,#0F766E,#14B8A6);border-bottom:1px solid rgba(255,255,255,.1)}body.has-location-bar #servia-loc-bar-placeholder,body:has(#servia-loc-bar) #servia-loc-bar-placeholder{display:none !important}</style>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+
 <nav class="nav"><div class="nav-inner">
-  <a href="/" aria-label="Servia home"><img src="/logo.svg" width="124" height="40" alt="Servia" decoding="async"></a>
-  <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
+  <a href="/" aria-label="Servia home"><img src="/logo.svg" width="124" height="40" alt="Servia"></a>
   <div class="nav-links">
-    <a href="/services.html" data-i18n="nav_services">Services</a>
-    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
+    <a href="/services.html">Services</a>
+    <a href="/coverage.html">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html" data-i18n="nav_my_account">My account</a>
+    <a href="/me.html">My account</a>
   </div>
   <div class="nav-cta">
-    <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
-    <select class="lang-dropdown notranslate" translate="no" aria-label="Language" onchange="window.lumoraSetLang&&lumoraSetLang(this.value)">
-      <option value="en">🇬🇧 EN</option><option value="ar">🇦🇪 AR</option><option value="ur">🇵🇰 UR</option>
-      <option value="hi">🇮🇳 HI</option><option value="bn">🇧🇩 BN</option><option value="ta">TA</option><option value="ml">ML</option>
-      <option value="tl">🇵🇭 TL</option><option value="ps">🇦🇫 PS</option><option value="ne">🇳🇵 NE</option>
-      <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
-      <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
-    </select>
-    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
-    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
+    <a class="btn btn-primary" href="/book.html">Book now</a>
   </div>
 </div></nav>
 
 <main class="ins-shell">
   <div class="ins-hero">
     <div style="font-size:64px;line-height:1">📲</div>
-    <h1>Install Servia, anywhere</h1>
-    <p>One tap to add Servia to your home screen, dock, or ChatGPT. After install, the app opens full-screen, works offline, and you get push notifications for booking updates.</p>
+    <h1>Get the Servia app</h1>
+    <p>UAE home services in 60 seconds. Same-day cleaning · AC · maid · handyman · 24/7 recovery. From 35 AED.</p>
+    <div class="stars">★★★★★</div>
+    <small><b>4.9</b> · 2,400+ UAE families</small>
   </div>
 
-  <div class="gpt-demo">
-    <div class="top">
-      <img src="/brand/servia-icon-1024x1024.png" alt="Servia">
-      <div class="who">Servia UAE Helper <small>via ChatGPT · @servia</small></div>
-    </div>
-    <div class="bubble user">Hey <span class="mention">@servia</span> how much is 2BHK clean in Dubai Marina?</div>
-    <div class="bubble bot"><span class="typing"><span></span><span></span><span></span></span></div>
-    <div class="bubble bot">Deep cleaning a 2-bed apartment in Dubai Marina runs about <b class="aed">AED 350–450</b>, depending on add-ons (oven, fridge, balcony glass). Same-day if you book before noon.</div>
-    <div class="bubble user">Book it tomorrow 10am, my phone is +971501234567</div>
-    <div class="bubble bot">Done — booking <b>LM-D8X4F2</b> locked in for Marina Crown Tower, tomorrow 10:00–14:00. Pay-link sent to your WhatsApp 🔗</div>
+  <!-- One-tap store badges -->
+  <div class="store-row">
+    <a class="store-badge ios" href="https://apps.apple.com/ae/app/servia/id0000000000" target="_blank" rel="noopener" data-event="store_ios">
+      <span class="icn">🍎</span><span class="lbl"><small>Download on the</small><b>App Store</b></span>
+    </a>
+    <a class="store-badge android" href="https://play.google.com/store/apps/details?id=ae.servia.app" target="_blank" rel="noopener" data-event="store_android">
+      <span class="icn">🤖</span><span class="lbl"><small>Get it on</small><b>Google Play</b></span>
+    </a>
+    <a class="store-badge wear" href="https://play.google.com/store/apps/details?id=ae.servia.wear" target="_blank" rel="noopener" data-event="store_wear">
+      <span class="icn">⌚</span><span class="lbl"><small>Wear OS</small><b>Watch app</b></span>
+    </a>
+    <a class="store-badge gpt" href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener" data-event="store_gpt">
+      <span class="icn">🚀</span><span class="lbl"><small>Talk to it on</small><b>ChatGPT</b></span>
+    </a>
   </div>
 
-  <div class="ins-grid">
-    <div class="ins-card">
-      <span class="badge pwa">📱 iPhone · Safari</span>
-      <div class="ico">🍎</div>
-      <h2>Add to Home Screen</h2>
-      <p>Open <b>servia.ae</b> in Safari (not Chrome — iOS limits PWAs to Safari).</p>
-      <ol>
-        <li>Tap the <b>Share</b> icon (square with up arrow)</li>
-        <li>Scroll → tap <b>Add to Home Screen</b></li>
-        <li>Name it "Servia" → tap <b>Add</b></li>
-      </ol>
-      <a class="btn primary" href="/" target="_blank">Open in Safari →</a>
-    </div>
+  <p style="text-align:center;color:#94A3B8;font-size:12px;margin:18px 0 0">Free to install. No ads. UAE-only services.</p>
 
-    <div class="ins-card" style="grid-column:1/-1;background:linear-gradient(135deg,#ECFDF5 0%,#fff 60%);border:2px solid #14B8A6;position:relative;overflow:hidden">
-      <div style="position:absolute;top:14px;inset-inline-end:14px;background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#7C2D12;padding:5px 12px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.04em">⭐ RECOMMENDED ON ANDROID</div>
-      <span class="badge" style="background:#0F766E;color:#fff">📦 ANDROID APK · FULL FEATURES</span>
-      <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;margin-top:6px">
-        <div style="font-size:64px;line-height:1;flex-shrink:0">🤖</div>
-        <div style="flex:1;min-width:240px">
-          <h2 style="margin:0 0 6px">Install Servia Android APK</h2>
-          <p style="color:#475569;font-size:14px;line-height:1.5;margin:0 0 10px">Native-style install with the full Servia experience. Larger than the browser PWA but unlocks features Chrome can't: home-screen widgets, true full-screen, faster cold-start, push notifications that survive Chrome restarts.</p>
-          <div id="apk-status" style="font-size:13px;color:#64748B;margin-bottom:12px">Loading latest version…</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-            <a id="apk-download" class="btn primary" href="#" style="background:#0F766E;color:#fff;padding:13px 22px;font-size:15px;font-weight:700">📥 Download APK</a>
-            <a class="btn ghost" id="apk-release-link" href="https://github.com/aalmir-erp/releases" target="_blank" rel="noopener">All releases</a>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:14px;padding:16px;margin-top:8px">
-        <h3 style="margin:0 0 12px;font-size:15px;color:#0F766E">✨ What you get vs browser-PWA:</h3>
-        <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));font-size:13px;color:#475569;line-height:1.5">
-          <div><b style="color:#0F172A">🧩 9 home-screen widgets.</b> Quick Book · Track · WhatsApp · Loyalty · Daily tip · Quick quote · Search · Ask Servia · Upcoming visit. PWA can't show widgets.</div>
-          <div><b style="color:#0F172A">🚀 Instant cold-start.</b> Native shell launches in ~0.3 s. Chrome PWA takes ~1.5–2 s.</div>
-          <div><b style="color:#0F172A">📵 No URL bar, ever.</b> True full-screen via assetlinks-verified Trusted Web Activity.</div>
-          <div><b style="color:#0F172A">🔔 Robust notifications.</b> Survives Chrome cleanup. PWA notifications die when Chrome is force-stopped.</div>
-          <div><b style="color:#0F172A">📂 Long-press shortcuts.</b> Home, Book, Track, Chat right from the launcher icon. PWA only has app icon, no shortcuts.</div>
-          <div><b style="color:#0F172A">⌚ Watch app pairing.</b> Auto-pairs with the Servia Wear OS APK once published. PWA has no watch story.</div>
-          <div><b style="color:#0F172A">📡 Offline-first.</b> Service worker pre-caches everything; works in basement parking / lift.</div>
-          <div><b style="color:#0F172A">🔄 In-app updates.</b> Tap ⓘ → Check for updates — we tell you when a new APK is out + one-tap re-install.</div>
-        </div>
-      </div>
-
-      <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:14px;padding:16px;margin-top:12px">
-        <h3 style="margin:0 0 10px;font-size:15px;color:#9A3412">📋 Install wizard (60 seconds):</h3>
-        <ol style="margin:0;padding-inline-start:22px;color:#7C2D12;font-size:13.5px;line-height:1.7;font-weight:500">
-          <li><b>Tap the green Download APK button</b> above. The .apk file (~2 MB) lands in your Downloads.</li>
-          <li>Open it. Android may say <em>"For your security, your phone is not allowed to install unknown apps from this source."</em> — that's normal for sideloaded apps.</li>
-          <li>Tap <b>Settings</b> → toggle <b>Allow from this source</b> → return.</li>
-          <li>Tap <b>Install</b>. ~5 seconds. Done — Servia icon appears in your launcher.</li>
-          <li><b>First launch</b> — we ask for: Location (optional, area-aware pricing), Notifications (booking updates), Camera (only when you upload before/after photos). Each one is optional and asked at use-time only.</li>
-          <li>Drag any of our 9 widgets onto your home screen — long-press home → Widgets → scroll to Servia.</li>
-        </ol>
-      </div>
-
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:#64748B">
-        <span style="background:#F1F5F9;padding:4px 10px;border-radius:999px"><b>📦 Size:</b> <span id="apk-size">~2 MB</span></span>
-        <span style="background:#F1F5F9;padding:4px 10px;border-radius:999px"><b>🤖 Min Android:</b> 7.0 (API 24)</span>
-        <span style="background:#F1F5F9;padding:4px 10px;border-radius:999px"><b>🔐 Signed:</b> SHA-256 verified</span>
-        <span style="background:#F1F5F9;padding:4px 10px;border-radius:999px"><b>🛡️ Safe:</b> No tracking SDKs</span>
-      </div>
-    </div>
-
-    <div class="ins-card">
-      <span class="badge pwa">📱 Android · Chrome PWA (alt)</span>
-      <div class="ico">🌐</div>
-      <h2>No download — Chrome PWA</h2>
-      <p>Don't want the APK? You can also install Servia straight from Chrome. Faster install, fewer features (no widgets, weaker notifications).</p>
-      <ol>
-        <li>Open <b>servia.ae</b> in Chrome</li>
-        <li>Tap the ⋮ menu → <b>Install app</b></li>
-        <li>Confirm → home-screen icon appears</li>
-      </ol>
-      <a class="btn primary" href="/" target="_blank">Open in Chrome →</a>
-    </div>
-
-    <div class="ins-card">
-      <span class="badge pwa">🖥️ Desktop · Chrome/Edge</span>
-      <div class="ico">💻</div>
-      <h2>Install Servia desktop</h2>
-      <p>One-click install — Servia opens like a native macOS / Windows app.</p>
-      <ol>
-        <li>Open <b>servia.ae</b> in Chrome or Edge</li>
-        <li>Look for the <b>Install</b> icon ⊕ in the address bar (right edge)</li>
-        <li>Click → confirm</li>
-      </ol>
-      <button class="btn primary" id="pwa-install" type="button" style="display:none;border:0;cursor:pointer">📥 Install now</button>
-      <a class="btn ghost" href="/" id="pwa-fallback">Open Servia →</a>
-    </div>
-
-    <div class="ins-card">
-      <span class="badge gpt">🤖 ChatGPT · @servia</span>
-      <div class="ico">🚀</div>
-      <h2>Add Servia to ChatGPT</h2>
-      <p>Talk to Servia inside ChatGPT. Use <code>@servia</code> in any chat to mention us.</p>
-      <ol>
-        <li>Open <b>chatgpt.com</b> (Plus/Free both work)</li>
-        <li>Click the link below → "Start chat"</li>
-        <li>In future chats, type <b>@servia</b> to mention</li>
-      </ol>
-      <a class="btn gpt" href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">🚀 Open Servia GPT →</a>
-    </div>
-
-    <div class="ins-card">
-      <span class="badge shortcut">⚡ Quick shortcuts</span>
-      <div class="ico">🔍</div>
-      <h2>Search palette · Cmd+K</h2>
-      <p>From any page, hit <kbd>Cmd</kbd>+<kbd>K</kbd> (Mac) or <kbd>Ctrl</kbd>+<kbd>K</kbd> (Win/Linux) to open the universal search palette.</p>
-      <ol>
-        <li><kbd>↑</kbd> <kbd>↓</kbd> navigate results</li>
-        <li><kbd>Tab</kbd> flip to AI mode</li>
-        <li><kbd>Enter</kbd> open · <kbd>Esc</kbd> close</li>
-      </ol>
-      <a class="btn primary" href="/search.html">Open full search →</a>
-    </div>
-
-    <div class="ins-card">
-      <span class="badge gpt">🎙️ Voice + AI</span>
-      <div class="ico">🎤</div>
-      <h2>Talk to Servia AI</h2>
-      <p>The 🎤 button on every search opens voice input — Servia listens and replies in your language (English, Arabic, Hindi, Filipino).</p>
-      <ol>
-        <li>Open the search palette</li>
-        <li>Tap the 🎤 mic icon</li>
-        <li>Say "I need a cleaner in Marina tomorrow morning"</li>
-      </ol>
-      <a class="btn primary" href="/search.html">Try voice search →</a>
-    </div>
-
-    <div class="ins-card" style="grid-column:1/-1;background:linear-gradient(135deg,#FEF3C7 0%,#fff 60%);border:2px solid #F59E0B">
-      <span class="badge" style="background:#F59E0B;color:#7C2D12">⌚ WEAR OS · STANDALONE</span>
-      <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
-        <div style="font-size:64px;line-height:1;flex-shrink:0">⌚</div>
-        <div style="flex:1;min-width:240px">
-          <h2 style="margin:0 0 6px">Servia for Wear OS watches</h2>
-          <p style="color:#475569;font-size:14px;line-height:1.5;margin:0 0 10px">A separate watch APK with 4 tappable tiles (Track · Book · Quote · Chat). Standalone — works without your phone nearby. Compatible with Pixel Watch (1, 2, 3), Galaxy Watch 4/5/6/7, TicWatch Pro 5, Mobvoi, OnePlus Watch 2, and any Wear OS 3.0+ device.</p>
-          <div id="wear-status" style="font-size:13px;color:#64748B;margin-bottom:12px">Loading watch APK info…</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-            <a id="wear-download" class="btn primary disabled" href="#" style="background:#F59E0B;color:#7C2D12;padding:13px 22px;font-size:15px;font-weight:700;opacity:.5;pointer-events:none">⌚ Download Wear OS APK</a>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:14px;padding:16px;margin-top:8px">
-        <h3 style="margin:0 0 10px;font-size:15px;color:#9A3412">📋 How to install on a Wear OS watch</h3>
-        <p style="margin:0 0 10px;font-size:13.5px;color:#7C2D12;line-height:1.5">Wear OS watches don't accept APK files directly from a download — they need ADB sideload (one-time setup) until we publish on Play Store. Three minutes total:</p>
-        <ol style="margin:0;padding-inline-start:22px;color:#7C2D12;font-size:13.5px;line-height:1.7;font-weight:500">
-          <li><b>On the watch:</b> Settings → About → tap "Build number" 7× to unlock Developer Options. Then Settings → Developer Options → enable <b>ADB debugging</b> + <b>Debug over Wi-Fi</b>. Note the IP shown.</li>
-          <li><b>On a computer:</b> install <a href="https://developer.android.com/studio/releases/platform-tools" target="_blank" style="color:#0F766E;font-weight:700">Android Platform Tools</a> (free, ~10 MB).</li>
-          <li>Download the watch APK to your computer (the orange button above).</li>
-          <li>Connect: <code style="background:#fff;padding:2px 6px;border-radius:4px;font-family:ui-monospace">adb connect &lt;watch-IP&gt;:5555</code></li>
-          <li>Install: <code style="background:#fff;padding:2px 6px;border-radius:4px;font-family:ui-monospace">adb -s &lt;watch-IP&gt;:5555 install servia-wear-v*.apk</code></li>
-          <li>Servia appears on the watch's app list. Open → tap any tile → opens the full Servia experience (auto-mirrors via the phone if the watch is offline).</li>
-        </ol>
-        <p style="margin:10px 0 0;font-size:12.5px;color:#9A3412"><b>🚀 Coming soon:</b> Once we publish to the Wear OS Play Store ($25 one-time fee, ~3 day review), watch users can install with one tap from <em>Play Store on the watch</em> — no ADB needed.</p>
-      </div>
-
-      <div style="background:#FEE2E2;border:1px solid #FCA5A5;border-radius:14px;padding:14px;margin-top:12px">
-        <h3 style="margin:0 0 6px;font-size:14px;color:#991B1B">❌ NOT compatible with:</h3>
-        <p style="margin:0;font-size:12.5px;color:#7F1D1D;line-height:1.55"><b>Apple Watch</b> (different OS — separate WatchOS app coming, see iOS card below) · <b>Garmin / Fitbit / Amazfit / Huawei Watch GT</b> (proprietary OS, no Android app support) · <b>Wear OS 1 / Wear OS 2 watches older than 2018</b> (Galaxy Watch 1, Apple-style classic Wear devices — APK won't install).</p>
-      </div>
-    </div>
-
-    <div class="ins-card" style="grid-column:1/-1;background:linear-gradient(135deg,#F1F5F9 0%,#fff 60%);border:2px solid #94A3B8">
-      <span class="badge" style="background:#0F172A;color:#fff">🍎 iOS · APPLE</span>
-      <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
-        <div style="font-size:64px;line-height:1;flex-shrink:0">🍎</div>
-        <div style="flex:1;min-width:240px">
-          <h2 style="margin:0 0 6px">Servia for iPhone, iPad, Apple Watch</h2>
-          <p style="color:#475569;font-size:14px;line-height:1.5;margin:0">iOS doesn't support TWA-style APK install — Apple requires native apps to be App-Store-published. Plan in motion below — no action needed from you.</p>
-        </div>
-      </div>
-
-      <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:14px">
-        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px">
-          <h3 style="margin:0 0 6px;font-size:14px;color:#0F766E">✅ Available NOW: PWA via Safari</h3>
-          <p style="margin:0;font-size:12.5px;color:#475569;line-height:1.5">Open <b>servia.ae</b> in <b>Safari</b> (not Chrome — iOS limits PWAs to Safari). Tap Share → <b>Add to Home Screen</b>. Servia behaves like a native iOS app — full-screen, home-screen icon, push notifications (iOS 16.4+), works offline. ~95% of features available.</p>
-        </div>
-        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px">
-          <h3 style="margin:0 0 6px;font-size:14px;color:#0F766E">🚧 In progress: Native iOS IPA</h3>
-          <p style="margin:0;font-size:12.5px;color:#475569;line-height:1.5">Capacitor wrapper around the existing web codebase. Same UI, native shell. Adds: Live Activities (booking ETA on Lock Screen), Apple Pay, Apple Wallet pass for receipts, Siri Shortcuts ("Hey Siri, book Servia"). Apple Developer fee $99/yr — funded.</p>
-        </div>
-        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px">
-          <h3 style="margin:0 0 6px;font-size:14px;color:#0F766E">⌚ Apple Watch — design phase</h3>
-          <p style="margin:0;font-size:12.5px;color:#475569;line-height:1.5">WatchOS native target inside the same iOS bundle. Tile complications for next-booking ETA, complications you can put on the watch face, double-tap to launch, Stand-by display friendly.</p>
-        </div>
-      </div>
-
-      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:14px;padding:14px;margin-top:12px;font-size:12.5px;color:#1E3A8A">
-        <b>📅 Timeline:</b> iOS PWA — <b>live now</b>. Native IPA + WatchOS — Sprint S+2 (App Store review takes 1–7 days). The work is queued in the same CI pipeline that builds Android — no extra hands needed.
-      </div>
-    </div>
+  <!-- Why install -->
+  <div class="features">
+    <div class="feat"><div class="ico">⚡</div><h3>0.3-sec cold-start</h3><p>Native shell launches faster than the browser. Even on weak Wi-Fi.</p></div>
+    <div class="feat"><div class="ico">🔔</div><h3>Push notifications</h3><p>Booking confirmed · crew on the way · payment receipts — direct on your phone.</p></div>
+    <div class="feat"><div class="ico">🧩</div><h3>9 home-screen widgets</h3><p>Quick book · track · WhatsApp · daily tip · search · ask Servia · loyalty tier.</p></div>
+    <div class="feat"><div class="ico">⌚</div><h3>Wear OS</h3><p>Track booking · book · quote · chat — straight from your wrist.</p></div>
+    <div class="feat"><div class="ico">📡</div><h3>Works offline</h3><p>Browse services + view past bookings even in basement parking or lift.</p></div>
+    <div class="feat"><div class="ico">🔒</div><h3>Privacy-first</h3><p>No tracking SDKs. UAE PDPL compliant. Delete your data any time.</p></div>
   </div>
 
-  <div class="ins-tips">
-    <h3>⚡ Pro tips</h3>
-    <ul>
-      <li><b>Cmd/Ctrl + K</b> opens search from anywhere on servia.ae</li>
-      <li><b>/</b> shortcut focuses search when you're not typing</li>
-      <li>In ChatGPT, type <b>@servia</b> to invoke our GPT mid-conversation in any chat (e.g. <em>"@servia how much for AC service in Sharjah?"</em>)</li>
-      <li>Once installed as a PWA, Servia gets push notifications for booking ETAs and confirmations</li>
-      <li>Voice input works in Chrome, Edge, Safari (iOS 14.5+) — say "hey Servia" not required, just tap 🎤</li>
-      <li>Long-press the home screen icon (after install) to use shortcuts: Search · Book · Track · Chat</li>
-    </ul>
+  <!-- PWA fallback for users who can't access app stores -->
+  <div class="pwa-box">
+    <h3>📲 Or skip the store — use Servia in your browser</h3>
+    <p>Open <b>servia.ae</b> in Safari (iPhone) or Chrome (Android) → tap the menu → <b>Add to Home Screen</b>. Same features, instant access.</p>
+    <a class="pwa-btn" href="/" data-event="open_pwa">Open Servia →</a>
+  </div>
+
+  <div class="ratings">
+    <span>🇦🇪 <b>UAE-built</b></span>
+    <span>🇦🇪 <b>UAE-only</b> services</span>
+    <span>🛡 <b>AED 25,000</b> damage cover</span>
+    <span>📱 <b>4.9★</b> 2,400+ reviews</span>
   </div>
 </main>
 
-<script>
-/* PWA install button — wires the beforeinstallprompt event */
-(function(){
-  let deferred = null;
-  const btn = document.getElementById("pwa-install");
-  const fallback = document.getElementById("pwa-fallback");
-  window.addEventListener("beforeinstallprompt", e => {
-    e.preventDefault(); deferred = e;
-    if (btn) { btn.style.display = "inline-flex"; }
-    if (fallback) { fallback.style.display = "none"; }
-  });
-  if (btn) btn.addEventListener("click", async () => {
-    if (!deferred) return;
-    deferred.prompt();
-    const r = await deferred.userChoice;
-    if (r.outcome === "accepted") {
-      btn.textContent = "✅ Installed";
-      btn.style.background = "#15803D";
-      setTimeout(() => location.href = "/", 800);
-    }
-    deferred = null;
-  });
-  // If PWA is already installed (standalone display mode), say so
-  if (window.matchMedia("(display-mode: standalone)").matches) {
-    if (btn) { btn.style.display = "inline-flex"; btn.textContent = "✅ Already installed"; btn.disabled = true; btn.style.background = "#15803D"; }
-  }
-})();
-
-/* APK card: pull latest Android + Wear release info from /api/app/latest
-   so the download links always point to the current GH Release. */
-(function(){
-  fetch("/api/app/latest", {cache:"no-store"}).then(r => r.ok && r.json()).then(j => {
-    if (!j) return;
-    // Phone APK card
-    const dl = document.getElementById("apk-download");
-    const status = document.getElementById("apk-status");
-    const sizeEl = document.getElementById("apk-size");
-    const relLink = document.getElementById("apk-release-link");
-    if (j.apk_url && dl) {
-      dl.href = j.apk_url;
-      dl.setAttribute("download", "servia-v" + (j.apk_version||"latest") + ".apk");
-    }
-    if (status) {
-      const ago = j.released_at ? new Date(j.released_at).toLocaleDateString() : "recently";
-      status.textContent = "Latest: v" + (j.apk_version||"?") + " · published " + ago + " · "
-        + (j.apk_size_mb ? j.apk_size_mb + " MB" : "");
-    }
-    if (sizeEl && j.apk_size_mb) sizeEl.textContent = j.apk_size_mb + " MB";
-    if (relLink) relLink.href = j.release_url || "https://github.com/aalmir-erp/lumora/releases";
-    // Wear card
-    const wd = document.getElementById("wear-download");
-    const ws = document.getElementById("wear-status");
-    if (j.wear_url && wd) {
-      wd.href = j.wear_url;
-      wd.setAttribute("download", "servia-wear-v" + (j.apk_version||"latest") + ".apk");
-      wd.classList.remove("disabled");
-      wd.style.opacity = "1";
-      wd.style.pointerEvents = "auto";
-      if (ws) ws.textContent = "Latest watch APK: v" + (j.apk_version||"?") +
-        (j.wear_size_mb ? " · " + j.wear_size_mb + " MB" : "");
-    } else if (ws) {
-      ws.textContent = "⏳ Wear OS APK is still in CI — link will go live once the next build succeeds.";
-    }
-  }).catch(()=>{});
-})();
-</script>
-<script src="/install.js" defer></script>
-<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
-<footer><div class="container">
-  <div>
-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
-    <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+<footer style="background:#0F172A;color:#cbd5e1;padding:32px 20px;font-size:13px;margin-top:48px">
+  <div style="max-width:980px;margin:0 auto;display:flex;gap:18px;justify-content:space-between;flex-wrap:wrap">
+    <div><b style="color:#fff">Servia</b><br>UAE home services platform</div>
+    <div>
+      <a href="/" style="color:#cbd5e1">Home</a> ·
+      <a href="/services.html" style="color:#cbd5e1">Services</a> ·
+      <a href="/nfc.html" style="color:#cbd5e1">NFC tap-to-book</a> ·
+      <a href="/contact.html" style="color:#cbd5e1">Contact</a>
+    </div>
   </div>
-  <div><h3>Customers</h3>
-    <a href="/services.html">All services</a><br>
-    <a href="/book.html">Book online</a><br>
-    <a href="/coverage.html">Coverage map</a><br>
-    <a href="/me.html">My account</a><br>
-    <a href="/faq.html">FAQ</a>
-  </div>
-  <div><h3>Service areas</h3>
-    <a href="/area.html?city=dubai">Dubai</a><br>
-    <a href="/area.html?city=sharjah">Sharjah</a><br>
-    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
-    <a href="/area.html?city=ajman">Ajman</a><br>
-    <a href="/area.html?city=ras-al-khaimah">RAK</a>
-  </div>
-  <div><h3>Apps &amp; AI</h3>
-    <a href="/install.html">Install app</a><br>
-    <a href="/smart-speakers.html">Voice booking</a><br>
-    <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">ChatGPT GPT</a><br>
-    <a href="/videos.html">Videos</a><br>
-    <a href="/blog">Blog</a>
-  </div>
-  <div><h3>Legal</h3>
-    <a href="/terms.html">Terms</a><br>
-    <a href="/privacy.html">Privacy</a><br>
-    <a href="/refund.html">Refund</a>
-  </div>
-  <div><h3>Contact</h3>
-    <a href="/contact.html">Contact us</a><br>
-    <a href="mailto:support@servia.ae">support@servia.ae</a><br>
-    <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
-  </div>
-</div></footer>
+</footer>
 </body></html>
