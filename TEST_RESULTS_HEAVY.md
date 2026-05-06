@@ -1,16 +1,16 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 42
+- ✅ Pass: 45
 - ⚠️ Warn: 1
-- ❌ Fail: 7
+- ❌ Fail: 4
 - ⏭ Skip: 0
 
 ## Items
 
-- ❌ **[T01] Homepage loads (desktop)** — exception: HTTP 502
-- ❌ **[T02] Homepage loads (mobile)** — exception: HTTP 502
+- ✅ **[T01] Homepage loads (desktop)** — "Servia: Trusted home services in UAE | Cleaning, AC, Maid, Handyman from 35 AED"
+- ✅ **[T02] Homepage loads (mobile)** — iPhone 12
 - ❌ **[T03] /services.html lists services** — exception: only 0 cards
-- ❌ **[T04] /coverage.html renders** — exception: HTTP 502
+- ✅ **[T04] /coverage.html renders** — OK
 - ✅ **[T05] /blog index loads** — OK
 - ❌ **[T06] Sitemap has /nfc.html** — exception: nfc.html missing
 - ✅ **[T07] robots.txt accessible** — OK
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_ywRGSaBFo...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_I6xP5oIib...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -49,7 +49,7 @@
 - ✅ **[T40] /admin.html responds** — OK
 - ✅ **[T41] /api/health responds** — v1.22.97
 - ✅ **[T42] /api/services >=10** — 32
-- ✅ **[T43] /api/app/latest works** — apk_v=1.22.96
+- ✅ **[T43] /api/app/latest works** — apk_v=1.22.97
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book.html renders form** — OK
