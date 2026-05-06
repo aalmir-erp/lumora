@@ -5,23 +5,26 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.Toast;
 
 /**
- * Servia Wear OS standalone activity.
+ * Servia Wear OS main launcher activity.
  *
- * 4 large tappable tiles for the most-used flows:
- *   1. Track booking → opens https://servia.ae/me.html on the watch's
- *      browser if available, otherwise mirrors the intent to the paired
- *      phone (Wear OS auto-mirrors VIEW intents).
- *   2. Quick book → opens /book.html
- *   3. Talk to Servia → opens chat
- *   4. Quote → opens /quote.html
+ * v1.24.0 — Rewrites the previous browser-launch design (which produced
+ * unusable tiny web pages on the watch). Now each tile in the launcher
+ * goes to a dedicated SCREEN ACTIVITY:
  *
- * No external dependencies — single Activity with a programmatically-
- * built BoxInsetLayout. Builds against the wearable support library and
- * runs on any Wear OS 2.0+ watch as a standalone APK.
+ *   wear_tile_track  → BookingTrackActivity   (native list of bookings)
+ *   wear_tile_book   → QuickBookActivity      (4 service buttons → tap to send)
+ *   wear_tile_quote  → QuoteActivity          (numeric AED estimate)
+ *   wear_tile_chat   → ChatActivity           (voice-input quick-message)
+ *
+ * The actual booking submit / quote calculation / chat send is forwarded
+ * to the paired phone via the Wearable Data Layer (Phone-side message
+ * listener forwards to /api/* over HTTPS). Watch never opens a browser.
+ *
+ * Until the phone-companion APK lands in v1.25, the secondary screens
+ * show a "Use phone app to complete" prompt instead of crashing.
  */
 public class MainActivity extends Activity {
     @Override
@@ -29,30 +32,20 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.wear_main);
 
-        wireTile(R.id.wear_tile_track,
-                 "https://servia.ae/me.html?source=wear");
-        wireTile(R.id.wear_tile_book,
-                 "https://servia.ae/book.html?source=wear");
-        wireTile(R.id.wear_tile_quote,
-                 "https://servia.ae/quote.html?source=wear");
-        wireTile(R.id.wear_tile_chat,
-                 "https://servia.ae/?chat=1&source=wear");
+        wireTile(R.id.wear_tile_track,  BookingTrackActivity.class);
+        wireTile(R.id.wear_tile_book,   QuickBookActivity.class);
+        wireTile(R.id.wear_tile_quote,  QuoteActivity.class);
+        wireTile(R.id.wear_tile_chat,   ChatActivity.class);
     }
 
-    private void wireTile(int id, final String url) {
+    private void wireTile(int id, final Class<?> activityClass) {
         View v = findViewById(id);
         if (v == null) return;
-        v.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                try {
-                    startActivity(intent);
-                } catch (Exception e) {
-                    // Wear OS will auto-forward unhandled VIEW intents to the
-                    // paired phone via the Companion app, so silent-fail is OK.
-                }
+        v.setOnClickListener(view -> {
+            try {
+                startActivity(new Intent(this, activityClass));
+            } catch (Exception e) {
+                Toast.makeText(this, "Use the phone app", Toast.LENGTH_SHORT).show();
             }
         });
     }

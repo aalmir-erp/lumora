@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Wearable Data Layer requires foreground service when listening -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:label="@string/wear_app_name"
@@ -16,12 +18,6 @@
         android:allowBackup="true"
         android:supportsRtl="true">
 
-        <!-- We intentionally DO NOT declare <uses-library com.google.android.wearable>.
-             That would require the now-delisted com.google.android.wearable:wearable
-             compileOnly artifact and is no longer the recommended way to mark a
-             Wear OS app. Modern signal: <uses-feature watch> + standalone metadata. -->
-
-        <!-- Tell Play Store this is standalone (works without phone app) -->
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
@@ -36,5 +32,125 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="ae.servia.wear.BookingTrackActivity"
+                  android:exported="false"
+                  android:label="Bookings" />
+        <activity android:name="ae.servia.wear.QuickBookActivity"
+                  android:exported="false"
+                  android:label="Quick book" />
+        <activity android:name="ae.servia.wear.QuoteActivity"
+                  android:exported="false"
+                  android:label="Quote" />
+        <activity android:name="ae.servia.wear.ChatActivity"
+                  android:exported="false"
+                  android:label="Chat" />
+
+        <!-- ============== TILE SERVICES (v1.24.0 - 6 tiles total) ==============
+             Each TileService is registered as an exported service the
+             Wear OS Launcher discovers. After install, user long-presses
+             the watch face → swipe to "Add tile" → all 6 Servia tiles
+             appear in the picker.
+        ============================================================== -->
+
+        <service
+            android:name="ae.servia.wear.tiles.QuickBookTileService"
+            android:label="Servia · Quick book"
+            android:description="@string/tile_quickbook_desc"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.tiles.NextBookingTileService"
+            android:label="Servia · Next booking"
+            android:description="@string/tile_nextbooking_desc"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.tiles.RecoveryTileService"
+            android:label="Servia · SOS Recovery"
+            android:description="@string/tile_recovery_desc"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.tiles.LoyaltyTileService"
+            android:label="Servia · Loyalty tier"
+            android:description="@string/tile_loyalty_desc"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.tiles.WalletTileService"
+            android:label="Servia · Wallet"
+            android:description="@string/tile_wallet_desc"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.tiles.DailyTipTileService"
+            android:label="Servia · Daily tip"
+            android:description="@string/tile_dailytip_desc"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+
+        <!-- Wearable Listener Service for phone↔watch Data Layer sync -->
+        <service
+            android:name="ae.servia.wear.WearMessageListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/servia/" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

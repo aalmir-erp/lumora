@@ -24,8 +24,11 @@ mkdir -p "$BUILD_DIR/app/src/main/res/mipmap-hdpi"
 mkdir -p "$BUILD_DIR/app/src/main/res/mipmap-xhdpi"
 
 # Source files
+mkdir -p "$BUILD_DIR/app/src/main/java/ae/servia/wear/tiles"
 cp -v "$WEAR_SRC/AndroidManifest.xml" "$BUILD_DIR/app/src/main/AndroidManifest.xml"
-cp -v "$WEAR_SRC/java/MainActivity.java" "$BUILD_DIR/app/src/main/java/ae/servia/wear/"
+# Copy ALL java files (root + tiles subpackage)
+cp -v "$WEAR_SRC/java/"*.java "$BUILD_DIR/app/src/main/java/ae/servia/wear/" 2>/dev/null || true
+cp -v "$WEAR_SRC/java/tiles/"*.java "$BUILD_DIR/app/src/main/java/ae/servia/wear/tiles/" 2>/dev/null || true
 cp -v "$WEAR_SRC/res-layout/wear_main.xml" "$BUILD_DIR/app/src/main/res/layout/"
 cp -v "$WEAR_SRC/res-values/strings.xml" "$BUILD_DIR/app/src/main/res/values/"
 cp -v "$WEAR_SRC/res-values/styles.xml" "$BUILD_DIR/app/src/main/res/values/"

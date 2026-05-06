@@ -2,34 +2,24 @@ plugins {
     id 'com.android.application'
 }
 
-// Servia Wear OS standalone build.
+// Servia Wear OS app v1.24.0 — proper native build with Tiles + Data Layer.
 //
-// History: previous CI attempts produced no APK because the older
-// `com.google.android.support:wearable` artifact has been delisted from
-// google()'s Maven mirror. AGP 8.5 silently fails dependency resolution
-// in some configurations and exits 0 — we lose the build with no logs.
-//
-// v1.22.83 fix: drop both the deprecated support-wearable AND the
-// androidx.wear widget (BoxInsetLayout). Layout uses plain FrameLayout
-// + manual padding for round-screen safety. compileOnly wearable jar is
-// kept solely so <uses-library> resolves at compile time — the watch
-// system provides it at runtime.
+// History note: earlier appcompat dep caused kotlin-stdlib duplicate-class
+// errors. We carefully pin the wear-tiles + wear-protolayout deps to a
+// version-set that uses a single kotlin-stdlib (1.9.x) so no conflicts.
 
 android {
     namespace 'ae.servia.wear'
     compileSdk 34
     defaultConfig {
         applicationId "ae.servia.wear"
-        minSdk 26          // Wear OS 2.0 baseline
+        minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 2
+        versionName "1.24.0"
     }
     signingConfigs {
         release {
-            // Real values supplied at runtime via -Pandroid.injected.signing.*
-            // (see .scripts/build-wear-apk.sh). These placeholders only
-            // exist to keep the gradle config valid before injection.
             storeFile file("placeholder.jks")
             storePassword "placeholder"
             keyAlias "servia"
@@ -49,19 +39,42 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    packaging {
+        resources {
+            // Defensive: if any transitive jar still tries to drop
+            // kotlin-stdlib version metadata, dedupe via mergeStrategy.
+            excludes += ['/META-INF/{AL2.0,LGPL2.1}', '/META-INF/DEPENDENCIES']
+        }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Pin all kotlin-stdlib variants to 1.9.22 so wear-tiles deps
+        // align with what AGP brings in. Eliminates the duplicate-class
+        // crash that delayed the Wear APK for 4 versions earlier.
+        force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-common:1.9.22'
+    }
 }
 
 dependencies {
-    // ZERO external deps. MainActivity extends android.app.Activity (NOT
-    // AppCompatActivity) and the layout uses pure platform views
-    // (FrameLayout, LinearLayout, TextView). The styles.xml references
-    // @android:style/Theme.DeviceDefault.Light which is built-in.
-    //
-    // Why nothing here: androidx.appcompat:appcompat:1.7.0 transitively
-    // pulls kotlin-stdlib:1.8.22 which conflicts with kotlin-stdlib-
-    // jdk7/jdk8:1.6.21 brought in by the AGP plugin classpath, causing
-    // 'Duplicate class kotlin.collections.jdk8.CollectionsJDK8Kt' errors
-    // and a silent BUILD FAILED in 30s with no APK produced. (The actual
-    // root cause was finally readable from the ci-wear-debug branch in
-    // v1.22.87.) Empty deps = no transitive jar conflicts = clean build.
+    // Wear Tiles SDK — the swipe-able tile cards on the watch face
+    implementation 'androidx.wear.tiles:tiles:1.4.1'
+    implementation 'androidx.wear.tiles:tiles-material:1.4.1'
+    implementation 'androidx.wear.protolayout:protolayout:1.2.1'
+    implementation 'androidx.wear.protolayout:protolayout-material:1.2.1'
+    implementation 'androidx.wear.protolayout:protolayout-expression:1.2.1'
+
+    // Native Wear UI components for MainActivity (BoxInsetLayout etc)
+    implementation 'androidx.wear:wear:1.3.0'
+
+    // Wearable Data Layer — phone↔watch sync (used for booking state +
+    // wallet balance push from phone TWA via a companion service later).
+    implementation 'com.google.android.gms:play-services-wearable:18.2.0'
+
+    // Guava ListenableFuture — required by tile-builders' callback chain
+    implementation 'com.google.guava:guava:33.0.0-android'
 }

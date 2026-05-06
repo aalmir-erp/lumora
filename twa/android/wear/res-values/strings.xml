@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="wear_app_name">Servia</string>
+    <string name="tile_quickbook_desc">One-tap book your most-used Servia service</string>
+    <string name="tile_nextbooking_desc">Your next booking with live ETA + crew status</string>
+    <string name="tile_recovery_desc">SOS · Roadside vehicle recovery in one tap</string>
+    <string name="tile_loyalty_desc">Your Ambassador tier + savings on next booking</string>
+    <string name="tile_wallet_desc">Servia wallet balance + recent activity</string>
+    <string name="tile_dailytip_desc">Daily UAE home-services tip from Servia experts</string>
 </resources>
