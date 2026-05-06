@@ -280,7 +280,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   /* Reserve space for location-bar so it doesn't push content when injected */
   #servia-loc-bar-placeholder{height:36px;background:linear-gradient(90deg,#0F766E,#14B8A6);
     border-bottom:1px solid rgba(255,255,255,.1)}
-  body.has-location-bar #servia-loc-bar-placeholder{display:none}
+  body.has-location-bar #servia-loc-bar-placeholder,body:has(#servia-loc-bar) #servia-loc-bar-placeholder{display:none !important}
 </style>
 <!-- v1.23.1: pre-rendered first slide so user sees content from frame 1 (no flash).
      banner.js (deferred) hydrates this with rotation between slides. -->
@@ -1079,6 +1079,45 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       <a href="/me.html#wallet" style="background:#fff;color:#7C2D12;padding:11px 22px;border-radius:999px;font-weight:700;text-decoration:none;font-size:14px;border:1.5px solid #7C2D12">💰 See my wallet</a>
       <a href="/share-rewards.html#how" style="color:#7C2D12;font-weight:700;text-decoration:underline;padding:11px 14px;font-size:13px">How it works →</a>
     </div>
+  </div>
+</section>
+
+<!-- 📤 SHARE & INVITE — restored detail card per user request (v1.23.3) -->
+<section style="padding:32px 16px;background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div style="max-width:1100px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:20px">
+      <span style="background:#0F766E;color:#fff;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">📤 Share Servia</span>
+      <h2 style="margin:14px 0 6px;font-size:24px;letter-spacing:-.02em;color:#0F172A">One tap to share — friends save AED 50, you earn rewards</h2>
+      <p style="margin:0;color:#475569;font-size:14px;max-width:540px;margin:0 auto">Send your unique link via WhatsApp, Instagram, copy + paste anywhere. We track every signup so referral credit is automatic.</p>
+    </div>
+
+    <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));max-width:780px;margin:0 auto">
+      <a href="javascript:window.serviaShare&&serviaShare('whatsapp')||(window.location='https://wa.me/?text='+encodeURIComponent('Try Servia for UAE home services - I love it! Use my link to get AED 50 off: https://servia.ae?ref=me'))"
+         style="background:#075E54;color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:14px;display:flex;align-items:center;gap:10px;justify-content:center">
+        <span style="font-size:22px">💬</span> WhatsApp
+      </a>
+      <a href="https://www.instagram.com/" target="_blank" rel="noopener"
+         style="background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF);color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:14px;display:flex;align-items:center;gap:10px;justify-content:center">
+        <span style="font-size:22px">📸</span> Instagram
+      </a>
+      <a href="https://twitter.com/intent/tweet?text=Try+Servia+for+UAE+home+services&url=https://servia.ae" target="_blank" rel="noopener"
+         style="background:#000;color:#fff;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:14px;display:flex;align-items:center;gap:10px;justify-content:center">
+        <span style="font-size:22px">✕</span> Post on X
+      </a>
+      <button type="button" onclick="navigator.clipboard.writeText('https://servia.ae?ref=me');this.innerHTML='<span style=\'font-size:22px\'>✓</span> Copied!'"
+         style="background:#fff;color:#0F172A;padding:14px;border-radius:14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;justify-content:center;border:2px solid #E2E8F0;cursor:pointer">
+        <span style="font-size:22px">🔗</span> Copy link
+      </button>
+      <a href="mailto:?subject=Try Servia&body=Use my link for AED 50 off your first booking: https://servia.ae?ref=me"
+         style="background:#fff;color:#0F172A;padding:14px;border-radius:14px;font-weight:700;text-decoration:none;font-size:14px;display:flex;align-items:center;gap:10px;justify-content:center;border:2px solid #E2E8F0">
+        <span style="font-size:22px">✉️</span> Email
+      </a>
+      <a href="/share-rewards.html"
+         style="background:#FCD34D;color:#7C2D12;padding:14px;border-radius:14px;font-weight:800;text-decoration:none;font-size:14px;display:flex;align-items:center;gap:10px;justify-content:center">
+        <span style="font-size:22px">🎁</span> My rewards
+      </a>
+    </div>
+    <p style="text-align:center;margin-top:14px;font-size:12px;color:#94A3B8">Friends get AED 50 off · You climb a tier with every successful referral · 5% cashback on every booking</p>
   </div>
 </section>
 

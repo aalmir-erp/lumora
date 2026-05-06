@@ -163,6 +163,7 @@
       <span class="detecting"><span class="dot"></span>Detecting your area for personalised service…</span>
     </span>
     <button type="button" id="servia-loc-grant" style="display:none">Allow location</button>
+    <button type="button" id="servia-loc-pin" style="display:none" title="Pin location on map">🗺 Pin map</button>
     <button type="button" id="servia-loc-edit" style="display:none">Edit address</button>
     <button type="button" class="x" id="servia-loc-x" aria-label="Hide">✕</button>
   `;
@@ -204,17 +205,20 @@
     const lbl = document.getElementById("servia-loc-label");
     const grant = document.getElementById("servia-loc-grant");
     const edit = document.getElementById("servia-loc-edit");
+    const pin = document.getElementById("servia-loc-pin");
     if (saved && saved.area) {
       const where = [saved.area, saved.emirate].filter(Boolean).join(", ");
       const tag = saved.tag ? `<span style="background:rgba(252,211,77,.25);color:#FCD34D;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:800;margin-inline-end:4px">${escapeHtml(saved.tag)}</span>` : "";
       lbl.innerHTML = `${tag}Servicing <b>${escapeHtml(where)}</b>${saved.full_address ? "" : " · add your full address for one-tap booking"}`;
       grant.style.display = "none";
       edit.style.display = "";
+      if (pin) pin.style.display = "";    // v1.23.3 — show map-pin button when we have an area
       bar.classList.add("compact");
     } else {
       lbl.innerHTML = `<span class="detecting"><span class="dot"></span>Allow location for area-specific prices &amp; arrival ETAs</span>`;
       grant.style.display = "";
       edit.style.display = "";
+      if (pin) pin.style.display = "none";
       grant.textContent = "Allow location";
       edit.textContent = "Set manually";
     }
@@ -229,6 +233,16 @@
     renderBar();
     document.getElementById("servia-loc-grant").addEventListener("click", grantLocation);
     document.getElementById("servia-loc-edit").addEventListener("click", openEditModal);
+    // v1.23.3 — Pin-map button: opens edit modal AND auto-expands the map section
+    const pinBtn = document.getElementById("servia-loc-pin");
+    if (pinBtn) pinBtn.addEventListener("click", () => {
+      openEditModal();
+      // After modal opens, click the map-toggle to expand it
+      setTimeout(() => {
+        const t = document.getElementById("lm-map-toggle");
+        if (t && !t.classList.contains("open")) t.click();
+      }, 100);
+    });
     document.getElementById("servia-loc-x").addEventListener("click", () => {
       try { sessionStorage.setItem(KEY_DISMISSED, "1"); } catch (_) {}
       bar.style.display = "none";
