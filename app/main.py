@@ -1938,9 +1938,22 @@ def _sitemap_xml_inner():
         ("/privacy.html", "0.4", "yearly"),
         ("/terms.html", "0.4", "yearly"),
         ("/refund.html", "0.4", "yearly"),
+        # NFC tap-to-book hub + dedicated keyword-targeted sub-pages.
+        # /nfc.html is the main hub; sub-pages target long-tail queries
+        # (vehicle recovery / villa bundle / laptop IT / NFC-vs-QR).
         ("/nfc.html", "0.95", "weekly"),
         ("/nfc-vehicle-recovery.html", "0.85", "weekly"),
+        ("/nfc-villa-bundle.html", "0.80", "weekly"),
+        ("/nfc-laptop-it.html", "0.80", "weekly"),
+        ("/nfc-vs-qr.html", "0.75", "monthly"),
+        # Other top-level pages
         ("/install.html", "0.85", "weekly"),
+        ("/quote.html", "0.7", "weekly"),
+        ("/search.html", "0.75", "weekly"),
+        ("/gallery.html", "0.6", "monthly"),
+        ("/area.html", "0.7", "weekly"),
+        ("/smart-speakers.html", "0.6", "monthly"),
+        ("/partner-agreement.html", "0.4", "yearly"),
     ]
     for p, prio, freq in static_pages:
         urls.append((p, prio, freq, today))
