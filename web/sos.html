@@ -148,6 +148,19 @@
       </div>
     </div>
 
+    <!-- v1.24.10 — photo upload. Customer can attach a photo of the issue
+         (broken AC, flat tyre, leak, etc.) so the vendor knows what to bring. -->
+    <div class="loc-card" id="photo-card">
+      <div class="lab">📷 Add a photo (optional)</div>
+      <div id="photo-preview-row" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0"></div>
+      <div class="row">
+        <button onclick="document.getElementById('photo-input').click()" class="primary" style="background:#0F766E;border-color:#0F766E">📷 Take / pick photo</button>
+        <button onclick="clearPhotos()" id="photo-clear-btn" style="display:none">🗑 Clear</button>
+      </div>
+      <input id="photo-input" type="file" accept="image/*" capture="environment" multiple style="display:none">
+      <div id="photo-status" style="font-size:11px;color:#64748B;margin-top:6px;min-height:14px"></div>
+    </div>
+
     <button class="primary" id="dispatch-btn" disabled onclick="dispatch()">DISPATCH NOW</button>
     <button class="ghost" onclick="location.href='tel:+971566900255'">📞 Or call hotline +971 56 690 0255</button>
   </div>
@@ -282,6 +295,7 @@
     sub: null,
     loc: null,           // {lat,lng,accuracy_m}
     addr: null,          // {building,flat,street,notes}
+    photos: [],          // v1.24.10 — array of {url, thumb} for uploaded photos
     dispatchId: 0,
     vendorPhone: null,
     pickmap: null,
@@ -449,6 +463,84 @@
   }
   window.openAddr = openAddr; window.closeAddr = closeAddr; window.saveAddr = saveAddr;
 
+  // ============ Photo upload (v1.24.10) ============
+  // Compresses each picked image client-side to ≤1280px JPEG q=0.7, POSTs
+  // to /api/chat/upload (existing endpoint, returns /uploads/chat/X.jpg URL),
+  // stores URLs in state.photos so they go with the dispatch payload.
+  function setupPhotoPicker(){
+    var inp = $("photo-input");
+    if (!inp) return;
+    inp.onchange = function(){
+      var files = Array.prototype.slice.call(inp.files || []);
+      inp.value = "";
+      files.forEach(uploadOne);
+    };
+  }
+  function uploadOne(file){
+    if (!file.type.startsWith("image/")) return;
+    var st = $("photo-status");
+    st.textContent = "⏳ Compressing & uploading…";
+    compressImage(file, 1280, 0.7).then(function(blob){
+      var fd = new FormData();
+      fd.append("file", blob, "sos-photo.jpg");
+      return fetch("/api/chat/upload", {method:"POST", body:fd});
+    }).then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+      .then(function(j){
+        if (!j.url) throw new Error("no URL returned");
+        state.photos.push({url: j.url});
+        renderPhotoPreviews();
+        st.textContent = "✅ " + state.photos.length + " photo" + (state.photos.length>1?"s":"") + " uploaded";
+      })
+      .catch(function(e){
+        st.textContent = "⚠ Upload failed: " + (e.message || e);
+      });
+  }
+  function compressImage(file, maxSize, quality){
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      img.onload = function(){
+        var w = img.width, h = img.height;
+        if (Math.max(w, h) > maxSize) {
+          var ratio = maxSize / Math.max(w, h);
+          w = Math.round(w * ratio); h = Math.round(h * ratio);
+        }
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        c.toBlob(function(b){ resolve(b); }, "image/jpeg", quality);
+      };
+      img.onerror = function(){ reject(new Error("could not load image")); };
+      var r = new FileReader();
+      r.onload = function(e){ img.src = e.target.result; };
+      r.readAsDataURL(file);
+    });
+  }
+  function renderPhotoPreviews(){
+    var row = $("photo-preview-row");
+    if (!row) return;
+    row.innerHTML = state.photos.map(function(p, i){
+      return '<div style="position:relative">'
+        + '<img src="' + escHtml(p.url) + '" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid #CBD5E1">'
+        + '<button data-i="' + i + '" class="ph-x" aria-label="Remove" '
+          + 'style="position:absolute;top:-4px;right:-4px;background:#DC2626;color:#fff;border:0;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:11px;line-height:1">✕</button>'
+        + '</div>';
+    }).join("");
+    Array.prototype.forEach.call(row.querySelectorAll(".ph-x"), function(b){
+      b.onclick = function(){
+        state.photos.splice(parseInt(b.dataset.i,10), 1);
+        renderPhotoPreviews();
+      };
+    });
+    $("photo-clear-btn").style.display = state.photos.length ? "" : "none";
+  }
+  function clearPhotos(){
+    state.photos = [];
+    renderPhotoPreviews();
+    $("photo-status").textContent = "";
+  }
+  window.clearPhotos = clearPhotos;
+  setupPhotoPicker();
+
   // ============ STEP 3: dispatch ============
   function dispatch(){
     if (!state.service || !state.sub || !state.loc) return;
@@ -481,11 +573,20 @@
     var body = {
       lat: state.loc.lat, lng: state.loc.lng,
       accuracy_m: state.loc.accuracy_m,
-      source: "mobile", issue: state.sub
+      source: "mobile", issue: state.sub,
+      service_id: state.service ? state.service.id : "vehicle_recovery"
     };
     if (state.addr) {
       body.customer_name = (state.addr.building || "") + " " + (state.addr.flat || "");
       body.notes = state.addr.notes || "";
+    }
+    // v1.24.10 — first photo on photo_url, rest space-separated in notes
+    if (state.photos && state.photos.length) {
+      body.photo_url = state.photos[0].url;
+      if (state.photos.length > 1) {
+        var more = state.photos.slice(1).map(function(p){ return p.url; }).join(" ");
+        body.notes = (body.notes ? body.notes + "\n" : "") + "Extra photos: " + more;
+      }
     }
     fetch("/api/recovery/dispatch", {
       method:"POST", headers:headers, body: JSON.stringify(body)

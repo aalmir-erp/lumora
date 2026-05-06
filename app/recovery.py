@@ -102,6 +102,15 @@ def _ensure_schema() -> None:
         """)
         c.execute("CREATE INDEX IF NOT EXISTS idx_rec_status ON recovery_dispatches(status)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_rec_phone  ON recovery_dispatches(customer_phone)")
+        # v1.24.10 — additive columns for service_id + photo + notes
+        for ddl in (
+            "ALTER TABLE recovery_dispatches ADD COLUMN service_id TEXT",
+            "ALTER TABLE recovery_dispatches ADD COLUMN notes TEXT",
+            "ALTER TABLE recovery_dispatches ADD COLUMN photo_url TEXT",
+            "ALTER TABLE recovery_dispatches ADD COLUMN customer_email TEXT",
+        ):
+            try: c.execute(ddl)
+            except Exception: pass
         c.execute("""
             CREATE TABLE IF NOT EXISTS recovery_vendor_base (
                 vendor_id  INTEGER PRIMARY KEY,
@@ -312,13 +321,20 @@ def recovery_dispatch(body: DispatchBody, request: Request,
     )
     today = _dt.date.today().isoformat()
     slot = _dt.datetime.utcnow().strftime("%H:%M")
-    bid = "RV" + secrets.token_hex(4).upper()
+    bid = ("RV" if (body.service_id == "vehicle_recovery" or not body.service_id)
+           else "SO") + secrets.token_hex(4).upper()
+    # Customer notes from the request body (separate from the auto-generated dispatch summary)
+    customer_notes = (body.notes or "").strip()
+    full_notes = notes if not customer_notes else (notes + "\n— customer note: " + customer_notes)
+    if body.photo_url:
+        full_notes += f"\n— photo: {body.photo_url}"
+
     with db.connect() as c:
         c.execute(
             "INSERT INTO bookings(id, service_id, target_date, time_slot, customer_name, phone, "
             "address, notes, status, estimated_total, currency, language, source, created_at, updated_at) "
             "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (bid, "vehicle_recovery", today, slot, name, phone, address_str, notes,
+            (bid, body.service_id or "vehicle_recovery", today, slot, name, phone, address_str, full_notes,
              "dispatched", price, "AED", "en", body.source or "web", _now(), _now())
         )
         # Auto-assign to the picked vendor
@@ -331,12 +347,16 @@ def recovery_dispatch(body: DispatchBody, request: Request,
         cur = c.execute(
             "INSERT INTO recovery_dispatches(booking_id, customer_id, customer_phone, customer_name, "
             "vehicle_make, vehicle_plate, issue, lat, lng, accuracy_m, vendor_id, eta_min, "
-            "price_aed, distance_km, status, source, created_at) "
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "price_aed, distance_km, status, source, created_at, "
+            "service_id, notes, photo_url, customer_email) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (bid, cust_id, phone, name, body.vehicle_make, body.vehicle_plate,
              body.issue or "breakdown", body.lat, body.lng, body.accuracy_m,
              int(vendor["id"]), eta, price, distance_km, "dispatched",
-             body.source or "web", _now())
+             body.source or "web", _now(),
+             body.service_id or "vehicle_recovery",
+             customer_notes or None, body.photo_url or None,
+             body.customer_email or None)
         )
         dispatch_id = cur.lastrowid
 
@@ -348,12 +368,21 @@ def recovery_dispatch(body: DispatchBody, request: Request,
     # Best-effort: ping vendor on WhatsApp + admin alert. Never blocks the caller.
     try:
         gmaps = f"https://maps.google.com/?q={body.lat},{body.lng}"
+        photo_line = ""
+        if body.photo_url:
+            full_photo = body.photo_url if body.photo_url.startswith("http") else f"https://servia.ae{body.photo_url}"
+            photo_line = f"📷 Customer photo: {full_photo}\n"
+        notes_line = ""
+        if customer_notes:
+            notes_line = f"📝 Notes: {customer_notes}\n"
         msg_v = (
-            f"🚨 *SERVIA RECOVERY DISPATCH*\n"
-            f"Booking: *{bid}*\n"
+            f"🚨 *SERVIA SOS DISPATCH*\n"
+            f"Booking: *{bid}* · {(body.service_id or 'vehicle_recovery').replace('_',' ').title()}\n"
             f"Customer: {name} ({phone})\n"
             f"Issue: {issue_label}\n"
             f"Vehicle: {body.vehicle_make or '—'} {body.vehicle_plate or ''}\n"
+            f"{notes_line}"
+            f"{photo_line}"
             f"Location: {gmaps}\n"
             f"Distance: {distance_km} km · ETA promised: {eta} min\n"
             f"Payout: AED {round(price * 0.85, 2)}\n"

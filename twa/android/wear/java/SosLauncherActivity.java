@@ -489,6 +489,19 @@ public class SosLauncherActivity extends Activity {
             TextView callBtn = button("📞 CALL  " + vendorPhone, 0xFFFCD34D, 0xFF1E293B);
             callBtn.setOnClickListener(v -> dial(vendorPhone));
             root.addView(callBtn);
+
+            // v1.24.10 — clear path for adding photos: the watch has no
+            // camera, so prompt the user to open Servia chat on their
+            // phone (which has 📎 attach + 📷 capture). The booking_id is
+            // included so the photo is filed against this dispatch.
+            TextView photoTip = new TextView(this);
+            photoTip.setText("📷 Add a photo of the issue?\nOpen Servia chat on your phone — type 'photo for "
+                + j.optString("booking_id", "") + "' and tap 📎 to attach.");
+            photoTip.setTextColor(0xFFFEE2E2);
+            photoTip.setTextSize(10);
+            photoTip.setGravity(Gravity.CENTER);
+            photoTip.setPadding(4, 12, 4, 4);
+            root.addView(photoTip);
         } catch (Exception e) {
             statusView.setText("⚠ Could not parse: " + e.getMessage());
         }
