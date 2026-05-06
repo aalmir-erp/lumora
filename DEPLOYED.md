@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"CHMx9H4xRvGJJg3o-_9nXA"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"XgTEDM1nTFCLIYhOnpoFkQ"}`
 
 ## Build logs
 ```
@@ -11,8 +11,8 @@
 [ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 2/11] WORKDIR /app
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
 [internal] load build context
@@ -32,9 +32,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6YWIxNWMwMmM5NTc2ZWI2MzZkZDMzNzFlZWJjZWNiZTZhMGIwOTNmZjU3YmVjOWQwZTBhYWE5ZTNmMjU4Mjg5NiIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNlQxOTowNToyOVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:d168152addeee2fe193a241a28eaaffb659bac0166b6d33f0d066d54f7b66256
-containerimage.digest: sha256:ab15c02c9576eb636dd3371eebcecbe6a0b093ff57bec9d0e0aaa9e3f2582896
+containerimage.digest: sha256:545c085248ca24c4cd224d39f191fba94396d444df8e485b72f612882b746838
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NTQ1YzA4NTI0OGNhMjRjNGNkMjI0ZDM5ZjE5MWZiYTk0Mzk2ZDQ0NGRmOGU0ODViNzJmNjEyODgyYjc0NjgzOCIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNlQxOTo1MDoyNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:a043190d94414a89acea9eb1abc0731131449af7c31095ec402c76501f9c03d5
 image push
 image push
 
@@ -50,19 +50,30 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/62032a30-6a47-427f-8b05-98d48ba8aa36/vol_onr647rhdeir9di9
-Starting Container
 [start] launching whatsapp_bridge
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/abb657b7-83b4-4043-b234-69e277db8b37/vol_onr647rhdeir9di9
+Starting Container
 [wa-bridge] listening on :3001
+INFO:     Waiting for application startup.
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
 INFO:     Started server process [1]
-INFO:     Waiting for application startup.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.2:41603 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:59995 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:39114 - "GET /.well-known/assetlinks.json HTTP/1.1" 200 OK
+INFO:     100.64.0.4:47460 - "GET /.well-known/assetlinks.json HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61600 - "GET /?source=twa HTTP/1.1" 200 OK
+INFO:     100.64.0.4:47460 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.4:47460 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.4:13658 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.6:43446 - "GET /img/recovery/burj-tap.webp HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61600 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.4:13658 - "GET /api/blog/latest?limit=10 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:47460 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.4:13662 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.4:47460 - "GET /sos.html HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:21674 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
