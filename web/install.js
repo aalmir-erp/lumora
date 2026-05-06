@@ -139,47 +139,11 @@
   }
 
   // ---------- Subtle banner (top of page) ----------
-  function injectBanner() {
-    if (!FORCE_SHOW && (isStandalone() || localStorage.getItem(KEY_INSTALLED))) return;
-    if (isBannerDismissed()) return;
-    if (document.getElementById("servia-install-banner")) return;
-    const b = document.createElement("div");
-    b.id = "servia-install-banner";
-    b.innerHTML =
-      '<span style="font-size:18px">📲</span>' +
-      '<span><b>Servia mobile app</b> · faster, arrival alerts, app-only deals.</span>' +
-      '<button id="servia-install-banner-go" type="button">Install</button>' +
-      '<button id="servia-install-banner-x" type="button" aria-label="Dismiss">✕</button>';
-    // v1.22.98 — STRICT single-row banner. NO wrapping, height locked to 36px,
-    // long message gets ellipsised. Banner injects with display:none then
-    // becomes visible only after first paint to prevent layout-shift flicker.
-    b.style.cssText =
-      "display:flex;gap:8px;align-items:center;justify-content:space-between;padding:0 12px;" +
-      "background:linear-gradient(90deg,#0F766E,#0D9488);color:#fff;font-size:13px;font-weight:600;" +
-      "flex-wrap:nowrap !important;line-height:1.3;height:36px;min-height:36px;max-height:36px;" +
-      "box-sizing:border-box;overflow:hidden;visibility:hidden";
-    const textSpan = b.querySelectorAll("span")[1];
-    if (textSpan) {
-      textSpan.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
-    }
-    b.querySelector("#servia-install-banner-go").style.cssText =
-      "background:#FCD34D;color:#0F172A;border:0;padding:5px 12px;border-radius:999px;font-weight:800;cursor:pointer;font-size:12.5px;flex-shrink:0;white-space:nowrap";
-    // After insert, reveal in next animation frame so layout settles first
-    requestAnimationFrame(() => { b.style.visibility = "visible"; });
-    b.querySelector("#servia-install-banner-x").style.cssText =
-      "background:transparent;color:#fff;border:0;cursor:pointer;font-size:16px;opacity:.7";
-    // Insert at top of body, after the flag strip if present
-    const flag = document.querySelector(".uae-flag-strip");
-    if (flag && flag.nextSibling) flag.parentNode.insertBefore(b, flag.nextSibling);
-    else document.body.insertBefore(b, document.body.firstChild);
-    document.getElementById("servia-install-banner-go").onclick = openModal;
-    document.getElementById("servia-install-banner-x").onclick = () => {
-      localStorage.setItem(KEY_DISMISSED, "banner");
-      localStorage.setItem(KEY_DISMISSED_AT, String(Date.now()));
-      b.remove(); track("banner_dismissed");
-    };
-    track("banner_shown");
-  }
+  // v1.24.3 — DISABLED. banner.js already rotates a "📲 Get the Servia mobile
+  // app" slide so a separate install banner just stacked another teal stripe
+  // on top of the page. We keep the modal + FAB; banner.js's slide opens this
+  // modal via window.serviaShowInstall.
+  function injectBanner() { return; }
 
   // ---------- Detailed install modal ----------
   function openModal() {

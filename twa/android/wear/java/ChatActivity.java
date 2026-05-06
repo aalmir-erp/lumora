@@ -49,8 +49,10 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
     protected LinearLayout bubbles;
     protected ProgressBar spinner;
     protected TextView status;
+    protected TextView stopBtn;     // v1.24.3: visible Stop button while TTS speaks
     protected TextToSpeech tts;
     protected boolean ttsReady = false;
+    protected boolean ttsSpeaking = false;
 
     /** Subclass override: open the mic immediately on launch. */
     protected boolean autoOpenMic() { return false; }
@@ -101,8 +103,18 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
         root.addView(status);
 
         TextView mic = button("🎙 Tap & speak", 0xFFFCD34D, 0xFF7C2D12);
-        mic.setOnClickListener(v -> startVoiceInput());
+        // v1.24.3 — tapping mic STOPS any speech in progress, then opens recogniser.
+        // Long-press (held >300ms) just stops without opening mic — useful when
+        // user only wants to silence the watch.
+        mic.setOnClickListener(v -> { stopSpeaking(); startVoiceInput(); });
+        mic.setOnLongClickListener(v -> { stopSpeaking(); return true; });
         root.addView(mic);
+
+        // Visible "⏹ Stop" button shown while TTS is speaking; hidden otherwise.
+        stopBtn = button("⏹ Stop voice", 0xFF334155, 0xFFFFFFFF);
+        stopBtn.setOnClickListener(v -> stopSpeaking());
+        stopBtn.setVisibility(View.GONE);
+        root.addView(stopBtn);
 
         setContentView(root);
 
@@ -124,8 +136,33 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
             try {
                 tts.setLanguage(Locale.US);
                 tts.setSpeechRate(1.04f);
+                // Track when TTS starts/stops so the Stop button shows correctly
+                tts.setOnUtteranceProgressListener(new android.speech.tts.UtteranceProgressListener() {
+                    @Override public void onStart(String uid) {
+                        ttsSpeaking = true;
+                        runOnUiThread(() -> stopBtn.setVisibility(View.VISIBLE));
+                    }
+                    @Override public void onDone(String uid) {
+                        ttsSpeaking = false;
+                        runOnUiThread(() -> stopBtn.setVisibility(View.GONE));
+                    }
+                    @Override public void onError(String uid) {
+                        ttsSpeaking = false;
+                        runOnUiThread(() -> stopBtn.setVisibility(View.GONE));
+                    }
+                });
             } catch (Exception ignored) {}
         }
+    }
+
+    /** Cut TTS playback immediately. Called when user taps mic again, taps
+     *  the Stop button, or long-presses mic. */
+    protected void stopSpeaking() {
+        try {
+            if (tts != null) tts.stop();
+        } catch (Exception ignored) {}
+        ttsSpeaking = false;
+        if (stopBtn != null) stopBtn.setVisibility(View.GONE);
     }
 
     @Override
@@ -136,6 +173,9 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
 
     // ---------------------------------------------------------------- voice
     protected void startVoiceInput() {
+        // Always silence any current TTS before listening — the recogniser
+        // would pick up Servia's own voice as input otherwise.
+        stopSpeaking();
         try {
             Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -235,7 +275,10 @@ public class ChatActivity extends Activity implements TextToSpeech.OnInitListene
             // Strip emoji-heavy noise so TTS doesn't say "smiley face"
             String clean = text.replaceAll("[\\p{So}\\p{Cn}]", "").trim();
             if (clean.length() > 600) clean = clean.substring(0, 600);
-            tts.speak(clean, TextToSpeech.QUEUE_FLUSH, null, "wear-tts");
+            // Pass utteranceId so OnUtteranceProgressListener fires; this
+            // toggles the Stop button's visibility for v1.24.3.
+            android.os.Bundle p = new android.os.Bundle();
+            tts.speak(clean, TextToSpeech.QUEUE_FLUSH, p, "wear-tts");
         } catch (Exception ignored) {}
     }
 

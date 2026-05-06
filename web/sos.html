@@ -2,212 +2,539 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>SOS · One-tap recovery · Servia</title>
-<meta name="description" content="One tap. Real GPS. Closest tow truck dispatched. Vendor name + phone shown instantly. Servia 24/7 vehicle recovery UAE.">
+<title>Quick service · Servia</title>
+<meta name="description" content="One-tap dispatch for vehicle recovery, chauffeur, handyman, plumber, electrician, AC fix, cleaning, and more. Real GPS, exact-address pin, vendor name + phone instantly.">
 <link rel="canonical" href="https://servia.ae/sos.html">
 <meta name="theme-color" content="#DC2626">
 <meta name="robots" content="noindex,nofollow">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous">
 <style>
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-       background:#DC2626;color:#fff;min-height:100vh;display:flex;flex-direction:column}
-  header{padding:18px 16px 6px;text-align:center}
-  header h1{margin:0;font-size:14px;letter-spacing:.18em;color:#FCD34D;font-weight:800}
-  main{flex:1;padding:14px 14px 24px;max-width:520px;margin:0 auto;width:100%}
-  .panic{background:#fff;color:#DC2626;border-radius:24px;padding:28px 18px;text-align:center;
-         box-shadow:0 14px 40px rgba(0,0,0,.35);margin-bottom:14px}
-  .panic .big{font-size:38px;font-weight:900;margin:6px 0;line-height:1}
-  .panic .sub{font-size:13px;color:#1f2937;margin:6px 0 0}
-  button.primary{display:block;width:100%;padding:24px 16px;font-size:18px;font-weight:800;
-       border:0;border-radius:18px;background:#FCD34D;color:#0F172A;cursor:pointer;
-       margin-top:10px;letter-spacing:.04em;box-shadow:0 6px 16px rgba(0,0,0,.2)}
-  button.primary:active{transform:scale(.98)}
-  button.ghost{display:block;width:100%;padding:14px;font-size:13px;
-       border:1px solid rgba(255,255,255,.4);border-radius:14px;background:transparent;color:#fff;
-       margin-top:10px;cursor:pointer}
-  .vendor-card{background:#fff;color:#0F172A;border-radius:20px;padding:18px;margin-top:10px;
-       box-shadow:0 14px 40px rgba(0,0,0,.4)}
-  .vendor-card .name{font-size:22px;font-weight:800;margin:0 0 4px}
-  .vendor-card .meta{font-size:12px;color:#475569;margin:0 0 12px}
-  .vendor-card .eta{background:#0F172A;color:#FCD34D;border-radius:14px;padding:14px;text-align:center;
-       margin-bottom:12px}
-  .vendor-card .eta .min{font-size:36px;font-weight:900}
-  .vendor-card .eta .km{font-size:13px;color:#cbd5e1;margin-top:2px}
-  .vendor-card .call{display:block;width:100%;padding:20px;background:#0F766E;color:#fff;
-       border-radius:14px;text-align:center;text-decoration:none;font-size:16px;font-weight:800;
-       margin-bottom:8px}
-  .vendor-card .wa{display:block;width:100%;padding:14px;background:#25D366;color:#fff;
-       border-radius:14px;text-align:center;text-decoration:none;font-size:14px;font-weight:700;
-       margin-bottom:8px}
-  .row{display:flex;gap:8px;margin-top:8px}
-  .row button{flex:1;padding:12px;border:0;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer}
-  .complete{background:#14B8A6;color:#fff}
-  .cancel{background:#334155;color:#fff}
+       background:#7F1D1D;color:#fff;min-height:100vh;display:flex;flex-direction:column;
+       background:linear-gradient(180deg,#7F1D1D 0%,#991B1B 60%,#0F172A 100%)}
+  header{padding:14px 16px 4px;text-align:center}
+  header .logo{display:inline-flex;align-items:center;gap:6px;font-size:13px;letter-spacing:.18em;color:#FCD34D;font-weight:800}
+  header .sub{font-size:11px;color:#FECACA;margin-top:4px}
+  main{flex:1;padding:10px 14px 28px;max-width:520px;margin:0 auto;width:100%}
+
+  /* service grid */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:8px 0 12px}
+  .tile{background:#fff;color:#0F172A;border:0;border-radius:18px;padding:14px 10px 12px;
+        text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;
+        box-shadow:0 8px 22px rgba(0,0,0,.28);transition:transform .15s ease;font:inherit;
+        min-height:96px;position:relative;overflow:hidden}
+  .tile:active{transform:scale(.97)}
+  .tile .ico{font-size:30px;line-height:1;margin-bottom:2px}
+  .tile .nm{font-size:14px;font-weight:800;line-height:1.15}
+  .tile .sub{font-size:11px;color:#475569;line-height:1.3}
+  .tile.urgent{background:#DC2626;color:#fff;outline:2px solid #FCD34D}
+  .tile.urgent .sub{color:#FECACA}
+  .tile.urgent::after{content:"24/7";position:absolute;top:8px;right:8px;
+        background:#FCD34D;color:#7C2D12;font-size:9px;font-weight:800;padding:2px 6px;border-radius:999px;letter-spacing:.06em}
+
+  /* sheet (sub-options + location) */
+  .sheet-wrap{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);
+              z-index:100;display:flex;align-items:flex-end;justify-content:center}
+  .sheet-wrap[hidden]{display:none}
+  .sheet{background:#fff;color:#0F172A;border-radius:24px 24px 0 0;width:100%;max-width:520px;
+         padding:20px 18px 22px;max-height:90vh;overflow:auto;animation:slideup .25s ease}
+  @keyframes slideup{from{transform:translateY(60%)}to{transform:translateY(0)}}
+  .sheet h2{margin:0 0 4px;font-size:20px;letter-spacing:-.02em}
+  .sheet .sm{margin:0 0 14px;color:#64748B;font-size:13px}
+  .sheet .close{position:absolute;top:10px;right:14px;background:transparent;border:0;
+        font-size:22px;color:#64748B;cursor:pointer}
+  .opts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0 16px}
+  .opts label{display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #E2E8F0;
+              border-radius:12px;cursor:pointer;font-size:13px;font-weight:600}
+  .opts label:has(input:checked){background:#FFFBEB;border-color:#F59E0B}
+  .opts input[type=radio]{accent-color:#DC2626;flex-shrink:0}
+
+  /* location card */
+  .loc-card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:12px;margin:0 0 14px}
+  .loc-card .lab{font-size:11px;color:#64748B;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+  .loc-card .val{font-size:14px;font-weight:700;color:#0F172A;margin:4px 0 6px;line-height:1.4}
+  .loc-card .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .loc-card .row button{padding:8px 12px;border:1px solid #CBD5E1;background:#fff;border-radius:10px;
+        font-size:12px;font-weight:700;cursor:pointer;color:#0F172A}
+  .loc-card .row button.primary{background:#DC2626;color:#fff;border-color:#DC2626}
+
+  /* map modal */
+  .map-modal{position:fixed;inset:0;background:#0F172A;z-index:200;display:flex;flex-direction:column}
+  .map-modal[hidden]{display:none}
+  .map-modal header{padding:12px 14px;background:#0F172A;color:#fff;display:flex;align-items:center;gap:10px;text-align:left}
+  .map-modal header button{background:transparent;color:#fff;border:0;font-size:20px;cursor:pointer}
+  #pickmap{flex:1;width:100%}
+  .map-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);font-size:42px;
+           pointer-events:none;text-shadow:0 4px 8px rgba(0,0,0,.4);z-index:500}
+  .map-bar{padding:10px 12px;background:#fff;display:flex;gap:8px;align-items:center}
+  .map-bar input{flex:1;padding:10px;border:1px solid #CBD5E1;border-radius:10px;font-size:14px}
+  .map-bar button{background:#DC2626;color:#fff;border:0;padding:11px 14px;border-radius:10px;font-weight:800;cursor:pointer}
+
+  /* address details modal */
+  .addr-modal .sheet input,.addr-modal .sheet textarea{width:100%;padding:11px;border:1px solid #CBD5E1;
+        border-radius:10px;font-size:14px;font-family:inherit;margin-top:4px}
+  .addr-modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+  /* primary buttons */
+  .primary{display:block;width:100%;padding:18px 16px;font-size:16px;font-weight:800;
+        border:0;border-radius:16px;background:#DC2626;color:#fff;cursor:pointer;
+        margin-top:12px;letter-spacing:.04em;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+  .primary:disabled{opacity:.55;cursor:not-allowed}
+  .ghost{display:block;width:100%;padding:13px;font-size:13px;
+        border:1px solid #CBD5E1;border-radius:12px;background:#fff;color:#0F172A;
+        margin-top:8px;cursor:pointer;font-weight:700}
+
+  /* result vendor card */
+  .vendor-card{background:#fff;color:#0F172A;border-radius:18px;padding:16px;margin-top:8px;
+        box-shadow:0 14px 38px rgba(0,0,0,.4)}
+  .vendor-card .name{font-size:20px;font-weight:800;margin:0 0 4px}
+  .vendor-card .meta{font-size:11.5px;color:#475569;margin:0 0 10px}
+  .vendor-card .eta{background:#0F172A;color:#FCD34D;border-radius:12px;padding:12px;text-align:center;margin-bottom:10px}
+  .vendor-card .eta .min{font-size:30px;font-weight:900}
+  .vendor-card .eta .km{font-size:12px;color:#cbd5e1;margin-top:2px}
+  .vendor-card .call{display:block;width:100%;padding:18px;background:#0F766E;color:#fff;
+        border-radius:12px;text-align:center;text-decoration:none;font-size:15px;font-weight:800;margin-bottom:6px}
+  .vendor-card .wa{display:block;width:100%;padding:12px;background:#25D366;color:#fff;
+        border-radius:12px;text-align:center;text-decoration:none;font-size:13px;font-weight:700;margin-bottom:6px}
+
   .status-msg{background:rgba(0,0,0,.25);border-radius:12px;padding:12px;font-size:13px;
-       text-align:center;margin-top:10px}
+        text-align:center;margin-top:10px}
   .status-msg.err{background:#0F172A;color:#FEE2E2}
   .spinner{display:inline-block;width:36px;height:36px;border:4px solid rgba(255,255,255,.25);
-       border-top-color:#FCD34D;border-radius:50%;animation:spin .8s linear infinite}
+        border-top-color:#FCD34D;border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .safety{font-size:11px;color:rgba(255,255,255,.85);text-align:center;margin-top:10px;line-height:1.55}
   details{background:rgba(0,0,0,.18);border-radius:10px;padding:10px;font-size:12px;margin-top:10px}
   details summary{cursor:pointer;font-weight:600}
-  .booking-id{font-size:11px;color:#94A3B8;text-align:center;margin-top:8px}
 </style>
 </head><body>
-<header><h1>🆘 SERVIA RECOVERY</h1></header>
+<header>
+  <div class="logo"><span style="background:#FCD34D;color:#7C2D12;padding:1px 6px;border-radius:5px;font-size:11px;letter-spacing:.06em">SOS</span> SERVIA QUICK SERVICE</div>
+  <div class="sub">One-tap dispatch · real GPS · vendor in seconds · 24/7</div>
+</header>
 <main>
-  <div id="initial">
-    <div class="panic">
-      <div style="font-size:11px;letter-spacing:.18em;color:#DC2626;font-weight:700">ROADSIDE EMERGENCY</div>
-      <div class="big">ONE TAP</div>
-      <div class="sub">Sends your real GPS · dispatches closest tow truck · shows vendor name + phone instantly.</div>
+
+<!-- ============ STEP 1: pick service ============ -->
+<section id="step-pick">
+  <div class="grid" id="grid"></div>
+  <details>
+    <summary>How does this work?</summary>
+    <p style="color:#FEE2E2">Pick a service → choose what kind → confirm or change your location → hit DISPATCH. We send your real GPS, find the closest Servia partner, and show you their name + phone in one screen. WhatsApp tracking link sent to you and the partner.</p>
+  </details>
+</section>
+
+<!-- ============ STEP 2: sub-options + location ============ -->
+<div class="sheet-wrap" id="step-detail" hidden>
+  <div class="sheet" style="position:relative">
+    <button class="close" onclick="closeDetail()" aria-label="Close">✕</button>
+    <h2 id="d-title">Service</h2>
+    <p class="sm" id="d-sub">Pick what you need</p>
+    <div class="opts" id="d-opts"></div>
+
+    <div class="loc-card">
+      <div class="lab">📍 Where are you?</div>
+      <div class="val" id="loc-val">Detecting your location…</div>
+      <div class="row">
+        <button onclick="redetect()">↻ Re-detect GPS</button>
+        <button onclick="openMap()" class="primary">🗺 Pin exact spot on map</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button onclick="openAddr()">✏️ Add building / apartment / notes</button>
+      </div>
     </div>
-    <button class="primary" id="sos-btn">📍 DISPATCH RECOVERY NOW</button>
-    <button class="ghost" id="hotline-btn">📞 Call hotline +971 56 690 0255</button>
-    <p class="safety">Turn on hazard lights · Stand off the road · Stay behind a barrier if you can.</p>
-    <details>
-      <summary>What happens after I tap?</summary>
-      <p>1. Your phone asks permission to share your location (one time).<br>
-         2. We find the closest Servia recovery vendor and assign your job.<br>
-         3. You see the vendor's name, photo and phone — tap once to call.<br>
-         4. WhatsApp tracking link sent. Mark "recovered" when done.</p>
-    </details>
-  </div>
 
-  <div id="working" hidden style="text-align:center;padding-top:18px">
-    <div class="spinner"></div>
-    <div class="status-msg" id="working-msg">Capturing your exact location…</div>
+    <button class="primary" id="dispatch-btn" disabled onclick="dispatch()">DISPATCH NOW</button>
+    <button class="ghost" onclick="location.href='tel:+971566900255'">📞 Or call hotline +971 56 690 0255</button>
   </div>
+</div>
 
-  <div id="result" hidden></div>
-
-  <div id="failed" hidden>
-    <div class="status-msg err" id="failed-msg"></div>
-    <button class="primary" id="hotline-btn-2" style="margin-top:14px">📞 Call hotline +971 56 690 0255</button>
-    <button class="ghost" id="retry-btn">↻ Retry</button>
+<!-- ============ MAP MODAL (drag pin) ============ -->
+<div class="map-modal" id="mapmodal" hidden>
+  <header>
+    <button onclick="closeMap()" aria-label="Back">←</button>
+    <div style="flex:1">
+      <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#FCD34D;font-weight:800">Pin exact location</div>
+      <div style="font-size:13px;font-weight:600">Drag map · centre is your pin</div>
+    </div>
+  </header>
+  <div style="position:relative;flex:1">
+    <div id="pickmap"></div>
+    <div class="map-pin">📍</div>
   </div>
+  <div class="map-bar">
+    <input id="searchq" type="text" placeholder="Search e.g. Marina, JLT, Burj Khalifa…" autocomplete="off">
+    <button onclick="searchAddr()">Search</button>
+    <button onclick="confirmPin()" style="background:#0F766E">✓ Use this</button>
+  </div>
+</div>
+
+<!-- ============ ADDRESS-DETAILS SHEET ============ -->
+<div class="sheet-wrap addr-modal" id="addrmodal" hidden>
+  <div class="sheet" style="position:relative">
+    <button class="close" onclick="closeAddr()">✕</button>
+    <h2>Address details</h2>
+    <p class="sm">Helps the partner find you faster.</p>
+    <div class="row2">
+      <label>Building / villa<input id="ad-building" type="text" placeholder="Marina Pinnacle"></label>
+      <label>Floor / apt<input id="ad-flat" type="text" placeholder="Apt 1204"></label>
+    </div>
+    <label style="display:block;margin-top:8px">Street / area<input id="ad-street" type="text" placeholder="Marina Walk, Dubai"></label>
+    <label style="display:block;margin-top:8px">Notes for the driver<textarea id="ad-notes" rows="2" placeholder="Black Toyota near McDonald's…"></textarea></label>
+    <button class="primary" onclick="saveAddr()" style="margin-top:14px">Save details</button>
+  </div>
+</div>
+
+<!-- ============ STEP 3: dispatching / vendor ============ -->
+<div id="step-working" hidden style="text-align:center;padding-top:14px">
+  <div class="spinner"></div>
+  <div class="status-msg" id="working-msg">Dispatching closest partner…</div>
+</div>
+<div id="step-result" hidden></div>
+<div id="step-failed" hidden>
+  <div class="status-msg err" id="failed-msg"></div>
+  <button class="primary" style="margin-top:10px" onclick="location.href='tel:+971566900255'">📞 Call hotline +971 56 690 0255</button>
+  <button class="ghost" onclick="reset()">↻ Try again</button>
+</div>
 </main>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
 <script>
 (function(){
-  var $ = function(id){ return document.getElementById(id); };
-  var dispatchId = 0, vendorPhone = '';
-  var token = (localStorage.getItem('servia_token') || '');
+  // ============ Service catalogue (UI metadata) ============
+  // Each entry maps to a service_id supported by /api/recovery/dispatch (when
+  // urgent/instant) or /book.html (when scheduled). subs[] are the radio
+  // chips shown in the detail sheet.
+  var SERVICES = [
+    {id:"vehicle_recovery", urgent:true, ico:"🚗", nm:"Vehicle recovery", sub:"Tow · battery · tyre", sheet_title:"What happened?", subs:[
+      {v:"breakdown", l:"❓ Breakdown"},
+      {v:"battery",   l:"🔋 Battery"},
+      {v:"flat_tyre", l:"🛞 Flat tyre"},
+      {v:"fuel",      l:"⛽ Fuel out"},
+      {v:"locked_out",l:"🔑 Locked out"},
+      {v:"crash",     l:"🚨 Crash / tow"}
+    ], dispatch:"recovery"},
+    {id:"chauffeur", urgent:true, ico:"🚙", nm:"Chauffeur", sub:"Driver · airport · night out", sheet_title:"Where are you going?", subs:[
+      {v:"airport_dxb", l:"✈️ DXB airport"},
+      {v:"airport_dwc", l:"✈️ DWC airport"},
+      {v:"hotel",       l:"🏨 Hotel"},
+      {v:"home",        l:"🏠 My home"},
+      {v:"event",       l:"🎉 Event venue"},
+      {v:"custom",      l:"📍 Other (type)"}
+    ], dispatch:"book"},
+    {id:"furniture_move", ico:"📦", nm:"Furniture", sub:"Move · assemble · fix", sheet_title:"What do you need?", subs:[
+      {v:"move_small", l:"📦 Small move (1 van)"},
+      {v:"move_big",   l:"🚚 Big move (truck)"},
+      {v:"assemble",   l:"🔩 Assemble (IKEA)"},
+      {v:"disassemble",l:"🪛 Disassemble"},
+      {v:"repair",     l:"🛠 Repair / fix"},
+      {v:"hang",       l:"🖼 Hang on wall"}
+    ], dispatch:"book"},
+    {id:"handyman", ico:"🔧", nm:"Handyman", sub:"Wall paint · door · curtains", sheet_title:"What needs fixing?", subs:[
+      {v:"paint",     l:"🎨 Wall paint"},
+      {v:"door_lock", l:"🚪 Door / lock"},
+      {v:"curtain",   l:"🪟 Curtain rod"},
+      {v:"tv_mount",  l:"📺 TV mount"},
+      {v:"shelf",     l:"📚 Shelves"},
+      {v:"other",     l:"🛠 Other"}
+    ], dispatch:"book"},
+    {id:"plumber", ico:"🚿", nm:"Plumber", sub:"Leak · clog · install", sheet_title:"What's the issue?", subs:[
+      {v:"leak",   l:"💧 Leak"},
+      {v:"clog",   l:"🚽 Clog"},
+      {v:"no_water",l:"❌ No water"},
+      {v:"heater", l:"🔥 Water heater"},
+      {v:"install",l:"🔧 Install fixture"},
+      {v:"other",  l:"🛠 Other"}
+    ], dispatch:"book"},
+    {id:"electrician", ico:"🔌", nm:"Electrician", sub:"No power · install · fix", sheet_title:"What's the issue?", subs:[
+      {v:"no_power", l:"⚡ No power"},
+      {v:"breaker",  l:"⚙️ Tripping breaker"},
+      {v:"install",  l:"💡 Install fixture"},
+      {v:"socket",   l:"🔌 Socket / switch"},
+      {v:"ceiling_fan",l:"🌀 Ceiling fan"},
+      {v:"other",    l:"🛠 Other"}
+    ], dispatch:"book"},
+    {id:"ac_cleaning", ico:"❄️", nm:"AC fix / clean", sub:"Not cooling · gas · service", sheet_title:"What's wrong with the AC?", subs:[
+      {v:"not_cooling",l:"🥵 Not cooling"},
+      {v:"gas_top",   l:"💨 Gas top-up"},
+      {v:"service",   l:"🧹 Full service"},
+      {v:"noise",     l:"🔊 Noisy unit"},
+      {v:"leak",      l:"💧 Water leak"},
+      {v:"new_install",l:"🆕 New install"}
+    ], dispatch:"book"},
+    {id:"general_cleaning", ico:"🧹", nm:"Cleaning", sub:"General · deep · maid", sheet_title:"What kind of clean?", subs:[
+      {v:"general",   l:"🧹 General"},
+      {v:"deep",      l:"✨ Deep clean"},
+      {v:"maid",      l:"👤 Maid (hourly)"},
+      {v:"sofa",      l:"🛋 Sofa / carpet"},
+      {v:"window",    l:"🪟 Windows"},
+      {v:"move_in",   l:"📦 Move-in/out"}
+    ], dispatch:"book"}
+  ];
 
-  function show(id){ ['initial','working','result','failed'].forEach(function(s){
-    var el = $(s); if (el) el.hidden = (s !== id);
-  }); }
+  // ============ State ============
+  var state = {
+    service: null,
+    sub: null,
+    loc: null,           // {lat,lng,accuracy_m}
+    addr: null,          // {building,flat,street,notes}
+    dispatchId: 0,
+    vendorPhone: null,
+    pickmap: null,
+    pickmarker: null
+  };
 
-  function setStatus(msg){ $('working-msg').textContent = msg; }
-  function fail(msg){ $('failed-msg').textContent = '⚠ ' + msg; show('failed'); }
+  function $(id){ return document.getElementById(id); }
+  function escHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
 
-  function getLocation(){
-    return new Promise(function(resolve, reject){
-      if (!navigator.geolocation) { reject(new Error('Geolocation not available on this device.')); return; }
-      navigator.geolocation.getCurrentPosition(
-        function(p){ resolve({lat:p.coords.latitude, lng:p.coords.longitude, accuracy_m:p.coords.accuracy}); },
-        function(e){
-          var m = e.code === 1 ? 'Location permission denied. Please enable location and try again.'
-                : e.code === 2 ? 'GPS unavailable. Move outdoors and retry.'
-                : e.code === 3 ? 'GPS timed out. Try again.'
-                : 'Could not read your location.';
-          reject(new Error(m));
-        },
-        {enableHighAccuracy:true, timeout:15000, maximumAge:0}
-      );
+  // ============ STEP 1: render grid ============
+  function renderGrid(){
+    var html = SERVICES.map(function(s){
+      return '<button class="tile' + (s.urgent?' urgent':'') + '" data-id="' + s.id + '">'
+        + '<span class="ico">' + s.ico + '</span>'
+        + '<span class="nm">' + escHtml(s.nm) + '</span>'
+        + '<span class="sub">' + escHtml(s.sub) + '</span></button>';
+    }).join("");
+    $("grid").innerHTML = html;
+    $("grid").addEventListener("click", function(e){
+      var t = e.target.closest(".tile");
+      if (!t) return;
+      var s = SERVICES.find(function(x){ return x.id === t.dataset.id; });
+      if (s) openDetail(s);
     });
   }
 
+  // ============ STEP 2: sub-options sheet ============
+  function openDetail(s){
+    state.service = s;
+    state.sub = null;
+    $("d-title").textContent = s.ico + "  " + s.nm;
+    $("d-sub").textContent = s.sheet_title;
+    $("d-opts").innerHTML = s.subs.map(function(o,i){
+      return '<label><input type="radio" name="dopt" value="' + escHtml(o.v) + '">' + escHtml(o.l) + '</label>';
+    }).join("");
+    Array.prototype.forEach.call($("d-opts").querySelectorAll("input"), function(inp){
+      inp.addEventListener("change", function(){
+        state.sub = inp.value;
+        updateDispatchBtn();
+      });
+    });
+    $("step-detail").hidden = false;
+    detectLocation();
+  }
+  function closeDetail(){ $("step-detail").hidden = true; }
+  window.closeDetail = closeDetail;
+
+  function updateDispatchBtn(){
+    var ok = !!state.sub && !!state.loc;
+    $("dispatch-btn").disabled = !ok;
+    $("dispatch-btn").textContent =
+      state.service && state.service.urgent
+        ? (state.service.dispatch === "recovery" ? "🆘 DISPATCH RECOVERY NOW" : "🚀 DISPATCH NOW")
+        : "📅 BOOK NOW";
+  }
+
+  // ============ Geolocation ============
+  function detectLocation(){
+    $("loc-val").textContent = "📍 Detecting…";
+    if (!navigator.geolocation) { $("loc-val").textContent = "Geolocation not available"; return; }
+    navigator.geolocation.getCurrentPosition(function(p){
+      state.loc = {lat:p.coords.latitude, lng:p.coords.longitude, accuracy_m:p.coords.accuracy};
+      reverseGeocode();
+      updateDispatchBtn();
+    }, function(e){
+      $("loc-val").textContent = "Could not detect — pin manually on map.";
+    }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
+  }
+  function redetect(){ detectLocation(); }
+  window.redetect = redetect;
+
+  function reverseGeocode(){
+    if (!state.loc) return;
+    fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + state.loc.lat + "&lon=" + state.loc.lng,
+      {headers:{"Accept-Language":"en"}})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var name = (j.display_name || "").split(",").slice(0,3).join(",");
+        $("loc-val").textContent = "📍 " + (name || (state.loc.lat.toFixed(5) + "," + state.loc.lng.toFixed(5)))
+                                  + (state.loc.accuracy_m ? "  (±" + Math.round(state.loc.accuracy_m) + "m)" : "");
+      })
+      .catch(function(){
+        $("loc-val").textContent = "📍 " + state.loc.lat.toFixed(5) + ", " + state.loc.lng.toFixed(5);
+      });
+  }
+
+  // ============ Map pin modal ============
+  function openMap(){
+    $("mapmodal").hidden = false;
+    setTimeout(function(){
+      if (!state.pickmap) {
+        var center = state.loc ? [state.loc.lat, state.loc.lng] : [25.2048, 55.2708];
+        state.pickmap = L.map("pickmap").setView(center, state.loc ? 17 : 11);
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {maxZoom:19, attribution:"© OpenStreetMap"}).addTo(state.pickmap);
+      } else {
+        if (state.loc) state.pickmap.setView([state.loc.lat, state.loc.lng], 17);
+        state.pickmap.invalidateSize();
+      }
+    }, 80);
+  }
+  function closeMap(){ $("mapmodal").hidden = true; }
+  function confirmPin(){
+    var c = state.pickmap.getCenter();
+    state.loc = {lat:c.lat, lng:c.lng, accuracy_m:5};
+    reverseGeocode();
+    updateDispatchBtn();
+    closeMap();
+  }
+  function searchAddr(){
+    var q = $("searchq").value.trim();
+    if (!q) return;
+    fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(q + ", United Arab Emirates") + "&limit=1")
+      .then(function(r){ return r.json(); })
+      .then(function(arr){
+        if (!arr.length) return alert("Not found, try a more specific search.");
+        var loc = arr[0];
+        state.pickmap.setView([loc.lat, loc.lon], 17);
+      });
+  }
+  window.openMap = openMap; window.closeMap = closeMap;
+  window.confirmPin = confirmPin; window.searchAddr = searchAddr;
+
+  // ============ Address-details modal ============
+  function openAddr(){ $("addrmodal").hidden = false; }
+  function closeAddr(){ $("addrmodal").hidden = true; }
+  function saveAddr(){
+    state.addr = {
+      building: $("ad-building").value.trim(),
+      flat:     $("ad-flat").value.trim(),
+      street:   $("ad-street").value.trim(),
+      notes:    $("ad-notes").value.trim()
+    };
+    closeAddr();
+    var bits = [];
+    if (state.addr.building) bits.push(state.addr.building);
+    if (state.addr.flat)     bits.push(state.addr.flat);
+    if (state.addr.street)   bits.push(state.addr.street);
+    if (bits.length) {
+      $("loc-val").innerHTML = "📍 " + escHtml(bits.join(" · "))
+        + '<br><small style="color:#64748B">' +
+          (state.loc ? state.loc.lat.toFixed(5) + "," + state.loc.lng.toFixed(5) : "")
+        + '</small>';
+    }
+  }
+  window.openAddr = openAddr; window.closeAddr = closeAddr; window.saveAddr = saveAddr;
+
+  // ============ STEP 3: dispatch ============
   function dispatch(){
-    show('working'); setStatus('📍 Capturing your exact location…');
-    getLocation().then(function(loc){
-      setStatus('🛟 Finding closest recovery truck…');
-      var headers = {'Content-Type':'application/json'};
-      if (token) headers['Authorization'] = 'Bearer ' + token;
-      return fetch('/api/recovery/dispatch', {
-        method:'POST', headers:headers,
-        body: JSON.stringify({
-          lat: loc.lat, lng: loc.lng, accuracy_m: loc.accuracy_m,
-          source: 'mobile', issue: 'breakdown'
-        })
-      }).then(function(r){ return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t || ('HTTP '+r.status)); }); });
-    }).then(renderResult).catch(function(e){ fail(e.message || String(e)); });
+    if (!state.service || !state.sub || !state.loc) return;
+    closeDetail();
+    if (state.service.dispatch === "recovery") {
+      callRecoveryApi();
+    } else {
+      // Non-urgent → bounce to /book.html prefilled. The booking flow's
+      // existing intake handles slot picking, payment, etc.
+      var u = "/book.html?service=" + encodeURIComponent(state.service.id)
+            + "&intent=" + encodeURIComponent(state.sub)
+            + "&lat=" + state.loc.lat
+            + "&lng=" + state.loc.lng;
+      if (state.addr) {
+        if (state.addr.street)   u += "&address=" + encodeURIComponent(state.addr.street);
+        if (state.addr.building) u += "&building=" + encodeURIComponent(state.addr.building);
+        if (state.addr.flat)     u += "&flat=" + encodeURIComponent(state.addr.flat);
+        if (state.addr.notes)    u += "&notes=" + encodeURIComponent(state.addr.notes);
+      }
+      location.href = u;
+    }
+  }
+  window.dispatch = dispatch;
+
+  function callRecoveryApi(){
+    showStep("working");
+    var token = (localStorage.getItem("servia_token") || "");
+    var headers = {"Content-Type":"application/json"};
+    if (token) headers["Authorization"] = "Bearer " + token;
+    var body = {
+      lat: state.loc.lat, lng: state.loc.lng,
+      accuracy_m: state.loc.accuracy_m,
+      source: "mobile", issue: state.sub
+    };
+    if (state.addr) {
+      body.customer_name = (state.addr.building || "") + " " + (state.addr.flat || "");
+      body.notes = state.addr.notes || "";
+    }
+    fetch("/api/recovery/dispatch", {
+      method:"POST", headers:headers, body: JSON.stringify(body)
+    }).then(function(r){
+      return r.ok ? r.json() : r.text().then(function(t){ throw new Error(t || ("HTTP " + r.status)); });
+    }).then(renderResult).catch(function(e){
+      $("failed-msg").textContent = "⚠ " + (e.message || String(e));
+      showStep("failed");
+    });
   }
 
   function renderResult(j){
-    dispatchId = j.dispatch_id || 0;
+    state.dispatchId = j.dispatch_id || 0;
     var v = j.vendor || {};
-    vendorPhone = v.phone || '';
-    var html =
-      '<div class="status-msg" style="background:rgba(0,0,0,.25);color:#FCD34D;font-weight:700">'
-        + '✅ TRUCK DISPATCHED — booking ' + (j.booking_id || '') + '</div>'
-      + '<div class="vendor-card">'
-        + '<div class="name">' + esc(v.name || 'Servia partner') + '</div>'
-        + '<div class="meta">★ ' + (v.rating || 4.8) + '  ·  '
-            + (v.completed_jobs || 0) + ' jobs  ·  ' + esc(v.base_label || 'Servia base') + '</div>'
-        + '<div class="eta">'
-            + '<div class="min">⏱ ' + j.eta_min + ' min</div>'
-            + '<div class="km">' + j.distance_km + ' km away · AED ' + (j.price_aed || 250) + '</div>'
-        + '</div>'
-        + '<a class="call" href="' + esc(v.tel_url || ('tel:' + vendorPhone)) + '">📞 CALL ' + esc(vendorPhone) + '</a>'
-        + (v.wa_url ? '<a class="wa" href="' + esc(v.wa_url) + '" target="_blank" rel="noopener">💬 WhatsApp vendor</a>' : '')
-        + '<div class="row">'
-            + '<button class="complete" id="completeBtn">✓ Recovered</button>'
-            + '<button class="cancel" id="cancelBtn">✕ Cancel</button>'
-        + '</div>'
-        + '<div class="booking-id">' + esc(j.message || '') + '</div>'
-      + '</div>'
-      + (j.map_url ? '<a class="ghost" style="text-decoration:none;display:block" href="' + esc(j.map_url)
-            + '" target="_blank" rel="noopener">🗺 Open my GPS in maps</a>' : '');
-    $('result').innerHTML = html;
-    show('result');
-    var c = document.getElementById('completeBtn');
-    if (c) c.addEventListener('click', completeDispatch);
-    var x = document.getElementById('cancelBtn');
-    if (x) x.addEventListener('click', cancelDispatch);
+    state.vendorPhone = v.phone || "";
+    var html = '<div class="status-msg" style="background:rgba(0,0,0,.25);color:#FCD34D;font-weight:700">'
+            + '✅ DISPATCHED — ' + escHtml(j.booking_id || "") + '</div>'
+            + '<div class="vendor-card">'
+              + '<div class="name">' + escHtml(v.name || "Servia partner") + '</div>'
+              + '<div class="meta">★ ' + (v.rating || 4.8) + ' · '
+                + (v.completed_jobs || 0) + ' jobs · ' + escHtml(v.base_label || "") + '</div>'
+              + '<div class="eta">'
+                + '<div class="min">⏱ ' + j.eta_min + ' min</div>'
+                + '<div class="km">' + j.distance_km + ' km · AED ' + (j.price_aed || 250) + '</div>'
+              + '</div>'
+              + '<a class="call" href="' + escHtml(v.tel_url || ("tel:" + state.vendorPhone)) + '">📞 CALL ' + escHtml(state.vendorPhone) + '</a>'
+              + (v.wa_url ? '<a class="wa" href="' + escHtml(v.wa_url) + '" target="_blank" rel="noopener">💬 WhatsApp</a>' : '')
+              + '<div style="display:flex;gap:6px;margin-top:8px">'
+                + '<button class="ghost" onclick="completeDispatch()" style="background:#14B8A6;color:#fff;border:0">✓ Done</button>'
+                + '<button class="ghost" onclick="cancelDispatch()" style="background:#334155;color:#fff;border:0">✕ Cancel</button>'
+              + '</div>'
+            + '</div>';
+    $("step-result").innerHTML = html;
+    showStep("result");
   }
-
   function completeDispatch(){
-    if (!dispatchId) return;
-    fetch('/api/recovery/dispatch/' + dispatchId + '/complete',
-      {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({rating:5})}
-    ).finally(function(){
-      $('result').innerHTML = '<div class="status-msg" style="background:#14B8A6;color:#fff;font-weight:700">'
-        + '✓ Marked recovered. Stay safe out there.</div>'
-        + '<button class="ghost" onclick="location.href=\'/\'">← Servia home</button>';
-    });
+    if (!state.dispatchId) return;
+    fetch("/api/recovery/dispatch/" + state.dispatchId + "/complete",
+      {method:"POST", headers:{"Content-Type":"application/json"}, body:'{"rating":5}'})
+      .finally(function(){ reset(); });
   }
-
   function cancelDispatch(){
-    if (!dispatchId) return;
-    if (!confirm('Cancel this dispatch?')) return;
-    fetch('/api/recovery/dispatch/' + dispatchId + '/cancel',
-      {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}
-    ).finally(function(){
-      $('result').innerHTML = '<div class="status-msg err">Dispatch cancelled.</div>'
-        + '<button class="ghost" onclick="location.href=\'/sos.html\'">↻ Try again</button>';
-    });
+    if (!state.dispatchId) return;
+    if (!confirm("Cancel this dispatch?")) return;
+    fetch("/api/recovery/dispatch/" + state.dispatchId + "/cancel",
+      {method:"POST", headers:{"Content-Type":"application/json"}, body:'{}'})
+      .finally(function(){ reset(); });
   }
+  window.completeDispatch = completeDispatch;
+  window.cancelDispatch = cancelDispatch;
 
-  function esc(s){ return String(s == null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function showStep(s){
+    ["step-pick","step-detail","step-working","step-result","step-failed"].forEach(function(x){
+      var el = $(x); if (el) el.hidden = (x !== "step-" + s && x !== s);
+    });
+    if (s === "working" || s === "result" || s === "failed") {
+      $("step-pick").hidden = true;
+    }
+  }
+  function reset(){
+    state = {service:null,sub:null,loc:null,addr:null,dispatchId:0,vendorPhone:null,
+             pickmap:state.pickmap,pickmarker:state.pickmarker};
+    showStep("pick");
+    $("step-pick").hidden = false;
+  }
+  window.reset = reset;
 
-  document.getElementById('sos-btn').addEventListener('click', dispatch);
-  document.getElementById('hotline-btn').addEventListener('click', function(){
-    location.href = 'tel:+971566900255';
-  });
-  document.getElementById('hotline-btn-2').addEventListener('click', function(){
-    location.href = 'tel:+971566900255';
-  });
-  document.getElementById('retry-btn').addEventListener('click', function(){
-    show('initial');
-  });
-
-  // If URL has ?auto=1 (e.g. NFC tap), fire immediately.
+  // ============ Init ============
+  renderGrid();
+  // If URL has ?auto=1 (e.g. NFC tag), open recovery sheet immediately.
   if (/[?&]auto=1\b/.test(location.search)) {
-    setTimeout(dispatch, 200);
+    var s = SERVICES[0];
+    setTimeout(function(){ openDetail(s); }, 300);
   }
 })();
 </script>

@@ -21,6 +21,18 @@
   // Skip on internal / admin / payment / vendor pages
   if (/^\/(admin|vendor|portal|pay|invoice)/.test(location.pathname)) return;
 
+  // v1.24.3 — only auto-show on pages where address actually matters: book,
+  // cart, account, services. Elsewhere the bar was just stacking another teal
+  // stripe under the rotating banner (header looked like 4 bars). The map
+  // edit modal still works site-wide via window.serviaEditAddress().
+  const SHOW_PATHS = /^\/(book|cart|account)\.html?$/;
+  if (!SHOW_PATHS.test(location.pathname)) {
+    // Hide pre-rendered placeholder if any (saves the 36px reservation slot).
+    var ph = document.getElementById("servia-loc-bar-placeholder");
+    if (ph) ph.style.display = "none";
+    return;
+  }
+
   const KEY_LOC = "servia.user.location.v1";       // {area, emirate, lat, lng, full_address, ...}
   const KEY_DISMISSED = "servia.location.dismissed_session";
 

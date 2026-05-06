@@ -1,4 +1,212 @@
-# Servia NFC tap-to-book — 50 video prompts
+# Servia visual asset prompts — videos + still images
+
+This file is the single source of truth for every Servia social/web/ad
+asset prompt. Two sections below: **(A) STILL-IMAGE PROMPT TEMPLATE**
+matched to the photo-realistic style of our hero shots in
+`/web/img/recovery/` (Burj Khalifa skyline, yellow-and-teal Servia
+truck, distressed driver, NFC tap close-up). Use it for Midjourney 7,
+DALL-E 3, Flux 1.1 Pro, Imagen 3, Ideogram 2.0. **(B) the original
+50-video script collection** for Veo 3 / Runway / Sora.
+
+---
+
+## A. STILL-IMAGE PROMPT TEMPLATE (use for ALL services)
+
+### A.1 Master style block — paste at the top of EVERY image prompt
+
+```
+Photo-realistic editorial advertising photograph, shot on Canon R5 with
+RF 35mm f/1.4 lens, golden-hour cinematic lighting (warm 4500K key
+light + soft fill), shallow depth of field at f/2.0, ultra-detailed
+skin texture, subtle film grain, high dynamic range. Setting: United
+Arab Emirates — recognisable but not generic (Burj Khalifa silhouette
+at distance, Sheikh Zayed Road, Marina towers, Sharjah corniche, Abu
+Dhabi mosques, Al Ain palm groves — pick whichever matches the service
+context). Wardrobe: respect the local culture (Emirati kandura/abaya
+where appropriate, modern smart-casual for expats).
+
+Servia brand identity (MUST appear, every shot):
+  · Servia tow trucks / vans: mustard yellow #FCD34D body + deep teal
+    #0F766E lower panels and hood, "servia" in lowercase teal logo on
+    side, "سيرفيا" Arabic logo below it, UAE plate "12345" on the
+    front, white roof beacon + LED strip, 3 wheels with chrome rims.
+  · Servia uniform: teal polo shirt with mustard "servia" embroidered
+    chest patch, dark slacks, white sneakers.
+  · Servia phone UI: green-confirm pill "✅ Booked · AED <X> · <when>"
+    bottom-third of phone screen, watch shows same on AMOLED face.
+  · Optional NFC sticker visible in scene: 32×32mm yellow square with
+    teal "NFC" + Servia mark + "TAP" caret.
+
+Composition:
+  · 1:1 square OR 4:5 portrait OR 9:16 reel — declare in prompt.
+  · Two-panel split-frame style works great for before/after.
+  · Headline-ready: leave 30 % top whitespace for the burned-in
+    English+Arabic copy ("TAP ONCE. RECOVERY ON THE WAY." +
+    "اضغط مرة. المساعدة في الطريق.").
+  · Bottom-right: small Servia logo lockup (English + Arabic).
+
+NEGATIVE prompts (always include): cartoonish, low-poly, illustration,
+3D render, anime, plastic skin, melting, deformed wheels, distorted
+hands, extra fingers, misspelled "servia", bus, taxi, Uber, blue lights,
+fake blur, watermark, signature, Stock-Adobe text.
+```
+
+### A.2 Per-service variant blocks
+
+Pick the master style block above + ONE of these scene blocks below.
+Replace `<PLACEHOLDER>` brackets with concrete details.
+
+#### Vehicle recovery (the reference set)
+```
+Scene: a Black/<COLOUR> <CAR_MODEL> with bonnet open at the side of
+Sheikh Zayed Road / Hatta highway / Al Quoz industrial street at dusk,
+hazard triangle behind it. <DRIVER_PROFILE: e.g. mid-30s Emirati man
+in white kandura | South-Asian woman in modest abaya | European expat
+in business shirt> looking calm but concerned, holding their phone
+1m from a Servia NFC sticker on the dashboard, pre-tap moment.
+Yellow-and-teal Servia tow truck approaches in the right third of
+the frame, headlights on. Headline: "TAP ONCE. RECOVERY ON THE WAY."
+"Servia · 18-min response · AED 250".
+```
+
+#### Chauffeur
+```
+Scene: front passenger door of a black Mercedes S-Class held open by
+a Servia chauffeur (40s, beard, teal Servia jacket, white gloves) at
+the Burj Al Arab driveway / DXB Terminal 3 kerb / Address Downtown
+porte-cochère. Customer (smart-casual, mid-30s) climbing in with a
+laptop bag, phone in hand showing "✅ Chauffeur · 6:30 AM Friday".
+Soft warm dawn light, palm trees, subtle reflections of city lights.
+Headline: "TAP ONCE. CHAUFFEUR AT YOUR DOOR."
+```
+
+#### Furniture move / assembly
+```
+Scene: the doorway of a Marina Pinnacle apartment with two Servia
+movers (teal polo, kneepads) carrying a wrapped 3-seater sofa. Yellow-
+and-teal Servia 3.5-tonne moving van parked behind, ramp down.
+Customer (woman, 30s, yoga pants) on the apartment side smiling with
+phone displaying "✅ 2-bedroom move · AED 750 · today 11 AM". Cardboard
+boxes labelled "BEDROOM 2", "KITCHEN" stacked neatly. Light grey marble
+floor, sunshine through the corridor windows.
+Headline: "TAP ONCE. FURNITURE MOVED."
+```
+
+#### Handyman
+```
+Scene: a Servia handyman (40s, beard, teal Servia polo, leather tool
+belt) on a step-ladder filling a nail hole in a freshly painted off-
+white wall, fresh paint roller and putty knife in hand. Living-room
+context, Burj Khalifa visible through floor-to-ceiling window. Customer
+in soft focus on the sofa, watching, phone face-up showing
+"✅ Handyman · 1 hr · AED 100 · arriving 14:20". Servia van roof visible
+in window reflection.
+Headline: "TAP ONCE. WE HANDLE IT."
+```
+
+#### Plumber
+```
+Scene: under-sink kitchen close-up. A Servia plumber (50s, friendly
+face, teal Servia polo, latex gloves) tightening a chrome pipe joint
+with a wrench. Tools spread on a teal Servia floor mat protecting the
+hardwood. Customer (mid-30s mum) in soft focus rinsing fruit at the
+counter, smiling, phone clipped to her apron showing "✅ Plumber · AED
+180 · job done". Warm afternoon UAE sunlight through the kitchen window.
+Headline: "TAP ONCE. LEAK FIXED."
+```
+
+#### Electrician
+```
+Scene: a Servia electrician (mid-30s, teal Servia polo, hard hat,
+voltage tester in hand) standing on a small ladder, cleanly installing
+a brushed-nickel ceiling pendant in a Downtown Dubai apartment. Power-
+off lockout tag visible on the breaker panel in background. Customer
+(expat couple, mid-40s) admiring from the kitchen island, phone showing
+"✅ Electrician · AED 220 · safety-certified".
+Headline: "TAP ONCE. POWER ON."
+```
+
+#### AC service / clean
+```
+Scene: a Servia HVAC tech (mid-30s, teal Servia polo, dust mask
+hanging on neck) cleaning a wall-mount split AC's evaporator coils
+with a foaming cleaner spray, drip-tray protected with Servia teal
+sheet on the floor below. Customer (Emirati lady in modern abaya) in
+soft focus reading on the sofa, baby napping in the cool room. Phone
+on the side table: "✅ AC clean · 3 units · AED 225 · 30-min service".
+Headline: "TAP ONCE. COOL ALL DAY."
+```
+
+#### General cleaning / maid
+```
+Scene: a bright JLT apartment with a Servia maid (30s, teal Servia
+polo + mustard apron, hair tied back, friendly smile) wiping the
+marble kitchen counter to a polished shine, microfibre cloth in hand.
+Sunlight streaming in. Hostess (working mum, 30s, in workout gear)
+sips coffee at the breakfast bar, phone showing "✅ Maid · 4 hr · AED
+100 · today 10 AM". Subtle Servia van outside in the parking visible
+through the window.
+Headline: "TAP ONCE. SPARKLE."
+```
+
+#### Pest control
+```
+Scene: a Servia pest-control specialist (40s, teal Servia polo,
+respirator pulled down to neck, certified-technician ID lanyard)
+spraying a clear, low-toxicity treatment along the kitchen baseboards.
+Discreet, family-friendly mood. Customer (dad, 40s) in foreground
+watches calmly, kids' toys in soft-focus background. Phone displays
+"✅ Pest control · AED 200 · 30-day warranty · MOH-approved".
+Headline: "TAP ONCE. PESTS GONE."
+```
+
+#### Pool service
+```
+Scene: drone view zooming in to a private villa pool in Arabian Ranches
+at golden hour. A Servia pool tech (30s, teal Servia polo + matching
+shorts, brimmed hat) using a long-handled net and chemical-test kit
+poolside. Pool water crystal-clear turquoise. Owner (Emirati man in
+kandura) in shaded majlis area, watch on wrist showing
+"✅ Pool · AED 250 · weekly maintenance".
+Headline: "TAP ONCE. POOL PERFECT."
+```
+
+### A.3 Output sizes — generate ALL of these for each service
+
+When commissioning images for the website, generate the same scene at:
+  1. **1200×1200 1:1** — square card (homepage / blog)
+  2. **1080×1350 4:5** — Instagram feed
+  3. **1080×1920 9:16** — story / Reel
+  4. **1920×1080 16:9** — landing-page hero / YouTube
+  5. **2400×1260 1.9:1** — open-graph card (link previews)
+  6. **800×600 4:3** — small thumbnail / email
+
+### A.4 Where these images get used in code
+
+| Service | File path | Used by |
+|---|---|---|
+| recovery | `/web/img/recovery/burj-tap.png` | `/nfc-vehicle-recovery.html` hero, `/sos.html` thumb, homepage SOS strip |
+| recovery | `/web/img/recovery/scene-mercedes.png` | recovery page strip |
+| recovery | `/web/img/recovery/hero-split.png` | recovery page strip |
+| recovery | `/web/img/recovery/panic-ad.png` | recovery page strip |
+| recovery | `/web/img/recovery/campaign-grid.png` | recovery page footer |
+| recovery | `/web/img/recovery/carousel-9.png` | recovery page section divider |
+| chauffeur | `/web/img/services/chauffeur-hero.png` | future `/services/chauffeur.html` |
+| furniture | `/web/img/services/move-hero.png` | future `/services/move.html` |
+| handyman | `/web/img/services/handyman-hero.png` | `/services.html` cards |
+| plumber | `/web/img/services/plumber-hero.png` | `/services.html` cards |
+| electrician | `/web/img/services/electrician-hero.png` | `/services.html` cards |
+| ac | `/web/img/services/ac-hero.png` | `/services.html` cards |
+| cleaning | `/web/img/services/cleaning-hero.png` | `/services.html` cards |
+| pest | `/web/img/services/pest-hero.png` | `/services.html` cards |
+| pool | `/web/img/services/pool-hero.png` | `/services.html` cards |
+
+After generating: drop the file at the path, no code changes required —
+the page references the file by path and falls back gracefully if absent.
+
+---
+
+## B. ORIGINAL 50-VIDEO PROMPT COLLECTION
 
 Each prompt is ready to paste into Veo 3 / Runway Gen-4 / Sora / Luma Dream Machine. Output spec: 9:16 vertical · 6–10 seconds · UAE setting · UAE actor (50% Emirati, 30% expat South-Asian, 20% expat European/Filipino) · cinematic lighting · phone always shown front-on with the green Servia confirm pill animating over it for last 1.5 s.
 

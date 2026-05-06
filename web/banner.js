@@ -128,14 +128,16 @@ function __serviaBannerInit() {
         display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;
       }
       #servia-topbanner .b-slide {
-        display: flex; align-items: center; gap: 10px; width: 100%;
+        display: none; align-items: center; gap: 10px; width: 100%;
         opacity: 0; transform: translateY(8px);
         transition: opacity .55s ease, transform .55s ease;
         position: absolute; left: 14px; right: 40px; top: 50%;
         margin-top: -10px;
       }
-      #servia-topbanner .b-slide.active { opacity: 1; transform: translateY(0); position: relative; left: 0; top: 0; margin-top: 0 }
-      #servia-topbanner .b-slide.exit  { opacity: 0; transform: translateY(-10px) }
+      /* v1.24.3 — defensive: only ever show ONE slide. Display:none on
+         non-active so a stale .exit class can never leave a 2nd bar visible. */
+      #servia-topbanner .b-slide.active { display: flex; opacity: 1; transform: translateY(0); position: relative; left: 0; top: 0; margin-top: 0 }
+      #servia-topbanner .b-slide.exit  { display: flex; opacity: 0; transform: translateY(-10px) }
       #servia-topbanner .b-emoji { font-size: 20px; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,.2)) }
       #servia-topbanner .b-text { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; flex: 1; min-width: 0 }
       #servia-topbanner .b-text b { font-weight: 800; letter-spacing: -.01em }
