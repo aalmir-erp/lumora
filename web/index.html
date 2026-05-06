@@ -1756,15 +1756,12 @@ setTimeout(() => {
     rec.onstart = () => { listening = true; mic.classList.add("listening"); mic.textContent = "🔴"; };
     rec.onend   = () => { listening = false; mic.classList.remove("listening"); mic.textContent = "🎤"; };
     rec.onerror = () => { listening = false; mic.classList.remove("listening"); mic.textContent = "🎤"; };
-    // v1.24.11 — REPLACE-ALWAYS pattern (no accumulator).
+    // v1.24.16 — only the latest result, never accumulate.
     rec.onresult = e => {
       if (!e.results || !e.results.length) return;
-      let txt = "";
-      for (let i = 0; i < e.results.length; i++) {
-        txt += e.results[i][0].transcript;
-        if (e.results[i].isFinal) txt += " ";
-      }
-      input.value = txt.trim();
+      const latest = e.results[e.results.length - 1];
+      if (!latest) return;
+      input.value = (latest[0].transcript || "").trim();
       dd.hidden = false; renderQuery(input.value);
     };
   } else {

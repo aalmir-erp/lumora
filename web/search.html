@@ -590,19 +590,15 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     rec.onstart = () => { listening = true; qmic.classList.add("listening"); qmic.textContent = "🔴"; };
     rec.onend   = () => { listening = false; qmic.classList.remove("listening"); qmic.textContent = "🎤"; };
     rec.onerror = () => { listening = false; qmic.classList.remove("listening"); qmic.textContent = "🎤"; };
-    // v1.24.11 — REPLACE-ALWAYS pattern (no accumulator).
+    // v1.24.16 — only the latest result, never accumulate.
     rec.onresult = e => {
       if (!e.results || !e.results.length) return;
-      let txt = "";
-      let lastFinal = false;
-      for (let i = 0; i < e.results.length; i++) {
-        txt += e.results[i][0].transcript;
-        if (e.results[i].isFinal) { txt += " "; lastFinal = true; }
-      }
-      q.value = txt.trim();
+      const latest = e.results[e.results.length - 1];
+      if (!latest) return;
+      q.value = (latest[0].transcript || "").trim();
       sbox.classList.add("has-text");
       if (mode === "search") render();
-      if (mode === "ai" && lastFinal) {
+      if (mode === "ai" && latest.isFinal) {
         const v = q.value.trim();
         if (v) { aiSend(v); q.value = ""; render(); }
       }

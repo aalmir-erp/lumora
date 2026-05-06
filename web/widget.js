@@ -482,14 +482,18 @@
   } else {
     let rec = null;
     let listening = false;
+    // v1.24.16 — track the LAST dictation so re-tapping mic replaces it
+    // instead of treating it as prefix-to-append-to. This is what was
+    // actually producing the dup-text bug ("I I want I want to I want
+    // to know…"): the user kept tapping mic without sending, each tap
+    // captured the previous dictation as prefix, and new dictation
+    // appended. Now we strip the previous dictation off the input
+    // before capturing prefix, so re-taps replace cleanly.
+    let lastDictation = "";
     micBtn.onclick = () => {
       if (listening && rec) { try { rec.stop(); } catch {} return; }
       const lang = (window.lumoraLang ? lumoraLang() : "en");
       rec = new SR();
-      // v1.24.8 — continuous=false so each click captures ONE utterance.
-      // Continuous mode caused Android Chrome to silently restart recognition
-      // after pauses; the same phrase then got accumulated multiple times in
-      // the input ("I have king size bed... I have king size bed... I have…").
       rec.continuous = false;
       rec.interimResults = true;
       rec.lang = SR_LANG_MAP[lang] || "en-US";
@@ -497,27 +501,26 @@
                             micBtn.textContent = "🔴"; input.placeholder = "🎙 Listening… speak in any UAE language"; };
       rec.onend = () => { listening = false; micBtn.classList.remove("recording");
                           micBtn.textContent = "🎤"; input.placeholder = "Type your message…"; };
-      // Capture whatever the user had typed BEFORE clicking the mic, so
-      // dictated text is appended (not overwritten).
-      const prefix = (input.value || "").trim();
-      // v1.24.11 — REPLACE-ALWAYS pattern. Android Chrome emits multiple
-      // isFinal=true results for the SAME utterance as it refines its
-      // interpretation. Any "accumulator" pattern doubled / tripled the
-      // text. The correct approach: always take the LATEST interpretation
-      // from e.results and replace the dictated portion with it. Never
-      // accumulate. After this click ends (continuous=false), the next
-      // click sees the existing input.value as the new prefix and appends.
+      // STRIP previous dictation so the new dictation REPLACES it.
+      let cur = (input.value || "").trim();
+      if (lastDictation) {
+        if (cur === lastDictation) {
+          cur = "";
+        } else if (lastDictation.length >= 3 && cur.endsWith(" " + lastDictation)) {
+          cur = cur.slice(0, cur.length - lastDictation.length - 1).trim();
+        }
+        input.value = cur;
+      }
+      const prefix = cur;
+      // Use ONLY the latest result (the canonical current interpretation).
+      // Never accumulate across e.results entries.
       rec.onresult = (e) => {
         if (!e.results || !e.results.length) return;
-        // Collect the full transcript from ALL current results (Chrome
-        // maintains this as the canonical evolving interpretation of
-        // the single utterance).
-        let txt = "";
-        for (let i = 0; i < e.results.length; i++) {
-          txt += e.results[i][0].transcript;
-          if (e.results[i].isFinal) txt += " ";
-        }
-        input.value = (prefix ? prefix + " " : "") + txt.trim();
+        const latest = e.results[e.results.length - 1];
+        if (!latest) return;
+        const txt = (latest[0].transcript || "").trim();
+        lastDictation = txt;
+        input.value = (prefix ? prefix + " " : "") + txt;
       };
       rec.onerror = (e) => {
         listening = false; micBtn.classList.remove("recording");

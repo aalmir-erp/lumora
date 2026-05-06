@@ -339,20 +339,18 @@
     rec.onstart = () => { listening = true; micBtn.classList.add("listening"); micBtn.textContent = "🔴"; };
     rec.onend   = () => { listening = false; micBtn.classList.remove("listening"); micBtn.textContent = "🎤"; };
     rec.onerror = () => { listening = false; micBtn.classList.remove("listening"); micBtn.textContent = "🎤"; };
-    // v1.24.11 — REPLACE-ALWAYS pattern (no accumulator). Chrome refines
-    // its interpretation across multiple onresult events; we just take
-    // the latest canonical transcript every time.
+    // v1.24.16 — fixed multi-tap repetition. Search mic is single-shot
+    // (sends on final), so we just need the latest result, no prefix
+    // tracking needed (input is consumed on send).
     rec.onresult = e => {
       if (!e.results || !e.results.length) return;
-      let txt = "";
-      let lastFinal = false;
-      for (let i = 0; i < e.results.length; i++) {
-        txt += e.results[i][0].transcript;
-        if (e.results[i].isFinal) { txt += " "; lastFinal = true; }
-      }
-      qInput.value = txt.trim();
+      const latest = e.results[e.results.length - 1];
+      if (!latest) return;
+      const txt = (latest[0].transcript || "").trim();
+      qInput.value = txt;
+      const isFin = latest.isFinal;
       if (mode === "search") render();
-      else if (lastFinal) {
+      else if (isFin) {
         const v = qInput.value.trim();
         if (v) { aiSend(v); qInput.value = ""; }
       }
