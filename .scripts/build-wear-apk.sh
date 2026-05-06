@@ -32,8 +32,10 @@ cp -v "$WEAR_SRC/java/tiles/"*.java "$BUILD_DIR/app/src/main/java/ae/servia/wear
 cp -v "$WEAR_SRC/res-layout/wear_main.xml" "$BUILD_DIR/app/src/main/res/layout/"
 cp -v "$WEAR_SRC/res-values/strings.xml" "$BUILD_DIR/app/src/main/res/values/"
 cp -v "$WEAR_SRC/res-values/styles.xml" "$BUILD_DIR/app/src/main/res/values/"
-# v1.24.4 — copy ALL drawable XMLs (tile previews, backgrounds, etc.)
+# v1.24.14 — copy ALL drawable XMLs **and** PNGs (tile previews now bitmap-
+# only because Samsung's tile picker silently rejects drawable XMLs).
 cp -v "$WEAR_SRC/res-drawable/"*.xml "$BUILD_DIR/app/src/main/res/drawable/" 2>/dev/null || true
+cp -v "$WEAR_SRC/res-drawable/"*.png "$BUILD_DIR/app/src/main/res/drawable/" 2>/dev/null || true
 
 # Use the same Servia icon bytes for the launcher (256x256 plenty for hdpi/xhdpi)
 # We'll just copy the existing servia-icon-512x512.png into the mipmap dirs.
