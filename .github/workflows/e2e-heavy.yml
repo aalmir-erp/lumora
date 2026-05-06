@@ -5,10 +5,14 @@ on:
   push:
     tags: ["v*"]
   schedule:
-    - cron: '37 */12 * * *'  # twice daily
+    - cron: '37 */12 * * *'
 
-permissions: { contents: write }
-concurrency: { group: e2e-heavy, cancel-in-progress: true }
+permissions:
+  contents: write
+
+concurrency:
+  group: e2e-heavy
+  cancel-in-progress: true
 
 jobs:
   playwright:
@@ -16,48 +20,41 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
-        with: { node-version: "20" }
+        with:
+          node-version: "20"
 
       - name: Install Playwright + browser
         run: |
-          npm init -y >/dev/null 2>&1
-          npm install playwright@latest >/dev/null 2>&1
-          npx playwright install chromium >/dev/null 2>&1
+          npm init -y
+          npm install playwright@latest
+          npx playwright install chromium --with-deps
 
       - name: Run heavy Playwright sweep
         env:
           SERVIA_BASE: https://servia.ae
+          E2E_SHOT_DIR: /tmp/e2e-shots
         run: |
+          mkdir -p /tmp/e2e-shots
           node tests/e2e-heavy.mjs 2>&1 | tee /tmp/e2e-heavy.log
-          # Extract structured findings JSON
           grep "FINDINGS-JSON:" /tmp/e2e-heavy.log | tail -1 | sed 's/^FINDINGS-JSON://' > /tmp/findings.json || true
-          python3 -c "
-import json, os
-try:
-    with open('/tmp/findings.json') as f:
-        d = json.load(f)
-    md = '# E2E Heavy Test Results\n\n'
-    md += f'- ✅ Pass: {d[\"pass\"]}\n- ⚠️ Warn: {d[\"warn\"]}\n- ❌ Fail: {d[\"fail\"]}\n\n## Items\n\n'
-    for item in d['items']:
-        icon = {'pass':'✅','warn':'⚠️','fail':'❌'}.get(item['status'],'•')
-        md += f'- {icon} **{item[\"name\"]}** — {item[\"detail\"]}\n'
-    open('TEST_RESULTS_HEAVY.md','w').write(md)
-    print(f'pass={d[\"pass\"]} warn={d[\"warn\"]} fail={d[\"fail\"]}')
-except Exception as e:
-    print(f'parse failed: {e}')
-"
+          python3 .scripts/format-e2e-results.py || true
 
       - name: Commit results to repo
         if: always()
+        continue-on-error: true
         run: |
           git config user.email "e2e-heavy@github-actions"
           git config user.name "E2E Heavy bot"
-          git add TEST_RESULTS_HEAVY.md /tmp/findings.json 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "e2e-heavy: $(date +%Y-%m-%d_%H:%M)"
-          git push origin HEAD:main || true
+          if [ -f TEST_RESULTS_HEAVY.md ]; then
+            git add TEST_RESULTS_HEAVY.md
+            git diff --staged --quiet || git commit -m "e2e-heavy: $(date -u +%Y-%m-%dT%H:%MZ)"
+            git pull --rebase origin main || true
+            git push origin HEAD:main || echo "push failed"
+          fi
 
-      - name: Upload artifacts
+      - name: Upload screenshots + log
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -66,5 +63,6 @@ except Exception as e:
             TEST_RESULTS_HEAVY.md
             /tmp/findings.json
             /tmp/e2e-heavy.log
+            /tmp/e2e-shots/
           if-no-files-found: warn
           retention-days: 14
