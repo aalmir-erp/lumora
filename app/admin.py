@@ -128,6 +128,140 @@ def update_status(bid: str, body: StatusUpdate):
     return tools.update_booking_status(bid, body.status, actor="admin")
 
 
+# v1.24.19 — one-click curated vendor import (no scraping, no API keys).
+# Loads app/data/vendors_recovery_uae_curated.json (~108 real UAE recovery
+# brands across all 7 emirates, 8 categories). Each vendor row carries
+# verified=false until admin confirms the phone — clicking the source_url
+# opens Yellow Pages / Google Maps so admin pastes the real phone in.
+@router.post("/vendors/import-recovery-curated")
+def import_recovery_curated():
+    import json as _j, datetime as _d, pathlib as _p
+    from . import auth_users as _au
+    p = _p.Path("app/data/vendors_recovery_uae_curated.json")
+    if not p.exists():
+        raise HTTPException(404, "vendors_recovery_uae_curated.json not found")
+    data = _j.loads(p.read_text())
+    now = _d.datetime.utcnow().isoformat() + "Z"
+    pwhash = _au.hash_password("servia-recovery-vendor-default")
+    imported = updated = skipped = 0
+    with db.connect() as c:
+        # Idempotent — additive columns for category + verified flag
+        for ddl in (
+            "ALTER TABLE vendors ADD COLUMN categories TEXT",
+            "ALTER TABLE vendors ADD COLUMN emirate TEXT",
+            "ALTER TABLE vendors ADD COLUMN area TEXT",
+            "ALTER TABLE vendors ADD COLUMN website TEXT",
+            "ALTER TABLE vendors ADD COLUMN source_url TEXT",
+            "ALTER TABLE vendors ADD COLUMN verified INTEGER DEFAULT 0",
+            "ALTER TABLE vendors ADD COLUMN needs_verification INTEGER DEFAULT 1",
+        ):
+            try: c.execute(ddl)
+            except Exception: pass
+        for v in data.get("vendors", []):
+            email = (v["name"].lower()
+                     .replace(" ", ".").replace("&", "and")
+                     .replace("/", "-")
+                     .replace("(", "").replace(")", ""))[:60] + "@servia-vendors.lumora"
+            row = c.execute("SELECT id FROM vendors WHERE email=?", (email,)).fetchone()
+            cats = ",".join(v.get("categories", []))
+            verified = 1 if v.get("verified") else 0
+            needs_v = 0 if verified else 1
+            phone_raw = v.get("phone") or ""
+            if row:
+                c.execute(
+                    "UPDATE vendors SET name=?, phone=?, rating=?, "
+                    "categories=?, emirate=?, area=?, website=?, source_url=?, "
+                    "verified=?, needs_verification=? WHERE id=?",
+                    (v["name"], phone_raw, float(v.get("rating") or 4.5),
+                     cats, v.get("emirate"), v.get("area"),
+                     v.get("website"), v.get("source_url"),
+                     verified, needs_v, row["id"])
+                )
+                vid = row["id"]
+                updated += 1
+            else:
+                cur = c.execute(
+                    "INSERT INTO vendors(email, password_hash, name, phone, company, "
+                    "rating, completed_jobs, is_active, is_approved, created_at, "
+                    "categories, emirate, area, website, source_url, verified, needs_verification) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (email, pwhash, v["name"], phone_raw, v["name"],
+                     float(v.get("rating") or 4.5), 0,
+                     1 if verified else 0,    # don't auto-activate unverified
+                     1 if verified else 0,    # don't auto-approve unverified
+                     now, cats, v.get("emirate"), v.get("area"),
+                     v.get("website"), v.get("source_url"),
+                     verified, needs_v)
+                )
+                vid = cur.lastrowid
+                imported += 1
+            # Add vehicle_recovery service_id binding for ALL of them
+            for sid in ("vehicle_recovery",):
+                try:
+                    c.execute(
+                        "INSERT OR IGNORE INTO vendor_services(vendor_id, service_id, "
+                        "area, price_aed, active) VALUES(?,?,?,?,?)",
+                        (vid, sid, v.get("area") or "*", 250.0, 1 if verified else 0)
+                    )
+                except Exception: pass
+    db.log_event("admin", "vendors", "import_recovery_curated",
+                 details={"imported": imported, "updated": updated})
+    return {
+        "ok": True, "imported": imported, "updated": updated,
+        "total_processed": len(data.get("vendors", [])),
+        "next_step": "Open admin → Vendors → filter by 'needs verification' → click each → open source_url → copy real phone → save. Once verified=1 they auto-activate and start receiving auction blasts.",
+    }
+
+
+@router.get("/vendors/needs-verification")
+def vendors_needing_verification(emirate: str | None = None,
+                                  category: str | None = None,
+                                  limit: int = 200):
+    """Return curated vendors awaiting phone verification — admin worksheet."""
+    sql = ("SELECT id, name, phone, rating, emirate, area, website, source_url, "
+           "categories, verified, needs_verification, is_active "
+           "FROM vendors WHERE COALESCE(needs_verification, 0) = 1")
+    params: list = []
+    if emirate:
+        sql += " AND emirate = ?"; params.append(emirate)
+    if category:
+        sql += " AND categories LIKE ?"; params.append(f"%{category}%")
+    sql += " ORDER BY emirate, area, name LIMIT ?"
+    params.append(limit)
+    with db.connect() as c:
+        rows = c.execute(sql, params).fetchall()
+    return {"items": [dict(r) for r in rows], "count": len(rows)}
+
+
+class _VerifyVendorBody(BaseModel):
+    phone: str
+    verified: bool = True
+
+
+@router.post("/vendors/{vid}/verify")
+def verify_vendor(vid: int, body: _VerifyVendorBody):
+    """Admin marks a vendor's phone as verified after looking it up.
+    Auto-activates the vendor + their vehicle_recovery service binding."""
+    from . import uae_phone as _ph
+    phone = _ph.normalize(body.phone) or body.phone
+    with db.connect() as c:
+        n = c.execute(
+            "UPDATE vendors SET phone=?, verified=?, needs_verification=?, "
+            "is_active=?, is_approved=? WHERE id=?",
+            (phone, 1 if body.verified else 0,
+             0 if body.verified else 1,
+             1 if body.verified else 0,
+             1 if body.verified else 0, vid)
+        ).rowcount
+        if not n:
+            raise HTTPException(404, "vendor not found")
+        c.execute(
+            "UPDATE vendor_services SET active=? WHERE vendor_id=?",
+            (1 if body.verified else 0, vid)
+        )
+    return {"ok": True, "vendor_id": vid, "phone": phone, "verified": body.verified}
+
+
 @router.post("/bookings/{bid}/invoice")
 def make_invoice(bid: str):
     return tools.create_invoice_for_booking(bid)

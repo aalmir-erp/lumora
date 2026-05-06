@@ -306,6 +306,64 @@
     </div>
 
     <div id="t-outreach" class="tab" style="display:none">
+      <!-- v1.24.19 — One-click 108-vendor curated recovery import -->
+      <div style="background:linear-gradient(135deg,#7C2D12 0%,#DC2626 50%,#F59E0B 100%);color:#fff;border-radius:14px;padding:18px;margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div>
+            <h3 style="margin:0 0 4px;font-size:18px;color:#fff">📥 Quick-import: 108 UAE vehicle-recovery vendors</h3>
+            <p style="margin:0;color:#FEE2E2;font-size:13px;line-height:1.55">
+              Pre-curated list of real UAE recovery / towing brands across all 7 emirates, 8 categories
+              (tow_light, tow_heavy, battery, tyre, lockout, fuel, garage, 24/7). Each entry has a
+              <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px">source_url</code>
+              (Yellow Pages / Google Maps) so you can verify phones in 1 click.
+            </p>
+          </div>
+          <button id="recovery-import-btn" class="btn" onclick="importRecoveryVendors()"
+                  style="background:#FCD34D;color:#7C2D12;border:0;padding:11px 18px;border-radius:999px;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer">
+            📥 Import 108 vendors
+          </button>
+        </div>
+        <div id="recovery-import-status" style="font-size:12.5px;margin-top:10px;background:rgba(0,0,0,.25);padding:8px 12px;border-radius:8px;display:none"></div>
+      </div>
+
+      <!-- Verification worksheet -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div>
+            <h3 style="margin:0 0 4px;font-size:16px">🔍 Verification worksheet</h3>
+            <p style="margin:0;color:var(--muted);font-size:12.5px">
+              Click <b>Open source</b> on each row → grab the real phone from Yellow Pages / Google Maps →
+              paste below → <b>✓ Verify</b>. Vendor auto-activates and starts receiving auction blasts.
+            </p>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <select id="vv-emirate" onchange="loadVerifyList()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px">
+              <option value="">All emirates</option>
+              <option value="dubai">Dubai</option>
+              <option value="abu_dhabi">Abu Dhabi</option>
+              <option value="sharjah">Sharjah</option>
+              <option value="ajman">Ajman</option>
+              <option value="rak">Ras Al Khaimah</option>
+              <option value="uaq">Umm Al Quwain</option>
+              <option value="fujairah">Fujairah</option>
+            </select>
+            <select id="vv-category" onchange="loadVerifyList()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px">
+              <option value="">All categories</option>
+              <option value="tow_light">🚗 Tow (light)</option>
+              <option value="tow_heavy">🚛 Tow (heavy)</option>
+              <option value="battery">🔋 Battery</option>
+              <option value="tyre">🛞 Tyre</option>
+              <option value="lockout">🔑 Lockout</option>
+              <option value="fuel">⛽ Fuel</option>
+              <option value="garage">🔧 Garage</option>
+              <option value="24/7">⏰ 24/7</option>
+            </select>
+            <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="loadVerifyList()">↻ Refresh</button>
+          </div>
+        </div>
+        <div id="verify-list" style="font-size:13px"></div>
+      </div>
+
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
         <div>
           <h2 style="margin:0">Vendor outreach</h2>
@@ -3259,6 +3317,85 @@ async function deleteRow(entity, id, after) {
   } catch (e) { /* adm() toasts */ }
 }
 window.changeStatus = async (bid, s) => { await adm(`/api/admin/bookings/${bid}/status`, { method:"POST", body:{status:s} }); };
+
+// v1.24.19 — Curated recovery vendors import + verification worksheet
+async function importRecoveryVendors() {
+  const btn = document.getElementById("recovery-import-btn");
+  const st = document.getElementById("recovery-import-status");
+  if (!confirm("Import 108 curated UAE recovery vendors? Existing vendors with the same name are updated; new ones are added (deactivated until you verify their phone).")) return;
+  btn.disabled = true; btn.textContent = "⏳ Importing…";
+  st.style.display = "block"; st.textContent = "Loading curated dataset…";
+  try {
+    const j = await adm("/api/admin/vendors/import-recovery-curated", {method:"POST"});
+    st.innerHTML = "✅ <b>Imported " + j.imported + " new + updated " + j.updated + "</b> · " + (j.next_step || "");
+    btn.textContent = "✓ Done — refresh worksheet";
+    setTimeout(loadVerifyList, 600);
+  } catch (e) {
+    st.textContent = "⚠ Failed: " + (e.message || e);
+    btn.disabled = false; btn.textContent = "📥 Import 108 vendors";
+  }
+}
+window.importRecoveryVendors = importRecoveryVendors;
+
+async function loadVerifyList() {
+  const em = document.getElementById("vv-emirate")?.value || "";
+  const cat = document.getElementById("vv-category")?.value || "";
+  const url = "/api/admin/vendors/needs-verification?"
+    + (em ? "emirate=" + encodeURIComponent(em) + "&" : "")
+    + (cat ? "category=" + encodeURIComponent(cat) : "");
+  const j = await adm(url).catch(() => ({items:[]}));
+  const items = j.items || [];
+  const el = document.getElementById("verify-list");
+  if (!el) return;
+  if (!items.length) {
+    el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">'
+      + (j.count === 0 ? '🎉 All vendors verified! Click <b>📥 Import 108</b> above to add more.' : 'No vendors match the filter.')
+      + '</p>';
+    return;
+  }
+  el.innerHTML = '<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">'
+    + items.length + ' vendors awaiting phone verification:</div>'
+    + '<table class="list" style="width:100%">'
+    + '<thead><tr>'
+      + '<th>Name</th><th>Emirate · Area</th><th>Categories</th><th>Source</th><th>Real phone</th><th></th>'
+    + '</tr></thead><tbody>'
+    + items.map(function(v){
+        return '<tr id="vv-row-' + v.id + '">'
+          + '<td><b>' + escHtml(v.name) + '</b><br><small style="color:#94A3B8">★ ' + (v.rating||4.5) + '</small></td>'
+          + '<td><b>' + escHtml(v.emirate||'?') + '</b><br><small style="color:#64748B">' + escHtml(v.area||'') + '</small></td>'
+          + '<td><small>' + escHtml(v.categories||'').split(',').map(function(c){return c.trim()?'<span style="background:#F0FDFA;color:#0F766E;padding:1px 6px;border-radius:999px;margin-right:3px;font-size:10.5px">'+escHtml(c)+'</span>':'';}).join('') + '</small></td>'
+          + '<td>' + (v.source_url ? '<a href="' + escHtml(v.source_url) + '" target="_blank" rel="noopener" style="color:#0F766E;font-weight:700;font-size:12px">📍 Open source ↗</a>' : '<small style="color:#94A3B8">none</small>') + '</td>'
+          + '<td><input id="vv-ph-' + v.id + '" type="tel" placeholder="+971..." style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;width:140px;font-family:monospace" value="' + escHtml(v.phone||'') + '"></td>'
+          + '<td><button class="btn btn-primary" style="font-size:11px;padding:5px 10px" onclick="verifyVendor(' + v.id + ')">✓ Verify</button></td>'
+          + '</tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+window.loadVerifyList = loadVerifyList;
+
+async function verifyVendor(vid) {
+  const inp = document.getElementById("vv-ph-" + vid);
+  const ph = (inp.value || "").trim();
+  if (!ph || ph.length < 9) { alert("Enter a valid +971 phone first."); return; }
+  const row = document.getElementById("vv-row-" + vid);
+  row.style.opacity = "0.5";
+  try {
+    await adm("/api/admin/vendors/" + vid + "/verify",
+      {method:"POST", body:{phone: ph, verified: true}});
+    row.style.background = "#ECFDF5";
+    row.querySelector("td:last-child").innerHTML = '<span style="color:#15803D;font-weight:800;font-size:11px">✓ Verified</span>';
+    setTimeout(function(){ row.remove(); }, 800);
+  } catch (e) {
+    row.style.opacity = "";
+    alert("Failed: " + (e.message || e));
+  }
+}
+window.verifyVendor = verifyVendor;
+function escHtml(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+
+// Auto-load verification list when outreach tab opens
+document.querySelector('[data-tab="outreach"]')?.addEventListener("click", function(){ setTimeout(loadVerifyList, 200); });
+if (location.hash === "#outreach") setTimeout(loadVerifyList, 400);
 window.makeInvoice  = async (bid) => { const r = await adm(`/api/admin/bookings/${bid}/invoice`, { method:"POST" }); alert("Invoice: "+JSON.stringify(r)); };
 
 
