@@ -83,6 +83,18 @@ _FORCE_MOBILE_SNIPPET = (
 # so we don't bloat every HTML response).
 _SOS_FAB_SNIPPET = b"<script src=\"/sos-fab.js\" defer></script>"
 
+# v1.24.12 — favicon link tags. Customer reported Google search showed a
+# generic globe icon for servia.ae results because /favicon.ico was missing.
+# We've added the file (web/favicon.ico) and now also inject these <link>
+# tags into every HTML response so inner pages crawled by Google point at
+# the proper icon. Skips pages that already declare a shortcut-icon link.
+_FAVICON_SNIPPET = (
+    b"<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/favicon-32.png\">"
+    b"<link rel=\"icon\" type=\"image/png\" sizes=\"48x48\" href=\"/favicon-48.png\">"
+    b"<link rel=\"shortcut icon\" href=\"/favicon.ico\">"
+    b"<link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/apple-touch-icon.png\">"
+)
+
 
 class _ForceMobileMiddleware(_BHM):
     async def dispatch(self, request, call_next):
@@ -103,6 +115,10 @@ class _ForceMobileMiddleware(_BHM):
             j = body.find(b">", i)
             if j > 0:
                 body = body[: j + 1] + _FORCE_MOBILE_SNIPPET + body[j + 1 :]
+        # v1.24.12 — favicon link tags (only if page doesn't already declare them)
+        if b"shortcut icon" not in body and b"favicon.ico" not in body:
+            if b"</head>" in body:
+                body = body.replace(b"</head>", _FAVICON_SNIPPET + b"</head>", 1)
         # v1.24.2 — universal SOS FAB before </body> so it loads after layout.
         # Skip /sos.html (already a panic page), /admin*, /vendor*, /pay*.
         path = (request.url.path or "")
@@ -119,6 +135,29 @@ class _ForceMobileMiddleware(_BHM):
 
 
 app.add_middleware(_ForceMobileMiddleware)
+
+
+# v1.24.12 — www → bare-domain canonical redirect.
+# Customer reported Google indexed servia.ae and www.servia.ae as separate
+# sites with inconsistent favicons. Fix: 301 every www.servia.ae request to
+# the bare domain, preserving path + query. Google merges the two into one
+# index entry over the next crawl cycle, and the favicon (now properly at
+# /favicon.ico) is served identically.
+class _CanonicalHostMiddleware(_BHM):
+    async def dispatch(self, request, call_next):
+        host = (request.headers.get("host") or "").lower()
+        if host.startswith("www.servia.ae"):
+            target_host = host[4:]   # strip "www."
+            url = str(request.url).replace(
+                "://" + host, "://" + target_host, 1)
+            from starlette.responses import RedirectResponse
+            # 301 = permanent. Browsers and crawlers both honour and cache it.
+            return RedirectResponse(url=url, status_code=301)
+        return await call_next(request)
+
+
+app.add_middleware(_CanonicalHostMiddleware)
+
 
 # Routers
 # IMPORTANT: specific admin sub-routers MUST be registered BEFORE
