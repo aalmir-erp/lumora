@@ -20,7 +20,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.wear_main);
 
         wireTile(R.id.wear_tile_voice,  VoiceAssistantActivity.class);
-        wireTile(R.id.wear_tile_sos,    RecoveryActivity.class);
+        wireTile(R.id.wear_tile_sos,    SosCategoryGridActivity.class);  // v1.24.7 — grid with sub-options
         wireTile(R.id.wear_tile_track,  BookingTrackActivity.class);
         wireTile(R.id.wear_tile_book,   QuickBookActivity.class);
         wireTile(R.id.wear_tile_quote,  QuoteActivity.class);

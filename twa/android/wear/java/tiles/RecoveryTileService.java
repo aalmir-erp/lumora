@@ -25,7 +25,10 @@ public class RecoveryTileService extends ServiaTileBase {
                         .setAndroidActivity(
                             new ActionBuilders.AndroidActivity.Builder()
                                 .setPackageName("ae.servia.wear")
-                                .setClassName("ae.servia.wear.RecoveryActivity")
+                                // v1.24.7 — go to the 8-tile category grid
+                                // (matches /sos.html on the website) instead
+                                // of dispatching vehicle recovery blindly.
+                                .setClassName("ae.servia.wear.SosCategoryGridActivity")
                                 .build())
                         .build())
                 .build();
@@ -53,13 +56,13 @@ public class RecoveryTileService extends ServiaTileBase {
                     .build())
             .addContent(
                 col()
-                    .addContent(title("🆘 SOS RECOVERY", AMBER))
+                    .addContent(title("🆘 SERVIA SOS", AMBER))
                     .addContent(spacer(4))
                     .addContent(big("TAP", WHITE))
                     .addContent(spacer(2))
-                    .addContent(body("Sends real GPS · dispatches closest tow truck", WHITE))
+                    .addContent(body("8 services · pick what you need", WHITE))
                     .addContent(spacer(6))
-                    .addContent(body("24/7 · ETA in seconds", AMBER))
+                    .addContent(body("Vehicle · plumber · electrician · AC · more", AMBER))
                     .build())
             .build();
     }

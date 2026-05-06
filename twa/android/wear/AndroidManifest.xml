@@ -78,6 +78,17 @@
                   android:label="Welcome"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
                   android:windowSoftInputMode="adjustResize" />
+        <!-- v1.24.7: SOS category grid (8 tiles, matches website /sos.html).
+             Launched by MainActivity SOS button + RecoveryTileService tap. -->
+        <activity android:name="ae.servia.wear.SosCategoryGridActivity"
+                  android:exported="true"
+                  android:label="Servia SOS"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="ae.servia.wear.action.SOS_GRID" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <!-- v1.24.4: Generic SOS dispatch (used by SosVehicle/Furniture/etc tiles) -->
         <activity android:name="ae.servia.wear.SosLauncherActivity"
                   android:exported="true"
