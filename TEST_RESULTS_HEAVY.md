@@ -1,26 +1,23 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 40
+- ✅ Pass: 45
 - ⚠️ Warn: 1
-- ❌ Fail: 9
+- ❌ Fail: 4
 - ⏭ Skip: 0
 
 ## Items
 
 - ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
-- ❌ **[T03] /services.html lists services** — exception: only 0 cards
+- ✅ **[T03] /services.html lists services** — 32 cards
 - ✅ **[T04] /coverage.html renders** — OK
-- ✅ **[T05] /blog index loads** — OK
+- ❌ **[T05] /blog index loads** — exception: HTTP 502
 - ❌ **[T06] Sitemap has /nfc.html** — exception: nfc.html missing
 - ✅ **[T07] robots.txt accessible** — OK
 - ✅ **[T08] /faq.html FAQPage schema** — present
 - ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
-- ❌ **[T11] Mobile nav single-row** — exception: locator.boundingBox: Timeout 18000ms exceeded.
-Call log:
-  - waiting for locator('.nav-inner img').first()
-
+- ✅ **[T11] Mobile nav single-row** — Δy=-7
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ✅ **[T13] Install banner single row height** — 36px
 - ✅ **[T14] Footer present** — OK
@@ -41,18 +38,18 @@ Call log:
 - ✅ **[T29] /api/nfc/consult endpoint** — greets
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
-- ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_GgQ1eZ-TJ...
+- ✅ **[T32] /me.html requires auth** — redirected
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_eIfmSjEQ9...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
-- ❌ **[T37] Wallet balance after login** — exception: HTTP 502
-- ❌ **[T38] /api/me/bookings authed** — exception: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
-- ❌ **[T39] /api/nfc/my-tags authed** — exception: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+- ✅ **[T37] Wallet balance after login** — AED 0
+- ✅ **[T38] /api/me/bookings authed** — OK
+- ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.3
+- ✅ **[T41] /api/health responds** — v1.24.4
 - ✅ **[T42] /api/services >=10** — 32
-- ✅ **[T43] /api/app/latest works** — apk_v=1.24.2
+- ✅ **[T43] /api/app/latest works** — apk_v=1.24.3
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book.html renders form** — OK
