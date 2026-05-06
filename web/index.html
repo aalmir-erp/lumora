@@ -194,8 +194,7 @@
 <!-- Critical-path scripts only. Non-critical (analytics pixels, social
      strip, social proof, cart badge) are queued for lazy-load below to
      keep the LCP window clear of main-thread JS. -->
-<!-- banner.js removed per v1.22.98 — rotating banner caused the recurring
-     "orange flicker / extra teal bar" issue. -->
+<script src="/banner.js" defer></script>
 <script>window.__lazyLoadQueue = [
   { src: "/_snippets.js",    id: "snippets" },
   { src: "/cart-badge.js",   id: "cart-badge" },
@@ -260,13 +259,42 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
      gradient so the area is never blank teal between paint and banner-
      content injection. The teal-tinted placeholder caused the "extra
      empty bar" + flicker the user reported in v1.22.86-89. -->
-<!-- v1.22.98: TOPBANNER REMOVED PERMANENTLY.
-     The rotating banner cycled through teal/amber/purple/green slides
-     which the user repeatedly identified as a flicker source AND as the
-     "extra orange bar" near the top (slide #2 has amber tone). Removing
-     it eliminates: visible flash on first paint, color mismatch with
-     status bar / nav, and the wasted 44px of vertical space. -->
-<style>html.hide-topbanner #servia-topbanner,#servia-topbanner{display:none !important;height:0 !important}</style>
+<!-- v1.23.1: TOPBANNER RESTORED with FIRST SLIDE pre-rendered inline.
+     Previous flicker was caused by banner.js injecting content AFTER first
+     paint. Now the placeholder ships with the first slide HTML already
+     baked in -> visible from frame 1, banner.js just enables rotation. -->
+<style>
+  #servia-topbanner{height:44px;min-height:44px;max-height:44px;overflow:hidden;
+    background:linear-gradient(90deg,#0F766E 0%,#0D9488 60%,#14B8A6 100%);
+    color:#fff;display:flex;align-items:center;gap:10px;padding:0 14px;
+    font-size:13px;font-weight:600;line-height:1.3;box-sizing:border-box}
+  #servia-topbanner .b-emoji{font-size:18px;flex-shrink:0}
+  #servia-topbanner .b-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #servia-topbanner .b-text b{font-weight:800}
+  #servia-topbanner a{background:#fff;color:#0F766E;text-decoration:none;
+    padding:4px 12px;border-radius:99px;font-weight:800;font-size:11.5px;
+    flex-shrink:0;white-space:nowrap}
+  #servia-topbanner .x{background:transparent;border:0;color:rgba(255,255,255,.7);
+    font-size:14px;cursor:pointer;flex-shrink:0;padding:0 4px}
+  html.hide-topbanner #servia-topbanner{display:none !important;height:0 !important}
+  /* Reserve space for location-bar so it doesn't push content when injected */
+  #servia-loc-bar-placeholder{height:36px;background:linear-gradient(90deg,#0F766E,#14B8A6);
+    border-bottom:1px solid rgba(255,255,255,.1)}
+  body.has-location-bar #servia-loc-bar-placeholder{display:none}
+</style>
+<!-- v1.23.1: pre-rendered first slide so user sees content from frame 1 (no flash).
+     banner.js (deferred) hydrates this with rotation between slides. -->
+<div id="servia-topbanner">
+  <span class="b-emoji">⚡</span>
+  <span class="b-text"><b>Book in 60 seconds</b> · Trusted UAE pros, vetted &amp; insured · same-day across all 7 emirates.</span>
+  <a href="/book.html">Book now →</a>
+  <button class="x" type="button" onclick="this.parentNode.style.display='none';try{localStorage.setItem('servia.topbanner.dismissed_at',Date.now())}catch(_){}" aria-label="Dismiss">✕</button>
+</div>
+<!-- v1.23.1: 36px placeholder reserves space for location-bar.js so the
+     bar doesn't push content down when injected (no CLS flash). The JS
+     adds 'has-location-bar' to <body> when its real bar is in the DOM,
+     which collapses this placeholder. -->
+<div id="servia-loc-bar-placeholder" aria-hidden="true"></div>
 <div class="uae-flag-strip"></div>
 <nav class="nav"><div class="nav-inner">
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="124" height="40" alt="Servia" decoding="async"></a>

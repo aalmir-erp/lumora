@@ -166,15 +166,23 @@
     <button type="button" id="servia-loc-edit" style="display:none">Edit address</button>
     <button type="button" class="x" id="servia-loc-x" aria-label="Hide">✕</button>
   `;
-  // Insert under the rotating banner / above the flag strip
+  // Insert under the rotating banner / above the flag strip.
+  // v1.23.1: prefer replacing the pre-rendered #servia-loc-bar-placeholder
+  // so there's NO layout shift between SSR placeholder and real bar.
   function insertBar() {
     if (!document.body) return;
-    const flag = document.querySelector(".uae-flag-strip");
-    if (flag && flag.parentNode === document.body) {
-      flag.parentNode.insertBefore(bar, flag.nextSibling);
+    const ph = document.getElementById("servia-loc-bar-placeholder");
+    if (ph && ph.parentNode) {
+      ph.parentNode.replaceChild(bar, ph);
     } else {
-      document.body.insertBefore(bar, document.body.firstChild);
+      const flag = document.querySelector(".uae-flag-strip");
+      if (flag && flag.parentNode === document.body) {
+        flag.parentNode.insertBefore(bar, flag.nextSibling);
+      } else {
+        document.body.insertBefore(bar, document.body.firstChild);
+      }
     }
+    document.body.classList.add("has-location-bar");
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", insertBar);
