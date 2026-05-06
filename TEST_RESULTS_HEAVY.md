@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 43
+- ✅ Pass: 45
 - ⚠️ Warn: 1
-- ❌ Fail: 6
+- ❌ Fail: 4
 - ⏭ Skip: 0
 
 ## Items
@@ -38,8 +38,8 @@
 - ✅ **[T29] /api/nfc/consult endpoint** — greets
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
-- ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_jPUPONTLf...
+- ✅ **[T32] /me.html requires auth** — redirected
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_Z1-YD8dYV...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,12 +47,12 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.13
+- ✅ **[T41] /api/health responds** — v1.24.14
 - ✅ **[T42] /api/services >=10** — 32
-- ✅ **[T43] /api/app/latest works** — apk_v=1.24.10
+- ✅ **[T43] /api/app/latest works** — apk_v=1.24.14
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
-- ❌ **[T46] /book.html renders form** — exception: no book button
+- ✅ **[T46] /book.html renders form** — OK
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
 - ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
 - ✅ **[T49] /cart.html loads** — OK
