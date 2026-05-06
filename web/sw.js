@@ -1,5 +1,5 @@
 /* Servia service worker — network-first for HTML/JS so deploys are seen instantly. */
-const CACHE = "servia-v1.24.19";
+const CACHE = "servia-v1.24.20";
 // v1.23.0 — pre-cache critical paint-path assets so first visit is instant
 // on a returning user. Keep small (<200KB total) to not blow Android cache.
 const SHELL = [
@@ -16,13 +16,42 @@ self.addEventListener("install", (e) => {
 });
 
 self.addEventListener("activate", (e) => {
-  e.waitUntil(caches.keys().then((keys) =>
-    Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))));
-  self.clients.claim();
+  // v1.24.20 — aggressive cache wipe AND ask all open clients to reload
+  // so they don't keep running stale broken JS. Customer reported a
+  // blank-white-screen state on servia.ae caused by v1.24.18's broken
+  // minify middleware corrupting cached JS. This activate handler now
+  // clears EVERY non-current cache + force-reloads any open tabs after
+  // taking control.
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
+    await self.clients.claim();
+    const all = await self.clients.matchAll({type: "window"});
+    for (const c of all) {
+      try { c.postMessage({type: "sw-updated", cache: CACHE}); } catch (_) {}
+    }
+  })());
+});
+
+// Allow the page to ask us to wipe + skipWaiting on demand (used by
+// the ?reset URL handler).
+self.addEventListener("message", (e) => {
+  if (!e.data || e.data.type !== "servia-reset") return;
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
+    self.skipWaiting();
+    const all = await self.clients.matchAll({type: "window"});
+    for (const c of all) c.navigate(c.url.split("?")[0]);
+  })());
 });
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
+  // v1.24.20 — emergency reset hatch. If URL has ?reset / ?clear-sw,
+  // bypass cache entirely so the user can force-fetch the latest HTML.
+  if (url.search.includes("reset") || url.search.includes("clear-sw") ||
+      url.search.includes("nocache")) return;
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/pay/")) return;
 
   // Network-first for HTML / JS / CSS so new deploys are seen on next request.
