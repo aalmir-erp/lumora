@@ -1,8 +1,13 @@
 /* Servia service worker — network-first for HTML/JS so deploys are seen instantly. */
-const CACHE = "servia-v1.22.99";
+const CACHE = "servia-v1.23.0";
+// v1.23.0 — pre-cache critical paint-path assets so first visit is instant
+// on a returning user. Keep small (<200KB total) to not blow Android cache.
 const SHELL = [
+  "/", "/index.html",
   "/logo.svg", "/avatar.svg", "/icon-192.svg", "/icon-512.svg",
-  "/manifest.webmanifest"
+  "/style.css", "/widget.css",
+  "/manifest.webmanifest",
+  "/mascot.svg",
 ];
 
 self.addEventListener("install", (e) => {

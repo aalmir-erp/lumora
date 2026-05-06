@@ -48,6 +48,14 @@
 <link rel="preload" as="fetch" href="/api/services" crossorigin="anonymous">
 <link rel="dns-prefetch" href="https://wa.me">
 <link rel="preconnect" href="https://wa.me" crossorigin>
+<!-- v1.23.0 perf: pre-connect to outbound origins used by lazy modules so
+     DNS+TLS handshake is parallelized with the initial paint. -->
+<link rel="dns-prefetch" href="https://unpkg.com">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="dns-prefetch" href="https://nominatim.openstreetmap.org">
+<link rel="preconnect" href="https://nominatim.openstreetmap.org" crossorigin>
+<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+<link rel="dns-prefetch" href="https://api.github.com">
 
 <script type="application/ld+json">
 {

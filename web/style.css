@@ -30,3 +30,26 @@
   .ss-ico{left:14px !important;font-size:18px !important}
   .ss-mic,.ss-clear,.ss-send{width:34px !important;height:34px !important}
 }
+
+/* ============== v1.23.0 page-speed boost ============== */
+/* Use content-visibility:auto on below-fold sections so the browser can
+   skip rendering work for offscreen content. We pair with contain-intrinsic-
+   size so layout doesn't shift when an offscreen section becomes visible. */
+section[data-cv]            { content-visibility:auto; contain-intrinsic-size:1px 600px; }
+.nfc-uses, .nfc-how, .nfc-faq, .nfc-privacy, .nfc-order, .gallery, .test-grid,
+.areas-strip, footer, .stats-strip, .ins-grid {
+  content-visibility:auto; contain-intrinsic-size:1px 500px;
+}
+/* Reduce layout shift on lazy-loaded service-tile images by reserving height */
+.svc-tile-hero, .svc-card { contain-intrinsic-size:auto 220px; }
+/* Compose-friendly transforms */
+.svc-tile-hero, .uc, .step, .ins-card, .feat, .review { will-change:transform; }
+/* Use GPU-accelerated paint for animated icons */
+.live-strip .row, .float-icon, .mascot-frame, .pulse, .tap-tag, .tap-phone {
+  transform:translateZ(0); backface-visibility:hidden;
+}
+/* Defer fonts so we don't block first paint waiting for them */
+@font-face {
+  font-family:'system-ui'; font-display:swap;
+  src:local('-apple-system'), local('BlinkMacSystemFont'), local('Segoe UI'), local('Roboto');
+}

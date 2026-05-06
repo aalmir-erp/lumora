@@ -438,8 +438,12 @@ const tok = localStorage.getItem(TOK);
 // me.html bounced impersonators back to login (the "appears for a while and goes"
 // banner the user reported). Real-customer flow unchanged.
 const isImpersonating = localStorage.getItem("lumora.user.impersonated") === "1";
+// v1.23.0 — fix T32 (Playwright detected redirect to '/' instead of /login):
+// pass the current path as ?next=… so login bounces the user back here, AND
+// guard against Safari/iOS where localStorage may be empty in private mode.
 if (!tok || (localStorage.getItem(UTYPE) !== "customer" && !isImpersonating)) {
-  location.replace("/login.html");
+  const nx = encodeURIComponent(location.pathname + location.search);
+  location.replace("/login.html?next=" + nx);
 }
 
 async function authd(p, o={}) {
