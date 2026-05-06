@@ -20,7 +20,7 @@
 - ✅ **[T11] Mobile nav single-row** — Δy=-7
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ❌ **[T13] Install banner single row height** — exception: h=106.375px (>50 = wrap)
-- ✅ **[T14] Footer present** — OK
+- ❌ **[T14] Footer present** — exception: no footer
 - ✅ **[T15] /install.html APK card** — OK
 - ✅ **[T16] /install.html Wear OS card** — OK
 - ✅ **[T17] /install.html iOS section** — OK
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_caKheDaws...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_H4VYelw2N...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,12 +47,12 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.23.2
+- ✅ **[T41] /api/health responds** — v1.23.3
 - ✅ **[T42] /api/services >=10** — 32
 - ✅ **[T43] /api/app/latest works** — apk_v=1.23.2
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
-- ❌ **[T46] /book.html renders form** — exception: no book button
+- ✅ **[T46] /book.html renders form** — OK
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
 - ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
 - ✅ **[T49] /cart.html loads** — OK
