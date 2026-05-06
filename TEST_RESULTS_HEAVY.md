@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 41
+- ✅ Pass: 43
 - ⚠️ Warn: 1
-- ❌ Fail: 8
+- ❌ Fail: 6
 - ⏭ Skip: 0
 
 ## Items
@@ -10,7 +10,7 @@
 - ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
 - ❌ **[T03] /services.html lists services** — exception: only 0 cards
-- ❌ **[T04] /coverage.html renders** — exception: HTTP 502
+- ✅ **[T04] /coverage.html renders** — OK
 - ✅ **[T05] /blog index loads** — OK
 - ❌ **[T06] Sitemap has /nfc.html** — exception: nfc.html missing
 - ✅ **[T07] robots.txt accessible** — OK
@@ -35,11 +35,11 @@
 - ✅ **[T26] /api/nfc/tag bad slug 404** — OK
 - ✅ **[T27] /t/<bad-slug> redirects** — /nfc-not-found.html?slug=zzzzbogus99
 - ✅ **[T28] /nfc.html vehicle recovery section** — OK
-- ❌ **[T29] /api/nfc/consult endpoint** — exception: HTTP 502
+- ✅ **[T29] /api/nfc/consult endpoint** — greets
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_RGn3aQLz4...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_2U5IGQCwG...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,9 +47,9 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.0
+- ✅ **[T41] /api/health responds** — v1.24.1
 - ✅ **[T42] /api/services >=10** — 32
-- ✅ **[T43] /api/app/latest works** — apk_v=1.23.9
+- ✅ **[T43] /api/app/latest works** — apk_v=1.24.0
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book.html renders form** — OK
