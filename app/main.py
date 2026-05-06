@@ -97,55 +97,49 @@ _FAVICON_SNIPPET = (
 
 
 class _ForceMobileMiddleware(_BHM):
+    """Inject force-mobile + favicon + SOS-FAB snippets into every HTML
+    response. v1.24.23 wraps every byte of work in a fail-safe try/except
+    so any error path serves the ORIGINAL response untouched — site never
+    blanks out due to a middleware bug. The injections are polish; the
+    page rendering is non-negotiable."""
     async def dispatch(self, request, call_next):
         resp = await call_next(request)
-        ctype = (resp.headers.get("content-type") or "").lower()
-        if "text/html" not in ctype:
-            return resp
-        # v1.24.22 — defensive: short-circuit if we already see a complete HTML
-        # response that doesn't need our injection. Avoids body re-stream cost
-        # and any potential issues with iterator races.
         try:
-            cl = int(resp.headers.get("content-length") or "0")
-            if cl > 0 and cl < 200:  # tiny pages (404 redirects etc.) skip
+            ctype = (resp.headers.get("content-type") or "").lower()
+            if "text/html" not in ctype:
                 return resp
+            try:
+                cl = int(resp.headers.get("content-length") or "0")
+                if 0 < cl < 200:
+                    return resp
+            except Exception:
+                pass
+            body = b""
+            async for chunk in resp.body_iterator:
+                body += chunk
+            if b"<head>" in body and b"id='_fm'" not in body:
+                body = body.replace(b"<head>", b"<head>" + _FORCE_MOBILE_SNIPPET, 1)
+            elif b"<head " in body and b"id='_fm'" not in body:
+                i = body.find(b"<head ")
+                j = body.find(b">", i)
+                if j > 0:
+                    body = body[: j + 1] + _FORCE_MOBILE_SNIPPET + body[j + 1 :]
+            if b"shortcut icon" not in body and b"favicon.ico" not in body:
+                if b"</head>" in body:
+                    body = body.replace(b"</head>", _FAVICON_SNIPPET + b"</head>", 1)
+            path = (request.url.path or "")
+            if (b"sos-fab.js" not in body
+                    and not path.startswith(("/admin", "/vendor", "/portal-vendor",
+                                              "/pay", "/sos.html"))):
+                if b"</body>" in body:
+                    body = body.replace(b"</body>", _SOS_FAB_SNIPPET + b"</body>", 1)
+            from starlette.responses import Response as _R
+            hdrs = {k: v for k, v in resp.headers.items() if k.lower() != "content-length"}
+            return _R(content=body, status_code=resp.status_code,
+                      headers=hdrs, media_type=resp.media_type)
         except Exception:
-            pass
-        # Don't touch anything that's already gzipped (we run BEFORE GZip)
-        body = b""
-        async for chunk in resp.body_iterator:
-            body += chunk
-        # Inject right after <head> so it runs before any CSS/JS
-        if b"<head>" in body and b"id='_fm'" not in body:
-            body = body.replace(b"<head>", b"<head>" + _FORCE_MOBILE_SNIPPET, 1)
-        elif b"<head " in body and b"id='_fm'" not in body:
-            # Handle <head attr=...> form
-            i = body.find(b"<head ")
-            j = body.find(b">", i)
-            if j > 0:
-                body = body[: j + 1] + _FORCE_MOBILE_SNIPPET + body[j + 1 :]
-        # v1.24.12 — favicon link tags (only if page doesn't already declare them)
-        if b"shortcut icon" not in body and b"favicon.ico" not in body:
-            if b"</head>" in body:
-                body = body.replace(b"</head>", _FAVICON_SNIPPET + b"</head>", 1)
-        # v1.24.2 — universal SOS FAB before </body> so it loads after layout.
-        # Skip /sos.html (already a panic page), /admin*, /vendor*, /pay*.
-        path = (request.url.path or "")
-        if (b"sos-fab.js" not in body
-                and not path.startswith(("/admin", "/vendor", "/portal-vendor",
-                                          "/pay", "/sos.html"))):
-            if b"</body>" in body:
-                body = body.replace(b"</body>", _SOS_FAB_SNIPPET + b"</body>", 1)
-        from starlette.responses import Response as _R
-        # Drop content-length from cloned headers so the new Response can
-        # correctly set its own — avoids subtle mismatches with proxies.
-        hdrs = {k: v for k, v in resp.headers.items() if k.lower() != "content-length"}
-        # v1.24.22 — explicit no-cache for HTML so any edge / browser cache
-        # doesn't pin a broken page from a previous bad deploy.
-        hdrs["cache-control"] = "no-cache, must-revalidate, max-age=0"
-        new = _R(content=body, status_code=resp.status_code,
-                 headers=hdrs, media_type=resp.media_type)
-        return new
+            # Total fail-safe: any error → original response, untouched.
+            return resp
 
 
 app.add_middleware(_ForceMobileMiddleware)
