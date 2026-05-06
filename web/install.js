@@ -150,17 +150,22 @@
       '<span><b>Servia mobile app</b> · faster, arrival alerts, app-only deals.</span>' +
       '<button id="servia-install-banner-go" type="button">Install</button>' +
       '<button id="servia-install-banner-x" type="button" aria-label="Dismiss">✕</button>';
+    // v1.22.98 — STRICT single-row banner. NO wrapping, height locked to 36px,
+    // long message gets ellipsised. Banner injects with display:none then
+    // becomes visible only after first paint to prevent layout-shift flicker.
     b.style.cssText =
-      "display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 12px;" +
+      "display:flex;gap:8px;align-items:center;justify-content:space-between;padding:0 12px;" +
       "background:linear-gradient(90deg,#0F766E,#0D9488);color:#fff;font-size:13px;font-weight:600;" +
-      "flex-wrap:nowrap;line-height:1.3;height:36px;box-sizing:border-box;overflow:hidden";
-    // v1.22.93 — squash + truncate the message label so it never wraps to 2 rows
+      "flex-wrap:nowrap !important;line-height:1.3;height:36px;min-height:36px;max-height:36px;" +
+      "box-sizing:border-box;overflow:hidden;visibility:hidden";
     const textSpan = b.querySelectorAll("span")[1];
     if (textSpan) {
       textSpan.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     }
     b.querySelector("#servia-install-banner-go").style.cssText =
       "background:#FCD34D;color:#0F172A;border:0;padding:5px 12px;border-radius:999px;font-weight:800;cursor:pointer;font-size:12.5px;flex-shrink:0;white-space:nowrap";
+    // After insert, reveal in next animation frame so layout settles first
+    requestAnimationFrame(() => { b.style.visibility = "visible"; });
     b.querySelector("#servia-install-banner-x").style.cssText =
       "background:transparent;color:#fff;border:0;cursor:pointer;font-size:16px;opacity:.7";
     // Insert at top of body, after the flag strip if present

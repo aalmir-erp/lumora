@@ -1938,7 +1938,8 @@ def _sitemap_xml_inner():
         ("/privacy.html", "0.4", "yearly"),
         ("/terms.html", "0.4", "yearly"),
         ("/refund.html", "0.4", "yearly"),
-        ("/nfc.html", "0.95", "weekly"),       # v1.22.92 NFC tap-to-book landing
+        ("/nfc.html", "0.95", "weekly"),
+        ("/nfc-vehicle-recovery.html", "0.85", "weekly"),
         ("/install.html", "0.85", "weekly"),
     ]
     for p, prio, freq in static_pages:

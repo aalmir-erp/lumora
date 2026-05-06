@@ -96,7 +96,7 @@
   .ins-tips ul { margin:0; padding-inline-start:22px; line-height:1.8; color:var(--text); font-size:14px }
   .ins-tips ul li b { color:#0F766E }
 </style>
-<script src="/banner.js" defer></script>
+<!-- banner.js removed v1.22.98 - was causing flicker -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
   {src:"/_snippets.js",id:"snippets"},
   {src:"/cart-badge.js",id:"cart-badge"}
@@ -154,7 +154,7 @@ html.hide-topbanner #servia-topbanner { display:none !important; height:0 !impor
 html.hide-install-banner #servia-install-banner { display:none !important; }
 </style>
 </head><body>
-<div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
+<style>#servia-topbanner{display:none !important;height:0 !important;visibility:hidden}</style>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <nav class="nav"><div class="nav-inner">
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="124" height="40" alt="Servia" decoding="async"></a>

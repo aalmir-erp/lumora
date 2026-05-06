@@ -5,7 +5,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
 <link rel="preload" as="style" href="/widget.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css"></noscript>
-<script src="/banner.js" defer></script>
+<!-- banner.js removed v1.22.98 - was causing flicker -->
 <!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
   {src:"/_snippets.js",id:"snippets"},
@@ -65,7 +65,7 @@ html.hide-topbanner #servia-topbanner { display:none !important; height:0 !impor
 html.hide-install-banner #servia-install-banner { display:none !important; }
 </style>
 </head><body>
-<div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
+<style>#servia-topbanner{display:none !important;height:0 !important;visibility:hidden}</style>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 <script src="/impersonation.js"></script>
 <nav class="nav"><div class="nav-inner">

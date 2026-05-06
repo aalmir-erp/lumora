@@ -13,9 +13,9 @@
      above it. -->
 <meta name="theme-color" content="#0F766E">
 
-<title>Servia: Trusted home services in UAE | Cleaning, AC, Maid, Handyman from 35 AED</title>
-<meta name="description" content="Same-day home services across Dubai, Sharjah, Ajman & Abu Dhabi. Verified cleaners, transparent pricing from 35 AED, instant WhatsApp booking, 4.9★ rated. Book in 60 seconds.">
-<meta name="keywords" content="cleaning service dubai, deep cleaning dubai price, maid service dubai, ac cleaning dubai, home services uae, sharjah cleaning, handyman dubai, lumora">
+<title>Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery</title>
+<meta name="description" content="UAE's first NFC tap-to-book home services platform. Stick a tag in your kitchen, car, AC, pool — tap your phone, instant booking. Cleaning, AC, maid, handyman, vehicle recovery 24/7. From 35 AED. Same-day across all 7 emirates. 4.9★ rated.">
+<meta name="keywords" content="NFC home services UAE, tap to book cleaner Dubai, NFC tag service Dubai, smart booking app UAE, cleaning service dubai, deep cleaning dubai price, maid service dubai, ac cleaning dubai, vehicle recovery dubai NFC, breakdown service UAE, home services uae, sharjah cleaning, handyman dubai, NFC sticker booking">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <link rel="canonical" href="https://servia.ae/">
 <link rel="alternate" hreflang="en" href="https://servia.ae/?lang=en">
@@ -25,8 +25,8 @@
 <link rel="alternate" hreflang="x-default" href="https://servia.ae/">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="Servia: Trusted home services in UAE from 35 AED">
-<meta property="og:description" content="Cleaning, AC, maid, handyman in 60 seconds. Verified, insured, 4.9★ rated. Book now.">
+<meta property="og:title" content="Servia · UAE's first NFC tap-to-book home services platform">
+<meta property="og:description" content="Tap once. Booked. Stick an NFC tag on your kitchen, car, AC, pool — tap to instantly re-book. Cleaning, recovery 24/7, IT support. From 35 AED.">
 <meta property="og:url" content="https://servia.ae/">
 <meta property="og:image" content="https://servia.ae/icon-512.svg">
 <meta property="og:locale" content="en_AE">
@@ -186,7 +186,8 @@
 <!-- Critical-path scripts only. Non-critical (analytics pixels, social
      strip, social proof, cart badge) are queued for lazy-load below to
      keep the LCP window clear of main-thread JS. -->
-<script src="/banner.js" defer></script>
+<!-- banner.js removed per v1.22.98 — rotating banner caused the recurring
+     "orange flicker / extra teal bar" issue. -->
 <script>window.__lazyLoadQueue = [
   { src: "/_snippets.js",    id: "snippets" },
   { src: "/cart-badge.js",   id: "cart-badge" },
@@ -251,7 +252,13 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
      gradient so the area is never blank teal between paint and banner-
      content injection. The teal-tinted placeholder caused the "extra
      empty bar" + flicker the user reported in v1.22.86-89. -->
-<div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
+<!-- v1.22.98: TOPBANNER REMOVED PERMANENTLY.
+     The rotating banner cycled through teal/amber/purple/green slides
+     which the user repeatedly identified as a flicker source AND as the
+     "extra orange bar" near the top (slide #2 has amber tone). Removing
+     it eliminates: visible flash on first paint, color mismatch with
+     status bar / nav, and the wasted 44px of vertical space. -->
+<style>html.hide-topbanner #servia-topbanner,#servia-topbanner{display:none !important;height:0 !important}</style>
 <div class="uae-flag-strip"></div>
 <nav class="nav"><div class="nav-inner">
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="124" height="40" alt="Servia" decoding="async"></a>

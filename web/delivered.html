@@ -67,7 +67,7 @@
   .ok-banner { background:#ECFDF5; border:1px solid #6EE7B7; padding:14px 18px;
     border-radius:12px; color:#065F46; font-weight:600; margin: 16px 0; display:none; }
 </style>
-<script src="/banner.js" defer></script>
+<!-- banner.js removed v1.22.98 - was causing flicker -->
 <!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
   {src:"/_snippets.js",id:"snippets"},
@@ -127,7 +127,7 @@ html.hide-topbanner #servia-topbanner { display:none !important; height:0 !impor
 html.hide-install-banner #servia-install-banner { display:none !important; }
 </style>
 </head><body>
-<div id="servia-topbanner" style="height:44px;min-height:44px;max-height:44px;overflow:hidden;background:linear-gradient(90deg,#0F766E,#0D9488,#14B8A6)" aria-hidden="true"></div>
+<style>#servia-topbanner{display:none !important;height:0 !important;visibility:hidden}</style>
 <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
 
 <nav class="nav"><div class="nav-inner">
