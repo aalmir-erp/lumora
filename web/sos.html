@@ -64,7 +64,11 @@
   .map-modal[hidden]{display:none}
   .map-modal header{padding:12px 14px;background:#0F172A;color:#fff;display:flex;align-items:center;gap:10px;text-align:left}
   .map-modal header button{background:transparent;color:#fff;border:0;font-size:20px;cursor:pointer}
-  #pickmap{flex:1;width:100%}
+  /* v1.24.5 — wrap is the flex child; pickmap is absolutely positioned
+     inside it so Leaflet always has a concrete height (was 0 before
+     because flex:1 was set on a non-flex parent → blank black map). */
+  .map-modal .mapwrap{position:relative;flex:1;min-height:200px;background:#1E293B}
+  #pickmap{position:absolute;inset:0;width:100%;height:100%}
   .map-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);font-size:42px;
            pointer-events:none;text-shadow:0 4px 8px rgba(0,0,0,.4);z-index:500}
   .map-bar{padding:10px 12px;background:#fff;display:flex;gap:8px;align-items:center}
@@ -157,7 +161,7 @@
       <div style="font-size:13px;font-weight:600">Drag map · centre is your pin</div>
     </div>
   </header>
-  <div style="position:relative;flex:1">
+  <div class="mapwrap">
     <div id="pickmap"></div>
     <div class="map-pin">📍</div>
   </div>
@@ -367,17 +371,36 @@
   // ============ Map pin modal ============
   function openMap(){
     $("mapmodal").hidden = false;
-    setTimeout(function(){
+    // v1.24.5 — defer init until the modal has a concrete size, then call
+    // invalidateSize() a second time after a longer delay because some
+    // Android browsers (Samsung Internet, Chrome via TWA) finish layout
+    // a frame later than first paint and would otherwise show a blank map.
+    function ensureMap(){
+      var center = state.loc ? [state.loc.lat, state.loc.lng] : [25.2048, 55.2708];
+      var zoom = state.loc ? 17 : 11;
       if (!state.pickmap) {
-        var center = state.loc ? [state.loc.lat, state.loc.lng] : [25.2048, 55.2708];
-        state.pickmap = L.map("pickmap").setView(center, state.loc ? 17 : 11);
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          {maxZoom:19, attribution:"© OpenStreetMap"}).addTo(state.pickmap);
+        state.pickmap = L.map("pickmap", {zoomControl: true}).setView(center, zoom);
+        // Use multiple tile servers for resilience — one CDN failing
+        // shouldn't blank the picker.
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: "© OpenStreetMap",
+          subdomains: "abc",
+          crossOrigin: true
+        }).addTo(state.pickmap);
       } else {
-        if (state.loc) state.pickmap.setView([state.loc.lat, state.loc.lng], 17);
-        state.pickmap.invalidateSize();
+        state.pickmap.setView(center, zoom);
       }
-    }, 80);
+      state.pickmap.invalidateSize(true);
+    }
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        ensureMap();
+        // Second invalidate after CSS transitions / soft-keyboard settle
+        setTimeout(function(){ if (state.pickmap) state.pickmap.invalidateSize(true); }, 250);
+        setTimeout(function(){ if (state.pickmap) state.pickmap.invalidateSize(true); }, 700);
+      });
+    });
   }
   function closeMap(){ $("mapmodal").hidden = true; }
   function confirmPin(){
