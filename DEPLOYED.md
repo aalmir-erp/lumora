@@ -2,19 +2,19 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"Z-R_B6BVSqWXzlMO8u2xcg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"42h-sJTpSPSNV2wMn6XIxQ"}`
 
 ## Build logs
 ```
+[internal] load build context
 [ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 2/11] WORKDIR /app
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
+uploading snapshot
 [internal] load build context
 [ 2/11] WORKDIR /app
 [ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -32,9 +32,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:8cf7d4ed92b10ba9b478c2a4b2ce823c7772a1e1f6bb34e1d8b547c991049cf3
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OGNmN2Q0ZWQ5MmIxMGJhOWI0NzhjMmE0YjJjZTgyM2M3NzcyYTFlMWY2YmIzNGUxZDhiNTQ3Yzk5MTA0OWNmMyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNlQxMDoxOTo0MVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:f8ae33aa501b522526f92cf5166459199a9e62db1dab381871eb54a59f687e39
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OTllNWNhMTAwNzU2MjNiMzczZDg4OGY1ZjFjNWNkMmEzMDE2NzdlOTcxYWFjZjEwOWJiM2VlNjYxODVlYmIxNiIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wNlQxMDoyOToyM1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:63e327b283db22714aac62a8c7144659dbffc947aaf203f62b683521b24c0d5b
+containerimage.digest: sha256:99e5ca10075623b373d888f5f1c5cd2a301677e971aacf109bb3ee66185ebb16
 image push
 image push
 
@@ -50,33 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/703bca9b-6454-4884-85a9-fdeaca475c6d/vol_onr647rhdeir9di9
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
-Starting Container
-[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:60023 - "GET /api/health HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:59672 - "GET /sos.html HTTP/1.1" 200 OK
-INFO:     100.64.0.4:26284 - "GET /login.html HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27220 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.5:59098 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27220 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27220 - "GET /api/site/social HTTP/1.1" 200 OK
-INFO:     100.64.0.5:30516 - "POST /api/auth/webauthn/challenge HTTP/1.1" 200 OK
-INFO:     100.64.0.6:15774 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.7:59708 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.8:45752 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.8:45752 - "GET /api/blog/latest?limit=10 HTTP/1.1" 200 OK
-INFO:     100.64.0.9:42100 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.8:45752 - "GET /book.html HTTP/1.1" 200 OK
-INFO:     100.64.0.8:46842 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.14:12190 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.14:12210 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.14:12210 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.15:34740 - "GET /book.html?nfc=zzzzbogus99 HTTP/1.1" 200 OK
+INFO:     100.64.0.21:52432 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.21:52454 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.21:52442 - "GET /api/nfc/tag/zzzzbogus99 HTTP/1.1" 404 Not Found
+INFO:     100.64.0.21:52478 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.21:52468 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.21:52432 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.21:59730 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.11:11944 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.20:17644 - "GET /cart.html HTTP/1.1" 200 OK
+INFO:     100.64.0.11:11960 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.11:11962 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.11:11964 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.11:11968 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.14:12210 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.14:12202 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.22:58676 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.22:58690 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.22:58676 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.22:58690 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.22:58690 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1]
+Stopping Container
+Stopping Container
 ```
