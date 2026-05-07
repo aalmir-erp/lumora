@@ -111,6 +111,7 @@ PYEOF
 cp -v "$WEAR_SRC/java/watchface/BaseServiaWatchFaceService.java" "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
 cp -v "$WEAR_SRC/java/watchface/WatchFaceMeta.java"               "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
 cp -v "$WEAR_SRC/java/watchface/WatchFaceRegistry.java"           "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+cp -v "$WEAR_SRC/java/watchface/ServiaWearLog.java"               "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
 cp -v "$WEAR_SRC/java/watchface/"ServiaFace*.java                 "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
 # WatchHomepageBridge (used by BaseServiaWatchFaceService for fallback open)
 cp -v "$WEAR_SRC/java/WatchHomepageBridge.java" "$BUILD_DIR/app/src/main/java/ae/servia/wear/" || true
