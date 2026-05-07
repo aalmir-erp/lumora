@@ -27,12 +27,14 @@ name: Build Android TWA (AAB + APK)
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: "Which APK(s) to build"
+        type: choice
+        default: "auto"
+        options: ["auto", "all", "phone", "wear", "faces", "single"]
   push:
     tags: ["v*"]
-    # v1.24.35 — also fire on every push to main so the Wear .aab/.apk + TWA
-    # rebuild automatically alongside Railway server deploys, instead of
-    # waiting for a manual tag. Path filters keep this fast: only paths
-    # that actually affect the Android artifacts trigger a rebuild.
     branches: ["main"]
     paths:
       - "twa/android/wear/**"
@@ -55,6 +57,68 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # need parent commit for the diff in path-filter
+
+      # v1.24.49 — figure out which APKs actually need rebuilding so we don't
+      # always burn 10+ minutes on all four when only one source tree
+      # changed. workflow_dispatch with target=auto behaves like a push:
+      # auto-detect from the diff. target=all|phone|wear|faces|single
+      # forces a specific subset.
+      - name: Decide build targets
+        id: targets
+        run: |
+          set -e
+          TARGET="${{ github.event.inputs.target }}"
+          [ -z "$TARGET" ] && TARGET="auto"
+          echo "Requested target: $TARGET"
+
+          BUILD_PHONE=false
+          BUILD_WEAR=false
+          BUILD_FACES=false
+          BUILD_SINGLE=false
+
+          if [ "$TARGET" = "all" ]; then
+            BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true
+          elif [ "$TARGET" = "phone" ]; then
+            BUILD_PHONE=true
+          elif [ "$TARGET" = "wear" ]; then
+            BUILD_WEAR=true
+          elif [ "$TARGET" = "faces" ]; then
+            BUILD_FACES=true
+          elif [ "$TARGET" = "single" ]; then
+            BUILD_SINGLE=true
+          else
+            # auto — diff against parent. The Wear / Faces / Single all share
+            # twa/android/wear/java/watchface so a change in any of those is
+            # picked up by all three (overbuild slightly, never underbuild).
+            BASE="${{ github.event.before }}"
+            [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] && BASE="HEAD~1"
+            CHANGED=$(git diff --name-only "$BASE" HEAD || git diff --name-only HEAD~1 HEAD || true)
+            echo "Changed files:"
+            echo "$CHANGED"
+            echo "$CHANGED" | grep -qE "^(twa/android/twa-manifest.json|twa/android/widget-sources/)" && BUILD_PHONE=true || true
+            echo "$CHANGED" | grep -qE "^twa/android/wear/" && { BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; } || true
+            echo "$CHANGED" | grep -qE "^twa/android/wear-faceonly/" && BUILD_FACES=true || true
+            echo "$CHANGED" | grep -qE "^twa/android/wear-singleface/" && BUILD_SINGLE=true || true
+            echo "$CHANGED" | grep -qE "^\.scripts/build-wear-apk\.sh$" && BUILD_WEAR=true || true
+            echo "$CHANGED" | grep -qE "^\.scripts/build-wear-faceonly-apk\.sh$" && BUILD_FACES=true || true
+            echo "$CHANGED" | grep -qE "^\.scripts/build-wear-singleface-apk\.sh$" && BUILD_SINGLE=true || true
+            # Workflow itself or twa-manifest changes -> rebuild everything
+            echo "$CHANGED" | grep -qE "^\.github/workflows/build-android-twa\.yml$|^twa/android/twa-manifest\.json$" \
+              && { BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; } || true
+            # If nothing matched (manual dispatch with no change context), default to all
+            if [ "$BUILD_PHONE$BUILD_WEAR$BUILD_FACES$BUILD_SINGLE" = "falsefalsefalsefalse" ]; then
+              echo "No matching paths — defaulting to all"
+              BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true
+            fi
+          fi
+
+          echo "Selection: phone=$BUILD_PHONE wear=$BUILD_WEAR faces=$BUILD_FACES single=$BUILD_SINGLE"
+          echo "phone=$BUILD_PHONE"   >> $GITHUB_OUTPUT
+          echo "wear=$BUILD_WEAR"     >> $GITHUB_OUTPUT
+          echo "faces=$BUILD_FACES"   >> $GITHUB_OUTPUT
+          echo "single=$BUILD_SINGLE" >> $GITHUB_OUTPUT
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -272,6 +336,7 @@ jobs:
           head -60 AndroidManifest.xml
 
       - name: Build AAB + APK via gradle (non-interactive)
+        if: steps.targets.outputs.phone == 'true'
         env:
           KS_PATH:  ${{ runner.temp }}/servia.jks
         working-directory: twa/android/generated
@@ -290,6 +355,7 @@ jobs:
           find app/build/outputs -type f \( -name "*.aab" -o -name "*.apk" \) -exec ls -la {} \;
 
       - name: Generate assetlinks.json sample
+        if: steps.targets.outputs.phone == 'true'
         working-directory: twa/android/generated
         env:
           KS_PATH: ${{ runner.temp }}/servia.jks
@@ -320,17 +386,23 @@ jobs:
           cat assetlinks.json
 
       - name: Copy outputs to a single artifacts dir
+        if: steps.targets.outputs.phone == 'true'
         working-directory: twa/android/generated
         run: |
           mkdir -p _artifacts
-          # Copy whatever AAB / APK exists, with a stable name
-          find app/build/outputs/bundle/release -name "*.aab" -exec cp {} _artifacts/app-release-bundle.aab \;
-          find app/build/outputs/apk/release    -name "*.apk" -exec cp {} _artifacts/app-release-signed.apk \;
+          # v1.24.49 — versioned filename only (matches the wear builds).
+          APP_VERSION=$(grep -E 'APP_VERSION\s*=' "${GITHUB_WORKSPACE}/app/config.py" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          BUILD_TS=$(date -u +%Y%m%d-%H%M)
+          SUFFIX="v${APP_VERSION}-${BUILD_TS}"
+          find app/build/outputs/bundle/release -name "*.aab" -exec cp {} "_artifacts/servia-twa-${SUFFIX}.aab" \;
+          find app/build/outputs/apk/release    -name "*.apk" -exec cp {} "_artifacts/servia-twa-${SUFFIX}.apk" \;
           cp assetlinks.json _artifacts/ 2>/dev/null || true
+          echo "$SUFFIX" > _artifacts/TWA_BUILD_INFO.txt
           echo "Final artifacts:"
           ls -la _artifacts/
 
       - name: Upload phone AAB + APK + assetlinks
+        if: steps.targets.outputs.phone == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: servia-android-twa
@@ -352,6 +424,7 @@ jobs:
       # -----------------------------------------------------------------
       - name: Build Wear OS standalone APK
         id: wear_build
+        if: steps.targets.outputs.wear == 'true'
         continue-on-error: true
         env:
           KS_PATH: ${{ runner.temp }}/servia.jks
@@ -386,7 +459,7 @@ jobs:
       # app's faces don't, co-packaging was the cause.
       - name: Build standalone Servia Faces APK
         id: faces_build
-        if: always()
+        if: steps.targets.outputs.faces == 'true'
         env:
           KS_PATH: ${{ env.RUNNER_TEMP }}/servia.jks
         run: |
@@ -411,7 +484,7 @@ jobs:
       # appear in the watch face picker, the issue is environmental.
       - name: Build Servia Single Face APK
         id: single_build
-        if: always()
+        if: steps.targets.outputs.single == 'true'
         run: |
           chmod +x .scripts/build-wear-singleface-apk.sh
           if ! .scripts/build-wear-singleface-apk.sh "$RUNNER_TEMP/servia.jks"; then
