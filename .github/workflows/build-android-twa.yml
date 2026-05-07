@@ -29,6 +29,16 @@ on:
   workflow_dispatch:
   push:
     tags: ["v*"]
+    # v1.24.35 — also fire on every push to main so the Wear .aab/.apk + TWA
+    # rebuild automatically alongside Railway server deploys, instead of
+    # waiting for a manual tag. Path filters keep this fast: only paths
+    # that actually affect the Android artifacts trigger a rebuild.
+    branches: ["main"]
+    paths:
+      - "twa/android/wear/**"
+      - "twa/android/twa-manifest.json"
+      - ".scripts/build-wear-apk.sh"
+      - ".github/workflows/build-android-twa.yml"
 
 permissions:
   # `contents: write` lets actions/upload-artifact and softprops/action-gh-release
