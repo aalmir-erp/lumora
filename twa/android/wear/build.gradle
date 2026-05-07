@@ -84,6 +84,12 @@ dependencies {
     implementation 'androidx.wear.watchface:watchface-data:1.2.1'
     implementation 'androidx.wear.watchface:watchface-complications-data-source:1.2.1'
     implementation 'androidx.wear.watchface:watchface-editor:1.2.1'
+    // v1.24.38 — Java/Guava interop module; ListenableWatchFaceService
+    // lives here, NOT in the core 'watchface' artifact. Without this
+    // the package-private import resolves to "cannot find symbol" and
+    // every override below it cascades into "does not override
+    // supertype" because the parent class is unknown.
+    implementation 'androidx.wear.watchface:watchface-guava:1.2.1'
 
     // Wearable Data Layer — phone↔watch sync (used for booking state +
     // wallet balance push from phone TWA via a companion service later).

@@ -603,7 +603,7 @@ public class ServiaWatchFaceService extends ListenableWatchFaceService {
             // /servia/booking_created.
             if ("next_booking".equals(kind)) {
                 android.content.SharedPreferences sp = appCtx
-                    .getSharedPreferences("servia_next_booking", MODE_PRIVATE);
+                    .getSharedPreferences("servia_next_booking", Context.MODE_PRIVATE);
                 int etaMin = sp.getInt("eta_min", 0);
                 if (etaMin > 0) {
                     pSlotIcon.setColor(slotFg);
@@ -633,11 +633,18 @@ public class ServiaWatchFaceService extends ListenableWatchFaceService {
 
         // ----- tap ------------------------------------------------------
 
+        // @TapType.TapType is the nested IntDef annotation on
+        // androidx.wear.watchface.TapType; the outer TapType is a class
+        // holding the int constants (DOWN=0, UP=1, CANCEL=2). Easy to
+        // confuse — javac said "TapType cannot be converted to Annotation"
+        // when we used the outer name as the annotation.
         @Override
-        public void onTapEvent(@TapType int tapType,
+        public void onTapEvent(@TapType.TapType int tapType,
                                @NonNull TapEvent tapEvent,
                                @NonNull ComplicationSlotsManager complicationSlotsManager) {
-            super.onTapEvent(tapType, tapEvent, complicationSlotsManager);
+            // Renderer.CanvasRenderer.onTapEvent has no super impl that's
+            // safe to call from Java (the open Kotlin variant is sketchy
+            // through bytecode), so we just override and skip super.
             if (tapType != TapType.UP) return;
             int x = tapEvent.getXPos();
             int y = tapEvent.getYPos();
