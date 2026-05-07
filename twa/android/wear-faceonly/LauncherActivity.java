@@ -122,8 +122,22 @@ public class LauncherActivity extends Activity {
             0xFF94A3B8);
         addSpacer(root, 14);
 
+        // ==== LIVE LOG ====
+        addHeader(root, "LIVE LOG (last 30)", 0xFFFCD34D);
+        addSpacer(root, 4);
+        String logTail = ae.servia.wear.watchface.ServiaWearLog.tail(this, 30);
+        TextView logView = new TextView(this);
+        logView.setText(logTail);
+        logView.setTextColor(0xFFA7F3D0);
+        logView.setTextSize(9);
+        logView.setTypeface(Typeface.MONOSPACE);
+        logView.setLayoutParams(wrap());
+        root.addView(logView);
+
+        addSpacer(root, 12);
+
         TextView footer = new TextView(this);
-        footer.setText("v1.24.43 · " + (Build.MANUFACTURER.toLowerCase().contains("samsung") ? "Samsung Wear OS" : "Wear OS"));
+        footer.setText("v1.24.45 · " + (Build.MANUFACTURER.toLowerCase().contains("samsung") ? "Samsung Wear OS" : "Wear OS"));
         footer.setTextColor(0xFF64748B);
         footer.setTextSize(9);
         footer.setGravity(Gravity.CENTER);

@@ -90,6 +90,7 @@ public abstract class BaseServiaWatchFaceService extends ListenableWatchFaceServ
             @NonNull WatchState watchState,
             @NonNull ComplicationSlotsManager complicationSlotsManager,
             @NonNull CurrentUserStyleRepository userStyleRepository) {
+        ServiaWearLog.logBootInfo(this, "WF·" + getPresetId());
         ServiaRenderer renderer = new ServiaRenderer(
             surfaceHolder, this, watchState, userStyleRepository, getPresetId());
         return Futures.immediateFuture(
@@ -182,15 +183,24 @@ public abstract class BaseServiaWatchFaceService extends ListenableWatchFaceServ
             if (frameBitmap == null || frameBitmap.isRecycled()) {
                 try {
                     int resId = meta.resolveFrameRes(appCtx);
-                    if (resId == 0) { frameBitmap = null; }
-                    else {
+                    if (resId == 0) {
+                        frameBitmap = null;
+                        ServiaWearLog.log(appCtx, "RENDER",
+                            "frame resource not found: " + meta.frameResName);
+                    } else {
                         BitmapFactory.Options opts = new BitmapFactory.Options();
                         opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
                         frameBitmap = BitmapFactory.decodeResource(
                             appCtx.getResources(), resId, opts);
+                        if (frameBitmap == null) {
+                            ServiaWearLog.log(appCtx, "RENDER",
+                                "decodeResource returned null for " + meta.frameResName);
+                        }
                     }
                 } catch (Throwable t) {
                     frameBitmap = null;
+                    ServiaWearLog.log(appCtx, "RENDER",
+                        "frame decode threw: " + t.getMessage());
                 }
             }
             if (frameBitmap != null) {

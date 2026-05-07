@@ -41,6 +41,9 @@ cp -v "$WEAR_SRC/res-drawable/"*.xml "$BUILD_DIR/app/src/main/res/drawable/" 2>/
 cp -v "$WEAR_SRC/res-drawable/"*.png "$BUILD_DIR/app/src/main/res/drawable/" 2>/dev/null || true
 # v1.24.41 — copy res-xml/* (WallpaperService descriptor for the watch face)
 cp -v "$WEAR_SRC/res-xml/"*.xml "$BUILD_DIR/app/src/main/res/xml/" 2>/dev/null || true
+# v1.24.45 — WFF (Watch Face Format) XML resources, one per face.
+mkdir -p "$BUILD_DIR/app/src/main/res/raw"
+cp -v "$WEAR_SRC/res-raw/"*.xml "$BUILD_DIR/app/src/main/res/raw/" 2>/dev/null || true
 
 # Use the same Servia icon bytes for the launcher (256x256 plenty for hdpi/xhdpi)
 # We'll just copy the existing servia-icon-512x512.png into the mipmap dirs.

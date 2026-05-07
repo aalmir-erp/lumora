@@ -103,8 +103,15 @@ open("$BUILD_DIR/app/src/main/AndroidManifest.xml","w").write(new)
 PYEOF
 
 # ---- Java sources ----
-# Watchface package (BaseServiaWatchFaceService + WatchFaceMeta + WatchFaceRegistry + 22 ServiaFaceNN.java)
-cp -v "$WEAR_SRC/java/watchface/"*.java "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+# Watchface package — ONLY the new-architecture files. Legacy
+# WatchFacePreset / WatchFaceSlots / WatchFaceEditorActivity / ThemePicker
+# depend on ae.servia.wear.ServiaTheme which lives outside this package
+# and isn't part of the standalone APK; if we copied them they'd fail
+# to compile with "cannot find symbol: ServiaTheme".
+cp -v "$WEAR_SRC/java/watchface/BaseServiaWatchFaceService.java" "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+cp -v "$WEAR_SRC/java/watchface/WatchFaceMeta.java"               "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+cp -v "$WEAR_SRC/java/watchface/WatchFaceRegistry.java"           "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+cp -v "$WEAR_SRC/java/watchface/"ServiaFace*.java                 "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
 # WatchHomepageBridge (used by BaseServiaWatchFaceService for fallback open)
 cp -v "$WEAR_SRC/java/WatchHomepageBridge.java" "$BUILD_DIR/app/src/main/java/ae/servia/wear/" || true
 # LauncherActivity
@@ -118,6 +125,9 @@ cp -v "$WEAR_SRC/res-drawable/"wf_*.png "$BUILD_DIR/app/src/main/res/drawable/" 
 cp -v "$WEAR_SRC/res-drawable/"tile_preview_hub.png "$BUILD_DIR/app/src/main/res/drawable/" 2>/dev/null || true
 # Wallpaper descriptor
 cp -v "$WEAR_SRC/res-xml/watch_face.xml" "$BUILD_DIR/app/src/main/res/xml/"
+# v1.24.45 — WFF XML resources
+mkdir -p "$BUILD_DIR/app/src/main/res/raw"
+cp -v "$WEAR_SRC/res-raw/"*.xml "$BUILD_DIR/app/src/main/res/raw/" 2>/dev/null || true
 # Launcher icon
 ICON_SRC="web/brand/servia-icon-512x512.png"
 if [ -f "$ICON_SRC" ]; then

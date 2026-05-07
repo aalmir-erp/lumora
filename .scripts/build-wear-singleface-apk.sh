@@ -32,11 +32,13 @@ mkdir -p "$BUILD_DIR/app/src/main/res/xml"
 cp -v "$SRC/AndroidManifest.xml" "$BUILD_DIR/app/src/main/AndroidManifest.xml"
 
 # ---- Java sources (minimal — only what's needed for ONE face) ----
-# Watchface package — Base + Meta + Registry + ALL 22 ServiaFaceNN.java.
-# (Even though only Face01 is registered in manifest, the registry
-# initializes all 22 entries; that's harmless and lets us flip a
-# different face by editing manifest only.)
-cp -v "$WEAR_SRC/java/watchface/"*.java "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+# ONLY new-architecture files. Skipping legacy WatchFacePreset/
+# WatchFaceSlots/WatchFaceEditorActivity/ThemePicker which depend on
+# ae.servia.wear.ServiaTheme that's outside this APK's namespace.
+cp -v "$WEAR_SRC/java/watchface/BaseServiaWatchFaceService.java" "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+cp -v "$WEAR_SRC/java/watchface/WatchFaceMeta.java"               "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+cp -v "$WEAR_SRC/java/watchface/WatchFaceRegistry.java"           "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
+cp -v "$WEAR_SRC/java/watchface/"ServiaFace*.java                 "$BUILD_DIR/app/src/main/java/ae/servia/wear/watchface/"
 # WatchHomepageBridge
 cp -v "$WEAR_SRC/java/WatchHomepageBridge.java" "$BUILD_DIR/app/src/main/java/ae/servia/wear/" 2>/dev/null || true
 # Reuse the diagnostic LauncherActivity from the face-only standalone
@@ -47,6 +49,10 @@ cp -v "$FACE_SRC/strings.xml" "$BUILD_DIR/app/src/main/res/values/strings.xml" 2
 cp -v "$WEAR_SRC/res-drawable/"wf_*.png "$BUILD_DIR/app/src/main/res/drawable/" 2>/dev/null || true
 cp -v "$WEAR_SRC/res-drawable/"tile_preview_hub.png "$BUILD_DIR/app/src/main/res/drawable/" 2>/dev/null || true
 cp -v "$WEAR_SRC/res-xml/watch_face.xml" "$BUILD_DIR/app/src/main/res/xml/"
+# v1.24.45 — WFF XML resources (face 1 only for single-face APK, but
+# safer to copy all so the manifest can opt-in to any of them)
+mkdir -p "$BUILD_DIR/app/src/main/res/raw"
+cp -v "$WEAR_SRC/res-raw/"*.xml "$BUILD_DIR/app/src/main/res/raw/" 2>/dev/null || true
 ICON_SRC="web/brand/servia-icon-512x512.png"
 if [ -f "$ICON_SRC" ]; then
   cp "$ICON_SRC" "$BUILD_DIR/app/src/main/res/mipmap-hdpi/wear_ic_launcher.png"

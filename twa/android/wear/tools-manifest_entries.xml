@@ -18,6 +18,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p01" />
         </service>
 
         <service
@@ -39,6 +49,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p02" />
         </service>
 
         <service
@@ -60,6 +80,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p03" />
         </service>
 
         <service
@@ -81,6 +111,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p04" />
         </service>
 
         <service
@@ -102,6 +142,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p05" />
         </service>
 
         <service
@@ -123,6 +173,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p06" />
         </service>
 
         <service
@@ -144,6 +204,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p07" />
         </service>
 
         <service
@@ -165,6 +235,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p08" />
         </service>
 
         <service
@@ -186,6 +266,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p09" />
         </service>
 
         <service
@@ -207,6 +297,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p10" />
         </service>
 
         <service
@@ -228,6 +328,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p11" />
         </service>
 
         <service
@@ -249,6 +359,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p12" />
         </service>
 
         <service
@@ -270,6 +390,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p13" />
         </service>
 
         <service
@@ -291,6 +421,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p14" />
         </service>
 
         <service
@@ -312,6 +452,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p15" />
         </service>
 
         <service
@@ -333,6 +483,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p16" />
         </service>
 
         <service
@@ -354,6 +514,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p17" />
         </service>
 
         <service
@@ -375,6 +545,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p18" />
         </service>
 
         <service
@@ -396,6 +576,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p19" />
         </service>
 
         <service
@@ -417,6 +607,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p20" />
         </service>
 
         <service
@@ -438,6 +638,16 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p21" />
         </service>
 
         <service
@@ -459,4 +669,14 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml. -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p22" />
         </service>

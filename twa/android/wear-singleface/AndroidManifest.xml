@@ -53,6 +53,13 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/watch_face" />
+            <!-- v1.24.45 WFF marker (Wear OS 5+ requirement, Jan 2025) -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p01" />
         </service>
 
     </application>
