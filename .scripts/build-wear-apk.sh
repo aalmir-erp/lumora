@@ -126,9 +126,20 @@ find app/build -type d 2>/dev/null | head -40 > _artifacts/wear-dirtree.txt || t
 cat _artifacts/wear-dirtree.txt
 
 # Try to copy artefacts even if gradle reported non-zero (some configs
-# produce a partial APK that still installs)
+# produce a partial APK that still installs).
+# v1.24.42 — also stamp the filename with version + UTC build timestamp
+# so the customer can see at a glance which version they downloaded.
+APP_VERSION=$(grep -E 'APP_VERSION\s*=' "${GITHUB_WORKSPACE:-/tmp/lumora-deploy}/app/config.py" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+BUILD_TS=$(date -u +%Y%m%d-%H%M)
+SUFFIX="v${APP_VERSION}-${BUILD_TS}"
+echo "=== artifact suffix: $SUFFIX ==="
 find app/build/outputs -name "*.apk" -exec cp {} _artifacts/servia-wear-signed.apk \; 2>&1 || true
 find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-wear-bundle.aab \; 2>&1 || true
+# Versioned copies (kept alongside the unversioned ones for any downstream
+# consumer that hard-codes the older filenames)
+[ -f _artifacts/servia-wear-signed.apk ] && cp _artifacts/servia-wear-signed.apk "_artifacts/servia-wear-${SUFFIX}.apk"
+[ -f _artifacts/servia-wear-bundle.aab ] && cp _artifacts/servia-wear-bundle.aab "_artifacts/servia-wear-${SUFFIX}.aab"
+echo "$SUFFIX" > _artifacts/BUILD_INFO.txt
 ls -la _artifacts/
 
 if [ "$GRADLE_EXIT" != "0" ]; then

@@ -143,6 +143,7 @@
             android:name="ae.servia.wear.watchface.ServiaWatchFaceService"
             android:label="@string/wf_face_name"
             android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService" />
