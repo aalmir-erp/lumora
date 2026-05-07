@@ -122,18 +122,15 @@ public class MySosActivity extends Activity {
 
     private void renderList(JSONArray items) {
         spinner.setVisibility(View.GONE);
+
+        // v1.24.29 — "+ Create new" card always shown at top so the watch
+        // is no longer dependent on the phone for shortcut creation.
+        addCreateCard();
+
         if (items == null || items.length() == 0) {
-            statusView.setText("No shortcuts yet —\nopen Servia on your phone\nto create one.");
+            statusView.setText("No shortcuts yet.\nTap ➕ above to create.");
             statusView.setTextColor(0xFFFCD34D);
             statusView.setTextSize(13);
-            // Also offer a tip and an "open phone Servia" hint
-            TextView tip = new TextView(this);
-            tip.setText("Visit servia.ae/sos.html\non your phone, tap\n'+ Create custom'");
-            tip.setTextColor(0xFF94A3B8);
-            tip.setTextSize(11);
-            tip.setGravity(Gravity.CENTER);
-            tip.setPadding(0, 12, 0, 0);
-            root.addView(tip);
             return;
         }
         statusView.setText(items.length() + " shortcut" + (items.length() == 1 ? "" : "s"));
@@ -144,12 +141,45 @@ public class MySosActivity extends Activity {
         }
         // Footer tip
         TextView tip = new TextView(this);
-        tip.setText("Manage shortcuts on your phone\nat servia.ae/sos.html");
+        tip.setText("Pin individual shortcuts\nto watch face: long-press\nface → Tiles → Slot 1-5");
         tip.setTextColor(0xFF64748B);
         tip.setTextSize(10);
         tip.setGravity(Gravity.CENTER);
         tip.setPadding(0, 12, 0, 0);
         root.addView(tip);
+    }
+
+    /** v1.24.29 — clickable "+ Create new" card at the top of the list. */
+    private void addCreateCard() {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundColor(0xFF065F46);
+        card.setPadding(12, 10, 12, 10);
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.bottomMargin = 6;
+        card.setLayoutParams(clp);
+        card.setClickable(true);
+
+        TextView ico = new TextView(this);
+        ico.setText("➕"); ico.setTextSize(22);
+        card.addView(ico);
+
+        TextView nm = new TextView(this);
+        nm.setText("Create new shortcut");
+        nm.setTextColor(0xFFFFFFFF); nm.setTextSize(13);
+        nm.setTypeface(nm.getTypeface(), Typeface.BOLD);
+        card.addView(nm);
+
+        TextView meta = new TextView(this);
+        meta.setText("Voice or type · pick service · save");
+        meta.setTextColor(0xCCFFFFFF); meta.setTextSize(10);
+        card.addView(meta);
+
+        card.setOnClickListener(v ->
+            startActivity(new Intent(this, CustomSosCreateActivity.class)));
+        root.addView(card);
     }
 
     private void addCard(JSONObject b) {

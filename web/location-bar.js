@@ -21,20 +21,14 @@
   // Skip on internal / admin / payment / vendor pages
   if (/^\/(admin|vendor|portal|pay|invoice)/.test(location.pathname)) return;
 
-  // v1.24.3 — only auto-show on pages where address actually matters: book,
-  // cart, account, services. Elsewhere the bar was just stacking another teal
-  // stripe under the rotating banner (header looked like 4 bars). The map
-  // edit modal still works site-wide via window.serviaEditAddress().
-  // v1.24.24 — show on homepage too (user requested back). Skip only on
-  // truly internal flows. Map pin + address form are inside the bar's
-  // edit modal, opened by tapping "Edit address".
-  const SHOW_PATHS = /^\/(book|cart|account|me)\.html?$|^\/$|^\/index\.html?$/;
-  if (!SHOW_PATHS.test(location.pathname)) {
-    // Hide pre-rendered placeholder if any (saves the 36px reservation slot).
-    var ph = document.getElementById("servia-loc-bar-placeholder");
-    if (ph) ph.style.display = "none";
-    return;
-  }
+  // v1.24.29 — show on every public page. Earlier we narrowed to a few
+  // routes because the bar was visually duplicating with the rotating
+  // banner; that's no longer the case and customers complained the
+  // address wasn't editable from anywhere except a handful of pages.
+  // Internal flows (admin/vendor/portal/pay/invoice) are still skipped
+  // by the regex above.
+  // Hide the placeholder if SW pre-rendered one but we end up not showing.
+  // (Currently we always show, so this is a no-op fallthrough.)
 
   const KEY_LOC = "servia.user.location.v1";       // {area, emirate, lat, lng, full_address, ...}
   const KEY_DISMISSED = "servia.location.dismissed_session";

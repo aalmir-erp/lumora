@@ -90,5 +90,39 @@
                 android:text="🤖\nChat"
                 android:contentDescription="Open chat" />
         </LinearLayout>
+
+        <!-- v1.24.29 Row 4: Create custom SOS + My address -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_create_sos"
+                style="@style/WearTile"
+                android:background="#065F46"
+                android:text="➕\nCreate SOS"
+                android:contentDescription="Create custom SOS button" />
+            <TextView
+                android:id="@+id/wear_tile_address"
+                style="@style/WearTile"
+                android:background="#1E40AF"
+                android:text="📍\nAddress"
+                android:contentDescription="My saved address" />
+        </LinearLayout>
+
+        <!-- v1.24.29 Row 5: My SOS shortcuts -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_mysos"
+                style="@style/WearTile"
+                android:background="#6366F1"
+                android:text="🎯\nMy SOS"
+                android:contentDescription="Open my saved SOS shortcuts" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

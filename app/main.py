@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, whatsapp
+from . import admin, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, whatsapp
 from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
 
@@ -214,6 +214,7 @@ app.include_router(_si.public_router)
 app.include_router(_nfc_mod.router)            # /api/nfc/*  + /api/admin/nfc/*
 app.include_router(_nfc_mod.public_router)     # /t/<slug> tap handler
 app.include_router(_recovery_mod.router)       # /api/recovery/* one-tap dispatch
+app.include_router(_me_loc.router)             # /api/me/location GET+POST (watch + web)
 app.include_router(_sos_custom_mod.router)     # /api/sos/custom/* user-saved one-tap shortcuts
 app.include_router(_sos_custom_mod.public_router)  # /csos/<slug> NFC-tap landing
 app.include_router(_gha.router)                # /api/google-home/* + admin

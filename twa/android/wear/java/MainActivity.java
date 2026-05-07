@@ -25,6 +25,10 @@ public class MainActivity extends Activity {
         wireTile(R.id.wear_tile_book,   QuickBookActivity.class);
         wireTile(R.id.wear_tile_quote,  QuoteActivity.class);
         wireTile(R.id.wear_tile_chat,   ChatActivity.class);
+        // v1.24.29 — custom SOS creation + my address + my SOS shortcuts
+        wireTile(R.id.wear_tile_create_sos, CustomSosCreateActivity.class);
+        wireTile(R.id.wear_tile_address,    LocationActivity.class);
+        wireTile(R.id.wear_tile_mysos,      MySosActivity.class);
     }
 
     private void wireTile(int id, final Class<?> activityClass) {

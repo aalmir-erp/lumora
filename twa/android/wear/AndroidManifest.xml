@@ -89,6 +89,21 @@
                   android:label="All services"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
 
+        <!-- v1.24.29: create custom SOS button on watch + per-slot dispatch + address -->
+        <activity android:name="ae.servia.wear.CustomSosCreateActivity"
+                  android:exported="true"
+                  android:label="Create SOS"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+                  android:windowSoftInputMode="adjustResize" />
+        <activity android:name="ae.servia.wear.CustomSosSlotDispatchActivity"
+                  android:exported="true"
+                  android:label="SOS slot"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <activity android:name="ae.servia.wear.LocationActivity"
+                  android:exported="true"
+                  android:label="My address"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
         <!-- v1.24.7: SOS category grid (8 tiles, matches website /sos.html).
              Launched by MainActivity SOS button + RecoveryTileService tap. -->
         <activity android:name="ae.servia.wear.SosCategoryGridActivity"
@@ -353,6 +368,91 @@
             </intent-filter>
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                        android:resource="@drawable/tile_preview_allservices" />
+        </service>
+
+        <!-- v1.24.29: 5 reusable Custom SOS slot tiles + Address tile.
+             Each slot tile reads SharedPreferences ("servia_csos_slots")
+             to know which user-created shortcut it's bound to. The
+             customer pins as many slots as they like from the watch face.
+        -->
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot1TileService"
+            android:label="Servia · SOS Slot 1"
+            android:description="@string/tile_csos_slot_desc"
+            android:icon="@drawable/tile_preview_mysos"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot2TileService"
+            android:label="Servia · SOS Slot 2"
+            android:description="@string/tile_csos_slot_desc"
+            android:icon="@drawable/tile_preview_mysos"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot3TileService"
+            android:label="Servia · SOS Slot 3"
+            android:description="@string/tile_csos_slot_desc"
+            android:icon="@drawable/tile_preview_mysos"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot4TileService"
+            android:label="Servia · SOS Slot 4"
+            android:description="@string/tile_csos_slot_desc"
+            android:icon="@drawable/tile_preview_mysos"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot5TileService"
+            android:label="Servia · SOS Slot 5"
+            android:description="@string/tile_csos_slot_desc"
+            android:icon="@drawable/tile_preview_mysos"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_mysos" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.tiles.LocationTileService"
+            android:label="Servia · Address"
+            android:description="@string/tile_location_desc"
+            android:icon="@drawable/tile_preview_hub"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_hub" />
         </service>
 
         <!-- Wearable Listener Service for phone↔watch Data Layer sync -->
