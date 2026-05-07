@@ -19,6 +19,16 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.wear_main);
 
+        // v1.24.48 — stamp the BIG version pill in the layout's
+        // wear_app_version TextView so the user can verify which build
+        // is running at a glance.
+        try {
+            android.content.pm.PackageInfo pi =
+                getPackageManager().getPackageInfo(getPackageName(), 0);
+            android.widget.TextView ver = findViewById(R.id.wear_app_version);
+            if (ver != null) ver.setText("v" + pi.versionName);
+        } catch (Throwable ignored) {}
+
         wireTile(R.id.wear_tile_voice,  VoiceAssistantActivity.class);
         wireTile(R.id.wear_tile_sos,    SosCategoryGridActivity.class);  // v1.24.7 — grid with sub-options
         wireTile(R.id.wear_tile_track,  BookingTrackActivity.class);

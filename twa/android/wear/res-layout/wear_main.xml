@@ -39,7 +39,20 @@
             android:textSize="9sp"
             android:gravity="center"
             android:textColor="#CBD5E1"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="2dp" />
+
+        <!-- v1.24.48 — BIG version pill so the user can see at a glance
+             which build is running. Set dynamically in MainActivity. -->
+        <TextView
+            android:id="@+id/wear_app_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="v?"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#A7F3D0"
+            android:layout_marginBottom="6dp" />
 
         <!-- Row 1: Voice (flagship) + SOS Recovery -->
         <LinearLayout

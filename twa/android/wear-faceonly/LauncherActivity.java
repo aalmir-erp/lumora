@@ -70,7 +70,21 @@ public class LauncherActivity extends Activity {
         setContentView(sv);
 
         addHeader(root, "SERVIA FACES", 0xFFFCD34D);
-        addSpacer(root, 6);
+        addSpacer(root, 4);
+
+        // BIG version banner so the user always knows what's installed
+        try {
+            android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+            TextView ver = new TextView(this);
+            ver.setText("v" + pi.versionName);
+            ver.setTextColor(0xFFA7F3D0);
+            ver.setTextSize(28);
+            ver.setTypeface(ver.getTypeface(), Typeface.BOLD);
+            ver.setGravity(Gravity.CENTER);
+            ver.setPadding(0, 4, 0, 4);
+            root.addView(ver);
+        } catch (Throwable ignored) {}
+        addSpacer(root, 8);
 
         // ==== ACTIONS (top, big, can't miss) =========================
         addActionButton(root, "▶ APPLY SERVIA FACE NOW", 0xFFFCD34D, 0xFF1F1411,
@@ -173,7 +187,12 @@ public class LauncherActivity extends Activity {
         addSpacer(root, 12);
 
         TextView footer = new TextView(this);
-        footer.setText("v1.24.47 · " + (Build.MANUFACTURER.toLowerCase().contains("samsung") ? "Samsung Wear OS" : "Wear OS"));
+        try {
+            android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+            footer.setText("v" + pi.versionName + " · " + (Build.MANUFACTURER.toLowerCase().contains("samsung") ? "Samsung Wear OS" : "Wear OS"));
+        } catch (Throwable t) {
+            footer.setText("v? · " + Build.MANUFACTURER);
+        }
         footer.setTextColor(0xFF64748B);
         footer.setTextSize(9);
         footer.setGravity(Gravity.CENTER);

@@ -136,12 +136,14 @@ APP_VERSION=$(grep -E 'APP_VERSION\s*=' "${GITHUB_WORKSPACE:-/tmp/lumora-deploy}
 BUILD_TS=$(date -u +%Y%m%d-%H%M)
 SUFFIX="v${APP_VERSION}-${BUILD_TS}"
 echo "=== artifact suffix: $SUFFIX ==="
-find app/build/outputs -name "*.apk" -exec cp {} _artifacts/servia-wear-signed.apk \; 2>&1 || true
-find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-wear-bundle.aab \; 2>&1 || true
-# Versioned copies (kept alongside the unversioned ones for any downstream
-# consumer that hard-codes the older filenames)
-[ -f _artifacts/servia-wear-signed.apk ] && cp _artifacts/servia-wear-signed.apk "_artifacts/servia-wear-${SUFFIX}.apk"
-[ -f _artifacts/servia-wear-bundle.aab ] && cp _artifacts/servia-wear-bundle.aab "_artifacts/servia-wear-${SUFFIX}.aab"
+# v1.24.48 — only write the versioned filename. Previously we also kept
+# servia-wear-signed.apk + servia-wear-bundle.aab "for downstream
+# consumers that hard-code older filenames" — but the only consumer
+# was the customer manually opening the artifact, and seeing two
+# identical files was confusing. One file with the version + UTC build
+# minute is unambiguous.
+find app/build/outputs -name "*.apk" -exec cp {} "_artifacts/servia-wear-${SUFFIX}.apk" \; 2>&1 || true
+find app/build/outputs -name "*.aab" -exec cp {} "_artifacts/servia-wear-${SUFFIX}.aab" \; 2>&1 || true
 echo "$SUFFIX" > _artifacts/BUILD_INFO.txt
 ls -la _artifacts/
 
@@ -149,7 +151,7 @@ if [ "$GRADLE_EXIT" != "0" ]; then
   echo "::error::Wear OS gradle build FAILED with exit $GRADLE_EXIT — see _artifacts/wear-gradle-tail.txt"
   exit "$GRADLE_EXIT"
 fi
-if [ ! -f _artifacts/servia-wear-signed.apk ]; then
+if [ -z "$(ls _artifacts/servia-wear-${SUFFIX}.apk 2>/dev/null)" ]; then
   echo "::error::Wear OS gradle returned 0 but produced NO APK — see _artifacts/wear-gradle-tail.txt"
   exit 1
 fi

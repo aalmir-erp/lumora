@@ -198,10 +198,9 @@ cat _artifacts/faces-found.txt
 APP_VERSION=$(grep -E 'APP_VERSION\s*=' "${GITHUB_WORKSPACE:-/tmp/lumora-deploy}/app/config.py" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
 BUILD_TS=$(date -u +%Y%m%d-%H%M)
 SUFFIX="v${APP_VERSION}-${BUILD_TS}"
-find app/build/outputs -name "*.apk" -exec cp {} _artifacts/servia-faces-signed.apk \; 2>&1 || true
-find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-faces-bundle.aab \; 2>&1 || true
-[ -f _artifacts/servia-faces-signed.apk ] && cp _artifacts/servia-faces-signed.apk "_artifacts/servia-faces-${SUFFIX}.apk"
-[ -f _artifacts/servia-faces-bundle.aab ] && cp _artifacts/servia-faces-bundle.aab "_artifacts/servia-faces-${SUFFIX}.aab"
+# v1.24.48 — versioned filenames only.
+find app/build/outputs -name "*.apk" -exec cp {} "_artifacts/servia-faces-${SUFFIX}.apk" \; 2>&1 || true
+find app/build/outputs -name "*.aab" -exec cp {} "_artifacts/servia-faces-${SUFFIX}.aab" \; 2>&1 || true
 echo "$SUFFIX" > _artifacts/FACES_BUILD_INFO.txt
 ls -la _artifacts/
 
@@ -216,7 +215,7 @@ if [ "$GRADLE_EXIT" != "0" ]; then
   echo "::warning::Servia Faces gradle build FAILED with exit $GRADLE_EXIT"
   exit "$GRADLE_EXIT"
 fi
-if [ ! -f _artifacts/servia-faces-signed.apk ]; then
+if [ -z "$(ls _artifacts/servia-faces-${SUFFIX}.apk 2>/dev/null)" ]; then
   echo "::error::Servia Faces gradle returned 0 but produced NO APK"
   echo "::error::See _artifacts/faces-gradle-tail.txt + faces-tree.txt for details"
   exit 1

@@ -116,10 +116,9 @@ tail -300 "$LOG" > _artifacts/single-gradle-tail.txt 2>/dev/null || true
 APP_VERSION=$(grep -E 'APP_VERSION\s*=' "${GITHUB_WORKSPACE:-/tmp/lumora-deploy}/app/config.py" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
 BUILD_TS=$(date -u +%Y%m%d-%H%M)
 SUFFIX="v${APP_VERSION}-${BUILD_TS}"
-find app/build/outputs -name "*.apk" -exec cp {} _artifacts/servia-single-face-signed.apk \; 2>&1 || true
-find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-single-face-bundle.aab \; 2>&1 || true
-[ -f _artifacts/servia-single-face-signed.apk ] && cp _artifacts/servia-single-face-signed.apk "_artifacts/servia-single-face-${SUFFIX}.apk"
-[ -f _artifacts/servia-single-face-bundle.aab ] && cp _artifacts/servia-single-face-bundle.aab "_artifacts/servia-single-face-${SUFFIX}.aab"
+# v1.24.48 — versioned filenames only.
+find app/build/outputs -name "*.apk" -exec cp {} "_artifacts/servia-single-face-${SUFFIX}.apk" \; 2>&1 || true
+find app/build/outputs -name "*.aab" -exec cp {} "_artifacts/servia-single-face-${SUFFIX}.aab" \; 2>&1 || true
 echo "$SUFFIX" > _artifacts/SINGLE_BUILD_INFO.txt
 ls -la _artifacts/
 
@@ -134,7 +133,7 @@ if [ "$GRADLE_EXIT" != "0" ]; then
   echo "::warning::Servia Single Face build FAILED with exit $GRADLE_EXIT"
   exit "$GRADLE_EXIT"
 fi
-if [ ! -f _artifacts/servia-single-face-signed.apk ]; then
+if [ -z "$(ls _artifacts/servia-single-face-${SUFFIX}.apk 2>/dev/null)" ]; then
   echo "::error::Servia Single Face gradle returned 0 but produced NO APK"
   echo "::error::See _artifacts/single-gradle-tail.txt + single-tree.txt for details"
   exit 1
