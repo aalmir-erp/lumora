@@ -101,6 +101,7 @@ public class MySosActivity extends Activity {
                 con.setRequestProperty("Authorization", "Bearer " + WearAuth.getToken(this));
                 con.setConnectTimeout(8000);
                 con.setReadTimeout(12000);
+                con.setRequestProperty("User-Agent", "ServiaWear/1.24.41 (Android Wear OS)");
                 int code = con.getResponseCode();
                 BufferedReader r = new BufferedReader(new InputStreamReader(
                     code >= 200 && code < 300 ? con.getInputStream() : con.getErrorStream(), "UTF-8"));
@@ -341,6 +342,7 @@ public class MySosActivity extends Activity {
                 con.setRequestProperty("Authorization", "Bearer " + WearAuth.getToken(this));
                 con.setConnectTimeout(8000);
                 con.setReadTimeout(15000);
+                con.setRequestProperty("User-Agent", "ServiaWear/1.24.41 (Android Wear OS)");
                 con.setDoOutput(true);
                 try (OutputStream os = con.getOutputStream()) {
                     os.write(body.toString().getBytes("UTF-8"));

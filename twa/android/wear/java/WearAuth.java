@@ -73,6 +73,7 @@ public final class WearAuth {
                 con.setRequestProperty("Accept", "application/json");
                 con.setConnectTimeout(8000);
                 con.setReadTimeout(15000);
+                con.setRequestProperty("User-Agent", "ServiaWear/1.24.41 (Android Wear OS)");
                 con.setDoOutput(true);
                 try (OutputStream os = con.getOutputStream()) {
                     os.write(body.toString().getBytes("UTF-8"));

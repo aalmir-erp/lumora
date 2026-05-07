@@ -199,6 +199,7 @@ public class RecoveryActivity extends Activity {
             if (tok != null && !tok.isEmpty()) con.setRequestProperty("Authorization", "Bearer " + tok);
             con.setConnectTimeout(8000);
             con.setReadTimeout(12000);
+                con.setRequestProperty("User-Agent", "ServiaWear/1.24.41 (Android Wear OS)");
             con.setDoOutput(true);
             try (OutputStream os = con.getOutputStream()) {
                 os.write(body.toString().getBytes("UTF-8"));
@@ -371,6 +372,7 @@ public class RecoveryActivity extends Activity {
             con.setRequestProperty("Content-Type", "application/json");
             con.setConnectTimeout(6000);
             con.setReadTimeout(8000);
+                con.setRequestProperty("User-Agent", "ServiaWear/1.24.41 (Android Wear OS)");
             con.setDoOutput(true);
             try (OutputStream os = con.getOutputStream()) {
                 os.write(body.getBytes("UTF-8"));

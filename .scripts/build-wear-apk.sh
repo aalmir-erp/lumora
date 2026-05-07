@@ -20,6 +20,7 @@ mkdir -p "$BUILD_DIR/app/src/main/java/ae/servia/wear"
 mkdir -p "$BUILD_DIR/app/src/main/res/layout"
 mkdir -p "$BUILD_DIR/app/src/main/res/values"
 mkdir -p "$BUILD_DIR/app/src/main/res/drawable"
+mkdir -p "$BUILD_DIR/app/src/main/res/xml"
 mkdir -p "$BUILD_DIR/app/src/main/res/mipmap-hdpi"
 mkdir -p "$BUILD_DIR/app/src/main/res/mipmap-xhdpi"
 
@@ -38,6 +39,8 @@ cp -v "$WEAR_SRC/res-values/styles.xml" "$BUILD_DIR/app/src/main/res/values/"
 # only because Samsung's tile picker silently rejects drawable XMLs).
 cp -v "$WEAR_SRC/res-drawable/"*.xml "$BUILD_DIR/app/src/main/res/drawable/" 2>/dev/null || true
 cp -v "$WEAR_SRC/res-drawable/"*.png "$BUILD_DIR/app/src/main/res/drawable/" 2>/dev/null || true
+# v1.24.41 — copy res-xml/* (WallpaperService descriptor for the watch face)
+cp -v "$WEAR_SRC/res-xml/"*.xml "$BUILD_DIR/app/src/main/res/xml/" 2>/dev/null || true
 
 # Use the same Servia icon bytes for the launcher (256x256 plenty for hdpi/xhdpi)
 # We'll just copy the existing servia-icon-512x512.png into the mipmap dirs.

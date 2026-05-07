@@ -228,6 +228,7 @@ public class NfcScanActivity extends Activity {
                     "Bearer " + WearAuth.getToken(this));
                 con.setConnectTimeout(8000);
                 con.setReadTimeout(15000);
+                con.setRequestProperty("User-Agent", "ServiaWear/1.24.41 (Android Wear OS)");
                 con.setDoOutput(true);
                 try (OutputStream os = con.getOutputStream()) {
                     os.write("{}".getBytes(StandardCharsets.UTF_8));

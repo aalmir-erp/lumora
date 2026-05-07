@@ -150,10 +150,17 @@
             </intent-filter>
             <meta-data
                 android:name="com.google.android.wearable.watchface.preview"
-                android:resource="@drawable/tile_preview_hub" />
+                android:resource="@drawable/wf_preview_servia" />
             <meta-data
                 android:name="com.google.android.wearable.watchface.preview_circular"
-                android:resource="@drawable/tile_preview_hub" />
+                android:resource="@drawable/wf_preview_servia" />
+            <!-- v1.24.41: REQUIRED for WallpaperService. Without this the
+                 system watch-face picker silently drops our face. The
+                 referenced res/xml/watch_face.xml provides the
+                 thumbnail used in the picker grid. -->
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
             <meta-data
                 android:name="com.google.android.wearable.watchface.companionConfigurationAction"
                 android:value="ae.servia.wear.watchface.CONFIG" />
