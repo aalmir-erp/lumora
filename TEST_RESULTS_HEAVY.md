@@ -2,14 +2,14 @@
 
 - ✅ Pass: 44
 - ⚠️ Warn: 1
-- ❌ Fail: 5
-- ⏭ Skip: 0
+- ❌ Fail: 4
+- ⏭ Skip: 1
 
 ## Items
 
 - ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
-- ✅ **[T03] /services.html lists services** — 32 cards
+- ❌ **[T03] /services.html lists services** — exception: only 0 cards
 - ✅ **[T04] /coverage.html renders** — OK
 - ✅ **[T05] /blog index loads** — OK
 - ❌ **[T06] Sitemap has /nfc.html** — exception: nfc.html missing
@@ -17,9 +17,9 @@
 - ✅ **[T08] /faq.html FAQPage schema** — present
 - ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
-- ✅ **[T11] Mobile nav single-row** — Δy=-7
+- ✅ **[T11] Mobile nav single-row** — Δy=-3
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
-- ❌ **[T13] Install banner single row height** — exception: h=106.375px (>50 = wrap)
+- ⏭ **[T13] Install banner single row height** — dismissed
 - ✅ **[T14] Footer present** — OK
 - ❌ **[T15] /install.html APK card** — exception: no apk-download
 - ❌ **[T16] /install.html Wear OS card** — exception: no wear-download
@@ -38,8 +38,8 @@
 - ✅ **[T29] /api/nfc/consult endpoint** — greets
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
-- ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_aLxNBV8Zu...
+- ✅ **[T32] /me.html requires auth** — redirected
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_urp2wm9H_...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,7 +47,7 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.23
+- ✅ **[T41] /api/health responds** — v1.24.28
 - ✅ **[T42] /api/services >=10** — 32
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.15
 - ✅ **[T44] /api/site/social works** — OK
