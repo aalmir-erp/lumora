@@ -32,14 +32,14 @@ public final class WatchFaceSlots {
 
     public static final String[] KINDS = {
         "sos_1", "sos_2", "sos_3", "sos_4", "sos_5",
-        "talk", "book", "track", "address",
+        "talk", "book", "track", "address", "nfc",
         "wallet", "weather", "battery", "steps", "next_booking",
         "none",
     };
 
     public static final String[] LABELS = {
         "🆘 SOS 1", "🆘 SOS 2", "🆘 SOS 3", "🆘 SOS 4", "🆘 SOS 5",
-        "🎙 Talk", "📋 Book", "📍 Track", "🏠 Address",
+        "🎙 Talk", "📋 Book", "📍 Track", "🏠 Address", "📡 NFC",
         "👛 Wallet", "☁ Weather", "🔋 Battery", "👣 Steps", "📅 Next",
         "—",
     };
@@ -100,6 +100,7 @@ public final class WatchFaceSlots {
             case "book":    return new String[]{"ae.servia.wear.QuickBookActivity", null};
             case "track":   return new String[]{"ae.servia.wear.BookingTrackActivity", null};
             case "address": return new String[]{"ae.servia.wear.LocationActivity", null};
+            case "nfc":     return new String[]{"ae.servia.wear.NfcScanActivity", null};
         }
         return null;
     }

@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
         wireTile(R.id.wear_tile_theme,      ThemePickerActivity.class);
         wireTile(R.id.wear_tile_face_editor,
                  ae.servia.wear.watchface.WatchFaceEditorActivity.class);
+        wireTile(R.id.wear_tile_nfc_scan,   NfcScanActivity.class);
     }
 
     private void wireTile(int id, final Class<?> activityClass) {

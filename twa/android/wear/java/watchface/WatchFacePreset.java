@@ -23,7 +23,16 @@ import ae.servia.wear.ServiaTheme;
  */
 public final class WatchFacePreset {
 
-    public enum Layout { DIGITAL_LARGE, DIGITAL_SMALL, ANALOG, HYBRID, MINIMAL }
+    public enum Layout {
+        DIGITAL_LARGE, DIGITAL_SMALL, ANALOG, HYBRID, MINIMAL,
+        // v1.24.35 — animated, brand-themed layouts. Each runs at ~30 fps in
+        // active/interactive mode. Falls back to a static frame in ambient.
+        SANDSTORM,         // drifting sand particles, AC-service warm gold
+        BURJ_SKYLINE,      // animated city silhouette + twinkling lights
+        MARINA_PULSE,      // expanding ripple per second tick, water blue
+        FALCON_TRAIL,      // UAE falcon icon orbits the time
+        SERVICE_SPOTLIGHT  // rotating beam highlights one slot at a time
+    }
 
     public final String id;
     public final String name;
@@ -73,6 +82,22 @@ public final class WatchFacePreset {
         new WatchFacePreset("p10_pearl_analog","Pearl Analog",
             ServiaTheme.ALL[9], Layout.ANALOG,
             new String[]{"sos_1", "address", "wallet", "talk"}),
+        // v1.24.35 — 5 animated, brand-themed variants
+        new WatchFacePreset("p11_sandstorm",   "Sandstorm Live",
+            ServiaTheme.ALL[2], Layout.SANDSTORM,
+            new String[]{"sos_1", "talk", "weather", "battery"}),
+        new WatchFacePreset("p12_burj",        "Burj Skyline",
+            ServiaTheme.ALL[3], Layout.BURJ_SKYLINE,
+            new String[]{"sos_1", "next_booking", "talk", "track"}),
+        new WatchFacePreset("p13_marina",      "Marina Pulse",
+            ServiaTheme.ALL[3], Layout.MARINA_PULSE,
+            new String[]{"sos_1", "address", "talk", "weather"}),
+        new WatchFacePreset("p14_falcon",      "Falcon Trail",
+            ServiaTheme.ALL[1], Layout.FALCON_TRAIL,
+            new String[]{"sos_1", "talk", "track", "wallet"}),
+        new WatchFacePreset("p15_spotlight",   "Service Spotlight",
+            ServiaTheme.ALL[8], Layout.SERVICE_SPOTLIGHT,
+            new String[]{"sos_1", "sos_2", "sos_3", "sos_4"}),
     };
 
     public static WatchFacePreset byId(String id) {
@@ -84,11 +109,16 @@ public final class WatchFacePreset {
     /** Slot count for each layout. */
     public int slotCount() {
         switch (layout) {
-            case DIGITAL_LARGE: return 4;
-            case DIGITAL_SMALL: return 6;
-            case ANALOG:        return 4;
-            case HYBRID:        return 4;
-            case MINIMAL:       return 2;
+            case DIGITAL_LARGE:      return 4;
+            case DIGITAL_SMALL:      return 6;
+            case ANALOG:             return 4;
+            case HYBRID:             return 4;
+            case MINIMAL:            return 2;
+            case SANDSTORM:          return 4;  // bottom row
+            case BURJ_SKYLINE:       return 4;  // base of skyline
+            case MARINA_PULSE:       return 4;  // 4 corners
+            case FALCON_TRAIL:       return 4;  // 4 corners
+            case SERVICE_SPOTLIGHT:  return 4;  // 4 corners (highlighted in turn)
         }
         return 0;
     }
@@ -100,22 +130,26 @@ public final class WatchFacePreset {
     public float[] slotPosition(int slotIndex) {
         switch (layout) {
             case DIGITAL_LARGE:
-                // Bottom row of 4
                 return new float[]{0.20f + slotIndex * 0.20f, 0.78f};
             case DIGITAL_SMALL:
-                // 2 rows of 3
                 if (slotIndex < 3) return new float[]{0.20f + slotIndex * 0.30f, 0.62f};
                 return new float[]{0.20f + (slotIndex - 3) * 0.30f, 0.82f};
             case ANALOG:
             case HYBRID:
-                // Four corners (TL, TR, BL, BR)
+            case MARINA_PULSE:
+            case FALCON_TRAIL:
+            case SERVICE_SPOTLIGHT: {
                 float[][] corners = {{0.20f, 0.20f}, {0.80f, 0.20f},
                                      {0.20f, 0.80f}, {0.80f, 0.80f}};
                 return corners[slotIndex % 4];
+            }
             case MINIMAL:
-                // Bottom-left, bottom-right
                 return slotIndex == 0 ? new float[]{0.30f, 0.85f}
                                        : new float[]{0.70f, 0.85f};
+            case SANDSTORM:
+                return new float[]{0.20f + slotIndex * 0.20f, 0.84f};
+            case BURJ_SKYLINE:
+                return new float[]{0.18f + slotIndex * 0.21f, 0.86f};
         }
         return new float[]{0.5f, 0.5f};
     }
@@ -123,12 +157,28 @@ public final class WatchFacePreset {
     /** Slot pixel radius (relative to face size). */
     public float slotRadiusFraction() {
         switch (layout) {
-            case DIGITAL_LARGE: return 0.085f;
-            case DIGITAL_SMALL: return 0.075f;
-            case ANALOG:        return 0.090f;
-            case HYBRID:        return 0.090f;
-            case MINIMAL:       return 0.110f;
+            case DIGITAL_LARGE:      return 0.085f;
+            case DIGITAL_SMALL:      return 0.075f;
+            case ANALOG:             return 0.090f;
+            case HYBRID:             return 0.090f;
+            case MINIMAL:            return 0.110f;
+            case SANDSTORM:          return 0.080f;
+            case BURJ_SKYLINE:       return 0.080f;
+            case MARINA_PULSE:       return 0.085f;
+            case FALCON_TRAIL:       return 0.085f;
+            case SERVICE_SPOTLIGHT:  return 0.085f;
         }
         return 0.080f;
+    }
+
+    /** Whether the layout has animated drawing (30fps in active mode). */
+    public boolean isAnimated() {
+        switch (layout) {
+            case SANDSTORM: case BURJ_SKYLINE: case MARINA_PULSE:
+            case FALCON_TRAIL: case SERVICE_SPOTLIGHT:
+                return true;
+            default:
+                return false;
+        }
     }
 }

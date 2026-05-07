@@ -91,6 +91,19 @@ public class WearMessageListenerService extends WearableListenerService {
         int etaMin = body.optInt("eta_min", 0);
         String vendor = body.optString("vendor", "");
 
+        // v1.24.35 — cache for the watch face's next_booking slot to render.
+        getSharedPreferences("servia_next_booking", MODE_PRIVATE).edit()
+            .putString("booking_id", bookingId)
+            .putString("service", service)
+            .putInt("eta_min", etaMin)
+            .putString("vendor", vendor)
+            .putLong("ts", System.currentTimeMillis())
+            .apply();
+        try {
+            androidx.wear.tiles.TileService.getUpdater(this).requestUpdate(
+                ae.servia.wear.tiles.NextBookingTileService.class);
+        } catch (Throwable ignored) {}
+
         ensureBookingChannel();
 
         Intent open = new Intent(this, BookingTrackActivity.class);

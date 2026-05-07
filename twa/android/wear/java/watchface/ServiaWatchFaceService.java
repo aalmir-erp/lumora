@@ -98,7 +98,9 @@ public class ServiaWatchFaceService extends WatchFaceService {
     // Renderer
     // ====================================================================
 
-    private static final long FRAME_PERIOD_MS = 1000L;  // 1 fps in interactive
+    // Default 1 fps; animated layouts request 30 fps after first frame.
+    private static final long FRAME_PERIOD_STATIC_MS = 1000L;
+    private static final long FRAME_PERIOD_ANIMATED_MS = 33L;  // ~30 fps
 
     static final class ServiaRenderer
             extends Renderer.CanvasRenderer2<ServiaSharedAssets> {
@@ -121,8 +123,12 @@ public class ServiaWatchFaceService extends WatchFaceService {
                        @NonNull Context ctx,
                        @NonNull WatchState watchState,
                        @NonNull CurrentUserStyleRepository userStyleRepo) {
+            // Pick the higher of the two as the constructor period — the
+            // renderer base class enforces the constructor value as the
+            // minimum interval. For static presets we still call
+            // setInteractiveDrawModeUpdateDelayMillis(1000) at runtime.
             super(surfaceHolder, userStyleRepo, watchState,
-                  CanvasType.HARDWARE, FRAME_PERIOD_MS,
+                  CanvasType.HARDWARE, FRAME_PERIOD_ANIMATED_MS,
                   /* clearWithBackgroundTintBeforeRenderingHighlightLayer */ true);
             this.appCtx = ctx.getApplicationContext();
         }
@@ -157,12 +163,18 @@ public class ServiaWatchFaceService extends WatchFaceService {
             }
 
             // ---- layout-specific drawing -------------------------------
+            long now = System.currentTimeMillis();
             switch (preset.layout) {
                 case DIGITAL_LARGE: drawDigitalLarge(canvas, bounds, zonedDateTime, theme, ambient); break;
                 case DIGITAL_SMALL: drawDigitalSmall(canvas, bounds, zonedDateTime, theme, ambient); break;
                 case ANALOG:        drawAnalog(canvas, bounds, zonedDateTime, theme, ambient);       break;
                 case HYBRID:        drawHybrid(canvas, bounds, zonedDateTime, theme, ambient);       break;
                 case MINIMAL:       drawMinimal(canvas, bounds, zonedDateTime, theme, ambient);      break;
+                case SANDSTORM:         drawSandstorm(canvas, bounds, zonedDateTime, theme, ambient, now); break;
+                case BURJ_SKYLINE:      drawBurjSkyline(canvas, bounds, zonedDateTime, theme, ambient, now); break;
+                case MARINA_PULSE:      drawMarinaPulse(canvas, bounds, zonedDateTime, theme, ambient, now); break;
+                case FALCON_TRAIL:      drawFalconTrail(canvas, bounds, zonedDateTime, theme, ambient, now); break;
+                case SERVICE_SPOTLIGHT: drawServiceSpotlight(canvas, bounds, zonedDateTime, theme, ambient, now, preset); break;
             }
 
             // ---- slots (skipped in ambient to save battery) ------------
@@ -325,6 +337,211 @@ public class ServiaWatchFaceService extends WatchFaceService {
             c.drawText(time, b.centerX(), b.height() * 0.55f, pt);
         }
 
+        // ----- animated layouts (v1.24.35) ------------------------------
+
+        /** Sandstorm — drifting golden particles behind a digital time. */
+        private void drawSandstorm(Canvas c, Rect b, ZonedDateTime t,
+                                    ServiaTheme theme, boolean ambient, long nowMs) {
+            int w = b.width(), h = b.height(), cx = b.centerX();
+            // Particles
+            if (!ambient) {
+                pSlotIcon.setStyle(Paint.Style.FILL);
+                int particleCount = 36;
+                for (int i = 0; i < particleCount; i++) {
+                    float seed = i * 137.5f;
+                    float driftSpeed = 0.04f + (i % 5) * 0.012f;
+                    float xN = ((seed + nowMs * driftSpeed * 0.001f) % 1.2f) - 0.1f;
+                    float yN = (float) (0.20f + 0.60f * Math.sin((nowMs * 0.0006f + seed) * 0.5f) + 0.30f);
+                    float x = b.left + xN * w;
+                    float y = b.top + (yN % 1.0f) * h;
+                    int alpha = 60 + (i * 15) % 120;
+                    pSlotIcon.setColor((alpha << 24) | (theme.accent & 0x00FFFFFF));
+                    c.drawCircle(x, y, 2.0f * w / 360f, pSlotIcon);
+                }
+            }
+            // Time
+            String time = String.format(Locale.US, "%02d:%02d",
+                t.getHour(), t.getMinute());
+            Paint pt = ambient ? pAmbientText : pTime;
+            pt.setColor(ambient ? 0xFFFFFFFF : theme.text);
+            pt.setTextAlign(Paint.Align.CENTER);
+            pt.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            pt.setTextSize(58f * w / 360f);
+            c.drawText(time, cx, h * 0.45f, pt);
+            if (!ambient) {
+                pDate.setColor(theme.accent);
+                pDate.setTextSize(11f * w / 360f);
+                pDate.setTextAlign(Paint.Align.CENTER);
+                pDate.setLetterSpacing(0.18f);
+                c.drawText("AC SEASON · BOOK NOW", cx, h * 0.55f, pDate);
+            }
+        }
+
+        /** Burj Skyline — silhouette + twinkling lights against the night. */
+        private void drawBurjSkyline(Canvas c, Rect b, ZonedDateTime t,
+                                      ServiaTheme theme, boolean ambient, long nowMs) {
+            int w = b.width(), h = b.height(), cx = b.centerX();
+            // Sky gradient (we fake it with two filled rects since LinearGradient
+            // would mean caching a Shader; keep it allocation-free).
+            // Skyline silhouette — five buildings + Burj-tall centre spire.
+            pHand.setStyle(Paint.Style.FILL);
+            pHand.setColor(0xFF0F172A);
+            float baseY = h * 0.72f;
+            // Building rectangles
+            float[] heights = {0.20f, 0.32f, 0.55f, 0.32f, 0.22f};
+            float[] widths  = {0.16f, 0.13f, 0.18f, 0.13f, 0.16f};
+            float xCursor = w * 0.05f;
+            for (int i = 0; i < heights.length; i++) {
+                float bw = w * widths[i];
+                float bh = h * heights[i];
+                c.drawRect(b.left + xCursor, baseY - bh,
+                           b.left + xCursor + bw, baseY, pHand);
+                xCursor += bw + w * 0.005f;
+            }
+            // Burj spire from centre tower
+            pHand.setStrokeWidth(3f * w / 360f);
+            pHand.setStyle(Paint.Style.FILL);
+            float spireBaseX = b.left + w * 0.50f;
+            float spireBaseY = baseY - h * 0.55f;
+            android.graphics.Path spire = new android.graphics.Path();
+            spire.moveTo(spireBaseX - w * 0.02f, spireBaseY);
+            spire.lineTo(spireBaseX + w * 0.02f, spireBaseY);
+            spire.lineTo(spireBaseX, spireBaseY - h * 0.12f);
+            spire.close();
+            c.drawPath(spire, pHand);
+
+            // Twinkling lights
+            if (!ambient) {
+                pSlotIcon.setStyle(Paint.Style.FILL);
+                long phase = nowMs / 200L;
+                for (int i = 0; i < 16; i++) {
+                    float lx = b.left + w * (0.10f + (i * 0.055f));
+                    float ly = baseY - h * (0.05f + ((i * 7 + phase) % 12) * 0.03f);
+                    int twinkle = (int) ((Math.sin((nowMs + i * 233) * 0.005) + 1.0) * 110);
+                    pSlotIcon.setColor((twinkle << 24) | (theme.accent & 0x00FFFFFF));
+                    c.drawCircle(lx, ly, 1.6f * w / 360f, pSlotIcon);
+                }
+            }
+
+            // Time
+            String time = String.format(Locale.US, "%02d:%02d",
+                t.getHour(), t.getMinute());
+            Paint pt = ambient ? pAmbientText : pTime;
+            pt.setColor(ambient ? 0xFFFFFFFF : theme.text);
+            pt.setTextAlign(Paint.Align.CENTER);
+            pt.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            pt.setTextSize(48f * w / 360f);
+            c.drawText(time, cx, h * 0.30f, pt);
+        }
+
+        /** Marina Pulse — water ripple expanding from centre on each second. */
+        private void drawMarinaPulse(Canvas c, Rect b, ZonedDateTime t,
+                                      ServiaTheme theme, boolean ambient, long nowMs) {
+            int w = b.width(), h = b.height(), cx = b.centerX(), cy = b.centerY();
+            if (!ambient) {
+                // Three ripples staggered by 333ms each, expanding 0->1 over 1s
+                pHand.setStyle(Paint.Style.STROKE);
+                for (int i = 0; i < 3; i++) {
+                    float phase = ((nowMs + i * 333L) % 1000L) / 1000f;
+                    float r = phase * Math.min(w, h) * 0.45f;
+                    int alpha = (int) ((1f - phase) * 140);
+                    pHand.setColor((alpha << 24) | (theme.accent & 0x00FFFFFF));
+                    pHand.setStrokeWidth((1f - phase) * 4f * w / 360f + 1f);
+                    c.drawCircle(cx, cy, r, pHand);
+                }
+            }
+            // Time
+            String time = String.format(Locale.US, "%02d:%02d",
+                t.getHour(), t.getMinute());
+            Paint pt = ambient ? pAmbientText : pTime;
+            pt.setColor(ambient ? 0xFFFFFFFF : theme.text);
+            pt.setTextAlign(Paint.Align.CENTER);
+            pt.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
+            pt.setTextSize(54f * w / 360f);
+            c.drawText(time, cx, cy + h * 0.05f, pt);
+            if (!ambient) {
+                pDate.setColor(theme.accent);
+                pDate.setTextSize(10f * w / 360f);
+                pDate.setTextAlign(Paint.Align.CENTER);
+                pDate.setLetterSpacing(0.18f);
+                c.drawText("DUBAI MARINA", cx, h * 0.62f, pDate);
+            }
+        }
+
+        /** Falcon Trail — a UAE falcon emoji orbits the time. */
+        private void drawFalconTrail(Canvas c, Rect b, ZonedDateTime t,
+                                      ServiaTheme theme, boolean ambient, long nowMs) {
+            int w = b.width(), h = b.height(), cx = b.centerX(), cy = b.centerY();
+            // Time at centre
+            String time = String.format(Locale.US, "%02d:%02d",
+                t.getHour(), t.getMinute());
+            Paint pt = ambient ? pAmbientText : pTime;
+            pt.setColor(ambient ? 0xFFFFFFFF : theme.text);
+            pt.setTextAlign(Paint.Align.CENTER);
+            pt.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            pt.setTextSize(56f * w / 360f);
+            c.drawText(time, cx, cy + h * 0.05f, pt);
+
+            if (!ambient) {
+                // Trail of fading dots behind the falcon
+                pSlotIcon.setStyle(Paint.Style.FILL);
+                double angBase = (nowMs % 3500L) / 3500.0 * 2 * Math.PI - Math.PI / 2;
+                float r = Math.min(w, h) * 0.36f;
+                for (int i = 0; i < 8; i++) {
+                    double a = angBase - i * 0.12;
+                    float tx = (float) (cx + Math.cos(a) * r);
+                    float ty = (float) (cy + Math.sin(a) * r);
+                    int alpha = 200 - i * 22;
+                    if (alpha < 30) alpha = 30;
+                    pSlotIcon.setColor((alpha << 24) | (theme.accent & 0x00FFFFFF));
+                    c.drawCircle(tx, ty, (8f - i) * w / 360f, pSlotIcon);
+                }
+                // Falcon glyph
+                float fx = (float) (cx + Math.cos(angBase) * r);
+                float fy = (float) (cy + Math.sin(angBase) * r);
+                pSlotIcon.setColor(0xFFFFFFFF);
+                pSlotIcon.setTextAlign(Paint.Align.CENTER);
+                pSlotIcon.setTextSize(20f * w / 360f);
+                c.drawText("🦅", fx, fy + 6f * w / 360f, pSlotIcon);
+            }
+        }
+
+        /** Service Spotlight — rotating beam highlights one slot at a time. */
+        private void drawServiceSpotlight(Canvas c, Rect b, ZonedDateTime t,
+                                            ServiaTheme theme, boolean ambient,
+                                            long nowMs, WatchFacePreset preset) {
+            int w = b.width(), h = b.height(), cx = b.centerX(), cy = b.centerY();
+            // Time at top
+            String time = String.format(Locale.US, "%02d:%02d",
+                t.getHour(), t.getMinute());
+            Paint pt = ambient ? pAmbientText : pTime;
+            pt.setColor(ambient ? 0xFFFFFFFF : theme.text);
+            pt.setTextAlign(Paint.Align.CENTER);
+            pt.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            pt.setTextSize(46f * w / 360f);
+            c.drawText(time, cx, h * 0.30f, pt);
+
+            if (!ambient) {
+                // Rotate a soft cone through the corners at one slot every 2s
+                int n = preset.slotCount();
+                int idx = (int) ((nowMs / 2000L) % n);
+                float[] pos = preset.slotPosition(idx);
+                float sx = b.left + pos[0] * w;
+                float sy = b.top + pos[1] * h;
+                // Faint gradient-like cone faked as a pile of decreasing-alpha
+                // discs from centre to slot
+                pSlotIcon.setStyle(Paint.Style.FILL);
+                for (int i = 0; i < 12; i++) {
+                    float ratio = i / 12f;
+                    float x = cx + (sx - cx) * ratio;
+                    float y = cy + (sy - cy) * ratio;
+                    int alpha = (int) ((1f - ratio) * 70);
+                    pSlotIcon.setColor((alpha << 24) | (theme.accent & 0x00FFFFFF));
+                    c.drawCircle(x, y, 14f * w / 360f * (1f - ratio * 0.4f), pSlotIcon);
+                }
+            }
+        }
+
         // ----- slots ----------------------------------------------------
 
         private void drawSlots(Canvas c, Rect b, WatchFacePreset preset,
@@ -356,8 +573,12 @@ public class ServiaWatchFaceService extends WatchFaceService {
                 slotBg = 0xFFDC2626; slotFg = 0xFFFFFFFF;
             } else if (kind.equals("talk")) {
                 slotBg = 0xFFF59E0B; slotFg = 0xFF1E293B;
+            } else if (kind.equals("nfc")) {
+                slotBg = 0xFF6366F1; slotFg = 0xFFFFFFFF;
             } else if (kind.equals("book") || kind.equals("track")) {
                 slotBg = theme.primary; slotFg = theme.text;
+            } else if (kind.equals("next_booking")) {
+                slotBg = theme.accent; slotFg = 0xFF1E293B;
             } else {
                 slotBg = theme.surface; slotFg = theme.text;
             }
@@ -366,15 +587,35 @@ public class ServiaWatchFaceService extends WatchFaceService {
             pSlotBg.setColor(slotBg);
             c.drawCircle(x, y, r, pSlotBg);
 
-            // Icon (emoji from label) — we draw the first character of the
-            // human-readable label since the watch face renderer can't pull
-            // bitmaps from R.drawable for every kind without bloat.
+            // v1.24.35 — booking-aware data slots. next_booking shows the
+            // ETA in minutes pulled from SharedPreferences populated by
+            // WearMessageListenerService when the server pushes
+            // /servia/booking_created.
+            if ("next_booking".equals(kind)) {
+                android.content.SharedPreferences sp = appCtx
+                    .getSharedPreferences("servia_next_booking", MODE_PRIVATE);
+                int etaMin = sp.getInt("eta_min", 0);
+                if (etaMin > 0) {
+                    pSlotIcon.setColor(slotFg);
+                    pSlotIcon.setTextAlign(Paint.Align.CENTER);
+                    pSlotIcon.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+                    pSlotIcon.setTextSize(r * 0.55f);
+                    c.drawText(etaMin + "m", x, y - r * 0.05f, pSlotIcon);
+                    pSlotIcon.setTextSize(r * 0.32f);
+                    pSlotIcon.setTypeface(Typeface.DEFAULT);
+                    String svc = sp.getString("service", "");
+                    if (svc.length() > 6) svc = svc.substring(0, 6);
+                    c.drawText(svc, x, y + r * 0.42f, pSlotIcon);
+                    return;
+                }
+            }
+
+            // Default: emoji from label
             pSlotIcon.setColor(slotFg);
             pSlotIcon.setTextAlign(Paint.Align.CENTER);
             pSlotIcon.setTypeface(Typeface.DEFAULT);
             pSlotIcon.setTextSize(r * 0.95f);
             String icon = WatchFaceSlots.labelFor(kind);
-            // First codepoint = the emoji
             int firstCp = icon.codePointAt(0);
             String iconStr = new String(Character.toChars(firstCp));
             c.drawText(iconStr, x, y + r * 0.30f, pSlotIcon);

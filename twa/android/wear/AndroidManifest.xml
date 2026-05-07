@@ -16,6 +16,9 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <!-- Voice assistant (v1.24.2): mic + speak-back -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- v1.24.35: watch NFC — works on Galaxy Watch 4+, Pixel Watch, Wear OS 3+ -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
@@ -103,6 +106,19 @@
                   android:exported="true"
                   android:label="My address"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <activity android:name="ae.servia.wear.NfcScanActivity"
+                  android:exported="true"
+                  android:label="Scan NFC"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+                  android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="https"
+                      android:host="servia.ae"
+                      android:pathPrefix="/csos/" />
+            </intent-filter>
+        </activity>
         <activity android:name="ae.servia.wear.ThemePickerActivity"
                   android:exported="true"
                   android:label="Theme"

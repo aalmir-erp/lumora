@@ -475,6 +475,29 @@ def _do_dispatch(btn_id: int, customer_id: int, customer_rec: dict,
             )
     except Exception:
         pass
+    # v1.24.35 — fire a success push so phone + watch + admin all light up.
+    # The watch's WearMessageListenerService catches /servia/booking_created
+    # via its own path; here we use the cross-platform admin_alerts pipe so
+    # web push subscribers (which include the customer's phone PWA, mirrored
+    # to the watch) see it immediately. Best-effort, never blocks.
+    try:
+        from . import admin_alerts as _aa
+        bk_id = res.get("booking_id", "")
+        vendor = res.get("vendor") or {}
+        eta = res.get("eta_min")
+        _aa.notify_admin(
+            f"✅ SOS dispatched · {row['label']}\n"
+            f"Booking: {bk_id}\n"
+            f"Vendor: {vendor.get('name', '?')}"
+            + (f"\nETA: {eta}m" if eta else "")
+            + f"\nSource: {source}",
+            kind="booking_confirmed",
+            urgency="urgent",
+            meta={"booking_id": bk_id, "source": source,
+                  "shortcut_label": row["label"]},
+        )
+    except Exception:
+        pass
     # Surface payment_method preference on the response so the UI can
     # decide whether to charge wallet first or prompt standard payment.
     res["payment_method"] = row["payment_method"]
