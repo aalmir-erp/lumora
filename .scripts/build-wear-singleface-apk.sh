@@ -116,7 +116,19 @@ find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-single-face-b
 echo "$SUFFIX" > _artifacts/SINGLE_BUILD_INFO.txt
 ls -la _artifacts/
 
+echo "=== Single Face build dir tree (debug) ==="
+find . -type f \( -name "*.apk" -o -name "*.aab" -o -name "AndroidManifest.xml" \) 2>/dev/null | head -20 > _artifacts/single-found.txt
+cat _artifacts/single-found.txt
+echo "=== app/build/outputs (recursive) ==="
+find app/build/outputs -type f 2>/dev/null | head -40 >> _artifacts/single-found.txt || true
+cat _artifacts/single-found.txt
+
 if [ "$GRADLE_EXIT" != "0" ]; then
   echo "::warning::Servia Single Face build FAILED with exit $GRADLE_EXIT"
   exit "$GRADLE_EXIT"
+fi
+if [ ! -f _artifacts/servia-single-face-signed.apk ]; then
+  echo "::error::Servia Single Face gradle returned 0 but produced NO APK"
+  echo "::error::See _artifacts/single-gradle-tail.txt + single-tree.txt for details"
+  exit 1
 fi

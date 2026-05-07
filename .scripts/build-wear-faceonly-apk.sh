@@ -194,7 +194,19 @@ find app/build/outputs -name "*.aab" -exec cp {} _artifacts/servia-faces-bundle.
 echo "$SUFFIX" > _artifacts/FACES_BUILD_INFO.txt
 ls -la _artifacts/
 
+echo "=== Faces build dir tree (debug) ==="
+find . -type f \( -name "*.apk" -o -name "*.aab" -o -name "AndroidManifest.xml" \) 2>/dev/null | head -20 > _artifacts/faces-found.txt
+cat _artifacts/faces-found.txt
+echo "=== app/build/outputs (recursive) ==="
+find app/build/outputs -type f 2>/dev/null | head -40 >> _artifacts/faces-found.txt || true
+cat _artifacts/faces-found.txt
+
 if [ "$GRADLE_EXIT" != "0" ]; then
   echo "::warning::Servia Faces gradle build FAILED with exit $GRADLE_EXIT"
   exit "$GRADLE_EXIT"
+fi
+if [ ! -f _artifacts/servia-faces-signed.apk ]; then
+  echo "::error::Servia Faces gradle returned 0 but produced NO APK"
+  echo "::error::See _artifacts/faces-gradle-tail.txt + faces-tree.txt for details"
+  exit 1
 fi
