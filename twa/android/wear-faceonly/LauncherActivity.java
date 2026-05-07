@@ -87,8 +87,13 @@ public class LauncherActivity extends Activity {
         addSpacer(root, 8);
 
         // ==== ACTIONS (top, big, can't miss) =========================
-        addActionButton(root, "▶ APPLY SERVIA FACE NOW", 0xFFFCD34D, 0xFF1F1411,
-            v -> applyFace());
+        // v1.24.52 PLAN B: two Apply buttons to A/B test which face type
+        // Samsung's One UI Watch picker accepts.
+        addActionButton(root, "▶ APPLY (LEGACY)", 0xFF065F46, 0xFFFFFFFF,
+            v -> applyFace("ae.servia.wear.watchface.LegacyServiaFace01"));
+        addSpacer(root, 4);
+        addActionButton(root, "▶ APPLY (ANDROIDX)", 0xFFFCD34D, 0xFF1F1411,
+            v -> applyFace("ae.servia.wear.watchface.ServiaFace01BurjSunset"));
         addSpacer(root, 6);
         addActionButton(root, "📤 SEND LOG TO SERVIA", 0xFF065F46, 0xFFFFFFFF,
             v -> sendLog());
@@ -218,10 +223,10 @@ public class LauncherActivity extends Activity {
      * actually accepts (if any) wins. Each attempt is logged so the
      * server's diag-recent endpoint shows us the result.
      */
-    private void applyFace() {
-        ComponentName cn = new ComponentName(this,
-            "ae.servia.wear.watchface.ServiaFace01BurjSunset");
-        ServiaWearLog.log(this, "APPLY", "begin — target=" + cn.flattenToShortString());
+    private void applyFace(String targetClass) {
+        ComponentName cn = new ComponentName(this, targetClass);
+        ServiaWearLog.log(this, "APPLY",
+            "begin — target=" + cn.flattenToShortString());
 
         // Attempt 1: standard Live Wallpaper picker (with explicit component)
         if (tryStart("live-wallpaper", () -> {

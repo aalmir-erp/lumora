@@ -45,5 +45,31 @@
              tools/watchface/manifest_entries.xml -->
         <!-- @SERVIA_FACE_SERVICES@ -->
 
+        <!-- v1.24.52 PLAN B: legacy WallpaperService-based face.
+             Deliberately NO WFF property markers — matches Samsung's
+             DefaultWatchFace pattern exactly. If Samsung's One UI Watch
+             picker filters by class hierarchy (excluding AndroidX
+             watchface services), this one should slip through. -->
+        <service
+            android:name="ae.servia.wear.watchface.LegacyServiaFace01"
+            android:label="Servia Legacy · Burj Sunset"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p01" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p01" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
     </application>
 </manifest>
