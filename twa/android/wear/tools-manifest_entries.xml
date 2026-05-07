@@ -1,0 +1,462 @@
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace01BurjSunset"
+            android:label="Servia · Burj Sunset"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p01" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p01" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace02MarinaNeon"
+            android:label="Servia · Marina Neon"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p02" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p02" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace03DesertPremium"
+            android:label="Servia · Desert Premium"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p03" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p03" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace04SportPulse"
+            android:label="Servia · Sport Pulse"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p04" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p04" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace05EmergencyRed"
+            android:label="Servia · Emergency Red"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p05" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p05" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace06ModularDark"
+            android:label="Servia · Modular Pro"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p06" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p06" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace07NeonGrid"
+            android:label="Servia · Neon Grid"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p07" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p07" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace08CalligraphyGold"
+            android:label="Servia · Calligraphy Gold"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p08" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p08" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace09PearlLadies"
+            android:label="Servia · Pearl Ladies"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p09" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p09" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace10EcoBotanical"
+            android:label="Servia · Eco Botanical"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p10" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p10" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace11MinimalWhite"
+            android:label="Servia · Minimal White"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p11" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p11" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace12FalconPremium"
+            android:label="Servia · Falcon Premium"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p12" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p12" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace13PixelRetro"
+            android:label="Servia · Pixel Retro"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p13" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p13" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace14CarbonFiber"
+            android:label="Servia · Carbon Fiber"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p14" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p14" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace15KidsFun"
+            android:label="Servia · Kids Fun"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p15" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p15" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace16BusinessExec"
+            android:label="Servia · Business Exec"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p16" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p16" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace17SandstormPremium"
+            android:label="Servia · Sandstorm Premium"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p17" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p17" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace18VioletChrono"
+            android:label="Servia · Violet Chronograph"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p18" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p18" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace19OceanAnimated"
+            android:label="Servia · Ocean Live"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p19" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p19" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace20Aviation"
+            android:label="Servia · Aviation"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p20" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p20" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace21ServiaHours"
+            android:label="Servia · Servia Hours"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p21" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p21" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace22ServiaDial"
+            android:label="Servia · Servia Dial"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p22" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p22" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+        </service>

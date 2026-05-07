@@ -375,6 +375,55 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      # v1.24.43 — also build a STANDALONE Servia Faces APK that contains
+      # ONLY the 22 watch face services (no tiles, no extra activities).
+      # Used as A/B test against the main Servia Wear APK — if this
+      # standalone shows up in the system watch face picker but the main
+      # app's faces don't, co-packaging was the cause.
+      - name: Build standalone Servia Faces APK
+        id: faces_build
+        if: always()
+        env:
+          KS_PATH: ${{ env.RUNNER_TEMP }}/servia.jks
+        run: |
+          chmod +x .scripts/build-wear-faceonly-apk.sh
+          if ! .scripts/build-wear-faceonly-apk.sh "$RUNNER_TEMP/servia.jks"; then
+            echo "::warning::Servia Faces standalone build FAILED — diagnostic logs uploaded"
+          fi
+          ls -la twa/android/wear-faceonly-build/_artifacts/ 2>/dev/null || true
+
+      - name: Upload Servia Faces standalone artifacts
+        if: always() && hashFiles('twa/android/wear-faceonly-build/_artifacts/*') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: servia-faces-standalone
+          path: twa/android/wear-faceonly-build/_artifacts/*
+          if-no-files-found: warn
+          retention-days: 30
+
+      # v1.24.43 — also build a SINGLE-FACE APK (just ServiaFace01).
+      # Different applicationId so it installs alongside both other APKs.
+      # Used as the most-stripped-down diagnostic: if even THIS doesn't
+      # appear in the watch face picker, the issue is environmental.
+      - name: Build Servia Single Face APK
+        id: single_build
+        if: always()
+        run: |
+          chmod +x .scripts/build-wear-singleface-apk.sh
+          if ! .scripts/build-wear-singleface-apk.sh "$RUNNER_TEMP/servia.jks"; then
+            echo "::warning::Servia Single Face build FAILED — diagnostic logs uploaded"
+          fi
+          ls -la twa/android/wear-singleface-build/_artifacts/ 2>/dev/null || true
+
+      - name: Upload Servia Single Face artifacts
+        if: always() && hashFiles('twa/android/wear-singleface-build/_artifacts/*') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: servia-single-face
+          path: twa/android/wear-singleface-build/_artifacts/*
+          if-no-files-found: warn
+          retention-days: 30
+
       # Push the Wear gradle log + dirtree to a debug branch so it's
       # readable via `git pull origin ci-wear-debug` from the development
       # sandbox (which can't reach the GH artifact CDN). Only the small

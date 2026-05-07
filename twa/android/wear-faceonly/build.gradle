@@ -1,0 +1,67 @@
+plugins {
+    id 'com.android.application'
+}
+
+// v1.24.43 — Servia Faces (standalone watch-face APK).
+// Bundles ONLY the 22 face services, no tiles or other activities.
+// Different applicationId so it can be installed alongside the main
+// Servia Wear app for diagnosis: if this picker entry appears but the
+// main app's doesn't, co-packaging was the cause.
+
+android {
+    namespace 'ae.servia.wear.faces'
+    compileSdk 34
+    defaultConfig {
+        applicationId "ae.servia.wear.faces"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.24.43"
+    }
+    signingConfigs {
+        release {
+            storeFile file("placeholder.jks")
+            storePassword "placeholder"
+            keyAlias "servia"
+            keyPassword "placeholder"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    packaging {
+        resources {
+            excludes += ['/META-INF/{AL2.0,LGPL2.1}', '/META-INF/DEPENDENCIES']
+        }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-common:1.9.22'
+    }
+}
+
+dependencies {
+    implementation 'androidx.wear.watchface:watchface:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-style:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-data:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-complications-data-source:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-editor:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-guava:1.2.1'
+
+    implementation 'com.google.guava:guava:33.0.0-android'
+}

@@ -1,0 +1,222 @@
+{
+  "p1_burj_sunset": {
+    "time_x": 240.0,
+    "time_y": 190.0,
+    "time_size": 92,
+    "time_color": "#FFFFFF",
+    "time_weight": 900,
+    "time_letter_spacing": -3.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p2_marina_neon": {
+    "time_x": 240.0,
+    "time_y": 245.0,
+    "time_size": 86,
+    "time_color": "#FFFFFF",
+    "time_weight": 200,
+    "time_letter_spacing": -3.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p3_desert_premium": {
+    "time_x": 240.0,
+    "time_y": 225.0,
+    "time_size": 88,
+    "time_color": "#FEF3C7",
+    "time_weight": 800,
+    "time_letter_spacing": -3.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p4_sport_pulse": {
+    "time_x": 240.0,
+    "time_y": 220.0,
+    "time_size": 58,
+    "time_color": "#FFFFFF",
+    "time_weight": 900,
+    "time_letter_spacing": -2.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p5_emergency_red": {
+    "time_x": 240.0,
+    "time_y": 230.0,
+    "time_size": 74,
+    "time_color": "#FFFFFF",
+    "time_weight": 900,
+    "time_letter_spacing": -2.0,
+    "time_serif": false,
+    "time_monospace": true
+  },
+  "p6_modular_dark": {
+    "time_x": 40.0,
+    "time_y": 120.0,
+    "time_size": 84,
+    "time_color": "#FFFFFF",
+    "time_weight": 800,
+    "time_letter_spacing": -3.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p7_neon_grid": {
+    "time_x": 240.0,
+    "time_y": 230.0,
+    "time_size": 88,
+    "time_color": "#FFFFFF",
+    "time_weight": 900,
+    "time_letter_spacing": -3.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p8_calligraphy_gold": {
+    "time_x": 240.0,
+    "time_y": 250.0,
+    "time_size": 100,
+    "time_color": "#FCD34D",
+    "time_weight": 900,
+    "time_letter_spacing": -2.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p9_pearl_ladies": {
+    "time_x": 370.0,
+    "time_y": 370.0,
+    "time_size": 18,
+    "time_color": "#FFFFFF",
+    "time_weight": 700,
+    "time_letter_spacing": 0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p10_eco_botanical": {
+    "time_x": 370.0,
+    "time_y": 370.0,
+    "time_size": 18,
+    "time_color": "#022C22",
+    "time_weight": 700,
+    "time_letter_spacing": 0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p11_minimal_white": {
+    "time_x": 240.0,
+    "time_y": 230.0,
+    "time_size": 120,
+    "time_color": "#0F172A",
+    "time_weight": 100,
+    "time_letter_spacing": -6.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p12_falcon_premium": {
+    "time_x": 240,
+    "time_y": 240,
+    "time_size": 80,
+    "time_color": "#FFFFFF",
+    "time_weight": 700,
+    "time_letter_spacing": 0,
+    "time_serif": false,
+    "time_monospace": false
+  },
+  "p13_pixel_retro": {
+    "time_x": 360.0,
+    "time_y": 345.0,
+    "time_size": 20,
+    "time_color": "#0F172A",
+    "time_weight": 700,
+    "time_letter_spacing": 0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p14_carbon_fiber": {
+    "time_x": 240.0,
+    "time_y": 230.0,
+    "time_size": 86,
+    "time_color": "#FFFFFF",
+    "time_weight": 500,
+    "time_letter_spacing": -2.0,
+    "time_serif": false,
+    "time_monospace": true
+  },
+  "p15_kids_fun": {
+    "time_x": 240.0,
+    "time_y": 230.0,
+    "time_size": 100,
+    "time_color": "#FFFFFF",
+    "time_weight": 900,
+    "time_letter_spacing": -2.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p16_business_exec": {
+    "time_x": 40.0,
+    "time_y": 120.0,
+    "time_size": 80,
+    "time_color": "#FFFFFF",
+    "time_weight": 800,
+    "time_letter_spacing": -3.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p17_sandstorm_premium": {
+    "time_x": 240.0,
+    "time_y": 210.0,
+    "time_size": 92,
+    "time_color": "#FFFFFF",
+    "time_weight": 800,
+    "time_letter_spacing": -3.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p18_violet_chrono": {
+    "time_x": 240.0,
+    "time_y": 190.0,
+    "time_size": 74,
+    "time_color": "#FFFFFF",
+    "time_weight": 900,
+    "time_letter_spacing": -2.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p19_ocean_animated": {
+    "time_x": 240.0,
+    "time_y": 255.0,
+    "time_size": 86,
+    "time_color": "#FFFFFF",
+    "time_weight": 100,
+    "time_letter_spacing": -3.0,
+    "time_serif": true,
+    "time_monospace": false
+  },
+  "p20_aviation": {
+    "time_x": 240.0,
+    "time_y": 230.0,
+    "time_size": 56,
+    "time_color": "#FFFFFF",
+    "time_weight": 900,
+    "time_letter_spacing": -1.0,
+    "time_serif": false,
+    "time_monospace": true
+  },
+  "p21_servia_hours": {
+    "time_x": 150.0,
+    "time_y": 91.1,
+    "time_size": 22,
+    "time_color": "#FFFFFF",
+    "time_weight": 700,
+    "time_letter_spacing": 0,
+    "time_serif": false,
+    "time_monospace": false
+  },
+  "p22_servia_dial": {
+    "time_x": 240.0,
+    "time_y": 180.0,
+    "time_size": 106,
+    "time_color": "#FFFFFF",
+    "time_weight": 900,
+    "time_letter_spacing": -4.0,
+    "time_serif": true,
+    "time_monospace": false
+  }
+}
