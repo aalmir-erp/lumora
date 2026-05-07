@@ -149,6 +149,13 @@ rootProject.name = "servia-faces"
 include ':app'
 GRADLE
 cp -v "$SRC/build.gradle" "$BUILD_DIR/app/build.gradle"
+# v1.24.50 — inject live APP_VERSION into versionName so the in-app banner
+# shows the actual build, not whatever was hardcoded in build.gradle.
+APP_VER=$(grep -E 'APP_VERSION\s*=' "${GITHUB_WORKSPACE:-/tmp/lumora-deploy}/app/config.py" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+if [ -n "$APP_VER" ]; then
+  sed -i -E "s/versionName \"[^\"]*\"/versionName \"$APP_VER\"/" "$BUILD_DIR/app/build.gradle"
+  echo "Injected versionName = $APP_VER into faces build.gradle"
+fi
 
 # Reuse the gradle wrapper from the TWA-generated project
 GW_DIR="twa/android/generated"

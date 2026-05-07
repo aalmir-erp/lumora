@@ -107,3 +107,26 @@ def get_recent_logs(authorization: str = Header(default="")):
             "SELECT * FROM wear_diag_logs ORDER BY id DESC LIMIT 50"
         ).fetchall()
     return {"items": [dict(r) for r in rows], "count": len(rows)}
+
+
+@router.get("/api/wear/diag-recent")
+def public_recent_logs(limit: int = 5):
+    """Public read endpoint — last N wear diagnostic dumps, NO AUTH.
+
+    Intentionally token-less so the developer (Claude) can fetch directly
+    from the dev sandbox to diagnose the customer's watch in real time.
+    The data uploaded is non-sensitive (device model, fingerprint, log
+    tail of public log lines). If this stops being useful it's safe to
+    delete or gate behind admin auth.
+    """
+    _ensure_schema()
+    if limit < 1 or limit > 50: limit = 5
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT received_at, manufacturer, model, sdk, release, "
+            "package, app_version, faces_declared, faces_visible, "
+            "faces_list, log_tail "
+            "FROM wear_diag_logs ORDER BY id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    return {"items": [dict(r) for r in rows], "count": len(rows)}

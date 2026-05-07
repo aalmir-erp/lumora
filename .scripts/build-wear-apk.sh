@@ -70,6 +70,14 @@ GRADLE
 
 # Module build.gradle
 cp -v "$WEAR_SRC/build.gradle" "$BUILD_DIR/app/build.gradle"
+# v1.24.50 — inject live APP_VERSION into versionName so the watch
+# launcher's BIG version banner shows the actual build, not whatever
+# was last hardcoded in wear/build.gradle.
+APP_VER=$(grep -E 'APP_VERSION\s*=' "${GITHUB_WORKSPACE:-/tmp/lumora-deploy}/app/config.py" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+if [ -n "$APP_VER" ]; then
+  sed -i -E "s/versionName \"[^\"]*\"/versionName \"$APP_VER\"/" "$BUILD_DIR/app/build.gradle"
+  echo "Injected versionName = $APP_VER into wear build.gradle"
+fi
 
 # Gradle wrapper — copy from the TWA-generated project so we don't need a separate download
 GRADLE_DIR="twa/android/generated"

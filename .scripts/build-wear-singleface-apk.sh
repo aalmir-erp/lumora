@@ -73,6 +73,12 @@ rootProject.name = "servia-single-face"
 include ':app'
 GRADLE
 cp -v "$SRC/build.gradle" "$BUILD_DIR/app/build.gradle"
+# v1.24.50 — inject live APP_VERSION into versionName.
+APP_VER=$(grep -E 'APP_VERSION\s*=' "${GITHUB_WORKSPACE:-/tmp/lumora-deploy}/app/config.py" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+if [ -n "$APP_VER" ]; then
+  sed -i -E "s/versionName \"[^\"]*\"/versionName \"$APP_VER\"/" "$BUILD_DIR/app/build.gradle"
+  echo "Injected versionName = $APP_VER into single-face build.gradle"
+fi
 
 GW_DIR="twa/android/generated"
 if [ -d "$GW_DIR/gradle/wrapper" ]; then
