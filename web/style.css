@@ -10,14 +10,14 @@
 }
 @media (max-width:720px){
   .nav-inner{padding:8px 10px !important;gap:6px !important}
-  .nav-inner>a:first-child img{width:92px !important;height:auto !important}
+  .nav-inner>a:first-child img{width:124px !important;height:auto !important}
   #lumora-version{display:none !important}
   .btn-icon{width:30px !important;height:30px !important;min-height:30px !important;font-size:12px !important}
   .lang-dropdown{height:30px !important;min-width:44px !important;max-width:74px !important;font-size:10px !important;padding:0 18px 0 6px !important;background-position:right 5px center !important}
   .nav-cta a.btn-primary{padding:7px 11px !important;min-height:30px !important;font-size:12px !important}
 }
 @media (max-width:380px){
-  .nav-inner>a:first-child img{width:78px !important}
+  .nav-inner>a:first-child img{width:104px !important}
   .nav-cta a.btn-primary{font-size:11px !important;padding:6px 9px !important}
   .btn-icon{width:28px !important;height:28px !important;min-height:28px !important}
 }
