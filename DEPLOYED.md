@@ -2,16 +2,15 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"WY71CCPGQquCxy1qBhdwDg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"jCtZY-_qQ7ORYHj29o6EoQ"}`
 
 ## Build logs
 ```
-[ 4/11] COPY requirements.txt ./
-[internal] load build context
-[ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 2/11] WORKDIR /app
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
@@ -21,6 +20,7 @@
 [ 4/11] COPY requirements.txt ./
 [ 5/11] RUN pip install -r requirements.txt
 [ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
+[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/11] COPY app ./app
 [ 8/11] COPY app ./app
@@ -32,9 +32,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:b85cc8bbbdb8412376c94b10d4373729841c1990c16798643cf11785e172abc9
-containerimage.digest: sha256:f916dcc6f1a8aa3b6cb3b6ac90d38045d154e36a57e723db38e8fb70301454e7
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZjkxNmRjYzZmMWE4YWEzYjZjYjNiNmFjOTBkMzgwNDVkMTU0ZTM2YTU3ZTcyM2RiMzhlOGZiNzAzMDE0NTRlNyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wN1QxODozOToyNVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:caab4d66d49384e5e2d6ec9307f5b214b9a06f8cffc271e15303c1bded154f01
+containerimage.digest: sha256:1f615bce6d1f38b72ff46da3e2e85285537b4719b68fcc8548c109fe613cd6ea
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MWY2MTViY2U2ZDFmMzhiNzJmZjQ2ZGEzZTJlODUyODU1MzdiNDcxOWI2OGZjYzg1NDhjMTA5ZmU2MTNjZDZlYSIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wN1QxODo0Nzo0NFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 image push
 
@@ -50,6 +50,7 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/aa4deac6-be4e-4731-93a8-7a2caad3cbd6/vol_onr647rhdeir9di9
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
 Starting Container
@@ -60,8 +61,8 @@ INFO:     Started server process [1]
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:46229 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.2:48881 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55970 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:61588 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
