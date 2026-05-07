@@ -633,18 +633,16 @@ public class ServiaWatchFaceService extends ListenableWatchFaceService {
 
         // ----- tap ------------------------------------------------------
 
-        // @TapType.TapType is the nested IntDef annotation on
-        // androidx.wear.watchface.TapType; the outer TapType is a class
-        // holding the int constants (DOWN=0, UP=1, CANCEL=2). Easy to
-        // confuse — javac said "TapType cannot be converted to Annotation"
-        // when we used the outer name as the annotation.
+        // No annotation on tapType. We tried @TapType (class -> not an
+        // annotation) and @TapType.TapType (no nested type at all in
+        // androidx.wear.watchface 1.2.1). The Java view of the Kotlin
+        // method is just `int tapType`; the IntDef constraint stays on
+        // the Kotlin side. We compare against TapType.UP (the int 1)
+        // for clarity.
         @Override
-        public void onTapEvent(@TapType.TapType int tapType,
+        public void onTapEvent(int tapType,
                                @NonNull TapEvent tapEvent,
                                @NonNull ComplicationSlotsManager complicationSlotsManager) {
-            // Renderer.CanvasRenderer.onTapEvent has no super impl that's
-            // safe to call from Java (the open Kotlin variant is sketchy
-            // through bytecode), so we just override and skip super.
             if (tapType != TapType.UP) return;
             int x = tapEvent.getXPos();
             int y = tapEvent.getYPos();
