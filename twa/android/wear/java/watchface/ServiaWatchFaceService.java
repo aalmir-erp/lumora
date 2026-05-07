@@ -19,15 +19,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.wear.watchface.CanvasType;
 import androidx.wear.watchface.ComplicationSlotsManager;
+import androidx.wear.watchface.DrawMode;
+import androidx.wear.watchface.ListenableWatchFaceService;
 import androidx.wear.watchface.Renderer;
 import androidx.wear.watchface.TapEvent;
 import androidx.wear.watchface.TapType;
 import androidx.wear.watchface.WatchFace;
-import androidx.wear.watchface.WatchFaceService;
 import androidx.wear.watchface.WatchFaceType;
 import androidx.wear.watchface.WatchState;
 import androidx.wear.watchface.style.CurrentUserStyleRepository;
 import androidx.wear.watchface.style.UserStyleSchema;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -59,7 +63,13 @@ import ae.servia.wear.ServiaTheme;
  * and re-generate this stub from the Java sample. This file targets
  * androidx.wear.watchface 1.2.x.
  */
-public class ServiaWatchFaceService extends WatchFaceService {
+// ListenableWatchFaceService — Java-friendly base. The vanilla
+// WatchFaceService Kotlin API uses suspending functions which make Java
+// overrides impossible. ListenableWatchFaceService swaps them for
+// ListenableFuture-returning equivalents that Java can return via
+// Futures.immediateFuture(...). Same applies to Renderer.CanvasRenderer
+// (NOT CanvasRenderer2) below.
+public class ServiaWatchFaceService extends ListenableWatchFaceService {
 
     @NonNull
     @Override
@@ -84,14 +94,15 @@ public class ServiaWatchFaceService extends WatchFaceService {
 
     @NonNull
     @Override
-    protected WatchFace createWatchFace(
+    protected ListenableFuture<WatchFace> createWatchFaceFuture(
             @NonNull SurfaceHolder surfaceHolder,
             @NonNull WatchState watchState,
             @NonNull ComplicationSlotsManager complicationSlotsManager,
             @NonNull CurrentUserStyleRepository userStyleRepository) {
         ServiaRenderer renderer = new ServiaRenderer(
             surfaceHolder, this, watchState, userStyleRepository);
-        return new WatchFace(WatchFaceType.DIGITAL, renderer);
+        return Futures.immediateFuture(
+            new WatchFace(WatchFaceType.DIGITAL, renderer));
     }
 
     // ====================================================================
@@ -102,8 +113,13 @@ public class ServiaWatchFaceService extends WatchFaceService {
     private static final long FRAME_PERIOD_STATIC_MS = 1000L;
     private static final long FRAME_PERIOD_ANIMATED_MS = 33L;  // ~30 fps
 
-    static final class ServiaRenderer
-            extends Renderer.CanvasRenderer2<ServiaSharedAssets> {
+    // Renderer.CanvasRenderer (deprecated but Java-callable) instead of
+    // CanvasRenderer2. The 2 variant requires overriding suspend
+    // createSharedAssets() which is impossible from Java without a Kotlin
+    // shim. We don't need shared assets for our render path (no large
+    // bitmaps, all paints are field-cached), so the older synchronous
+    // base class is the right fit here.
+    static final class ServiaRenderer extends Renderer.CanvasRenderer {
 
         private final Context appCtx;
         // Paints reused across frames
@@ -123,30 +139,25 @@ public class ServiaWatchFaceService extends WatchFaceService {
                        @NonNull Context ctx,
                        @NonNull WatchState watchState,
                        @NonNull CurrentUserStyleRepository userStyleRepo) {
-            // Pick the higher of the two as the constructor period — the
-            // renderer base class enforces the constructor value as the
-            // minimum interval. For static presets we still call
-            // setInteractiveDrawModeUpdateDelayMillis(1000) at runtime.
+            // 33 ms ≈ 30 fps for animated layouts. Static layouts redraw
+            // every second only because the renderer skips rebuilding paint
+            // state when nothing changes; not a separate constructor.
             super(surfaceHolder, userStyleRepo, watchState,
                   CanvasType.HARDWARE, FRAME_PERIOD_ANIMATED_MS,
                   /* clearWithBackgroundTintBeforeRenderingHighlightLayer */ true);
             this.appCtx = ctx.getApplicationContext();
         }
 
-        @NonNull
-        @Override
-        public ServiaSharedAssets createSharedAssets() {
-            return new ServiaSharedAssets();
-        }
-
         @Override
         public void render(@NonNull Canvas canvas, @NonNull Rect bounds,
-                           @NonNull ZonedDateTime zonedDateTime,
-                           @NonNull ServiaSharedAssets shared) {
+                           @NonNull ZonedDateTime zonedDateTime) {
             String presetId = WatchFaceSlots.activePresetId(appCtx);
             WatchFacePreset preset = WatchFacePreset.byId(presetId);
             ServiaTheme theme = preset.theme;
-            boolean ambient = isAmbient();
+            // isAmbient() is gone in Renderer.CanvasRenderer — read DrawMode
+            // from getRenderParameters() instead. Ambient mode flips the
+            // bg to black + skips slot/animation drawing for battery.
+            boolean ambient = getRenderParameters().getDrawMode() == DrawMode.AMBIENT;
 
             int w = bounds.width();
             int h = bounds.height();
@@ -196,8 +207,7 @@ public class ServiaWatchFaceService extends WatchFaceService {
         @Override
         public void renderHighlightLayer(@NonNull Canvas canvas,
                                          @NonNull Rect bounds,
-                                         @NonNull ZonedDateTime zonedDateTime,
-                                         @NonNull ServiaSharedAssets shared) {
+                                         @NonNull ZonedDateTime zonedDateTime) {
             // Editor highlight pass — we don't override default behaviour.
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         }
@@ -624,9 +634,9 @@ public class ServiaWatchFaceService extends WatchFaceService {
         // ----- tap ------------------------------------------------------
 
         @Override
-        public void onTapEvent(@TapType.TapType int tapType,
+        public void onTapEvent(@TapType int tapType,
                                @NonNull TapEvent tapEvent,
-                               @Nullable ComplicationSlotsManager complicationSlotsManager) {
+                               @NonNull ComplicationSlotsManager complicationSlotsManager) {
             super.onTapEvent(tapType, tapEvent, complicationSlotsManager);
             if (tapType != TapType.UP) return;
             int x = tapEvent.getXPos();
@@ -666,8 +676,4 @@ public class ServiaWatchFaceService extends WatchFaceService {
         }
     }
 
-    /** Empty asset bag — required by Renderer.CanvasRenderer2 generic. */
-    static final class ServiaSharedAssets implements Renderer.SharedAssets {
-        @Override public void onDestroy() {}
-    }
 }
