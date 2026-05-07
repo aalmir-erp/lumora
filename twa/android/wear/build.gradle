@@ -74,6 +74,17 @@ dependencies {
     // Native Wear UI components for MainActivity (BoxInsetLayout etc)
     implementation 'androidx.wear:wear:1.3.0'
 
+    // v1.24.33 — Servia Wear OS watch face (the dial itself, not tiles).
+    // Modern AndroidX watch face stack required for Wear OS 3+ ; the
+    // legacy android.support.wearable.watchface API is no longer accepted
+    // by the Play Store. Versions pinned to the same kotlin-stdlib 1.9.x
+    // family the existing wear-tiles deps use.
+    implementation 'androidx.wear.watchface:watchface:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-style:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-data:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-complications-data-source:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-editor:1.2.1'
+
     // Wearable Data Layer — phone↔watch sync (used for booking state +
     // wallet balance push from phone TWA via a companion service later).
     implementation 'com.google.android.gms:play-services-wearable:18.2.0'

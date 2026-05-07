@@ -136,5 +136,19 @@
                 android:text="🎨\nTheme"
                 android:contentDescription="Pick theme" />
         </LinearLayout>
+
+        <!-- v1.24.33 Row 6: Watch face editor -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_face_editor"
+                style="@style/WearTile"
+                android:background="#0F766E"
+                android:text="🎭\nWatch face"
+                android:contentDescription="Edit Servia watch face" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

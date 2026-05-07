@@ -108,6 +108,44 @@
                   android:label="Theme"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
 
+        <!-- v1.24.33: Servia watch face (the dial itself) + companion editor.
+             10 curated presets (theme x layout) + 8 customizable slots
+             that can hold custom SOS shortcuts, click-to-talk, booking
+             ETA, address picker, weather/battery/steps complications. -->
+        <activity android:name="ae.servia.wear.watchface.WatchFaceEditorActivity"
+                  android:exported="true"
+                  android:label="Watch face editor"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="ae.servia.wear.watchface.CONFIG" />
+                <category android:name="com.google.android.wearable.watchface.category.WEARABLE_CONFIGURATION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaWatchFaceService"
+            android:label="@string/wf_face_name"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/tile_preview_hub" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/tile_preview_hub" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.companionConfigurationAction"
+                android:value="ae.servia.wear.watchface.CONFIG" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+                android:value="ae.servia.wear.watchface.CONFIG" />
+        </service>
+
         <!-- v1.24.7: SOS category grid (8 tiles, matches website /sos.html).
              Launched by MainActivity SOS button + RecoveryTileService tap. -->
         <activity android:name="ae.servia.wear.SosCategoryGridActivity"
