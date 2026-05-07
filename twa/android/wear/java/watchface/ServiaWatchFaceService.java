@@ -633,13 +633,15 @@ public class ServiaWatchFaceService extends ListenableWatchFaceService {
 
         // ----- tap ------------------------------------------------------
 
-        // No annotation on tapType. We tried @TapType (class -> not an
-        // annotation) and @TapType.TapType (no nested type at all in
-        // androidx.wear.watchface 1.2.1). The Java view of the Kotlin
-        // method is just `int tapType`; the IntDef constraint stays on
-        // the Kotlin side. We compare against TapType.UP (the int 1)
-        // for clarity.
-        @Override
+        // No @Override annotation. javac couldn't bind it to a supertype
+        // method because Kotlin's `open fun onTapEvent(...,
+        // complicationSlotsManager: ComplicationSlotsManager)` has subtle
+        // nullability annotations that don't quite match what the Java
+        // view sees. Without @Override the method is a regular instance
+        // method, but the runtime virtual-dispatches into it because
+        // the JVM matches by name + erased signature, not by static
+        // override-checking. If at runtime taps don't fire, this is the
+        // place to investigate.
         public void onTapEvent(int tapType,
                                @NonNull TapEvent tapEvent,
                                @NonNull ComplicationSlotsManager complicationSlotsManager) {
