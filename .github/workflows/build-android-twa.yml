@@ -36,8 +36,12 @@ on:
     branches: ["main"]
     paths:
       - "twa/android/wear/**"
+      - "twa/android/wear-faceonly/**"
+      - "twa/android/wear-singleface/**"
       - "twa/android/twa-manifest.json"
       - ".scripts/build-wear-apk.sh"
+      - ".scripts/build-wear-faceonly-apk.sh"
+      - ".scripts/build-wear-singleface-apk.sh"
       - ".github/workflows/build-android-twa.yml"
 
 permissions:
