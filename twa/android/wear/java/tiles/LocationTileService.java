@@ -9,6 +9,8 @@ import androidx.wear.protolayout.LayoutElementBuilders;
 import androidx.wear.protolayout.ModifiersBuilders;
 import androidx.wear.tiles.RequestBuilders;
 
+import ae.servia.wear.ServiaTheme;
+
 /**
  * v1.24.29 — "📍 Address" tile. Shows the customer's current saved area
  * + emirate. Tap → LocationActivity (refresh GPS / edit on phone).
@@ -18,12 +20,11 @@ import androidx.wear.tiles.RequestBuilders;
  */
 public class LocationTileService extends ServiaTileBase {
 
-    private static final int OCEAN = 0xFF065F46;
-
     @Override
     protected LayoutElementBuilders.LayoutElement buildLayout(
             RequestBuilders.TileRequest req) {
 
+        ServiaTheme theme = ServiaTheme.current(this);
         SharedPreferences sp = getSharedPreferences(
             "servia_address", MODE_PRIVATE);
         String area = sp.getString("area", null);
@@ -43,21 +44,21 @@ public class LocationTileService extends ServiaTileBase {
                 .build();
 
         LayoutElementBuilders.Column.Builder content = col()
-            .addContent(title("📍 ADDRESS", AMBER))
+            .addContent(title("📍 ADDRESS", theme.accent))
             .addContent(spacer(6));
 
         if (area != null && !area.isEmpty()) {
-            content.addContent(big(area, WHITE))
+            content.addContent(big(area, theme.text))
                    .addContent(spacer(2));
             if (emirate != null && !emirate.isEmpty()) {
-                content.addContent(body(emirate, AMBER));
+                content.addContent(body(emirate, theme.accent));
             }
             content.addContent(spacer(6))
-                   .addContent(body("Tap to refresh GPS", WHITE));
+                   .addContent(body("Tap to refresh GPS", theme.text));
         } else {
-            content.addContent(big("(set)", WHITE))
+            content.addContent(big("(set)", theme.text))
                    .addContent(spacer(4))
-                   .addContent(body("Tap to capture\nyour location", WHITE));
+                   .addContent(body("Tap to capture\nyour location", theme.text));
         }
 
         return new LayoutElementBuilders.Box.Builder()
@@ -69,7 +70,7 @@ public class LocationTileService extends ServiaTileBase {
                 new ModifiersBuilders.Modifiers.Builder()
                     .setBackground(
                         new ModifiersBuilders.Background.Builder()
-                            .setColor(ColorBuilders.argb(OCEAN))
+                            .setColor(ColorBuilders.argb(theme.primary))
                             .setCorner(
                                 new ModifiersBuilders.Corner.Builder()
                                     .setRadius(DimensionBuilders.dp(20))

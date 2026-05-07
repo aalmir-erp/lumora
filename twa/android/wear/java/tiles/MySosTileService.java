@@ -7,11 +7,13 @@ import androidx.wear.protolayout.LayoutElementBuilders;
 import androidx.wear.protolayout.ModifiersBuilders;
 import androidx.wear.tiles.RequestBuilders;
 
+import ae.servia.wear.ServiaTheme;
+
 /** "🎯 My Servia SOS" tile — opens the user's saved custom shortcuts. */
 public class MySosTileService extends ServiaTileBase {
-    private static final int INDIGO = 0xFF6366F1;
     @Override
     protected LayoutElementBuilders.LayoutElement buildLayout(RequestBuilders.TileRequest req) {
+        ServiaTheme theme = ServiaTheme.current(this);
         ModifiersBuilders.Clickable launch =
             new ModifiersBuilders.Clickable.Builder()
                 .setId("my_sos")
@@ -34,7 +36,7 @@ public class MySosTileService extends ServiaTileBase {
                 new ModifiersBuilders.Modifiers.Builder()
                     .setBackground(
                         new ModifiersBuilders.Background.Builder()
-                            .setColor(ColorBuilders.argb(INDIGO))
+                            .setColor(ColorBuilders.argb(theme.primary))
                             .setCorner(
                                 new ModifiersBuilders.Corner.Builder()
                                     .setRadius(DimensionBuilders.dp(20))
@@ -48,13 +50,13 @@ public class MySosTileService extends ServiaTileBase {
                     .build())
             .addContent(
                 col()
-                    .addContent(title("🎯 MY SOS", AMBER))
+                    .addContent(title("🎯 MY SOS", theme.accent))
                     .addContent(spacer(4))
-                    .addContent(big("TAP", WHITE))
+                    .addContent(big("TAP", theme.text))
                     .addContent(spacer(2))
-                    .addContent(body("Your saved one-tap shortcuts", WHITE))
+                    .addContent(body("Your saved shortcuts", theme.text))
                     .addContent(spacer(6))
-                    .addContent(body("Custom buttons created on phone", AMBER))
+                    .addContent(body("Auto-syncs from phone", theme.accent))
                     .build())
             .build();
     }

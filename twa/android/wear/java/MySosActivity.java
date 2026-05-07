@@ -127,6 +127,13 @@ public class MySosActivity extends Activity {
         // is no longer dependent on the phone for shortcut creation.
         addCreateCard();
 
+        // v1.24.31 — auto-bind the top 4 server-side custom shortcuts to
+        // slots 1..4 so the QuadTile stays in sync without any phone-side
+        // native code. User manual binds (from CustomSosCreateActivity's
+        // slot picker) override on next save. This makes phone-created
+        // shortcuts appear on the watch face after one MySosActivity open.
+        autoBindSlots(items);
+
         if (items == null || items.length() == 0) {
             statusView.setText("No shortcuts yet.\nTap ➕ above to create.");
             statusView.setTextColor(0xFFFCD34D);
@@ -147,6 +154,36 @@ public class MySosActivity extends Activity {
         tip.setGravity(Gravity.CENTER);
         tip.setPadding(0, 12, 0, 0);
         root.addView(tip);
+    }
+
+    /** v1.24.31 — write the first 4 server shortcuts to QuadTile slots
+     *  + request a tile refresh so changes show without manual binding. */
+    private void autoBindSlots(JSONArray items) {
+        if (items == null) return;
+        android.content.SharedPreferences sp = getSharedPreferences(
+            CustomSosCreateActivity.PREFS, MODE_PRIVATE);
+        android.content.SharedPreferences.Editor ed = sp.edit();
+        for (int slot = 1; slot <= 4; slot++) {
+            int idx = slot - 1;
+            if (idx < items.length()) {
+                JSONObject b = items.optJSONObject(idx);
+                if (b == null) continue;
+                ed.putInt("csos_slot_" + slot + "_id", b.optInt("id"))
+                  .putString("csos_slot_" + slot + "_label",
+                             b.optString("label", "SOS"))
+                  .putString("csos_slot_" + slot + "_emoji",
+                             b.optString("emoji", "🆘"));
+            } else {
+                ed.remove("csos_slot_" + slot + "_id")
+                  .remove("csos_slot_" + slot + "_label")
+                  .remove("csos_slot_" + slot + "_emoji");
+            }
+        }
+        ed.apply();
+        try {
+            androidx.wear.tiles.TileService.getUpdater(this).requestUpdate(
+                ae.servia.wear.tiles.CustomSosQuadTileService.class);
+        } catch (Throwable ignored) {}
     }
 
     /** v1.24.29 — clickable "+ Create new" card at the top of the list. */
