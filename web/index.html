@@ -282,9 +282,16 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   #servia-topbanner .x{background:transparent;border:0;color:rgba(255,255,255,.7);
     font-size:14px;cursor:pointer;flex-shrink:0;padding:0 4px}
   html.hide-topbanner #servia-topbanner{display:none !important;height:0 !important}
-  /* Reserve space for location-bar so it doesn't push content when injected */
-  #servia-loc-bar-placeholder{height:36px;background:linear-gradient(90deg,#0F766E,#14B8A6);
-    border-bottom:1px solid rgba(255,255,255,.1)}
+  /* v1.24.24 — defence-in-depth: hide ANY stale install.js banner that
+     might still exist in cached service-worker JS from old visitors. */
+  #servia-install-banner{display:none !important;height:0 !important}
+  /* v1.24.24 — relax hero h1 min-height (was 200px, leaving a huge gap
+     between rotator phrase changes). 60px is enough to prevent CLS. */
+  .hero-h1{min-height:60px !important}
+  /* v1.24.24 — placeholder collapsed by default. The teal stripe was
+     showing a phantom banner when location-bar.js was disabled OR
+     hadn't loaded yet. Real bar ALWAYS replaces this when injected. */
+  #servia-loc-bar-placeholder{display:none}
   body.has-location-bar #servia-loc-bar-placeholder,body:has(#servia-loc-bar) #servia-loc-bar-placeholder{display:none !important}
 </style>
 <!-- v1.23.1: pre-rendered first slide so user sees content from frame 1 (no flash).

@@ -25,7 +25,10 @@
   // cart, account, services. Elsewhere the bar was just stacking another teal
   // stripe under the rotating banner (header looked like 4 bars). The map
   // edit modal still works site-wide via window.serviaEditAddress().
-  const SHOW_PATHS = /^\/(book|cart|account)\.html?$/;
+  // v1.24.24 — show on homepage too (user requested back). Skip only on
+  // truly internal flows. Map pin + address form are inside the bar's
+  // edit modal, opened by tapping "Edit address".
+  const SHOW_PATHS = /^\/(book|cart|account|me)\.html?$|^\/$|^\/index\.html?$/;
   if (!SHOW_PATHS.test(location.pathname)) {
     // Hide pre-rendered placeholder if any (saves the 36px reservation slot).
     var ph = document.getElementById("servia-loc-bar-placeholder");
