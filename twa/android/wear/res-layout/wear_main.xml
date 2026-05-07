@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- v1.24.2 — 6-tile launcher with the new Voice + SOS buttons.
-     Plain ScrollView+LinearLayout (no androidx.wear dep) so the
-     layout resolves cleanly. Round-screen safe via 8dp padding. -->
+<!-- v1.24.30 — round-screen safe launcher.
+     Outer 18dp padding keeps content inside the visible disc; tile
+     rows use insetting margins so the 4 corners don't get clipped on
+     round watches. Tested at 360x360, 384x384, 454x454. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0F172A"
-    android:padding="8dp"
-    android:fillViewport="true">
+    android:paddingLeft="18dp"
+    android:paddingRight="18dp"
+    android:paddingTop="22dp"
+    android:paddingBottom="22dp"
+    android:fillViewport="true"
+    android:scrollbars="none"
+    android:overScrollMode="never">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,7 +29,7 @@
             android:letterSpacing="0.2"
             android:gravity="center"
             android:textColor="#FCD34D"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="2dp"
             android:layout_marginBottom="2dp" />
 
         <TextView
@@ -32,13 +38,13 @@
             android:text="Tap to act"
             android:textSize="9sp"
             android:gravity="center"
-            android:textColor="#94A3B8"
-            android:layout_marginBottom="6dp" />
+            android:textColor="#CBD5E1"
+            android:layout_marginBottom="8dp" />
 
         <!-- Row 1: Voice (flagship) + SOS Recovery -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
+            android:layout_height="68dp"
             android:orientation="horizontal">
             <TextView
                 android:id="@+id/wear_tile_voice"
@@ -58,7 +64,7 @@
         <!-- Row 2: Track + Quick book -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
+            android:layout_height="68dp"
             android:layout_marginTop="4dp"
             android:orientation="horizontal">
             <TextView
@@ -76,7 +82,7 @@
         <!-- Row 3: Quote + Chat -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
+            android:layout_height="68dp"
             android:layout_marginTop="4dp"
             android:orientation="horizontal">
             <TextView
@@ -94,7 +100,7 @@
         <!-- v1.24.29 Row 4: Create custom SOS + My address -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
+            android:layout_height="68dp"
             android:layout_marginTop="4dp"
             android:orientation="horizontal">
             <TextView
@@ -111,10 +117,10 @@
                 android:contentDescription="My saved address" />
         </LinearLayout>
 
-        <!-- v1.24.29 Row 5: My SOS shortcuts -->
+        <!-- v1.24.29-30 Row 5: My SOS shortcuts + Theme picker -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
+            android:layout_height="68dp"
             android:layout_marginTop="4dp"
             android:orientation="horizontal">
             <TextView
@@ -123,6 +129,12 @@
                 android:background="#6366F1"
                 android:text="🎯\nMy SOS"
                 android:contentDescription="Open my saved SOS shortcuts" />
+            <TextView
+                android:id="@+id/wear_tile_theme"
+                style="@style/WearTile"
+                android:background="#7C3AED"
+                android:text="🎨\nTheme"
+                android:contentDescription="Pick theme" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

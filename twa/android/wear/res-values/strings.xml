@@ -18,5 +18,6 @@
     <string name="tile_allservices_desc">All 8 Servia services in one scroll grid · order from tile</string>
     <string name="tile_hub_desc">Servia hub — 4 buttons in one tile · talk · SOS · my shortcuts · all services</string>
     <string name="tile_csos_slot_desc">Bind any custom SOS shortcut to this slot · one-tap from watch face</string>
+    <string name="tile_csos_quad_desc">4 mini SOS shortcuts in one tile · circular Samsung-Health-style</string>
     <string name="tile_location_desc">Your saved address · refresh GPS or edit on phone</string>
 </resources>

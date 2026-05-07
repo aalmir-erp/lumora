@@ -103,6 +103,10 @@
                   android:exported="true"
                   android:label="My address"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <activity android:name="ae.servia.wear.ThemePickerActivity"
+                  android:exported="true"
+                  android:label="Theme"
+                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
 
         <!-- v1.24.7: SOS category grid (8 tiles, matches website /sos.html).
              Launched by MainActivity SOS button + RecoveryTileService tap. -->
@@ -431,6 +435,24 @@
             android:name="ae.servia.wear.tiles.CustomSosSlot5TileService"
             android:label="Servia · SOS Slot 5"
             android:description="@string/tile_csos_slot_desc"
+            android:icon="@drawable/tile_preview_mysos"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                       android:resource="@drawable/tile_preview_mysos" />
+        </service>
+
+        <!-- v1.24.30: Quad tile — 4 mini circular SOS buttons in ONE tile.
+             Listed FIRST in this group so it shows at the top of the
+             picker (it's the recommended way to expose 1-4 shortcuts;
+             the 5 individual slot tiles above remain for power users). -->
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosQuadTileService"
+            android:label="Servia · 4 SOS shortcuts"
+            android:description="@string/tile_csos_quad_desc"
             android:icon="@drawable/tile_preview_mysos"
             android:exported="true"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
