@@ -212,31 +212,80 @@ public class LauncherActivity extends Activity {
      * versions block it), fall back to opening the watch face
      * customizer carousel.
      */
+    /**
+     * v1.24.51 — try 5 different intents in sequence to apply
+     * ServiaFace01BurjSunset. Whichever one Samsung's One UI Watch
+     * actually accepts (if any) wins. Each attempt is logged so the
+     * server's diag-recent endpoint shows us the result.
+     */
     private void applyFace() {
-        // Try the standard live wallpaper picker first.
-        try {
+        ComponentName cn = new ComponentName(this,
+            "ae.servia.wear.watchface.ServiaFace01BurjSunset");
+        ServiaWearLog.log(this, "APPLY", "begin — target=" + cn.flattenToShortString());
+
+        // Attempt 1: standard Live Wallpaper picker (with explicit component)
+        if (tryStart("live-wallpaper", () -> {
             Intent i = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
-            i.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
-                new ComponentName(this, "ae.servia.wear.watchface.ServiaFace01BurjSunset"));
+            i.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, cn);
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(i);
-            ServiaWearLog.log(this, "APPLY", "live-wallpaper preview launched OK");
-            return;
-        } catch (Throwable t) {
-            ServiaWearLog.log(this, "APPLY", "live-wallpaper failed: " + t.getMessage());
-        }
-        // Fallback: try Samsung's specific watch face carousel
-        try {
+            return i;
+        })) return;
+
+        // Attempt 2: Google's hard-coded watch-face surface intent
+        if (tryStart("google-set-watchface", () -> {
+            Intent i = new Intent("com.google.android.wearable.app.cn.SET_WATCH_FACE");
+            i.setComponent(cn);
+            i.putExtra("watchface", cn.flattenToShortString());
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            return i;
+        })) return;
+
+        // Attempt 3: Samsung One UI watch-face manager
+        if (tryStart("samsung-watch-manager", () -> {
+            Intent i = new Intent("com.samsung.android.app.watchmanagerstub.action.WATCH_FACE");
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.putExtra("component", cn.flattenToShortString());
+            return i;
+        })) return;
+
+        // Attempt 4: Samsung One UI Watch face picker
+        if (tryStart("samsung-pick-watchface", () -> {
             Intent i = new Intent("com.samsung.android.wearable.watchface.action.OPEN_GALLERY");
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            return i;
+        })) return;
+
+        // Attempt 5: open the Wear OS system Settings → Wallpapers
+        if (tryStart("system-wallpaper-settings", () -> {
+            Intent i = new Intent("android.settings.WALLPAPER_SETTINGS");
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            return i;
+        })) return;
+
+        ServiaWearLog.log(this, "APPLY", "ALL 5 ATTEMPTS FAILED");
+        Toast.makeText(this,
+            "All 5 picker intents failed. Tap 'SEND LOG' so I can read why.",
+            Toast.LENGTH_LONG).show();
+    }
+
+    /** Try to start the intent; log success/fail; return true if started. */
+    private boolean tryStart(String label, java.util.function.Supplier<Intent> mk) {
+        try {
+            Intent i = mk.get();
+            // Check if anything resolves before launching.
+            if (i.resolveActivity(getPackageManager()) == null) {
+                ServiaWearLog.log(this, "APPLY", label + " · no activity resolves");
+                return false;
+            }
             startActivity(i);
-            ServiaWearLog.log(this, "APPLY", "samsung gallery opened");
-            return;
+            ServiaWearLog.log(this, "APPLY", label + " · launched OK");
+            Toast.makeText(this, "Tried: " + label, Toast.LENGTH_SHORT).show();
+            return true;
         } catch (Throwable t) {
-            ServiaWearLog.log(this, "APPLY", "samsung gallery failed: " + t.getMessage());
+            ServiaWearLog.log(this, "APPLY",
+                label + " · FAIL: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage()));
+            return false;
         }
-        Toast.makeText(this, "Couldn't open watch face picker — try long-press on the face.",
-                       Toast.LENGTH_LONG).show();
     }
 
     /** Send the diagnostic dump + log tail to /api/wear/diag-log. */

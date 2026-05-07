@@ -99,7 +99,9 @@ jobs:
             echo "$CHANGED"
             echo "$CHANGED" | grep -qE "^(twa/android/twa-manifest.json|twa/android/widget-sources/)" && BUILD_PHONE=true || true
             echo "$CHANGED" | grep -qE "^twa/android/wear/" && { BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; } || true
-            echo "$CHANGED" | grep -qE "^twa/android/wear-faceonly/" && BUILD_FACES=true || true
+            # wear-faceonly/ changes also trigger single-face rebuild
+            # because the single-face APK reuses LauncherActivity from there.
+            echo "$CHANGED" | grep -qE "^twa/android/wear-faceonly/" && { BUILD_FACES=true; BUILD_SINGLE=true; } || true
             echo "$CHANGED" | grep -qE "^twa/android/wear-singleface/" && BUILD_SINGLE=true || true
             echo "$CHANGED" | grep -qE "^\.scripts/build-wear-apk\.sh$" && BUILD_WEAR=true || true
             echo "$CHANGED" | grep -qE "^\.scripts/build-wear-faceonly-apk\.sh$" && BUILD_FACES=true || true
