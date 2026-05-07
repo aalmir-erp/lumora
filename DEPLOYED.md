@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"-jGlH-JAR_ildlPr2prcFg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"ibLeoVGLRoiXLpkJozsQ6Q"}`
 
 ## Build logs
 ```
@@ -11,8 +11,7 @@
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[internal] load build context
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [internal] load build context
 [internal] load build context
@@ -25,6 +24,7 @@
 [ 8/11] COPY app ./app
 [ 8/11] COPY app ./app
 [ 9/11] COPY web ./web
+uploading snapshot
 [ 9/11] COPY web ./web
 [10/11] COPY start.sh /app/start.sh
 [10/11] COPY start.sh /app/start.sh
@@ -32,9 +32,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MGY2MmE4OTU0YTU3MjVhNmRlMGRhZTEwMGE1NDIzNmZmMzNkOWE2ZWRjNDEwZjNmN2UxZjFiZTVhNjMzNzNkNSIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wN1QyMToxOTo0NloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:4ad0a68a644b3c4a3d881446758a7073d81a8a52405b6f9558f0f258e674bdf4
-containerimage.digest: sha256:0f62a8954a5725a6de0dae100a54236ff33d9a6edc410f3f7e1f1be5a63373d5
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OWNhNWZhZTQwNmEwMjc3M2UwOWIyNGYwOTc5NDJjODg5ZjJkOTZjMzI0ZmQwNGJhMDgwNmNmMzZmNzc5M2NjZSIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wN1QyMTozMDo0MVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:75d640dd7e9b6d12c493fcac5da876a55172d59e9b66bfa8d81a8531c58ae8b7
+containerimage.digest: sha256:9ca5fae406a02773e09b24f097942c889f2d96c324fd04ba0806cf36f7793cce
 image push
 image push
 
@@ -50,19 +50,19 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/fa19ccb7-1a2b-4269-b50b-ee9f294109a6/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/8299b774-3fff-4959-8d5d-be092b40cdee/vol_onr647rhdeir9di9
+Starting Container
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
-Starting Container
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Waiting for application startup.
 INFO:     Started server process [1]
+INFO:     Waiting for application startup.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:52675 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:28186 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.2:37699 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:14278 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.4:35620 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
 ```
