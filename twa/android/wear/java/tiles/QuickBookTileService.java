@@ -1,5 +1,7 @@
 package ae.servia.wear.tiles;
 
+import ae.servia.wear.ServiaTheme;
+
 import androidx.wear.protolayout.LayoutElementBuilders;
 import androidx.wear.tiles.RequestBuilders;
 
@@ -7,15 +9,16 @@ import androidx.wear.tiles.RequestBuilders;
 public class QuickBookTileService extends ServiaTileBase {
     @Override
     protected LayoutElementBuilders.LayoutElement buildLayout(RequestBuilders.TileRequest req) {
-        return wrap(TEAL,
+        ServiaTheme theme = ServiaTheme.current(this);
+        return wrap(theme.primary,
             col()
-                .addContent(title("⚡ QUICK BOOK", AMBER))
+                .addContent(title("⚡ QUICK BOOK", theme.accent))
                 .addContent(spacer(4))
-                .addContent(big("Tap", WHITE))
+                .addContent(big("Tap", theme.text))
                 .addContent(spacer(2))
-                .addContent(body("Most-used: Deep Clean · AED 350+", WHITE))
+                .addContent(body("Most-used: Deep Clean · AED 350+", theme.text))
                 .addContent(spacer(6))
-                .addContent(body("Tap to book on phone", AMBER))
+                .addContent(body("Tap to book on phone", theme.accent))
                 .build());
     }
 }

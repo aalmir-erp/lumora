@@ -1,5 +1,7 @@
 package ae.servia.wear.tiles;
 
+import ae.servia.wear.ServiaTheme;
+
 import androidx.wear.protolayout.ActionBuilders;
 import androidx.wear.protolayout.ColorBuilders;
 import androidx.wear.protolayout.DimensionBuilders;
@@ -12,6 +14,7 @@ public class AllServicesTileService extends ServiaTileBase {
     private static final int SLATE = 0xFF334155;
     @Override
     protected LayoutElementBuilders.LayoutElement buildLayout(RequestBuilders.TileRequest req) {
+        ServiaTheme theme = ServiaTheme.current(this);
         ModifiersBuilders.Clickable launch =
             new ModifiersBuilders.Clickable.Builder()
                 .setId("all_services")
@@ -48,13 +51,13 @@ public class AllServicesTileService extends ServiaTileBase {
                     .build())
             .addContent(
                 col()
-                    .addContent(title("🛠 SERVICES", AMBER))
+                    .addContent(title("🛠 SERVICES", theme.accent))
                     .addContent(spacer(4))
-                    .addContent(big("ALL 8", WHITE))
+                    .addContent(big("ALL 8", theme.text))
                     .addContent(spacer(2))
-                    .addContent(body("Tow · plumber · electric · AC · clean", WHITE))
+                    .addContent(body("Tow · plumber · electric · AC · clean", theme.text))
                     .addContent(spacer(6))
-                    .addContent(body("4 per screen · scroll · tap to order", AMBER))
+                    .addContent(body("4 per screen · scroll · tap to order", theme.accent))
                     .build())
             .build();
     }

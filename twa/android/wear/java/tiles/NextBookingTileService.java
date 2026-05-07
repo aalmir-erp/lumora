@@ -1,5 +1,7 @@
 package ae.servia.wear.tiles;
 
+import ae.servia.wear.ServiaTheme;
+
 import androidx.wear.protolayout.LayoutElementBuilders;
 import androidx.wear.tiles.RequestBuilders;
 
@@ -10,15 +12,16 @@ import androidx.wear.tiles.RequestBuilders;
 public class NextBookingTileService extends ServiaTileBase {
     @Override
     protected LayoutElementBuilders.LayoutElement buildLayout(RequestBuilders.TileRequest req) {
-        return wrap(DARK,
+        ServiaTheme theme = ServiaTheme.current(this);
+        return wrap(theme.bg,
             col()
-                .addContent(title("📋 NEXT BOOKING", AMBER))
+                .addContent(title("📋 NEXT BOOKING", theme.accent))
                 .addContent(spacer(4))
-                .addContent(big("—", WHITE))
+                .addContent(big("—", theme.text))
                 .addContent(spacer(2))
-                .addContent(body("Open app to view your next booking", WHITE))
+                .addContent(body("Open app to view your next booking", theme.text))
                 .addContent(spacer(6))
-                .addContent(body("Tap to see all", AMBER))
+                .addContent(body("Tap to see all", theme.accent))
                 .build());
     }
 }

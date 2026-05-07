@@ -9,6 +9,8 @@ import androidx.wear.protolayout.LayoutElementBuilders;
 import androidx.wear.protolayout.ModifiersBuilders;
 import androidx.wear.tiles.RequestBuilders;
 
+import ae.servia.wear.ServiaTheme;
+
 /**
  * v1.24.29 — base class for the 5 pre-registered "Custom SOS Slot"
  * tiles. Each subclass returns its slot number (1..5). Tiles read
@@ -34,6 +36,7 @@ public abstract class CustomSosSlotTileBase extends ServiaTileBase {
     protected LayoutElementBuilders.LayoutElement buildLayout(
             RequestBuilders.TileRequest req) {
 
+        ServiaTheme theme = ServiaTheme.current(this);
         SharedPreferences sp = getSharedPreferences(
             "servia_csos_slots", MODE_PRIVATE);
         int btnId = sp.getInt("csos_slot_" + slotNumber() + "_id", 0);
@@ -80,19 +83,19 @@ public abstract class CustomSosSlotTileBase extends ServiaTileBase {
 
         LayoutElementBuilders.Column.Builder content = col();
         if (bound) {
-            content.addContent(title("⚡ SLOT " + slotNumber(), AMBER))
+            content.addContent(title("⚡ SLOT " + slotNumber(), theme.accent))
                    .addContent(spacer(4))
-                   .addContent(big(emoji, WHITE))
+                   .addContent(big(emoji, theme.text))
                    .addContent(spacer(2))
-                   .addContent(body(label, WHITE))
+                   .addContent(body(label, theme.text))
                    .addContent(spacer(6))
-                   .addContent(body("Tap → SOS", AMBER));
+                   .addContent(body("Tap → SOS", theme.accent));
         } else {
-            content.addContent(title("⚡ SLOT " + slotNumber(), AMBER))
+            content.addContent(title("⚡ SLOT " + slotNumber(), theme.accent))
                    .addContent(spacer(6))
-                   .addContent(big("+", WHITE))
+                   .addContent(big("+", theme.text))
                    .addContent(spacer(4))
-                   .addContent(body("Empty · tap to\ncreate shortcut", WHITE));
+                   .addContent(body("Empty · tap to\ncreate shortcut", theme.text));
         }
 
         return new LayoutElementBuilders.Box.Builder()
@@ -105,7 +108,7 @@ public abstract class CustomSosSlotTileBase extends ServiaTileBase {
                     .setBackground(
                         new ModifiersBuilders.Background.Builder()
                             .setColor(ColorBuilders.argb(
-                                bound ? RED : 0xFF334155))
+                                bound ? RED : theme.surface))
                             .setCorner(
                                 new ModifiersBuilders.Corner.Builder()
                                     .setRadius(DimensionBuilders.dp(20))

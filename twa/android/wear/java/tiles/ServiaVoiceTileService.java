@@ -1,5 +1,7 @@
 package ae.servia.wear.tiles;
 
+import ae.servia.wear.ServiaTheme;
+
 import androidx.wear.protolayout.ActionBuilders;
 import androidx.wear.protolayout.ColorBuilders;
 import androidx.wear.protolayout.DimensionBuilders;
@@ -22,6 +24,7 @@ import androidx.wear.tiles.RequestBuilders;
 public class ServiaVoiceTileService extends ServiaTileBase {
     @Override
     protected LayoutElementBuilders.LayoutElement buildLayout(RequestBuilders.TileRequest req) {
+        ServiaTheme theme = ServiaTheme.current(this);
         ModifiersBuilders.Clickable launch =
             new ModifiersBuilders.Clickable.Builder()
                 .setId("servia_voice")
@@ -44,7 +47,7 @@ public class ServiaVoiceTileService extends ServiaTileBase {
                 new ModifiersBuilders.Modifiers.Builder()
                     .setBackground(
                         new ModifiersBuilders.Background.Builder()
-                            .setColor(ColorBuilders.argb(AMBER_DEEP))
+                            .setColor(ColorBuilders.argb(theme.primary))
                             .setCorner(
                                 new ModifiersBuilders.Corner.Builder()
                                     .setRadius(DimensionBuilders.dp(20))
@@ -64,7 +67,7 @@ public class ServiaVoiceTileService extends ServiaTileBase {
                     .addContent(spacer(2))
                     .addContent(body("Speak: book · quote · recovery · wallet", DARK))
                     .addContent(spacer(6))
-                    .addContent(body("Voice answers + real bookings", WHITE))
+                    .addContent(body("Voice answers + real bookings", theme.text))
                     .build())
             .build();
     }

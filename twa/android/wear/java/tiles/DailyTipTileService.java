@@ -1,5 +1,7 @@
 package ae.servia.wear.tiles;
 
+import ae.servia.wear.ServiaTheme;
+
 import androidx.wear.protolayout.LayoutElementBuilders;
 import androidx.wear.tiles.RequestBuilders;
 import java.time.DayOfWeek;
@@ -19,16 +21,17 @@ public class DailyTipTileService extends ServiaTileBase {
 
     @Override
     protected LayoutElementBuilders.LayoutElement buildLayout(RequestBuilders.TileRequest req) {
+        ServiaTheme theme = ServiaTheme.current(this);
         int idx = LocalDate.now().getDayOfYear() % TIPS.length;
         String tip = TIPS[idx];
         DayOfWeek dow = LocalDate.now().getDayOfWeek();
-        return wrap(DARK,
+        return wrap(theme.bg,
             col()
                 .addContent(title("💡 SERVIA TIP · " + dow.toString().substring(0, 3), AMBER))
                 .addContent(spacer(6))
-                .addContent(body(tip, WHITE))
+                .addContent(body(tip, theme.text))
                 .addContent(spacer(8))
-                .addContent(body("Tap to read full guide", AMBER))
+                .addContent(body("Tap to read full guide", theme.accent))
                 .build());
     }
 }
