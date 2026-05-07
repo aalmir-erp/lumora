@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"G_ERj2hVQlK-1IHCezItjw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"KHHACkwCT5i9R2zrCx5-qw"}`
 
 ## Build logs
 ```
@@ -32,9 +32,9 @@ uploading snapshot
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MjE4ZWJkM2NmMDE1ZTlhYmQyZDE3ZDM3ZmRjNTkzM2Q5NWQ0Zjg4ZTI5NWE4MWEzOTQ4Mjk5MThiOTkyMTgyMyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wN1QyMjoxMToyM1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:28d5302540e109f258667219ad4ff8eb6aee38638928ad7a998ecb61e7c6e429
-containerimage.digest: sha256:218ebd3cf015e9abd2d17d37fdc5933d95d4f88e295a81a394829918b9921823
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODRhMjhiODYwMGZiMDNmMWE3ZjE0M2Q2NGJjYzUzNmE3NmU5NjZlMWU3NTJmZjJjNDcwMzhiNWNmY2QwYTJlOCIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wN1QyMjoxODo0OFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:f60d34fe94371be27d4d56e9a89d1df7ee49c72741152a0d262cd30c1e0e6cda
+containerimage.digest: sha256:84a28b8600fb03f1a7f143d64bcc536a76e966e1e752ff2c47038b5cfcd0a2e8
 image push
 image push
 
@@ -50,20 +50,21 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/95fa70a3-2807-427f-91fe-d0502c91aab3/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/a96e1aef-2268-41e5-b59b-37896bba57f7/vol_onr647rhdeir9di9
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
 Starting Container
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
 INFO:     Started server process [1]
 INFO:     Waiting for application startup.
-[wa-bridge] QR received. Open /qr in your browser to scan.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:33753 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:32408 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.2:38215 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.4:18238 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34200 - "GET /api/blog/latest?limit=10 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:60956 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.4:21752 - "GET /api/wear/diag-recent HTTP/1.1" 200 OK
+INFO:     100.64.0.4:46924 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
