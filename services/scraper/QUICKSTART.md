@@ -26,6 +26,16 @@ You only need 3 things: a Railway service for the scraper, API keys, and
 
 ## 2. Start the local agent on your PC
 
+### Windows (one-click)
+```cmd
+cd lumora\services\scraper\local_agent
+install_windows.bat
+```
+The installer asks for `SCRAPER_SERVER_URL`, generates a token, writes
+`.env`, and installs Playwright. Then double-click `run_windows.bat`
+whenever you want the agent online.
+
+### macOS / Linux / manual
 ```bash
 cd lumora/services/scraper
 pip install -r local_agent/requirements.txt
@@ -47,6 +57,15 @@ python -m local_agent.agent
 Leave it running. The web UI's "agents" pill will show your laptop.
 
 ## 3. Test it
+
+**Without any keys**: pick backend = `demo`, runtime = `railway`, hit Run with
+goal `Visit https://example.com and read the homepage`. Lets you verify the
+whole stack works before pasting paid API keys.
+
+**With keys**: pick `gemini-pro` / `gemini-flash` / `gemini-cu` / `claude-cu`.
+
+**Diagnose anything missing**: GET `https://<domain>/api/diag` — tells you
+exactly which env vars and agents are wired up.
 
 Open `https://<domain>/`, type a goal, pick backend/runtime/mode, hit Run.
 

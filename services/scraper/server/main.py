@@ -38,6 +38,48 @@ def healthz() -> dict[str, Any]:
     return {"ok": True, "agents": AGENT_REGISTRY.list_agents()}
 
 
+@app.get("/api/diag")
+def diag() -> dict[str, Any]:
+    checks = []
+    def add(name: str, ok: bool, detail: str = "") -> None:
+        checks.append({"name": name, "ok": ok, "detail": detail})
+
+    add("GOOGLE_API_KEY", bool(config.GOOGLE_API_KEY),
+        "set if you'll use gemini-pro/flash/cu")
+    add("ANTHROPIC_API_KEY", bool(config.ANTHROPIC_API_KEY),
+        "set if you'll use claude-cu")
+    add("LOCAL_AGENT_TOKEN", bool(config.LOCAL_AGENT_TOKEN),
+        "required for local/desktop tasks; agents cannot connect without it")
+    add("agents_connected", bool(AGENT_REGISTRY.list_agents()),
+        f"connected: {AGENT_REGISTRY.list_agents()}")
+    add("default_backend_buildable", True, config.DEFAULT_BACKEND)
+    try:
+        from .ai import build_backend
+        build_backend(config.DEFAULT_BACKEND)
+    except Exception as e:
+        checks[-1]["ok"] = False
+        checks[-1]["detail"] = f"{config.DEFAULT_BACKEND}: {e}"
+    add("playwright_installed", _check_playwright(),
+        "needed only for railway runtime; install via Dockerfile base image")
+
+    summary = "ok" if all(c["ok"] for c in checks if c["name"] not in ("GOOGLE_API_KEY", "ANTHROPIC_API_KEY")) else "issues"
+    return {
+        "summary": summary,
+        "default_backend": config.DEFAULT_BACKEND,
+        "default_runtime": config.DEFAULT_RUNTIME,
+        "force_local_hosts": config.FORCE_LOCAL_HOSTS,
+        "checks": checks,
+    }
+
+
+def _check_playwright() -> bool:
+    try:
+        import playwright  # type: ignore  # noqa
+        return True
+    except Exception:
+        return False
+
+
 @app.get("/")
 def root() -> FileResponse:
     return FileResponse(WEB_DIR / "index.html")
@@ -48,7 +90,7 @@ def get_config() -> dict[str, Any]:
     return {
         "default_backend": config.DEFAULT_BACKEND,
         "default_runtime": config.DEFAULT_RUNTIME,
-        "backends": ["gemini-pro", "gemini-flash", "gemini-cu", "claude-cu"],
+        "backends": ["demo", "gemini-pro", "gemini-flash", "gemini-cu", "claude-cu"],
         "runtimes": ["railway", "local", "hybrid"],
         "modes": ["browser", "desktop"],
         "force_local_hosts": config.FORCE_LOCAL_HOSTS,
