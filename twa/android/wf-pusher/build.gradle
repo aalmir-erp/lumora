@@ -1,14 +1,22 @@
-plugins { id 'com.android.application' }
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
 
 // v1.24.54 — Servia Watch Face Pusher.
 //
-// Pulls in androidx.wear.watchface:watchface-push (Jan 2025 release).
-// Bundles the wff-only payload APK as a raw resource and pushes it to
-// the watch's WatchFacePushManager on activity start.
+// Pulls in androidx.wear.watchfacepush:watchfacepush — the artifact ID
+// is one word "watchfacepush" (NOT "watchface-push") and the group is
+// androidx.wear.watchfacepush, not androidx.wear.watchface. Confirmed
+// against the public release page Jan 2026.
 //
-// applicationId is distinct from every other Servia APK so install
-// cleanly alongside the existing main / faces / single-face builds
-// during A/B testing.
+// All three Push API methods (addWatchFace, listWatchFaces,
+// setWatchFaceAsActive) are Kotlin suspend functions, so this module
+// is Kotlin + coroutines from the ground up. Java callers would need
+// runBlocking + BuildersKt boilerplate that's not worth maintaining.
+//
+// applicationId is distinct from every other Servia APK so it can sit
+// on the watch alongside main / faces / single during A/B testing.
 
 android {
     namespace 'ae.servia.pusher'
@@ -36,6 +44,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
     packaging {
         resources { excludes += ['/META-INF/{AL2.0,LGPL2.1}', '/META-INF/DEPENDENCIES'] }
     }
@@ -51,15 +62,16 @@ configurations.all {
 }
 
 dependencies {
-    // Watch Face Push API. The artifact ID is best-known-correct as of
-    // Jan 2026 — if the alpha cadence has rev'd, bump the version here.
-    implementation 'androidx.wear.watchface:watchface-push:1.0.0-alpha02'
+    // Watch Face Push API (Wear OS 5.1+, alpha as of Jan 2026).
+    implementation 'androidx.wear.watchfacepush:watchfacepush:1.0.0-alpha01'
 
-    // Standard Wear OS support
-    implementation 'androidx.wear:wear:1.3.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    // Kotlin coroutines (suspend Push API methods need this at runtime).
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
-    // Concurrent / Guava futures used by the Push API result types
-    implementation 'androidx.concurrent:concurrent-futures:1.1.0'
-    implementation 'com.google.guava:guava:33.0.0-android'
+    // ComponentActivity (carries LifecycleOwner so lifecycleScope works).
+    // No appcompat — we don't need MaterialComponents on a watch UI and
+    // it would require a Theme.AppCompat parent theme.
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
 }
+

@@ -134,13 +134,21 @@ jobs:
             echo "$CHANGED" | grep -qE "^\.scripts/build-wear-singleface-apk\.sh$" && BUILD_SINGLE=true || true
             echo "$CHANGED" | grep -qE "^\.scripts/build-wff-only-apk\.sh$"   && { BUILD_WFF=true; BUILD_PUSHER=true; } || true
             echo "$CHANGED" | grep -qE "^\.scripts/build-wf-pusher-apk\.sh$"  && { BUILD_WFF=true; BUILD_PUSHER=true; } || true
-            # Workflow itself or twa-manifest changes -> rebuild everything
-            echo "$CHANGED" | grep -qE "^\.github/workflows/build-android-twa\.yml$|^twa/android/twa-manifest\.json$" \
+            # twa-manifest changes affect every APK — those are legit "rebuild all".
+            echo "$CHANGED" | grep -qE "^twa/android/twa-manifest\.json$" \
               && { BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; BUILD_WFF=true; BUILD_PUSHER=true; } || true
-            # If nothing matched (manual dispatch with no change context), default to all
+            # Workflow-only changes -> just rebuild the active iteration target
+            # (Push API: wff payload + pusher). Was "rebuild all" but that
+            # burns 8+ minutes per workflow tweak. Phone/wear/faces/single
+            # are stable; only re-run them via a workflow_dispatch with
+            # target=phone|wear|faces|single|all when needed.
+            echo "$CHANGED" | grep -qE "^\.github/workflows/build-android-twa\.yml$" \
+              && { BUILD_WFF=true; BUILD_PUSHER=true; } || true
+            # If nothing matched (manual dispatch with no change context),
+            # default to wff+pusher — that's the active testing target.
             if [ "$BUILD_PHONE$BUILD_WEAR$BUILD_FACES$BUILD_SINGLE$BUILD_WFF$BUILD_PUSHER" = "falsefalsefalsefalsefalsefalse" ]; then
-              echo "No matching paths — defaulting to all"
-              BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; BUILD_WFF=true; BUILD_PUSHER=true
+              echo "No matching paths — defaulting to wff+pusher (active iteration target)"
+              BUILD_WFF=true; BUILD_PUSHER=true
             fi
           fi
 

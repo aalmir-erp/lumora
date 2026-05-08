@@ -28,18 +28,18 @@ fi
 
 echo "=== Setting up wf-pusher project at $BUILD_DIR ==="
 rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR/app/src/main/java/ae/servia/pusher"
+mkdir -p "$BUILD_DIR/app/src/main/kotlin/ae/servia/pusher"
 mkdir -p "$BUILD_DIR/app/src/main/res/raw"
 mkdir -p "$BUILD_DIR/app/src/main/res/layout"
 mkdir -p "$BUILD_DIR/app/src/main/res/values"
 mkdir -p "$BUILD_DIR/app/src/main/res/mipmap-hdpi"
 mkdir -p "$BUILD_DIR/app/src/main/res/mipmap-xhdpi"
 
-cp -v "$SRC/AndroidManifest.xml"          "$BUILD_DIR/app/src/main/AndroidManifest.xml"
-cp -v "$SRC/java/ae/servia/pusher/"*.java "$BUILD_DIR/app/src/main/java/ae/servia/pusher/"
-cp -v "$SRC/res-layout/"*.xml             "$BUILD_DIR/app/src/main/res/layout/"
-cp -v "$SRC/res-values/"*.xml             "$BUILD_DIR/app/src/main/res/values/"
-cp -v "$PAYLOAD_SRC"                      "$BUILD_DIR/app/src/main/res/raw/payload.apk"
+cp -v "$SRC/AndroidManifest.xml"            "$BUILD_DIR/app/src/main/AndroidManifest.xml"
+cp -v "$SRC/kotlin/ae/servia/pusher/"*.kt   "$BUILD_DIR/app/src/main/kotlin/ae/servia/pusher/"
+cp -v "$SRC/res-layout/"*.xml               "$BUILD_DIR/app/src/main/res/layout/"
+cp -v "$SRC/res-values/"*.xml               "$BUILD_DIR/app/src/main/res/values/"
+cp -v "$PAYLOAD_SRC"                        "$BUILD_DIR/app/src/main/res/raw/payload.apk"
 
 ICON_SRC="web/brand/servia-icon-512x512.png"
 if [ -f "$ICON_SRC" ]; then
@@ -50,7 +50,12 @@ fi
 cat > "$BUILD_DIR/build.gradle" <<'GRADLE'
 buildscript {
     repositories { google(); mavenCentral() }
-    dependencies { classpath 'com.android.tools.build:gradle:8.5.2' }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.5.2'
+        // v1.24.54 — kotlin-android plugin: PusherActivity is .kt because
+        // the Push API methods are suspend functions.
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
+    }
 }
 allprojects { repositories { google(); mavenCentral() } }
 GRADLE
