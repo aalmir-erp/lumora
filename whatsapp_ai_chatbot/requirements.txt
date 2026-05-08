@@ -5,3 +5,8 @@ pydantic>=2.7
 pydantic-settings>=2.4
 anthropic>=0.97
 openai>=1.50
+
+# Test deps (kept here for the scaffold's simplicity; split into
+# requirements-dev.txt later if you prefer)
+pytest>=8.0
+pytest-asyncio>=0.23
