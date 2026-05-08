@@ -1,15 +1,15 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 44
+- ✅ Pass: 42
 - ⚠️ Warn: 1
-- ❌ Fail: 4
+- ❌ Fail: 6
 - ⏭ Skip: 1
 
 ## Items
 
 - ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
-- ✅ **[T03] /services.html lists services** — 32 cards
+- ❌ **[T03] /services.html lists services** — exception: only 0 cards
 - ✅ **[T04] /coverage.html renders** — OK
 - ✅ **[T05] /blog index loads** — OK
 - ❌ **[T06] Sitemap has /nfc.html** — exception: nfc.html missing
@@ -17,7 +17,7 @@
 - ✅ **[T08] /faq.html FAQPage schema** — present
 - ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
-- ✅ **[T11] Mobile nav single-row** — Δy=-7
+- ✅ **[T11] Mobile nav single-row** — Δy=-3
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
 - ✅ **[T14] Footer present** — OK
@@ -26,7 +26,7 @@
 - ✅ **[T17] /install.html iOS section** — OK
 - ✅ **[T18] Search input has ss-input class** — ss-input
 - ✅ **[T19] Search trending chips load** — 16 chips
-- ✅ **[T20] Hero rotator present** — present
+- ❌ **[T20] Hero rotator present** — exception: no #hero-rotator
 - ✅ **[T21] /nfc.html loads** — OK
 - ✅ **[T22] /nfc.html 3-mode panel** — OK
 - ✅ **[T23] /nfc.html bot widget** — OK
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_5VtSMpoxf...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_J_VDBPHck...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
