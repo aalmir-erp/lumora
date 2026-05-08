@@ -20,11 +20,17 @@ plugins {
 
 android {
     namespace 'ae.servia.pusher'
-    compileSdk 34
+    // compileSdk must be >= the watchfacepush library's compile target,
+    // which is API 36 (Wear OS that ships the Push API service).
+    compileSdk 36
     defaultConfig {
         applicationId "ae.servia.pusher"
-        minSdk 33                // Push API requires Wear OS 5.1 (API 33+).
-        targetSdk 34
+        // The Push API library itself declares minSdk 36 — manifest merger
+        // hard-fails below that. Wear OS that ships the Push API system
+        // service is API 36+; lower devices wouldn't be able to honour the
+        // calls anyway, so 36 is the correct floor, not a workaround.
+        minSdk 36
+        targetSdk 36
         versionCode 1
         versionName "1.24.54"
     }
