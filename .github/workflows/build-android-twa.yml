@@ -32,7 +32,7 @@ on:
         description: "Which APK(s) to build"
         type: choice
         default: "auto"
-        options: ["auto", "all", "phone", "wear", "faces", "single"]
+        options: ["auto", "all", "phone", "wear", "faces", "single", "wff", "pusher"]
   push:
     tags: ["v*"]
     branches: ["main"]
@@ -40,10 +40,14 @@ on:
       - "twa/android/wear/**"
       - "twa/android/wear-faceonly/**"
       - "twa/android/wear-singleface/**"
+      - "twa/android/wff-only/**"
+      - "twa/android/wf-pusher/**"
       - "twa/android/twa-manifest.json"
       - ".scripts/build-wear-apk.sh"
       - ".scripts/build-wear-faceonly-apk.sh"
       - ".scripts/build-wear-singleface-apk.sh"
+      - ".scripts/build-wff-only-apk.sh"
+      - ".scripts/build-wf-pusher-apk.sh"
       - ".github/workflows/build-android-twa.yml"
 
 permissions:
@@ -77,9 +81,11 @@ jobs:
           BUILD_WEAR=false
           BUILD_FACES=false
           BUILD_SINGLE=false
+          BUILD_WFF=false
+          BUILD_PUSHER=false
 
           if [ "$TARGET" = "all" ]; then
-            BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true
+            BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; BUILD_WFF=true; BUILD_PUSHER=true
           elif [ "$TARGET" = "phone" ]; then
             BUILD_PHONE=true
           elif [ "$TARGET" = "wear" ]; then
@@ -88,6 +94,14 @@ jobs:
             BUILD_FACES=true
           elif [ "$TARGET" = "single" ]; then
             BUILD_SINGLE=true
+          elif [ "$TARGET" = "wff" ]; then
+            # wff payload alone (no pusher). Useful for inspecting the
+            # raw WFF APK before bundling into the pusher.
+            BUILD_WFF=true
+          elif [ "$TARGET" = "pusher" ]; then
+            # Pusher implicitly rebuilds the wff payload first because
+            # it embeds it in res/raw.
+            BUILD_WFF=true; BUILD_PUSHER=true
           else
             # auto — diff against parent. The Wear / Faces / Single all share
             # twa/android/wear/java/watchface so a change in any of those is
@@ -103,24 +117,35 @@ jobs:
             # because the single-face APK reuses LauncherActivity from there.
             echo "$CHANGED" | grep -qE "^twa/android/wear-faceonly/" && { BUILD_FACES=true; BUILD_SINGLE=true; } || true
             echo "$CHANGED" | grep -qE "^twa/android/wear-singleface/" && BUILD_SINGLE=true || true
+            # v1.24.54 — Watch Face Push API split: wff-only payload + wf-pusher.
+            # A change in wff-only/ rebuilds both (the pusher embeds the
+            # payload). A change in wf-pusher/ only rebuilds the pusher
+            # (its build script will pull the existing payload artifact
+            # if present, or rebuild from source).
+            echo "$CHANGED" | grep -qE "^twa/android/wff-only/"  && { BUILD_WFF=true; BUILD_PUSHER=true; } || true
+            echo "$CHANGED" | grep -qE "^twa/android/wf-pusher/" && { BUILD_WFF=true; BUILD_PUSHER=true; } || true
             echo "$CHANGED" | grep -qE "^\.scripts/build-wear-apk\.sh$" && BUILD_WEAR=true || true
             echo "$CHANGED" | grep -qE "^\.scripts/build-wear-faceonly-apk\.sh$" && BUILD_FACES=true || true
             echo "$CHANGED" | grep -qE "^\.scripts/build-wear-singleface-apk\.sh$" && BUILD_SINGLE=true || true
+            echo "$CHANGED" | grep -qE "^\.scripts/build-wff-only-apk\.sh$"   && { BUILD_WFF=true; BUILD_PUSHER=true; } || true
+            echo "$CHANGED" | grep -qE "^\.scripts/build-wf-pusher-apk\.sh$"  && { BUILD_WFF=true; BUILD_PUSHER=true; } || true
             # Workflow itself or twa-manifest changes -> rebuild everything
             echo "$CHANGED" | grep -qE "^\.github/workflows/build-android-twa\.yml$|^twa/android/twa-manifest\.json$" \
-              && { BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; } || true
+              && { BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; BUILD_WFF=true; BUILD_PUSHER=true; } || true
             # If nothing matched (manual dispatch with no change context), default to all
-            if [ "$BUILD_PHONE$BUILD_WEAR$BUILD_FACES$BUILD_SINGLE" = "falsefalsefalsefalse" ]; then
+            if [ "$BUILD_PHONE$BUILD_WEAR$BUILD_FACES$BUILD_SINGLE$BUILD_WFF$BUILD_PUSHER" = "falsefalsefalsefalsefalsefalse" ]; then
               echo "No matching paths — defaulting to all"
-              BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true
+              BUILD_PHONE=true; BUILD_WEAR=true; BUILD_FACES=true; BUILD_SINGLE=true; BUILD_WFF=true; BUILD_PUSHER=true
             fi
           fi
 
-          echo "Selection: phone=$BUILD_PHONE wear=$BUILD_WEAR faces=$BUILD_FACES single=$BUILD_SINGLE"
+          echo "Selection: phone=$BUILD_PHONE wear=$BUILD_WEAR faces=$BUILD_FACES single=$BUILD_SINGLE wff=$BUILD_WFF pusher=$BUILD_PUSHER"
           echo "phone=$BUILD_PHONE"   >> $GITHUB_OUTPUT
           echo "wear=$BUILD_WEAR"     >> $GITHUB_OUTPUT
           echo "faces=$BUILD_FACES"   >> $GITHUB_OUTPUT
           echo "single=$BUILD_SINGLE" >> $GITHUB_OUTPUT
+          echo "wff=$BUILD_WFF"       >> $GITHUB_OUTPUT
+          echo "pusher=$BUILD_PUSHER" >> $GITHUB_OUTPUT
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -503,6 +528,63 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      # -----------------------------------------------------------------
+      # v1.24.54 — Watch Face Push API path.
+      #
+      # wff-only/ → tiny resource-only APK (one WFF XML + two PNGs,
+      # no DEX). The Watch Face Push API consumes this as a payload.
+      # wf-pusher/ → Wear OS app that calls
+      # androidx.wear.watchface.push.WatchFacePushManager#addWatchFace
+      # on the bundled wff-only APK, registering the face directly with
+      # the system service and bypassing Samsung's One UI Watch picker
+      # (which filters sideloaded faces by FLAG_SYSTEM, proven in v1.24.50–.52).
+      #
+      # The pusher EMBEDS the wff-only APK in res/raw/payload.apk, so
+      # the wff-only build MUST complete before the pusher build starts.
+      # We always build wff first when pusher is requested.
+      # -----------------------------------------------------------------
+      - name: Build Servia WFF-only payload (Burj Sunset)
+        id: wff_build
+        if: steps.targets.outputs.wff == 'true'
+        env:
+          KS_PATH: ${{ env.RUNNER_TEMP }}/servia.jks
+        run: |
+          chmod +x .scripts/build-wff-only-apk.sh
+          if ! .scripts/build-wff-only-apk.sh "$RUNNER_TEMP/servia.jks"; then
+            echo "::warning::wff-only build FAILED — diagnostic logs uploaded"
+          fi
+          ls -la twa/android/wff-only-build/_artifacts/ 2>/dev/null || true
+
+      - name: Upload Servia WFF-only artifacts
+        if: always() && hashFiles('twa/android/wff-only-build/_artifacts/*') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: servia-wff-only
+          path: twa/android/wff-only-build/_artifacts/*
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Build Servia Watch Face Pusher
+        id: pusher_build
+        if: steps.targets.outputs.pusher == 'true'
+        env:
+          KS_PATH: ${{ env.RUNNER_TEMP }}/servia.jks
+        run: |
+          chmod +x .scripts/build-wf-pusher-apk.sh
+          if ! .scripts/build-wf-pusher-apk.sh "$RUNNER_TEMP/servia.jks"; then
+            echo "::warning::wf-pusher build FAILED — diagnostic logs uploaded"
+          fi
+          ls -la twa/android/wf-pusher-build/_artifacts/ 2>/dev/null || true
+
+      - name: Upload Servia Watch Face Pusher artifacts
+        if: always() && hashFiles('twa/android/wf-pusher-build/_artifacts/*') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: servia-wf-pusher
+          path: twa/android/wf-pusher-build/_artifacts/*
+          if-no-files-found: warn
+          retention-days: 30
+
       # Push the Wear gradle log + dirtree to a debug branch so it's
       # readable via `git pull origin ci-wear-debug` from the development
       # sandbox (which can't reach the GH artifact CDN). Only the small
@@ -523,6 +605,9 @@ jobs:
           cp -v twa/android/wear-faceonly-build/_artifacts/faces-found.txt         _ci_wear_log/ 2>/dev/null || true
           cp -v twa/android/wear-singleface-build/_artifacts/single-gradle-tail.txt _ci_wear_log/ 2>/dev/null || true
           cp -v twa/android/wear-singleface-build/_artifacts/single-found.txt       _ci_wear_log/ 2>/dev/null || true
+          # v1.24.54 — Push API path logs.
+          cp -v twa/android/wff-only-build/_artifacts/wff-gradle-tail.txt        _ci_wear_log/ 2>/dev/null || true
+          cp -v twa/android/wf-pusher-build/_artifacts/pusher-gradle-tail.txt    _ci_wear_log/ 2>/dev/null || true
           # Capture full build dirs in case the partial setup itself failed
           (find twa/android/wear-faceonly-build  -type f 2>/dev/null | head -100 > _ci_wear_log/faces-tree.txt) || true
           (find twa/android/wear-singleface-build -type f 2>/dev/null | head -100 > _ci_wear_log/single-tree.txt) || true
@@ -595,6 +680,8 @@ jobs:
             twa/android/generated/_artifacts/assetlinks.json
             twa/android/wear-build/_artifacts/servia-wear-signed.apk
             twa/android/wear-build/_artifacts/servia-wear-bundle.aab
+            twa/android/wff-only-build/_artifacts/servia-wff-burj-sunset-*.apk
+            twa/android/wf-pusher-build/_artifacts/servia-wf-pusher-*.apk
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

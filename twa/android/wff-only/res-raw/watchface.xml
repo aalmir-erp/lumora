@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!--
+  v1.24.54 — Burj Sunset WFF payload (Push API).
+  Identical to wear/res-raw/watchface_p01.xml but renamed so the
+  manifest's @raw/watchface points at it without an indirection.
+-->
+<WatchFace width="450" height="450" clipShape="CIRCLE">
+    <Metadata key="CLOCK_TYPE" value="DIGITAL" />
+    <Metadata key="STEP_GOAL" value="10000" />
+    <Scene>
+        <Group x="0" y="0" width="450" height="450">
+
+            <PartImage x="0" y="0" width="450" height="450">
+                <Image resource="frame" />
+            </PartImage>
+
+            <DigitalClock x="53" y="90" width="344" height="103" alpha="255">
+                <TimeText format="HH:mm" align="CENTER">
+                    <Font family="SYNC_TO_DEVICE" size="86" weight="BOLD" color="#FFFFFFFF" />
+                </TimeText>
+            </DigitalClock>
+
+        </Group>
+    </Scene>
+</WatchFace>

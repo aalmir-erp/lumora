@@ -1,0 +1,40 @@
+plugins { id 'com.android.application' }
+
+// v1.24.54 — Servia WFF-only payload APK (Burj Sunset).
+//
+// No Java, no Kotlin, no service code. android:hasCode="false" in the
+// manifest skips DEX generation entirely. The result is a < 200 KB APK
+// containing one XML descriptor + two PNGs.
+//
+// Different applicationId from every other Servia APK so it can sit on
+// the watch alongside the pusher and the older sideload builds without
+// conflicts.
+
+android {
+    namespace 'ae.servia.wff'
+    compileSdk 34
+    defaultConfig {
+        applicationId "ae.servia.wff.burjsunset"
+        minSdk 33                // WFF v2 + Push API need Wear OS 5.1+
+        targetSdk 34
+        versionCode 1
+        versionName "1.24.54"
+    }
+    signingConfigs {
+        release {
+            storeFile file("placeholder.jks")
+            storePassword "placeholder"
+            keyAlias "servia"
+            keyPassword "placeholder"
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+        debug   { signingConfig signingConfigs.release }
+    }
+}
+
+// Intentionally no `dependencies` block. A WFF-only payload pulls in
+// zero AndroidX libraries — adding any would inflate the APK and risk
+// the Push API rejecting it as a non-pure WFF package. android:hasCode="false"
+// in the manifest makes AGP skip DEX generation entirely.

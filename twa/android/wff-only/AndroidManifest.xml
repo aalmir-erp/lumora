@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  v1.24.54 — Servia WFF-only payload (Burj Sunset).
+
+  This APK contains NO Java/Kotlin code, NO service classes, NO launcher
+  activity. It is a pure Watch Face Format (WFF) package: one XML
+  descriptor + frame PNG + preview PNG. The Watch Face Push API
+  (androidx.wear.watchface.push) consumes this APK as a payload, hands
+  it to the system, and the system materialises it as a watch face slot
+  that bypasses Samsung's One UI Watch picker entirely.
+
+  v1.24.50–.52 proved that 22 sideloaded face services get filtered by
+  FLAG_SYSTEM in Samsung's picker. The Push API does not go through
+  that picker — the face is registered directly via the system service.
+
+  REQUIRED for Push API consumption:
+    1. <property com.google.wear.watchface.format.version>
+    2. The signing cert must match the wf-pusher APK's cert. CI signs
+       both with the same keystore so this is automatic.
+    3. The WFF XML must declare itself as a valid WFF document.
+
+  Manifest declares ONE service stub so the package validates as a
+  watch-face APK (Wear OS reject pure-resource APKs as malformed). The
+  service has BIND_WALLPAPER permission and exists only for the
+  package validator — it is never instantiated by Push API code paths.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:name="android.hardware.type.watch" />
+
+    <application
+        android:label="@string/wff_label"
+        android:allowBackup="false"
+        android:hasCode="false"
+        android:supportsRtl="true">
+
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <!-- WFF v2 marker — Push API requires v2+ payloads. -->
+        <property
+            android:name="com.google.wear.watchface.format.version"
+            android:value="2" />
+
+        <!-- Pure-resource declaration. The Push API reads this meta-data
+             to locate the watch face XML inside the APK. -->
+        <meta-data
+            android:name="com.google.wear.watchface.format.RESOURCES"
+            android:resource="@raw/watchface" />
+
+        <meta-data
+            android:name="com.google.wear.watchface.format.PREVIEW"
+            android:resource="@drawable/preview" />
+    </application>
+</manifest>

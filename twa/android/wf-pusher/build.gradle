@@ -1,0 +1,65 @@
+plugins { id 'com.android.application' }
+
+// v1.24.54 — Servia Watch Face Pusher.
+//
+// Pulls in androidx.wear.watchface:watchface-push (Jan 2025 release).
+// Bundles the wff-only payload APK as a raw resource and pushes it to
+// the watch's WatchFacePushManager on activity start.
+//
+// applicationId is distinct from every other Servia APK so install
+// cleanly alongside the existing main / faces / single-face builds
+// during A/B testing.
+
+android {
+    namespace 'ae.servia.pusher'
+    compileSdk 34
+    defaultConfig {
+        applicationId "ae.servia.pusher"
+        minSdk 33                // Push API requires Wear OS 5.1 (API 33+).
+        targetSdk 34
+        versionCode 1
+        versionName "1.24.54"
+    }
+    signingConfigs {
+        release {
+            storeFile file("placeholder.jks")
+            storePassword "placeholder"
+            keyAlias "servia"
+            keyPassword "placeholder"
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+        debug   { signingConfig signingConfigs.release }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    packaging {
+        resources { excludes += ['/META-INF/{AL2.0,LGPL2.1}', '/META-INF/DEPENDENCIES'] }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-common:1.9.22'
+    }
+}
+
+dependencies {
+    // Watch Face Push API. The artifact ID is best-known-correct as of
+    // Jan 2026 — if the alpha cadence has rev'd, bump the version here.
+    implementation 'androidx.wear.watchface:watchface-push:1.0.0-alpha02'
+
+    // Standard Wear OS support
+    implementation 'androidx.wear:wear:1.3.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+
+    // Concurrent / Guava futures used by the Push API result types
+    implementation 'androidx.concurrent:concurrent-futures:1.1.0'
+    implementation 'com.google.guava:guava:33.0.0-android'
+}

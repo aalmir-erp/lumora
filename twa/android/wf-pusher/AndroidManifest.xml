@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  v1.24.54 — Servia Watch Face Pusher (Wear OS standalone).
+
+  This is a *Wear OS app* (NOT a watch face) whose only job is to call
+  androidx.wear.watchface.push to install the bundled wff-only APK as a
+  watch face on the same watch it's running on.
+
+  Why this exists:
+    Samsung One UI Watch picker filters services by FLAG_SYSTEM (proven
+    via v1.24.50–.52). The Watch Face Push API was added by Google in
+    Jan 2025 specifically to let third-party apps install watch faces
+    on devices where the picker is gate-kept by the OEM. Galaxy Watch 5+
+    on One UI 5+ honour the Push API even when sideloaded faces are
+    invisible in the picker.
+
+  PUSH_WATCH_FACES permission is the gating permission (granted at
+  install time on Wear OS 5.1+). Without it, the manager call returns
+  PERMISSION_DENIED.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:name="android.hardware.type.watch" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Watch Face Push API permission. Wear OS 5.1+ only.
+         Documented at:
+         https://developer.android.com/training/wearables/watch-faces/push -->
+    <uses-permission android:name="com.google.wear.permission.PUSH_WATCH_FACES" />
+
+    <application
+        android:label="@string/pusher_label"
+        android:icon="@mipmap/wear_ic_launcher"
+        android:theme="@android:style/Theme.DeviceDefault"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <activity
+            android:name="ae.servia.pusher.PusherActivity"
+            android:exported="true"
+            android:label="@string/pusher_label">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
