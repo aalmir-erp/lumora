@@ -1,0 +1,7 @@
+__pycache__
+*.pyc
+.env
+.env.*
+out/
+tests/scenarios/out/
+.local_agent_cache/

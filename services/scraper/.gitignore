@@ -1,0 +1,9 @@
+.env
+.env.local
+.env.production
+__pycache__/
+*.pyc
+out/
+tests/scenarios/out/
+.local_agent_cache/
+.pytest_cache/

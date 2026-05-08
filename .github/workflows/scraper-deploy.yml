@@ -1,0 +1,53 @@
+name: Deploy scraper service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/scraper/**'
+      - '.github/workflows/scraper-deploy.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: railway-scraper-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create / configure / deploy scraper service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LOCAL_AGENT_TOKEN: ${{ secrets.LOCAL_AGENT_TOKEN }}
+          STATUS_WEBHOOK_URL: ${{ secrets.STATUS_WEBHOOK_URL }}
+          PROJECT_ID: 15485030-5fc0-44e4-afc7-02f2cdc1d22f
+          SCRAPER_SERVICE_NAME: scraper
+          DEPLOY_BRANCH: main
+          DEFAULT_BACKEND: gemini-pro
+          DEFAULT_RUNTIME: hybrid
+          FORCE_LOCAL_HOSTS: web.whatsapp.com,*.whatsapp.com
+        run: python services/scraper/scripts/railway_deploy.py
+
+      - name: Commit deploy report
+        if: always()
+        run: |
+          if [ -f services/scraper/DEPLOYED.md ]; then
+            git config user.email "ci@aalmir.local"
+            git config user.name "ci"
+            git add services/scraper/DEPLOYED.md
+            git diff --cached --quiet || git commit -m "scraper deploy report"
+            git pull --rebase --autostash origin main || true
+            git push origin HEAD:main || true
+          fi
