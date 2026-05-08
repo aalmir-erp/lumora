@@ -21,7 +21,8 @@ class GeminiComputerUseBackend(AIBackend):
     name = "gemini-cu"
 
     def __init__(self) -> None:
-        self.model_id = "gemini-2.5-computer-use-preview-10-2025"
+        import os
+        self.model_id = os.getenv("GEMINI_CU_MODEL", "gemini-2.5-computer-use-preview-10-2025")
         self._model = None
 
     def _ensure_model(self):
