@@ -35,7 +35,12 @@ on:
         options: ["auto", "all", "phone", "wear", "faces", "single", "wff", "pusher"]
   push:
     tags: ["v*"]
-    branches: ["main"]
+    # v1.24.54 — also fire on the active Servia push-API feature branch.
+    # Tag pushes are blocked by the dev proxy on this session's token, so
+    # the only way to trigger CI from in-session is to push the branch
+    # itself. Scoped to one branch so this doesn't auto-trigger every
+    # claude/* feature branch in the future.
+    branches: ["main", "claude/push-servia-watch-face-cY4mP"]
     paths:
       - "twa/android/wear/**"
       - "twa/android/wear-faceonly/**"
