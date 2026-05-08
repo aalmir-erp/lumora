@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active = "dashboard" %}
+{% block title %}Dashboard — Aalmir Bot{% endblock %}
+{% block content %}
+<h2>Dashboard</h2>
+
+<div class="kpi-grid" style="margin-bottom:24px">
+  <div class="kpi"><div class="label">Orders captured</div><div class="value">{{ counts.orders_total }}</div></div>
+  <div class="kpi"><div class="label">New orders</div><div class="value">{{ counts.orders_new }}</div></div>
+  <div class="kpi"><div class="label">Customers chatted</div><div class="value">{{ counts.conversations }}</div></div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Health check</h3>
+  <div class="health">
+    <div class="item"><span class="dot {% if health.meta_token %}ok{% else %}bad{% endif %}"></span>Meta access token</div>
+    <div class="item"><span class="dot {% if health.meta_phone %}ok{% else %}bad{% endif %}"></span>Phone Number ID</div>
+    <div class="item"><span class="dot {% if health.meta_secret %}ok{% else %}bad{% endif %}"></span>App Secret</div>
+    <div class="item"><span class="dot {% if health.meta_verify %}ok{% else %}bad{% endif %}"></span>Webhook verify token</div>
+    <div class="item"><span class="dot {% if health.ai_ok %}ok{% else %}bad{% endif %}"></span>AI provider key</div>
+    <div class="item"><span class="dot {% if health.bot_enabled %}ok{% else %}warn{% endif %}"></span>Bot {% if health.bot_enabled %}ON{% else %}OFF{% endif %}</div>
+  </div>
+  <p style="margin-top:14px;color:var(--muted)">
+    Anything red? Open <a href="/admin/settings">Tokens &amp; Keys</a> to paste the value, or
+    <a href="/admin/setup-guide">see where to find each one</a>.
+  </p>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Webhook URL to paste in Meta</h3>
+  <p>In your Meta App → WhatsApp → Configuration → Webhook, set:</p>
+  <p><strong>Callback URL:</strong> <code>https://&lt;your-railway-app&gt;/webhook</code></p>
+  <p><strong>Verify Token:</strong> the same value you put in <em>Meta Webhook Verify Token</em> on the settings page.</p>
+  <p>Subscribe to the <code>messages</code> field.</p>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Quick actions</h3>
+  <p>
+    <a href="/admin/settings" class="btn">Edit tokens &amp; keys</a>
+    <a href="/admin/kb" class="btn secondary">Edit knowledge base</a>
+    <a href="/admin/orders" class="btn secondary">View orders</a>
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% set active = "settings" %}
+{% block title %}Tokens &amp; Keys — Aalmir Bot{% endblock %}
+{% block content %}
+<h2>Tokens &amp; Keys</h2>
+<p style="color:var(--muted)">
+  Paste each value here after Meta verifies your number.
+  Need help finding them? <a href="/admin/setup-guide">Step-by-step guide</a>.
+</p>
+
+<form action="/admin/settings" method="post">
+<div class="card">
+  {% for r in rows %}
+    <div class="row">
+      <label>
+        {{ r.label }}
+        {% if r.source == "env" %}
+          <span class="tag warn" title="Set by Railway env var, takes precedence over what you type here">env override</span>
+        {% elif r.source == "db" %}
+          <span class="tag ok">saved</span>
+        {% else %}
+          <span class="tag bad">not set</span>
+        {% endif %}
+      </label>
+      <input type="{% if r.is_secret %}password{% else %}text{% endif %}"
+             name="{{ r.key }}"
+             placeholder="{% if r.has_value and r.is_secret %}{{ r.masked }} (paste a new value to overwrite){% elif r.has_value %}{{ r.masked }}{% else %}paste value{% endif %}"
+             {% if r.source == "env" %}disabled{% endif %}>
+      {% if r.source == "env" %}
+        <div class="hint">Currently controlled by a Railway env var — clear that env var first if you want to manage it from this panel.</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+  <button type="submit">Save changes</button>
+</div>
+</form>
+
+<div class="card">
+  <h3 style="margin-top:0">Notes</h3>
+  <ul>
+    <li>Values you save here are stored in the bot's database (encrypted at rest by your hosting provider's disk encryption).</li>
+    <li>Railway env vars take precedence over values saved here — useful if you want to lock production values down.</li>
+    <li>Secret fields (passwords/tokens) only show the first and last 4 characters once saved. Paste a new value to overwrite.</li>
+    <li>Empty fields are ignored on save (no accidental wipes).</li>
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% set active = "conversations" %}
+{% block title %}Conversation +{{ wa_id }} — Aalmir Bot{% endblock %}
+{% block content %}
+<h2>Conversation with +{{ wa_id }}</h2>
+<p><a href="/admin/conversations">← back to all conversations</a></p>
+<div class="card" style="display:flex;flex-direction:column;gap:6px">
+{% for m in messages %}
+  <div class="bubble {{ m.role }}"><strong style="font-size:11px;opacity:.6">{{ m.role }}</strong><br>{{ m.content }}</div>
+{% else %}
+  <p style="color:var(--muted)">No messages yet.</p>
+{% endfor %}
+</div>
+{% endblock %}

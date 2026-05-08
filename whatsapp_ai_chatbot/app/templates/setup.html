@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>First-time setup — Aalmir Bot</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="auth-shell">
+  <div class="auth-card">
+    <h2>First-time setup</h2>
+    <p style="color:var(--muted)">Set the admin password. You'll use it to sign in from now on.</p>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form action="/admin/setup" method="post">
+      {% if needs_bootstrap %}
+      <div class="row">
+        <label>Bootstrap token</label>
+        <input type="password" name="bootstrap_token" required>
+        <div class="hint">The value of <code>ADMIN_BOOTSTRAP_TOKEN</code> set in your Railway env vars.</div>
+      </div>
+      {% endif %}
+      <div class="row">
+        <label>New admin password</label>
+        <input type="password" name="password" minlength="8" required>
+      </div>
+      <div class="row">
+        <label>Confirm password</label>
+        <input type="password" name="confirm" minlength="8" required>
+      </div>
+      <button type="submit" style="width:100%">Create admin</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

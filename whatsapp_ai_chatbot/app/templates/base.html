@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Aalmir Bot Admin{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{% block body %}
+<div class="layout">
+  <aside class="sidebar">
+    <h1>Aalmir Bot<small>Admin Panel</small></h1>
+    <nav>
+      <a href="/admin" class="{% if active == 'dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="/admin/settings" class="{% if active == 'settings' %}active{% endif %}">Tokens &amp; Keys</a>
+      <a href="/admin/setup-guide" class="{% if active == 'guide' %}active{% endif %}">Where to find them</a>
+      <a href="/admin/kb" class="{% if active == 'kb' %}active{% endif %}">Knowledge Base</a>
+      <a href="/admin/orders" class="{% if active == 'orders' %}active{% endif %}">Orders</a>
+      <a href="/admin/conversations" class="{% if active == 'conversations' %}active{% endif %}">Conversations</a>
+    </nav>
+    <form action="/admin/logout" method="post">
+      <button type="submit" class="secondary" style="width:100%">Log out</button>
+    </form>
+  </aside>
+  <main class="main">
+    {% if request.query_params.get("saved") %}
+      <div class="success">Saved {{ request.query_params.get("saved") }} setting(s).</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}
+</body>
+</html>

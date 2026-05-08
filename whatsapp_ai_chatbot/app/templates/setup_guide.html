@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% set active = "guide" %}
+{% block title %}Setup guide — Aalmir Bot{% endblock %}
+{% block content %}
+<h2>Where to find each token &amp; key</h2>
+<p style="color:var(--muted)">
+  Once Meta has verified your business number, follow each step below to gather every value
+  required on the <a href="/admin/settings">Tokens &amp; Keys</a> page.
+</p>
+
+<div class="card guide">
+  <h3 style="margin-top:0">A. Meta WhatsApp Cloud API</h3>
+  <ol>
+    <li>
+      Open <a href="https://developers.facebook.com/apps/" target="_blank">developers.facebook.com/apps</a> →
+      pick your app (e.g. <em>MIR AI Sales BOT</em>).
+    </li>
+    <li>
+      Sidebar → <strong>WhatsApp → API Setup</strong> (also called "Try it out" in the new UI).
+    </li>
+    <li>
+      <strong>Phone Number ID</strong>: shown next to the active number, top of the page.
+      Copy → paste into <em>Meta Phone Number ID</em>.
+    </li>
+    <li>
+      <strong>WhatsApp Business Account ID</strong>: also on the same row.
+      Copy → paste into <em>WhatsApp Business Account ID</em> (optional).
+    </li>
+    <li>
+      <strong>Access Token</strong>: click <em>Generate access token</em>.
+      Copy immediately (Meta only shows it once) → paste into <em>Meta Access Token</em>.
+      <br><span class="hint">For production, replace the 24-hour temporary token with a permanent System User token: Business Settings → System Users → Add → assign WhatsApp asset → Generate token (full_control + whatsapp_business_messaging + whatsapp_business_management).</span>
+    </li>
+    <li>
+      Sidebar → <strong>App Settings → Basic</strong>. The <strong>App Secret</strong> field has a "Show" button
+      (Meta will ask for your password). Copy → paste into <em>Meta App Secret</em>.
+    </li>
+    <li>
+      <strong>Webhook Verify Token</strong>: <em>you invent this</em>. Type any random
+      long string into <em>Meta Webhook Verify Token</em> on the settings page.
+      Then in Meta App → WhatsApp → Configuration → Webhook, paste the SAME string in
+      Meta's "Verify token" box, and set the Callback URL to
+      <code>https://&lt;your-railway-app&gt;/webhook</code>.
+    </li>
+  </ol>
+</div>
+
+<div class="card guide">
+  <h3 style="margin-top:0">B. AI provider key</h3>
+  <p>You only need ONE of these, depending on the <em>AI Provider</em> setting.</p>
+  <ol>
+    <li>
+      <strong>Anthropic (recommended for this bot)</strong>: sign up at
+      <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> →
+      Settings → API Keys → "Create key". Copy → paste into <em>Anthropic API Key</em>.
+      Default model <code>claude-sonnet-4-6</code> works well; leave the model field empty
+      unless you have a reason to override.
+    </li>
+    <li>
+      <strong>OpenAI</strong>: sign up at
+      <a href="https://platform.openai.com" target="_blank">platform.openai.com</a> →
+      API Keys → "Create new secret key". Copy → paste into <em>OpenAI API Key</em>.
+      Default model <code>gpt-4.1</code>.
+    </li>
+  </ol>
+  <p>Make sure you've added a payment method to whichever provider you pick — both reject API calls until billing is enabled.</p>
+</div>
+
+<div class="card guide">
+  <h3 style="margin-top:0">C. Sales handoff (optional)</h3>
+  <ol>
+    <li>
+      <strong>Sales handoff WhatsApp number</strong>: when the bot can't help (frustration / explicit
+      request / completed order intake), it pings this number with a summary. Use international
+      format with leading <code>+</code>, e.g. <code>+971564020087</code>.
+    </li>
+    <li>
+      <strong>Sales handoff email</strong>: shown to customers as a fallback contact.
+    </li>
+  </ol>
+</div>
+
+<div class="card guide">
+  <h3 style="margin-top:0">D. Bot ON / OFF</h3>
+  <p>
+    The <em>Bot enabled?</em> setting takes <code>true</code> or <code>false</code>. Setting it to
+    <code>false</code> tells the bot to drop incoming webhooks silently — useful when you want sales
+    agents to handle everything manually for a while.
+  </p>
+  <p>The bot also auto-pauses each conversation for 4 hours after escalating, to avoid talking over an agent who's taking the customer over from Meta Inbox.</p>
+</div>
+
+<div class="card guide">
+  <h3 style="margin-top:0">E. Connecting the webhook to Meta</h3>
+  <ol>
+    <li>Make sure your bot is deployed and reachable at <code>https://&lt;your-railway-app&gt;</code>.</li>
+    <li>Open Meta App → <strong>WhatsApp → Configuration → Webhook</strong>.</li>
+    <li>Click <strong>Edit</strong> on the Webhook row.</li>
+    <li>Callback URL: <code>https://&lt;your-railway-app&gt;/webhook</code></li>
+    <li>Verify token: paste the same string you saved as <em>Meta Webhook Verify Token</em>.</li>
+    <li>Click <strong>Verify and save</strong>. Meta calls your bot, your bot replies with the challenge, the connection becomes green.</li>
+    <li>Below the Webhook row, click <strong>Manage</strong> on the Webhook fields and subscribe to <code>messages</code>.</li>
+  </ol>
+  <p>You're done. Send a WhatsApp message from your test number → bot replies.</p>
+</div>
+{% endblock %}

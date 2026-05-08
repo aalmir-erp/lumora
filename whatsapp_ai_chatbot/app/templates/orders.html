@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% set active = "orders" %}
+{% block title %}Orders — Aalmir Bot{% endblock %}
+{% block content %}
+<h2>Orders</h2>
+
+<div class="card" style="display:flex;gap:8px;align-items:center">
+  <span style="color:var(--muted)">Filter:</span>
+  <a class="btn secondary" href="/admin/orders">All</a>
+  <a class="btn secondary" href="/admin/orders?status=new">New</a>
+  <a class="btn secondary" href="/admin/orders?status=contacted">Contacted</a>
+  <a class="btn secondary" href="/admin/orders?status=quoted">Quoted</a>
+  <a class="btn secondary" href="/admin/orders?status=closed">Closed</a>
+</div>
+
+<div class="card">
+{% if orders %}
+<table>
+  <thead>
+    <tr>
+      <th>#</th><th>WA</th><th>Customer</th><th>Product</th><th>Qty</th><th>Delivery</th>
+      <th>Status</th><th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for o in orders %}
+  <tr>
+    <td>{{ o.id }}</td>
+    <td>+{{ o.wa_id }}</td>
+    <td>
+      <strong>{{ o.customer_name or "—" }}</strong>
+      {% if o.company %}<br><span style="color:var(--muted);font-size:12px">{{ o.company }}</span>{% endif %}
+      {% if o.phone %}<br><span style="color:var(--muted);font-size:12px">{{ o.phone }}</span>{% endif %}
+    </td>
+    <td>
+      {{ o.product or "—" }}
+      {% if o.grade %}<br><span style="color:var(--muted);font-size:12px">{{ o.grade }}</span>{% endif %}
+      {% if o.dimensions %}<br><span style="color:var(--muted);font-size:12px">{{ o.dimensions }}</span>{% endif %}
+    </td>
+    <td>{{ o.quantity or "—" }}</td>
+    <td>{{ o.delivery or "—" }}</td>
+    <td>
+      <span class="tag {% if o.status == 'new' %}warn{% elif o.status == 'closed' %}ok{% elif o.status == 'lost' %}bad{% endif %}">{{ o.status }}</span>
+    </td>
+    <td>
+      <form action="/admin/orders/{{ o.id }}/status" method="post" style="display:inline">
+        <select name="status" onchange="this.form.submit()">
+          <option value="new" {% if o.status == 'new' %}selected{% endif %}>new</option>
+          <option value="contacted" {% if o.status == 'contacted' %}selected{% endif %}>contacted</option>
+          <option value="quoted" {% if o.status == 'quoted' %}selected{% endif %}>quoted</option>
+          <option value="closed" {% if o.status == 'closed' %}selected{% endif %}>closed</option>
+          <option value="lost" {% if o.status == 'lost' %}selected{% endif %}>lost</option>
+        </select>
+      </form>
+    </td>
+  </tr>
+  {% if o.notes %}
+  <tr><td></td><td colspan="7" style="color:var(--muted);font-size:12px">Notes: {{ o.notes }}</td></tr>
+  {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p style="color:var(--muted)">No orders yet. They'll appear here once the bot completes its first quote intake.</p>
+{% endif %}
+</div>
+{% endblock %}

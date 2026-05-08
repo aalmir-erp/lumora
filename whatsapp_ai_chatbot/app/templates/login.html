@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Sign in — Aalmir Bot Admin</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="auth-shell">
+  <div class="auth-card">
+    <h2>Aalmir Bot Admin</h2>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form action="/admin/login" method="post">
+      <div class="row">
+        <label>Admin password</label>
+        <input type="password" name="password" autofocus required>
+      </div>
+      <button type="submit" style="width:100%">Sign in</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

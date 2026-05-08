@@ -1,20 +1,19 @@
-"""Pick the configured AI provider."""
+"""Pick the configured AI provider — re-resolved each call so the admin
+panel can switch providers without a redeploy."""
 from __future__ import annotations
 
-from functools import lru_cache
-
-from ..config import settings
+from .. import settings_store
 from .base import AIProvider
 
 
-@lru_cache(maxsize=1)
 def get_provider() -> AIProvider:
-    if settings.ai_provider == "anthropic":
+    provider = settings_store.ai_provider()
+    if provider == "anthropic":
         from .anthropic_provider import AnthropicProvider
 
         return AnthropicProvider()
-    if settings.ai_provider == "openai":
+    if provider == "openai":
         from .openai_provider import OpenAIProvider
 
         return OpenAIProvider()
-    raise RuntimeError(f"Unknown AI_PROVIDER: {settings.ai_provider!r}")
+    raise RuntimeError(f"Unknown AI_PROVIDER: {provider!r}")

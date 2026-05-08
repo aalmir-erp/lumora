@@ -8,17 +8,13 @@ from typing import Any
 
 import httpx
 
-from .config import settings
+from . import settings_store
 
 log = logging.getLogger(__name__)
 
 
 def verify_signature(app_secret: str, raw_body: bytes, header: str | None) -> bool:
-    """Verify Meta's X-Hub-Signature-256 header.
-
-    Meta signs the raw request body with HMAC-SHA256 keyed by the app secret
-    and sends it as `sha256=<hex>`. Reject anything that doesn't match.
-    """
+    """Verify Meta's X-Hub-Signature-256 header (HMAC-SHA256 of body, keyed by app secret)."""
     if not app_secret or not header:
         return False
     if not header.startswith("sha256="):
@@ -29,12 +25,7 @@ def verify_signature(app_secret: str, raw_body: bytes, header: str | None) -> bo
 
 
 def parse_inbound(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    """Flatten Meta's nested webhook payload into a list of message dicts.
-
-    Returns one entry per text message we care about. Non-text events
-    (status callbacks, reactions, media, etc.) are filtered out and the
-    caller can decide what to do.
-    """
+    """Flatten Meta's nested webhook payload into a list of text-message dicts."""
     out: list[dict[str, Any]] = []
     for entry in payload.get("entry", []) or []:
         for change in entry.get("changes", []) or []:
@@ -59,13 +50,15 @@ def parse_inbound(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 async def send_text(to_wa_id: str, text: str) -> dict[str, Any]:
     """Send a plain-text WhatsApp message via the Cloud API."""
-    if not settings.meta_access_token or not settings.meta_phone_number_id:
-        log.warning("META_ACCESS_TOKEN or META_PHONE_NUMBER_ID missing — skipping send")
+    token = settings_store.meta_access_token()
+    phone_id = settings_store.meta_phone_number_id()
+    if not token or not phone_id:
+        log.warning("WhatsApp not configured (missing token or phone_number_id)")
         return {"skipped": True}
 
     url = (
-        f"https://graph.facebook.com/{settings.meta_graph_version}"
-        f"/{settings.meta_phone_number_id}/messages"
+        f"https://graph.facebook.com/{settings_store.meta_graph_version()}"
+        f"/{phone_id}/messages"
     )
     body = {
         "messaging_product": "whatsapp",
@@ -75,7 +68,7 @@ async def send_text(to_wa_id: str, text: str) -> dict[str, Any]:
         "text": {"preview_url": False, "body": text[:4096]},
     }
     headers = {
-        "Authorization": f"Bearer {settings.meta_access_token}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
     async with httpx.AsyncClient(timeout=15.0) as client:
@@ -87,22 +80,16 @@ async def send_text(to_wa_id: str, text: str) -> dict[str, Any]:
 
 
 async def mark_read(message_id: str) -> None:
-    """Mark an incoming message as read so the customer sees the blue ticks."""
-    if not settings.meta_access_token or not settings.meta_phone_number_id:
+    token = settings_store.meta_access_token()
+    phone_id = settings_store.meta_phone_number_id()
+    if not token or not phone_id:
         return
     url = (
-        f"https://graph.facebook.com/{settings.meta_graph_version}"
-        f"/{settings.meta_phone_number_id}/messages"
+        f"https://graph.facebook.com/{settings_store.meta_graph_version()}"
+        f"/{phone_id}/messages"
     )
-    body = {
-        "messaging_product": "whatsapp",
-        "status": "read",
-        "message_id": message_id,
-    }
-    headers = {
-        "Authorization": f"Bearer {settings.meta_access_token}",
-        "Content-Type": "application/json",
-    }
+    body = {"messaging_product": "whatsapp", "status": "read", "message_id": message_id}
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             await client.post(url, json=body, headers=headers)

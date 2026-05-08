@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% set active = "kb" %}
+{% block title %}Knowledge Base — Aalmir Bot{% endblock %}
+{% block content %}
+<h2>Knowledge Base</h2>
+<p style="color:var(--muted)">
+  Edit any block and click Save to replace the default. The bot reads the merged KB on every
+  customer message — no redeploy needed.
+</p>
+{% for b in blocks %}
+<div class="card">
+  <form action="/admin/kb/{{ b.slug }}" method="post">
+    <div class="row">
+      <label>{{ b.slug }}
+        {% if b.overridden %}<span class="tag ok">customized</span>{% else %}<span class="tag">default</span>{% endif %}
+      </label>
+      <input type="text" name="title" value="{{ b.title }}">
+    </div>
+    <div class="row">
+      <label>Content</label>
+      <textarea name="content" rows="14">{{ b.content }}</textarea>
+    </div>
+    <button type="submit">Save</button>
+    {% if b.overridden %}
+      <button type="submit" formaction="/admin/kb/{{ b.slug }}/reset" class="secondary">Reset to default</button>
+    {% endif %}
+  </form>
+</div>
+{% endfor %}
+{% endblock %}
