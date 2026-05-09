@@ -8,7 +8,7 @@
       "description": "Top-to-bottom deep clean: kitchen degrease, bathroom descale, dust extraction, floor scrub, balcony, interior windows.",
       "duration_per_bedroom_hours": 1.5,
       "min_team": 2,
-      "starting_price": 350,
+      "starting_price": 490,
       "includes": [
         "Kitchen deep clean",
         "Bathroom descaling + disinfection",
@@ -129,7 +129,7 @@
       "description": "Standard maintenance clean — dusting, mopping, bathrooms, kitchen wipe-down. Best for already-clean homes.",
       "duration_per_bedroom_hours": 1.0,
       "min_team": 1,
-      "starting_price": 200,
+      "starting_price": 280,
       "includes": [
         "Dust + wipe surfaces",
         "Vacuum + mop floors",
@@ -219,7 +219,7 @@
       "icon": "user",
       "description": "Trained maid for housekeeping. Hourly basis, minimum 2 hours.",
       "min_hours": 2,
-      "starting_price": 35,
+      "starting_price": 49,
       "includes": [
         "General cleaning",
         "Laundry assistance",
@@ -330,7 +330,7 @@
       "description": "Vacant property handover clean. Inside cabinets, oven, fridge included.",
       "duration_per_bedroom_hours": 2.0,
       "min_team": 2,
-      "starting_price": 600,
+      "starting_price": 840,
       "includes": [
         "Everything in deep clean",
         "Inside cabinets",
@@ -438,7 +438,7 @@
       "icon": "briefcase",
       "description": "Daily, weekly, or one-off office cleaning. Workstations, pantry, restrooms, reception.",
       "min_hours": 3,
-      "starting_price": 120,
+      "starting_price": 168,
       "includes": [
         "Desks + surfaces",
         "Floors",
@@ -541,7 +541,7 @@
       "icon": "hardhat",
       "description": "Heavy-debris cleanup after fit-out. Cement haze removal, paint splatter, HEPA dust extraction.",
       "min_hours": 4,
-      "starting_price": 240,
+      "starting_price": 336,
       "includes": [
         "Debris removal",
         "Cement haze",
@@ -642,7 +642,7 @@
       "category": "Specialty",
       "icon": "sofa",
       "description": "Deep extraction shampoo for sofas, carpets, mattresses.",
-      "starting_price": 35,
+      "starting_price": 49,
       "includes": [
         "Pre-treatment",
         "Hot water extraction",
@@ -749,7 +749,7 @@
       "category": "Maintenance",
       "icon": "wind",
       "description": "Split AC and central duct cleaning. Coil wash, drain pan flush, filter clean.",
-      "starting_price": 150,
+      "starting_price": 210,
       "includes": [
         "Coil wash",
         "Drain pan flush",
@@ -838,7 +838,7 @@
       "category": "Specialty",
       "icon": "shield",
       "description": "MOH-approved disinfection. ULV fogging + electrostatic spray. Certificate provided.",
-      "starting_price": 250,
+      "starting_price": 350,
       "includes": [
         "ULV fogging",
         "Electrostatic spray",
@@ -931,7 +931,7 @@
       "category": "Specialty",
       "icon": "window",
       "description": "Interior + accessible exterior windows. Glass, frames, sills.",
-      "starting_price": 150,
+      "starting_price": 210,
       "includes": [
         "Glass clean",
         "Frame wipe",
@@ -1006,7 +1006,7 @@
       "category": "Maintenance",
       "icon": "bug",
       "description": "General pest treatment for cockroaches, ants, bedbugs, rodents. Municipality-approved chemicals.",
-      "starting_price": 200,
+      "starting_price": 280,
       "includes": [
         "Inspection",
         "Treatment",
@@ -1113,7 +1113,7 @@
       "category": "Residential",
       "icon": "tshirt",
       "description": "Pickup, wash, iron, deliver. Per-piece or per-kg.",
-      "starting_price": 5,
+      "starting_price": 7,
       "includes": [
         "Wash",
         "Iron",
@@ -1187,7 +1187,7 @@
       "category": "Care",
       "icon": "baby",
       "description": "Trained, background-checked nannies. Hourly or by-the-day.",
-      "starting_price": 40,
+      "starting_price": 56,
       "includes": [
         "Background-checked staff",
         "First-aid trained",
@@ -1260,7 +1260,7 @@
       "category": "Outdoor",
       "icon": "leaf",
       "description": "Lawn mowing, hedge trimming, plant care, irrigation check.",
-      "starting_price": 150,
+      "starting_price": 210,
       "includes": [
         "Mowing",
         "Trimming",
@@ -1333,7 +1333,7 @@
       "category": "Maintenance",
       "icon": "wrench",
       "description": "Plumbing, electrical, carpentry, painting touch-ups. Hourly + parts.",
-      "starting_price": 120,
+      "starting_price": 168,
       "includes": [
         "Diagnosis",
         "Repair",
@@ -1415,7 +1415,7 @@
       "category": "Specialty",
       "icon": "chef",
       "description": "Inside oven, hood, fridge, freezer. Cabinet degrease, tile descaling.",
-      "starting_price": 280,
+      "starting_price": 392,
       "includes": [
         "Inside oven",
         "Hood + filter",
@@ -1509,7 +1509,7 @@
       "category": "Residential",
       "icon": "home",
       "description": "Full-villa deep clean including outdoor. 4-person crew. By size.",
-      "starting_price": 1100,
+      "starting_price": 1540,
       "includes": [
         "All deep clean",
         "Garden sweep",
@@ -1615,7 +1615,7 @@
       "category": "Specialty",
       "icon": "truck",
       "description": "Premium hand wash, interior detail, wax + polish. Mobile — we come to you.",
-      "starting_price": 80,
+      "starting_price": 112,
       "includes": [
         "Exterior hand wash",
         "Interior vacuum",
@@ -1702,7 +1702,7 @@
       "category": "Outdoor",
       "icon": "shield",
       "description": "Weekly pool cleaning + chemical balancing + filter check. Keeps water crystal-clear.",
-      "starting_price": 250,
+      "starting_price": 350,
       "includes": [
         "Skim + brush",
         "pH + chlorine balance",
@@ -1777,7 +1777,7 @@
       "category": "Specialty",
       "icon": "sparkles",
       "description": "Diamond polishing for marble, granite, terrazzo. Restores high gloss + removes etches.",
-      "starting_price": 15,
+      "starting_price": 21,
       "includes": [
         "3-step diamond polish",
         "Sealing",
@@ -1849,7 +1849,7 @@
       "category": "Specialty",
       "icon": "window",
       "description": "On-site steam clean of curtains + drapes. No need to take them down.",
-      "starting_price": 40,
+      "starting_price": 56,
       "includes": [
         "Steam clean",
         "Deodorize",
@@ -1921,7 +1921,7 @@
       "category": "Maintenance",
       "icon": "wrench",
       "description": "Install + configure smart locks, cameras, lights, speakers. Apple HomeKit / Alexa / Google.",
-      "starting_price": 200,
+      "starting_price": 280,
       "includes": [
         "Device install",
         "WiFi setup",
@@ -1999,7 +1999,7 @@
       "category": "Specialty",
       "icon": "hardhat",
       "description": "Interior wall painting — patch, prime, paint. Drop cloths + clean-up included.",
-      "starting_price": 300,
+      "starting_price": 420,
       "includes": [
         "Surface prep",
         "Primer",
@@ -2079,7 +2079,7 @@
       "category": "Tech & Appliance",
       "icon": "wrench",
       "description": "Same-day mobile screen, battery, charging port, water damage and software repair — at your home or office.",
-      "starting_price": 80,
+      "starting_price": 112,
       "duration_label": "30-90 minutes",
       "team_label": "1 certified technician",
       "includes": [
@@ -2155,7 +2155,7 @@
       "category": "Tech & Appliance",
       "icon": "wrench",
       "description": "Laptop screen, keyboard, battery, fan, SSD upgrade, OS reinstall and virus removal — on-site.",
-      "starting_price": 150,
+      "starting_price": 210,
       "duration_label": "45-120 minutes",
       "team_label": "1 certified technician",
       "includes": [
@@ -2231,7 +2231,7 @@
       "category": "Tech & Appliance",
       "icon": "wrench",
       "description": "Front-load and top-load washer repair — drum, motor, drain pump, electronic board, water inlet, door lock.",
-      "starting_price": 120,
+      "starting_price": 168,
       "duration_label": "1-3 hours",
       "team_label": "1 appliance technician",
       "includes": [
@@ -2300,7 +2300,7 @@
       "category": "Tech & Appliance",
       "icon": "wrench",
       "description": "Fridge & freezer repair — compressor, gas refill, thermostat, defrost, water dispenser, ice maker.",
-      "starting_price": 150,
+      "starting_price": 210,
       "duration_label": "1-2 hours",
       "team_label": "1 appliance technician",
       "includes": [
@@ -2360,7 +2360,7 @@
       "category": "Tech & Appliance",
       "icon": "wrench",
       "description": "Dishwasher repair & maintenance — pump, spray arms, heating element, salt/rinse-aid system, door seal.",
-      "starting_price": 130,
+      "starting_price": 182,
       "duration_label": "1-2 hours",
       "team_label": "1 appliance technician",
       "includes": [
@@ -2418,7 +2418,7 @@
       "category": "Tech & Appliance",
       "icon": "wrench",
       "description": "Built-in oven, gas hob, electric hob, microwave and combi oven repair — on-site.",
-      "starting_price": 130,
+      "starting_price": 182,
       "duration_label": "1-2 hours",
       "team_label": "1 appliance technician",
       "includes": [
@@ -2478,7 +2478,7 @@
       "category": "Tech & Appliance",
       "icon": "wrench",
       "description": "Geyser & water-heater repair, descaling, thermostat replacement, leak fix, full install of new unit.",
-      "starting_price": 100,
+      "starting_price": 140,
       "duration_label": "1-3 hours",
       "team_label": "1 plumber-electrician",
       "includes": [
@@ -2536,7 +2536,7 @@
       "category": "Tech & Appliance",
       "icon": "wrench",
       "description": "TV wall mounting, soundbar install, Apple TV / Fire Stick setup, OSN/beIN/Netflix configuration, cable hide.",
-      "starting_price": 150,
+      "starting_price": 210,
       "duration_label": "1-2 hours",
       "team_label": "1 AV technician",
       "includes": [
@@ -2610,7 +2610,7 @@
       "category": "Transport & Concierge",
       "icon": "user",
       "description": "On-demand and hourly chauffeur for airport runs, errands, school runs, business meetings — your car or ours.",
-      "starting_price": 60,
+      "starting_price": 84,
       "duration_label": "Hourly · Min 3 hrs",
       "team_label": "1 vetted driver",
       "includes": [
