@@ -89,13 +89,11 @@ body.us-lift-bar .us-launcher-tip { bottom: 104px; }
 .us-header .us-download:hover, .us-header .us-newchat:hover{background:rgba(255,255,255,.12) !important;opacity:1 !important}
 .us-header .us-version{font-size:9.5px;opacity:.55;margin-top:1px;letter-spacing:.05em;color:#fff}
 
-/* v1.24.56 — minimized state: just header strip + tiny indicator */
-.us-panel.us-min-state{height:54px;min-height:54px;overflow:hidden}
-.us-panel.us-min-state .us-actions-bar,
-.us-panel.us-min-state .us-body,
-.us-panel.us-min-state .us-quickreplies,
-.us-panel.us-min-state .us-attach-preview,
-.us-panel.us-min-state .us-input{display:none}
+/* v1.24.82 — minimized state hides the panel entirely; user sees only
+   the round launcher icon in the corner. Previous design (54px header
+   strip across the screen) looked like a "useless horizontal bar"
+   hiding content on every page (user complaint). */
+.us-panel.us-min-state{display:none !important}
 /* maximized state: full viewport */
 .us-panel.us-max-state{position:fixed;inset:8px;right:8px;left:8px;top:8px;bottom:8px;
   width:auto;height:auto;max-width:none;max-height:none;border-radius:14px}

@@ -79,9 +79,9 @@ inline_url_count = sum(text.count(s) for s in [
 t("2. Reply has NO inline URL pill buttons (uses card instead)",
   inline_url_count == 0, f"inline_count={inline_url_count}")
 
-# Step 3: Reply still has Revise [[choices:]]
-t("3. Reply still has ✏️ Revise [[choices:]]",
-  "✏️ Revise quote" in text and "[[choices:" in text)
+# Step 3: Reply has NO Revise marker pre-sign (v1.24.82 — moved into card after sign)
+t("3. Reply does NOT have pre-sign Revise marker (now post-sign only)",
+  "✏️ Revise" not in text)
 
 if qid:
     # Step 4: GET /api/q/<id>/card?session_id=<sid> returns data

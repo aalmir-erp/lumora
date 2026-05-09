@@ -248,12 +248,16 @@
     try { localStorage.removeItem("servia.chat.size"); } catch(_) {}
   };
 
-  // v1.24.56 — header controls
+  // v1.24.82 — Minimize now CLOSES the panel (back to launcher icon).
+  // Previous behaviour kept a 54px header bar across the bottom which
+  // hid page content on every page (user reported it as a "horizontal
+  // long useless bar"). Conversation persists; clicking the launcher
+  // brings it back exactly as it was.
   panel.querySelector(".us-min").onclick = () => {
-    panel.classList.toggle("us-min-state");
+    panel.style.display = "none";
     panel.classList.remove("us-max-state");
-    try { localStorage.setItem("servia.chat.size",
-      panel.classList.contains("us-min-state") ? "min" : "normal"); } catch(_) {}
+    if (typeof launcher !== "undefined" && launcher) launcher.style.display = "";
+    try { localStorage.setItem("servia.chat.size", "min"); } catch(_) {}
   };
   panel.querySelector(".us-resize").onclick = () => {
     panel.classList.toggle("us-max-state");
@@ -379,12 +383,15 @@
     container.innerHTML = html;
   }
 
-  // v1.24.56 — restore widget size + open state from localStorage on mount
+  // v1.24.82 — restore widget size, but treat "min" as closed (panel
+   // hidden, launcher shown). The 54px header strip was bad UX.
   setTimeout(() => {
     try {
       const sz = localStorage.getItem("servia.chat.size");
-      if (sz === "min") panel.classList.add("us-min-state");
-      else if (sz === "max") panel.classList.add("us-max-state");
+      if (sz === "min") {
+        panel.style.display = "none";
+        if (launcher) launcher.style.display = "";
+      } else if (sz === "max") panel.classList.add("us-max-state");
     } catch (_) {}
   }, 200);
 
@@ -881,6 +888,10 @@
   }
 
   function _renderQuoteCard(card, q, sid) {
+    // v1.24.82 — pass session_id to View/PDF/Print/Pay URLs so /q /p /i
+    // can authenticate the user from chat session, skipping the phone
+    // gate. UX: user is already in a verified chat session.
+    const qsid = sid ? ("?sid=" + encodeURIComponent(sid)) : "";
     const items = (q.items || []).map((it, i) =>
       `<div class="us-qcard-line">
          <span class="us-qcard-num">${i+1}</span>
@@ -906,14 +917,15 @@
         <div>👤 ${q.customer_name||''} · ${q.phone||''}</div>
       </div>
       <div class="us-qcard-actions">
-        <a class="us-qcard-btn" href="${q.view_url}" target="_blank">👁 View</a>
-        <a class="us-qcard-btn" href="${q.pdf_url}" target="_blank">📥 PDF</a>
-        <a class="us-qcard-btn" href="${q.print_url}" target="_blank" onclick="setTimeout(()=>{try{window.opener && window.opener.focus()}catch(_){}},100)">🖨 Print</a>
+        <a class="us-qcard-btn" href="${q.view_url}${qsid}" target="_blank">👁 View</a>
+        <a class="us-qcard-btn" href="${q.pdf_url}${qsid}" target="_blank">📥 PDF</a>
+        <a class="us-qcard-btn" href="${q.print_url}${qsid}" target="_blank">🖨 Print</a>
       </div>
       ${isSigned ? `
         <div class="us-qcard-signed">
-          <div class="us-qcard-signed-msg">✅ Signed at ${q.signed_at}. Our team is on the way.</div>
-          <a class="us-qcard-pay" href="${q.pay_url}" target="_blank">💳 Pay AED ${(q.total_aed||0).toLocaleString()}</a>
+          <div class="us-qcard-signed-msg">✅ Signed at ${q.signed_at}. <b>100% advance payment</b> applies — pay below to lock your slot.</div>
+          <a class="us-qcard-pay" href="${q.pay_url}${qsid}" target="_blank">💳 Pay AED ${(q.total_aed||0).toLocaleString()}</a>
+          <button type="button" class="us-qcard-btn us-qcard-revise" style="margin-top:10px">✏️ Revise quote</button>
         </div>
       ` : `
         <div class="us-qcard-sigblock">
@@ -923,11 +935,30 @@
             <button type="button" class="us-qcard-btn us-qcard-clear">Clear</button>
             <button type="button" class="us-qcard-btn us-qcard-approve">✅ Approve &amp; sign</button>
           </div>
+          <div class="us-qcard-payinfo" style="font-size:11px;color:var(--us-muted);margin-top:8px;text-align:center">
+            🔒 <b>100% advance payment.</b> Required to lock your slot — fully refundable if we cancel.
+          </div>
           <div class="us-qcard-msg"></div>
         </div>
       `}
     `;
     if (!isSigned) _wireSignPad(card, q, sid);
+    else _wireReviseButton(card, q, sid);
+  }
+
+  // v1.24.82 — Revise button only appears AFTER sign. Tapping it sends
+  // a structured "I want to revise quote Q-XXX" message to the bot,
+  // which then asks what to change. The next create_multi_quote call
+  // will use revise_of=Q-XXX → produces Q-XXX-1 (then -2, -3, ...).
+  function _wireReviseButton(card, q, sid) {
+    const btn = card.querySelector(".us-qcard-revise");
+    if (!btn) return;
+    btn.onclick = () => {
+      btn.disabled = true;
+      btn.textContent = "✏️ Revising…";
+      input.value = `I want to revise quote ${q.quote_id} (tell me what to add, remove, or change)`;
+      form.requestSubmit();
+    };
   }
 
   function _wireSignPad(card, q, sid) {
@@ -976,6 +1007,7 @@
         if (j.ok) {
           q.signed_at = j.signed_at;
           _renderQuoteCard(card, q, sid);  // re-render with signed state
+          _wireReviseButton(card, q, sid);
         } else {
           msg.textContent = "Failed: " + (j.error || "unknown error");
           msg.style.color = "#DC2626";

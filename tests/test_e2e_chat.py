@@ -139,7 +139,7 @@ t("B3 reply has [[quote_card: Q-XXX]] marker",
   qid_str and f"[[quote_card: {qid_str}]]" in text)
 t("B4 reply does NOT have inline PDF URL (now via card)",
   "[📥 Download PDF](" not in text)
-t("B5 reply has Revise [[choices:]]", "✏️ Revise quote" in text)
+t("B5 reply does NOT have pre-sign Revise (v1.24.82)", "✏️ Revise" not in text)
 
 # ─── SCENARIO C: persistence — Q-XXXXXX is in DB and findable ───────
 print("\n--- C) Persistence + lookup round-trip ---")

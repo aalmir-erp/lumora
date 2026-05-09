@@ -254,7 +254,7 @@ These are decisions the founder has already made about how the product
 must behave. They override default coding instincts — DO NOT add
 "normal" implementations that contradict them.
 
-**A) Stealth-launch payment gate (GATE_BOOKINGS=1)**
+**A) Stealth-launch payment gate (GATE_BOOKINGS=1) + 100% ADVANCE policy**
 "Pay with card" must NOT actually charge a card. It routes to
 `/gate.html?inv=<id>&amount=<n>` which shows a friendly "your card was
 declined by your bank" message and offers a 15% discount voucher in
@@ -265,6 +265,33 @@ service. Files: `app/quotes.py::_make_payment_link`,
 If you're writing a new payment-related code path, it MUST honour
 `GATE_BOOKINGS` first — never bypass it with a Stripe / direct gateway
 link. Switch is `app/config.py :: GATE_BOOKINGS`.
+
+**STRICT 100% ADVANCE PAYMENT POLICY** (added v1.24.82):
+The product policy is 100% advance payment, ALWAYS. Every customer-
+facing surface MUST clearly communicate this:
+- Chat replies (every quote_card mentions "100% advance")
+- /q/ and /p/ pages (signed-confirmation banner says "100% advance applies")
+- Invoice PDF (T&C section 1: "PAYMENT")
+- llms.txt (## Payment policy section — for AI engines)
+- FAQ entries
+- Service pages
+
+NEVER mention or imply: "cash on delivery", "partial deposit",
+"split payment", "pay later", "credit terms", "deferred payment".
+These options DO NOT EXIST. Wording must be unambiguous: full payment
+locks the slot; refundable in full only if WE cancel.
+
+**3-state revision policy for quotes** (added v1.24.82):
+- PRE-SIGN — customer wants to change items BEFORE signing → call
+  `create_multi_quote` with `revise_of=Q-XXX`. Tool MODIFIES IN PLACE
+  (same quote_id). Tell customer: "Updated quote Q-XXX (same number)".
+- POST-SIGN, PRE-PAY — call `create_multi_quote` with `revise_of=Q-XXX`.
+  Tool issues NEW `Q-XXX-1` (then `-2`, `-3`...). Tell customer:
+  "Revised quote Q-XXX-1 — please review and re-sign."
+- POST-PAY — `create_multi_quote` REJECTS with handoff hint. Bot must
+  call `handoff_to_human` instead. Tell customer: "Once paid, changes
+  must go through a specialist — connecting you now."
+Implemented in `app/tools.py::create_multi_quote::revise_of` branch.
 
 **B) Clean URLs (no .html in production paths)**
 The site is served via FastAPI middleware that:
@@ -293,6 +320,20 @@ The bot must only ask the fields listed in each service's
 ASK_FOR_BOOKING (e.g. `bedrooms` for cleaning, `ac_units_count` for
 ac_cleaning, `pool_size_sqm` for swimming_pool). Never invent fields
 the KB doesn't list. Never skip required fields the KB lists.
+
+**F-pre) Brand voice — NEVER reveal third-party vendor model**
+(Re-emphasised v1.24.82)
+Servia presents as a SINGLE unified service brand to the customer,
+even though work is delivered by background-checked third-party crews.
+NEVER let any customer-facing text — chat reply, PDF, FAQ, llms.txt,
+landing page, error message, email — say or imply:
+- "vendor" / "third-party" / "marketplace" / "subcontractor"
+- "we'll find someone for you"
+- "our partners" (use "our team" instead)
+- "external provider"
+Always use "our team / our crew / our specialists / our cleaners".
+Internal-only docs (admin panel, vendor onboarding flow) MAY use
+"vendor" — those are not customer-facing.
 
 **F) UI uniformity — never fork the canonical template**
 Every service detail page is rendered from the SINGLE canonical

@@ -249,7 +249,65 @@ async function approve() {{
     </div>`;
   }} else alert("Could not sign: " + (j.error||"server error"));
 }}
-if (token) showCart();
+// v1.24.82 — if ?sid=<session_id> is in URL and matches the chat that
+// created this quote, bypass the phone gate entirely. The chat session
+// is already an authenticated context. Removes the "ask for phone
+// twice" UX wart the customer hit when clicking View from in-chat card.
+async function _trySidAuth() {{
+  const u = new URL(location.href);
+  const sid = u.searchParams.get("sid");
+  if (!sid) return false;
+  try {{
+    const r = await fetch(`/api/q/{quote_id}/card?session_id=${{encodeURIComponent(sid)}}`);
+    const j = await r.json();
+    if (!j.ok) return false;
+    // Synthesize a token that the existing showCart() flow uses
+    document.getElementById("gate").style.display = "none";
+    document.getElementById("cart").style.display = "block";
+    document.getElementById("lines").innerHTML = (j.items||[]).map((it,i) =>
+      `<div class="line"><span class="num">${{i+1}}</span>
+         <div><span class="nm">${{escapeHtml(it.label)}}</span>
+              <span class="det">${{escapeHtml(it.detail||"")}}</span></div>
+         <span class="pr">AED ${{it.price_aed}}</span></div>`).join("");
+    document.getElementById("sub").textContent   = "AED " + j.subtotal_aed;
+    document.getElementById("vat").textContent   = "AED " + j.vat_aed;
+    document.getElementById("total").textContent = "AED " + j.total_aed;
+    document.getElementById("date").textContent  = (j.target_date||"") + " at " + (j.time_slot||"");
+    document.getElementById("addr").textContent  = j.address||"";
+    const pa = document.getElementById("payAmount"); if (pa) pa.textContent = j.total_aed;
+    // Stash session_id so the sign POST can use it as auth
+    window.__SERVIA_SID = sid;
+    initSig();
+    return true;
+  }} catch(e) {{ return false; }}
+}}
+// Override approve() to use session_id auth when sid was supplied
+const __origApprove = approve;
+approve = async function() {{
+  if (!window.__SERVIA_SID) return __origApprove();
+  const dataUrl = document.getElementById("sig").toDataURL("image/png");
+  const note    = document.getElementById("cnote").value.trim();
+  const r = await fetch("/api/q/{quote_id}/sign", {{
+    method:"POST", headers:{{"Content-Type":"application/json"}},
+    body: JSON.stringify({{ signature_data_url: dataUrl, customer_note: note,
+                           session_id: window.__SERVIA_SID }})
+  }});
+  const j = await r.json();
+  if (j.ok) {{
+    document.body.innerHTML = `<div style="background:#F8FAFC;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px">
+      <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:32px 24px;max-width:480px;text-align:center;box-shadow:0 8px 32px rgba(15,23,42,.08)">
+        <div style="background:#D1FAE5;color:#065F46;width:64px;height:64px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:14px">✓</div>
+        <h1 style="margin:0 0 8px;font-size:22px;color:#0F172A">Quote signed!</h1>
+        <p style="color:#64748B;font-size:14px;margin:0 0 20px;line-height:1.6">Quote <code style="background:#F0FDFA;color:#0F766E;padding:2px 6px;border-radius:4px">{quote_id}</code> is approved. <b>100% advance payment</b> applies.</p>
+        <a href="/p/{quote_id}?sid=${{encodeURIComponent(window.__SERVIA_SID)}}" style="display:inline-flex;padding:14px 28px;background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border-radius:9px;font-weight:700;text-decoration:none">💳 Pay AED ${{j.total_aed||""}}</a>
+      </div>
+    </div>`;
+  }} else alert("Could not sign: " + (j.error||"server error"));
+}};
+(async () => {{
+  if (await _trySidAuth()) return;  // session auth succeeded
+  if (token) showCart();           // fall back to stored phone token
+}})();
 </script></body></html>"""
 
 
@@ -517,9 +575,23 @@ def invoice_pdf(quote_id: str):
     except Exception:
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url=f"/i/{quote_id}", status_code=302)
+    # v1.24.82 — pre-replace common Unicode chars with latin-1 equivalents
+    # so the Helvetica core font can render them. Em/en-dash were causing
+    # FPDFUnicodeEncodingException on items like "Sofa & Carpet — AED 49".
+    _UNI_MAP = {
+        "—": "-", "–": "-", "•": "*", "·": "-", "→": "->", "↗": "^",
+        "←": "<-", "✓": "v", "✗": "x", "✅": "[OK]", "❌": "[X]",
+        "•": "*", "⤷": ">", "📋": "[Q]", "📅": "", "📍": "",
+        "👤": "", "✍️": "", "💳": "", "🔒": "",
+        "–":"-","—":"-","‘":"'","’":"'",
+        "“":'"',"”":'"',
+    }
     def _safe(s):
-        try: return (s or "").encode("latin-1", "replace").decode("latin-1")
-        except: return (s or "").encode("ascii", "ignore").decode("ascii")
+        s = (s or "")
+        for k, v in _UNI_MAP.items():
+            s = s.replace(k, v)
+        try: return s.encode("latin-1", "replace").decode("latin-1")
+        except Exception: return s.encode("ascii", "ignore").decode("ascii")
     pdf = FPDF(format="A4", unit="mm")
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -529,27 +601,51 @@ def invoice_pdf(quote_id: str):
     pdf.set_font("Helvetica", "", 9); pdf.set_xy(15, 18)
     pdf.cell(0, 4, "UAE home services platform", ln=1)
     pdf.set_xy(150, 8); pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(45, 6, "INVOICE", align="R", ln=1)
+    pdf.cell(45, 6, "QUOTATION & INVOICE", align="R", ln=1)
     pdf.set_font("Helvetica", "", 9); pdf.set_xy(150, 16)
-    pdf.cell(45, 4, f"Quote: {quote_id}", align="R", ln=1)
+    pdf.cell(45, 4, f"Ref: {quote_id}", align="R", ln=1)
     pdf.set_xy(150, 21)
-    pdf.cell(45, 4, f"Date: {(q.get('created_at') or '')[:10]}", align="R", ln=1)
+    pdf.cell(45, 4, f"Issued: {(q.get('created_at') or '')[:10]}", align="R", ln=1)
+    # v1.24.82 — professional invoice layout
     pdf.set_text_color(15, 23, 42); pdf.set_xy(15, 38)
-    pdf.set_font("Helvetica", "B", 10); pdf.cell(0, 5, "Bill to:", ln=1)
+    pdf.set_font("Helvetica", "B", 10); pdf.cell(0, 5, "BILL TO", ln=1)
     pdf.set_font("Helvetica", "", 10)
     pdf.set_x(15); pdf.cell(0, 5, _safe(q.get("customer_name") or ""), ln=1)
     pdf.set_x(15); pdf.cell(0, 5, _safe(q.get("phone") or ""), ln=1)
     pdf.set_x(15); pdf.multi_cell(120, 5, _safe(q.get("address") or ""))
-    pdf.set_y(pdf.get_y() + 6)
+    # Service date / time block
+    pdf.set_y(pdf.get_y() + 4)
+    pdf.set_fill_color(240, 253, 250); pdf.set_text_color(15, 118, 110)
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.cell(0, 7, " SERVICE SCHEDULE", fill=True, ln=1)
+    pdf.set_text_color(15, 23, 42); pdf.set_font("Helvetica", "", 10)
+    pdf.set_x(15); pdf.cell(0, 5,
+        f"Date: {q.get('target_date','')}    Time: {q.get('time_slot','')}", ln=1)
+    pdf.ln(4)
+    # Itemised services table
     pdf.set_fill_color(241, 245, 249); pdf.set_font("Helvetica", "B", 9)
     pdf.cell(10, 7, "#", border=1, fill=True, align="C")
-    pdf.cell(120, 7, "Service", border=1, fill=True)
+    pdf.cell(120, 7, "Service & Special Instructions", border=1, fill=True)
     pdf.cell(60, 7, "Amount (AED)", border=1, fill=True, align="R", ln=1)
     pdf.set_font("Helvetica", "", 10)
     for i, it in enumerate(q.get("items") or []):
-        pdf.cell(10, 7, str(i + 1), border=1, align="C")
-        pdf.cell(120, 7, _safe(it.get("label", ""))[:60], border=1)
-        pdf.cell(60, 7, f"{it.get('price_aed', 0):,.2f}", border=1, align="R", ln=1)
+        # Capture vertical for multi-row alignment
+        y_start = pdf.get_y()
+        pdf.cell(10, 7, str(i + 1), border="LR", align="C")
+        # Inline service name
+        pdf.cell(120, 7, _safe(it.get("label", ""))[:60], border="LR")
+        pdf.cell(60, 7, f"{it.get('price_aed', 0):,.2f}", border="LR", align="R", ln=1)
+        # Special instructions row (italic, smaller)
+        si = (it.get("special_instructions") or "").strip()
+        if si:
+            pdf.set_x(20)
+            pdf.set_font("Helvetica", "I", 8)
+            pdf.set_text_color(100, 116, 139)
+            pdf.multi_cell(170, 4, _safe("⤷ " + si)[:200], border=0)
+            pdf.set_text_color(15, 23, 42); pdf.set_font("Helvetica", "", 10)
+        # Bottom border for row
+        pdf.set_x(15); pdf.cell(190, 0, "", border="T", ln=1)
+    # Totals
     pdf.ln(4)
     sub, vat, tot = q.get("subtotal_aed") or 0, q.get("vat_aed") or 0, q.get("total_aed") or 0
     pdf.set_x(115); pdf.cell(45, 6, "Subtotal", align="R")
@@ -557,12 +653,93 @@ def invoice_pdf(quote_id: str):
     pdf.set_x(115); pdf.cell(45, 6, "VAT 5%", align="R")
     pdf.cell(35, 6, f"AED {vat:,.2f}", align="R", ln=1)
     pdf.set_font("Helvetica", "B", 12); pdf.set_text_color(13, 148, 136)
-    pdf.set_x(115); pdf.cell(45, 8, "Total", align="R")
+    pdf.set_x(115); pdf.cell(45, 8, "TOTAL", align="R")
     pdf.cell(35, 8, f"AED {tot:,.2f}", align="R", ln=1)
-    pdf.ln(8); pdf.set_font("Helvetica", "B", 11)
+    # Payment status banner
+    pdf.ln(6); pdf.set_font("Helvetica", "B", 11)
     paid = bool(q.get("paid_at"))
-    pdf.set_text_color(*((16,185,129) if paid else (220,38,38)))
-    pdf.cell(0, 8, ("PAID + " + (q.get("paid_at") or "")[:19]) if paid else "PAYMENT PENDING", ln=1)
+    if paid:
+        pdf.set_fill_color(209, 250, 229); pdf.set_text_color(6, 95, 70)
+        pdf.cell(0, 9, _safe(f"  PAID  -  {(q.get('paid_at') or '')[:19]}"), fill=True, ln=1)
+    else:
+        pdf.set_fill_color(254, 243, 199); pdf.set_text_color(146, 64, 14)
+        pdf.cell(0, 9, "  PAYMENT PENDING - 100% advance required to dispatch crew", fill=True, ln=1)
+    # General special instructions
+    notes = (q.get("notes") or "").strip()
+    if notes:
+        pdf.ln(4); pdf.set_text_color(15, 23, 42); pdf.set_font("Helvetica", "B", 9)
+        pdf.cell(0, 5, "GENERAL INSTRUCTIONS", ln=1)
+        pdf.set_font("Helvetica", "", 9); pdf.set_text_color(71, 85, 105)
+        pdf.multi_cell(0, 4.5, _safe(notes)[:1500])
+    # Customer satisfaction block
+    pdf.ln(3); pdf.set_font("Helvetica", "B", 9); pdf.set_text_color(15, 23, 42)
+    pdf.cell(0, 5, "CUSTOMER SATISFACTION", ln=1)
+    pdf.set_font("Helvetica", "", 8); pdf.set_text_color(71, 85, 105)
+    pdf.multi_cell(0, 4,
+        "If you are not satisfied with the service delivered, contact us "
+        "within 24 hours of completion via WhatsApp +971 56 4020087 or "
+        "support@servia.ae and we will arrange a free re-do or escalate "
+        "to our quality team. Photos and live status of your service are "
+        "available 24/7 at https://" + get_settings().brand().get("domain","servia.ae") + "/q/" + quote_id)
+    # ──────────────────────────────────────────────────────────
+    # Customer Portal & Modern Features section (v1.24.82)
+    # — beats every UAE competitor's static PDF with live links +
+    # PWA install + smartwatch + NFC unlock + booking AI assistant.
+    # ──────────────────────────────────────────────────────────
+    domain = get_settings().brand().get("domain","servia.ae")
+    pdf.ln(3); pdf.set_font("Helvetica", "B", 9); pdf.set_text_color(15, 23, 42)
+    pdf.cell(0, 5, "YOUR CUSTOMER PORTAL", ln=1)
+    pdf.set_font("Helvetica", "", 8); pdf.set_text_color(71, 85, 105)
+    pdf.multi_cell(0, 4,
+        f"Live status + photos + invoices + signature record:  https://{domain}/q/{quote_id}\n"
+        f"All your bookings (phone-gated):     https://{domain}/me\n"
+        f"Need to talk to a human?            https://{domain}/contact   |   WhatsApp +971 56 4020087\n"
+        f"Refund policy:                       https://{domain}/refund")
+    pdf.ln(2); pdf.set_font("Helvetica", "B", 9); pdf.set_text_color(15, 23, 42)
+    pdf.cell(0, 5, _safe("BUILT FOR THE UAE - FEATURES YOU WILL NOT FIND ELSEWHERE"), ln=1)
+    pdf.set_font("Helvetica", "", 8); pdf.set_text_color(71, 85, 105)
+    pdf.multi_cell(0, 4,
+        f"Mobile app (Android + iOS)   - one-tap rebook, push alerts, app-only deals.  https://{domain}/install\n"
+        f"Wear OS / smartwatch         - 'Crew arriving' on your wrist, no phone needed.  https://{domain}/wearos\n"
+        f"NFC tap (villa & vehicle)    - tap a Servia tag to call the right specialist instantly.  https://{domain}/nfc\n"
+        f"24/7 AI Concierge            - 15 languages, books in 60 seconds, lives at every page.\n"
+        f"Live tracking                - watch the crew approach your address in real time.\n"
+        f"Digital signature            - sign quotes from your phone, no paperwork.\n"
+        f"Ambassador rewards           - refer friends, earn discounts on every future booking.")
+    # Terms & Conditions
+    pdf.ln(3); pdf.set_font("Helvetica", "B", 9); pdf.set_text_color(15, 23, 42)
+    pdf.cell(0, 5, "TERMS & CONDITIONS", ln=1)
+    pdf.set_font("Helvetica", "", 7.5); pdf.set_text_color(71, 85, 105)
+    tnc = (
+        "1. PAYMENT: 100% advance payment is strictly required to lock the "
+        "scheduled slot. We do not offer cash on delivery, partial payment, "
+        "or credit terms.\n"
+        "2. CANCELLATION: Full refund if Servia cancels. Customer "
+        "cancellations within 4 hours of dispatch are non-refundable; "
+        "earlier cancellations incur a 25% admin fee.\n"
+        "3. LIABILITY: Servia is not liable for any damage to property, "
+        "loss of valuables, or personal items during or after the service. "
+        "Customer is responsible for securing valuables, jewellery, cash, "
+        "documents, and electronics before crew arrival.\n"
+        "4. SCOPE: Service is limited to what is itemised above. Additional "
+        "work outside the listed scope requires a separate quote.\n"
+        "5. ACCESS: Customer must ensure unobstructed access to the "
+        "premises at the scheduled time. Failure to grant access is a "
+        "no-show and is non-refundable.\n"
+        "6. INSURANCE: All staff are background-checked. Major-incident "
+        "insurance is provided up to AED 5,000 per booking; this excludes "
+        "ordinary wear and consequential losses.\n"
+        "7. DISPUTES: Any dispute must be raised within 48 hours of service "
+        "completion. Decisions of the Servia quality team are final.\n"
+        "8. COMMUNICATION: SMS and WhatsApp notifications are sent to the "
+        "phone number on file. Customer is responsible for keeping it "
+        "current.\n"
+        "By signing the digital quote you accept these terms."
+    )
+    pdf.multi_cell(0, 3.6, _safe(tnc))
+    # Footer
+    pdf.ln(2); pdf.set_font("Helvetica", "I", 7); pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 4, _safe(f"Servia - {get_settings().brand().get('domain','servia.ae')} - WhatsApp +971 56 4020087 - Issued {_now()[:19]}"), align="C", ln=1)
     out = pdf.output(dest="S")
     if isinstance(out, str): out = out.encode("latin-1")
     from fastapi.responses import Response

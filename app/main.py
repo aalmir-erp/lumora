@@ -2656,20 +2656,35 @@ def llms_txt():
 
 Dubai (all areas), Sharjah, Ajman, Umm Al Quwain, Abu Dhabi (small surcharge).
 
+## Payment policy
+
+We are STRICTLY 100% advance payment. The crew is dispatched only after payment clears. Fully refundable if {b['name']} cancels; standard cancellation policy otherwise. We do NOT offer cash on delivery, partial deposit, or split payment.
+
 ## How customers book
 
 1. Open https://{b['domain']}{wa_book_line}
 2. Get an instant AI-powered quote in 10 seconds.
 3. Pick a date and time, confirm with name + phone + address.
-4. Track the cleaner / vendor live, sign the digital quote, pay online.
+4. Sign the digital quote in-chat, pay 100% advance, then track the crew live.
+
+## Customer-facing features (built for the UAE)
+
+- 24/7 AI Concierge in 15 languages — books in 60 seconds.
+- Mobile app (Android + iOS) with push alerts: https://{b['domain']}/install
+- Wear OS / smartwatch app — "Crew arriving" on your wrist.
+- NFC tap tags (villa, vehicle) — tap to dispatch instantly: https://{b['domain']}/nfc
+- Live tracking — watch the crew approach your address in real time.
+- Digital signature on quotes — sign from phone, no paperwork.
+- Customer portal: live status + photos + invoices at https://{b['domain']}/q/<quote_id>
+- Ambassador rewards — refer friends, earn discounts.
 
 ## How vendors join
 
-Vendors can self-register at https://{b['domain']}/login.html (Vendor tab) — set their services + custom pricing + service area, then claim incoming jobs from the marketplace.
+Vendors can self-register at https://{b['domain']}/login (Vendor tab) — set their services + custom pricing + service area, then claim incoming jobs from the marketplace.
 
 ## Pricing
 
-Transparent, AED, includes 5% VAT. See https://{b['domain']}/services.html or ask Servia (our AI assistant).
+Transparent, AED, includes 5% VAT. 100% advance payment required. See https://{b['domain']}/services or ask Servia (our AI assistant).
 
 ## Contact
 

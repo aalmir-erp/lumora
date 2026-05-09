@@ -380,7 +380,8 @@ def update_booking_status(booking_id: str, status: str, actor: str = "agent") ->
 def create_multi_quote(services: list, customer_name: str, phone: str,
                        address: str, target_date: str, time_slot: str,
                        notes: str | None = None,
-                       session_id: str | None = None) -> dict:
+                       session_id: str | None = None,
+                       revise_of: str | None = None) -> dict:
     """Bundle multiple services into a single Quote + Invoice + signing/pay
     links. Each service is computed via get_quote then aggregated.
 
@@ -437,7 +438,8 @@ def create_multi_quote(services: list, customer_name: str, phone: str,
                     break
         except Exception: pass
         items.append({"service_id": sid, "label": label,
-                      "detail": detail, "price_aed": round(line_price, 2)})
+                      "detail": detail, "price_aed": round(line_price, 2),
+                      "special_instructions": (svc.get("special_instructions") or "").strip()})
         subtotal += line_price
 
     vat_pct = s.brand().get("vat_pct", 5)
@@ -447,7 +449,61 @@ def create_multi_quote(services: list, customer_name: str, phone: str,
     # Persist a single quote record with items_json for the customer signing page
     from . import db as _db, quotes as _q
     import uuid as _u, json as _json
-    quote_id = "Q-" + _u.uuid4().hex[:6].upper()
+    # v1.24.82 — quote versioning. If `revise_of=Q-BASE` is supplied,
+    # derive the new quote_id by extending the base with -1, -2, …
+    # (or extending an existing -N to -N+1). Customer can track
+    # revisions to the same booking via a stable "Q-BASE" prefix.
+    # v1.24.82 — three-state change policy:
+    #   PRE-SIGN  → MODIFY IN PLACE (same quote_id, no version bump)
+    #   POST-SIGN, PRE-PAY → REVISE (new id with -N suffix, parent stays)
+    #   POST-PAY  → REJECT with handoff_to_human ("contact specialist")
+    quote_id = None
+    modify_in_place = False
+    if revise_of:
+        base = revise_of.strip().upper()
+        import re as _re
+        with _db.connect() as c:
+            cur = c.execute(
+                "SELECT quote_id, signed_at, paid_at FROM multi_quotes WHERE quote_id=?",
+                (base,)).fetchone()
+        if not cur:
+            return {"ok": False,
+                    "error": f"Quote {revise_of} not found.",
+                    "action": "ask_for_quote_id"}
+        # POST-PAY → can't self-serve
+        if cur["paid_at"]:
+            return {"ok": False,
+                    "error": ("This quote is already paid. Changes after "
+                              "payment require contacting a specialist."),
+                    "action": "handoff_to_human",
+                    "quote_id": base,
+                    "contact": "WhatsApp +971 56 4020087"}
+        # POST-SIGN → version bump
+        if cur["signed_at"]:
+            mm = _re.match(r"^(Q-[A-Z0-9]+?)(?:-(\d+))?$", base)
+            true_base = mm.group(1) if mm else base
+            with _db.connect() as c:
+                rows = c.execute(
+                    "SELECT quote_id FROM multi_quotes "
+                    "WHERE quote_id = ? OR quote_id LIKE ?",
+                    (true_base, f"{true_base}-%"),
+                ).fetchall()
+            versions = []
+            for r in rows:
+                qid = r["quote_id"]
+                if qid == true_base:
+                    versions.append(0)
+                else:
+                    sm = _re.match(rf"^{true_base}-(\d+)$", qid)
+                    if sm: versions.append(int(sm.group(1)))
+            next_v = (max(versions) + 1) if versions else 1
+            quote_id = f"{true_base}-{next_v}"
+        else:
+            # PRE-SIGN → modify in place
+            modify_in_place = True
+            quote_id = base
+    if not quote_id:
+        quote_id = "Q-" + _u.uuid4().hex[:6].upper()
     invoice_id = "INV-" + _u.uuid4().hex[:6].upper()
     with _db.connect() as c:
         try:
@@ -469,16 +525,30 @@ def create_multi_quote(services: list, customer_name: str, phone: str,
                 created_at TEXT
             )""")
         except Exception: pass
-        c.execute(
-            "INSERT INTO multi_quotes(quote_id, items_json, subtotal_aed, vat_aed, "
-            "total_aed, customer_name, phone, address, target_date, time_slot, "
-            "notes, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-            (quote_id, _json.dumps(items), subtotal, vat, total, customer_name,
-             phone, address, target_date, time_slot, notes or "", _now()))
-    db.log_event("quote", quote_id, "multi_quote_created",
-                 actor="bot",
-                 details={"phone": phone, "items": len(items), "total": total,
-                          "session_id": session_id})
+        if modify_in_place:
+            # v1.24.82 — pre-sign edit: same quote_id, refreshed fields
+            c.execute(
+                "UPDATE multi_quotes SET items_json=?, subtotal_aed=?, "
+                "vat_aed=?, total_aed=?, customer_name=?, phone=?, "
+                "address=?, target_date=?, time_slot=?, notes=? "
+                "WHERE quote_id=?",
+                (_json.dumps(items), subtotal, vat, total, customer_name,
+                 phone, address, target_date, time_slot,
+                 notes or "", quote_id))
+        else:
+            c.execute(
+                "INSERT INTO multi_quotes(quote_id, items_json, subtotal_aed, vat_aed, "
+                "total_aed, customer_name, phone, address, target_date, time_slot, "
+                "notes, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                (quote_id, _json.dumps(items), subtotal, vat, total, customer_name,
+                 phone, address, target_date, time_slot, notes or "", _now()))
+    db.log_event(
+        "quote", quote_id,
+        "multi_quote_modified" if modify_in_place else "multi_quote_created",
+        actor="bot",
+        details={"phone": phone, "items": len(items), "total": total,
+                 "session_id": session_id,
+                 "revise_of": revise_of if revise_of else None})
 
     domain = s.brand().get("domain", "servia.ae")
     return {
@@ -630,13 +700,16 @@ TOOL_SCHEMAS: list[dict] = [
              "bedrooms":   {"type": "number"}, "hours": {"type": "number"},
              "sqm":        {"type": "number"},
              "addons":     {"type": "array", "items": {"type": "string"}},
+             "special_instructions": {"type": "string", "description": "Per-service instructions from the customer (e.g. 'no chemicals on marble', 'allergy-safe products only'). Renders on the line in the quote + invoice PDF."},
          }, "required": ["service_id"]}},
          "customer_name": {"type": "string"},
          "phone":         {"type": "string"},
          "address":       {"type": "string"},
          "target_date":   {"type": "string", "description": "YYYY-MM-DD"},
          "time_slot":     {"type": "string", "description": "e.g. 08:00 or '8 AM'"},
-         "notes":         {"type": "string"}},
+         "notes":         {"type": "string", "description": "General special instructions for the whole booking (e.g. 'Bring own water', 'Park at gate B', 'Code 1234'). These render on the quote and the printed invoice."},
+         "revise_of":     {"type": "string",
+                           "description": "If editing/revising an existing quote, pass its quote_id. PRE-SIGN edits update the same quote_id in place. POST-SIGN edits issue Q-XXX-1, -2, … (versioned). POST-PAY changes are blocked — call handoff_to_human instead."}},
          "required": ["services", "customer_name", "phone", "address",
                       "target_date", "time_slot"]}},
 ]

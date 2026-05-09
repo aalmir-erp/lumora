@@ -150,7 +150,8 @@ t("18 Reply does NOT have inline View URL (replaced by card)",
   "[👁 View quote](" not in out)
 t("19 Reply does NOT have inline PDF URL (replaced by card)",
   "[📥 Download PDF](" not in out)
-t("20 Reply has ✏️ Revise choice button", "✏️ Revise quote" in out and "[[choices:" in out)
+t("20 Reply does NOT have pre-sign Revise (v1.24.82 — moved into card after sign)",
+  "✏️ Revise" not in out)
 t("21 Card endpoint /api/q/<id>/card exists",
   any(r.path == "/api/q/{quote_id}/card" for r in _m.app.routes if hasattr(r,'path')))
 t("22 Reply NOT contains 'Book now ↗'", "Book now" not in out)

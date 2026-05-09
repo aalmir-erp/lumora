@@ -195,8 +195,30 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         "        📋 *Quote {quote_id}* — your service is ready to confirm.\n"
         "        [[quote_card: {quote_id}]]\n"
         "        [[choices: ✏️ Revise quote=I want to revise...]]\n"
-        "STEP 11: If customer asks for revision, call create_multi_quote AGAIN\n"
-        "        with the updated items list (a NEW quote_id will be issued).\n"
+        "STEP 11 — CHANGE-REQUEST POLICY (3 states, v1.24.82):\n"
+        "        a) PRE-SIGN — customer wants to add/remove/edit items BEFORE\n"
+        "           signing the quote. Call create_multi_quote with\n"
+        "           revise_of=Q-XXX. The SAME quote_id is kept (modified in\n"
+        "           place). Tell customer: 'Updated quote Q-XXX — same\n"
+        "           number, refreshed details.'\n"
+        "        b) POST-SIGN, PRE-PAY — customer wants to change something\n"
+        "           after signing but before paying. Call create_multi_quote\n"
+        "           with revise_of=Q-XXX. A NEW quote_id is issued as\n"
+        "           Q-XXX-1 (then Q-XXX-2 if revised again). Tell customer:\n"
+        "           'Revised quote Q-XXX-1 — please review and re-sign.'\n"
+        "        c) POST-PAY — payment already received. NO self-service\n"
+        "           edits. Call handoff_to_human with reason='post-payment\n"
+        "           change request' so a specialist contacts the customer.\n"
+        "           Do NOT call create_multi_quote in this state.\n"
+        "\n"
+        "🚨 PAYMENT POLICY — STRICT 100% ADVANCE (v1.24.82):\n"
+        "We are STRICTLY 100% advance payment. The slot is locked ONLY\n"
+        "after payment clears. Refundable in full if WE cancel; standard\n"
+        "cancellation policy otherwise. State this CLEARLY whenever\n"
+        "discussing pricing or scheduling. Never imply 'pay later' / 'cash\n"
+        "on arrival' / 'partial deposit' / 'split payment' — those are NOT\n"
+        "options. If a customer asks, politely confirm 100% advance and\n"
+        "explain it's how we guarantee crew dispatch.\n"
         "\n"
         "❌ NEVER call create_multi_quote BEFORE confirming the price/services with the customer.\n"
         "❌ NEVER produce a quote_id while details are still missing.\n"
@@ -956,15 +978,13 @@ def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = No
     #   - ✏️ Revise (sends "I want to revise..." back to bot)
     # Customer never has to leave the chat.
     qid = q['quote_id']
+    # v1.24.82 — Revise button moved INTO the card (post-sign only).
+    # UX rule: customer should sign first; revision is offered after
+    # signing in case they spot an error post-commit. Pre-sign, the
+    # customer should review and sign — not be tempted to revise.
     lines = [f"\U0001f4cb *Quote {qid}* — your service is ready to confirm.",
              "",
-             f"[[quote_card: {qid}]]",
-             "",
-             # Revision is the only NON-card action — sends a text request
-             # to the bot, which then asks what to change.
-             (f"[[choices: ✏️ Revise quote=I want to revise quote {qid} "
-              "(tell me what to add, remove, or change)]]"),
-    ]
+             f"[[quote_card: {qid}]]"]
     return "\n".join(lines)
 
 
