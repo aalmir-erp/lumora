@@ -38,6 +38,13 @@ class CartPayload(BaseModel):
     email: Optional[str] = None       # for auto-account create / attach
     address: Optional[str] = None
     language: Optional[str] = "en"
+    # v1.24.88 — when true, route through create_multi_quote → /q/<id>
+    # for the unified single-payment flow (Q-XXXXXX + signature pad).
+    # Otherwise legacy multi-booking + bundle invoice path is used.
+    use_quote: Optional[bool] = True
+    target_date: Optional[str] = None
+    time_slot: Optional[str] = None
+    notes: Optional[str] = None
 
 
 @router.post("/quote")
@@ -120,6 +127,37 @@ def checkout(cart: CartPayload):
     setting a password or requesting a magic-link via email."""
     if not (cart.customer_name and cart.phone and cart.address):
         raise HTTPException(400, "customer_name, phone, address required")
+    # v1.24.88 — unified flow: route through create_multi_quote so the
+    # checkout, signature, and payment all happen on /q/<id> + /p/<id>
+    # — same UX whether the customer started in chat, on /book, or /cart.
+    if cart.use_quote:
+        from .tools import create_multi_quote as _cmq
+        # Pull date/time from first item if not supplied
+        td = cart.target_date or (cart.items[0].target_date if cart.items else None)
+        ts = cart.time_slot   or (cart.items[0].time_slot   if cart.items else None)
+        if not td or not ts:
+            return {"ok": False, "error": "target_date + time_slot required"}
+        services_arg = []
+        for it in cart.items:
+            d = it.model_dump(exclude_none=True)
+            d["service_id"] = d.pop("service_id", None) or d.get("id")
+            services_arg.append({k: v for k, v in d.items()
+                                 if k in {"service_id","bedrooms","hours",
+                                          "sqm","addons","special_instructions"}})
+        q = _cmq(services=services_arg,
+                 customer_name=cart.customer_name, phone=cart.phone,
+                 address=cart.address, target_date=td, time_slot=ts,
+                 notes=cart.notes)
+        if not q.get("ok"):
+            return q
+        return {
+            "ok": True, "via": "multi_quote",
+            "quote_id": q["quote_id"],
+            "total_aed": q.get("total_aed"),
+            "currency": "AED",
+            "payment_url": q["signing_url"],  # /q/<id> — sign first, then pay
+            "signing_url": q["signing_url"],
+        }
     # Strict UAE-only phone validation. We auto-normalise +971 / 971 / 0X / 5X
     # forms so customers can type whichever form they're comfortable with —
     # but anything outside the UAE +971 5X mobile range is rejected up-front.
