@@ -537,7 +537,11 @@
   function extractActions(text, toolCalls) {
     const out = [];
     let cleanText = text || "";
-    cleanText = cleanText.replace(/\[\[\s*choices?\s*:\s*([^\]]+)\]\]/gi, (_, b) => {
+    let pickerKind = null;   // v1.24.64 — 'date' | 'time' | null
+    cleanText = cleanText.replace(/\[\[\s*picker\s*:\s*(date|time)\s*\]\]/gi, (_, kind) => {
+      pickerKind = kind.toLowerCase();
+      return "";
+    }).replace(/\[\[\s*choices?\s*:\s*([^\]]+)\]\]/gi, (_, b) => {
       b.split(/\s*;\s*/).forEach(pair => {
         const m = pair.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/);
         if (m) out.push({ label: m[1], send: m[2] });
@@ -545,6 +549,7 @@
       });
       return "";
     }).replace(/\n{3,}/g, "\n\n").trim();
+    if (pickerKind) out.__picker = pickerKind;
     for (const tc of toolCalls || []) {
       const r = tc.result || {};
       if (tc.name === "list_slots" && r.ok && Array.isArray(r.slots) && !out.length) {
@@ -576,16 +581,18 @@
         out.push({ label: "❌ No", send: "No" });
       }
     }
-    return { cleanText, actions: out };
+    return { cleanText, actions: out, picker: pickerKind };
   }
 
   function addMsg(who, text, toolCalls, isAgent) {
     let cleanText = text;
     let actions = [];
+    let picker = null;
     if (who === "bot") {
       const ex = extractActions(text, toolCalls);
       cleanText = ex.cleanText;
       actions = ex.actions;
+      picker = ex.picker;
     }
     const div = el("div", { class: "us-msg " + (who === "user" ? "user" : "bot") });
     div.innerHTML = formatMd(cleanText);
@@ -608,7 +615,74 @@
       });
       body.appendChild(wrap);
     }
+    // v1.24.64 — render rich date/time picker if [[picker:date]] / [[picker:time]] was emitted
+    if (who === "bot" && picker) {
+      body.appendChild(_buildPicker(picker));
+    }
     body.scrollTop = body.scrollHeight;
+  }
+
+  // v1.24.64 — date/time picker DOM
+  function _buildPicker(kind) {
+    const wrap = el("div", { class: "us-picker" });
+    if (kind === "date") {
+      // 14-day horizontal scroll cards: Today, Tomorrow, then weekday + date
+      const days = [];
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const monthShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const dayShort = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(today.getTime() + i * 86400000);
+        const label = i === 0 ? "Today" : (i === 1 ? "Tomorrow" : dayShort[d.getDay()]);
+        const sub = `${d.getDate()} ${monthShort[d.getMonth()]}`;
+        const iso = d.toISOString().slice(0,10);
+        const sendStr = `${label} (${dayShort[d.getDay()]} ${d.getDate()} ${monthShort[d.getMonth()]} ${d.getFullYear()})`;
+        days.push({ label, sub, iso, sendStr, isWeekend: d.getDay() === 0 || d.getDay() === 6 });
+      }
+      const strip = el("div", { class: "us-picker-strip" });
+      days.forEach(d => {
+        const card = el("button", { type: "button", class: "us-picker-day" + (d.isWeekend ? " us-picker-day-weekend" : "") });
+        card.innerHTML = `<div class="us-picker-day-label">${d.label}</div>
+          <div class="us-picker-day-sub">${d.sub}</div>`;
+        card.onclick = () => {
+          [...wrap.querySelectorAll("button")].forEach(x => x.disabled = true);
+          card.classList.add("us-picker-picked");
+          input.value = d.sendStr; form.requestSubmit();
+        };
+        strip.appendChild(card);
+      });
+      wrap.appendChild(strip);
+      const hint = el("div", { class: "us-picker-hint" }, "← swipe for more days · or type a custom date");
+      wrap.appendChild(hint);
+    } else if (kind === "time") {
+      // 6-col grid of half-hour slots from 7am to 9pm
+      const slots = [];
+      for (let h = 7; h <= 21; h++) {
+        for (const m of [0, 30]) {
+          if (h === 21 && m === 30) continue;
+          const t24 = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+          const ampm = h < 12 ? "AM" : "PM";
+          const h12 = h % 12 || 12;
+          const t12 = `${h12}:${String(m).padStart(2,"0")} ${ampm}`;
+          slots.push({ t24, t12 });
+        }
+      }
+      const grid = el("div", { class: "us-picker-grid" });
+      slots.forEach(s => {
+        const b = el("button", { type: "button", class: "us-picker-time" }, s.t12);
+        b.onclick = () => {
+          [...wrap.querySelectorAll("button")].forEach(x => x.disabled = true);
+          b.classList.add("us-picker-picked");
+          input.value = s.t24; form.requestSubmit();
+        };
+        grid.appendChild(b);
+      });
+      wrap.appendChild(grid);
+      const hint = el("div", { class: "us-picker-hint" }, "or type a custom time (e.g. 11pm)");
+      wrap.appendChild(hint);
+    }
+    return wrap;
   }
 
   function addMsgWithImage(who, text, imageUrl) {

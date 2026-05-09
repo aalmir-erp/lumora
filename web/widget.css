@@ -166,3 +166,22 @@ body.us-lift-bar .us-launcher-tip { bottom: 104px; }
 @keyframes us-pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}
 
 .us-mode{display:none}
+
+/* v1.24.64 — friendly date/time picker */
+.us-picker { padding: 8px 12px 14px; background: #FAFBFD; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; }
+.us-picker-strip { display: flex; gap: 8px; overflow-x: auto; padding: 6px 2px 8px; scrollbar-width: thin; scroll-snap-type: x mandatory; }
+.us-picker-strip::-webkit-scrollbar { height: 4px; }
+.us-picker-strip::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+.us-picker-day { flex-shrink: 0; min-width: 80px; padding: 12px 4px; border: 2px solid #E2E8F0; background: #fff; border-radius: 12px; cursor: pointer; transition: all .15s; scroll-snap-align: start; font-family: inherit; }
+.us-picker-day:hover { border-color: var(--us-primary); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(13,148,136,0.15); }
+.us-picker-day-label { font-weight: 700; font-size: 13.5px; color: var(--us-text); }
+.us-picker-day-sub { font-size: 11px; color: var(--us-muted); margin-top: 2px; }
+.us-picker-day-weekend .us-picker-day-label { color: #DC2626; }
+.us-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px 0 0; }
+.us-picker-time { padding: 9px 4px; border: 2px solid #E2E8F0; background: #fff; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--us-text); font-family: inherit; transition: all .12s; }
+.us-picker-time:hover { border-color: var(--us-primary); background: #F0FDFA; color: var(--us-primary-dark); }
+.us-picker-picked { background: var(--us-primary) !important; color: #fff !important; border-color: var(--us-primary) !important; }
+.us-picker-picked .us-picker-day-label, .us-picker-picked .us-picker-day-sub { color: #fff !important; }
+.us-picker-hint { font-size: 11px; color: var(--us-muted); margin-top: 8px; text-align: center; opacity: .7; }
+.us-picker [disabled] { opacity: .5; cursor: not-allowed; }
+@media (max-width: 380px) { .us-picker-grid { grid-template-columns: repeat(3, 1fr); } }
