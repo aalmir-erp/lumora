@@ -41,20 +41,71 @@ jobs:
           grep "FINDINGS-JSON:" /tmp/e2e-heavy.log | tail -1 | sed 's/^FINDINGS-JSON://' > /tmp/findings.json || true
           python3 .scripts/format-e2e-results.py || true
 
+      # v1.24.85 — commit small (240px) thumbnails into the repo so admin
+      # can view them at /admin/e2e-shots without GitHub login. Full PNGs
+      # remain in workflow artifact (7-day retention).
+      - name: Build thumbnails for admin viewer
+        if: always()
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends imagemagick 2>&1 | tail -2 || true
+          OUT="_e2e-shots/${{ github.run_number }}-${{ github.run_id }}"
+          mkdir -p "$OUT"
+          for f in /tmp/e2e-shots/*.png; do
+            [ -e "$f" ] || continue
+            base=$(basename "$f")
+            convert "$f" -resize 240x -strip -quality 78 "$OUT/$base" 2>/dev/null || cp "$f" "$OUT/$base"
+          done
+          python3 - "$OUT" <<'PYEOF'
+import json, os, glob, datetime, sys
+out = sys.argv[1]
+shots = sorted([os.path.basename(p) for p in glob.glob(os.path.join(out, "*.png"))])
+findings = {}
+try:
+    findings = json.load(open("/tmp/findings.json"))
+except Exception: pass
+manifest = {
+    "run_number": os.environ.get("GITHUB_RUN_NUMBER", ""),
+    "run_id":     os.environ.get("GITHUB_RUN_ID", ""),
+    "commit_sha": (os.environ.get("GITHUB_SHA", "") or "")[:8],
+    "created_at": datetime.datetime.utcnow().isoformat() + "Z",
+    "pass": findings.get("pass", 0),
+    "warn": findings.get("warn", 0),
+    "fail": findings.get("fail", 0),
+    "skip": findings.get("skip", 0),
+    "shots": shots,
+    "workflow_run_url": "https://github.com/" + os.environ.get("GITHUB_REPOSITORY","") +
+                       "/actions/runs/" + os.environ.get("GITHUB_RUN_ID",""),
+}
+json.dump(manifest, open(os.path.join(out, "manifest.json"), "w"), indent=2)
+print("manifest written:", manifest["run_number"], "shots:", len(shots))
+PYEOF
+
+      # Keep only the 14 most recent runs in _e2e-shots/ (auto-prune).
+      - name: Prune old screenshot folders
+        if: always()
+        run: |
+          if [ -d _e2e-shots ]; then
+            cd _e2e-shots
+            ls -1 | sort -n | head -n -14 | while read d; do
+              [ -d "$d" ] && rm -rf "$d" && echo "pruned: $d"
+            done
+          fi
+          true
+
       - name: Commit results to repo
         if: always()
         continue-on-error: true
         run: |
           git config user.email "e2e-heavy@github-actions"
           git config user.name "E2E Heavy bot"
-          if [ -f TEST_RESULTS_HEAVY.md ]; then
-            git add TEST_RESULTS_HEAVY.md
-            git diff --staged --quiet || git commit -m "e2e-heavy: $(date -u +%Y-%m-%dT%H:%MZ)"
+          if [ -f TEST_RESULTS_HEAVY.md ] || [ -d _e2e-shots ]; then
+            git add TEST_RESULTS_HEAVY.md _e2e-shots/ 2>/dev/null || true
+            git diff --staged --quiet || git commit -m "e2e-heavy: $(date -u +%Y-%m-%dT%H:%MZ) (run #${{ github.run_number }})"
             git pull --rebase origin main || true
             git push origin HEAD:main || echo "push failed"
           fi
 
-      - name: Upload screenshots + log
+      - name: Upload screenshots + log (7-day retention)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -65,4 +116,4 @@ jobs:
             /tmp/e2e-heavy.log
             /tmp/e2e-shots/
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 7

@@ -152,7 +152,8 @@ app.add_middleware(_ForceMobileMiddleware)
 #   3. /faq.html       → 301 redirect to /faq (canonicalisation for SEO)
 # API paths (/api/, /q/, /p/, /i/) and existing files are untouched.
 class _CleanURLMiddleware(_BHM):
-    _NO_REWRITE_PREFIX = ("/api/", "/q/", "/p/", "/i/", "/pay/", "/admin",
+    # Truly internal — never serve a .html file at these paths
+    _NO_REWRITE_PREFIX = ("/api/", "/q/", "/p/", "/i/", "/pay/",
                           "/sitemap", "/robots", "/llms", "/.well-known/",
                           "/static/", "/img/", "/web/", "/_snippets",
                           "/manifest", "/sw.js", "/widget.")
@@ -175,6 +176,10 @@ class _CleanURLMiddleware(_BHM):
             return RedirectResponse(url=clean, status_code=301)
 
         # 2. /name (no extension) → if web/name.html exists, rewrite path.
+        # v1.24.85: previously /admin and other paths in NO_REWRITE_PREFIX
+        # short-circuited HERE without rewriting — meaning /admin returned
+        # 404 because there's no /admin file, only /admin.html. Removed
+        # /admin from prefix list above so the rewrite step now handles it.
         if "." not in path.rsplit("/", 1)[-1] and request.method == "GET":
             from pathlib import Path as _P
             web_dir = _P(settings.WEB_DIR)
@@ -283,6 +288,53 @@ app.include_router(_cust_prof.router)               # /api/me/auth/* + /profile 
 # v1.24.84 — pin-location reverse geocode + city cross-check
 from . import address_picker as _addr_pick
 app.include_router(_addr_pick.router)               # /api/geocode/reverse + /api/geocode/check-city
+
+
+# v1.24.85 — admin viewer for committed Playwright thumbnails
+@app.get("/api/admin/e2e-shots/runs", dependencies=[Depends(require_admin)])
+def list_e2e_runs():
+    """List all _e2e-shots/<run> directories with their manifests."""
+    import os, json
+    base = settings.BASE_DIR.parent / "_e2e-shots"
+    if not base.exists():
+        return {"ok": True, "runs": []}
+    runs = []
+    for d in sorted(os.listdir(base), reverse=True):
+        manifest = base / d / "manifest.json"
+        if not manifest.is_file(): continue
+        try: m = json.loads(manifest.read_text())
+        except Exception: continue
+        m["dir"] = d
+        runs.append(m)
+    return {"ok": True, "runs": runs}
+
+
+@app.delete("/api/admin/e2e-shots/runs/{dir}", dependencies=[Depends(require_admin)])
+def delete_e2e_run(dir: str):
+    """Manually delete an e2e-shots run directory."""
+    import os, shutil, re
+    if not re.match(r"^[\w\-]+$", dir):
+        return {"ok": False, "error": "invalid dir name"}
+    target = settings.BASE_DIR.parent / "_e2e-shots" / dir
+    if not target.is_dir():
+        return {"ok": False, "error": "not found"}
+    shutil.rmtree(target)
+    return {"ok": True, "deleted": dir}
+
+
+@app.get("/_e2e-shots/{path:path}")
+def serve_e2e_shot(path: str):
+    """Public-ish: serve a thumbnail or manifest. Path-traversal safe."""
+    import os
+    if ".." in path or path.startswith("/"):
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"ok": False}, status_code=400)
+    target = settings.BASE_DIR.parent / "_e2e-shots" / path
+    if not target.is_file():
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"ok": False, "error": "not found"}, status_code=404)
+    from fastapi.responses import FileResponse
+    return FileResponse(str(target))
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)

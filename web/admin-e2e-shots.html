@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Servia Admin · E2E Screenshots</title>
+<style>
+:root{--t:#0F766E;--t2:#0D9488;--bg:#F8FAFC;--tx:#0F172A;--mu:#64748B;--ln:#E2E8F0}
+body{font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--tx);margin:0;padding:0}
+.hdr{background:linear-gradient(135deg,var(--t),var(--t2));color:#fff;padding:18px 16px}
+.hdr h1{margin:0;font-size:20px}
+.hdr .sub{font-size:12px;opacity:.85;margin-top:3px}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+.run{background:#fff;border:1px solid var(--ln);border-radius:14px;margin-bottom:14px;overflow:hidden}
+.run-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#F1F5F9;border-bottom:1px solid var(--ln);flex-wrap:wrap;gap:8px}
+.run-title{font-size:15px;font-weight:800}
+.run-meta{font-size:12px;color:var(--mu)}
+.run-stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.stat.pass{background:#D1FAE5;color:#065F46}
+.stat.warn{background:#FEF3C7;color:#92400E}
+.stat.fail{background:#FEE2E2;color:#991B1B}
+.stat.skip{background:#E0E7FF;color:#3730A3}
+.del{background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700}
+.del:hover{background:#FCA5A5}
+.shots{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.shot{position:relative;border:1px solid var(--ln);border-radius:8px;overflow:hidden;background:#fff;cursor:pointer;transition:transform .08s}
+.shot:hover{transform:scale(1.02);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.shot img{width:100%;height:auto;display:block}
+.shot .lab{position:absolute;left:0;right:0;bottom:0;background:rgba(15,23,42,.78);color:#fff;font-size:11px;font-weight:600;padding:5px 7px}
+.empty{padding:32px;text-align:center;color:var(--mu)}
+.lightbox{position:fixed;inset:0;background:rgba(15,23,42,.92);display:none;align-items:center;justify-content:center;z-index:9999;padding:16px}
+.lightbox.on{display:flex}
+.lightbox img{max-width:100%;max-height:90vh;border-radius:8px}
+.lightbox .x{position:absolute;top:14px;right:18px;color:#fff;font-size:32px;cursor:pointer;background:none;border:none}
+a.run-link{color:var(--t);font-size:11px;text-decoration:none;font-weight:700}
+a.run-link:hover{text-decoration:underline}
+.note{background:#FEF3C7;border-left:3px solid #F59E0B;padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;margin-bottom:14px;color:#92400E}
+</style></head><body>
+<div class="hdr">
+  <h1>📸 E2E Screenshots</h1>
+  <div class="sub">Latest Playwright runs against servia.ae · auto-pruned to last 14 runs</div>
+</div>
+<div class="wrap">
+  <div class="note">Thumbnails (240px) committed by GitHub Actions · click to enlarge · full-resolution PNGs in workflow artifact (7-day retention).</div>
+  <div id="runs"><div class="empty">Loading…</div></div>
+</div>
+<div class="lightbox" id="lb"><button class="x" onclick="closeLb()">×</button><img id="lbImg"></div>
+<script>
+async function load() {
+  let token = localStorage.getItem("admin.token") || prompt("Admin token?");
+  if (!token) { document.getElementById("runs").innerHTML = '<div class="empty">Authentication required</div>'; return; }
+  localStorage.setItem("admin.token", token);
+  const r = await fetch("/api/admin/e2e-shots/runs", { headers: {"X-Admin-Token": token, "Authorization": "Bearer " + token} });
+  if (r.status === 401) { localStorage.removeItem("admin.token"); document.getElementById("runs").innerHTML = '<div class="empty">Token rejected</div>'; return; }
+  const j = await r.json();
+  if (!j.ok) { document.getElementById("runs").innerHTML = '<div class="empty">Failed to load</div>'; return; }
+  const runs = j.runs || [];
+  if (!runs.length) { document.getElementById("runs").innerHTML = '<div class="empty">No screenshots yet — wait for the next workflow run (every 12h or on tag push).</div>'; return; }
+  document.getElementById("runs").innerHTML = runs.map(r => `
+    <div class="run">
+      <div class="run-head">
+        <div>
+          <div class="run-title">Run #${r.run_number || "?"} <span class="run-meta">· ${r.commit_sha || ""} · ${r.created_at?.replace("T"," ").slice(0,16) || ""}</span></div>
+          <a class="run-link" href="${r.workflow_run_url}" target="_blank">Open in GitHub Actions ↗</a>
+        </div>
+        <div class="run-stats">
+          <span class="stat pass">✅ ${r.pass||0}</span>
+          <span class="stat warn">⚠️ ${r.warn||0}</span>
+          <span class="stat fail">❌ ${r.fail||0}</span>
+          <span class="stat skip">⏭ ${r.skip||0}</span>
+          <button class="del" onclick="del('${r.dir}', this)">🗑 Delete</button>
+        </div>
+      </div>
+      <div class="shots">${(r.shots||[]).map(s => `
+        <div class="shot" onclick="openLb('/_e2e-shots/${r.dir}/${s}')">
+          <img loading="lazy" src="/_e2e-shots/${r.dir}/${s}" alt="${s}">
+          <div class="lab">${s.replace(".png","")}</div>
+        </div>`).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+function openLb(src) {
+  document.getElementById("lbImg").src = src;
+  document.getElementById("lb").classList.add("on");
+}
+function closeLb() {
+  document.getElementById("lb").classList.remove("on");
+  document.getElementById("lbImg").src = "";
+}
+async function del(dir, btn) {
+  if (!confirm("Delete run " + dir + " from repo?")) return;
+  btn.disabled = true; btn.textContent = "Deleting…";
+  const token = localStorage.getItem("admin.token");
+  const r = await fetch("/api/admin/e2e-shots/runs/" + encodeURIComponent(dir), {
+    method: "DELETE",
+    headers: {"X-Admin-Token": token, "Authorization": "Bearer " + token}
+  });
+  const j = await r.json();
+  if (j.ok) load();
+  else { alert("Delete failed: " + (j.error||"")); btn.disabled = false; btn.textContent = "🗑 Delete"; }
+}
+load();
+</script></body></html>
