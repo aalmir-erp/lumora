@@ -170,6 +170,21 @@ output used `✓ Services: A, B, C` (inline). Parser silently returned
 fixture that is the EXACT text from the user's most recent
 screenshot, copy-pasted verbatim.
 
+**RULE — `/tmp/test_real_fixtures.py` is the LIVE FIXTURE FILE.**
+Every time the user sends a screenshot showing "no Q- generated" /
+"picker missing" / "wrong format", you MUST:
+  1. Copy the EXACT bot text from the screenshot (including bullets,
+     em-dashes, ✓ marks, etc.) into `test_real_fixtures.py` as a new
+     FIXTURES entry
+  2. Run the test — it WILL fail (because the parser hasn't been
+     updated for that format yet)
+  3. Fix the parser
+  4. Re-run — must pass
+  5. Push only when this fixture passes alongside ALL prior fixtures
+The bug pattern that bit me 3+ times in this project is "LLM emits a
+new format the parser hasn't seen before". The fixture file is the
+permanent guard against this.
+
 **Loophole 3 — Local green ≠ deployed green.**
 I claimed "v1.24.X is fixed" but Railway hadn't redeployed yet,
 service worker hadn't busted cache, or the browser was on

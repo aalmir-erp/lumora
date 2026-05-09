@@ -697,18 +697,26 @@ def _parse_summary(text: str) -> dict:
                 if name and len(name) >= 3 and len(name) <= 60:
                     svcs.append(name)
 
-    # --- Format A: bulleted list under "Services:\n" ---
+    # --- Format A: bulleted/numbered list under "Services:\n" or
+    # "Booking summary:" header. Tolerates -, •, *, ·, 1., 2., etc. ---
     if not svcs:
         m_block = _re_q.search(
-            r"Services?\s*[:\-]\s*\n((?:.*\n?)+?)(?:\n\n|Details:|$)",
+            r"(?:Services?|Booking summary)\s*[:\-]\s*\n((?:.*\n?)+?)(?:\n\n|Details:|Name\s*[:\-]|$)",
             norm, _re_q.IGNORECASE)
         if m_block:
             for line in m_block.group(1).splitlines():
-                line = line.strip(" -•*\t✓✅")
+                # Strip bullet/number prefixes: "- ", "• ", "1. ", "2) "
+                line = _re_q.sub(r"^\s*(?:[-•*·✓✅✗❌▪▶]|\d{1,2}[\.\)])\s*", "", line)
+                line = line.strip()
                 if not line:
                     continue
-                name = _re_q.split(r"\s*\(", line)[0].strip()
-                if name:
+                # v1.24.79 — strip "(from AED ...)" / "— AED 490" /
+                # ", AED 280" / "· AED 49" suffixes so
+                # "Deep Cleaning — AED 490" → "Deep Cleaning".
+                name = _re_q.split(
+                    r"\s*[—–\-·,]\s*(?:AED|aed|from|FROM)\b|\s*\(",
+                    line)[0].strip(" -•*\t·,")
+                if name and 3 <= len(name) <= 60:
                     svcs.append(name)
 
     # De-dupe while preserving order
@@ -861,26 +869,40 @@ def _normalise_date_time(time_str: str | None) -> tuple[str, str]:
 def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = None) -> str:
     """If bot reply contains 'Book now ↗' + 2+ services, auto-create a
     Q-XXXXXX and replace the reply with the proper itemised cart."""
-    if not text or not _BOOK_NOW_RE.search(text):
+    if not text:
         return text
-    if not _SUMMARY_RE.search(text):
+    has_book_now = bool(_BOOK_NOW_RE.search(text))
+    has_summary  = bool(_SUMMARY_RE.search(text))
+    # v1.24.79 — log every decision branch so we can diagnose production
+    # cases where the post-processor silently skipped. The user has been
+    # bitten by "no Q- generated" three times now.
+    print(f"[auto-quote] has_book_now={has_book_now} has_summary={has_summary} sid={session_id}", flush=True)
+    if not has_book_now or not has_summary:
         return text
     parsed = _parse_summary(text)
+    print(f"[auto-quote] parsed: services={parsed['services']} "
+          f"name={parsed['name']!r} phone={parsed['phone']!r} "
+          f"addr={parsed['address']!r} time={parsed['time']!r}", flush=True)
     if len(parsed["services"]) < 2:
+        print(f"[auto-quote] SKIP: only {len(parsed['services'])} services parsed", flush=True)
         return text
     # Map to service_ids; require at least 2 mapped
     services_arg = []
+    unmapped = []
     for n in parsed["services"]:
         sid = _name_to_service_id(n)
         if sid:
             services_arg.append({"service_id": sid})
+        else:
+            unmapped.append(n)
     if len(services_arg) < 2:
+        print(f"[auto-quote] SKIP: only {len(services_arg)} services mapped to ids; unmapped={unmapped}", flush=True)
         return text
     name = parsed["name"] or "Customer"
     phone = parsed["phone"] or ""
     address = parsed["address"] or ""
     if not phone or not address:
-        # Missing required fields — leave reply alone (LLM should ask)
+        print(f"[auto-quote] SKIP: missing phone={bool(phone)} address={bool(address)}", flush=True)
         return text
     target_date, time_slot = _normalise_date_time(parsed["time"])
     try:
