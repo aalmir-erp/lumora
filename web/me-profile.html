@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0F766E">
+<title>My profile · Servia</title>
+<link rel="canonical" href="https://servia.ae/me-profile">
+<style>
+:root{--t:#0F766E;--t2:#0D9488;--tl:#F0FDFA;--bg:#F8FAFC;--tx:#0F172A;--mu:#64748B;--ln:#E2E8F0;--ok:#10B981;--er:#DC2626;--w:#F59E0B}
+*{box-sizing:border-box}
+body{font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--tx);margin:0;padding:0;min-height:100vh}
+.hdr{background:linear-gradient(135deg,var(--t),var(--t2));color:#fff;padding:18px 16px}
+.hdr-row{max-width:880px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.hdr h1{margin:0;font-size:20px;letter-spacing:-.01em}
+.hdr a{color:#fff;text-decoration:none;font-size:13px;opacity:.9}
+.hdr a:hover{opacity:1;text-decoration:underline}
+.wrap{max-width:880px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 4px 16px rgba(15,23,42,.04)}
+.card h2{margin:0 0 12px;font-size:15px;font-weight:800;color:var(--t)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.row.full{grid-template-columns:1fr}
+@media(max-width:480px){.row{grid-template-columns:1fr}}
+label{display:block;font-size:11px;font-weight:700;color:var(--mu);margin:4px 0 3px;text-transform:uppercase;letter-spacing:.04em}
+.inp{width:100%;padding:10px 12px;border:1.5px solid var(--ln);border-radius:9px;font-size:13.5px;font-family:inherit;color:var(--tx);min-height:42px;background:#fff}
+.inp:focus{outline:none;border-color:var(--t);box-shadow:0 0 0 3px rgba(15,118,110,.15)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;min-height:42px;background:var(--t);color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit;text-decoration:none;transition:background .12s}
+.btn:hover{background:var(--t2)}
+.btn.full{width:100%}
+.btn.alt{background:#fff;color:var(--t);border:1.5px solid var(--t)}
+.btn.alt:hover{background:var(--tl)}
+.btn.danger{background:#fff;color:var(--er);border:1.5px solid var(--er);font-size:11px;padding:6px 10px;min-height:0}
+.btn.danger:hover{background:#FEE2E2}
+.list{padding:0;margin:0;list-style:none}
+.list li{padding:10px;background:#F8FAFC;border:1px solid var(--ln);border-radius:9px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:13px;flex-wrap:wrap;gap:6px}
+.list .name{font-weight:600}
+.list .meta{color:var(--mu);font-size:11px}
+.msg{font-size:12px;min-height:14px;margin-top:8px}
+.msg.ok{color:var(--ok)}
+.msg.err{color:var(--er)}
+.empty{color:var(--mu);font-size:13px;text-align:center;padding:18px}
+.tab-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;background:#fff;padding:6px;border-radius:11px;border:1px solid var(--ln)}
+.tab{padding:8px 14px;border:none;background:transparent;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer;color:var(--mu);font-family:inherit;flex:1;min-width:90px}
+.tab.on{background:var(--t);color:#fff}
+.pane{display:none}
+.pane.on{display:block}
+.pic{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--t),var(--t2));display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:800;flex-shrink:0}
+.profile-head{display:flex;gap:14px;align-items:center;margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed var(--ln)}
+.profile-head .nm{font-weight:800;font-size:16px}
+.profile-head .ph{color:var(--mu);font-size:12px;font-family:monospace}
+.payment-note{background:#FEF3C7;border-left:3px solid var(--w);color:#92400E;padding:8px 12px;border-radius:0 8px 8px 0;font-size:12px;margin-bottom:10px}
+</style></head><body>
+
+<div class="hdr"><div class="hdr-row">
+  <h1>👤 My Profile</h1>
+  <div><a href="/me">My account</a> · <a href="#" id="logoutBtn">Sign out</a></div>
+</div></div>
+
+<div class="wrap" id="root">
+  <!-- Sign-in card (shown when not logged in) -->
+  <div class="card" id="loginCard" style="display:none">
+    <h2>🔐 Sign in to your profile</h2>
+    <p style="color:var(--mu);font-size:13px;margin:0 0 12px">We'll send you a one-tap login link on WhatsApp. No password required.</p>
+    <div class="row full">
+      <div><label>Phone number</label>
+        <input class="inp" id="loginPhone" type="tel" placeholder="0559396459" inputmode="tel"></div>
+    </div>
+    <button class="btn full" onclick="startAuth()">📲 Send WhatsApp login link</button>
+    <div class="msg" id="loginMsg"></div>
+    <p style="font-size:11px;color:var(--mu);margin-top:10px;text-align:center">
+      Already have a quote? Your account was auto-created. Just sign in.
+    </p>
+  </div>
+
+  <!-- Tabs (shown when logged in) -->
+  <div id="dashboard" style="display:none">
+    <div class="profile-head">
+      <div class="pic" id="picLetter">?</div>
+      <div>
+        <div class="nm" id="profName">Loading…</div>
+        <div class="ph" id="profPhone"></div>
+      </div>
+    </div>
+    <div class="tab-row">
+      <button class="tab on" data-tab="profile">👤 Profile</button>
+      <button class="tab" data-tab="locations">📍 Locations</button>
+      <button class="tab" data-tab="family">👨‍👩‍👧 Family</button>
+      <button class="tab" data-tab="quotes">📋 Quotes</button>
+      <button class="tab" data-tab="tickets">🎫 Tickets</button>
+      <button class="tab" data-tab="settings">⚙ Settings</button>
+    </div>
+
+    <div class="pane on" id="pane-profile">
+      <div class="card">
+        <h2>Edit profile</h2>
+        <div class="row">
+          <div><label>Full name</label><input class="inp" id="fName" placeholder="Khaqan Shahehe"></div>
+          <div><label>Email</label><input class="inp" id="fEmail" type="email" placeholder="you@email.com"></div>
+        </div>
+        <div class="row">
+          <div><label>Language</label>
+            <select class="inp" id="fLang"><option value="en">English</option><option value="ar">العربية</option><option value="hi">हिन्दी</option><option value="ur">اردو</option><option value="tl">Filipino</option></select>
+          </div>
+          <div><label>Profile picture URL</label><input class="inp" id="fPic" placeholder="https://…"></div>
+        </div>
+        <div class="row full"><div><label>About you (optional)</label><input class="inp" id="fBio" placeholder="3-BR villa, family with pets"></div></div>
+        <button class="btn" onclick="saveProfile()">💾 Save changes</button>
+        <span class="msg" id="profileMsg"></span>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-locations">
+      <div class="card">
+        <h2>Saved locations</h2>
+        <ul class="list" id="locList"></ul>
+        <h2 style="margin-top:18px;font-size:13px;color:var(--tx)">+ Add new location</h2>
+        <p style="font-size:12px;color:var(--mu);margin:0 0 8px">Pin the exact spot — area + city auto-fill.</p>
+        <div id="address-picker"></div>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-family">
+      <div class="card">
+        <h2>Family members</h2>
+        <ul class="list" id="famList"></ul>
+        <h2 style="margin-top:18px;font-size:13px;color:var(--tx)">+ Add member</h2>
+        <div class="row">
+          <div><label>Name</label><input class="inp" id="famName" placeholder="Sara"></div>
+          <div><label>Role</label>
+            <select class="inp" id="famRole"><option value="spouse">Spouse</option><option value="child">Child</option><option value="parent">Parent</option><option value="helper">Helper</option><option value="other">Other</option></select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label>Phone (optional)</label><input class="inp" id="famPhone" type="tel"></div>
+          <div><label>Notes</label><input class="inp" id="famNotes" placeholder="Allergic to fragrance"></div>
+        </div>
+        <button class="btn" onclick="addFamily()">➕ Add member</button>
+        <span class="msg" id="famMsg"></span>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-quotes">
+      <div class="card">
+        <h2>My quotes</h2>
+        <ul class="list" id="qList"><li class="empty">Loading…</li></ul>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-tickets">
+      <div class="card">
+        <h2>Open a ticket</h2>
+        <div class="row">
+          <div><label>Subject</label><input class="inp" id="tkSubject" placeholder="Cleaner arrived 30 min late"></div>
+        </div>
+        <div class="row full"><div><label>Details</label><input class="inp" id="tkBody" placeholder="What happened?"></div></div>
+        <button class="btn" onclick="openTicket()">📩 Submit ticket</button>
+        <span class="msg" id="tkMsg"></span>
+      </div>
+      <div class="card">
+        <h2>My tickets</h2>
+        <ul class="list" id="tkList"><li class="empty">Loading…</li></ul>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-settings">
+      <div class="card">
+        <h2>Set / change password</h2>
+        <p class="payment-note">100% advance payment is required for every booking. Refunds (if we cancel) go back to your wallet.</p>
+        <div class="row">
+          <div><label>Current password</label><input class="inp" id="oldPw" type="password"></div>
+          <div><label>New password</label><input class="inp" id="newPw" type="password"></div>
+        </div>
+        <button class="btn" onclick="setPwd()">🔒 Update password</button>
+        <span class="msg" id="pwdMsg"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/address-picker.js?v=1.24.87" defer></script>
+<script>
+async function api(path, opts) {
+  opts = opts || {};
+  opts.credentials = "include";
+  if (opts.body && typeof opts.body !== "string") {
+    opts.body = JSON.stringify(opts.body);
+    opts.headers = Object.assign({"Content-Type":"application/json"}, opts.headers||{});
+  }
+  const r = await fetch(path, opts);
+  return r.json();
+}
+async function load() {
+  const j = await api("/api/me/profile");
+  if (!j.ok) {
+    document.getElementById("loginCard").style.display = "block";
+    document.getElementById("dashboard").style.display = "none";
+    return;
+  }
+  document.getElementById("loginCard").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  document.getElementById("profName").textContent = j.name || "—";
+  document.getElementById("profPhone").textContent = "+" + (j.phone || "");
+  document.getElementById("picLetter").textContent = (j.name||"?").charAt(0).toUpperCase();
+  document.getElementById("fName").value = j.name||"";
+  document.getElementById("fEmail").value = j.email||"";
+  document.getElementById("fLang").value = j.language||"en";
+  document.getElementById("fPic").value = j.profile_pic_url||"";
+  document.getElementById("fBio").value = j.bio||"";
+  renderLocations(j.locations||[]);
+  renderFamily(j.family||[]);
+  loadQuotes();
+  loadTickets();
+  // Mount address picker
+  if (window.serviaAddressPicker) {
+    window.serviaAddressPicker.mount("#address-picker", {
+      onPick: async (a) => { await api("/api/me/locations", {method:"POST", body:a}); load(); }
+    });
+  } else {
+    setTimeout(() => window.serviaAddressPicker && window.serviaAddressPicker.mount("#address-picker", {
+      onPick: async (a) => { await api("/api/me/locations", {method:"POST", body:a}); load(); }
+    }), 600);
+  }
+}
+async function startAuth() {
+  const phone = document.getElementById("loginPhone").value.trim();
+  const m = document.getElementById("loginMsg");
+  m.className = "msg"; m.textContent = "Sending…";
+  const j = await api("/api/me/auth/start", {method:"POST", body:{phone}});
+  if (j.ok) {
+    m.className = "msg ok";
+    m.textContent = j.delivered ? "✅ Check your WhatsApp." : "✅ Login link queued (admin will deliver via WhatsApp shortly).";
+  } else {
+    m.className = "msg err"; m.textContent = j.error || "Failed.";
+  }
+}
+async function saveProfile() {
+  const m = document.getElementById("profileMsg");
+  m.className = "msg"; m.textContent = "Saving…";
+  const j = await api("/api/me/profile", {method:"PUT", body:{
+    name: document.getElementById("fName").value,
+    email: document.getElementById("fEmail").value,
+    language: document.getElementById("fLang").value,
+    profile_pic_url: document.getElementById("fPic").value,
+    bio: document.getElementById("fBio").value,
+  }});
+  m.className = "msg " + (j.ok ? "ok" : "err");
+  m.textContent = j.ok ? "✅ Saved." : (j.error||"Failed.");
+  if (j.ok) load();
+}
+function renderLocations(locs) {
+  const el = document.getElementById("locList");
+  if (!locs.length) { el.innerHTML = '<li class="empty">No saved locations yet — pin one below.</li>'; return; }
+  el.innerHTML = locs.map(l => `<li>
+    <div><div class="name">📍 ${l.label||""}</div>
+      <div class="meta">${[l.building,l.unit,l.area,l.city].filter(Boolean).join(", ")||l.address||""}</div></div>
+    <button class="btn danger" onclick="delLoc('${l.id}')">Delete</button>
+  </li>`).join("");
+}
+async function delLoc(id) {
+  if (!confirm("Delete this location?")) return;
+  await api("/api/me/locations/"+encodeURIComponent(id), {method:"DELETE"});
+  load();
+}
+function renderFamily(fam) {
+  const el = document.getElementById("famList");
+  if (!fam.length) { el.innerHTML = '<li class="empty">No family members yet.</li>'; return; }
+  el.innerHTML = fam.map(f => `<li>
+    <div><div class="name">${f.name||""}</div><div class="meta">${f.role||""}${f.phone? " · "+f.phone:""}</div></div>
+  </li>`).join("");
+}
+async function addFamily() {
+  const m = document.getElementById("famMsg");
+  m.className = "msg"; m.textContent = "Adding…";
+  const j = await api("/api/me/family", {method:"POST", body:{
+    name: document.getElementById("famName").value,
+    role: document.getElementById("famRole").value,
+    phone: document.getElementById("famPhone").value,
+    notes: document.getElementById("famNotes").value,
+  }});
+  m.className = "msg " + (j.ok ? "ok" : "err");
+  m.textContent = j.ok ? "✅ Added." : (j.error||"Failed.");
+  if (j.ok) {
+    document.getElementById("famName").value = "";
+    document.getElementById("famPhone").value = "";
+    document.getElementById("famNotes").value = "";
+    load();
+  }
+}
+async function loadQuotes() {
+  const j = await api("/api/me/quotes");
+  const el = document.getElementById("qList");
+  if (!j.ok || !j.quotes.length) { el.innerHTML = '<li class="empty">No quotes yet.</li>'; return; }
+  el.innerHTML = j.quotes.map(q => `<li>
+    <div><div class="name">📋 ${q.quote_id}</div>
+      <div class="meta">${q.target_date||""} · AED ${q.total_aed||0} · ${q.signed_at?'✓ Signed':'Pending sign'}${q.paid_at?' · ✓ Paid':''}</div></div>
+    <a class="btn alt" href="/q/${q.quote_id}" target="_blank">View</a>
+  </li>`).join("");
+}
+async function loadTickets() {
+  const j = await api("/api/me/tickets");
+  const el = document.getElementById("tkList");
+  if (!j.ok || !j.tickets.length) { el.innerHTML = '<li class="empty">No tickets yet.</li>'; return; }
+  el.innerHTML = j.tickets.map(t => `<li>
+    <div><div class="name">${t.subject}</div><div class="meta">${t.status} · ${t.created_at?.slice(0,10)}</div></div>
+  </li>`).join("");
+}
+async function openTicket() {
+  const m = document.getElementById("tkMsg");
+  m.className = "msg"; m.textContent = "Submitting…";
+  const j = await api("/api/me/tickets", {method:"POST", body:{
+    subject: document.getElementById("tkSubject").value,
+    body: document.getElementById("tkBody").value,
+  }});
+  m.className = "msg " + (j.ok ? "ok" : "err");
+  m.textContent = j.ok ? "✅ Ticket #" + j.ticket_id + " opened." : (j.error||"Failed.");
+  if (j.ok) {
+    document.getElementById("tkSubject").value = "";
+    document.getElementById("tkBody").value = "";
+    loadTickets();
+  }
+}
+async function setPwd() {
+  const m = document.getElementById("pwdMsg");
+  m.className = "msg"; m.textContent = "Updating…";
+  const j = await api("/api/me/password", {method:"POST", body:{
+    old_password: document.getElementById("oldPw").value,
+    new_password: document.getElementById("newPw").value,
+  }});
+  m.className = "msg " + (j.ok ? "ok" : "err");
+  m.textContent = j.ok ? "✅ Password updated." : (j.error||"Failed.");
+  if (j.ok) {
+    document.getElementById("oldPw").value = "";
+    document.getElementById("newPw").value = "";
+  }
+}
+document.querySelectorAll(".tab").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("on"));
+    document.querySelectorAll(".pane").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    document.getElementById("pane-"+b.dataset.tab).classList.add("on");
+  };
+});
+document.getElementById("logoutBtn").onclick = async (e) => {
+  e.preventDefault();
+  await api("/api/me/logout", {method:"POST"});
+  location.reload();
+};
+// Auto-verify when arriving from WA link
+(function(){
+  const u = new URL(location.href);
+  const phone = u.searchParams.get("phone");
+  const t = u.searchParams.get("t");
+  if (phone && t) {
+    api("/api/me/auth/verify", {method:"POST", body:{phone, token:t}}).then(j => {
+      if (j.ok) { history.replaceState(null,"","/me-profile"); load(); }
+      else { document.getElementById("loginCard").style.display = "block";
+             const m = document.getElementById("loginMsg"); m.className="msg err";
+             m.textContent = "Login link expired. Request a new one."; }
+    });
+  } else {
+    load();
+  }
+})();
+</script></body></html>

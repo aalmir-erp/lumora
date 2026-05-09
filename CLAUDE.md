@@ -248,6 +248,24 @@ I tested that good input creates the quote. I never tested:
   - cancellation / abort → DB row marked or removed
 Coverage: at least one rejection-path test per public surface.
 
+**Loophole 6 — Test set wrong env var (DATABASE_URL vs DB_PATH).**
+Tests were setting `DATABASE_URL="sqlite:///..."` but the app reads
+`DB_PATH`. Result: every test silently used `/tmp/lumora.db`,
+accumulating state across runs. Cross-test pollution looked like
+"phantom intermittent failures". Coverage: every test must `import`
+the module that reads the env var IT actually uses. When in doubt,
+`grep -nE "DATABASE_URL|DB_PATH" app/db.py app/config.py` and use the
+exact name. Pattern: `os.environ["DB_PATH"] = "/tmp/test_<feature>.db"`
+followed by `os.path.exists(...) and os.unlink(...)` BEFORE any
+`from app import ...` line.
+
+**Loophole 7 — Cloudflare 502 transients fail flake-prone tests.**
+Live Playwright tests hit `https://servia.ae` through Cloudflare;
+cold-load can return 502 once before warming up. Treating that as a
+real failure leads to false-alarm fixes. Coverage: visit-then-assert
+tests that hit the live site must include at least 1 retry with
+short backoff (1.5s) — see `tests/e2e-heavy.mjs` T23/T24 pattern.
+
 ### 🔒 SCOPE-OF-WORK contract (NEVER violate, even silently)
 
 These are decisions the founder has already made about how the product

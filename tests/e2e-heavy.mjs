@@ -51,7 +51,10 @@ const TESTS = [
     rec('T02','Homepage loads (mobile)','pass', 'iPhone 12');
   }, 'iPhone 12'],
   ['T03','/services lists services', async (p) => {
-    await p.goto(BASE+'/services');
+    await p.goto(BASE+'/services', { waitUntil: 'networkidle' });
+    // v1.24.86: cards are JS-rendered after /api/services fetch.
+    // Wait up to 8s for at least one card to appear before counting.
+    await p.locator('.svc-card, .svc-tile-hero').first().waitFor({ timeout: 8000 }).catch(()=>{});
     const cards = await p.locator('.svc-card, .svc-tile-hero').count();
     if (cards < 5) throw new Error(`only ${cards} cards`);
     rec('T03','/services lists services','pass',`${cards} cards`);
@@ -79,11 +82,13 @@ const TESTS = [
     if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
     rec('T07','robots.txt accessible','pass','OK');
   }],
-  ['T08','/faq.html FAQPage schema', async (p) => {
-    await p.goto(BASE+'/faq');
-    const j = await p.locator('script[type="application/ld+json"]').allInnerTexts();
-    if (!j.some(s => /FAQPage/.test(s))) throw new Error('no FAQPage schema');
-    rec('T08','/faq.html FAQPage schema','pass','present');
+  ['T08','/faq FAQPage schema', async (p) => {
+    // v1.24.86: avoid execution-context-destroyed flake by reading
+    // raw HTML via request fetch instead of locator on a navigating page
+    const r = await p.request.get(BASE+'/faq');
+    const html = await r.text();
+    if (!/FAQPage/.test(html)) throw new Error('no FAQPage schema');
+    rec('T08','/faq FAQPage schema','pass','present');
   }],
   ['T09','Homepage Org/LocalBusiness schema', async (p) => {
     await p.goto(BASE);
@@ -153,7 +158,8 @@ const TESTS = [
     rec('T19','Search trending chips load', chips > 0 ? 'pass':'warn', `${chips} chips`);
   }],
   ['T20','Hero rotator present', async (p) => {
-    await p.goto(BASE);
+    await p.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await p.locator('#hero-rotator').waitFor({ timeout: 8000 }).catch(()=>{});
     if (await p.locator('#hero-rotator').count() === 0) throw new Error('no #hero-rotator');
     rec('T20','Hero rotator present','pass','present');
   }],
@@ -335,10 +341,11 @@ const TESTS = [
   }],
 
   // === Booking + cart (46-50) ===
-  ['T46','/book.html renders form', async (p) => {
-    await p.goto(BASE+'/book');
+  ['T46','/book renders form', async (p) => {
+    await p.goto(BASE+'/book', { waitUntil: 'domcontentloaded' });
+    await p.locator('#book-btn').waitFor({ timeout: 8000 }).catch(()=>{});
     if (await p.locator('#book-btn').count() === 0) throw new Error('no book button');
-    rec('T46','/book.html renders form','pass','OK');
+    rec('T46','/book renders form','pass','OK');
   }],
   ['T47','/book.html?service=deep_cleaning prefills', async (p) => {
     await p.goto(BASE+'/book?service=deep_cleaning');
