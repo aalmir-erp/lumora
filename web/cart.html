@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#0D9488">
 <title>Your Servia bundle: book multiple services in one go</title>
 <meta name="description" content="Book 2 or more Servia services together and save up to 15%. Per-service address with map pin + saved addresses + addons.">
-<link rel="canonical" href="https://servia.ae/cart.html">
+<link rel="canonical" href="https://servia.ae/cart">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="preload" as="style" href="/style.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null">
-<noscript><link rel="stylesheet" href="/style.css?v=1.24.80"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.80"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null">
+<noscript><link rel="stylesheet" href="/style.css?v=1.24.81"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.81"></noscript>
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preload" as="style" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin onload="this.rel='stylesheet';this.onload=null">
 <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin></noscript>
@@ -141,10 +141,10 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="160" height="52" alt="Servia" decoding="async"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
-    <a href="/services.html" data-i18n="nav_services">Services</a>
-    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
+    <a href="/services" data-i18n="nav_services">Services</a>
+    <a href="/coverage" data-i18n="nav_coverage">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html" data-i18n="nav_my_account">My account</a>
+    <a href="/me" data-i18n="nav_my_account">My account</a>
   </div>
   <div class="nav-cta">
     <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
@@ -155,8 +155,8 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
       <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
     </select>
-    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
-    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
+    <a class="btn btn-icon" href="/login" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
+    <a class="btn btn-primary" href="/book" data-i18n="nav_book_now">Book now</a>
   </div>
 </div></nav>
 <section style="padding:32px 16px 8px;text-align:center">
@@ -167,7 +167,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <div class="panel">
     <h2 style="margin:0 0 8px;font-size:18px">Your services</h2>
     <div id="cart-items"></div>
-    <a class="add-more" href="/services.html">+ Add another service</a>
+    <a class="add-more" href="/services">+ Add another service</a>
   </div>
   <div class="panel" style="position:sticky;top:16px">
     <h2 style="margin:0 0 8px;font-size:18px">Order summary</h2>
@@ -196,33 +196,33 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
   </div>
   <div><h3>Customers</h3>
-    <a href="/services.html">All services</a><br>
-    <a href="/book.html">Book online</a><br>
-    <a href="/coverage.html">Coverage map</a><br>
-    <a href="/me.html">My account</a><br>
-    <a href="/faq.html">FAQ</a>
+    <a href="/services">All services</a><br>
+    <a href="/book">Book online</a><br>
+    <a href="/coverage">Coverage map</a><br>
+    <a href="/me">My account</a><br>
+    <a href="/faq">FAQ</a>
   </div>
   <div><h3>Service areas</h3>
-    <a href="/area.html?city=dubai">Dubai</a><br>
-    <a href="/area.html?city=sharjah">Sharjah</a><br>
-    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
-    <a href="/area.html?city=ajman">Ajman</a><br>
-    <a href="/area.html?city=ras-al-khaimah">RAK</a>
+    <a href="/area?city=dubai">Dubai</a><br>
+    <a href="/area?city=sharjah">Sharjah</a><br>
+    <a href="/area?city=abu-dhabi">Abu Dhabi</a><br>
+    <a href="/area?city=ajman">Ajman</a><br>
+    <a href="/area?city=ras-al-khaimah">RAK</a>
   </div>
   <div><h3>Apps &amp; AI</h3>
-    <a href="/install.html">Install app</a><br>
-    <a href="/smart-speakers.html">Voice booking</a><br>
+    <a href="/install">Install app</a><br>
+    <a href="/smart-speakers">Voice booking</a><br>
     <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">ChatGPT GPT</a><br>
-    <a href="/videos.html">Videos</a><br>
+    <a href="/videos">Videos</a><br>
     <a href="/blog">Blog</a>
   </div>
   <div><h3>Legal</h3>
-    <a href="/terms.html">Terms</a><br>
+    <a href="/terms">Terms</a><br>
     <a href="/privacy.html">Privacy</a><br>
-    <a href="/refund.html">Refund</a>
+    <a href="/refund">Refund</a>
   </div>
   <div><h3>Contact</h3>
-    <a href="/contact.html">Contact us</a><br>
+    <a href="/contact">Contact us</a><br>
     <a href="mailto:support@servia.ae">support@servia.ae</a><br>
     <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
   </div>
@@ -285,7 +285,7 @@ window.applyAllSlot=()=>{const s=document.getElementById("aa-slot").value;if(!s)
 window.__cartLastDict=window.__cartLastDict||{};window.startVoiceNote=i=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert("Voice not supported on this browser. Try Chrome/Edge/Safari.");return}const inp=document.getElementById(`note-input-${i}`);const btn=document.getElementById(`note-mic-${i}`);if(!inp||!btn)return;if(btn.dataset.on==="1"){btn.dataset.on="0";return}btn.dataset.on="1";btn.textContent="🔴 Listening…";const lang=(window.lumoraLang?lumoraLang():"en");const map={en:"en-US",ar:"ar-AE",ur:"ur-PK",hi:"hi-IN",bn:"bn-BD",ta:"ta-IN",ml:"ml-IN",tl:"fil-PH",ps:"ps-AF",ne:"ne-NP",ru:"ru-RU",fa:"fa-IR",fr:"fr-FR",zh:"zh-CN",es:"es-ES"};const r=new SR();r.continuous=false;r.interimResults=true;r.lang=map[lang]||"en-US";let cur=(inp.value||"").trim();const last=window.__cartLastDict[i]||"";if(last){if(cur===last)cur="";else if(last.length>=3&&cur.endsWith(" "+last))cur=cur.slice(0,cur.length-last.length-1).trim();inp.value=cur}const pfx=cur;r.onresult=e=>{if(!e.results||!e.results.length)return;const lt=e.results[e.results.length-1];if(!lt)return;const txt=(lt[0].transcript||"").trim();window.__cartLastDict[i]=txt;inp.value=(pfx?pfx+" ":"")+txt;updateField(i,"notes",inp.value)};r.onend=()=>{btn.textContent="🎤";btn.dataset.on="0"};r.onerror=()=>{btn.textContent="🎤";btn.dataset.on="0"};try{r.start()}catch(_){btn.textContent="🎤";btn.dataset.on="0"}};
 async function render(){
   const items=get();const wrap=document.getElementById("cart-items");
-  if(!items.length){wrap.innerHTML='<div class="empty">Your bundle is empty.<br><br><a class="btn btn-primary" href="/services.html">Browse services</a></div>';document.getElementById("summary").innerHTML="";document.getElementById("bundle-saving").style.display="none";document.getElementById("co-btn").disabled=true;document.getElementById("co-btn").textContent="Add items to checkout";document.getElementById("default-apply").style.display="none";return}
+  if(!items.length){wrap.innerHTML='<div class="empty">Your bundle is empty.<br><br><a class="btn btn-primary" href="/services">Browse services</a></div>';document.getElementById("summary").innerHTML="";document.getElementById("bundle-saving").style.display="none";document.getElementById("co-btn").disabled=true;document.getElementById("co-btn").textContent="Add items to checkout";document.getElementById("default-apply").style.display="none";return}
   const sa=saved();
   // Apply-to-all bar (only when 2+ services)
   const applyAllBar = items.length>=2 ? `
@@ -384,5 +384,5 @@ window.serviaCart={add:i=>{const c=get();c.push({...i,_ts:Date.now()});save(c)},
   });
 </script>
 <script src="/install.js" defer></script>
-<script>(function(){var l=false;function ld(){if(l)return;l=true;var s=document.createElement("script");s.src="/widget.js?v=1.24.80";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(function(ev){addEventListener(ev,ld,{once:true,passive:true})});})();</script>
+<script>(function(){var l=false;function ld(){if(l)return;l=true;var s=document.createElement("script");s.src="/widget.js?v=1.24.81";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(function(ev){addEventListener(ev,ld,{once:true,passive:true})});})();</script>
 </body></html>

@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#0D9488">
 <title>Servia UAE coverage: live interactive map</title>
 <meta name="description" content="See live Servia bookings popping up across UAE in real time, actual interactive map with all 7 emirates, Dubai areas, live job pulses and 5★ reviews.">
-<link rel="canonical" href="https://servia.ae/coverage.html">
+<link rel="canonical" href="https://servia.ae/coverage">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Servia">
 <meta property="og:locale" content="en_AE">
 <meta property="og:title" content="Servia UAE coverage: live interactive map">
 <meta property="og:description" content="See live Servia bookings popping up across the UAE in real time.">
-<meta property="og:url" content="https://servia.ae/coverage.html">
+<meta property="og:url" content="https://servia.ae/coverage">
 <meta property="og:image" content="https://servia.ae/og-coverage.svg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -44,8 +44,8 @@
 </script>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="preload" as="style" href="/style.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.80"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.80"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.81"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.81"></noscript>
 
 <!-- Leaflet — preconnect early but load CSS async + script defer to keep PSI happy. -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
@@ -126,10 +126,10 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="160" height="52" alt="Servia" decoding="async"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
-    <a href="/services.html" data-i18n="nav_services">Services</a>
-    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
+    <a href="/services" data-i18n="nav_services">Services</a>
+    <a href="/coverage" data-i18n="nav_coverage">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html" data-i18n="nav_my_account">My account</a>
+    <a href="/me" data-i18n="nav_my_account">My account</a>
   </div>
   <div class="nav-cta">
     <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
@@ -140,8 +140,8 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
       <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
     </select>
-    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
-    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
+    <a class="btn btn-icon" href="/login" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
+    <a class="btn btn-primary" href="/book" data-i18n="nav_book_now">Book now</a>
   </div>
 </div></nav>
 
@@ -174,13 +174,13 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 
 <section style="max-width:1280px;margin:8px auto 24px;padding:0 16px">
   <div class="areas-strip">
-    <a class="btn btn-ghost" href="/area.html?city=dubai">🏙 Dubai (200+ areas)</a>
-    <a class="btn btn-ghost" href="/area.html?city=abu-dhabi">🦅 Abu Dhabi (80+)</a>
-    <a class="btn btn-ghost" href="/area.html?city=sharjah">🌅 Sharjah (60+)</a>
-    <a class="btn btn-ghost" href="/area.html?city=ajman">⛵ Ajman (25+)</a>
-    <a class="btn btn-ghost" href="/area.html?city=ras-al-khaimah">🏔 RAK (18+)</a>
-    <a class="btn btn-ghost" href="/area.html?city=umm-al-quwain">🌊 UAQ (8+)</a>
-    <a class="btn btn-ghost" href="/area.html?city=fujairah">🏝 Fujairah (6+)</a>
+    <a class="btn btn-ghost" href="/area?city=dubai">🏙 Dubai (200+ areas)</a>
+    <a class="btn btn-ghost" href="/area?city=abu-dhabi">🦅 Abu Dhabi (80+)</a>
+    <a class="btn btn-ghost" href="/area?city=sharjah">🌅 Sharjah (60+)</a>
+    <a class="btn btn-ghost" href="/area?city=ajman">⛵ Ajman (25+)</a>
+    <a class="btn btn-ghost" href="/area?city=ras-al-khaimah">🏔 RAK (18+)</a>
+    <a class="btn btn-ghost" href="/area?city=umm-al-quwain">🌊 UAQ (8+)</a>
+    <a class="btn btn-ghost" href="/area?city=fujairah">🏝 Fujairah (6+)</a>
   </div>
 </section>
 
@@ -190,33 +190,33 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
   </div>
   <div><h3>Customers</h3>
-    <a href="/services.html">All services</a><br>
-    <a href="/book.html">Book online</a><br>
-    <a href="/coverage.html">Coverage map</a><br>
-    <a href="/me.html">My account</a><br>
-    <a href="/faq.html">FAQ</a>
+    <a href="/services">All services</a><br>
+    <a href="/book">Book online</a><br>
+    <a href="/coverage">Coverage map</a><br>
+    <a href="/me">My account</a><br>
+    <a href="/faq">FAQ</a>
   </div>
   <div><h3>Service areas</h3>
-    <a href="/area.html?city=dubai">Dubai</a><br>
-    <a href="/area.html?city=sharjah">Sharjah</a><br>
-    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
-    <a href="/area.html?city=ajman">Ajman</a><br>
-    <a href="/area.html?city=ras-al-khaimah">RAK</a>
+    <a href="/area?city=dubai">Dubai</a><br>
+    <a href="/area?city=sharjah">Sharjah</a><br>
+    <a href="/area?city=abu-dhabi">Abu Dhabi</a><br>
+    <a href="/area?city=ajman">Ajman</a><br>
+    <a href="/area?city=ras-al-khaimah">RAK</a>
   </div>
   <div><h3>Apps &amp; AI</h3>
-    <a href="/install.html">Install app</a><br>
-    <a href="/smart-speakers.html">Voice booking</a><br>
+    <a href="/install">Install app</a><br>
+    <a href="/smart-speakers">Voice booking</a><br>
     <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">ChatGPT GPT</a><br>
-    <a href="/videos.html">Videos</a><br>
+    <a href="/videos">Videos</a><br>
     <a href="/blog">Blog</a>
   </div>
   <div><h3>Legal</h3>
-    <a href="/terms.html">Terms</a><br>
+    <a href="/terms">Terms</a><br>
     <a href="/privacy.html">Privacy</a><br>
-    <a href="/refund.html">Refund</a>
+    <a href="/refund">Refund</a>
   </div>
   <div><h3>Contact</h3>
-    <a href="/contact.html">Contact us</a><br>
+    <a href="/contact">Contact us</a><br>
     <a href="mailto:support@servia.ae">support@servia.ae</a><br>
     <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
   </div>
@@ -304,7 +304,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
         <div class="lp-h">${ev.icon} ${ev.headline}</div>
         <div class="lp-m">${ev.area}, ${ev.emirate.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
           ${ev.ago_min ? ` · ${ev.ago_min<60?ev.ago_min+' min ago':Math.round(ev.ago_min/60)+'h ago'}` : ' · live now'}</div>
-        <a class="lp-cta" href="/book.html?service=${encodeURIComponent(ev.service||'')}&area=${encodeURIComponent(ev.area)}">Book in ${ev.area} →</a>
+        <a class="lp-cta" href="/book?service=${encodeURIComponent(ev.service||'')}&area=${encodeURIComponent(ev.area)}">Book in ${ev.area} →</a>
        </div>`
     );
     return m;
@@ -413,5 +413,5 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 })();
 </script>
 
-<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.80";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.81";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 </body></html>

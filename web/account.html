@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<link rel="canonical" href="https://servia.ae/account.html"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="canonical" href="https://servia.ae/account"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My account • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/style.css?v=1.24.80">
-<link rel="preload" as="style" href="/widget.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.80"></noscript>
+<link rel="stylesheet" href="/style.css?v=1.24.81">
+<link rel="preload" as="style" href="/widget.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.81"></noscript>
 <script src="/universal-nav.js" defer></script>
 <style id="servia-gt-fix">
 /* Google Translate sanity overrides — keep content visible on RTL languages
@@ -63,10 +63,10 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="160" height="52" alt="Servia" decoding="async"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
-    <a href="/services.html" data-i18n="nav_services">Services</a>
-    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
+    <a href="/services" data-i18n="nav_services">Services</a>
+    <a href="/coverage" data-i18n="nav_coverage">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html" data-i18n="nav_my_account">My account</a>
+    <a href="/me" data-i18n="nav_my_account">My account</a>
   </div>
   <div class="nav-cta">
     <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
@@ -77,8 +77,8 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
       <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
     </select>
-    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
-    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
+    <a class="btn btn-icon" href="/login" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
+    <a class="btn btn-primary" href="/book" data-i18n="nav_book_now">Book now</a>
   </div>
 </div></nav>
 
@@ -138,7 +138,7 @@ function renderBooking(b) {
       <td>${q.total} ${q.currency}</td>
       <td><span class="badge ${q.status==='signed'?'signed':'pending'}">${q.status}</span></td>
       <td>${q.signed_at ? new Date(q.signed_at).toLocaleString() : ''}</td>
-      <td><a class="btn btn-ghost" href="/quote.html?id=${q.id}">View / sign</a></td>
+      <td><a class="btn btn-ghost" href="/quote?id=${q.id}">View / sign</a></td>
     </tr>`).join("");
   const invs = (b.invoices || []).map(i => `
     <tr>
@@ -168,15 +168,15 @@ function renderBooking(b) {
     </div>`;
 }
 </script>
-<script src="/widget.js?v=1.24.80"></script>
+<script src="/widget.js?v=1.24.81"></script>
 <script src="/theme.js"></script>
 
 <nav class="mobile-nav" aria-label="Primary mobile">
   <div class="mobile-nav-inner">
     <a href="/"           data-mobnav="home"><span class="ico">🏠</span><span>Home</span></a>
-    <a href="/services.html" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
-    <a href="/book.html"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
-    <a href="/me.html"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
+    <a href="/services" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
+    <a href="/book"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
+    <a href="/me"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
     <a href="#" onclick="document.querySelector('.us-launcher').click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
   </div>
 </nav>
@@ -188,33 +188,33 @@ function renderBooking(b) {
     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
   </div>
   <div><h3>Customers</h3>
-    <a href="/services.html">All services</a><br>
-    <a href="/book.html">Book online</a><br>
-    <a href="/coverage.html">Coverage map</a><br>
-    <a href="/me.html">My account</a><br>
-    <a href="/faq.html">FAQ</a>
+    <a href="/services">All services</a><br>
+    <a href="/book">Book online</a><br>
+    <a href="/coverage">Coverage map</a><br>
+    <a href="/me">My account</a><br>
+    <a href="/faq">FAQ</a>
   </div>
   <div><h3>Service areas</h3>
-    <a href="/area.html?city=dubai">Dubai</a><br>
-    <a href="/area.html?city=sharjah">Sharjah</a><br>
-    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
-    <a href="/area.html?city=ajman">Ajman</a><br>
-    <a href="/area.html?city=ras-al-khaimah">RAK</a>
+    <a href="/area?city=dubai">Dubai</a><br>
+    <a href="/area?city=sharjah">Sharjah</a><br>
+    <a href="/area?city=abu-dhabi">Abu Dhabi</a><br>
+    <a href="/area?city=ajman">Ajman</a><br>
+    <a href="/area?city=ras-al-khaimah">RAK</a>
   </div>
   <div><h3>Apps &amp; AI</h3>
-    <a href="/install.html">Install app</a><br>
-    <a href="/smart-speakers.html">Voice booking</a><br>
+    <a href="/install">Install app</a><br>
+    <a href="/smart-speakers">Voice booking</a><br>
     <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">ChatGPT GPT</a><br>
-    <a href="/videos.html">Videos</a><br>
+    <a href="/videos">Videos</a><br>
     <a href="/blog">Blog</a>
   </div>
   <div><h3>Legal</h3>
-    <a href="/terms.html">Terms</a><br>
+    <a href="/terms">Terms</a><br>
     <a href="/privacy.html">Privacy</a><br>
-    <a href="/refund.html">Refund</a>
+    <a href="/refund">Refund</a>
   </div>
   <div><h3>Contact</h3>
-    <a href="/contact.html">Contact us</a><br>
+    <a href="/contact">Contact us</a><br>
     <a href="mailto:support@servia.ae">support@servia.ae</a><br>
     <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
   </div>

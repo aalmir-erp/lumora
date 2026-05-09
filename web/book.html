@@ -2,13 +2,13 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="servia-page" content="book"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Book • Servia</title><meta name="theme-color" content="#0D9488">
-<link rel="canonical" href="https://servia.ae/book.html">
+<link rel="canonical" href="https://servia.ae/book">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Servia">
 <meta property="og:locale" content="en_AE">
 <meta property="og:title" content="Book • Servia">
 <meta property="og:description" content="Book a UAE home service in 60 seconds. Same-day across all 7 emirates.">
-<meta property="og:url" content="https://servia.ae/book.html">
+<meta property="og:url" content="https://servia.ae/book">
 <meta property="og:image" content="https://servia.ae/og-book.svg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -34,8 +34,8 @@
   {"@type":"ListItem","position":2,"name":"Book","item":"https://servia.ae/book.html"}]}
 </script>
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preload" as="style" href="/style.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.80"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.80"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.81"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.81"></noscript>
 <script src="/banner.js" defer></script>
 <!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
@@ -104,10 +104,10 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="160" height="52" alt="Servia" decoding="async"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
-    <a href="/services.html" data-i18n="nav_services">Services</a>
-    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
+    <a href="/services" data-i18n="nav_services">Services</a>
+    <a href="/coverage" data-i18n="nav_coverage">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html" data-i18n="nav_my_account">My account</a>
+    <a href="/me" data-i18n="nav_my_account">My account</a>
   </div>
   <div class="nav-cta">
     <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
@@ -118,15 +118,15 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
       <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
     </select>
-    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
-    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
+    <a class="btn btn-icon" href="/login" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
+    <a class="btn btn-primary" href="/book" data-i18n="nav_book_now">Book now</a>
   </div>
 </div></nav>
 
 <section><div class="container" style="max-width:720px">
   <h2>Book a service</h2>
   <p class="sub">Get an instant quote and pay to confirm — your slot is locked the moment payment goes through.</p>
-  <div style="margin:14px 0 18px;padding:12px 16px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;font-size:13px;color:#92400E"><b>💳 Advance payment policy.</b> All Servia bookings are confirmed only after payment is received via card, Apple Pay, Google Pay, or WhatsApp link. Fully refundable if we cancel; standard cancellation fees apply otherwise (see <a href="/refund.html" style="color:#92400E;text-decoration:underline">refund policy</a>).</div>
+  <div style="margin:14px 0 18px;padding:12px 16px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;font-size:13px;color:#92400E"><b>💳 Advance payment policy.</b> All Servia bookings are confirmed only after payment is received via card, Apple Pay, Google Pay, or WhatsApp link. Fully refundable if we cancel; standard cancellation fees apply otherwise (see <a href="/refund" style="color:#92400E;text-decoration:underline">refund policy</a>).</div>
 
   
 <div class="tbadges" style="margin-bottom:18px;justify-content:center">
@@ -268,7 +268,7 @@ fetch("/api/services").then(r=>r.json()).then(d=>{
   card.id = "nfc-confirm-card";
   const ownerLine = tag.owner.is_me
     ? `Welcome back, <b>${escapeHtml(tag.owner.name||"")}</b>.`
-    : `This Servia tag is bound to <b>${escapeHtml(tag.owner.phone||"a customer")}</b>. <a href="/login.html?next=${encodeURIComponent(location.pathname+location.search)}" style="color:#fff;text-decoration:underline;font-weight:700">Sign in</a> to confirm.`;
+    : `This Servia tag is bound to <b>${escapeHtml(tag.owner.phone||"a customer")}</b>. <a href="/login?next=${encodeURIComponent(location.pathname+location.search)}" style="color:#fff;text-decoration:underline;font-weight:700">Sign in</a> to confirm.`;
   card.style.cssText = "background:linear-gradient(135deg,#0F766E 0%,#14B8A6 100%);color:#fff;padding:22px 20px;border-radius:18px;margin-bottom:22px;box-shadow:0 12px 30px rgba(15,118,110,.22)";
   card.innerHTML = `
     <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
@@ -640,15 +640,15 @@ document.getElementById("book-btn").addEventListener("click", async () => {
 
 function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 </script>
-<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.80";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.81";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 <script src="/theme.js" defer></script>
 
 <nav class="mobile-nav" aria-label="Primary mobile">
   <div class="mobile-nav-inner">
     <a href="/"           data-mobnav="home"><span class="ico">🏠</span><span>Home</span></a>
-    <a href="/services.html" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
-    <a href="/book.html"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
-    <a href="/me.html"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
+    <a href="/services" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
+    <a href="/book"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
+    <a href="/me"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
     <a href="#" onclick="document.querySelector('.us-launcher').click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
   </div>
 </nav>
@@ -663,33 +663,33 @@ function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<
     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
   </div>
   <div><h3>Customers</h3>
-    <a href="/services.html">All services</a><br>
-    <a href="/book.html">Book online</a><br>
-    <a href="/coverage.html">Coverage map</a><br>
-    <a href="/me.html">My account</a><br>
-    <a href="/faq.html">FAQ</a>
+    <a href="/services">All services</a><br>
+    <a href="/book">Book online</a><br>
+    <a href="/coverage">Coverage map</a><br>
+    <a href="/me">My account</a><br>
+    <a href="/faq">FAQ</a>
   </div>
   <div><h3>Service areas</h3>
-    <a href="/area.html?city=dubai">Dubai</a><br>
-    <a href="/area.html?city=sharjah">Sharjah</a><br>
-    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
-    <a href="/area.html?city=ajman">Ajman</a><br>
-    <a href="/area.html?city=ras-al-khaimah">RAK</a>
+    <a href="/area?city=dubai">Dubai</a><br>
+    <a href="/area?city=sharjah">Sharjah</a><br>
+    <a href="/area?city=abu-dhabi">Abu Dhabi</a><br>
+    <a href="/area?city=ajman">Ajman</a><br>
+    <a href="/area?city=ras-al-khaimah">RAK</a>
   </div>
   <div><h3>Apps &amp; AI</h3>
-    <a href="/install.html">Install app</a><br>
-    <a href="/smart-speakers.html">Voice booking</a><br>
+    <a href="/install">Install app</a><br>
+    <a href="/smart-speakers">Voice booking</a><br>
     <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">ChatGPT GPT</a><br>
-    <a href="/videos.html">Videos</a><br>
+    <a href="/videos">Videos</a><br>
     <a href="/blog">Blog</a>
   </div>
   <div><h3>Legal</h3>
-    <a href="/terms.html">Terms</a><br>
+    <a href="/terms">Terms</a><br>
     <a href="/privacy.html">Privacy</a><br>
-    <a href="/refund.html">Refund</a>
+    <a href="/refund">Refund</a>
   </div>
   <div><h3>Contact</h3>
-    <a href="/contact.html">Contact us</a><br>
+    <a href="/contact">Contact us</a><br>
     <a href="mailto:support@servia.ae">support@servia.ae</a><br>
     <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
   </div>

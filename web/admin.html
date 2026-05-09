@@ -4,7 +4,7 @@
 <meta name="googlebot" content="noindex,nofollow">
 <meta name="bingbot" content="noindex,nofollow">
 <title>Admin: Servia</title><meta name="theme-color" content="#0D9488">
-<link rel="stylesheet" href="/style.css?v=1.24.80">
+<link rel="stylesheet" href="/style.css?v=1.24.81">
 <style>
   /* Mobile drawer for the admin sidebar — style.css hides .admin-side on
    * <=880px with no way to bring it back. Re-introduce it as a slide-out
@@ -400,7 +400,7 @@
         <!-- Right: leads + status -->
         <div>
           <div style="background:#FEF3C7;border:1px solid #FCD34D;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:13px">
-            <b>📡 WhatsApp bridge required.</b> The actual message is delivered via the Servia WhatsApp bridge (Node service). Set <code>WA_BRIDGE_URL</code> in Railway env. Without it, leads are still recorded with their signup URL — you can manually copy/paste-send for now. <a href="/contact.html" target="_blank">Need help setting it up?</a>
+            <b>📡 WhatsApp bridge required.</b> The actual message is delivered via the Servia WhatsApp bridge (Node service). Set <code>WA_BRIDGE_URL</code> in Railway env. Without it, leads are still recorded with their signup URL — you can manually copy/paste-send for now. <a href="/contact" target="_blank">Need help setting it up?</a>
           </div>
           <h3 style="margin:0 0 12px;font-size:15px">Recent leads (top 50)</h3>
           <div id="ou-leads"></div>
@@ -1843,7 +1843,7 @@
 
         <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:14px;padding:14px">
           <h4 style="margin:0 0 8px;font-size:14px;color:#78350F">⚡ Cheap shortcut available TODAY — Siri Shortcuts</h4>
-          <p style="margin:0;font-size:12.5px;color:#92400E">iOS users can manually create a Siri Shortcut that opens <code>https://servia.ae/search.html?q=AC%20service</code> when they say "Book AC service". No dev work needed. We've already shipped a <a href="/smart-speakers.html" target="_blank" style="color:#7C2D12;font-weight:700">/smart-speakers.html</a> page that walks users through this. Promotes Servia as voice-friendly without waiting on the full Alexa skill.</p>
+          <p style="margin:0;font-size:12.5px;color:#92400E">iOS users can manually create a Siri Shortcut that opens <code>https://servia.ae/search.html?q=AC%20service</code> when they say "Book AC service". No dev work needed. We've already shipped a <a href="/smart-speakers" target="_blank" style="color:#7C2D12;font-weight:700">/smart-speakers.html</a> page that walks users through this. Promotes Servia as voice-friendly without waiting on the full Alexa skill.</p>
         </div>
       </div>
 
@@ -3038,7 +3038,7 @@ async function loadHealth() {
     const vN = (v.videos||[]).length, bN = (b.posts||[]).length;
     card.querySelector(".dash-v").innerHTML = `<span style="color:#15803D">● ${vN} videos</span> · ${bN} articles`;
     card.insertAdjacentHTML("beforeend",
-      `<div class="dash-sub"><a href="/videos.html" target="_blank" style="color:#0F766E">Watch all →</a> · <a href="/blog" target="_blank" style="color:#0F766E">Blog →</a></div>`);
+      `<div class="dash-sub"><a href="/videos" target="_blank" style="color:#0F766E">Watch all →</a> · <a href="/blog" target="_blank" style="color:#0F766E">Blog →</a></div>`);
   } catch (_) {}
 }
 

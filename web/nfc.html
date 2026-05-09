@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#0F766E">
 <title>Servia NFC Tap-to-Book — UAE's first one-tap home services tag</title>
 <meta name="description" content="Stick a Servia NFC tag in your kitchen, car, AC unit or pool — tap your phone once, repeat your favourite service in 2 seconds. Free in UAE. No tracking, no battery, GDPR-style privacy.">
-<link rel="canonical" href="https://servia.ae/nfc.html">
+<link rel="canonical" href="https://servia.ae/nfc">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Servia NFC Tap-to-Book — UAE's first one-tap home services tag">
 <meta property="og:description" content="Stick a Servia NFC tag in your kitchen, car, AC, pool — tap your phone once, repeat the service in 2 seconds. Free in UAE.">
-<meta property="og:url" content="https://servia.ae/nfc.html">
+<meta property="og:url" content="https://servia.ae/nfc">
 <meta property="og:image" content="https://servia.ae/brand/servia-icon-1024x1024.png">
 <meta property="og:site_name" content="Servia">
 <meta property="og:locale" content="en_AE">
@@ -77,7 +77,7 @@
 
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="preload" as="style" href="/style.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.80"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.81"></noscript>
 
 <style>
   body { background:#FAFAFA; min-height:100vh; }
@@ -294,13 +294,13 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 <nav class="nav"><div class="nav-inner">
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="160" height="52" alt="Servia"></a>
   <div class="nav-links">
-    <a href="/services.html">Services</a>
-    <a href="/coverage.html">Coverage</a>
+    <a href="/services">Services</a>
+    <a href="/coverage">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html">My account</a>
+    <a href="/me">My account</a>
   </div>
   <div class="nav-cta">
-    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in">👤</a>
+    <a class="btn btn-icon" href="/login" title="Sign in" aria-label="Sign in">👤</a>
     <a class="btn btn-primary" href="#order">Get my tag →</a>
   </div>
 </div></nav>
@@ -385,7 +385,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       </div>
     </div>
 
-    <p style="text-align:center;margin-top:22px;font-size:13px;color:#64748B">Switch modes any time from <a href="/me.html#nfctags" style="color:#0F766E;font-weight:700">My account → NFC tags → Configure</a>. New tags default to <b>Mode 1</b>.</p>
+    <p style="text-align:center;margin-top:22px;font-size:13px;color:#64748B">Switch modes any time from <a href="/me#nfctags" style="color:#0F766E;font-weight:700">My account → NFC tags → Configure</a>. New tags default to <b>Mode 1</b>.</p>
   </div>
   <style>
     @keyframes m1-tap  { 0%,40%{opacity:1;transform:translateY(-50%) scale(1)} 50%,100%{opacity:.3;transform:translateY(-50%) scale(.85)} }
@@ -762,16 +762,16 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <div style="max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px">
     <div><img src="/logo.svg" width="160" height="52" alt="Servia"><p style="margin:12px 0 0;font-size:13px;opacity:.85">UAE's first NFC home-service tag.</p></div>
     <div><h4 style="color:#fff;font-size:13px;margin:0 0 12px;font-weight:700">NFC Tap-to-Book</h4>
-      <a href="/nfc.html#how" style="color:#cbd5e1;font-size:13px">How it works</a><br>
-      <a href="/nfc.html#order" style="color:#cbd5e1;font-size:13px">Order a tag</a><br>
-      <a href="/me.html" style="color:#cbd5e1;font-size:13px">My tags</a><br>
-      <a href="/contact.html" style="color:#cbd5e1;font-size:13px">Help with NFC</a>
+      <a href="/nfc#how" style="color:#cbd5e1;font-size:13px">How it works</a><br>
+      <a href="/nfc#order" style="color:#cbd5e1;font-size:13px">Order a tag</a><br>
+      <a href="/me" style="color:#cbd5e1;font-size:13px">My tags</a><br>
+      <a href="/contact" style="color:#cbd5e1;font-size:13px">Help with NFC</a>
     </div>
     <div><h4 style="color:#fff;font-size:13px;margin:0 0 12px;font-weight:700">Servia</h4>
-      <a href="/services.html" style="color:#cbd5e1;font-size:13px">All services</a><br>
-      <a href="/coverage.html" style="color:#cbd5e1;font-size:13px">Coverage</a><br>
+      <a href="/services" style="color:#cbd5e1;font-size:13px">All services</a><br>
+      <a href="/coverage" style="color:#cbd5e1;font-size:13px">Coverage</a><br>
       <a href="/blog" style="color:#cbd5e1;font-size:13px">Blog</a><br>
-      <a href="/install.html" style="color:#cbd5e1;font-size:13px">Install app</a>
+      <a href="/install" style="color:#cbd5e1;font-size:13px">Install app</a>
     </div>
   </div>
 </footer>
@@ -939,7 +939,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     const out = document.getElementById("bulk-result");
     const tok = localStorage.getItem("lumora.user.tok");
     if (!tok) {
-      out.innerHTML = `📲 <a href="/login.html?next=/nfc.html%23bulk" style="color:#FCD34D;font-weight:700">Sign in</a> first to place a bulk NFC order.`;
+      out.innerHTML = `📲 <a href="/login?next=/nfc.html%23bulk" style="color:#FCD34D;font-weight:700">Sign in</a> first to place a bulk NFC order.`;
       return;
     }
     const items = [];
@@ -994,7 +994,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     out.innerHTML = "";
     const tok = localStorage.getItem("lumora.user.tok");
     if (!tok) {
-      out.innerHTML = `<div class="login-hint">📲 You need to <a href="/login.html?next=/nfc.html%23order" style="color:#0F766E;font-weight:700">sign in</a> first to order an NFC tag (we need to bind it to your account).</div>`;
+      out.innerHTML = `<div class="login-hint">📲 You need to <a href="/login?next=/nfc.html%23order" style="color:#0F766E;font-weight:700">sign in</a> first to order an NFC tag (we need to bind it to your account).</div>`;
       return;
     }
     const body = {
@@ -1016,7 +1016,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
         <b>✅ Tag queued — slug ${j.slug}</b><br>
         Tap-URL: <code style="background:rgba(0,0,0,.05);padding:1px 6px;border-radius:4px;font-size:12px">${j.tap_url}</code><br>
         ${j.message}<br>
-        <a href="/me.html#nfc-tags" style="color:#0F766E;font-weight:700;margin-top:8px;display:inline-block">View my tags →</a>
+        <a href="/me#nfc-tags" style="color:#0F766E;font-weight:700;margin-top:8px;display:inline-block">View my tags →</a>
       </div>`;
       btn.textContent = "Order another →";
     } catch (e) {

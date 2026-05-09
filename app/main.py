@@ -2011,7 +2011,10 @@ def sitemap_pages(request: Request = None):
                 except Exception:
                     lastmod = today
                 freq, prio = _PAGE_OVERRIDES.get(fname, ("weekly", "0.7"))
-                urls.append((f"{base}/{fname}", lastmod, freq, prio))
+                # v1.24.81 — emit clean URL (drop .html) so Google's
+                # canonical signal matches what the middleware redirects to.
+                clean_path = fname[:-5]  # "faq.html" → "faq"
+                urls.append((f"{base}/{clean_path}", lastmod, freq, prio))
             # Also walk the /vs/ subdir so competitor comparison pages
             # are crawled. AI engines (Gemini SGE, ChatGPT) lean heavily
             # on these structured side-by-sides for "X vs Y" answers.
@@ -2025,7 +2028,8 @@ def sitemap_pages(request: Request = None):
                         lastmod = _dt.date.fromtimestamp(mtime).isoformat()
                     except Exception:
                         lastmod = today
-                    urls.append((f"{base}/vs/{fname}", lastmod, "weekly", "0.8"))
+                    clean_path = fname[:-5]
+                    urls.append((f"{base}/vs/{clean_path}", lastmod, "weekly", "0.8"))
             # v1.24.68 — emit /services/<slug>.html for EVERY service in the
             # KB. The dynamic route `service_slug_page` renders the canonical
             # service.html template for each slug, so SEO-friendly URLs like

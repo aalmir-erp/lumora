@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<link rel="canonical" href="https://servia.ae/me.html"><meta charset="utf-8">
+<link rel="canonical" href="https://servia.ae/me"><meta charset="utf-8">
 <meta name="servia-page" content="me"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My account • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preload" as="style" href="/style.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.80"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.80"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.81"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.81"></noscript>
 <script src="/banner.js" defer></script>
 <!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
@@ -75,10 +75,10 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="160" height="52" alt="Servia" decoding="async"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
-    <a href="/services.html" data-i18n="nav_services">Services</a>
-    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
+    <a href="/services" data-i18n="nav_services">Services</a>
+    <a href="/coverage" data-i18n="nav_coverage">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html" data-i18n="nav_my_account">My account</a>
+    <a href="/me" data-i18n="nav_my_account">My account</a>
   </div>
   <div class="nav-cta">
     <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
@@ -89,8 +89,8 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
       <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
     </select>
-    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
-    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
+    <a class="btn btn-icon" href="/login" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
+    <a class="btn btn-primary" href="/book" data-i18n="nav_book_now">Book now</a>
   </div>
 </div></nav>
 
@@ -173,9 +173,9 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
         <p style="margin:4px 0 0;color:var(--muted)">Each tag is bound to a service. Tap your phone on it → 1-tap booking.</p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <a class="btn btn-ghost" href="/nfc.html">How it works</a>
-        <a class="btn btn-primary" href="/nfc.html#order">+ Order single</a>
-        <a class="btn btn-primary" href="/nfc.html#bulk" style="background:#7C3AED">+ Bulk order</a>
+        <a class="btn btn-ghost" href="/nfc">How it works</a>
+        <a class="btn btn-primary" href="/nfc#order">+ Order single</a>
+        <a class="btn btn-primary" href="/nfc#bulk" style="background:#7C3AED">+ Bulk order</a>
       </div>
     </div>
     <div id="nfc-tags-list">
@@ -190,7 +190,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
         <h2 style="margin:0">My bookings</h2>
         <p style="margin:4px 0 0;color:var(--muted)" id="live-status">🟢 Live updates on</p>
       </div>
-      <a class="btn btn-primary" href="/book.html">+ Book another</a>
+      <a class="btn btn-primary" href="/book">+ Book another</a>
     </div>
     <div id="list">
       <div class="skel-card"><div class="skel skel-line" style="width:40%;height:18px"></div><div class="skel skel-line" style="width:60%"></div></div>
@@ -376,7 +376,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     <div id="video" style="background:linear-gradient(135deg,#1F2937,#111827);color:#fff;border-radius:18px;padding:22px;margin-top:18px">
       <div style="display:inline-block;background:linear-gradient(135deg,#F59E0B,#FCD34D);color:#78350F;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;margin-bottom:10px">🎬 CREATOR</div>
       <h3 style="margin:0 0 6px;font-size:18px">Submit a Servia video → earn creator points</h3>
-      <p style="font-size:13.5px;color:#CBD5E1;margin:0 0 14px;line-height:1.55">Length × follower count × platform = creator points. Roll into Ambassador tier (more % off bookings) plus Creator-Elite perks at 5,000+ pts. <a href="/share-rewards.html" style="color:#FCD34D">See scoring rules →</a></p>
+      <p style="font-size:13.5px;color:#CBD5E1;margin:0 0 14px;line-height:1.55">Length × follower count × platform = creator points. Roll into Ambassador tier (more % off bookings) plus Creator-Elite perks at 5,000+ pts. <a href="/share-rewards" style="color:#FCD34D">See scoring rules →</a></p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div>
           <label style="font-size:11px;color:#CBD5E1;font-weight:700">Booking ID</label>
@@ -414,7 +414,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       </p>
     </div>
 
-    <p style="text-align:center;margin-top:20px"><a href="/share-rewards.html">Full rewards guide →</a></p>
+    <p style="text-align:center;margin-top:20px"><a href="/share-rewards">Full rewards guide →</a></p>
   </div>
 
 <!-- Modal for cancel + reschedule + review -->
@@ -424,9 +424,9 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 
 <nav class="mobile-nav"><div class="mobile-nav-inner">
   <a href="/"><span class="ico">🏠</span><span>Home</span></a>
-  <a href="/services.html"><span class="ico">📋</span><span>Services</span></a>
-  <a href="/book.html"><span class="ico">➕</span><span>Book</span></a>
-  <a href="/me.html" class="active"><span class="ico">👤</span><span>Account</span></a>
+  <a href="/services"><span class="ico">📋</span><span>Services</span></a>
+  <a href="/book"><span class="ico">➕</span><span>Book</span></a>
+  <a href="/me" class="active"><span class="ico">👤</span><span>Account</span></a>
   <a href="#" onclick="document.querySelector('.us-launcher').click();return false"><span class="ico">💬</span><span>Chat</span></a>
 </div></nav>
 
@@ -538,7 +538,7 @@ async function loadNfcTags() {
     if (!tags.length) {
       list.innerHTML = `<div class="form" style="text-align:center;color:var(--muted)">
         <p style="margin:0 0 14px">No NFC tags yet.</p>
-        <a class="btn btn-primary" href="/nfc.html#order">Order your first tag (free) →</a></div>`;
+        <a class="btn btn-primary" href="/nfc#order">Order your first tag (free) →</a></div>`;
       return;
     }
     const SVCNAME = {deep_cleaning:"✨ Deep Cleaning",ac_cleaning:"❄️ AC Service",
@@ -671,7 +671,7 @@ async function loadBookings() {
     const list = document.getElementById("list");
     if (!r.bookings.length) {
       list.innerHTML = `<div class="form" style="text-align:center;color:var(--muted)">
-        No bookings yet. <a href="/book.html">Book your first service →</a></div>`;
+        No bookings yet. <a href="/book">Book your first service →</a></div>`;
     } else {
       list.innerHTML = r.bookings.map(renderBooking).join("");
     }
@@ -716,7 +716,7 @@ function renderBooking(b) {
   const quotes = (b.quotes || []).map(q => `
     <tr><td>${q.id}</td><td>${q.total} ${q.currency}</td>
         <td><span class="badge ${q.status==='signed'?'signed':'pending'}">${q.status}</span></td>
-        <td><a class="btn btn-ghost" style="font-size:11px;padding:4px 10px" href="/quote.html?id=${q.id}">${q.status==='signed'?'View':'Sign'}</a></td></tr>`).join("");
+        <td><a class="btn btn-ghost" style="font-size:11px;padding:4px 10px" href="/quote?id=${q.id}">${q.status==='signed'?'View':'Sign'}</a></td></tr>`).join("");
   const invs = (b.invoices || []).map(i => `
     <tr><td>${i.id}</td><td>${i.amount} ${i.currency}</td>
         <td><span class="badge ${i.payment_status}">${i.payment_status}</span></td>
@@ -1100,7 +1100,7 @@ async function submitVideoProof() {
   } catch (e) { alert("Network error: " + e.message); }
 }
 </script>
-<script src="/widget.js?v=1.24.80"></script>
+<script src="/widget.js?v=1.24.81"></script>
 <script src="/cms.js" defer></script>
 <script src="/share.js" defer></script>
 <script src="/install.js" defer></script>
@@ -1111,33 +1111,33 @@ async function submitVideoProof() {
     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
   </div>
   <div><h3>Customers</h3>
-    <a href="/services.html">All services</a><br>
-    <a href="/book.html">Book online</a><br>
-    <a href="/coverage.html">Coverage map</a><br>
-    <a href="/me.html">My account</a><br>
-    <a href="/faq.html">FAQ</a>
+    <a href="/services">All services</a><br>
+    <a href="/book">Book online</a><br>
+    <a href="/coverage">Coverage map</a><br>
+    <a href="/me">My account</a><br>
+    <a href="/faq">FAQ</a>
   </div>
   <div><h3>Service areas</h3>
-    <a href="/area.html?city=dubai">Dubai</a><br>
-    <a href="/area.html?city=sharjah">Sharjah</a><br>
-    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
-    <a href="/area.html?city=ajman">Ajman</a><br>
-    <a href="/area.html?city=ras-al-khaimah">RAK</a>
+    <a href="/area?city=dubai">Dubai</a><br>
+    <a href="/area?city=sharjah">Sharjah</a><br>
+    <a href="/area?city=abu-dhabi">Abu Dhabi</a><br>
+    <a href="/area?city=ajman">Ajman</a><br>
+    <a href="/area?city=ras-al-khaimah">RAK</a>
   </div>
   <div><h3>Apps &amp; AI</h3>
-    <a href="/install.html">Install app</a><br>
-    <a href="/smart-speakers.html">Voice booking</a><br>
+    <a href="/install">Install app</a><br>
+    <a href="/smart-speakers">Voice booking</a><br>
     <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">ChatGPT GPT</a><br>
-    <a href="/videos.html">Videos</a><br>
+    <a href="/videos">Videos</a><br>
     <a href="/blog">Blog</a>
   </div>
   <div><h3>Legal</h3>
-    <a href="/terms.html">Terms</a><br>
+    <a href="/terms">Terms</a><br>
     <a href="/privacy.html">Privacy</a><br>
-    <a href="/refund.html">Refund</a>
+    <a href="/refund">Refund</a>
   </div>
   <div><h3>Contact</h3>
-    <a href="/contact.html">Contact us</a><br>
+    <a href="/contact">Contact us</a><br>
     <a href="mailto:support@servia.ae">support@servia.ae</a><br>
     <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
   </div>

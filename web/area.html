@@ -10,8 +10,8 @@
 <link rel="canonical" href="">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="preload" as="style" href="/style.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.80"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.80" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.80"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.81"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.81" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.81"></noscript>
 <link rel="preload" as="image" href="/mascot.svg" type="image/svg+xml" fetchpriority="high">
 <link rel="preload" as="fetch" href="/api/services" crossorigin="anonymous">
 
@@ -92,10 +92,10 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <a href="/" aria-label="Servia home"><img src="/logo.svg" width="160" height="52" alt="Servia" decoding="async"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
-    <a href="/services.html" data-i18n="nav_services">Services</a>
-    <a href="/coverage.html" data-i18n="nav_coverage">Coverage</a>
+    <a href="/services" data-i18n="nav_services">Services</a>
+    <a href="/coverage" data-i18n="nav_coverage">Coverage</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html" data-i18n="nav_my_account">My account</a>
+    <a href="/me" data-i18n="nav_my_account">My account</a>
   </div>
   <div class="nav-cta">
     <button class="btn btn-icon" type="button" onclick="window.lumoraOpenSettings&&lumoraOpenSettings()" title="Themes &amp; fonts" aria-label="Theme settings">🎨</button>
@@ -106,8 +106,8 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       <option value="ru">🇷🇺 RU</option><option value="fa">🇮🇷 FA</option><option value="fr">🇫🇷 FR</option>
       <option value="zh">🇨🇳 ZH</option><option value="es">🇪🇸 ES</option>
     </select>
-    <a class="btn btn-icon" href="/login.html" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
-    <a class="btn btn-primary" href="/book.html" data-i18n="nav_book_now">Book now</a>
+    <a class="btn btn-icon" href="/login" title="Sign in" aria-label="Sign in" data-i18n-title="nav_signin">👤</a>
+    <a class="btn btn-primary" href="/book" data-i18n="nav_book_now">Book now</a>
   </div>
 </div></nav>
 
@@ -124,9 +124,9 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
         <div class="s">7-day<small>re-do guarantee</small></div>
       </div>
       <div class="area-cta-row">
-        <a class="btn-bigwa" id="hero-wa" href="/contact.html" target="_blank"
+        <a class="btn-bigwa" id="hero-wa" href="/contact" target="_blank"
            style="background:#25D366;color:#fff;padding:14px 24px;border-radius:999px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px">📱 Book on WhatsApp</a>
-        <a class="btn btn-primary" href="/book.html" style="font-size:15px;padding:14px 24px">Book online →</a>
+        <a class="btn btn-primary" href="/book" style="font-size:15px;padding:14px 24px">Book online →</a>
       </div>
     </div>
     <div style="text-align:center" class="reveal in">
@@ -138,13 +138,13 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 <section style="padding:24px 16px;background:var(--surface)">
   <div class="container">
     <div class="areas-strip">
-      <a href="/area.html?city=dubai"        data-c="dubai">🏙 Dubai</a>
-      <a href="/area.html?city=sharjah"      data-c="sharjah">🌅 Sharjah</a>
-      <a href="/area.html?city=ajman"        data-c="ajman">⛵ Ajman</a>
-      <a href="/area.html?city=abu-dhabi"    data-c="abu-dhabi">🦅 Abu Dhabi</a>
-      <a href="/area.html?city=ras-al-khaimah" data-c="ras-al-khaimah">🏔 Ras Al Khaimah</a>
-      <a href="/area.html?city=umm-al-quwain"  data-c="umm-al-quwain">🌊 Umm Al Quwain</a>
-      <a href="/area.html?city=fujairah"       data-c="fujairah">🏝 Fujairah</a>
+      <a href="/area?city=dubai"        data-c="dubai">🏙 Dubai</a>
+      <a href="/area?city=sharjah"      data-c="sharjah">🌅 Sharjah</a>
+      <a href="/area?city=ajman"        data-c="ajman">⛵ Ajman</a>
+      <a href="/area?city=abu-dhabi"    data-c="abu-dhabi">🦅 Abu Dhabi</a>
+      <a href="/area?city=ras-al-khaimah" data-c="ras-al-khaimah">🏔 Ras Al Khaimah</a>
+      <a href="/area?city=umm-al-quwain"  data-c="umm-al-quwain">🌊 Umm Al Quwain</a>
+      <a href="/area?city=fujairah"       data-c="fujairah">🏝 Fujairah</a>
     </div>
   </div>
 </section>
@@ -171,7 +171,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     <iframe id="em-video" style="width:100%;aspect-ratio:16/9;border:0;background:#0F172A;display:block"
             loading="lazy" title="Emirate video"></iframe>
   </div>
-  <p style="text-align:center;margin:10px 0 0"><a href="/videos.html" style="color:#FCD34D;font-weight:700;text-decoration:none;font-size:13px">📺 More Servia videos →</a></p>
+  <p style="text-align:center;margin:10px 0 0"><a href="/videos" style="color:#FCD34D;font-weight:700;text-decoration:none;font-size:13px">📺 More Servia videos →</a></p>
   <script>
   (function(){
     const params = new URLSearchParams(location.search);
@@ -199,7 +199,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     </div>
     <div id="ar-map" style="height:440px;border-radius:18px;box-shadow:0 8px 28px rgba(15,23,42,.10);position:relative;background:#E0F2F1;z-index:1"></div>
     <div id="ar-feed" style="margin-top:14px;display:flex;flex-direction:column;gap:6px;max-height:140px;overflow:auto;padding-right:6px"></div>
-    <p style="text-align:center;margin-top:14px"><a class="btn btn-ghost" href="/coverage.html">See full UAE-wide live map →</a></p>
+    <p style="text-align:center;margin-top:14px"><a class="btn btn-ghost" href="/coverage">See full UAE-wide live map →</a></p>
   </div>
 </section>
 
@@ -246,7 +246,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   <div class="container">
     <h2 class="reveal" id="sec-faq-h" style="text-align:center">Frequently asked</h2>
     <div id="faqs" style="max-width:760px;margin:24px auto 0"></div>
-    <p style="text-align:center;margin-top:18px"><a class="btn btn-ghost" href="/faq.html">See all 60+ FAQs →</a></p>
+    <p style="text-align:center;margin-top:18px"><a class="btn btn-ghost" href="/faq">See all 60+ FAQs →</a></p>
   </div>
 </section>
 
@@ -255,8 +255,8 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     <h2 class="reveal">Book your service in 60 seconds</h2>
     <p class="sub reveal" id="cta-sub">Pick a service, get an instant quote, lock in the slot. We do the rest.</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px">
-      <a class="btn btn-primary" href="/book.html" style="font-size:16px;padding:14px 28px">Book now</a>
-      <a class="btn btn-ghost" id="cta-wa" href="/contact.html" target="_blank" style="font-size:16px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366">📱 WhatsApp</a>
+      <a class="btn btn-primary" href="/book" style="font-size:16px;padding:14px 28px">Book now</a>
+      <a class="btn btn-ghost" id="cta-wa" href="/contact" target="_blank" style="font-size:16px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366">📱 WhatsApp</a>
     </div>
   </div>
 </section>
@@ -270,7 +270,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     <p style="margin:0 0 14px;color:var(--muted);font-size:14px">Refer friends to climb the Ambassador tier ladder — earn up to 20% off every Servia booking. 5★ reviews and social posts give bonus tier boosts.</p>
     <div data-share="home" data-share-key="home-page" data-share-url="https://servia.ae"
          style="display:flex;justify-content:center"></div>
-    <a href="/share-rewards.html" class="btn btn-primary" style="margin-top:12px;display:inline-block">See full rewards guide →</a>
+    <a href="/share-rewards" class="btn btn-primary" style="margin-top:12px;display:inline-block">See full rewards guide →</a>
   </div>
 </section>
 <footer><div class="container">
@@ -279,33 +279,33 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
   </div>
   <div><h3>Customers</h3>
-    <a href="/services.html">All services</a><br>
-    <a href="/book.html">Book online</a><br>
-    <a href="/coverage.html">Coverage map</a><br>
-    <a href="/me.html">My account</a><br>
-    <a href="/faq.html">FAQ</a>
+    <a href="/services">All services</a><br>
+    <a href="/book">Book online</a><br>
+    <a href="/coverage">Coverage map</a><br>
+    <a href="/me">My account</a><br>
+    <a href="/faq">FAQ</a>
   </div>
   <div><h3>Service areas</h3>
-    <a href="/area.html?city=dubai">Dubai</a><br>
-    <a href="/area.html?city=sharjah">Sharjah</a><br>
-    <a href="/area.html?city=abu-dhabi">Abu Dhabi</a><br>
-    <a href="/area.html?city=ajman">Ajman</a><br>
-    <a href="/area.html?city=ras-al-khaimah">RAK</a>
+    <a href="/area?city=dubai">Dubai</a><br>
+    <a href="/area?city=sharjah">Sharjah</a><br>
+    <a href="/area?city=abu-dhabi">Abu Dhabi</a><br>
+    <a href="/area?city=ajman">Ajman</a><br>
+    <a href="/area?city=ras-al-khaimah">RAK</a>
   </div>
   <div><h3>Apps &amp; AI</h3>
-    <a href="/install.html">Install app</a><br>
-    <a href="/smart-speakers.html">Voice booking</a><br>
+    <a href="/install">Install app</a><br>
+    <a href="/smart-speakers">Voice booking</a><br>
     <a href="https://chatgpt.com/g/g-69f9f43427c88191bca61c0fe0977b53-servia-uae-helper" target="_blank" rel="noopener">ChatGPT GPT</a><br>
-    <a href="/videos.html">Videos</a><br>
+    <a href="/videos">Videos</a><br>
     <a href="/blog">Blog</a>
   </div>
   <div><h3>Legal</h3>
-    <a href="/terms.html">Terms</a><br>
+    <a href="/terms">Terms</a><br>
     <a href="/privacy.html">Privacy</a><br>
-    <a href="/refund.html">Refund</a>
+    <a href="/refund">Refund</a>
   </div>
   <div><h3>Contact</h3>
-    <a href="/contact.html">Contact us</a><br>
+    <a href="/contact">Contact us</a><br>
     <a href="mailto:support@servia.ae">support@servia.ae</a><br>
     <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
   </div>
@@ -313,9 +313,9 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 
 <nav class="mobile-nav"><div class="mobile-nav-inner">
   <a href="/"><span class="ico">🏠</span><span>Home</span></a>
-  <a href="/services.html"><span class="ico">📋</span><span>Services</span></a>
-  <a href="/book.html"><span class="ico">➕</span><span>Book</span></a>
-  <a href="/me.html"><span class="ico">👤</span><span>Account</span></a>
+  <a href="/services"><span class="ico">📋</span><span>Services</span></a>
+  <a href="/book"><span class="ico">➕</span><span>Book</span></a>
+  <a href="/me"><span class="ico">👤</span><span>Account</span></a>
   <a href="#" onclick="document.querySelector('.us-launcher').click();return false"><span class="ico">💬</span><span>Chat</span></a>
 </div></nav>
 
@@ -543,7 +543,7 @@ fetch("/api/services").then(r => r.json()).then(d => {
   const map = Object.fromEntries(d.services.map(s => [s.id, s]));
   const featured = POPULAR.map(id => map[id]).filter(Boolean);
   document.getElementById("svc-tiles").innerHTML = featured.map(s => `
-    <a class="svc-tile reveal in" href="/service.html?id=${s.id}&city=${cityKey}">
+    <a class="svc-tile reveal in" href="/service?id=${s.id}&city=${cityKey}">
       <div class="e">${ICONS[s.icon] || "🧽"}</div>
       <h3>${s.name}</h3>
       <small>${s.category} in ${C.name}</small>
@@ -652,7 +652,7 @@ document.querySelectorAll(".reveal").forEach(el => io.observe(el));
         <div style="font-weight:800;color:#0F766E;font-size:13.5px">${ev.icon||'•'} ${ev.headline||''}</div>
         <div style="color:#475569;font-size:12px;margin-top:2px">${ev.area||''} · ${ago}</div>
         <a style="display:inline-block;margin-top:8px;padding:6px 12px;background:linear-gradient(135deg,#0F766E,#F59E0B);color:#fff;border-radius:999px;text-decoration:none;font-size:11.5px;font-weight:700"
-           href="/book.html?service=${encodeURIComponent(ev.service||'')}&area=${encodeURIComponent(ev.area||'')}">Book in ${ev.area||''} →</a>
+           href="/book?service=${encodeURIComponent(ev.service||'')}&area=${encodeURIComponent(ev.area||'')}">Book in ${ev.area||''} →</a>
        </div>`);
     setTimeout(() => { try { pinLayer.removeLayer(m); } catch(_) {} }, 14000);
     return m;
@@ -748,7 +748,7 @@ document.querySelectorAll(".reveal").forEach(el => io.observe(el));
   setInterval(tickFeed, 3000);
 })();
 </script>
-<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.80";s.dataset.apiBase="";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.81";s.dataset.apiBase="";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 <script src="/cms.js" defer></script>
 <script src="/share.js" defer></script>
 <script src="/install.js" defer></script>
