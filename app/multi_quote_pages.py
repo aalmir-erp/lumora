@@ -302,7 +302,13 @@ margin:8px 0;cursor:pointer}}
 # ---------------------------------------------------------------------------
 # v1.24.57 — invoice HTML + native PDF
 @public_router.get("/i/{quote_id}", response_class=HTMLResponse)
-def invoice_view(quote_id: str) -> str:
+def invoice_view(quote_id: str):
+    # v1.24.73 — FastAPI matches "/i/{quote_id}" before "/i/{quote_id}.pdf"
+    # because of registration order, so /i/Q-XXX.pdf was being routed here
+    # with quote_id="Q-XXX.pdf" and 404'ing. Detect the .pdf suffix and
+    # delegate to the PDF handler.
+    if quote_id.endswith(".pdf"):
+        return invoice_pdf(quote_id[:-4])
     q = _quote(quote_id)
     if not q: return HTMLResponse("<h1>Invoice not found</h1>", status_code=404)
     items_html = "".join(
