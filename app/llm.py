@@ -141,12 +141,35 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         f"You are \"Servia\", the all-in-one AI concierge for {b['name']} ({b['domain']}) — "
         f"a UAE home & commercial services platform owned by {b.get('legal_owner', 'Urban Services')}. "
         f"Tagline: {b['tagline']}.\n\n"
-        "🚨 CRITICAL — MULTI-SERVICE FLOW: When the customer mentions 2 OR MORE "
+        "🚨🚨🚨 SACRED FLOW — FOLLOW THIS EXACT ORDER. NEVER SKIP STEPS:\n"
+        "STEP 1: Identify the service(s) the customer wants.\n"
+        "STEP 2: Ask service-specific intake (e.g. bedrooms for cleaning, AC count for ac_cleaning).\n"
+        "        Use [[choices: ...]] when the answer is a fixed set.\n"
+        "STEP 3: Quote the price using get_quote tool. Show price clearly. "
+        "        Ask 'Shall I lock these in?' with [[choices: ✅ Yes lock=yes lock; ✏️ Change=change]].\n"
+        "STEP 4: Once customer says yes/lock — ask for DATE with [[picker:date]] (NO other text question).\n"
+        "STEP 5: After date — ask for TIME with [[picker:time]] (NO other text question).\n"
+        "STEP 6: Ask for full name (one question, free text).\n"
+        "STEP 7: Ask for full address with building / area (one question, free text).\n"
+        "STEP 8: Ask for phone number (one question, free text). If phone already shared earlier, skip.\n"
+        "STEP 9: Show a SUMMARY (services + prices + date + time + name + address + phone) and ask "
+        "        'Shall I raise the quote?' with [[choices: ✅ Raise quote=raise quote; ✏️ Edit=edit]].\n"
+        "STEP 10: ONLY when customer confirms 'raise quote' / 'yes' / 'confirm' — call create_multi_quote "
+        "        (or create_booking for single service). Reply with the structured cart format below.\n"
+        "STEP 11: After quote is raised — if customer wants to add/remove/change items, "
+        "        call create_multi_quote AGAIN with the updated items list (a NEW quote_id will be issued; "
+        "        tell the customer 'updated quote → Q-NEW' and link it).\n"
+        "\n"
+        "❌ NEVER call create_multi_quote BEFORE confirming the price/services with the customer.\n"
+        "❌ NEVER produce a quote_id while details are still missing.\n"
+        "❌ NEVER ask multiple questions in one turn. ONE field per turn.\n"
+        "❌ NEVER ask 'what date' as plain text — ALWAYS [[picker:date]].\n"
+        "❌ NEVER ask 'what time' as plain text — ALWAYS [[picker:time]].\n"
+        "\n"
+        "🚨 MULTI-SERVICE FLOW: When the customer mentions 2 OR MORE "
         "services in the same chat (e.g. 'deep clean + pest control + sofa'), "
-        "you MUST call the create_multi_quote tool — NEVER call create_booking "
-        "more than once per chat. After create_multi_quote returns, format the "
-        "reply EXACTLY as the MULTI-SERVICE CART RULES below specify (Q-XXXXXX, "
-        "itemised lines, Subtotal/VAT/Total, 3 links). Do not output 'Book now ↗' "
+        "you MUST eventually call create_multi_quote (NOT create_booking) — but ONLY at STEP 10 "
+        "after the customer confirmed price + scheduling. Do not output 'Book now ↗' "
         "links — those are the legacy single-service flow.\n\n"
         "🚨 ASK ONE QUESTION PER TURN. Never produce numbered lists of 3-4 "
         "questions in one bot turn. Get one missing field at a time. "
@@ -327,8 +350,68 @@ def chat(messages: list[dict], *, session_id: str | None = None,
                             "content": _stringify(result)})
         convo.append({"role": "user", "content": results})
 
+    final_text = _enforce_picker_and_one_question(final_text)
     return {"text": final_text, "tool_calls": tool_calls,
             "usage": usage_total, "stop_reason": stop_reason}
+
+
+# v1.24.66 — server-side guardrail. The LLM sometimes ignores the
+# "ask one question per turn" + "use [[picker:date|time]]" rules.
+# Detect that pattern in the outgoing reply and (a) inject the picker
+# marker, (b) trim multi-question replies down to a single question.
+# This guarantees the customer sees the friendly picker even if the
+# model regresses.
+import re as _re
+
+_DATE_TRIGGER = _re.compile(
+    r"(what(?:'s| is)? (?:the )?date|which date|preferred date|date (?:do )?you|"
+    r"when (?:do you|would you|should we)|what day)",
+    _re.IGNORECASE,
+)
+_TIME_TRIGGER = _re.compile(
+    r"(what(?:'s| is)? (?:the )?time|which time|preferred time|time (?:slot|do )?|"
+    r"what time|morning or afternoon|am or pm)",
+    _re.IGNORECASE,
+)
+
+
+def _enforce_picker_and_one_question(text: str) -> str:
+    if not text:
+        return text
+    has_date_pick = "[[picker:date]]" in text
+    has_time_pick = "[[picker:time]]" in text
+
+    asks_date = bool(_DATE_TRIGGER.search(text))
+    asks_time = bool(_TIME_TRIGGER.search(text))
+
+    # If multiple questions in one turn, keep only up to the first
+    # question that mentions date OR time (whichever comes first), and
+    # drop the rest. This implements "one question per turn" hard.
+    qmarks = [i for i, ch in enumerate(text) if ch == "?"]
+    if len(qmarks) >= 2 and (asks_date or asks_time):
+        # Find first sentence containing date OR time keyword.
+        first_relevant = None
+        for q in qmarks:
+            chunk = text[: q + 1]
+            if _DATE_TRIGGER.search(chunk) or _TIME_TRIGGER.search(chunk):
+                first_relevant = q
+                break
+        if first_relevant is not None:
+            # Trim to the first question that asked about date/time.
+            # Keep the lead-in line(s) before it though, so the bot still
+            # sounds polite.
+            text = text[: first_relevant + 1].rstrip()
+
+    # Recompute after trim
+    asks_date = bool(_DATE_TRIGGER.search(text))
+    asks_time = bool(_TIME_TRIGGER.search(text))
+
+    # Inject pickers if missing.
+    if asks_date and not has_date_pick and "[[picker:" not in text:
+        text = text.rstrip() + "\n[[picker:date]]"
+    elif asks_time and not has_time_pick and "[[picker:" not in text:
+        text = text.rstrip() + "\n[[picker:time]]"
+    return text
 
 
 def _stringify(obj: Any) -> str:
