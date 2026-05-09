@@ -8,6 +8,34 @@ time. None of these mistakes should ever happen again.
 
 ## 🚨 Top-3 rules — break any of these and you owe the user an apology
 
+### 0. NEVER say "fixed" / "okay" / "done" without showing test output
+
+**Hard rule (added v1.24.72)**: when the user reports a bug, you must:
+1. Write a real test that reproduces it (Python + TestClient + Node for
+   widget regex if needed)
+2. Run it and capture PASS/FAIL output
+3. Show the test output to the user BEFORE claiming the fix works
+4. If PASS → push; if FAIL → keep fixing, don't push
+
+If you don't have an API key to drive the LLM in the sandbox, mock the
+LLM output (capture its prior reply from the screenshot, paste it into
+the test as input) and run the post-processor / widget extractor against
+it. The user has paid for hours of broken iterations because I claimed
+fixes without running them. Never again.
+
+Concrete recipes that should always be runnable:
+- **Picker e2e**: `python3 /tmp/test_picker_e2e.py` — drives 7 LLM-style
+  replies through `_enforce_picker_and_one_question`, then through the
+  widget regex via Node. Asserts each scenario's picker kind matches and
+  no >1 questions remain.
+- **Multi-quote auto-creation**: feed a "Book now ↗" + 3-service summary
+  to `_enforce_multi_quote_when_book_now`, assert output contains
+  `Q-XXXXXX`, sign URL, pay URL, no "Book now".
+- **Slug routes**: `TestClient(app).get("/services/<slug>.html")` →
+  assert 200 + `mascot.svg` present + correct canonical URL.
+- **Tool blocker**: assert `create_booking` rejected when 2+ services
+  are in conversation history.
+
 ### 1. Verify code BEFORE saying "deployed"
 After every code change, before claiming success, run:
 ```bash

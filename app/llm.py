@@ -473,29 +473,37 @@ def _enforce_picker_and_one_question(text: str) -> str:
     asks_date = bool(_DATE_TRIGGER.search(text))
     asks_time = bool(_TIME_TRIGGER.search(text))
 
-    # If multiple questions in one turn, keep only up to the first
-    # question that mentions date OR time (whichever comes first), and
-    # drop the rest. This implements "one question per turn" hard.
-    qmarks = [i for i, ch in enumerate(text) if ch == "?"]
-    if len(qmarks) >= 2 and (asks_date or asks_time):
-        # Find first sentence containing date OR time keyword.
-        first_relevant = None
-        for q in qmarks:
-            chunk = text[: q + 1]
-            if _DATE_TRIGGER.search(chunk) or _TIME_TRIGGER.search(chunk):
-                first_relevant = q
-                break
-        if first_relevant is not None:
-            # Trim to the first question that asked about date/time.
-            # Keep the lead-in line(s) before it though, so the bot still
-            # sounds polite.
-            text = text[: first_relevant + 1].rstrip()
+    qmarks_count = text.count("?")
 
-    # Recompute after trim
-    asks_date = bool(_DATE_TRIGGER.search(text))
-    asks_time = bool(_TIME_TRIGGER.search(text))
+    # v1.24.72 — when the LLM produces a multi-question reply that includes
+    # a date or time ask, REWRITE the whole reply to a single concise date
+    # / time question. This implements "one question per turn" hard and
+    # guarantees the picker shows. Previous version only trimmed up to the
+    # first date/time question but left earlier unrelated questions intact
+    # (e.g. "Which emirate? What date?" → both questions remained, picker
+    # was below — confusing UX).
+    if qmarks_count >= 2 and (asks_date or asks_time):
+        # Preserve a friendly opening line if the bot wrote one before any
+        # question mark — keeps brand voice without leaking extra asks.
+        prefix = ""
+        first_q = text.find("?")
+        if first_q != -1:
+            head = text[:first_q]
+            # take the last paragraph break so multi-line context is kept
+            last_break = head.rfind("\n\n")
+            if last_break != -1:
+                pre = head[:last_break].strip()
+                if pre and "?" not in pre:
+                    prefix = pre + "\n\n"
+        if asks_date:
+            text = (prefix + "When would you like us to come?\n"
+                    "[[picker:date]]")
+        else:
+            text = (prefix + "What time works best for you?\n"
+                    "[[picker:time]]")
+        return text
 
-    # Inject pickers if missing.
+    # Inject pickers if missing on single-question replies.
     if asks_date and not has_date_pick and "[[picker:" not in text:
         text = text.rstrip() + "\n[[picker:date]]"
     elif asks_time and not has_time_pick and "[[picker:" not in text:
