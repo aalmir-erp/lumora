@@ -225,7 +225,11 @@ app.include_router(_admin_live.admin_router)   # /api/admin/live/{active-chats,c
 # v1.24.55 — multi-service quote system + customer history endpoint
 from . import multi_quote_pages as _mqp_router_mod, me_history as _meh_router_mod
 app.include_router(_mqp_router_mod.public_router)   # /q/{id}, /p/{id}, /i/{id}, /api/q/{id}/...
-app.include_router(_mqp_router_mod.admin_router)    # /api/admin/quote/{id}/status, line-status, upload, all
+# v1.24.57 — admin_router not present in this build; admin quote ops via
+# /api/admin/live/quotes/recent (in admin_live.py) instead. Re-enable when
+# patch-08 admin endpoints are ported.
+if hasattr(_mqp_router_mod, "admin_router"):
+    app.include_router(_mqp_router_mod.admin_router)
 app.include_router(_meh_router_mod.public_router)   # /api/me/history + /api/me/chat/{sid}
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
