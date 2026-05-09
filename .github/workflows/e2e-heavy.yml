@@ -55,30 +55,7 @@ jobs:
             base=$(basename "$f")
             convert "$f" -resize 240x -strip -quality 78 "$OUT/$base" 2>/dev/null || cp "$f" "$OUT/$base"
           done
-          python3 - "$OUT" <<'PYEOF'
-import json, os, glob, datetime, sys
-out = sys.argv[1]
-shots = sorted([os.path.basename(p) for p in glob.glob(os.path.join(out, "*.png"))])
-findings = {}
-try:
-    findings = json.load(open("/tmp/findings.json"))
-except Exception: pass
-manifest = {
-    "run_number": os.environ.get("GITHUB_RUN_NUMBER", ""),
-    "run_id":     os.environ.get("GITHUB_RUN_ID", ""),
-    "commit_sha": (os.environ.get("GITHUB_SHA", "") or "")[:8],
-    "created_at": datetime.datetime.utcnow().isoformat() + "Z",
-    "pass": findings.get("pass", 0),
-    "warn": findings.get("warn", 0),
-    "fail": findings.get("fail", 0),
-    "skip": findings.get("skip", 0),
-    "shots": shots,
-    "workflow_run_url": "https://github.com/" + os.environ.get("GITHUB_REPOSITORY","") +
-                       "/actions/runs/" + os.environ.get("GITHUB_RUN_ID",""),
-}
-json.dump(manifest, open(os.path.join(out, "manifest.json"), "w"), indent=2)
-print("manifest written:", manifest["run_number"], "shots:", len(shots))
-PYEOF
+          python3 .scripts/e2e-shots-manifest.py "$OUT" || true
 
       # Keep only the 14 most recent runs in _e2e-shots/ (auto-prune).
       - name: Prune old screenshot folders
