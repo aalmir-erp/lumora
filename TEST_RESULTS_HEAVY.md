@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 39
+- ✅ Pass: 40
 - ⚠️ Warn: 1
-- ❌ Fail: 9
+- ❌ Fail: 8
 - ⏭ Skip: 1
 
 ## Items
@@ -14,20 +14,20 @@
 - ✅ **[T05] /blog index loads** — OK
 - ❌ **[T06] Sitemap has /nfc** — exception: nfc.html missing
 - ✅ **[T07] robots.txt accessible** — OK
-- ❌ **[T08] /faq.html FAQPage schema** — exception: locator.allInnerTexts: Execution context was destroyed, most likely because of a navigation
-- ❌ **[T09] Homepage Org/LocalBusiness schema** — exception: locator.allInnerTexts: Execution context was destroyed, most likely because of a navigation
+- ✅ **[T08] /faq.html FAQPage schema** — present
+- ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
 - ✅ **[T11] Mobile nav single-row** — Δy=-3
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
-- ❌ **[T14] Footer present** — exception: no footer
+- ✅ **[T14] Footer present** — OK
 - ❌ **[T15] /install APK card** — exception: no apk-download
 - ❌ **[T16] /install Wear OS card** — exception: no wear-download
 - ✅ **[T17] /install iOS section** — OK
 - ✅ **[T18] Search input has ss-input class** — ss-input
 - ✅ **[T19] Search trending chips load** — 16 chips
 - ✅ **[T20] Hero rotator present** — present
-- ✅ **[T21] /nfc loads** — OK
+- ❌ **[T21] /nfc loads** — exception: HTTP 502
 - ✅ **[T22] /nfc 3-mode panel** — OK
 - ✅ **[T23] /nfc bot widget** — OK
 - ✅ **[T24] /nfc bulk-order section** — OK
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ❌ **[T32] /me requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_7-SmGWGdC...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_YQMoOvJ2_...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,13 +47,13 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ❌ **[T40] /admin.html responds** — exception: HTTP 404
-- ✅ **[T41] /api/health responds** — v1.24.83
+- ✅ **[T41] /api/health responds** — v1.24.84
 - ✅ **[T42] /api/services >=10** — 37
-- ✅ **[T43] /api/app/latest works** — apk_v=1.24.82
+- ✅ **[T43] /api/app/latest works** — apk_v=1.24.83
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book.html renders form** — OK
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
-- ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
+- ❌ **[T48] /book.html?nfc=<bogus> graceful** — exception: book button missing
 - ✅ **[T49] /cart.html loads** — OK
 - ⚠️ **[T50] Service worker active** — not registered
