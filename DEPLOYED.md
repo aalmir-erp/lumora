@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"65pPFbj8R4Gtj5Tw6WHkDg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"2A4wTc5xRq2XoQmECx5-qw"}`
 
 ## Build logs
 ```
@@ -33,9 +33,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:145068c10f3e5948066085af361249abdf1d3f234974ad881819433eb7e7727c
-containerimage.digest: sha256:dc8a22a8d8fe7ce1d6c9c408565ce02a86f7b1145140997e742147fee2e63763
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZGM4YTIyYThkOGZlN2NlMWQ2YzljNDA4NTY1Y2UwMmE4NmY3YjExNDUxNDA5OTdlNzQyMTQ3ZmVlMmU2Mzc2MyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wOVQxODowNDozNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:e976caebd62eb5821a6f19b138c74804821bf6a40a00fb5b636be0fe5ef36eab
+containerimage.digest: sha256:0c173d8e14350c4a0b5a4d00240cf42ec69186f9a9bff483de0a09be18e4a393
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MGMxNzNkOGUxNDM1MGM0YTBiNWE0ZDAwMjQwY2Y0MmVjNjkxODZmOWE5YmZmNDgzZGUwYTA5YmUxOGU0YTM5MyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wOVQxODoxNDowOVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 
 [35m====================
@@ -50,7 +50,7 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/201962e3-8caf-4298-b03d-94f032929ad5/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/27d3c3d5-6468-4475-8eec-decd2f972e1f/vol_onr647rhdeir9di9
 Starting Container
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
@@ -60,7 +60,8 @@ INFO:     Waiting for application startup.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:40165 - "GET /api/health HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.2:39785 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
