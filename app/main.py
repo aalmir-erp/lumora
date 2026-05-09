@@ -1963,6 +1963,19 @@ def sitemap_pages(request: Request = None):
                     except Exception:
                         lastmod = today
                     urls.append((f"{base}/vs/{fname}", lastmod, "weekly", "0.8"))
+            # v1.24.63 — also walk /services/ subdir for the dedicated
+            # service landing pages (commercial, holiday, post-construction,
+            # gym, school cleaning).
+            svc_dir = _os.path.join(web_dir, "services")
+            if _os.path.isdir(svc_dir):
+                for fname in sorted(_os.listdir(svc_dir)):
+                    if not fname.endswith(".html"): continue
+                    try:
+                        mtime = _os.path.getmtime(_os.path.join(svc_dir, fname))
+                        lastmod = _dt.date.fromtimestamp(mtime).isoformat()
+                    except Exception:
+                        lastmod = today
+                    urls.append((f"{base}/services/{fname}", lastmod, "weekly", "0.85"))
         return _xml_response(_wrap_urlset(urls))
     except Exception as e:  # noqa: BLE001
         print(f"[sitemap-pages] error: {e}", flush=True)
@@ -3879,6 +3892,28 @@ def _generate_seed_articles(target_count: int):
          "post-summer reset"),
         ("abu-dhabi", "pest_control",
          "Bed bugs on Reem Island — why 80% of treatments fail and what works in 2026",
+         "year-round"),
+        # v1.24.63 — new commercial / specialised cleaning topics
+        ("dubai", "commercial_cleaning",
+         "Office cleaning in Business Bay — what AED 980 per visit actually covers",
+         "year-round"),
+        ("dubai", "holiday_cleaning",
+         "Last-minute pre-Eid cleaning in Dubai Marina — same-day rates and what to ask",
+         "pre-Eid"),
+        ("abu-dhabi", "post_construction_cleaning",
+         "Post-handover cleaning on Yas Island — getting marble and grout move-in ready",
+         "year-round"),
+        ("dubai", "gym_deep_cleaning",
+         "Gym deep cleaning in JVC — hospital-grade sanitisation between member shifts",
+         "year-round"),
+        ("sharjah", "school_deep_cleaning",
+         "School deep cleaning in Aljada — KHDA-aligned hygiene before term starts",
+         "term-break"),
+        ("dubai", "commercial_cleaning",
+         "F&B kitchen cleaning JLT — the food-safe disinfectant most operators don't know about",
+         "year-round"),
+        ("dubai", "post_construction_cleaning",
+         "Renovation handover in Damac Hills — 3-stage floor finishing done right",
          "year-round"),
         ("sharjah", "carpet_cleaning",
          "Carpet cleaning in Al Khan Sharjah — sand, oil, kid spills and what AED 80 covers",

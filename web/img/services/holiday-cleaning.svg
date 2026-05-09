@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#D97706"/>
+    </linearGradient>
+    <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.18)"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+  <g transform="translate(600,250)">
+    <circle r="120" fill="rgba(255,255,255,0.12)"/>
+    <circle r="90" fill="rgba(255,255,255,0.18)"/>
+    <text x="0" y="40" text-anchor="middle" font-size="140" font-family="'Apple Color Emoji','Segoe UI Emoji',sans-serif">🎊</text>
+  </g>
+  <text x="600" y="450" text-anchor="middle" fill="#fff" font-size="64" font-weight="800" font-family="system-ui,sans-serif" letter-spacing="-1">SERVIA</text>
+  <text x="600" y="500" text-anchor="middle" fill="#fff" font-size="28" font-family="system-ui,sans-serif" opacity=".9" font-weight="600" letter-spacing="3">HOLIDAY CLEANING</text>
+  <text x="600" y="550" text-anchor="middle" fill="#fff" font-size="18" font-family="system-ui,sans-serif" opacity=".75">United Arab Emirates · Servia.ae</text>
+</svg>

@@ -2707,6 +2707,254 @@
         }
       ],
       "emoji": "🚖"
+    },
+    {
+      "id": "commercial_cleaning",
+      "name": "Commercial Cleaning",
+      "category": "Commercial",
+      "icon": "building",
+      "description": "Daily/weekly cleaning for offices, retail stores, F&B, salons, clinics. Trained crews + commercial-grade equipment + supervised QA.",
+      "duration_per_visit_hours": 4,
+      "min_team": 2,
+      "starting_price": 980,
+      "includes": [
+        "Workstation dust + sanitise",
+        "Restroom deep clean + restock",
+        "Lobby + corridor mop",
+        "Kitchen / pantry wipe-down",
+        "Trash collection + liner change",
+        "Glass + mirror polish"
+      ],
+      "excludes": [
+        "Carpet shampoo (separate addon)",
+        "Window-washing above 1st floor",
+        "Disinfection / fogging (separate)"
+      ],
+      "intake": [
+        "office_size_sqft",
+        "frequency",
+        "preferred_day",
+        "preferred_time",
+        "address",
+        "contact_name",
+        "contact_phone"
+      ],
+      "addons": [
+        {
+          "id": "carpet_shampoo",
+          "name": "Carpet shampoo (per 100 sqft)",
+          "price": 70
+        },
+        {
+          "id": "deep_disinfection",
+          "name": "Deep disinfection / fogging",
+          "price": 350
+        },
+        {
+          "id": "window_inside",
+          "name": "Inside windows polish (1st floor)",
+          "price": 140
+        }
+      ]
+    },
+    {
+      "id": "holiday_cleaning",
+      "name": "Holiday Cleaning",
+      "category": "Residential",
+      "icon": "sparkles",
+      "description": "Pre/post Eid, Ramadan, NYE, parties, family gatherings. Same-day or scheduled — bring your home back to spotless before guests arrive.",
+      "duration_per_bedroom_hours": 1.5,
+      "min_team": 2,
+      "starting_price": 560,
+      "includes": [
+        "Living room + dining deep clean",
+        "Kitchen degrease",
+        "Bathroom descale",
+        "Floor scrub + mop",
+        "Dust extraction",
+        "Bed-making / linen change",
+        "Trash + recycling out"
+      ],
+      "excludes": [
+        "Cooking / catering",
+        "Furniture moving > 30 kg",
+        "Decoration setup"
+      ],
+      "intake": [
+        "bedrooms",
+        "occasion",
+        "target_date",
+        "preferred_time",
+        "address",
+        "contact_name",
+        "contact_phone"
+      ],
+      "addons": [
+        {
+          "id": "balcony_setup",
+          "name": "Balcony setup + clean",
+          "price": 140
+        },
+        {
+          "id": "fridge_clean",
+          "name": "Inside fridge deep clean",
+          "price": 70
+        },
+        {
+          "id": "oven_clean",
+          "name": "Inside oven deep clean",
+          "price": 84
+        }
+      ]
+    },
+    {
+      "id": "post_construction_cleaning",
+      "name": "After Construction Cleaning",
+      "category": "Specialised",
+      "icon": "hardhat",
+      "description": "Post-handover, post-renovation, post-paint. Heavy-duty dust + debris removal, paint splatter, grout haze, sanding fines, drilling residue.",
+      "duration_per_bedroom_hours": 2.5,
+      "min_team": 3,
+      "starting_price": 1400,
+      "includes": [
+        "Dust extraction (every surface)",
+        "Paint splatter removal",
+        "Grout haze + tile finish",
+        "Window track + frame clean",
+        "Cabinet interior + door wipe",
+        "Floor scrub (3-stage)",
+        "AC vent dust",
+        "Final QA walk-through"
+      ],
+      "excludes": [
+        "Debris removal > 100 kg",
+        "Construction defect repair",
+        "Painting / handyman tasks"
+      ],
+      "intake": [
+        "property_size_sqft",
+        "construction_type",
+        "target_date",
+        "address",
+        "contact_name",
+        "contact_phone"
+      ],
+      "addons": [
+        {
+          "id": "debris_removal",
+          "name": "Debris removal (per cubic m)",
+          "price": 168
+        },
+        {
+          "id": "exterior_windows",
+          "name": "Exterior windows (ground floor)",
+          "price": 280
+        },
+        {
+          "id": "ac_duct_clean",
+          "name": "AC duct interior clean",
+          "price": 350
+        }
+      ]
+    },
+    {
+      "id": "gym_deep_cleaning",
+      "name": "Gym Deep Cleaning",
+      "category": "Commercial",
+      "icon": "dumbbell",
+      "description": "Equipment sanitisation, mat disinfection, locker rooms, mirrors, sauna, restrooms. Hospital-grade chemicals safe for skin contact.",
+      "duration_per_visit_hours": 5,
+      "min_team": 3,
+      "starting_price": 1120,
+      "includes": [
+        "All equipment wipe + sanitise",
+        "Mat + flooring disinfection",
+        "Locker room deep clean",
+        "Mirror polish (streak-free)",
+        "Restroom restock + descale",
+        "Sauna / steam room wipe",
+        "Cardio machine vent + screen"
+      ],
+      "excludes": [
+        "Equipment maintenance / repair",
+        "Pool tile resurfacing",
+        "AC duct cleaning (separate)"
+      ],
+      "intake": [
+        "facility_size_sqft",
+        "frequency",
+        "preferred_time",
+        "address",
+        "contact_name",
+        "contact_phone"
+      ],
+      "addons": [
+        {
+          "id": "pool_clean",
+          "name": "Pool surface + chlorination",
+          "price": 420
+        },
+        {
+          "id": "sauna_deep",
+          "name": "Sauna deep wood-treat",
+          "price": 280
+        },
+        {
+          "id": "ac_filter",
+          "name": "AC filter swap (per unit)",
+          "price": 70
+        }
+      ]
+    },
+    {
+      "id": "school_deep_cleaning",
+      "name": "School Deep Cleaning",
+      "category": "Commercial",
+      "icon": "school",
+      "description": "Classrooms, playgrounds, cafeterias, restrooms, libraries. KHDA / ADEK / SPEA-aligned hygiene standards. ULV fogging available.",
+      "duration_per_visit_hours": 8,
+      "min_team": 5,
+      "starting_price": 2100,
+      "includes": [
+        "Classroom desk + chair sanitise",
+        "Whiteboard + AV equipment wipe",
+        "Cafeteria floor + table deep clean",
+        "Restroom deep clean + restock",
+        "Playground equipment disinfect",
+        "Library book + shelf dust",
+        "Locker / cubby wipe",
+        "Trash + recycling consolidation"
+      ],
+      "excludes": [
+        "Asbestos / hazardous remediation",
+        "Pool / aquatic facilities (separate)",
+        "Pest control (separate)"
+      ],
+      "intake": [
+        "campus_size_sqft",
+        "student_count",
+        "target_date",
+        "address",
+        "contact_name",
+        "contact_phone"
+      ],
+      "addons": [
+        {
+          "id": "ulv_fogging",
+          "name": "ULV electrostatic fogging",
+          "price": 980
+        },
+        {
+          "id": "playground_sand",
+          "name": "Playground sand replace",
+          "price": 560
+        },
+        {
+          "id": "ac_full_service",
+          "name": "AC full service (per unit)",
+          "price": 168
+        }
+      ]
     }
   ],
   "areas_served": [

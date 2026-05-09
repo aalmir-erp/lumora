@@ -96,6 +96,50 @@
       "base_flat": 60,
       "deluxe": 120,
       "min_charge": 84.0
+    },
+    "commercial_cleaning": {
+      "per_sqft": 2.1,
+      "min_charge": 980,
+      "team_size": 2,
+      "frequency_discounts": {
+        "daily": 30,
+        "weekly": 20,
+        "biweekly": 10,
+        "monthly": 5
+      },
+      "notes": "Office / retail / F&B. Per-sqft rate after 500 sqft."
+    },
+    "holiday_cleaning": {
+      "base_per_bedroom": 280,
+      "min_charge": 560,
+      "team_size": 2,
+      "rush_surcharge_pct": 25,
+      "notes": "Same-day / next-day rush attracts surcharge. Quiet days = standard."
+    },
+    "post_construction_cleaning": {
+      "per_sqft": 4.2,
+      "min_charge": 1400,
+      "team_size": 3,
+      "supplies_addon": 280,
+      "notes": "Heavy debris attracts removal addon. 3-stage clean included."
+    },
+    "gym_deep_cleaning": {
+      "per_sqft": 2.8,
+      "min_charge": 1120,
+      "team_size": 3,
+      "frequency_discounts": {
+        "weekly": 15,
+        "biweekly": 10,
+        "monthly": 5
+      },
+      "notes": "Hospital-grade sanitisation. Equipment wipe per unit."
+    },
+    "school_deep_cleaning": {
+      "per_sqft": 1.96,
+      "min_charge": 2100,
+      "team_size": 5,
+      "term_break_surcharge_pct": 20,
+      "notes": "After-hours pricing standard. Term-break + holiday +20%."
     }
   },
   "surcharges": {
