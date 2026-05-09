@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 43
+- ✅ Pass: 40
 - ⚠️ Warn: 1
-- ❌ Fail: 5
+- ❌ Fail: 8
 - ⏭ Skip: 1
 
 ## Items
@@ -17,7 +17,7 @@
 - ✅ **[T08] /faq.html FAQPage schema** — present
 - ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
-- ✅ **[T11] Mobile nav single-row** — Δy=-3
+- ✅ **[T11] Mobile nav single-row** — Δy=1
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
 - ✅ **[T14] Footer present** — OK
@@ -39,16 +39,16 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_Mavs9Bmmt...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_04PbqpkGo...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
 - ✅ **[T37] Wallet balance after login** — AED 0
-- ✅ **[T38] /api/me/bookings authed** — OK
-- ✅ **[T39] /api/nfc/my-tags authed** — OK
-- ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.52
-- ✅ **[T42] /api/services >=10** — 32
+- ❌ **[T38] /api/me/bookings authed** — exception: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+- ❌ **[T39] /api/nfc/my-tags authed** — exception: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+- ❌ **[T40] /admin.html responds** — exception: HTTP 502
+- ✅ **[T41] /api/health responds** — v1.24.82
+- ✅ **[T42] /api/services >=10** — 37
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.15
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
