@@ -899,6 +899,14 @@ def chat(req: ChatRequest, request: Request):
         # without producing final text, give the user a clear "I'm here" reply.
         text = ("Got it — I've noted your message. Could you give me one more detail "
                 "(service, area, or date) so I can help? Or use /contact.html for direct support.")
+    # v1.24.67 — defense-in-depth picker enforcement runs on EVERY chat reply,
+    # not just the Anthropic-primary path. Catches replies from cascade/demo
+    # fallbacks that ask date/time as plain text without a picker marker.
+    try:
+        from .llm import _enforce_picker_and_one_question as _ep
+        text = _ep(text)
+    except Exception:
+        pass
     usage = result.get("usage") or {}
     tin  = usage.get("input_tokens") or usage.get("prompt_tokens") or None
     tout = usage.get("output_tokens") or usage.get("completion_tokens") or None
