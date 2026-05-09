@@ -206,6 +206,46 @@ git push origin HEAD:main
 
 If any of those aren't done, say "deployed but not yet confirmed" — not "done".
 
+### 🚨 RUN A REAL END-TO-END TEST BEFORE PUSHING (added v1.24.71)
+
+Recurring failure mode: I claimed a fix worked, pushed it, user found
+it didn't. Cost: hours of back-and-forth iteration on the same bug.
+
+**Rule**: before pushing ANY chat / bot / quote / picker / multi-step
+flow change, write a Python test that exercises the actual code path
+and prints the result. Show the user the test output ("CONTAINS Q-:
+True, sign URL: True") BEFORE saying "fixed". If you don't have an API
+key in the sandbox, mock the LLM output and run the post-processor
+against it.
+
+Examples of what should always be tested locally before push:
+- Picker injection — feed bot text "What date works?", assert output
+  contains `[[picker:date]]`
+- Multi-quote auto-creation — feed a "Book now ↗" multi-service
+  summary, assert output contains `Q-XXXXXX` + sign URL + pay URL
+- Service slug routes — TestClient.get(`/services/<slug>.html`),
+  assert 200 + canonical nav present
+- Tool blocker — assert `create_booking` is rejected when 2+ services
+  are in the conversation
+
+Common gotchas that bit me in v1.24.65 → v1.24.70:
+1. Bot produces a hyperlink in TEXT, not a tool call → tool-level
+   blocker can't help. Need OUTPUT post-processor.
+2. Post-processor only ran inside `llm.chat()` (Anthropic-primary
+   path). Cascade router / demo-brain bypassed it. Move enforcement
+   to `main.py` where ALL paths converge.
+3. `create_multi_quote` returned 0 AED when sizing fields missing.
+   Fall back to `services.json :: starting_price`.
+4. SVG hero "image" wired only as `og:image` → never rendered on the
+   page. Test the actual page render, not just the file existence.
+5. New service pages used custom CSS instead of `service.html`
+   template → looked like a different brand. Don't fork the
+   template — render the canonical one server-side with SEO meta
+   injected.
+6. Regex `Address|Location` without `(?:...)` group has wrong
+   precedence: matches "Address" alone, group(1) is None, AttributeError
+   on `.strip()`. Always wrap alternations in non-capturing groups.
+
 ## 📚 Patches folder
 
 `/_lumora_perf_patches/` exists for HISTORICAL patches that the previous

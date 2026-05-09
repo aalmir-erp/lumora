@@ -907,6 +907,16 @@ def chat(req: ChatRequest, request: Request):
         text = _ep(text)
     except Exception:
         pass
+    # v1.24.71 — auto-create Q-XXXXXX when bot tries to "Book now ↗" with
+    # 2+ services in the summary instead of calling create_multi_quote.
+    try:
+        from .llm import _enforce_multi_quote_when_book_now as _eq
+        new_text = _eq(text, session_id=sid)
+        if new_text != text:
+            print(f"[auto-quote] replaced 'Book now' reply with multi-quote for sid={sid}", flush=True)
+        text = new_text
+    except Exception as e:  # noqa: BLE001
+        print(f"[auto-quote] post-processor error: {e}", flush=True)
     usage = result.get("usage") or {}
     tin  = usage.get("input_tokens") or usage.get("prompt_tokens") or None
     tout = usage.get("output_tokens") or usage.get("completion_tokens") or None

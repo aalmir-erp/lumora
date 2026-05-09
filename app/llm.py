@@ -503,6 +503,160 @@ def _enforce_picker_and_one_question(text: str) -> str:
     return text
 
 
+# v1.24.71 — output post-processor that detects "Book now ↗" / /book.html
+# legacy link patterns when the bot's reply summarises 2+ services, and
+# auto-converts the reply into a proper Q-XXXXXX itemised cart by calling
+# create_multi_quote programmatically. Catches the case where the LLM
+# bypasses tool-calls entirely and just types a hyperlink (which v1.24.69
+# tool-blocker can't intercept).
+import re as _re_q
+
+_BOOK_NOW_RE = _re_q.compile(
+    r"(book\s*now\s*[↗→»>]|\(/book\.html|\[book now\])",
+    _re_q.IGNORECASE,
+)
+_SUMMARY_RE = _re_q.compile(r"(services?|booking summary)\s*[:\-]", _re_q.IGNORECASE)
+
+
+def _parse_summary(text: str) -> dict:
+    """Extract services list + name/address/time/phone from a bot summary."""
+    svcs: list[str] = []
+    m = _re_q.search(r"Services?\s*[:\-]\s*\n((?:.*\n?)+?)(?:\n\n|Details:|$)",
+                     text, _re_q.IGNORECASE)
+    if m:
+        for line in m.group(1).splitlines():
+            line = line.strip(" -•*\t✓✅")
+            if not line:
+                continue
+            name = _re_q.split(r"\s*\(", line)[0].strip()
+            if name:
+                svcs.append(name)
+
+    def _field(label: str) -> str | None:
+        mm = _re_q.search(rf"(?:{label})\s*[:\-]\s*([^\n]+)", text, _re_q.IGNORECASE)
+        if not mm or mm.group(1) is None:
+            return None
+        return mm.group(1).strip() or None
+
+    return {
+        "services": svcs,
+        "name":    _field("Name"),
+        "address": _field("Address|Location"),
+        "time":    _field(r"Date\s*&\s*Time|Date/Time|Time|Date") or _field("Schedule"),
+        "phone":   _field("Phone|Mobile"),
+    }
+
+
+def _name_to_service_id(name: str) -> str | None:
+    try:
+        from . import kb
+        services = kb.services().get("services", [])
+    except Exception:
+        return None
+    nl = (name or "").lower().strip()
+    if not nl:
+        return None
+    for s in services:
+        if (s.get("name") or "").lower() == nl:
+            return s.get("id")
+    for s in services:
+        sn = (s.get("name") or "").lower()
+        if sn and (sn in nl or nl in sn):
+            return s.get("id")
+    return None
+
+
+def _normalise_date_time(time_str: str | None) -> tuple[str, str]:
+    """Convert 'Tomorrow 8 AM' / 'Sat 11 May 8:00' etc. -> (YYYY-MM-DD, HH:MM)."""
+    today = _dt.date.today()
+    if not time_str:
+        return (today + _dt.timedelta(days=1)).isoformat(), "10:00"
+    s = time_str.strip().lower()
+    # Date
+    if "today" in s:
+        target = today
+    elif "tomorrow" in s:
+        target = today + _dt.timedelta(days=1)
+    else:
+        # Try YYYY-MM-DD
+        m = _re_q.search(r"(\d{4}-\d{2}-\d{2})", s)
+        if m:
+            try:
+                target = _dt.date.fromisoformat(m.group(1))
+            except Exception:
+                target = today + _dt.timedelta(days=1)
+        else:
+            target = today + _dt.timedelta(days=1)
+    # Time
+    tm = _re_q.search(r"(\d{1,2})\s*(?::\s*(\d{2}))?\s*(am|pm)?", s)
+    if tm:
+        hh = int(tm.group(1))
+        mm = int(tm.group(2) or 0)
+        ap = (tm.group(3) or "").lower()
+        if ap == "pm" and hh < 12: hh += 12
+        if ap == "am" and hh == 12: hh = 0
+        return target.isoformat(), f"{hh:02d}:{mm:02d}"
+    return target.isoformat(), "10:00"
+
+
+def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = None) -> str:
+    """If bot reply contains 'Book now ↗' + 2+ services, auto-create a
+    Q-XXXXXX and replace the reply with the proper itemised cart."""
+    if not text or not _BOOK_NOW_RE.search(text):
+        return text
+    if not _SUMMARY_RE.search(text):
+        return text
+    parsed = _parse_summary(text)
+    if len(parsed["services"]) < 2:
+        return text
+    # Map to service_ids; require at least 2 mapped
+    services_arg = []
+    for n in parsed["services"]:
+        sid = _name_to_service_id(n)
+        if sid:
+            services_arg.append({"service_id": sid})
+    if len(services_arg) < 2:
+        return text
+    name = parsed["name"] or "Customer"
+    phone = parsed["phone"] or ""
+    address = parsed["address"] or ""
+    if not phone or not address:
+        # Missing required fields — leave reply alone (LLM should ask)
+        return text
+    target_date, time_slot = _normalise_date_time(parsed["time"])
+    try:
+        from .tools import create_multi_quote as _cmq
+        q = _cmq(services=services_arg, customer_name=name, phone=phone,
+                 address=address, target_date=target_date, time_slot=time_slot,
+                 session_id=session_id)
+    except Exception as e:  # noqa: BLE001
+        print(f"[auto-quote] create_multi_quote failed: {e}", flush=True)
+        return text
+    if not q.get("ok"):
+        return text
+    # Format the structured cart reply
+    lines = [f"\U0001f4cb *Quote {q['quote_id']}*", ""]
+    for i, it in enumerate(q.get("items") or [], 1):
+        price = it.get("price_aed") or 0
+        lines.append(f"{i}. *{it['label']}* — {it.get('detail','standard')}    AED {price:,.0f}")
+    lines += [
+        "",
+        f"Subtotal:                   AED {q.get('subtotal_aed', 0):,.0f}",
+        f"VAT 5%:                       AED {q.get('vat_aed', 0):,.0f}",
+        f"*Total:*                     *AED {q.get('total_aed', 0):,.0f}*",
+        "",
+        f"\U0001f4c5 {target_date} · {time_slot}",
+        f"\U0001f4cd {address} · {name} · {phone}",
+        "",
+        f"➜ *Approve & sign:* {q['signing_url']}",
+        f"➜ *Pay online:* {q['pay_url']}",
+        f"➜ Or pay manually: {q.get('fallback_pay_contact','WhatsApp +971 56 4020087')}",
+        "",
+        "Once signed, our team is dispatched within 30 min.",
+    ]
+    return "\n".join(lines)
+
+
 def _stringify(obj: Any) -> str:
     import json
     try:

@@ -395,6 +395,16 @@ def create_multi_quote(services: list, customer_name: str, phone: str,
     s = get_settings()
     items = []
     subtotal = 0.0
+    # v1.24.71 — when sizing fields are absent (e.g. auto-quote from chat
+    # post-processor), fall back to the service's `starting_price` from
+    # services.json so we never persist a 0 AED quote.
+    try:
+        from . import kb as _kb_fallback
+        _starting = {sv.get("id"): float(sv.get("starting_price") or 0)
+                     for sv in _kb_fallback.services().get("services", [])
+                     if sv.get("id")}
+    except Exception:
+        _starting = {}
     for svc in services or []:
         sid = svc.get("service_id") or svc.get("id")
         if not sid: continue
@@ -408,6 +418,8 @@ def create_multi_quote(services: list, customer_name: str, phone: str,
             line_price = float(line_q.get("subtotal_aed") or line_q.get("total_aed") or 0)
         except Exception:
             line_price = 0.0
+        if line_price <= 0:
+            line_price = _starting.get(sid, 0.0)
         # Pretty detail line
         detail_bits = []
         if svc.get("bedrooms"): detail_bits.append(f"{svc['bedrooms']} BR")
