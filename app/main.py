@@ -280,6 +280,9 @@ app.include_router(_meh_router_mod.public_router)   # /api/me/history + /api/me/
 from . import customer_profile as _cust_prof
 _cust_prof._ensure_schema()
 app.include_router(_cust_prof.router)               # /api/me/auth/* + /profile + /locations + /family + /tickets
+# v1.24.84 — pin-location reverse geocode + city cross-check
+from . import address_picker as _addr_pick
+app.include_router(_addr_pick.router)               # /api/geocode/reverse + /api/geocode/check-city
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)

@@ -1,6 +1,6 @@
 """v1.24.82 — quote versioning + 3-state change policy regression."""
 import os, sys
-os.environ["DATABASE_URL"] = "sqlite:////tmp/test_versioning.db"
+os.environ["DB_PATH"] = "/tmp/test_versioning.db"
 sys.path.insert(0, ".")
 import os; os.unlink("/tmp/test_versioning.db") if os.path.exists("/tmp/test_versioning.db") else None
 from app.tools import create_multi_quote

@@ -6,7 +6,7 @@
 5. Verify the same quote then shows signed_at in /api/q/<id>/card
 """
 import os, sys, json, types, re, uuid
-os.environ["DATABASE_URL"] = "sqlite:////tmp/test_quote_card_e2e.db"
+os.environ["DB_PATH"] = "/tmp/test_quote_card_e2e.db"
 os.environ["ANTHROPIC_API_KEY"] = "fake"
 os.environ["DEMO_MODE"] = "off"
 sys.path.insert(0, "/tmp/lumora-deploy")

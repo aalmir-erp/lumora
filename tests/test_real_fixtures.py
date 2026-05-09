@@ -5,7 +5,7 @@ This is the LIVE fixture file — every time the user reports a 'no Q-
 generated' bug, copy the EXACT bot text from their screenshot here.
 """
 import os, re, sys
-os.environ["DATABASE_URL"] = "sqlite:////tmp/test_real_fixtures.db"
+os.environ["DB_PATH"] = "/tmp/test_real_fixtures.db"
 sys.path.insert(0, "/tmp/lumora-deploy")
 from app.llm import _enforce_multi_quote_when_book_now as eq, _parse_summary
 

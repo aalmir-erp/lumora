@@ -10,7 +10,7 @@ If a function only "works in unit test" but never fires here, this
 test catches it.
 """
 import os, sys, json, types, re, uuid
-os.environ["DATABASE_URL"] = "sqlite:////tmp/test_e2e_chat.db"
+os.environ["DB_PATH"] = "/tmp/test_e2e_chat.db"
 os.environ["ANTHROPIC_API_KEY"] = "fake-key-for-mock"  # so use_llm=True
 os.environ["DEMO_MODE"] = "off"
 sys.path.insert(0, "/tmp/lumora-deploy")

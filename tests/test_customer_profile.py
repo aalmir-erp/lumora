@@ -4,7 +4,7 @@ Drives /api/me/auth/* + /api/me/profile + /api/me/locations + /api/me/family
 + /api/me/tickets through TestClient. Asserts the round-trip works.
 """
 import os, sys, hashlib
-os.environ["DATABASE_URL"] = "sqlite:////tmp/test_customer_profile.db"
+os.environ["DB_PATH"] = "/tmp/test_customer_profile.db"
 if os.path.exists("/tmp/test_customer_profile.db"): os.unlink("/tmp/test_customer_profile.db")
 sys.path.insert(0, ".")
 os.environ["MAGIC_LINK_SALT"] = "test-salt"

@@ -6,7 +6,7 @@
   5. Pipeline integration (not just component)
 """
 import os, sys, json, subprocess, re
-os.environ["DATABASE_URL"] = "sqlite:////tmp/test_master.db"
+os.environ["DB_PATH"] = "/tmp/test_master.db"
 os.environ["DEMO_MODE"] = "off"  # disable LLM, force code paths through
 sys.path.insert(0, "/tmp/lumora-deploy")
 PASS, FAIL = "✅ PASS", "❌ FAIL"
