@@ -10,12 +10,31 @@ time. None of these mistakes should ever happen again.
 
 ### 0. NEVER say "fixed" / "okay" / "done" without showing test output
 
-**Hard rule (added v1.24.72)**: when the user reports a bug, you must:
+**Hard rule (added v1.24.72, refined v1.24.75)**: when the user reports a
+bug, you must:
 1. Write a real test that reproduces it (Python + TestClient + Node for
    widget regex if needed)
-2. Run it and capture PASS/FAIL output
-3. Show the test output to the user BEFORE claiming the fix works
-4. If PASS → push; if FAIL → keep fixing, don't push
+2. **Use the EXACT bot output from the user's screenshot as your test
+   fixture** — not a contrived format you made up. Different LLM versions
+   produce different reply formats (bulleted vs ✓-prefixed inline vs
+   "Date & Time:" vs "Time:") and a parser that works on Format A will
+   silently return [] on Format B.
+3. Run it and capture PASS/FAIL output
+4. Show the test output to the user BEFORE claiming the fix works
+5. If PASS → push; if FAIL → keep fixing, don't push
+
+**v1.24.75 retrospective**: I claimed "24/24 PASS" for v1.24.73, but
+the parser only handled the bulleted format. Real production output
+used `✓ Services: A, B, C` (inline comma-separated, ✓ prefix, "Date &
+Time:" label). My parser returned `services: []` → post-processor
+exited → no Q-XXXXXX. The user paid for 3 more wasted iterations.
+
+**The fix discipline**: every parser/regex must be tested against:
+  a) The fixture I made up (synthetic test)
+  b) **The exact text from the user's screenshot** (real-world test)
+  c) An edge case it should NOT match (prose / casual mention)
+
+Without (b) and (c), the test is theatre, not verification.
 
 If you don't have an API key to drive the LLM in the sandbox, mock the
 LLM output (capture its prior reply from the screenshot, paste it into

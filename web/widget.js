@@ -538,7 +538,7 @@
     const out = [];
     let cleanText = text || "";
     let pickerKind = null;   // v1.24.64 — 'date' | 'time' | null
-    cleanText = cleanText.replace(/\[\[\s*picker\s*:\s*(date|time)\s*\]\]/gi, (_, kind) => {
+    cleanText = cleanText.replace(/\[\[\s*picker\s*:\s*(datetime|date|time)\s*\]\]/gi, (_, kind) => {
       pickerKind = kind.toLowerCase();
       return "";
     }).replace(/\[\[\s*choices?\s*:\s*([^\]]+)\]\]/gi, (_, b) => {
@@ -716,6 +716,129 @@
       wrap.appendChild(grid);
       const hint = el("div", { class: "us-picker-hint" }, "or type a custom time (e.g. 11pm)");
       wrap.appendChild(hint);
+    } else if (kind === "datetime") {
+      // v1.24.75 — combined month-grid calendar + time slots in one picker.
+      // Customer picks a day on the calendar, time grid reveals below,
+      // then a single tap on a time slot submits "Day DD Mon YYYY at HH:MM".
+      const monthShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const monthLong  = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const dayShort   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const dayHead    = ["S","M","T","W","T","F","S"];
+      const today = new Date(); today.setHours(0,0,0,0);
+      const max = new Date(today.getTime() + 180 * 86400000);
+
+      // State
+      let viewYear  = today.getFullYear();
+      let viewMonth = today.getMonth();   // 0-11
+      let pickedISO = null;
+      let pickedSendDate = null;          // "Sat 11 May 2026"
+
+      // --- Month header with prev/next ---
+      const header = el("div", { class: "us-cal-head" });
+      const btnPrev = el("button", { type: "button", class: "us-cal-nav", "aria-label": "Previous month" }, "‹");
+      const lblMonth = el("div", { class: "us-cal-title" });
+      const btnNext = el("button", { type: "button", class: "us-cal-nav", "aria-label": "Next month" }, "›");
+      header.appendChild(btnPrev); header.appendChild(lblMonth); header.appendChild(btnNext);
+      wrap.appendChild(header);
+
+      // --- Day-of-week heading row ---
+      const dowRow = el("div", { class: "us-cal-dow" });
+      dayHead.forEach(d => { dowRow.appendChild(el("div", { class: "us-cal-dow-cell" }, d)); });
+      wrap.appendChild(dowRow);
+
+      // --- Calendar grid ---
+      const calGrid = el("div", { class: "us-cal-grid" });
+      wrap.appendChild(calGrid);
+
+      // --- Time block (hidden until date picked) ---
+      const timeBlock = el("div", { class: "us-cal-time", style: "display:none" });
+      const timeLabel = el("div", { class: "us-cal-time-label" }, "Pick a time");
+      const timeGrid  = el("div", { class: "us-picker-grid us-cal-time-grid" });
+      timeBlock.appendChild(timeLabel);
+      timeBlock.appendChild(timeGrid);
+      wrap.appendChild(timeBlock);
+
+      const hint = el("div", { class: "us-picker-hint" }, "Tap a date, then a time");
+      wrap.appendChild(hint);
+
+      // --- Renderers ---
+      function _isPast(y, m, d) {
+        const cell = new Date(y, m, d); cell.setHours(0,0,0,0);
+        return cell.getTime() < today.getTime();
+      }
+      function _isAfterMax(y, m, d) {
+        const cell = new Date(y, m, d); cell.setHours(0,0,0,0);
+        return cell.getTime() > max.getTime();
+      }
+      function _renderCalendar() {
+        lblMonth.textContent = `${monthLong[viewMonth]} ${viewYear}`;
+        // Disable nav past today/max
+        btnPrev.disabled = (viewYear < today.getFullYear() ||
+          (viewYear === today.getFullYear() && viewMonth <= today.getMonth()));
+        btnNext.disabled = (viewYear > max.getFullYear() ||
+          (viewYear === max.getFullYear() && viewMonth >= max.getMonth()));
+        // Build cells
+        calGrid.innerHTML = "";
+        const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+        const dim = new Date(viewYear, viewMonth + 1, 0).getDate();
+        for (let i = 0; i < firstDow; i++) {
+          calGrid.appendChild(el("div", { class: "us-cal-cell us-cal-empty" }));
+        }
+        for (let d = 1; d <= dim; d++) {
+          const past = _isPast(viewYear, viewMonth, d);
+          const beyond = _isAfterMax(viewYear, viewMonth, d);
+          const isToday = (viewYear === today.getFullYear() &&
+                           viewMonth === today.getMonth() && d === today.getDate());
+          const cls = "us-cal-cell" +
+                      (past || beyond ? " us-cal-disabled" : "") +
+                      (isToday ? " us-cal-today" : "");
+          const cell = el("button", { type: "button", class: cls }, String(d));
+          if (past || beyond) cell.disabled = true;
+          else {
+            cell.onclick = () => {
+              [...calGrid.querySelectorAll("button")].forEach(x => x.classList.remove("us-cal-picked"));
+              cell.classList.add("us-cal-picked");
+              const dt = new Date(viewYear, viewMonth, d);
+              pickedISO = dt.toISOString().slice(0,10);
+              pickedSendDate = `${dayShort[dt.getDay()]} ${dt.getDate()} ${monthShort[dt.getMonth()]} ${dt.getFullYear()}`;
+              timeLabel.textContent = `Pick a time for ${pickedSendDate}`;
+              timeBlock.style.display = "";
+              timeBlock.scrollIntoView({behavior:"smooth", block:"nearest"});
+            };
+          }
+          calGrid.appendChild(cell);
+        }
+      }
+      btnPrev.onclick = () => {
+        if (viewMonth === 0) { viewMonth = 11; viewYear--; } else viewMonth--;
+        _renderCalendar();
+      };
+      btnNext.onclick = () => {
+        if (viewMonth === 11) { viewMonth = 0; viewYear++; } else viewMonth++;
+        _renderCalendar();
+      };
+
+      // Build time slots once
+      for (let h = 7; h <= 21; h++) {
+        for (const m of [0, 30]) {
+          if (h === 21 && m === 30) continue;
+          const t24 = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+          const ampm = h < 12 ? "AM" : "PM";
+          const h12 = h % 12 || 12;
+          const t12 = `${h12}:${String(m).padStart(2,"0")} ${ampm}`;
+          const b = el("button", { type: "button", class: "us-picker-time" }, t12);
+          b.onclick = () => {
+            if (!pickedSendDate) return;
+            [...wrap.querySelectorAll("button")].forEach(x => x.disabled = true);
+            b.classList.add("us-picker-picked");
+            input.value = `${pickedSendDate} at ${t24}`;
+            form.requestSubmit();
+          };
+          timeGrid.appendChild(b);
+        }
+      }
+
+      _renderCalendar();
     }
     return wrap;
   }

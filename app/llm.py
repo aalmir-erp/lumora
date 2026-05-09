@@ -469,33 +469,32 @@ def _enforce_picker_and_one_question(text: str) -> str:
         return text
     has_date_pick = "[[picker:date]]" in text
     has_time_pick = "[[picker:time]]" in text
+    has_dt_pick   = "[[picker:datetime]]" in text
 
     asks_date = bool(_DATE_TRIGGER.search(text))
     asks_time = bool(_TIME_TRIGGER.search(text))
 
     qmarks_count = text.count("?")
 
-    # v1.24.72 — when the LLM produces a multi-question reply that includes
-    # a date or time ask, REWRITE the whole reply to a single concise date
-    # / time question. This implements "one question per turn" hard and
-    # guarantees the picker shows. Previous version only trimmed up to the
-    # first date/time question but left earlier unrelated questions intact
-    # (e.g. "Which emirate? What date?" → both questions remained, picker
-    # was below — confusing UX).
+    # v1.24.75 — when the LLM produces a multi-question reply that asks for
+    # date OR time (or both), REWRITE the whole reply to a single concise
+    # question + the BEST picker. If both date AND time are asked, use the
+    # combined calendar+time picker [[picker:datetime]] so the customer
+    # picks both in ONE step instead of two turns.
     if qmarks_count >= 2 and (asks_date or asks_time):
-        # Preserve a friendly opening line if the bot wrote one before any
-        # question mark — keeps brand voice without leaking extra asks.
         prefix = ""
         first_q = text.find("?")
         if first_q != -1:
             head = text[:first_q]
-            # take the last paragraph break so multi-line context is kept
             last_break = head.rfind("\n\n")
             if last_break != -1:
                 pre = head[:last_break].strip()
                 if pre and "?" not in pre:
                     prefix = pre + "\n\n"
-        if asks_date:
+        if asks_date and asks_time:
+            text = (prefix + "When would you like us to come? "
+                    "Pick a date and time below.\n[[picker:datetime]]")
+        elif asks_date:
             text = (prefix + "When would you like us to come?\n"
                     "[[picker:date]]")
         else:
@@ -503,10 +502,12 @@ def _enforce_picker_and_one_question(text: str) -> str:
                     "[[picker:time]]")
         return text
 
-    # Inject pickers if missing on single-question replies.
-    if asks_date and not has_date_pick and "[[picker:" not in text:
+    # Single-question case: pick the right marker.
+    if asks_date and asks_time and not (has_date_pick or has_time_pick or has_dt_pick):
+        text = text.rstrip() + "\n[[picker:datetime]]"
+    elif asks_date and not has_date_pick and not has_dt_pick and "[[picker:" not in text:
         text = text.rstrip() + "\n[[picker:date]]"
-    elif asks_time and not has_time_pick and "[[picker:" not in text:
+    elif asks_time and not has_time_pick and not has_dt_pick and "[[picker:" not in text:
         text = text.rstrip() + "\n[[picker:time]]"
     return text
 
@@ -527,30 +528,74 @@ _SUMMARY_RE = _re_q.compile(r"(services?|booking summary)\s*[:\-]", _re_q.IGNORE
 
 
 def _parse_summary(text: str) -> dict:
-    """Extract services list + name/address/time/phone from a bot summary."""
+    """Extract services list + name/address/time/phone from a bot summary.
+
+    Handles BOTH formats observed in production (v1.24.75 fix):
+    A) Bulleted (early v1.24.71 format)
+         Services:
+         - Deep Cleaning (from AED 490)
+         - Pest Control
+    B) Inline comma-separated with ✓/✅/✗ prefix (real v1.24.72 format)
+         ✓ Services: Deep Cleaning, Pest Control, Sofa & Carpet Shampoo
+    """
     svcs: list[str] = []
-    m = _re_q.search(r"Services?\s*[:\-]\s*\n((?:.*\n?)+?)(?:\n\n|Details:|$)",
-                     text, _re_q.IGNORECASE)
-    if m:
-        for line in m.group(1).splitlines():
-            line = line.strip(" -•*\t✓✅")
-            if not line:
-                continue
-            name = _re_q.split(r"\s*\(", line)[0].strip()
-            if name:
-                svcs.append(name)
+
+    # Strip checkmark-prefix lines so the regexes work uniformly:
+    # "✓ Services: A, B, C" → "Services: A, B, C"
+    norm = _re_q.sub(r"(?m)^\s*[✓✅✗❌✓✔]\s+", "", text)
+
+    # --- Format B: inline "Services: A, B, C" on one line ---
+    # Anchor to the SAME line — [ \t]* not \s* to avoid swallowing \n.
+    m_inline = _re_q.search(r"Services?[ \t]*[:\-][ \t]*([^\n]+)", norm, _re_q.IGNORECASE)
+    if m_inline:
+        line = m_inline.group(1).strip()
+        # Skip obvious sentence prose (long sentences with 'and', 'we', etc.)
+        if len(line) < 200 and not _re_q.search(r"\b(?:we|will|after)\b", line, _re_q.I):
+            # Split on , ; or "and" — but DO NOT split on bare "&" (e.g.
+            # "Sofa & Carpet Shampoo" must stay as one service name).
+            for chunk in _re_q.split(r"\s*[,;]\s*|\s+and\s+", line):
+                # Strip "(from AED ...)" suffixes and other parenthetical price tags
+                name = _re_q.split(r"\s*\(", chunk)[0].strip(" -•*\t").strip()
+                if name and len(name) >= 3 and len(name) <= 60:
+                    svcs.append(name)
+
+    # --- Format A: bulleted list under "Services:\n" ---
+    if not svcs:
+        m_block = _re_q.search(
+            r"Services?\s*[:\-]\s*\n((?:.*\n?)+?)(?:\n\n|Details:|$)",
+            norm, _re_q.IGNORECASE)
+        if m_block:
+            for line in m_block.group(1).splitlines():
+                line = line.strip(" -•*\t✓✅")
+                if not line:
+                    continue
+                name = _re_q.split(r"\s*\(", line)[0].strip()
+                if name:
+                    svcs.append(name)
+
+    # De-dupe while preserving order
+    seen = set()
+    svcs_uniq = []
+    for s in svcs:
+        k = s.lower()
+        if k not in seen:
+            seen.add(k); svcs_uniq.append(s)
 
     def _field(label: str) -> str | None:
-        mm = _re_q.search(rf"(?:{label})\s*[:\-]\s*([^\n]+)", text, _re_q.IGNORECASE)
+        mm = _re_q.search(rf"(?:{label})\s*[:\-]\s*([^\n]+)", norm, _re_q.IGNORECASE)
         if not mm or mm.group(1) is None:
             return None
         return mm.group(1).strip() or None
 
+    # Address must NOT match "Location: Furjan, Dubai" if the explicit Address
+    # field exists on its own line — prefer Address over Location.
+    address = _field("Address") or _field("Location")
+
     return {
-        "services": svcs,
+        "services": svcs_uniq,
         "name":    _field("Name"),
-        "address": _field("Address|Location"),
-        "time":    _field(r"Date\s*&\s*Time|Date/Time|Time|Date") or _field("Schedule"),
+        "address": address,
+        "time":    _field(r"Date\s*&\s*Time|Date/Time|Schedule|Time|Date"),
         "phone":   _field("Phone|Mobile"),
     }
 
@@ -574,37 +619,105 @@ def _name_to_service_id(name: str) -> str | None:
     return None
 
 
+_MONTH_NAMES = {
+    "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,
+    "apr":4,"april":4,"may":5,"jun":6,"june":6,"jul":7,"july":7,
+    "aug":8,"august":8,"sep":9,"sept":9,"september":9,"oct":10,"october":10,
+    "nov":11,"november":11,"dec":12,"december":12,
+}
+
+
 def _normalise_date_time(time_str: str | None) -> tuple[str, str]:
-    """Convert 'Tomorrow 8 AM' / 'Sat 11 May 8:00' etc. -> (YYYY-MM-DD, HH:MM)."""
+    """Convert various human formats to (YYYY-MM-DD, HH:MM).
+
+    Handles (v1.24.75):
+      - 'Today' / 'Tomorrow'
+      - '2026-05-18'
+      - 'Monday, 18 May 2026 at 12:00 PM'  ← real bot output
+      - 'Sat 11 May 2026'
+      - '8 AM' (date defaults to tomorrow)
+    """
     today = _dt.date.today()
     if not time_str:
         return (today + _dt.timedelta(days=1)).isoformat(), "10:00"
     s = time_str.strip().lower()
-    # Date
-    if "today" in s:
-        target = today
-    elif "tomorrow" in s:
-        target = today + _dt.timedelta(days=1)
-    else:
-        # Try YYYY-MM-DD
-        m = _re_q.search(r"(\d{4}-\d{2}-\d{2})", s)
+    target = None
+
+    # 1) ISO yyyy-mm-dd
+    m = _re_q.search(r"(\d{4})-(\d{2})-(\d{2})", s)
+    if m:
+        try:
+            target = _dt.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except Exception:
+            target = None
+
+    # 2) "DD MonthName YYYY" / "MonthName DD YYYY"
+    if target is None:
+        m = _re_q.search(
+            r"(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+(\d{4})",
+            s, _re_q.IGNORECASE)
         if m:
             try:
-                target = _dt.date.fromisoformat(m.group(1))
+                target = _dt.date(int(m.group(3)),
+                                  _MONTH_NAMES[m.group(2).lower()],
+                                  int(m.group(1)))
             except Exception:
-                target = today + _dt.timedelta(days=1)
-        else:
+                target = None
+    if target is None:
+        m = _re_q.search(
+            r"(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})",
+            s, _re_q.IGNORECASE)
+        if m:
+            try:
+                target = _dt.date(int(m.group(3)),
+                                  _MONTH_NAMES[m.group(1).lower()],
+                                  int(m.group(2)))
+            except Exception:
+                target = None
+
+    # 3) Today / Tomorrow / next <weekday>
+    if target is None:
+        if "today" in s:
+            target = today
+        elif "tomorrow" in s:
             target = today + _dt.timedelta(days=1)
-    # Time
-    tm = _re_q.search(r"(\d{1,2})\s*(?::\s*(\d{2}))?\s*(am|pm)?", s)
-    if tm:
-        hh = int(tm.group(1))
-        mm = int(tm.group(2) or 0)
-        ap = (tm.group(3) or "").lower()
+
+    # Default
+    if target is None:
+        target = today + _dt.timedelta(days=1)
+
+    # Time — prefer explicit HH:MM AM/PM, else any HH AM/PM.
+    # Avoid grabbing day-of-month digits like "18" in "18 May" — anchor on
+    # an "at" clause OR a colon OR an am/pm marker.
+    hh, mm = 10, 0
+    # Try "at HH:MM AM/PM" / "at HH AM/PM" / "HH:MM AM/PM" / "HH AM/PM"
+    candidates = [
+        r"\bat\s+(\d{1,2})\s*[:\.]\s*(\d{2})\s*(am|pm)\b",   # at 12:00 PM
+        r"\bat\s+(\d{1,2})\s*(am|pm)\b",                     # at 8 PM
+        r"(\d{1,2})\s*[:\.]\s*(\d{2})\s*(am|pm)\b",          # 12:00 PM
+        r"(\d{1,2})\s*(am|pm)\b",                            # 8 AM
+        r"\bat\s+(\d{1,2})\s*[:\.]\s*(\d{2})\b",             # at 12:00
+        r"(\d{1,2})\s*[:\.]\s*(\d{2})\b",                    # 14:30
+    ]
+    for pat in candidates:
+        tm = _re_q.search(pat, s, _re_q.IGNORECASE)
+        if not tm:
+            continue
+        groups = tm.groups()
+        hh = int(groups[0])
+        if len(groups) >= 3 and groups[2]:  # HH:MM AM/PM
+            mm = int(groups[1])
+            ap = groups[2].lower()
+        elif len(groups) == 2 and groups[1] and groups[1].lower() in ("am","pm"):
+            mm = 0; ap = groups[1].lower()
+        elif len(groups) >= 2 and groups[1] and groups[1].isdigit():
+            mm = int(groups[1]); ap = ""
+        else:
+            mm = 0; ap = ""
         if ap == "pm" and hh < 12: hh += 12
         if ap == "am" and hh == 12: hh = 0
-        return target.isoformat(), f"{hh:02d}:{mm:02d}"
-    return target.isoformat(), "10:00"
+        break
+    return target.isoformat(), f"{hh:02d}:{mm:02d}"
 
 
 def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = None) -> str:
