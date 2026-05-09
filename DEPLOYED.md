@@ -2,17 +2,23 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"x6ZaxifDSNCha7TB0_TJvA"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"q_ScM7gPShu37vQwWUN5dQ"}`
 
 ## Build logs
 ```
+[ 5/11] RUN pip install -r requirements.txt
+[ 9/11] COPY web ./web
+[internal] load build context
+[ 3/11] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[ 2/11] WORKDIR /app
+[10/11] COPY start.sh /app/start.sh
+[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
+[ 8/11] COPY app ./app
+[ 4/11] COPY requirements.txt ./
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
-[internal] load build context
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
 [internal] load build context
 [ 2/11] WORKDIR /app
@@ -22,20 +28,14 @@
 [ 6/11] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/11] COPY app ./app
-[ 8/11] COPY app ./app
-[ 9/11] COPY web ./web
 [ 9/11] COPY web ./web
 [10/11] COPY start.sh /app/start.sh
-[10/11] COPY start.sh /app/start.sh
-[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
-uploading snapshot
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MGI0Njk4NzdlNzZiNDhkMDFiOTBlYjdmZWFkYWIxNmFjNzAyYWEyOTUwMDJmOTJiZjc3NDM3MzdkNzlhYzBjNyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wOVQyMjowNDowOFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:6949d073d74fcf1a16b852c4db294712caf291c3a068f31b6d77e82add035017
-containerimage.digest: sha256:0b469877e76b48d01b90eb7feadab16ac702aa295002f92bf7743737d79ac0c7
-image push
+containerimage.digest: sha256:7dbe0a2780f5da684df3d6f41ca8b609bbc9bb31126902d8d70a4bc1f6c94fc6
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6N2RiZTBhMjc4MGY1ZGE2ODRkZjNkNmY0MWNhOGI2MDliYmM5YmIzMTEyNjkwMmQ4ZDcwYTRiYzFmNmM5NGZjNiIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wOVQyMjowNzowMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:ada24c08e1f08ffcfadab87e5fe06196ed80a440bc3c6a70d6a775ff906c788a
 image push
 
 [35m====================
@@ -50,23 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/c83b0081-1301-4a17-8f61-dc5f49de37b9/vol_onr647rhdeir9di9
-Starting Container
-[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.4:43696 - "GET /book.html?nfc=zzzzbogus99 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:43696 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.4:43696 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61096 - "GET /api/nfc/tag/zzzzbogus99 HTTP/1.1" 404 Not Found
+INFO:     100.64.0.4:61096 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.4:43696 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.4:43696 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61096 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.4:43696 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.4:43696 - "GET /index.html HTTP/1.1" 200 OK
+INFO:     100.64.0.4:43696 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61996 - "GET /cart.html HTTP/1.1" 200 OK
+INFO:     100.64.0.7:31432 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.8:59264 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.8:51096 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.8:51106 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:62004 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.5:61996 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61996 - "GET /index.html HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61996 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61110 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.4:61110 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61110 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61096 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.4:43696 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.4:43696 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61110 - "GET /index.html HTTP/1.1" 200 OK
+INFO:     100.64.0.4:61096 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:37999 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     Shutting down
-INFO:     Application shutdown complete.
-INFO:     Finished server process [1]
-INFO:     Waiting for application shutdown.
-Stopping Container
-Stopping Container
 ```
