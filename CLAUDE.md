@@ -8,6 +8,71 @@ time. None of these mistakes should ever happen again.
 
 ## 🚨 Top-3 rules — break any of these and you owe the user an apology
 
+### 🎨 DESIGN-REVIEW gate (added v1.24.77)
+
+ANY new design — page redesign, modal, button, chip, badge, banner,
+icon, color change — MUST pass through:
+
+1. **Senior designer review** (visual hierarchy, brand alignment, type
+   scale, spacing, accessibility)
+2. **UX developer review** (touch targets ≥44px on mobile, hover states,
+   loading states, error states, keyboard nav, screen-reader labels)
+3. **Screenshot delivered to user** before pushing — render the
+   change in a TestClient or local server, save the rendered HTML, and
+   describe it in the message ("here's the new quote-card layout: ...
+   you can see it at http://localhost:8000/q/Q-XYZ"). DO NOT ship
+   visual changes blind.
+
+This rule applies even to a single button. The product has a brand
+voice and the user is the brand owner — every visual decision is
+theirs to approve, not mine to ship silently.
+
+### 🧪 TESTING LOOPHOLES — categorise + cover (added v1.24.77)
+
+Five recurring test loopholes that have caused me to lie about
+"tested ✅":
+
+**Loophole 1 — Unit-test green ≠ feature-works green.**
+I tested `_enforce_picker_and_one_question()` directly and it produced
+the right output for synthetic inputs. But I never ran a TestClient
+chat round-trip to confirm the picker actually reaches the user via
+the real `/api/chat` endpoint. Coverage: every chat-flow change must
+ship with a TestClient request that drives `/api/chat` and asserts
+the final response text contains `[[picker:date]]` (or whatever).
+
+**Loophole 2 — My made-up fixture ≠ real LLM output.**
+My parser test used a bulleted-list format I invented. Real bot
+output used `✓ Services: A, B, C` (inline). Parser silently returned
+[]. Coverage: every text-parser test must include AT LEAST ONE
+fixture that is the EXACT text from the user's most recent
+screenshot, copy-pasted verbatim.
+
+**Loophole 3 — Local green ≠ deployed green.**
+I claimed "v1.24.X is fixed" but Railway hadn't redeployed yet,
+service worker hadn't busted cache, or the browser was on
+v1.24.X-1. Coverage: when claiming fix-deployed, list:
+  a) commit hash pushed
+  b) Railway deploy URL  
+  c) the version footer the user should see
+  d) cache-busting steps if their browser is stuck
+
+**Loophole 4 — Component tested ≠ pipeline tested.**
+I tested `create_multi_quote()` returns a row in `multi_quotes`. I
+never tested that the conversation phone is correctly indexed so
+`/api/me/history?phone=X` returns it. The user reported "no
+matches" → my Q-XXXXXX existed but wasn't queryable. Coverage:
+every persistence test must include a "find it back" assertion via
+the actual lookup endpoint (history, list, search), not just SELECT
+from the table.
+
+**Loophole 5 — Happy path tested ≠ rejection path tested.**
+I tested that good input creates the quote. I never tested:
+  - bad inputs (wrong service id) → 4xx not 500
+  - duplicate calls → idempotent or clean error
+  - empty / partial fields → tool blocker fires
+  - cancellation / abort → DB row marked or removed
+Coverage: at least one rejection-path test per public surface.
+
 ### 🔒 SCOPE-OF-WORK contract (NEVER violate, even silently)
 
 These are decisions the founder has already made about how the product
@@ -84,6 +149,32 @@ the parser only handled the bulleted format. Real production output
 used `✓ Services: A, B, C` (inline comma-separated, ✓ prefix, "Date &
 Time:" label). My parser returned `services: []` → post-processor
 exited → no Q-XXXXXX. The user paid for 3 more wasted iterations.
+
+**v1.24.77 retrospective (THE END-TO-END LIE)**: Test passed for
+`_enforce_multi_quote_when_book_now()` directly — I fed it sample
+text, it produced Q-XXXXXX. Shipped, called it done. User reported
+the History tab still says "No matches for this phone." I had NEVER
+verified the chat endpoint → real LLM → post-processor → DB save →
+phone-indexed history → search round-trip end-to-end. **Unit-test
+green ≠ feature-works green.** Going forward, every chat-flow change
+MUST also include:
+
+```python
+# E2E pseudo-test recipe — REQUIRED for any chat/quote/booking change
+client = TestClient(app)
+sid = "e2e-" + uuid4().hex
+# Drive a real chat sequence
+for msg in ["hi", "deep cleaning + pest", "2 br", "tomorrow", ...]:
+    client.post("/api/chat", json={"session_id": sid, "message": msg, "phone": "0559396459"})
+# Then verify
+assert phone_appears_in_DB(table="multi_quotes", phone="0559396459")
+assert client.get("/api/me/history?phone=0559396459").json()["count"] >= 1
+```
+
+Without an actual ANTHROPIC_API_KEY in the sandbox the LLM won't drive
+the chat — but you can still test the post-processor + DB persistence
++ history endpoint round-trip with a mocked-LLM fixture. That mock
+must use a REAL bot reply (from the user's screenshot), not made up.
 
 **The fix discipline**: every parser/regex must be tested against:
   a) The fixture I made up (synthetic test)

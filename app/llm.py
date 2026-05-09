@@ -143,7 +143,39 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         f"Tagline: {b['tagline']}.\n\n"
         "🚨🚨🚨 SACRED FLOW — FOLLOW THIS EXACT ORDER. NEVER SKIP STEPS:\n"
         "STEP 1: Identify the service(s) the customer wants.\n"
-        "STEP 2: Ask service-specific intake (e.g. bedrooms for cleaning, AC count for ac_cleaning).\n"
+        "STEP 2: Ask service-specific intake — ONE FIELD AT A TIME.\n"
+        "        🚨 NEVER skip to date/quote until ALL intake fields below are answered.\n"
+        "        REQUIRED INTAKE BY SERVICE (ask in this order, use [[choices:...]]):\n"
+        "        • deep_cleaning, general_cleaning, holiday_cleaning, post_construction_cleaning →\n"
+        "          1) bedrooms [[choices: Studio=studio; 1 BR=1; 2 BR=2; 3 BR=3; 4 BR=4; 5+ BR=5]]\n"
+        "          2) bathrooms [[choices: 1=1; 2=2; 3=3; 4=4]]\n"
+        "        • commercial_cleaning, office_cleaning →\n"
+        "          1) office_size_sqft (free text, e.g. '850 sqft')\n"
+        "          2) frequency [[choices: Daily=daily; Weekly=weekly; Biweekly=biweekly; Monthly=monthly; One-time=one-time]]\n"
+        "        • ac_cleaning →\n"
+        "          1) ac_units_count [[choices: 1=1; 2=2; 3=3; 4+=4]]\n"
+        "          2) ac_type [[choices: Split=split; Window=window; Central=central; Ducted=ducted]]\n"
+        "        • pest_control →\n"
+        "          1) pest_type [[choices: 🪳 Cockroaches=cockroaches; 🐜 Ants=ants; 🦟 Bed bugs=bedbugs; 🐀 Rodents=rodents; All=general]]\n"
+        "          2) property_type [[choices: Apartment=apartment; Villa=villa; Office=office; Warehouse=warehouse]]\n"
+        "        • sofa_carpet, curtain_cleaning →\n"
+        "          1) item_count_or_size (e.g. '3-seater + 5x5m carpet')\n"
+        "        • car_wash →\n"
+        "          1) car_size [[choices: Sedan=sedan; SUV=suv; 4x4=4x4; Van=van]]\n"
+        "          2) wash_type [[choices: Exterior=exterior; Full=full; Polish=polish; Steam=steam]]\n"
+        "        • swimming_pool →\n"
+        "          1) pool_size_sqm (free text)\n"
+        "        • gardening →\n"
+        "          1) garden_size [[choices: Small=small; Medium=medium; Large=large]]\n"
+        "          2) service_type [[choices: Maintenance=maintenance; Landscaping=landscaping; Trimming=trimming]]\n"
+        "        • handyman, painting, marble_polish, smart_home →\n"
+        "          1) job_description (free text — what needs to be done)\n"
+        "        • vehicle_recovery →\n"
+        "          1) vehicle_type, 2) pickup_location, 3) drop_location\n"
+        "        • laundry → 1) item_count_or_kg\n"
+        "        • babysitting, maid_service → 1) hours_needed [[choices: 2 hrs=2; 4 hrs=4; 6 hrs=6; 8 hrs=8]]\n"
+        "        • move_in_out, villa_deep, kitchen_deep, gym_deep_cleaning, school_deep_cleaning →\n"
+        "          1) bedrooms or square footage (free text)\n"
         "        Use [[choices: ...]] when the answer is a fixed set.\n"
         "STEP 3: Quote the price using get_quote tool. Show price clearly. "
         "        Ask 'Shall I lock these in?' with [[choices: ✅ Yes lock=yes lock; ✏️ Change=change]].\n"
@@ -368,6 +400,27 @@ def chat(messages: list[dict], *, session_id: str | None = None,
                 results.append({"type": "tool_result", "tool_use_id": tu.id,
                                 "content": _stringify(err)})
                 continue
+            # v1.24.77 — block create_booking / create_multi_quote /
+            # get_quote when service-specific intake fields are missing.
+            # Forces the LLM to ask bedrooms/AC count/etc. BEFORE quoting.
+            if tu.name in ("get_quote", "create_booking", "create_multi_quote"):
+                missing = _missing_intake(tu.name, dict(tu.input), convo)
+                if missing:
+                    err = {
+                        "ok": False,
+                        "error": (
+                            f"BLOCKED — intake incomplete. You called {tu.name} "
+                            f"but the customer hasn't answered required intake: "
+                            f"{', '.join(missing)}. Ask the FIRST missing field "
+                            "with [[choices: ...]] (or free text if no fixed set). "
+                            "DO NOT retry the tool until the customer answers."
+                        ),
+                    }
+                    tool_calls.append({"name": tu.name, "input": dict(tu.input),
+                                       "result": err})
+                    results.append({"type": "tool_result", "tool_use_id": tu.id,
+                                    "content": _stringify(err)})
+                    continue
             result = run_tool(tu.name, dict(tu.input), session_id=session_id)
             tool_calls.append({"name": tu.name, "input": dict(tu.input), "result": result})
             results.append({"type": "tool_result", "tool_use_id": tu.id,
@@ -377,6 +430,91 @@ def chat(messages: list[dict], *, session_id: str | None = None,
     final_text = _enforce_picker_and_one_question(final_text)
     return {"text": final_text, "tool_calls": tool_calls,
             "usage": usage_total, "stop_reason": stop_reason}
+
+
+# v1.24.77 — service-specific intake guard. Required intake per service
+# (the bare minimum that MUST be answered before a quote can be issued).
+# Each entry: a list of regex-like keywords the conversation must contain.
+INTAKE_REQUIRED: dict[str, list[tuple[str, list[str]]]] = {
+    "deep_cleaning":              [("bedrooms", ["studio","1 br","2 br","3 br","4 br","5 br","bedroom"])],
+    "general_cleaning":           [("bedrooms", ["studio","1 br","2 br","3 br","4 br","5 br","bedroom"])],
+    "holiday_cleaning":           [("bedrooms", ["studio","1 br","2 br","3 br","4 br","5 br","bedroom"])],
+    "post_construction_cleaning": [("bedrooms or sqft", ["1 br","2 br","3 br","4 br","sqft","sq ft","square feet"])],
+    "villa_deep":                 [("bedrooms", ["1 br","2 br","3 br","4 br","5 br","bedroom"])],
+    "kitchen_deep":               [("kitchen size", ["small","medium","large","sqft","square"])],
+    "office_cleaning":            [("office size", ["sqft","sq ft","square feet"])],
+    "commercial_cleaning":        [("office size", ["sqft","sq ft","square feet"])],
+    "ac_cleaning":                [("ac_units_count", ["1 unit","2 unit","3 unit","4 unit","ac unit","split","window","central"])],
+    "pest_control":               [("pest_type", ["cockroach","ant","bed bug","bedbug","rodent","rat","mouse","general","all"])],
+    "sofa_carpet":                [("item_count", ["seater","seat","carpet","piece","item"])],
+    "curtain_cleaning":           [("panel_count", ["panel","curtain","piece"])],
+    "car_wash":                   [("car_size", ["sedan","suv","4x4","van","hatchback","crossover","pickup"])],
+    "swimming_pool":              [("pool_size", ["sqm","square","small","medium","large"])],
+    "gardening":                  [("garden_size", ["small","medium","large","sqm"])],
+    "laundry":                    [("kg_or_count", ["kg","piece","bag","item"])],
+    "babysitting":                [("hours_needed", ["hour","hr","hrs"])],
+    "maid_service":               [("hours_needed", ["hour","hr","hrs"])],
+    "vehicle_recovery":           [("vehicle_type", ["sedan","suv","4x4","truck","van","car"])],
+    "smart_home":                 [("job_description", []), ("device count", ["device","appliance"])],
+    "handyman":                   [("job_description", [])],
+    "painting":                   [("rooms or sqft", ["room","wall","sqft","sq ft"])],
+    "marble_polish":              [("area sqft", ["sqft","sq ft","square","floor"])],
+    "window_cleaning":            [("window_count", ["window","panel"])],
+    "disinfection":               [("property size", ["sqft","square","studio","1 br","2 br","3 br","4 br"])],
+    "move_in_out":                [("bedrooms", ["1 br","2 br","3 br","4 br","studio","bedroom"])],
+    "gym_deep_cleaning":          [("size sqft", ["sqft","sq ft","square"])],
+    "school_deep_cleaning":       [("size sqft", ["sqft","sq ft","square"])],
+}
+
+
+def _missing_intake(tool_name: str, tool_input: dict, convo: list) -> list[str]:
+    """Return list of missing intake field names for the service(s) this
+    tool call is about. Empty list = OK to proceed."""
+    sids = []
+    if tool_name == "create_multi_quote":
+        for s_obj in tool_input.get("services") or []:
+            sid = s_obj.get("service_id") or s_obj.get("id")
+            if sid: sids.append((sid, s_obj))
+    else:
+        sid = tool_input.get("service_id")
+        if sid: sids.append((sid, tool_input))
+
+    if not sids: return []
+
+    # Aggregate all conversation text (lowercase) for keyword search.
+    convo_text = ""
+    for m in convo:
+        c = m.get("content")
+        if isinstance(c, str):
+            convo_text += " " + c
+        elif isinstance(c, list):
+            for cc in c:
+                if isinstance(cc, dict) and cc.get("type") == "text":
+                    convo_text += " " + (cc.get("text") or "")
+    convo_text = convo_text.lower()
+
+    missing: list[str] = []
+    for sid, args in sids:
+        spec = INTAKE_REQUIRED.get(sid)
+        if not spec:
+            continue
+        for field_name, keywords in spec:
+            # 1. If the explicit arg is supplied to the tool, accept.
+            arg_keys_match = any(
+                k in args and args[k] not in (None, "", 0)
+                for k in (field_name.replace(" ", "_"), field_name.split()[0],
+                         "bedrooms","hours","sqm","ac_units_count","pest_type","car_size",
+                         "pool_size_sqm","panel_count","item_count","job_description")
+            )
+            if arg_keys_match:
+                continue
+            # 2. If any keyword appears in the conversation, accept.
+            if not keywords:  # free-text field — require args only
+                missing.append(f"{sid}:{field_name}")
+                continue
+            if not any(kw in convo_text for kw in keywords):
+                missing.append(f"{sid}:{field_name}")
+    return missing
 
 
 # v1.24.69 — count distinct services mentioned in the conversation so far,
@@ -755,8 +893,17 @@ def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = No
         return text
     if not q.get("ok"):
         return text
-    # Format the structured cart reply
-    lines = [f"\U0001f4cb *Quote {q['quote_id']}*", ""]
+    # v1.24.77 — rich quote card. Each line is a service. Below the
+    # totals: action row with View / Download / Print as markdown links
+    # (widget renders them as styled buttons), plus [[choices:]] for
+    # Approve / Revise / Pay so the customer can act in-chat without
+    # leaving the conversation.
+    qid = q['quote_id']
+    sign_url = q['signing_url']
+    pay_url  = q['pay_url']
+    inv_url  = sign_url.replace(f"/q/{qid}", f"/i/{qid}")
+    pdf_url  = f"{inv_url}.pdf"
+    lines = [f"\U0001f4cb *Quote {qid}*", ""]
     for i, it in enumerate(q.get("items") or [], 1):
         price = it.get("price_aed") or 0
         lines.append(f"{i}. *{it['label']}* — {it.get('detail','standard')}    AED {price:,.0f}")
@@ -769,9 +916,17 @@ def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = No
         f"\U0001f4c5 {target_date} · {time_slot}",
         f"\U0001f4cd {address} · {name} · {phone}",
         "",
-        f"➜ *Approve & sign:* {q['signing_url']}",
-        f"➜ *Pay online:* {q['pay_url']}",
-        f"➜ Or pay manually: {q.get('fallback_pay_contact','WhatsApp +971 56 4020087')}",
+        # Quote action buttons — markdown links open URLs in a new tab.
+        # Widget renders them as inline pill buttons.
+        f"[✅ Approve & sign]({sign_url}) [💳 Pay online]({pay_url})",
+        f"[👁 View quote]({sign_url}) [📥 Download PDF]({pdf_url}) [🖨 Print]({inv_url})",
+        "",
+        f"Or pay manually: WhatsApp *+971 56 4020087* with quote *{qid}*.",
+        "",
+        # Revision is the only NON-URL action — sends a text request to
+        # the bot, which then asks what to change.
+        (f"[[choices: ✏️ Revise quote=I want to revise quote {qid} "
+         "(tell me what to add, remove, or change)]]"),
         "",
         "Once signed, our team is dispatched within 30 min.",
     ]
