@@ -63,7 +63,8 @@
         style: "border-radius:50%;background:rgba(255,255,255,.18)" }),
       el("div", { style: "flex:1" },
         el("h3", {}, "Servia"),
-        el("p", { class: "us-mode-line" }, "Concierge · 24×7 · 15 languages")),
+        el("p", { class: "us-mode-line" }, "Concierge · 24×7 · 15 languages"),
+        el("p", { class: "us-version", style: "font-size:10px;opacity:.55;margin-top:1px;letter-spacing:.05em" }, "v—")),
       // v1.24.56 — header controls: download / new chat / minimize / maximize / close
       el("button", { class: "us-newchat", "aria-label": "Start new chat", title: "Start new chat" }, "✨"),
       el("button", { class: "us-download", "aria-label": "Download transcript", title: "Download transcript" }, "⤓"),
@@ -162,6 +163,22 @@
   const previewWrap = panel.querySelector(".us-attach-preview");
   const modeBadge = panel.querySelector(".us-mode");
   const subtitle = panel.querySelector(".us-mode-line");
+  // v1.24.58 — populate version label in chat header from /api/health.
+  // Fires once on widget mount (idle-deferred so it doesn't block paint).
+  (function _showVersion() {
+    function paint(v) {
+      const el = panel.querySelector(".us-version");
+      if (el) el.textContent = "v" + v;
+    }
+    if (window.LUMORA_VERSION) { paint(window.LUMORA_VERSION); return; }
+    function go() {
+      fetch(API_BASE + "/api/health").then(r => r.ok && r.json()).then(j => {
+        if (j && j.version) { window.LUMORA_VERSION = j.version; paint(j.version); }
+      }).catch(()=>{});
+    }
+    if (window.requestIdleCallback) requestIdleCallback(go, {timeout: 4000});
+    else setTimeout(go, 1500);
+  })();
 
   // Build persistent action toolbar
   QUICK_ACTIONS.forEach(a => {
