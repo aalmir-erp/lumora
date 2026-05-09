@@ -893,42 +893,27 @@ def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = No
         return text
     if not q.get("ok"):
         return text
-    # v1.24.77 — rich quote card. Each line is a service. Below the
-    # totals: action row with View / Download / Print as markdown links
-    # (widget renders them as styled buttons), plus [[choices:]] for
-    # Approve / Revise / Pay so the customer can act in-chat without
-    # leaving the conversation.
+    # v1.24.78 — in-chat quote card. The reply is just a single
+    # [[quote_card: Q-XXXXXX]] marker. The widget fetches /api/q/<id>
+    # data and renders an interactive card inside the chat with:
+    #   - Itemised lines + totals
+    #   - 📅 date / 📍 address / 👤 phone
+    #   - 👁 View quote (opens summary modal)
+    #   - 📥 Download PDF (opens /i/<id>.pdf in new tab)
+    #   - 🖨 Print (opens /i/<id> with print() trigger)
+    #   - ✍️ Sign here (signature pad inline → POST /api/q/<id>/sign)
+    #   - 💳 Pay online (opens gate flow)
+    #   - ✏️ Revise (sends "I want to revise..." back to bot)
+    # Customer never has to leave the chat.
     qid = q['quote_id']
-    sign_url = q['signing_url']
-    pay_url  = q['pay_url']
-    inv_url  = sign_url.replace(f"/q/{qid}", f"/i/{qid}")
-    pdf_url  = f"{inv_url}.pdf"
-    lines = [f"\U0001f4cb *Quote {qid}*", ""]
-    for i, it in enumerate(q.get("items") or [], 1):
-        price = it.get("price_aed") or 0
-        lines.append(f"{i}. *{it['label']}* — {it.get('detail','standard')}    AED {price:,.0f}")
-    lines += [
-        "",
-        f"Subtotal:                   AED {q.get('subtotal_aed', 0):,.0f}",
-        f"VAT 5%:                       AED {q.get('vat_aed', 0):,.0f}",
-        f"*Total:*                     *AED {q.get('total_aed', 0):,.0f}*",
-        "",
-        f"\U0001f4c5 {target_date} · {time_slot}",
-        f"\U0001f4cd {address} · {name} · {phone}",
-        "",
-        # Quote action buttons — markdown links open URLs in a new tab.
-        # Widget renders them as inline pill buttons.
-        f"[✅ Approve & sign]({sign_url}) [💳 Pay online]({pay_url})",
-        f"[👁 View quote]({sign_url}) [📥 Download PDF]({pdf_url}) [🖨 Print]({inv_url})",
-        "",
-        f"Or pay manually: WhatsApp *+971 56 4020087* with quote *{qid}*.",
-        "",
-        # Revision is the only NON-URL action — sends a text request to
-        # the bot, which then asks what to change.
-        (f"[[choices: ✏️ Revise quote=I want to revise quote {qid} "
-         "(tell me what to add, remove, or change)]]"),
-        "",
-        "Once signed, our team is dispatched within 30 min.",
+    lines = [f"\U0001f4cb *Quote {qid}* — your service is ready to confirm.",
+             "",
+             f"[[quote_card: {qid}]]",
+             "",
+             # Revision is the only NON-card action — sends a text request
+             # to the bot, which then asks what to change.
+             (f"[[choices: ✏️ Revise quote=I want to revise quote {qid} "
+              "(tell me what to add, remove, or change)]]"),
     ]
     return "\n".join(lines)
 

@@ -538,8 +538,12 @@
     const out = [];
     let cleanText = text || "";
     let pickerKind = null;   // v1.24.64 — 'date' | 'time' | null
+    let quoteCardId = null;  // v1.24.78 — Q-XXXXXX to render as in-chat card
     cleanText = cleanText.replace(/\[\[\s*picker\s*:\s*(datetime|date|time)\s*\]\]/gi, (_, kind) => {
       pickerKind = kind.toLowerCase();
+      return "";
+    }).replace(/\[\[\s*quote_card\s*:\s*(Q-[A-Z0-9]+)\s*\]\]/gi, (_, qid) => {
+      quoteCardId = qid;
       return "";
     }).replace(/\[\[\s*choices?\s*:\s*([^\]]+)\]\]/gi, (_, b) => {
       b.split(/\s*;\s*/).forEach(pair => {
@@ -550,6 +554,7 @@
       return "";
     }).replace(/\n{3,}/g, "\n\n").trim();
     if (pickerKind) out.__picker = pickerKind;
+    if (quoteCardId) out.__quoteCard = quoteCardId;
     for (const tc of toolCalls || []) {
       const r = tc.result || {};
       if (tc.name === "list_slots" && r.ok && Array.isArray(r.slots) && !out.length) {
@@ -581,18 +586,20 @@
         out.push({ label: "❌ No", send: "No" });
       }
     }
-    return { cleanText, actions: out, picker: pickerKind };
+    return { cleanText, actions: out, picker: pickerKind, quoteCard: quoteCardId };
   }
 
   function addMsg(who, text, toolCalls, isAgent) {
     let cleanText = text;
     let actions = [];
     let picker = null;
+    let quoteCard = null;
     if (who === "bot") {
       const ex = extractActions(text, toolCalls);
       cleanText = ex.cleanText;
       actions = ex.actions;
       picker = ex.picker;
+      quoteCard = ex.quoteCard;
     }
     const div = el("div", { class: "us-msg " + (who === "user" ? "user" : "bot") });
     div.innerHTML = formatMd(cleanText);
@@ -614,6 +621,11 @@
         wrap.appendChild(b);
       });
       body.appendChild(wrap);
+    }
+    // v1.24.78 — render in-chat quote card if [[quote_card:Q-XXX]] was emitted
+    if (who === "bot" && quoteCard) {
+      const card = _buildQuoteCard(quoteCard);
+      body.appendChild(card);
     }
     // v1.24.64 — render rich date/time picker if [[picker:date]] / [[picker:time]] was emitted
     if (who === "bot" && picker) {
@@ -841,6 +853,138 @@
       _renderCalendar();
     }
     return wrap;
+  }
+
+  // v1.24.78 — in-chat quote card. Fetches /api/q/<id>/card?session_id=<sid>
+  // and renders the full booking summary + signature pad + action buttons
+  // INSIDE the chat message bubble. No need for the customer to navigate to
+  // /q/<id> at all — they can review, sign, download, print, and pay all
+  // from the conversation flow. Designed by senior UX-UI per CLAUDE.md
+  // DESIGN-REVIEW gate.
+  function _buildQuoteCard(qid) {
+    const card = el("div", { class: "us-qcard" });
+    card.innerHTML = `<div class="us-qcard-loading">Loading quote ${qid}…</div>`;
+    const sid = (typeof sessionId !== "undefined" && sessionId) || window.LUMORA_SESSION_ID || sessionStorage.getItem("us.sid") || "";
+    fetch(`/api/q/${qid}/card?session_id=${encodeURIComponent(sid)}`)
+      .then(r => r.json())
+      .then(j => {
+        if (!j.ok) {
+          card.innerHTML = `<div class="us-qcard-err">Couldn't load quote ${qid}. Open <a href="/q/${qid}" target="_blank">/q/${qid}</a></div>`;
+          return;
+        }
+        _renderQuoteCard(card, j, sid);
+      })
+      .catch(() => {
+        card.innerHTML = `<div class="us-qcard-err">Network error loading ${qid}.</div>`;
+      });
+    return card;
+  }
+
+  function _renderQuoteCard(card, q, sid) {
+    const items = (q.items || []).map((it, i) =>
+      `<div class="us-qcard-line">
+         <span class="us-qcard-num">${i+1}</span>
+         <span class="us-qcard-name">${it.label || it.service_id}</span>
+         <span class="us-qcard-detail">${it.detail || ''}</span>
+         <span class="us-qcard-price">AED ${(it.price_aed||0).toLocaleString()}</span>
+       </div>`).join("");
+    const isSigned = !!q.signed_at;
+    card.innerHTML = `
+      <div class="us-qcard-head">
+        <div class="us-qcard-title">📋 Quote ${q.quote_id}</div>
+        ${isSigned ? '<div class="us-qcard-badge us-qcard-badge-ok">✓ Signed</div>' : '<div class="us-qcard-badge">Pending sign</div>'}
+      </div>
+      <div class="us-qcard-items">${items}</div>
+      <div class="us-qcard-totals">
+        <div class="us-qcard-trow"><span>Subtotal</span><span>AED ${(q.subtotal_aed||0).toLocaleString()}</span></div>
+        <div class="us-qcard-trow"><span>VAT 5%</span><span>AED ${(q.vat_aed||0).toLocaleString()}</span></div>
+        <div class="us-qcard-trow us-qcard-total"><span>Total</span><span>AED ${(q.total_aed||0).toLocaleString()}</span></div>
+      </div>
+      <div class="us-qcard-meta">
+        <div>📅 <b>${q.target_date||''}</b> at <b>${q.time_slot||''}</b></div>
+        <div>📍 ${q.address||''}</div>
+        <div>👤 ${q.customer_name||''} · ${q.phone||''}</div>
+      </div>
+      <div class="us-qcard-actions">
+        <a class="us-qcard-btn" href="${q.view_url}" target="_blank">👁 View</a>
+        <a class="us-qcard-btn" href="${q.pdf_url}" target="_blank">📥 PDF</a>
+        <a class="us-qcard-btn" href="${q.print_url}" target="_blank" onclick="setTimeout(()=>{try{window.opener && window.opener.focus()}catch(_){}},100)">🖨 Print</a>
+      </div>
+      ${isSigned ? `
+        <div class="us-qcard-signed">
+          <div class="us-qcard-signed-msg">✅ Signed at ${q.signed_at}. Our team is on the way.</div>
+          <a class="us-qcard-pay" href="${q.pay_url}" target="_blank">💳 Pay AED ${(q.total_aed||0).toLocaleString()}</a>
+        </div>
+      ` : `
+        <div class="us-qcard-sigblock">
+          <div class="us-qcard-siglabel">✍️ Sign here to confirm this booking:</div>
+          <canvas class="us-qcard-sigpad" width="380" height="90"></canvas>
+          <div class="us-qcard-sigrow">
+            <button type="button" class="us-qcard-btn us-qcard-clear">Clear</button>
+            <button type="button" class="us-qcard-btn us-qcard-approve">✅ Approve &amp; sign</button>
+          </div>
+          <div class="us-qcard-msg"></div>
+        </div>
+      `}
+    `;
+    if (!isSigned) _wireSignPad(card, q, sid);
+  }
+
+  function _wireSignPad(card, q, sid) {
+    const canvas = card.querySelector(".us-qcard-sigpad");
+    const ctx = canvas.getContext("2d");
+    let drawing = false; let last = null; let hasInk = false;
+    ctx.strokeStyle = "#0F172A"; ctx.lineWidth = 2; ctx.lineCap = "round";
+    function pos(e) {
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches && e.touches[0];
+      return { x: ((t?t.clientX:e.clientX) - r.left) * (canvas.width/r.width),
+               y: ((t?t.clientY:e.clientY) - r.top)  * (canvas.height/r.height) };
+    }
+    function down(e) { e.preventDefault(); drawing = true; last = pos(e); hasInk = true; }
+    function move(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const p = pos(e);
+      ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      last = p;
+    }
+    function up() { drawing = false; }
+    canvas.addEventListener("mousedown", down);
+    canvas.addEventListener("mousemove", move);
+    canvas.addEventListener("mouseup", up);
+    canvas.addEventListener("mouseleave", up);
+    canvas.addEventListener("touchstart", down, {passive:false});
+    canvas.addEventListener("touchmove", move, {passive:false});
+    canvas.addEventListener("touchend", up);
+    card.querySelector(".us-qcard-clear").onclick = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); hasInk = false;
+    };
+    const msg = card.querySelector(".us-qcard-msg");
+    card.querySelector(".us-qcard-approve").onclick = async () => {
+      if (!hasInk) { msg.textContent = "Please draw your signature first."; msg.style.color="#DC2626"; return; }
+      msg.textContent = "Submitting…"; msg.style.color = "var(--us-muted)";
+      try {
+        const r = await fetch(`/api/q/${q.quote_id}/sign`, {
+          method: "POST", headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({
+            signature_data_url: canvas.toDataURL("image/png"),
+            session_id: sid,
+          }),
+        });
+        const j = await r.json();
+        if (j.ok) {
+          q.signed_at = j.signed_at;
+          _renderQuoteCard(card, q, sid);  // re-render with signed state
+        } else {
+          msg.textContent = "Failed: " + (j.error || "unknown error");
+          msg.style.color = "#DC2626";
+        }
+      } catch (e) {
+        msg.textContent = "Network error. Try again.";
+        msg.style.color = "#DC2626";
+      }
+    };
   }
 
   function addMsgWithImage(who, text, imageUrl) {

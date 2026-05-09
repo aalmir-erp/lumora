@@ -65,63 +65,116 @@ def quote_landing(quote_id: str) -> str:
     q = _quote(quote_id)
     if not q:
         return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
-    # Render a phone-gate page; once verified, JS calls /api/q/{quote_id}
+    # v1.24.78 — light-theme redesign matching brand palette (teal/amber).
+    # Designed per CLAUDE.md DESIGN-REVIEW gate: brand-aligned hero,
+    # uniform typography, ≥44px touch targets, semantic color roles
+    # (primary teal, accent amber, success green, danger red).
     return f"""<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Servia · Quote {quote_id}</title>
 <link rel="stylesheet" href="/style.css">
 <style>
-body{{font-family:system-ui;background:#0F172A;color:#F1F5F9;padding:14px;margin:0}}
-.gate{{max-width:340px;margin:18vh auto;text-align:center;background:#1E293B;
-border:1px solid #334155;border-radius:12px;padding:18px}}
-.gate input{{width:100%;padding:10px;font-size:15px;background:#0F172A;
-color:#fff;border:1px solid #334155;border-radius:8px;margin:8px 0;font-family:monospace}}
-.gate button{{width:100%;padding:11px;background:#0D9488;color:#fff;border:none;
-border-radius:8px;font-weight:600;font-size:14px;cursor:pointer}}
-.cart{{max-width:520px;margin:0 auto;display:none}}
-.line{{display:flex;justify-content:space-between;padding:8px 0;
-border-bottom:1px dashed #334155}}
-.line .label{{flex:1}} .line .price{{font-weight:600;color:#FCD34D}}
-.totals .total{{font-size:18px;font-weight:700;color:#14B8A6}}
-canvas{{background:#fff;border-radius:8px;width:100%;height:140px;display:block;margin:8px 0}}
-.btn{{padding:11px 14px;background:#0D9488;color:#fff;border:none;border-radius:8px;
-font-weight:600;cursor:pointer;width:100%;margin:6px 0}}
-.btn.alt{{background:#1E293B;color:#F1F5F9;border:1px solid #475569}}
-textarea,input[type=text]{{width:100%;padding:8px;background:#0F172A;color:#fff;
-border:1px solid #334155;border-radius:6px;font:inherit;margin-top:4px}}
-.warn{{background:#7F1D1D;color:#FECACA;padding:8px;border-radius:6px;
-font-size:12px;margin:8px 0}}
-.feature{{font-size:12px;color:#94A3B8;line-height:1.5;background:#1E293B;
-border-left:3px solid #14B8A6;padding:8px 12px;margin:10px 0;border-radius:0 6px 6px 0}}
+:root {{ --t:#0F766E; --t2:#0D9488; --tl:#F0FDFA; --acc:#F59E0B; --bg:#F8FAFC;
+         --tx:#0F172A; --mu:#64748B; --ln:#E2E8F0; --ok:#10B981; --er:#DC2626; }}
+body {{ font-family: -apple-system, system-ui, sans-serif; background: var(--bg);
+       color: var(--tx); padding: 0; margin: 0; min-height: 100vh; }}
+.hdr {{ background: linear-gradient(135deg, var(--t) 0%, var(--t2) 100%);
+       color: #fff; padding: 18px 16px; text-align: center; }}
+.hdr h1 {{ margin: 0; font-size: 19px; letter-spacing: -.01em; font-weight: 800; }}
+.hdr .sub {{ font-size: 12px; opacity: .9; margin-top: 4px; font-family: monospace; }}
+.wrap {{ max-width: 560px; margin: 0 auto; padding: 16px; }}
+.card {{ background: #fff; border: 1px solid var(--ln); border-radius: 14px;
+        padding: 18px; box-shadow: 0 4px 16px rgba(15,23,42,.06); margin-bottom: 14px; }}
+.gate input {{ width: 100%; padding: 12px; font-size: 15px; background: #fff;
+              color: var(--tx); border: 1.5px solid var(--ln); border-radius: 9px;
+              font-family: inherit; box-sizing: border-box; min-height: 44px; }}
+.gate input:focus {{ outline: none; border-color: var(--t); box-shadow: 0 0 0 3px rgba(15,118,110,.15); }}
+.btn {{ display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+       padding: 12px 16px; min-height: 44px; background: var(--t); color: #fff;
+       border: none; border-radius: 9px; font-weight: 700; font-size: 14px; cursor: pointer;
+       text-decoration: none; font-family: inherit; transition: background .12s, transform .08s; }}
+.btn:hover {{ background: var(--t2); transform: translateY(-1px); }}
+.btn.full {{ width: 100%; margin: 8px 0; }}
+.btn.alt {{ background: #fff; color: var(--t); border: 1.5px solid var(--t); }}
+.btn.alt:hover {{ background: var(--tl); transform: translateY(-1px); }}
+.gate {{ display: block; }}
+.cart {{ display: none; }}
+.line {{ display: grid; grid-template-columns: 24px 1fr auto; gap: 8px;
+        align-items: baseline; padding: 8px 0; border-bottom: 1px solid #F1F5F9; }}
+.line .num {{ color: var(--mu); font-weight: 700; font-size: 12px; }}
+.line .nm {{ font-weight: 600; color: var(--tx); }}
+.line .det {{ display: block; grid-column: 2; font-size: 12px; color: var(--mu); }}
+.line .pr {{ font-weight: 700; color: var(--t); }}
+.totals .row {{ display: flex; justify-content: space-between; padding: 4px 0;
+               font-size: 13px; color: var(--mu); }}
+.totals .row.total {{ font-size: 18px; font-weight: 800; color: var(--t);
+                     padding-top: 8px; border-top: 1px solid var(--ln); margin-top: 6px; }}
+.meta {{ background: var(--tl); border-radius: 9px; padding: 10px 12px; margin: 12px 0;
+        font-size: 13px; line-height: 1.7; }}
+.feature {{ font-size: 12px; color: var(--mu); line-height: 1.55; background: #FEF3C7;
+           border-left: 3px solid var(--acc); padding: 10px 12px; margin: 10px 0;
+           border-radius: 0 8px 8px 0; }}
+canvas {{ background: #fff; border: 1.5px dashed var(--t); border-radius: 9px;
+         width: 100%; height: 140px; display: block; margin: 8px 0; cursor: crosshair;
+         touch-action: none; }}
+textarea {{ width: 100%; padding: 10px; background: #fff; color: var(--tx);
+           border: 1.5px solid var(--ln); border-radius: 9px; font: inherit;
+           margin-top: 4px; box-sizing: border-box; min-height: 60px; resize: vertical; }}
+textarea:focus {{ outline: none; border-color: var(--t); }}
+h3 {{ font-size: 14px; margin: 14px 0 6px; color: var(--tx); }}
+.msg {{ font-size: 12px; min-height: 16px; margin-top: 8px; text-align: center; }}
+.msg.err {{ color: var(--er); }}
+.row-2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }}
+@media (max-width: 380px) {{ .row-2 {{ grid-template-columns: 1fr; }} }}
 </style></head><body>
-<div class="gate" id="gate">
-  <h2>Servia Quote</h2>
-  <p style="color:#94A3B8;font-size:12.5px">Quote <code>{quote_id}</code><br>
-  Enter the phone number used to request this quote.</p>
-  <input id="phone" type="tel" placeholder="0559396459" autocomplete="tel">
-  <button onclick="verify()">View quote</button>
-  <p id="msg" style="color:#FCA5A5;font-size:12px;margin-top:8px"></p>
+<div class="hdr">
+  <h1>📋 Servia Quote</h1>
+  <div class="sub">{quote_id}</div>
 </div>
-<div class="cart" id="cart">
-  <h2>Servia Quote <code>{quote_id}</code></h2>
-  <div id="lines"></div>
-  <div class="totals" style="margin:14px 0">
-    <div class="line"><div class="label">Subtotal</div><div class="price" id="sub">—</div></div>
-    <div class="line"><div class="label">VAT 5%</div><div class="price" id="vat">—</div></div>
-    <div class="line total"><div class="label">Total</div><div class="price" id="total">—</div></div>
+<div class="wrap">
+  <div class="gate card" id="gate">
+    <h3 style="margin-top:0;text-align:center">View your quote</h3>
+    <p style="color:var(--mu);font-size:13px;text-align:center;margin:6px 0 14px">
+      Enter the phone number you used when requesting this quote.
+    </p>
+    <input id="phone" type="tel" placeholder="0559396459" autocomplete="tel" inputmode="tel">
+    <button class="btn full" onclick="verify()">👁 View quote</button>
+    <p id="msg" class="msg err"></p>
   </div>
-  <div class="feature">📅 <span id="date"></span> · 📍 <span id="addr"></span></div>
-  <div class="feature">✍️ <b>Sign below to approve</b> · Photos &amp; videos of your service will be uploaded after completion in this same link · You can comment on each service · Live status updates land on your phone.</div>
-  <h3 style="margin:16px 0 6px;font-size:14px">✍️ Your signature</h3>
-  <canvas id="sig" width="500" height="140"></canvas>
-  <button class="btn alt" onclick="clearSig()">Clear signature</button>
-  <h3 style="margin:16px 0 6px;font-size:14px">💬 Notes / per-service comments</h3>
-  <textarea id="cnote" rows="3" placeholder="Add any special instructions or comments…"></textarea>
-  <button class="btn" onclick="approve()">✅ Approve &amp; sign</button>
-  <button class="btn alt" onclick="location.href='/p/{quote_id}'">💳 Pay online instead</button>
-  <p style="color:#94A3B8;font-size:11px;text-align:center;margin-top:12px">
-    Or pay manually: WhatsApp <b>+971 56 4020087</b> with quote <code>{quote_id}</code>
-  </p>
+  <div class="cart" id="cart">
+    <div class="card">
+      <div id="lines"></div>
+      <div class="totals" style="margin-top:12px">
+        <div class="row"><span>Subtotal</span><span id="sub">—</span></div>
+        <div class="row"><span>VAT 5%</span><span id="vat">—</span></div>
+        <div class="row total"><span>Total</span><span id="total">—</span></div>
+      </div>
+      <div class="meta">
+        📅 <b id="date"></b><br>
+        📍 <span id="addr"></span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="feature">
+        ✍️ <b>Sign below to approve.</b> After your service, we'll upload before/after
+        photos and live status updates to this same page — view them anytime.
+      </div>
+      <h3>✍️ Your signature</h3>
+      <canvas id="sig" width="500" height="140"></canvas>
+      <div class="row-2">
+        <button class="btn alt" onclick="clearSig()">Clear</button>
+        <button class="btn" onclick="approve()">✅ Approve &amp; sign</button>
+      </div>
+      <h3>💬 Add notes (optional)</h3>
+      <textarea id="cnote" rows="3" placeholder="Special instructions, parking info, etc."></textarea>
+    </div>
+    <div class="card" style="text-align:center">
+      <a class="btn full alt" href="/p/{quote_id}">💳 Pay online (AED <span id="payAmount">—</span>)</a>
+      <p style="color:var(--mu);font-size:12px;margin:10px 0 0">
+        Or pay manually via WhatsApp <b>+971 56 4020087</b> with quote <code>{quote_id}</code>.
+      </p>
+    </div>
+  </div>
 </div>
 <script>
 let token = localStorage.getItem("q.token.{quote_id}") || "";
@@ -146,14 +199,17 @@ async function showCart() {{
   document.getElementById("gate").style.display="none";
   document.getElementById("cart").style.display="block";
   document.getElementById("lines").innerHTML = (j.items||[]).map((it,i) =>
-    `<div class="line"><div class="label">${{i+1}}. <b>${{escapeHtml(it.label)}}</b><br>
-       <small style="color:#94A3B8">${{escapeHtml(it.detail||"")}}</small></div>
-       <div class="price">AED ${{it.price_aed}}</div></div>`).join("");
+    `<div class="line"><span class="num">${{i+1}}</span>
+       <div><span class="nm">${{escapeHtml(it.label)}}</span>
+            <span class="det">${{escapeHtml(it.detail||"")}}</span></div>
+       <span class="pr">AED ${{it.price_aed}}</span></div>`).join("");
   document.getElementById("sub").textContent   = "AED " + j.subtotal_aed;
   document.getElementById("vat").textContent   = "AED " + j.vat_aed;
   document.getElementById("total").textContent = "AED " + j.total_aed;
-  document.getElementById("date").textContent  = (j.target_date||"") + " · " + (j.time_slot||"");
+  document.getElementById("date").textContent  = (j.target_date||"") + " at " + (j.time_slot||"");
   document.getElementById("addr").textContent  = j.address||"";
+  const pa = document.getElementById("payAmount");
+  if (pa) pa.textContent = j.total_aed;
   initSig();
 }}
 function escapeHtml(s){{return String(s||"").replace(/[&<>"']/g, c=>({{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}}[c]))}}
@@ -182,11 +238,15 @@ async function approve() {{
   }});
   const j = await r.json();
   if (j.ok) {{
-    document.body.innerHTML = `<div style="text-align:center;padding:24vh 16px"><h1>✅ Approved!</h1>
-      <p style="color:#94A3B8;font-size:14px">Quote <code>{quote_id}</code> is signed.<br>
-      Our team will dispatch within 30 minutes. Track and pay at any time:</p>
-      <p style="margin:16px 0"><a class="btn" style="background:#0D9488;color:#fff;padding:11px 18px;border-radius:8px;text-decoration:none" href="/p/{quote_id}">💳 Pay AED ${{j.total_aed||""}}</a></p>
-      <p style="font-size:12px;color:#64748B">Or WhatsApp +971 56 4020087 with quote <code>{quote_id}</code></p></div>`;
+    document.body.innerHTML = `<div style="background:#F8FAFC;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px">
+      <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:32px 24px;max-width:480px;text-align:center;box-shadow:0 8px 32px rgba(15,23,42,.08)">
+        <div style="background:#D1FAE5;color:#065F46;width:64px;height:64px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:14px">✓</div>
+        <h1 style="margin:0 0 8px;font-size:22px;color:#0F172A;letter-spacing:-.01em">Quote signed!</h1>
+        <p style="color:#64748B;font-size:14px;margin:0 0 20px;line-height:1.6">Quote <code style="background:#F0FDFA;color:#0F766E;padding:2px 6px;border-radius:4px">{quote_id}</code> is approved.<br>Our team will dispatch within 30 minutes.</p>
+        <a href="/p/{quote_id}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:14px 28px;min-height:44px;background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border-radius:9px;font-weight:700;text-decoration:none;font-size:15px">💳 Pay AED ${{j.total_aed||""}}</a>
+        <p style="font-size:12px;color:#94A3B8;margin:16px 0 0">Or WhatsApp <b>+971 56 4020087</b> with quote <code>{quote_id}</code></p>
+      </div>
+    </div>`;
   }} else alert("Could not sign: " + (j.error||"server error"));
 }}
 if (token) showCart();
@@ -236,6 +296,48 @@ def get_quote_data(quote_id: str, request: Request) -> dict:
 class _SignBody(BaseModel):
     signature_data_url: str
     customer_note: str | None = ""
+    session_id: str | None = None  # v1.24.78 — chat-session signing
+
+
+# v1.24.78 — in-chat quote card endpoint. Returns the same data as
+# /api/q/<id> but is gated by session_id (the chat that CREATED this
+# quote) instead of the phone-typed token. Lets the widget render the
+# card immediately without asking the customer to re-type their phone.
+@public_router.get("/api/q/{quote_id}/card")
+def get_quote_card(quote_id: str, session_id: str = "") -> dict:
+    q = _quote(quote_id)
+    if not q: raise HTTPException(404)
+    # session_id is REQUIRED — auth must always be checked.
+    if not session_id:
+        return {"ok": False, "error": "session_id required"}
+    with db.connect() as c:
+        ev = c.execute(
+            "SELECT 1 FROM events WHERE entity_type='quote' AND entity_id=? "
+            "AND json_extract(details_json,'$.session_id')=? LIMIT 1",
+            (quote_id, session_id),
+        ).fetchone()
+    if not ev:
+        return {"ok": False, "error": "session does not own this quote"}
+    return {
+        "ok": True,
+        "quote_id": q["quote_id"],
+        "items": q.get("items") or [],
+        "subtotal_aed": q.get("subtotal_aed"),
+        "vat_aed":      q.get("vat_aed"),
+        "total_aed":    q.get("total_aed"),
+        "target_date":  q.get("target_date"),
+        "time_slot":    q.get("time_slot"),
+        "address":      q.get("address"),
+        "customer_name": q.get("customer_name"),
+        "phone":         q.get("phone"),
+        "signed_at":    q.get("signed_at"),
+        "paid_at":      q.get("paid_at"),
+        "view_url":     f"/q/{quote_id}",
+        "pdf_url":      f"/i/{quote_id}.pdf",
+        "print_url":    f"/i/{quote_id}",
+        "pay_url":      f"/p/{quote_id}",
+    }
+
 
 @public_router.post("/api/q/{quote_id}/sign")
 def sign(quote_id: str, body: _SignBody, request: Request) -> dict:
@@ -243,7 +345,18 @@ def sign(quote_id: str, body: _SignBody, request: Request) -> dict:
     if not q: raise HTTPException(404)
     tok = request.headers.get("X-Quote-Token", "")
     stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
-    if not _verify_token(tok, quote_id, stored):
+    # v1.24.78 — accept either phone-token (page form) OR session_id
+    # (in-chat card). Either is sufficient proof of ownership.
+    auth_ok = _verify_token(tok, quote_id, stored)
+    if not auth_ok and body.session_id:
+        with db.connect() as c:
+            ev = c.execute(
+                "SELECT 1 FROM events WHERE entity_type='quote' AND entity_id=? "
+                "AND json_extract(details_json,'$.session_id')=? LIMIT 1",
+                (quote_id, body.session_id),
+            ).fetchone()
+        auth_ok = bool(ev)
+    if not auth_ok:
         return {"ok": False, "error": "invalid token"}
     with db.connect() as c:
         c.execute(
@@ -296,22 +409,36 @@ def pay_landing(quote_id: str) -> str:
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Servia · Pay {quote_id}</title>
 <style>
-body{{font-family:system-ui;background:#0F172A;color:#F1F5F9;padding:18px;margin:0;text-align:center}}
-.box{{max-width:360px;margin:14vh auto;background:#1E293B;border:1px solid #334155;
-border-radius:12px;padding:22px}}
-h1{{font-size:24px;color:#FCD34D;margin:0 0 8px}}
-.btn{{display:block;width:100%;padding:13px;background:#0D9488;color:#fff;
-border:none;border-radius:10px;font-weight:600;font-size:15px;text-decoration:none;
-margin:8px 0;cursor:pointer}}
-.btn.alt{{background:#1E293B;color:#F1F5F9;border:1px solid #475569}}
+:root {{ --t:#0F766E; --t2:#0D9488; --bg:#F8FAFC; --tx:#0F172A; --mu:#64748B; --ln:#E2E8F0; }}
+body {{ font-family: -apple-system, system-ui, sans-serif; background: var(--bg);
+       color: var(--tx); padding: 16px; margin: 0; min-height: 100vh;
+       display: flex; align-items: center; justify-content: center; }}
+.box {{ background: #fff; border: 1px solid var(--ln); border-radius: 16px;
+       padding: 32px 24px; max-width: 420px; width: 100%; text-align: center;
+       box-shadow: 0 8px 32px rgba(15,23,42,.08); }}
+.amount {{ font-size: 36px; color: var(--t); font-weight: 800; letter-spacing: -.02em;
+          margin: 0 0 4px; }}
+.amount .cur {{ font-size: 16px; color: var(--mu); font-weight: 600; vertical-align: super; margin-right: 4px; }}
+.qid {{ font-family: monospace; background: #F0FDFA; color: var(--t); padding: 3px 8px;
+       border-radius: 4px; font-size: 13px; }}
+.cust {{ color: var(--mu); font-size: 13px; margin: 12px 0 22px; line-height: 1.6; }}
+.btn {{ display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+       width: 100%; padding: 14px; min-height: 44px; background: linear-gradient(135deg,var(--t),var(--t2));
+       color: #fff; border: none; border-radius: 11px; font-weight: 700; font-size: 15px;
+       text-decoration: none; margin: 8px 0; cursor: pointer; box-sizing: border-box;
+       font-family: inherit; transition: transform .08s; }}
+.btn:hover {{ transform: translateY(-1px); }}
+.btn.alt {{ background: #fff; color: #25D366; border: 1.5px solid #25D366; }}
+.btn.alt:hover {{ background: #F0FDF4; }}
+.note {{ color: var(--mu); font-size: 12px; margin-top: 16px; line-height: 1.5; }}
 </style></head><body>
 <div class="box">
-  <h1>AED {q.get('total_aed')}</h1>
-  <p style="color:#94A3B8;font-size:13px">Quote <code>{quote_id}</code><br>
+  <p class="amount"><span class="cur">AED</span>{q.get('total_aed')}</p>
+  <p class="cust">Quote <span class="qid">{quote_id}</span><br>
   {q.get('customer_name','')} · {q.get('phone','')}</p>
   <a class="btn" href="{pay_url}">💳 Pay with card</a>
   <a class="btn alt" href="https://wa.me/971564020087?text=Pay%20{quote_id}">📱 WhatsApp +971 56 4020087</a>
-  <p style="color:#64748B;font-size:11px;margin-top:12px">Pay manually with the quote number for instant confirmation.</p>
+  <p class="note">Pay manually via WhatsApp with the quote number for instant confirmation.</p>
 </div></body></html>"""
 
 

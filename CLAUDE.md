@@ -6,6 +6,129 @@ time. None of these mistakes should ever happen again.
 
 ---
 
+## 🛑 WORKING INSTRUCTIONS — read and obey before EVERY response
+
+These are permanent, non-negotiable rules for this project. They are
+listed first because every prior session has violated them silently.
+
+### W1. DO NOT STOP UNTIL EVERYTHING IS DONE — and NEW REQUESTS QUEUE
+When the user asks for a multi-task fix:
+- Complete ALL items, including the UX/UI review
+- Don't push partial work and ask "should I continue?"
+- Don't skip items because they're hard
+- Don't claim "done" if anything is left
+- Continue through every issue mentioned, push consolidated when ready,
+  then continue with the rest
+- Only stop when: (a) all listed tasks are PASS-tested, (b) UX/UI is
+  reviewed, (c) the version is pushed
+
+**INTERRUPTING REQUESTS QUEUE — DON'T DROP PRIOR WORK**
+When the user sends a new instruction WHILE you are still working on
+prior instructions:
+- If the new message is a QUESTION → answer it briefly, queue any
+  new task it implies, then RESUME the prior work
+- If the new message is a NEW TASK → add it to the queue, COMPLETE
+  the in-progress task first, then process the queue in order
+- Never let a previous task fall off the floor because a new one came
+  in. Track them in TodoWrite so the user can see the queue.
+- Only when the queue is EMPTY and CLAUDE.md rules pass for every
+  item should you stop and report.
+
+A natural rhythm:
+  1. Take in-progress task to PASS state
+  2. Push it
+  3. Pop next from queue (whether it was the original list or a
+     mid-flight injection)
+  4. Repeat until queue empty
+  5. Re-read CLAUDE.md, verify nothing is undone, report ALL DONE
+
+### W2. EVERY CHAT-FLOW CHANGE MUST BE TESTED THROUGH A REAL LLM CALL
+Never claim a chat/picker/quote/intake fix "works" based on a unit
+test alone. The chat endpoint goes:
+
+  /api/chat → llm.chat() → Anthropic API → tool dispatch → post-processors → response
+
+The post-processors and tool blockers I keep "fixing" only run inside
+this pipeline. Unit-testing the function in isolation tells me
+nothing about whether it FIRES in production.
+
+**Coverage recipe (no API key needed in the sandbox)**:
+```python
+# Replay-mock the Anthropic SDK so the chat() function runs end-to-end
+# without an API key. Feed it captured real-LLM responses (from the
+# user's screenshot text) as the LLM output. Then drive /api/chat and
+# assert the response contains Q-XXXXXX, the picker, etc.
+class _FakeAnthropic:
+    def __init__(self, *a, **kw): self.messages = self
+    def create(self, **kw):
+        # Return a Message-shaped object whose `content` is a list of
+        # `{type:"text", text:<the captured real bot reply>}` blocks.
+        return _make_msg(text=CAPTURED_REAL_BOT_REPLY)
+monkeypatch.setattr("anthropic.Anthropic", _FakeAnthropic)
+client.post("/api/chat", json={"session_id":"e2e", "message":"…", "phone":"…"})
+```
+
+If you don't run this kind of test, DO NOT claim the chat flow is
+fixed. Period.
+
+### W3. NO .html IN PUBLIC URLs (CLEAN URLs)
+Modern websites don't expose `.html`. The `_CleanURLMiddleware` in
+`app/main.py` enforces:
+- `/faq` serves `web/faq.html` transparently
+- `/faq.html` 301-redirects to `/faq`
+- All canonical tags, sitemap entries, and internal links must use
+  the clean form
+
+Whenever a new HTML page is added, the URL it appears at MUST be
+`/<name>` not `/<name>.html`. The middleware handles serving — code
+just has to not link to the .html form.
+
+### W4. SHOW SCREENSHOT / TEST OUTPUT BEFORE PUSHING ANY UI CHANGE
+Visual changes (button colors, page layout, modals, etc.) must be:
+1. Designed (visual hierarchy, brand alignment, accessibility)
+2. UX-reviewed (touch targets, hover states, loading states)
+3. Rendered locally and shown as a screenshot or HTML preview to the
+   user BEFORE the push happens
+Bug fixes that change rendered output count as visual changes.
+
+### W5b. AUTO-UPDATE THIS FILE AFTER EVERY TASK
+After completing any task, before pushing the commit, ASK YOURSELF:
+1. Did this introduce a new product decision the user made
+   verbally? → add to SCOPE-OF-WORK contract
+2. Did this fix a recurring lie pattern? → add to TESTING LOOPHOLES
+3. Did this introduce a new file pattern / template / convention?
+   → add a "how to extend X" section
+4. Did the user complain "you keep doing this wrong"? → add a
+   prevention rule with concrete code example
+
+The MD file is the user's **insurance policy** against me repeating
+the same mistake. Treat each push as an opportunity to lower future
+support cost. If the diff to CLAUDE.md is empty, you probably missed
+something.
+
+Examples of decisions auto-documented in v1.24.78:
+- Payment is a SIMULATED gate flow (no real gateway) — even on /p/<id>
+- Multi-question replies are REWRITTEN to one question (not trimmed)
+- Slug pages render canonical service.html (no per-service custom HTML)
+- Picker / tool / intake / parser changes test through real-LLM-mocked
+  TestClient call (not isolated unit tests)
+
+### W5. EVERY SCOPE-OF-WORK DECISION IS LOCKED
+The 🔒 SCOPE-OF-WORK contract section (below) lists product decisions
+the founder has already made. They override default coding instincts.
+Do NOT silently bypass them. Examples that have happened:
+- A `<a href="javascript:alert('TODO')">` instead of routing through
+  the GATE_BOOKINGS gateway
+- A custom per-service HTML file instead of using the canonical
+  `service.html` template
+- A "Book now ↗" link for multi-service instead of `Q-XXXXXX` cart
+- A direct `.html` link instead of clean URL
+
+If you're tempted to take a shortcut that contradicts the scope,
+STOP and re-read it.
+
+---
+
 ## 🚨 Top-3 rules — break any of these and you owe the user an apology
 
 ### 🎨 DESIGN-REVIEW gate (added v1.24.77)
