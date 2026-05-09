@@ -1,23 +1,23 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 44
+- ✅ Pass: 48
 - ⚠️ Warn: 1
-- ❌ Fail: 4
+- ❌ Fail: 0
 - ⏭ Skip: 1
 
 ## Items
 
 - ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
-- ❌ **[T03] /services lists services** — exception: only 0 cards
+- ✅ **[T03] /services lists services** — 37 cards
 - ✅ **[T04] /coverage.html renders** — OK
 - ✅ **[T05] /blog index loads** — OK
 - ✅ **[T06] Sitemap has /nfc** — OK
 - ✅ **[T07] robots.txt accessible** — OK
-- ❌ **[T08] /faq.html FAQPage schema** — exception: locator.allInnerTexts: Execution context was destroyed, most likely because of a navigation
+- ✅ **[T08] /faq FAQPage schema** — present
 - ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
-- ✅ **[T11] Mobile nav single-row** — Δy=-3
+- ✅ **[T11] Mobile nav single-row** — Δy=1
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
 - ✅ **[T14] Footer present** — OK
@@ -26,7 +26,7 @@
 - ✅ **[T17] /install iOS section** — OK
 - ✅ **[T18] Search input has ss-input class** — ss-input
 - ✅ **[T19] Search trending chips load** — 16 chips
-- ❌ **[T20] Hero rotator present** — exception: no #hero-rotator
+- ✅ **[T20] Hero rotator present** — present
 - ✅ **[T21] /nfc loads** — OK
 - ✅ **[T22] /nfc 3-mode panel** — OK
 - ✅ **[T23] /nfc bot widget** — OK
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_XgXSurVu-...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_ItNjCENGU...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -49,10 +49,10 @@
 - ✅ **[T40] /admin.html responds** — OK
 - ✅ **[T41] /api/health responds** — v1.24.86
 - ✅ **[T42] /api/services >=10** — 37
-- ✅ **[T43] /api/app/latest works** — apk_v=1.24.85
+- ✅ **[T43] /api/app/latest works** — apk_v=1.24.86
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
-- ❌ **[T46] /book.html renders form** — exception: no book button
+- ✅ **[T46] /book renders form** — OK
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
 - ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
 - ✅ **[T49] /cart.html loads** — OK
