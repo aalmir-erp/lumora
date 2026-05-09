@@ -316,3 +316,41 @@ def send_to_all(payload: dict, audience: str = "all", filters: dict | None = Non
         "matched": len(rows),
         "errors": failed_errors[:30],   # cap so admin doesn't get a 1MB JSON
     }
+
+
+# ---------------------------------------------------------------------------
+def send_to_phone(phone: str | None, *, title: str, body: str,
+                  url: str | None = None, kind: str = "info") -> dict:
+    """Convenience helper: send a push to all subscriptions tied to a phone.
+    No-ops if phone is missing or no subs found. Used by quote status updates."""
+    if not phone:
+        return {"sent": 0, "matched": 0}
+    payload = {"title": title, "body": body, "kind": kind, "url": url or "/"}
+    audience = {"phone": phone}
+    try:
+        return broadcast(payload, audience)
+    except NameError:
+        # `broadcast()` may not be defined in older versions; fall back to a
+        # direct send to all subs.
+        return _send_all(payload)
+
+
+def _send_all(payload: dict) -> dict:
+    """Final fallback: send to all subscriptions ignoring audience."""
+    keys = _ensure_vapid_keys()
+    if not keys: return {"sent": 0}
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT id, endpoint, subscription_json FROM push_subscriptions"
+        ).fetchall()
+    n = 0
+    vapid_claims = {"sub": "mailto:" + os.getenv("ADMIN_EMAIL", "admin@servia.ae")}
+    for r in rows:
+        try:
+            sub = _json.loads(r["subscription_json"])
+            webpush(subscription_info=sub, data=_json.dumps(payload),
+                    vapid_private_key=keys["private"], vapid_claims=vapid_claims, ttl=86400)
+            n += 1
+        except Exception:
+            pass
+    return {"sent": n, "matched": len(rows)}

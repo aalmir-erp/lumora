@@ -75,8 +75,28 @@ body.us-lift-bar .us-launcher-tip { bottom: 104px; }
   color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px}
 .us-header h3{margin:0;font-size:15px;font-weight:700}
 .us-header p{margin:2px 0 0;font-size:12px;opacity:.85}
-.us-header .us-close{margin-inline-start:auto;background:transparent;border:0;color:#fff;
-  font-size:22px;cursor:pointer;line-height:1}
+.us-header .us-close,
+.us-header .us-min,
+.us-header .us-resize,
+.us-header .us-download,
+.us-header .us-newchat{background:transparent;border:0;color:#fff;
+  font-size:16px;cursor:pointer;line-height:1;padding:4px 6px;opacity:.85;border-radius:4px;
+  transition:background .12s, opacity .12s}
+.us-header .us-close{font-size:22px;margin-inline-start:4px}
+.us-header .us-min:hover, .us-header .us-resize:hover, .us-header .us-close:hover,
+.us-header .us-download:hover, .us-header .us-newchat:hover{background:rgba(255,255,255,.12);opacity:1}
+
+/* v1.24.56 — minimized state: just header strip + tiny indicator */
+.us-panel.us-min-state{height:54px;min-height:54px;overflow:hidden}
+.us-panel.us-min-state .us-actions-bar,
+.us-panel.us-min-state .us-body,
+.us-panel.us-min-state .us-quickreplies,
+.us-panel.us-min-state .us-attach-preview,
+.us-panel.us-min-state .us-input{display:none}
+/* maximized state: full viewport */
+.us-panel.us-max-state{position:fixed;inset:8px;right:8px;left:8px;top:8px;bottom:8px;
+  width:auto;height:auto;max-width:none;max-height:none;border-radius:14px}
+@media(max-width:600px){.us-panel.us-max-state{inset:0;border-radius:0}}
 
 .us-actions-bar{display:flex;gap:6px;overflow-x:auto;padding:10px 12px 6px;
   background:linear-gradient(180deg,#FAFBFD,#fff);border-bottom:1px solid var(--us-border);

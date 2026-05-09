@@ -56,9 +56,24 @@ def kb_blob(language: str = "en") -> str:
     lines = [f"# {b['name'].upper()} KNOWLEDGE BASE", ""]
     lines.append(f"Brand: {b['name']} — {b['tagline']}")
     lines.append(f"Operates as: {b.get('legal_owner', 'Urban Services')}")
-    lines.append(f"Phone: {b['phone']}")
-    lines.append(f"WhatsApp: {b['whatsapp']}")
-    lines.append(f"Email: {b['email']}")
+    # v1.24.55 — only expose contact fields the admin EXPLICITLY set + that
+    # are NOT the internal admin/founder personal number. The LLM saw this
+    # blob and on a handoff_to_human turn it cheerfully shared the admin's
+    # personal mobile with a customer. Never again. Empty fields skipped.
+    import os as _os
+    _ADMIN_NUM = _os.getenv("ADMIN_WA_NUMBER", "").strip().lstrip("+")
+    def _safe_contact(v: str) -> str:
+        if not v: return ""
+        digits = "".join(ch for ch in v if ch.isdigit())
+        if _ADMIN_NUM and (digits == _ADMIN_NUM or _ADMIN_NUM in digits):
+            return ""  # never expose admin number in LLM context
+        return v
+    if _safe_contact(b.get("phone", "")):
+        lines.append(f"Phone: {b['phone']}")
+    if _safe_contact(b.get("whatsapp", "")):
+        lines.append(f"WhatsApp: {b['whatsapp']}")
+    if b.get("email"):
+        lines.append(f"Email: {b['email']}")
     lines.append(f"Domain: https://{b['domain']}")
     lines.append(f"Languages supported: {', '.join(b['languages'])}")
     lines.append(f"Areas served: {', '.join(s['areas_served'])}")

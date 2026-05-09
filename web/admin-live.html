@@ -1,0 +1,159 @@
+<!doctype html>
+<!--
+  v1.24.55 — Servia Admin Live PWA.
+
+  Single-file admin mini-app that:
+    · stores ADMIN_TOKEN once in localStorage (no logout, ever)
+    · polls /api/admin/live/feed every 4s for visitors + new messages
+    · subscribes to Web Push on first run → phone gets native notifications
+    · phone notifications auto-mirror to paired Wear OS / iOS watches
+    · notification reply action posts to /api/admin/live/chat/{sid}/reply
+    · in-app inline reply for when admin is actively watching the PWA
+    · sound alerts (beep on visitor, double-beep on chat)
+
+  Designed mobile-first. Renders in any browser, but on Android it's
+  installable as a PWA via Chrome's "Add to home screen" — making it feel
+  like a native app with no separate APK build needed.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0F172A">
+<title>Servia · Admin Live</title>
+<link rel="manifest" href="/admin-live.webmanifest">
+<link rel="icon" href="/icon-192.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/brand/servia-icon-512x512.png">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #0F172A; color: #F1F5F9;
+  font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent; }
+header { position: sticky; top: 0; z-index: 5; background: #1E293B;
+  border-bottom: 1px solid #334155; padding: 8px 12px;
+  display: flex; align-items: center; gap: 10px; }
+header .title { font-size: 14px; font-weight: 700; flex: 1; }
+header .dot { width: 8px; height: 8px; border-radius: 50%; background: #10B981;
+  box-shadow: 0 0 8px #10B981; }
+header .dot.off { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
+header .stat { font-size: 11px; color: #94A3B8; }
+header button { background: transparent; color: #F1F5F9; border: 1px solid #475569;
+  border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
+header button.active { background: #0F766E; border-color: #14B8A6; }
+
+#login { padding: 22vh 16px 0; max-width: 360px; margin: 0 auto; text-align: center; }
+#login h1 { font-size: 22px; margin-bottom: 8px; color: #F1F5F9; }
+#login p { color: #94A3B8; font-size: 12px; margin-bottom: 18px; }
+#login input { width: 100%; padding: 12px; background: #1E293B; color: #F1F5F9;
+  border: 1px solid #334155; border-radius: 8px; font-size: 14px;
+  font-family: monospace; margin-bottom: 12px; }
+#login button { width: 100%; padding: 12px; background: #0D9488; color: #fff;
+  border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+#tabs { display: flex; background: #1E293B; border-bottom: 1px solid #334155; }
+#tabs button { flex: 1; background: none; border: none; color: #94A3B8;
+  padding: 10px 6px; font-size: 13px; cursor: pointer; position: relative; }
+#tabs button.active { color: #14B8A6; }
+#tabs button.active::after { content: ""; position: absolute; left: 20%; right: 20%;
+  bottom: 0; height: 2px; background: #14B8A6; border-radius: 2px; }
+#tabs .badge { display: inline-block; min-width: 18px; padding: 1px 5px;
+  margin-left: 4px; background: #DC2626; color: #fff; border-radius: 9px;
+  font-size: 10px; font-weight: 700; }
+
+#content { padding-bottom: 60px; }
+
+.card { background: #1E293B; border: 1px solid #334155; border-radius: 8px;
+  margin: 8px; padding: 10px 12px; cursor: pointer; transition: background .15s; }
+.card:active { background: #334155; }
+.card.new { border-left: 3px solid #14B8A6; animation: flash 1.5s; }
+@keyframes flash { 0% { background: #0F766E; } 100% { background: #1E293B; } }
+.card .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.card .head { font-weight: 600; font-size: 13px; }
+.card .when { font-size: 10px; color: #64748B; white-space: nowrap; }
+.card .meta { font-size: 11px; color: #94A3B8; margin-top: 4px; line-height: 1.45; }
+.card .preview { font-size: 13px; color: #CBD5E1; margin-top: 6px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; text-overflow: ellipsis; }
+.chip { display: inline-block; padding: 1px 7px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; margin-right: 4px; }
+.chip.search { background: #1E40AF; color: #DBEAFE; }
+.chip.social { background: #831843; color: #FCE7F3; }
+.chip.direct { background: #334155; color: #CBD5E1; }
+.chip.taken { background: #B45309; color: #FEF3C7; }
+
+#chat-detail { position: fixed; inset: 0; background: #0F172A; z-index: 10;
+  display: none; flex-direction: column; }
+#chat-detail.open { display: flex; }
+#chat-detail header { background: #1E293B; }
+#chat-detail .back { background: transparent; color: #14B8A6; border: none;
+  font-size: 18px; cursor: pointer; padding: 0 4px; }
+#chat-detail .messages { flex: 1; overflow-y: auto; padding: 8px 0; }
+#chat-detail .msg { max-width: 85%; padding: 8px 12px; margin: 4px 8px;
+  border-radius: 14px; font-size: 13.5px; line-height: 1.45; word-wrap: break-word; }
+#chat-detail .msg.user      { background: #1E40AF; margin-right: auto;
+  border-bottom-left-radius: 4px; }
+#chat-detail .msg.assistant { background: #134E4A; margin-left: auto;
+  border-bottom-right-radius: 4px; }
+#chat-detail .msg .role { font-size: 9px; color: rgba(255,255,255,.6);
+  margin-bottom: 2px; text-transform: uppercase; }
+#chat-detail .composer { background: #1E293B; border-top: 1px solid #334155;
+  padding: 8px; display: flex; gap: 6px; align-items: flex-end; }
+#chat-detail .composer textarea { flex: 1; min-height: 38px; max-height: 120px;
+  padding: 8px 10px; background: #0F172A; color: #F1F5F9; border: 1px solid #334155;
+  border-radius: 8px; font: inherit; resize: none; }
+#chat-detail .composer button { padding: 9px 14px; background: #0D9488; color: #fff;
+  border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+#chat-detail .composer button:disabled { opacity: .4; cursor: not-allowed; }
+
+.empty { text-align: center; color: #64748B; padding: 40px 16px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- Login screen (shown until token is in localStorage) -->
+<div id="login">
+  <h1>Servia · Admin Live</h1>
+  <p>Paste your <code style="font-family:monospace;background:#1E293B;padding:1px 5px;border-radius:3px">ADMIN_TOKEN</code> once. Stored locally, never asked again unless you clear data.</p>
+  <input id="token-input" type="password" placeholder="Admin token" autocomplete="off">
+  <button onclick="adminLogin()">Sign in</button>
+</div>
+
+<!-- Main app (shown after login) -->
+<div id="app" style="display:none">
+  <header>
+    <div class="dot" id="status-dot"></div>
+    <div class="title">Servia Live</div>
+    <div class="stat" id="last-sync">just now</div>
+    <button id="snd-btn" onclick="toggleSound()" title="Toggle alert sound">🔔</button>
+    <button onclick="enablePush()" title="Enable phone notifications">📲</button>
+    <button onclick="logout()" title="Sign out">⏻</button>
+  </header>
+
+  <nav id="tabs">
+    <button class="active" data-tab="visitors">Visitors <span class="badge" id="vis-badge" hidden>0</span></button>
+    <button data-tab="chats">Chats <span class="badge" id="chat-badge" hidden>0</span></button>
+  </nav>
+
+  <main id="content">
+    <div id="visitors-panel"></div>
+    <div id="chats-panel" hidden></div>
+  </main>
+</div>
+
+<!-- Full-screen chat detail (slides over when a chat card is tapped) -->
+<div id="chat-detail">
+  <header>
+    <button class="back" onclick="closeChat()">←</button>
+    <div class="title" id="chat-title">Chat</div>
+    <button onclick="releaseChat()" title="Hand back to bot">🤖</button>
+  </header>
+  <div class="messages" id="chat-messages"></div>
+  <div class="composer">
+    <textarea id="reply-input" placeholder="Type to reply…" rows="1"></textarea>
+    <button id="reply-btn" onclick="sendReply()">Send</button>
+  </div>
+</div>
+
+<script src="/admin-live.js"></script>
+</body>
+</html>

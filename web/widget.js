@@ -61,10 +61,15 @@
     el("div", { class: "us-header" },
       el("img", { src: "/avatar.svg", width: "36", height: "36",
         style: "border-radius:50%;background:rgba(255,255,255,.18)" }),
-      el("div", {},
+      el("div", { style: "flex:1" },
         el("h3", {}, "Servia"),
         el("p", { class: "us-mode-line" }, "Concierge · 24×7 · 15 languages")),
-      el("button", { class: "us-close", "aria-label": "Close" }, "×")),
+      // v1.24.56 — header controls: download / new chat / minimize / maximize / close
+      el("button", { class: "us-newchat", "aria-label": "Start new chat", title: "Start new chat" }, "✨"),
+      el("button", { class: "us-download", "aria-label": "Download transcript", title: "Download transcript" }, "⤓"),
+      el("button", { class: "us-resize", "aria-label": "Maximize / restore", title: "Maximize / restore" }, "⛶"),
+      el("button", { class: "us-min", "aria-label": "Minimize", title: "Minimize" }, "—"),
+      el("button", { class: "us-close", "aria-label": "Close", title: "Close" }, "×")),
     el("div", { class: "us-actions-bar" }),  // persistent action toolbar
     el("div", { class: "us-body" }),
     el("div", { class: "us-quickreplies" }),
@@ -198,18 +203,71 @@
     }
     setTimeout(() => input.focus(), 150);
     startPolling();
-    try { sessionStorage.setItem("servia.chat.open.v1", "1"); } catch(_) {}
+    try { localStorage.setItem("servia.chat.open.v2", "1"); } catch(_) {}
   };
   panel.querySelector(".us-close").onclick = () => {
     panel.classList.remove("open");
-    try { sessionStorage.setItem("servia.chat.open.v1", "0"); } catch(_) {}
+    panel.classList.remove("us-min-state","us-max-state");
+    try { localStorage.setItem("servia.chat.open.v2", "0"); } catch(_) {}
+    try { localStorage.removeItem("servia.chat.size"); } catch(_) {}
   };
+
+  // v1.24.56 — header controls
+  panel.querySelector(".us-min").onclick = () => {
+    panel.classList.toggle("us-min-state");
+    panel.classList.remove("us-max-state");
+    try { localStorage.setItem("servia.chat.size",
+      panel.classList.contains("us-min-state") ? "min" : "normal"); } catch(_) {}
+  };
+  panel.querySelector(".us-resize").onclick = () => {
+    panel.classList.toggle("us-max-state");
+    panel.classList.remove("us-min-state");
+    try { localStorage.setItem("servia.chat.size",
+      panel.classList.contains("us-max-state") ? "max" : "normal"); } catch(_) {}
+  };
+  panel.querySelector(".us-newchat").onclick = () => {
+    if (!confirm("Start a new chat? Current conversation stays in our records but the widget resets.")) return;
+    sessionId = null; since = 0; chatStarted = false;
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SINCE_KEY);
+    localStorage.removeItem(STARTED_KEY);
+    body.innerHTML = "";
+    greet();
+  };
+  panel.querySelector(".us-download").onclick = async () => {
+    if (!sessionId) { alert("Nothing to download yet — say hi first."); return; }
+    try {
+      const r = await fetch(API_BASE + "/api/chat/poll?session_id=" + encodeURIComponent(sessionId) + "&since_id=0");
+      const j = await r.json();
+      const lines = (j.messages || []).map(m => {
+        const ts = (m.created_at || "").slice(0,19).replace("T"," ");
+        const who = m.role === "user" ? "You" : (m.agent_handled ? "Agent" : "Servia");
+        return `[${ts}] ${who}:\n${(m.content || "").trim()}\n`;
+      }).join("\n");
+      const header = `Servia chat transcript\nSession: ${sessionId}\nDownloaded: ${new Date().toISOString()}\n\n${"=".repeat(48)}\n\n`;
+      const blob = new Blob([header + lines], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `servia-chat-${sessionId}.txt`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (e) { alert("Download failed: " + e.message); }
+  };
+
+  // v1.24.56 — restore widget size + open state from localStorage on mount
+  setTimeout(() => {
+    try {
+      const sz = localStorage.getItem("servia.chat.size");
+      if (sz === "min") panel.classList.add("us-min-state");
+      else if (sz === "max") panel.classList.add("us-max-state");
+    } catch (_) {}
+  }, 200);
 
   // Reopen panel automatically on the next page if user had it open.
   // Stored in sessionStorage so it resets on tab close.
   setTimeout(() => {
     try {
-      if (sessionStorage.getItem("servia.chat.open.v1") === "1" && !panel.classList.contains("open")) {
+      if (localStorage.getItem("servia.chat.open.v2") === "1" && !panel.classList.contains("open")) {
         launcher.click();
       }
     } catch(_) {}

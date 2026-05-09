@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
+from . import admin, admin_live as _admin_live, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
 from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
 
@@ -221,6 +221,7 @@ app.include_router(_sos_custom_mod.router)     # /api/sos/custom/* user-saved on
 app.include_router(_sos_custom_mod.public_router)  # /csos/<slug> NFC-tap landing
 app.include_router(_gha.router)                # /api/google-home/* + admin
 app.include_router(_gha.oauth_router)          # /oauth/* (cloud-to-cloud)
+app.include_router(_admin_live.admin_router)   # /api/admin/live/{active-chats,chat,feed,...}
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)
@@ -289,11 +290,25 @@ async def _log_bot_visit_mw(request: Request, call_next):
             from . import admin_alerts as _aa
             ua = (request.headers.get("user-agent") or "")[:120]
             path = str(request.url.path)
-            ref = (request.headers.get("referer") or "(direct)")[:120]
+            ref = (request.headers.get("referer") or "")[:200]
             ipc = request.headers.get("cf-ipcountry") or ""
+            # v1.24.55 — parse the referrer so admin sees "via Google · 'ac
+            # repair dubai'" instead of a raw URL. Falls through to "Direct"
+            # when there is no referrer header.
+            src = live_visitors.parse_referrer(ref)
+            if src["traffic_source"] == "search":
+                src_line = (f"From: {src['source_label']} search"
+                            + (f" · query: \"{src['search_query']}\""
+                               if src.get("search_query") else " · (query hidden)"))
+            elif src["traffic_source"] == "social":
+                src_line = f"From: {src['source_label']}"
+            elif src["traffic_source"] == "referral":
+                src_line = f"From: {src['source_label']} (referral)"
+            else:
+                src_line = "From: Direct (typed URL or bookmark)"
             _aa.notify_admin(
                 f"👋 New visitor on Servia\n\n"
-                f"Page: {path}\nReferrer: {ref}\nCountry: {ipc or '?'}\nUA: {ua}",
+                f"Page: {path}\n{src_line}\nCountry: {ipc or '?'}\nUA: {ua}",
                 kind="new_visitor", urgency="low")
         except Exception: pass
     return resp
@@ -806,21 +821,41 @@ def chat(req: ChatRequest, request: Request):
     result = None
     mode = ""
     last_err = None
-    # Only attempt the Anthropic-bound primary path when the admin's customer
-    # default IS Anthropic. If they've configured a different provider (or none
-    # at all), skip straight to the cascade so we don't burn 5-10s on a known-
-    # bad Anthropic call before fallback kicks in.
+    # v1.24.55 — ADMIN AI ARENA ALWAYS WINS.
+    # The admin's choice in /admin.html → AI Arena → "Default model per persona"
+    # is the single source of truth for which provider runs. Railway's
+    # ANTHROPIC_API_KEY env var is a *fallback only* when no admin default is
+    # set AND no other provider has a key configured. This avoids the previous
+    # behaviour where deleting/keeping Railway env was needed to switch models.
     try:
         from . import ai_router as _ar
-        _cust_default = (_ar._load_cfg().get("defaults") or {}).get("customer", "")
-    except Exception: _cust_default = ""
-    if settings.use_llm and (_cust_default.startswith("anthropic/") or not _cust_default):
+        _ai_cfg = _ar._load_cfg()
+        _cust_default = (_ai_cfg.get("defaults") or {}).get("customer", "")
+        _ai_keys = _ai_cfg.get("keys") or {}
+    except Exception:
+        _cust_default = ""
+        _ai_keys = {}
+    # Anthropic primary path runs ONLY if:
+    #   (a) admin default explicitly says anthropic/*, OR
+    #   (b) admin default is empty AND no other provider has a key set
+    _other_keys_set = any(
+        bool(_ai_keys.get(p)) for p in ("openai", "google", "openrouter", "groq", "deepseek")
+    )
+    _use_anthropic_primary = (
+        _cust_default.startswith("anthropic/") or
+        (not _cust_default and not _other_keys_set)
+    )
+    if settings.use_llm and _use_anthropic_primary:
+        print(f"[chat] route=anthropic-primary (admin_default={_cust_default!r})", flush=True)
         try:
             result = llm.chat(history, session_id=sid, language=lang)
             mode = "llm"
         except Exception as e:  # noqa: BLE001
             last_err = f"primary anthropic: {e}"
             print(f"[chat] primary LLM failed, cascading: {e}", flush=True)
+    else:
+        print(f"[chat] route=admin-router (admin_default={_cust_default!r}, "
+              f"other_keys_set={_other_keys_set})", flush=True)
 
     if (not result) or not (result.get("text") or "").strip():
         # 2 & 3: try admin-side AI Router with cascade
@@ -1007,7 +1042,19 @@ async def stripe_webhook(request: Request):
     etype = event.get("type") if isinstance(event, dict) else event["type"]
     obj = (event.get("data") or {}).get("object") if isinstance(event, dict) else event["data"]["object"]
     if etype == "checkout.session.completed":
-        invoice_id = (obj.get("metadata") or {}).get("invoice_id")
+        # v1.24.56 — also handle multi_quotes paid by Stripe Checkout
+        # (initiated from /api/p/{quote_id}/checkout). Metadata carries
+        # quote_id for that path.
+        meta = (obj.get("metadata") or {})
+        mq_id = meta.get("quote_id")
+        if mq_id:
+            try:
+                from . import multi_quote_pages as _mqp_mod
+                amount_total = obj.get("amount_total", 0)
+                _mqp_mod.mark_paid(mq_id, amount_aed=(amount_total / 100.0) if amount_total else None)
+            except Exception as e:
+                print(f"[stripe webhook] mark_paid failed for {mq_id}: {e}", flush=True)
+        invoice_id = meta.get("invoice_id")
         if invoice_id:
             from . import quotes as _q
             _q.mark_invoice_paid(invoice_id, source="stripe")

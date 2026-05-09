@@ -117,8 +117,8 @@ def inbound(msg: InboundMsg):
     #   - everyone else → 'customer'
     persona = "customer"
     import os as _os
-    admin_num = _os.getenv("ADMIN_WA_NUMBER", "971564020087").strip().lstrip("+")
-    if msg.from_number.lstrip("+").replace(" ", "") == admin_num:
+    admin_num = _os.getenv("ADMIN_WA_NUMBER", "").strip().lstrip("+")
+    if admin_num and msg.from_number.lstrip("+").replace(" ", "") == admin_num:
         persona = "admin"
     else:
         try:

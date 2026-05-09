@@ -33,6 +33,16 @@ def _ensure_table() -> None:
                 hit_count INTEGER DEFAULT 1,
                 is_new INTEGER DEFAULT 1
             )""")
+        # v1.24.56 — full click-trail. Every page visit (capped per-visitor)
+        # so admin can replay exactly which pages a user navigated through.
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS visitor_pageviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                visitor_id TEXT,
+                path TEXT, referrer TEXT, seen_at TEXT
+            )""")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_pageviews_vid_id "
+                  "ON visitor_pageviews(visitor_id, id DESC)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_live_last ON live_visitors(last_seen)")
 
 
@@ -89,6 +99,102 @@ def visitor_id_for(request: Request) -> str:
     if cookie: return cookie
     raw = real_client_ip(request) + "|" + request.headers.get("user-agent", "")
     return "h_" + hashlib.sha1(raw.encode()).hexdigest()[:16]
+
+
+# ---------------------------------------------------------------------------
+# Referrer parsing — figure out whether visitor came from a search engine,
+# social platform, or another website. If from a search engine, extract the
+# query string when the referer still includes it (Google strips it on
+# HTTPS-to-HTTPS traffic for privacy, but Bing/DDG/Yandex/Brave still pass it).
+#
+# Returned dict has 4 keys:
+#   traffic_source : "direct" | "search" | "social" | "referral"
+#   source_label   : human label like "Google", "Facebook", "Reddit", "Direct"
+#   search_query   : the query string the visitor typed, or None
+#   referrer_domain: cleaned eTLD+1 of referrer, or None
+#
+SEARCH_ENGINES = {
+    # host substring -> (label, query param name)
+    "google.":           ("Google",        "q"),
+    "bing.com":          ("Bing",          "q"),
+    "duckduckgo.com":    ("DuckDuckGo",    "q"),
+    "search.yahoo":      ("Yahoo",         "p"),
+    "yandex.":           ("Yandex",        "text"),
+    "baidu.com":         ("Baidu",         "wd"),
+    "search.brave.com":  ("Brave",         "q"),
+    "ecosia.org":        ("Ecosia",        "q"),
+    "qwant.com":         ("Qwant",         "q"),
+    "kagi.com":          ("Kagi",          "q"),
+    "search.naver.com":  ("Naver",         "query"),
+    "perplexity.ai":     ("Perplexity",    "q"),
+    "chatgpt.com":       ("ChatGPT",       "q"),
+    "claude.ai":         ("Claude",        "q"),
+    "gemini.google":     ("Gemini",        "q"),
+    "copilot.microsoft": ("Copilot",       "q"),
+}
+SOCIAL_PLATFORMS = {
+    # host substring -> label
+    "facebook.com":      "Facebook",
+    "fb.com":            "Facebook",
+    "l.facebook.com":    "Facebook (link wrapper)",
+    "twitter.com":       "Twitter",
+    "x.com":             "X (Twitter)",
+    "t.co":              "Twitter (t.co)",
+    "linkedin.com":      "LinkedIn",
+    "lnkd.in":           "LinkedIn",
+    "instagram.com":     "Instagram",
+    "tiktok.com":        "TikTok",
+    "youtube.com":       "YouTube",
+    "youtu.be":          "YouTube",
+    "reddit.com":        "Reddit",
+    "redd.it":           "Reddit",
+    "pinterest.":        "Pinterest",
+    "snapchat.com":      "Snapchat",
+    "telegram.me":       "Telegram",
+    "t.me":              "Telegram",
+    "wa.me":             "WhatsApp",
+    "web.whatsapp.com":  "WhatsApp Web",
+    "whatsapp.com":      "WhatsApp",
+    "discord.com":       "Discord",
+    "discord.gg":        "Discord",
+    "medium.com":        "Medium",
+    "github.com":        "GitHub",
+    "stackoverflow.com": "Stack Overflow",
+    "ph.com":            "Product Hunt",
+    "producthunt.com":   "Product Hunt",
+}
+def parse_referrer(ref: str) -> dict:
+    if not ref or ref.strip() == "":
+        return {"traffic_source": "direct", "source_label": "Direct",
+                "search_query": None, "referrer_domain": None}
+    try:
+        from urllib.parse import urlparse, parse_qs
+        u = urlparse(ref)
+        host = (u.netloc or "").lower()
+        if not host:
+            return {"traffic_source": "direct", "source_label": "Direct",
+                    "search_query": None, "referrer_domain": None}
+        # Strip leading "www."
+        host_clean = host[4:] if host.startswith("www.") else host
+        # Search engines (highest priority)
+        for sub, (label, qp) in SEARCH_ENGINES.items():
+            if sub in host:
+                qs = parse_qs(u.query or "")
+                q = (qs.get(qp, [None]) or [None])[0]
+                return {"traffic_source": "search", "source_label": label,
+                        "search_query": q.strip() if q else None,
+                        "referrer_domain": host_clean}
+        # Social
+        for sub, label in SOCIAL_PLATFORMS.items():
+            if sub in host:
+                return {"traffic_source": "social", "source_label": label,
+                        "search_query": None, "referrer_domain": host_clean}
+        # Anything else = generic referral from another site
+        return {"traffic_source": "referral", "source_label": host_clean,
+                "search_query": None, "referrer_domain": host_clean}
+    except Exception:
+        return {"traffic_source": "direct", "source_label": "Direct",
+                "search_query": None, "referrer_domain": None}
 
 
 def track(request: Request) -> bool:
@@ -171,6 +277,12 @@ def track(request: Request) -> bool:
                     "user_agent=?, ip=?, country=?, referrer=?, hit_count=hit_count+1 "
                     "WHERE visitor_id=?",
                     (now_s, r["last_path"] or "", path, ua, ip, country, ref, vid))
+                # v1.24.56 — log each pageview into the click-trail
+                try:
+                    c.execute(
+                        "INSERT INTO visitor_pageviews(visitor_id, path, referrer, seen_at) "
+                        "VALUES(?,?,?,?)", (vid, path, ref, now_s))
+                except Exception: pass
             else:
                 is_new = True
                 c.execute(
@@ -178,6 +290,12 @@ def track(request: Request) -> bool:
                     "last_path, prev_path, user_agent, ip, country, referrer) "
                     "VALUES(?,?,?,?,?,?,?,?,?)",
                     (vid, now_s, now_s, path, "", ua, ip, country, ref))
+                # First pageview row
+                try:
+                    c.execute(
+                        "INSERT INTO visitor_pageviews(visitor_id, path, referrer, seen_at) "
+                        "VALUES(?,?,?,?)", (vid, path, ref, now_s))
+                except Exception: pass
         return is_new
     except Exception:
         return False
@@ -247,6 +365,11 @@ def get_live_visitors(active_minutes: int = 5):
                                     "pingdom","uptime","monitor","synthetic")):
             continue
         d.update(parse_ua(d.get("user_agent","")))
+        # v1.24.55 — figure out where the visitor actually came from. Adds 4
+        # extra keys (traffic_source, source_label, search_query, referrer_domain)
+        # that the admin UI renders as a chip like
+        # "Google · 'ac repair dubai'" or "Direct" or "Facebook"
+        d.update(parse_referrer(d.get("referrer","") or ""))
         # Bot detection
         bot_name = _viz.detect_bot(d.get("user_agent",""))
         d["is_bot"] = bool(bot_name)
@@ -370,4 +493,24 @@ def live_stats():
         "top_pages_now": [{"path": p["last_path"], "count": p["n"]} for p in pages],
         "hourly_24h": buckets,
         "ts": now.isoformat() + "Z",
+    }
+
+
+# ---------------------------------------------------------------------------
+# v1.24.56 — Full click-trail for a visitor.
+@admin_router.get("/visitor/{vid}/trail")
+def visitor_trail(vid: str, limit: int = 200) -> dict:
+    """Returns last N pageviews for a visitor, newest first."""
+    _ensure_table()
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT path, referrer, seen_at FROM visitor_pageviews "
+            "WHERE visitor_id=? ORDER BY id DESC LIMIT ?",
+            (vid, max(1, min(limit, 500)))).fetchall()
+        v = c.execute("SELECT * FROM live_visitors WHERE visitor_id=?",
+                      (vid,)).fetchone()
+    return {
+        "visitor": dict(v) if v else None,
+        "pageviews": [dict(r) for r in rows],
+        "count": len(rows),
     }

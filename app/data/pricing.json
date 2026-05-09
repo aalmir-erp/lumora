@@ -3,34 +3,34 @@
   "vat_pct": 5,
   "rules": {
     "deep_cleaning": {
-      "base_per_bedroom": 200,
-      "min_charge": 350,
+      "base_per_bedroom": 280.0,
+      "min_charge": 490.0,
       "team_size": 2,
       "notes": "Studios = 1 BR rate. Maids' room = 0.5 BR."
     },
     "general_cleaning": {
-      "base_per_bedroom": 120,
-      "min_charge": 200,
+      "base_per_bedroom": 168.0,
+      "min_charge": 280.0,
       "team_size": 1
     },
     "maid_service": {
-      "hourly_rate": 35,
+      "hourly_rate": 49.0,
       "min_hours": 2,
-      "supplies_addon": 15
+      "supplies_addon": 21.0
     },
     "move_in_out": {
-      "base_per_bedroom": 280,
-      "min_charge": 600,
+      "base_per_bedroom": 392.0,
+      "min_charge": 840.0,
       "team_size": 2
     },
     "office_cleaning": {
-      "hourly_rate": 40,
+      "hourly_rate": 56.0,
       "min_hours": 3,
       "weekly_discount_pct": 15,
       "daily_contract_discount_pct": 25
     },
     "post_construction": {
-      "hourly_rate": 60,
+      "hourly_rate": 84.0,
       "min_hours": 4,
       "team_size": 3
     },
@@ -61,10 +61,10 @@
     "laundry": {
       "per_piece": 7,
       "per_kg": 18,
-      "min_charge": 60
+      "min_charge": 84.0
     },
     "babysitting": {
-      "hourly_rate": 40,
+      "hourly_rate": 56.0,
       "min_hours": 3,
       "overnight_flat": 350
     },
@@ -73,7 +73,7 @@
       "per_extra_hour": 80
     },
     "handyman": {
-      "hourly_rate": 120,
+      "hourly_rate": 168.0,
       "callout_flat": 80,
       "min_hours": 1
     },
@@ -82,20 +82,20 @@
       "with_appliances": 480
     },
     "villa_deep": {
-      "base_per_bedroom": 280,
-      "min_charge": 1100,
+      "base_per_bedroom": 392.0,
+      "min_charge": 1540.0,
       "team_size": 4
     },
     "vehicle_recovery": {
       "callout_flat": 250,
       "tow_per_km": 8,
-      "min_charge": 250,
+      "min_charge": 350.0,
       "notes": "Roadside recovery + flatbed tow. Quoted per km after first 10 km included."
     },
     "car_wash": {
       "base_flat": 60,
       "deluxe": 120,
-      "min_charge": 60
+      "min_charge": 84.0
     }
   },
   "surcharges": {
@@ -105,9 +105,19 @@
     "same_day": 30
   },
   "discounts": {
-    "first_time": {"code": "WELCOME15", "pct": 15, "max_aed": 75},
-    "weekly_recurring": {"pct": 20},
-    "biweekly_recurring": {"pct": 10},
-    "annual_contract": {"pct": 25}
+    "first_time": {
+      "code": "WELCOME15",
+      "pct": 15,
+      "max_aed": 75
+    },
+    "weekly_recurring": {
+      "pct": 20
+    },
+    "biweekly_recurring": {
+      "pct": 10
+    },
+    "annual_contract": {
+      "pct": 25
+    }
   }
 }

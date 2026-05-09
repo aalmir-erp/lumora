@@ -377,6 +377,116 @@ def update_booking_status(booking_id: str, status: str, actor: str = "agent") ->
 
 
 # ---------------------------------------------------------------------------
+def create_multi_quote(services: list, customer_name: str, phone: str,
+                       address: str, target_date: str, time_slot: str,
+                       notes: str | None = None,
+                       session_id: str | None = None) -> dict:
+    """Bundle multiple services into a single Quote + Invoice + signing/pay
+    links. Each service is computed via get_quote then aggregated.
+
+    services is a list of dicts: [{service_id: 'deep_cleaning', bedrooms: 1},
+                                  {service_id: 'pest_control'}, ...]
+
+    Returns:
+      quote_id, signing_url, pay_url, items (list of {service_id, label,
+      detail, price}), subtotal, vat, total, fallback_pay_contact.
+    """
+    from . import quotes as _q, kb as _kb
+    s = get_settings()
+    items = []
+    subtotal = 0.0
+    for svc in services or []:
+        sid = svc.get("service_id") or svc.get("id")
+        if not sid: continue
+        # Compute price for this line
+        try:
+            line_q = get_quote(service_id=sid,
+                               bedrooms=svc.get("bedrooms"),
+                               hours=svc.get("hours"),
+                               sqm=svc.get("sqm") or svc.get("size_sqm"),
+                               area=None, addons=svc.get("addons") or [])
+            line_price = float(line_q.get("subtotal_aed") or line_q.get("total_aed") or 0)
+        except Exception:
+            line_price = 0.0
+        # Pretty detail line
+        detail_bits = []
+        if svc.get("bedrooms"): detail_bits.append(f"{svc['bedrooms']} BR")
+        if svc.get("hours"):    detail_bits.append(f"{svc['hours']} hr")
+        if svc.get("sqm") or svc.get("size_sqm"):
+            detail_bits.append(f"{svc.get('sqm') or svc['size_sqm']} sqm")
+        if svc.get("addons"): detail_bits.append("+" + ", ".join(svc["addons"]))
+        detail = " · ".join(detail_bits) or "standard"
+        # Service label from KB
+        label = sid.replace("_"," ").title()
+        try:
+            for s_ in _kb.services().get("services", []):
+                if s_.get("id") == sid:
+                    label = s_.get("name") or label
+                    break
+        except Exception: pass
+        items.append({"service_id": sid, "label": label,
+                      "detail": detail, "price_aed": round(line_price, 2)})
+        subtotal += line_price
+
+    vat_pct = s.brand().get("vat_pct", 5)
+    vat = round(subtotal * vat_pct / 100, 2)
+    total = round(subtotal + vat, 2)
+
+    # Persist a single quote record with items_json for the customer signing page
+    from . import db as _db, quotes as _q
+    import uuid as _u, json as _json
+    quote_id = "Q-" + _u.uuid4().hex[:6].upper()
+    invoice_id = "INV-" + _u.uuid4().hex[:6].upper()
+    with _db.connect() as c:
+        try:
+            c.execute("""CREATE TABLE IF NOT EXISTS multi_quotes (
+                quote_id TEXT PRIMARY KEY,
+                items_json TEXT,
+                subtotal_aed REAL,
+                vat_aed REAL,
+                total_aed REAL,
+                customer_name TEXT,
+                phone TEXT,
+                address TEXT,
+                target_date TEXT,
+                time_slot TEXT,
+                notes TEXT,
+                signed_at TEXT,
+                signature_data_url TEXT,
+                paid_at TEXT,
+                created_at TEXT
+            )""")
+        except Exception: pass
+        c.execute(
+            "INSERT INTO multi_quotes(quote_id, items_json, subtotal_aed, vat_aed, "
+            "total_aed, customer_name, phone, address, target_date, time_slot, "
+            "notes, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            (quote_id, _json.dumps(items), subtotal, vat, total, customer_name,
+             phone, address, target_date, time_slot, notes or "", _now()))
+    db.log_event("quote", quote_id, "multi_quote_created",
+                 actor="bot",
+                 details={"phone": phone, "items": len(items), "total": total,
+                          "session_id": session_id})
+
+    domain = s.brand().get("domain", "servia.ae")
+    return {
+        "ok": True,
+        "quote_id": quote_id,
+        "invoice_id": invoice_id,
+        "items": items,
+        "subtotal_aed": round(subtotal, 2),
+        "vat_aed": vat,
+        "total_aed": total,
+        "currency": "AED",
+        "signing_url": f"https://{domain}/q/{quote_id}",
+        "pay_url":     f"https://{domain}/p/{quote_id}",
+        "fallback_pay_contact": "WhatsApp +971 56 4020087",
+        "scheduled": {"date": target_date, "time": time_slot},
+        "delivery": {"name": customer_name, "phone": phone, "address": address},
+    }
+
+
+# ---------------------------------------------------------------------------
 def handoff_to_human(reason: str, customer_name: str | None = None,
                      phone: str | None = None, summary: str | None = None,
                      session_id: str | None = None) -> dict:
@@ -495,6 +605,28 @@ TOOL_SCHEMAS: list[dict] = [
          "reason": {"type": "string"}, "customer_name": {"type": "string"},
          "phone": {"type": "string"}, "summary": {"type": "string"}},
          "required": ["reason"]}},
+    {"name": "create_multi_quote",
+     "description": ("Bundle 2 or more services into a single Quote with a "
+                     "shared scheduled date, address, and customer. Returns "
+                     "quote_id, signing_url, pay_url, line items with prices, "
+                     "subtotal, VAT and total. ALWAYS use this when the "
+                     "customer mentions multiple services in one chat — "
+                     "do NOT call create_booking once per service."),
+     "input_schema": {"type": "object", "properties": {
+         "services": {"type": "array", "items": {"type": "object", "properties": {
+             "service_id": {"type": "string", "description": "e.g. deep_cleaning, pest_control"},
+             "bedrooms":   {"type": "number"}, "hours": {"type": "number"},
+             "sqm":        {"type": "number"},
+             "addons":     {"type": "array", "items": {"type": "string"}},
+         }, "required": ["service_id"]}},
+         "customer_name": {"type": "string"},
+         "phone":         {"type": "string"},
+         "address":       {"type": "string"},
+         "target_date":   {"type": "string", "description": "YYYY-MM-DD"},
+         "time_slot":     {"type": "string", "description": "e.g. 08:00 or '8 AM'"},
+         "notes":         {"type": "string"}},
+         "required": ["services", "customer_name", "phone", "address",
+                      "target_date", "time_slot"]}},
 ]
 
 
@@ -507,6 +639,7 @@ TOOL_DISPATCH = {
     "get_my_tier": get_my_tier,
     "list_areas_in_emirate": list_areas_in_emirate,
     "create_invoice_for_booking": create_invoice_for_booking,
+    "create_multi_quote": create_multi_quote,
     "send_whatsapp": send_whatsapp, "handoff_to_human": handoff_to_human,
 }
 
@@ -517,7 +650,7 @@ def run_tool(name: str, arguments: dict, *, session_id: str | None = None) -> di
         return {"ok": False, "error": f"Unknown tool '{name}'."}
     try:
         # Inject session_id where supported.
-        if name in ("create_booking", "handoff_to_human"):
+        if name in ("create_booking", "handoff_to_human", "create_multi_quote"):
             arguments.setdefault("session_id", session_id)
         return fn(**arguments)
     except TypeError as e:

@@ -340,7 +340,9 @@
   ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
     addEventListener(ev, _runBF, { once: true, passive: true }));
 
-  // Version stamp from /api/health
+  // Version stamp from /api/health — DEFERRED off the critical path.
+  // Was firing on DOMContentLoaded which dragged LCP. Now waits until
+  // browser is idle (or 800ms after load on browsers without idle API).
   function _setVersion() {
     fetch("/api/health").then(r => r.json()).then(j => {
       window.LUMORA_VERSION = j.version;
@@ -352,11 +354,16 @@
     document.querySelectorAll(".lang-flags [data-lang]").forEach(b =>
       b.classList.toggle("active", b.dataset.lang === cur));
   }
+  // Defer version fetch so it doesn't block LCP. Flag-active runs immediately
+  // (no network — just className toggle).
   if (document.readyState !== "loading") {
-    _setVersion(); _refreshFlagActive();
+    _refreshFlagActive();
   } else {
-    document.addEventListener("DOMContentLoaded", () => { _setVersion(); _refreshFlagActive(); });
+    document.addEventListener("DOMContentLoaded", _refreshFlagActive);
   }
+  if (window.requestIdleCallback) requestIdleCallback(_setVersion, {timeout: 5000});
+  else if (document.readyState === 'complete') setTimeout(_setVersion, 1500);
+  else window.addEventListener('load', () => setTimeout(_setVersion, 1500));
   window.addEventListener("lumora:lang", _refreshFlagActive);
 
 })();

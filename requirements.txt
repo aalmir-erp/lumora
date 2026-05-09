@@ -11,3 +11,6 @@ apscheduler>=3.10
 # no-ops. Removed from required deps to keep Railway builds fast (pywebpush
 # pulls http-ece which needs C-compile).
 cryptography>=41.0
+# v1.24.56 — fpdf2 for native PDF invoice generation (pure-Python, no
+# system deps, ~500KB install). Falls back to browser-print if missing.
+fpdf2>=2.7

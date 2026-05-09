@@ -3,7 +3,7 @@
 Pushes important events (article published, new booking, urgent bot
 message, daily summary) to the admin's personal WhatsApp via the QR-paired
 bridge service. Admin number is read from ADMIN_WA_NUMBER env (E.164 digits
-only, e.g. 971564020087).
+only, e.g. 971XXXXXXXXX — set on Railway, not committed in source).
 
 If the bridge isn't paired or configured, alerts are still recorded in the
 admin_alerts table so the admin sees them in the admin UI when they next
@@ -20,7 +20,7 @@ from .config import get_settings
 
 
 def _admin_number() -> str:
-    return os.getenv("ADMIN_WA_NUMBER", "971564020087").strip().lstrip("+")
+    return os.getenv("ADMIN_WA_NUMBER", "").strip().lstrip("+")
 
 
 def _ensure_table() -> None:
@@ -50,10 +50,24 @@ def _store(kind: str, urgency: str, text: str, meta: dict | None,
         return cur.lastrowid or 0
 
 
+_BRIDGE_OUTAGE_UNTIL = 0.0   # epoch ts; if now < this, skip the bridge call
+
 def _send_via_bridge(text: str) -> tuple[bool, str | None]:
+    """Send via WA bridge with graceful auto-degradation.
+
+    v1.24.56 — if the bridge returns 503 (not paired), or 5xx, or times out,
+    we cache that for 5 minutes and skip the call instead of blocking every
+    notify_admin for 8 seconds. Web-Push remains the working channel during
+    bridge outages.
+    """
+    import time as _t
+    global _BRIDGE_OUTAGE_UNTIL
     s = get_settings()
     if not s.WA_BRIDGE_URL:
         return False, "WA_BRIDGE_URL not configured"
+    now = _t.time()
+    if now < _BRIDGE_OUTAGE_UNTIL:
+        return False, "bridge in outage cooldown (auto-skipped)"
     try:
         import httpx
         r = httpx.post(
@@ -65,11 +79,19 @@ def _send_via_bridge(text: str) -> tuple[bool, str | None]:
             json={"to": _admin_number(), "text": text},
             timeout=8,
         )
+        if r.status_code >= 500 or r.status_code == 503:
+            # Bridge is down (Chromium booting, Puppeteer crashed, container
+            # restarting). Mark unhealthy for 5 minutes so we don't burn
+            # every notify_admin call on the same retry.
+            _BRIDGE_OUTAGE_UNTIL = now + 300
+            return False, f"bridge {r.status_code} (cooldown 5min): {r.text[:160]}"
         if r.status_code >= 400:
             return False, f"bridge {r.status_code}: {r.text[:200]}"
         return True, None
     except Exception as e:  # noqa: BLE001
-        return False, str(e)
+        # Network/connection error → also cooldown
+        _BRIDGE_OUTAGE_UNTIL = now + 120
+        return False, f"bridge unreachable (cooldown 2min): {e}"
 
 
 def notify_admin(text: str, *, kind: str = "general",
