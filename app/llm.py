@@ -343,7 +343,31 @@ def chat(messages: list[dict], *, session_id: str | None = None,
 
         convo.append({"role": "assistant", "content": resp.content})
         results: list[dict] = []
+        # v1.24.69 — multi-service guardrail. If the conversation already
+        # mentions 2+ services AND the LLM tries to call create_booking
+        # (single-service), BLOCK the call and return a synthetic error
+        # that forces the model to retry with create_multi_quote on the
+        # next iteration. This guarantees customers see Q-XXXXXX +
+        # itemised cart instead of the legacy "Book now ↗" link.
+        services_in_chat = _services_mentioned_in_convo(convo, tool_calls)
         for tu in tool_uses:
+            if tu.name == "create_booking" and len(services_in_chat) >= 2:
+                err = {
+                    "ok": False,
+                    "error": (
+                        f"BLOCKED — multi-service flow required. The customer "
+                        f"already discussed {len(services_in_chat)} services in "
+                        f"this chat: {', '.join(sorted(services_in_chat))}. "
+                        "You MUST call create_multi_quote with ALL confirmed "
+                        "services as a single bundle. Do NOT call "
+                        "create_booking. Retry now with create_multi_quote."
+                    ),
+                }
+                tool_calls.append({"name": tu.name, "input": dict(tu.input),
+                                   "result": err})
+                results.append({"type": "tool_result", "tool_use_id": tu.id,
+                                "content": _stringify(err)})
+                continue
             result = run_tool(tu.name, dict(tu.input), session_id=session_id)
             tool_calls.append({"name": tu.name, "input": dict(tu.input), "result": result})
             results.append({"type": "tool_result", "tool_use_id": tu.id,
@@ -353,6 +377,71 @@ def chat(messages: list[dict], *, session_id: str | None = None,
     final_text = _enforce_picker_and_one_question(final_text)
     return {"text": final_text, "tool_calls": tool_calls,
             "usage": usage_total, "stop_reason": stop_reason}
+
+
+# v1.24.69 — count distinct services mentioned in the conversation so far,
+# matching against KB service ids and human-readable names. Used to force
+# create_multi_quote when the customer is buying 2+ services.
+_KNOWN_SERVICES_CACHE: dict | None = None
+
+
+def _known_services() -> dict:
+    global _KNOWN_SERVICES_CACHE
+    if _KNOWN_SERVICES_CACHE is None:
+        try:
+            from . import kb
+            _KNOWN_SERVICES_CACHE = {
+                s["id"]: (s.get("name") or s["id"]).lower()
+                for s in kb.services().get("services", []) if s.get("id")
+            }
+        except Exception:
+            _KNOWN_SERVICES_CACHE = {}
+    return _KNOWN_SERVICES_CACHE
+
+
+def _services_mentioned_in_convo(convo: list, tool_calls: list) -> set[str]:
+    seen: set[str] = set()
+    services = _known_services()
+    # 1. Inspect tool_calls — most reliable: get_quote / create_booking carry
+    #    explicit service_id arguments.
+    for tc in tool_calls or []:
+        sid = (tc.get("input") or {}).get("service_id")
+        if sid and sid in services:
+            seen.add(sid)
+        # create_multi_quote argues a list of services
+        for s_obj in (tc.get("input") or {}).get("services") or []:
+            sid2 = s_obj.get("service_id") or s_obj.get("id")
+            if sid2 and sid2 in services:
+                seen.add(sid2)
+    # 2. Scan textual messages for service ids / names.
+    def _extract_text(content) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            buf = []
+            for c in content:
+                if isinstance(c, dict):
+                    if c.get("type") == "text":
+                        buf.append(c.get("text") or "")
+                    elif c.get("type") == "tool_use":
+                        # service_id often in tool_use input
+                        inp = c.get("input") or {}
+                        if isinstance(inp, dict):
+                            sid_ = inp.get("service_id")
+                            if sid_:
+                                buf.append(sid_)
+                else:
+                    buf.append(str(c))
+            return " ".join(buf)
+        return ""
+    for m in convo or []:
+        text = _extract_text(m.get("content")).lower()
+        if not text:
+            continue
+        for sid, name in services.items():
+            if sid in text or (name and len(name) > 3 and name in text):
+                seen.add(sid)
+    return seen
 
 
 # v1.24.66 — server-side guardrail. The LLM sometimes ignores the
