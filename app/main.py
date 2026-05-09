@@ -1971,19 +1971,19 @@ def sitemap_pages(request: Request = None):
                     except Exception:
                         lastmod = today
                     urls.append((f"{base}/vs/{fname}", lastmod, "weekly", "0.8"))
-            # v1.24.63 — also walk /services/ subdir for the dedicated
-            # service landing pages (commercial, holiday, post-construction,
-            # gym, school cleaning).
-            svc_dir = _os.path.join(web_dir, "services")
-            if _os.path.isdir(svc_dir):
-                for fname in sorted(_os.listdir(svc_dir)):
-                    if not fname.endswith(".html"): continue
-                    try:
-                        mtime = _os.path.getmtime(_os.path.join(svc_dir, fname))
-                        lastmod = _dt.date.fromtimestamp(mtime).isoformat()
-                    except Exception:
-                        lastmod = today
-                    urls.append((f"{base}/services/{fname}", lastmod, "weekly", "0.85"))
+            # v1.24.68 — emit /services/<slug>.html for EVERY service in the
+            # KB. The dynamic route `service_slug_page` renders the canonical
+            # service.html template for each slug, so SEO-friendly URLs like
+            # /services/commercial-cleaning.html resolve to the same uniform
+            # layout as /service.html?id=commercial_cleaning.
+            try:
+                for s in kb.services()["services"]:
+                    sid = s.get("id")
+                    if not sid: continue
+                    slug = sid.replace("_", "-")
+                    urls.append((f"{base}/services/{slug}.html",
+                                 today, "weekly", "0.85"))
+            except Exception: pass
         return _xml_response(_wrap_urlset(urls))
     except Exception as e:  # noqa: BLE001
         print(f"[sitemap-pages] error: {e}", flush=True)
@@ -1991,6 +1991,60 @@ def sitemap_pages(request: Request = None):
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
             '  <url><loc>https://servia.ae/</loc></url>\n</urlset>\n',
             fallback=True)
+
+
+# v1.24.68 — render canonical service.html for friendly slug URLs.
+# Previous custom-styled `/services/<slug>.html` static files looked NOTHING
+# like the rest of the site (different CSS, no nav, no widget, no mascot,
+# hero SVG referenced only as og:image). This route serves the SAME
+# template every other service page uses, with SEO meta hardcoded for the
+# slug + a JS shim that pre-fills the `?id=` param so the dynamic loader
+# picks the right service.
+@app.get("/services/{slug}.html", include_in_schema=False, response_class=HTMLResponse)
+def service_slug_page(slug: str):
+    sid = slug.replace("-", "_")
+    try:
+        services_by_id = {s["id"]: s for s in kb.services().get("services", [])}
+    except Exception:
+        services_by_id = {}
+    svc = services_by_id.get(sid)
+    if not svc:
+        from fastapi import HTTPException as _HE
+        raise _HE(status_code=404, detail="service not found")
+    p = settings.WEB_DIR / "service.html"
+    if not p.exists():
+        from fastapi import HTTPException as _HE
+        raise _HE(status_code=500, detail="template missing")
+    html = p.read_text(encoding="utf-8")
+    brand = settings.brand()
+    name = svc.get("name") or sid.replace("_", " ").title()
+    desc = (svc.get("description") or svc.get("short")
+            or f"{name} in the UAE — booked online with {brand['name']}.")
+    canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug}.html"
+    title = f"{name} · {brand['name']} UAE"
+    desc_safe = desc.replace('"', "&quot;")
+    title_safe = title.replace('"', "&quot;")
+    html = html.replace(
+        "<title>Service • Servia</title>",
+        f"<title>{title_safe}</title>",
+    ).replace(
+        '<meta name="description" content="">',
+        f'<meta name="description" content="{desc_safe}">',
+    ).replace(
+        '<link rel="canonical" href="">',
+        f'<link rel="canonical" href="{canonical}">',
+    )
+    # Inject ?id=<sid> into the URL early so service.html JS reads the
+    # correct service from URLSearchParams. Done via replaceState so the
+    # browser address bar still shows the slug URL (good for SEO + share).
+    shim = (
+        '<script>(function(){try{var u=new URL(location.href);'
+        f'if(!u.searchParams.get("id"))u.searchParams.set("id","{sid}");'
+        'history.replaceState(null,"",u.toString());'
+        '}catch(_){}})();</script>'
+    )
+    html = html.replace("</head>", shim + "</head>", 1)
+    return HTMLResponse(html)
 
 
 @app.get("/sitemap-services.xml")
