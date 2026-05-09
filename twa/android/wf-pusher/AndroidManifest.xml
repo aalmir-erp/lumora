@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  v1.24.54 — Servia Watch Face Pusher (Plan A — escapes the SYSTEM-flag filter).
+
+  Diagnostic dump (v1.24.52) proved Samsung One UI Watch picker filters
+  by ApplicationInfo.FLAG_SYSTEM:
+    Stock face: flags=[ SYSTEM HAS_CODE ALLOW_CLEAR_USER_DATA ]
+    Our face:   flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ]
+  SYSTEM flag is set by the OS for /system/, /system_ext/, /vendor/,
+  /product/ apps only. It is unsettable from a sideload. Therefore
+  no APK we ship can ever appear in the Samsung picker via wallpaper-
+  service enumeration.
+
+  Watch Face Push API is the supported escape hatch. A pusher APK
+  with the PUSH_WATCH_FACES permission registers a payload APK into
+  the watch's pushed-faces registry, and that registry is rendered
+  by the picker via a different code path that ignores SYSTEM flag.
+
+  This APK's only job: hold the permission, bundle the payload as
+  an asset, expose a single button that calls
+  WatchFacePushManager.addWatchFace() then setWatchFaceAsActive().
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature android:name="android.hardware.type.watch" />
+
+    <!-- Required to invoke WatchFacePushManager. Runtime grant
+         dialog appears the first time addWatchFace() is called. -->
+    <uses-permission android:name="com.google.wear.permission.PUSH_WATCH_FACES" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@android:style/Theme.DeviceDefault"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <activity
+            android:name="ae.servia.wfpusher.PushActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.DeviceDefault.Light">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

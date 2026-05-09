@@ -1,0 +1,56 @@
+plugins {
+    id 'com.android.application'
+}
+
+// v1.24.54 — Servia WFF face package APK (Burj Sunset).
+//
+// This is the PAYLOAD APK consumed by the wf-pusher app via
+// WatchFacePushManager.addWatchFace(). It is never installed by the
+// user directly. To minimise size, sourceSets has zero Java/Kotlin
+// directories — aapt sees hasCode="false" and refuses to bundle
+// classes.dex. Output APK is ~80KB (mostly the 450x450 frame PNG).
+
+android {
+    namespace 'ae.servia.wff.burjsunset'
+    compileSdk 34
+    defaultConfig {
+        applicationId "ae.servia.wff.burjsunset"
+        minSdk 33     // WFF v4 = Wear OS 5+
+        targetSdk 34
+        versionCode 1
+        versionName "1.24.54"
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = []
+            kotlin.srcDirs = []
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            res.srcDirs = ['src/main/res']
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("placeholder.jks")
+            storePassword "placeholder"
+            keyAlias "servia"
+            keyPassword "placeholder"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// No dependencies — pure resource APK.

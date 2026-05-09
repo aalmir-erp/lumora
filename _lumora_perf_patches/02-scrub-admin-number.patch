@@ -1,0 +1,37 @@
+diff --git a/app/admin_alerts.py b/app/admin_alerts.py
+index 9bb981e..7997350 100644
+--- a/app/admin_alerts.py
++++ b/app/admin_alerts.py
+@@ -3,7 +3,7 @@
+ Pushes important events (article published, new booking, urgent bot
+ message, daily summary) to the admin's personal WhatsApp via the QR-paired
+ bridge service. Admin number is read from ADMIN_WA_NUMBER env (E.164 digits
+-only, e.g. 971564020087).
++only, e.g. 971XXXXXXXXX — set on Railway, not committed in source).
+ 
+ If the bridge isn't paired or configured, alerts are still recorded in the
+ admin_alerts table so the admin sees them in the admin UI when they next
+@@ -20,7 +20,7 @@ from .config import get_settings
+ 
+ 
+ def _admin_number() -> str:
+-    return os.getenv("ADMIN_WA_NUMBER", "971564020087").strip().lstrip("+")
++    return os.getenv("ADMIN_WA_NUMBER", "").strip().lstrip("+")
+ 
+ 
+ def _ensure_table() -> None:
+diff --git a/app/whatsapp.py b/app/whatsapp.py
+index 2d5ea66..aa61f85 100644
+--- a/app/whatsapp.py
++++ b/app/whatsapp.py
+@@ -117,8 +117,8 @@ def inbound(msg: InboundMsg):
+     #   - everyone else → 'customer'
+     persona = "customer"
+     import os as _os
+-    admin_num = _os.getenv("ADMIN_WA_NUMBER", "971564020087").strip().lstrip("+")
+-    if msg.from_number.lstrip("+").replace(" ", "") == admin_num:
++    admin_num = _os.getenv("ADMIN_WA_NUMBER", "").strip().lstrip("+")
++    if admin_num and msg.from_number.lstrip("+").replace(" ", "") == admin_num:
+         persona = "admin"
+     else:
+         try:

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!--
+  v1.24.54 — Watch Face Format v4 — Servia Burj Sunset.
+
+  Authored on a 450x450 design grid (the standard WFF circular canvas).
+  Frame is the rendered Burj Sunset PNG (artwork generated in v3 of
+  the SVG-based face designs). Time + date are overlaid live by the
+  on-device WFF runtime.
+-->
+<WatchFace width="450" height="450" clipShape="CIRCLE" version="4">
+
+    <Metadata key="CLOCK_TYPE" value="DIGITAL" />
+    <Metadata key="STEP_GOAL" value="10000" />
+    <Metadata key="PREVIEW_TIME" value="10:08:32" />
+
+    <Scene>
+        <Group x="0" y="0" width="450" height="450" name="Burj Sunset">
+
+            <PartImage x="0" y="0" width="450" height="450">
+                <Image resource="frame" />
+            </PartImage>
+
+            <DigitalClock x="0" y="120" width="450" height="120" alpha="255">
+                <TimeText format="HH:mm" align="CENTER">
+                    <Font family="SYNC_TO_DEVICE" size="86" weight="BOLD" color="#FFFFFFFF" />
+                </TimeText>
+            </DigitalClock>
+
+            <DigitalClock x="0" y="250" width="450" height="50" alpha="200">
+                <TimeText format="dd MMM" align="CENTER">
+                    <Font family="SYNC_TO_DEVICE" size="22" weight="NORMAL" color="#FFFFE0B0" />
+                </TimeText>
+            </DigitalClock>
+
+        </Group>
+    </Scene>
+</WatchFace>

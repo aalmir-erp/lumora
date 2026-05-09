@@ -1,0 +1,2169 @@
+diff --git a/app/main.py b/app/main.py
+index 3150700..57d936c 100644
+--- a/app/main.py
++++ b/app/main.py
+@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+ from fastapi.staticfiles import StaticFiles
+ from pydantic import BaseModel, Field
+ 
+-from . import admin, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
++from . import admin, admin_live as _admin_live, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
+ from .auth import ADMIN_TOKEN, require_admin
+ from .config import get_settings
+ 
+@@ -221,6 +221,11 @@ app.include_router(_sos_custom_mod.router)     # /api/sos/custom/* user-saved on
+ app.include_router(_sos_custom_mod.public_router)  # /csos/<slug> NFC-tap landing
+ app.include_router(_gha.router)                # /api/google-home/* + admin
+ app.include_router(_gha.oauth_router)          # /oauth/* (cloud-to-cloud)
++app.include_router(_admin_live.admin_router)   # /api/admin/live/{active-chats,chat,feed,...}
++from . import multi_quote_pages as _mqp, me_history as _meh
++app.include_router(_mqp.public_router)         # /q/{id}, /p/{id}, /i/{id}, /api/q/{id}/...
++app.include_router(_mqp.admin_router)          # /api/admin/quote/{id}/status,line-status,upload,all
++app.include_router(_meh.public_router)         # /api/me/history + /api/me/chat/{sid}
+ app.include_router(admin.router)
+ app.include_router(admin.public_cms_router)
+ app.include_router(admin.public_2fa_router)
+@@ -289,11 +294,25 @@ async def _log_bot_visit_mw(request: Request, call_next):
+             from . import admin_alerts as _aa
+             ua = (request.headers.get("user-agent") or "")[:120]
+             path = str(request.url.path)
+-            ref = (request.headers.get("referer") or "(direct)")[:120]
++            ref = (request.headers.get("referer") or "")[:200]
+             ipc = request.headers.get("cf-ipcountry") or ""
++            # v1.24.55 — parse the referrer so admin sees "via Google · 'ac
++            # repair dubai'" instead of a raw URL. Falls through to "Direct"
++            # when there is no referrer header.
++            src = live_visitors.parse_referrer(ref)
++            if src["traffic_source"] == "search":
++                src_line = (f"From: {src['source_label']} search"
++                            + (f" · query: \"{src['search_query']}\""
++                               if src.get("search_query") else " · (query hidden)"))
++            elif src["traffic_source"] == "social":
++                src_line = f"From: {src['source_label']}"
++            elif src["traffic_source"] == "referral":
++                src_line = f"From: {src['source_label']} (referral)"
++            else:
++                src_line = "From: Direct (typed URL or bookmark)"
+             _aa.notify_admin(
+                 f"👋 New visitor on Servia\n\n"
+-                f"Page: {path}\nReferrer: {ref}\nCountry: {ipc or '?'}\nUA: {ua}",
++                f"Page: {path}\n{src_line}\nCountry: {ipc or '?'}\nUA: {ua}",
+                 kind="new_visitor", urgency="low")
+         except Exception: pass
+     return resp
+@@ -806,21 +825,41 @@ def chat(req: ChatRequest, request: Request):
+     result = None
+     mode = ""
+     last_err = None
+-    # Only attempt the Anthropic-bound primary path when the admin's customer
+-    # default IS Anthropic. If they've configured a different provider (or none
+-    # at all), skip straight to the cascade so we don't burn 5-10s on a known-
+-    # bad Anthropic call before fallback kicks in.
++    # v1.24.55 — ADMIN AI ARENA ALWAYS WINS.
++    # The admin's choice in /admin.html → AI Arena → "Default model per persona"
++    # is the single source of truth for which provider runs. Railway's
++    # ANTHROPIC_API_KEY env var is a *fallback only* when no admin default is
++    # set AND no other provider has a key configured. This avoids the previous
++    # behaviour where deleting/keeping Railway env was needed to switch models.
+     try:
+         from . import ai_router as _ar
+-        _cust_default = (_ar._load_cfg().get("defaults") or {}).get("customer", "")
+-    except Exception: _cust_default = ""
+-    if settings.use_llm and (_cust_default.startswith("anthropic/") or not _cust_default):
++        _ai_cfg = _ar._load_cfg()
++        _cust_default = (_ai_cfg.get("defaults") or {}).get("customer", "")
++        _ai_keys = _ai_cfg.get("keys") or {}
++    except Exception:
++        _cust_default = ""
++        _ai_keys = {}
++    # Anthropic primary path runs ONLY if:
++    #   (a) admin default explicitly says anthropic/*, OR
++    #   (b) admin default is empty AND no other provider has a key set
++    _other_keys_set = any(
++        bool(_ai_keys.get(p)) for p in ("openai", "google", "openrouter", "groq", "deepseek")
++    )
++    _use_anthropic_primary = (
++        _cust_default.startswith("anthropic/") or
++        (not _cust_default and not _other_keys_set)
++    )
++    if settings.use_llm and _use_anthropic_primary:
++        print(f"[chat] route=anthropic-primary (admin_default={_cust_default!r})", flush=True)
+         try:
+             result = llm.chat(history, session_id=sid, language=lang)
+             mode = "llm"
+         except Exception as e:  # noqa: BLE001
+             last_err = f"primary anthropic: {e}"
+             print(f"[chat] primary LLM failed, cascading: {e}", flush=True)
++    else:
++        print(f"[chat] route=admin-router (admin_default={_cust_default!r}, "
++              f"other_keys_set={_other_keys_set})", flush=True)
+ 
+     if (not result) or not (result.get("text") or "").strip():
+         # 2 & 3: try admin-side AI Router with cascade
+@@ -1007,7 +1046,19 @@ async def stripe_webhook(request: Request):
+     etype = event.get("type") if isinstance(event, dict) else event["type"]
+     obj = (event.get("data") or {}).get("object") if isinstance(event, dict) else event["data"]["object"]
+     if etype == "checkout.session.completed":
+-        invoice_id = (obj.get("metadata") or {}).get("invoice_id")
++        # v1.24.56 — also handle multi_quotes paid by Stripe Checkout
++        # (initiated from /api/p/{quote_id}/checkout). Metadata carries
++        # quote_id for that path.
++        meta = (obj.get("metadata") or {})
++        mq_id = meta.get("quote_id")
++        if mq_id:
++            try:
++                from . import multi_quote_pages as _mqp_mod
++                amount_total = obj.get("amount_total", 0)
++                _mqp_mod.mark_paid(mq_id, amount_aed=(amount_total / 100.0) if amount_total else None)
++            except Exception as e:
++                print(f"[stripe webhook] mark_paid failed for {mq_id}: {e}", flush=True)
++        invoice_id = meta.get("invoice_id")
+         if invoice_id:
+             from . import quotes as _q
+             _q.mark_invoice_paid(invoice_id, source="stripe")
+diff --git a/app/me_history.py b/app/me_history.py
+new file mode 100644
+index 0000000..cc38b22
+--- /dev/null
++++ b/app/me_history.py
+@@ -0,0 +1,150 @@
++"""Customer self-service history endpoint (v1.24.56).
++
++Powers the new "📜 History" tab in the chat widget. Customer enters their
++phone number (and optionally email) — we look up:
++  · all bookings tied to that phone
++  · all invoices  (legacy + multi_quotes)
++  · all multi-quote carts (signed + unsigned)
++  · all chat sessions where the phone was captured
++And return them in one neat JSON payload the widget renders as a card list.
++
++Phone matching is last-9-digit (so +971 / 971 / 0 prefixes all match the
++same customer). Email match is case-insensitive substring (the customer
++might type variations).
++
++Privacy: a soft rate-limit + the customer must enter the phone (which they
++already know). No public listing.
++"""
++from __future__ import annotations
++import datetime as _dt
++import json as _json
++from typing import Any
++
++from fastapi import APIRouter, HTTPException
++from pydantic import BaseModel
++
++from . import db
++
++
++public_router = APIRouter(tags=["history-public"])
++
++
++def _norm_phone(s: str) -> str:
++    return "".join(ch for ch in (s or "") if ch.isdigit())[-9:]
++
++
++class _LookupBody(BaseModel):
++    phone: str | None = None
++    email: str | None = None
++
++
++@public_router.post("/api/me/history")
++def me_history(body: _LookupBody) -> dict:
++    p = _norm_phone(body.phone or "")
++    e = (body.email or "").strip().lower()
++    if not p and not e:
++        raise HTTPException(400, "phone or email required")
++
++    out: dict[str, list[dict]] = {
++        "bookings": [], "invoices": [], "quotes": [], "chats": [],
++    }
++
++    with db.connect() as c:
++        # Bookings (try a few likely table/column shapes — the existing
++        # schema has evolved over many versions). Phone-only match.
++        try:
++            rows = c.execute(
++                "SELECT id, service_id, status, target_date, time_slot, "
++                "address, total_aed, created_at "
++                "FROM bookings WHERE phone LIKE ? OR phone LIKE ? "
++                "ORDER BY id DESC LIMIT 50",
++                (f"%{p}", f"%{p[-8:]}")).fetchall()
++            for r in rows:
++                d = dict(r)
++                d["kind"] = "booking"
++                out["bookings"].append(d)
++        except Exception: pass
++
++        # Invoices (legacy)
++        try:
++            rows = c.execute(
++                "SELECT id, booking_id, amount_aed, status, paid_at, created_at "
++                "FROM invoices WHERE customer_phone LIKE ? OR customer_phone LIKE ? "
++                "ORDER BY id DESC LIMIT 50",
++                (f"%{p}", f"%{p[-8:]}")).fetchall()
++            for r in rows:
++                d = dict(r); d["kind"] = "invoice"
++                out["invoices"].append(d)
++        except Exception: pass
++
++        # Multi-service quotes (the new system in patch 07/08)
++        try:
++            rows = c.execute(
++                "SELECT quote_id, customer_name, phone, address, total_aed, "
++                "status, signed_at, paid_at, target_date, time_slot, "
++                "created_at, items_json "
++                "FROM multi_quotes WHERE phone LIKE ? OR phone LIKE ? "
++                "ORDER BY created_at DESC LIMIT 50",
++                (f"%{p}", f"%{p[-8:]}")).fetchall()
++            for r in rows:
++                d = dict(r); d["kind"] = "quote"
++                try: d["items"] = _json.loads(d.get("items_json") or "[]")
++                except Exception: d["items"] = []
++                d.pop("items_json", None)
++                d["view_url"] = f"/q/{d['quote_id']}"
++                d["pay_url"]  = f"/p/{d['quote_id']}"
++                d["invoice_url"] = f"/i/{d['quote_id']}"
++                d["pdf_url"]  = f"/i/{d['quote_id']}.pdf"
++                out["quotes"].append(d)
++        except Exception: pass
++
++        # Chat sessions — group by session_id where phone matched
++        try:
++            rows = c.execute(
++                "SELECT session_id, MIN(created_at) AS first_at, "
++                "MAX(created_at) AS last_at, COUNT(*) AS msg_count, "
++                "MAX(CASE WHEN role='user' THEN content END) AS sample "
++                "FROM conversations WHERE phone LIKE ? OR phone LIKE ? "
++                "GROUP BY session_id ORDER BY last_at DESC LIMIT 30",
++                (f"%{p}", f"%{p[-8:]}")).fetchall()
++            for r in rows:
++                d = dict(r); d["kind"] = "chat"
++                d["preview"] = (d.get("sample") or "")[:120]
++                d.pop("sample", None)
++                out["chats"].append(d)
++        except Exception: pass
++
++    counts = {k: len(v) for k, v in out.items()}
++    total = sum(counts.values())
++    return {
++        "ok": True,
++        "matched_phone_last_9": p if p else None,
++        "matched_email": e if e else None,
++        "counts": counts,
++        "total": total,
++        **out,
++    }
++
++
++@public_router.get("/api/me/chat/{session_id}")
++def fetch_chat(session_id: str, phone: str = "") -> dict:
++    """Returns the full chat history for a given session_id IF the phone
++    matches the phone we captured during that chat. Used by the History
++    tab to expand a past conversation."""
++    p = _norm_phone(phone)
++    if not p:
++        raise HTTPException(400, "phone required")
++    with db.connect() as c:
++        # Verify phone matches at least one message in this session
++        r = c.execute(
++            "SELECT 1 FROM conversations WHERE session_id=? AND "
++            "(phone LIKE ? OR phone LIKE ?) LIMIT 1",
++            (session_id, f"%{p}", f"%{p[-8:]}")).fetchone()
++        if not r:
++            raise HTTPException(403, "phone does not match this session")
++        rows = c.execute(
++            "SELECT role, content, agent_handled, created_at "
++            "FROM conversations WHERE session_id=? ORDER BY id ASC LIMIT 200",
++            (session_id,)).fetchall()
++    return {"ok": True, "session_id": session_id,
++            "messages": [dict(r) for r in rows]}
+diff --git a/app/multi_quote_pages.py b/app/multi_quote_pages.py
+new file mode 100644
+index 0000000..db5db1c
+--- /dev/null
++++ b/app/multi_quote_pages.py
+@@ -0,0 +1,957 @@
++"""Multi-service quote signing + payment + status + photos (v1.24.56).
++
++End-to-end customer + vendor + admin experience around a single quote.
++
++PUBLIC ROUTES:
++  GET  /q/{id}                 customer signing page (phone-gated)
++  POST /api/q/{id}/verify      → token
++  GET  /api/q/{id}             → full quote data (includes line statuses + photos)
++  POST /api/q/{id}/sign        signature + per-line approvals + customer notes
++  POST /api/q/{id}/upload      customer uploads a photo (compressed)
++  GET  /p/{id}                 payment page (Stripe / WA fallback)
++  POST /api/p/{id}/checkout    create Stripe Checkout session (returns hosted url)
++  GET  /i/{id}                 print-friendly invoice page
++
++ADMIN ROUTES (require ADMIN_TOKEN):
++  POST /api/admin/quote/{id}/status     update quote-level status
++  POST /api/admin/quote/{id}/line-status  update per-line status
++  POST /api/admin/quote/{id}/upload     vendor/Servia uploads service photo/video
++  GET  /api/admin/quote/{id}/all        full data + signature + photos for admin
++
++Tables added at first call (idempotent):
++  multi_quotes              (added: status, line_status_json, paid_at, paid_amount)
++  quote_photos              new — base64-stored compressed images, kind='before|during|after|invoice'
++  quote_status_history      new — timeline events
++"""
++from __future__ import annotations
++import base64 as _b64
++import datetime as _dt
++import hashlib
++import hmac
++import json as _json
++import os
++from typing import Any
++
++from fastapi import APIRouter, Depends, HTTPException, Request
++from fastapi.responses import HTMLResponse
++from pydantic import BaseModel
++
++from . import db
++from .auth import require_admin
++from .config import get_settings
++
++
++public_router = APIRouter(tags=["quote-public"])
++admin_router  = APIRouter(prefix="/api/admin/quote", tags=["quote-admin"],
++                          dependencies=[Depends(require_admin)])
++
++
++def _now() -> str:
++    return _dt.datetime.utcnow().isoformat() + "Z"
++
++
++def _ensure_schema() -> None:
++    with db.connect() as c:
++        # Additive columns on multi_quotes (no-op if already there)
++        for ddl in (
++            "ALTER TABLE multi_quotes ADD COLUMN status TEXT DEFAULT 'pending'",
++            "ALTER TABLE multi_quotes ADD COLUMN line_status_json TEXT",
++            "ALTER TABLE multi_quotes ADD COLUMN paid_amount REAL",
++            "ALTER TABLE multi_quotes ADD COLUMN stripe_session_id TEXT",
++        ):
++            try: c.execute(ddl)
++            except Exception: pass
++        c.execute("""CREATE TABLE IF NOT EXISTS quote_photos (
++            id INTEGER PRIMARY KEY AUTOINCREMENT,
++            quote_id TEXT, line_index INTEGER,
++            kind TEXT,           -- before|during|after|invoice|customer
++            uploaded_by TEXT,    -- customer|vendor|admin
++            data_url TEXT,       -- base64 inline (compressed client-side)
++            mime TEXT, bytes INTEGER, caption TEXT,
++            created_at TEXT)""")
++        c.execute("""CREATE TABLE IF NOT EXISTS quote_status_history (
++            id INTEGER PRIMARY KEY AUTOINCREMENT,
++            quote_id TEXT, event TEXT, actor TEXT, note TEXT, at TEXT)""")
++
++
++def _quote(quote_id: str) -> dict | None:
++    _ensure_schema()
++    with db.connect() as c:
++        try:
++            r = c.execute("SELECT * FROM multi_quotes WHERE quote_id=?",
++                          (quote_id,)).fetchone()
++        except Exception: return None
++    if not r: return None
++    d = dict(r)
++    try: d["items"] = _json.loads(d.get("items_json") or "[]")
++    except Exception: d["items"] = []
++    try: d["line_status"] = _json.loads(d.get("line_status_json") or "{}")
++    except Exception: d["line_status"] = {}
++    return d
++
++
++def _photos(quote_id: str) -> list[dict]:
++    with db.connect() as c:
++        rows = c.execute(
++            "SELECT id, line_index, kind, uploaded_by, mime, bytes, caption, "
++            "created_at FROM quote_photos WHERE quote_id=? ORDER BY id DESC",
++            (quote_id,)).fetchall()
++    return [dict(r) for r in rows]
++
++
++def _history(quote_id: str) -> list[dict]:
++    with db.connect() as c:
++        rows = c.execute(
++            "SELECT event, actor, note, at FROM quote_status_history "
++            "WHERE quote_id=? ORDER BY id DESC LIMIT 50",
++            (quote_id,)).fetchall()
++    return [dict(r) for r in rows]
++
++
++def _add_event(quote_id: str, event: str, actor: str, note: str = "") -> None:
++    with db.connect() as c:
++        c.execute(
++            "INSERT INTO quote_status_history(quote_id, event, actor, note, at) "
++            "VALUES(?,?,?,?,?)", (quote_id, event, actor, note, _now()))
++
++
++def _sign_token(quote_id: str, phone: str) -> str:
++    s = get_settings()
++    secret = (getattr(s, "ADMIN_TOKEN", "") or os.getenv("ADMIN_TOKEN", "lumora-token")).encode()
++    msg = f"{quote_id}|{phone}".encode()
++    return hmac.new(secret, msg, hashlib.sha256).hexdigest()[:32]
++
++
++def _verify_token(token: str, quote_id: str, phone: str) -> bool:
++    return hmac.compare_digest(token or "", _sign_token(quote_id, phone))
++
++
++# ---------------------------------------------------------------------------
++@public_router.get("/q/{quote_id}", response_class=HTMLResponse)
++def quote_landing(quote_id: str) -> str:
++    q = _quote(quote_id)
++    if not q:
++        return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
++    return _render_quote_html(quote_id, q)
++
++
++def _render_quote_html(quote_id: str, q: dict) -> str:
++    return f"""<!doctype html><html><head><meta charset="utf-8">
++<meta name="viewport" content="width=device-width,initial-scale=1">
++<title>Servia · Quote {quote_id}</title>
++<style>
++* {{box-sizing: border-box; margin: 0; padding: 0;}}
++body{{font: 14px/1.45 system-ui;background:#0F172A;color:#F1F5F9;padding:14px}}
++.container{{max-width:540px;margin:0 auto}}
++.gate{{max-width:340px;margin:18vh auto;text-align:center;background:#1E293B;
++border:1px solid #334155;border-radius:12px;padding:18px}}
++.gate input{{width:100%;padding:10px;font-size:15px;background:#0F172A;
++color:#fff;border:1px solid #334155;border-radius:8px;margin:8px 0;font-family:monospace}}
++.cart{{display:none}}
++.line{{background:#1E293B;border:1px solid #334155;border-radius:8px;
++padding:10px 12px;margin:6px 0;cursor:default}}
++.line.approved{{border-left:3px solid #10B981}}
++.line.rejected{{border-left:3px solid #EF4444;opacity:.6}}
++.line .head{{display:flex;justify-content:space-between;font-weight:600}}
++.line .price{{color:#FCD34D}}
++.line .detail{{font-size:12px;color:#94A3B8;margin-top:2px}}
++.line .actions{{display:flex;gap:6px;margin-top:6px}}
++.line .actions button{{flex:1;padding:5px;background:#334155;color:#F1F5F9;
++border:none;border-radius:5px;font-size:11px;cursor:pointer}}
++.line .actions button.ok{{background:#0D9488}}
++.line .actions button.no{{background:#7F1D1D}}
++.line textarea{{width:100%;background:#0F172A;border:1px solid #334155;
++color:#F1F5F9;border-radius:5px;padding:6px;margin-top:5px;font:inherit;font-size:12px}}
++.line .photos{{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}}
++.line .photos img{{width:60px;height:60px;object-fit:cover;border-radius:4px;
++cursor:pointer;border:1px solid #475569}}
++.totals{{padding:10px 12px;background:#1E293B;border-radius:8px;margin:10px 0}}
++.totals .row{{display:flex;justify-content:space-between;padding:3px 0}}
++.totals .row.t{{font-size:17px;font-weight:700;color:#14B8A6;border-top:1px solid #334155;padding-top:8px;margin-top:4px}}
++.feature{{font-size:12px;color:#94A3B8;background:#1E293B;border-left:3px solid #14B8A6;
++padding:8px 12px;margin:8px 0;border-radius:0 6px 6px 0}}
++canvas{{background:#fff;border-radius:8px;width:100%;height:130px;display:block;margin:6px 0}}
++.btn{{padding:11px 14px;background:#0D9488;color:#fff;border:none;border-radius:8px;
++font-weight:600;cursor:pointer;width:100%;margin:6px 0;font-size:14px}}
++.btn.alt{{background:#1E293B;color:#F1F5F9;border:1px solid #475569}}
++.timeline{{padding:8px 12px;background:#1E293B;border-radius:8px;margin:10px 0}}
++.timeline .ev{{padding:4px 0;border-bottom:1px dashed #334155;font-size:12px}}
++.timeline .ev:last-child{{border:none}}
++.timeline .ev b{{color:#14B8A6}}
++.lightbox{{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;
++align-items:center;justify-content:center;z-index:99}}
++.lightbox.open{{display:flex}}
++.lightbox img,.lightbox video{{max-width:96vw;max-height:90vh}}
++.lightbox .close{{position:absolute;top:12px;right:14px;background:#fff;color:#000;
++border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer}}
++input[type=text],textarea{{font:inherit}}
++</style></head><body>
++
++<div class="gate" id="gate">
++  <h2>Servia Quote</h2>
++  <p style="color:#94A3B8;font-size:12.5px;margin:8px 0">Quote <code>{quote_id}</code><br>
++  Enter the phone number used to request this quote.</p>
++  <input id="phone" type="tel" placeholder="0559396459" autocomplete="tel">
++  <button class="btn" onclick="verify()">View quote</button>
++  <p id="msg" style="color:#FCA5A5;font-size:12px;margin-top:8px"></p>
++</div>
++
++<div class="cart container" id="cart">
++  <h2>Quote <code>{quote_id}</code></h2>
++  <div id="lines"></div>
++  <div class="totals">
++    <div class="row"><div>Subtotal</div><div id="sub">—</div></div>
++    <div class="row"><div>VAT 5%</div><div id="vat">—</div></div>
++    <div class="row t"><div>Total</div><div id="total">—</div></div>
++  </div>
++  <div class="feature">📅 <span id="date"></span> · 📍 <span id="addr"></span></div>
++  <div class="feature" id="status-line">Status: <b>pending</b></div>
++  <div class="timeline" id="timeline" style="display:none"><b>Status timeline</b><div id="tl-events"></div></div>
++
++  <h3 style="margin:14px 0 6px;font-size:13px">📸 Service photos</h3>
++  <div id="photos" class="photos" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;min-height:50px"></div>
++  <input type="file" id="up-input" accept="image/*,video/*" style="display:none" onchange="onPhotoSelect(event)">
++  <button class="btn alt" onclick="document.getElementById('up-input').click()">📤 Upload photo / video</button>
++
++  <h3 style="margin:14px 0 6px;font-size:13px">✍️ Your signature</h3>
++  <canvas id="sig" width="500" height="130"></canvas>
++  <button class="btn alt" onclick="clearSig()">Clear signature</button>
++
++  <h3 style="margin:14px 0 6px;font-size:13px">💬 General note</h3>
++  <textarea id="cnote" rows="2" placeholder="Any extra instructions…"></textarea>
++
++  <button class="btn" id="approve-btn" onclick="approve()">✅ Approve all &amp; sign</button>
++  <button class="btn alt" onclick="location.href='/p/{quote_id}'">💳 Pay online instead</button>
++  <p style="color:#94A3B8;font-size:11px;text-align:center;margin-top:10px">
++    Or pay manually: WhatsApp <b>+971 56 4020087</b> with quote <code>{quote_id}</code>
++  </p>
++
++  <p style="color:#64748B;font-size:10px;text-align:center;margin-top:14px">
++    All photos and videos are compressed before upload · Per-service approval &amp; comments are recorded with timestamp · Real-time status updates land on your phone · Secure phone-gated access
++  </p>
++</div>
++
++<div class="lightbox" id="lb" onclick="this.classList.remove('open')">
++  <button class="close" onclick="document.getElementById('lb').classList.remove('open');event.stopPropagation()">×</button>
++  <div id="lb-content"></div>
++</div>
++
++<script>
++const QID = "{quote_id}";
++let token = localStorage.getItem("q.token." + QID) || "";
++let lineState = {{}};   // {{ idx: {{ approved: bool, comment: str }} }}
++
++async function verify() {{
++  const phone = document.getElementById("phone").value.replace(/[^\\d]/g,"");
++  const r = await fetch("/api/q/" + QID + "/verify", {{
++    method: "POST", headers: {{"Content-Type":"application/json"}},
++    body: JSON.stringify({{phone}})
++  }});
++  const j = await r.json();
++  if (!j.ok) {{ document.getElementById("msg").textContent = "Phone doesn't match. Try again."; return; }}
++  token = j.token;
++  localStorage.setItem("q.token." + QID, token);
++  showCart();
++}}
++
++async function showCart() {{
++  const r = await fetch("/api/q/" + QID, {{ headers: {{"X-Quote-Token": token}} }});
++  const j = await r.json();
++  if (!j.ok) {{ token=""; localStorage.removeItem("q.token." + QID); return; }}
++  document.getElementById("gate").style.display="none";
++  document.getElementById("cart").style.display="block";
++  lineState = j.line_status || {{}};
++  renderLines(j.items || []);
++  document.getElementById("sub").textContent   = "AED " + j.subtotal_aed;
++  document.getElementById("vat").textContent   = "AED " + j.vat_aed;
++  document.getElementById("total").textContent = "AED " + j.total_aed;
++  document.getElementById("date").textContent  = (j.target_date||"") + " · " + (j.time_slot||"");
++  document.getElementById("addr").textContent  = j.address||"";
++  document.getElementById("status-line").innerHTML = "Status: <b>" + (j.status||"pending") + "</b>";
++  if ((j.history||[]).length) {{
++    document.getElementById("timeline").style.display="block";
++    document.getElementById("tl-events").innerHTML = j.history.map(h =>
++      `<div class="ev"><b>${{escapeHtml(h.event)}}</b> · ${{shortAt(h.at)}} · <i>${{escapeHtml(h.actor||"")}}</i>${{h.note?" — "+escapeHtml(h.note):""}}</div>`).join("");
++  }}
++  renderPhotos(j.photos || []);
++  initSig();
++}}
++
++function renderLines(items) {{
++  document.getElementById("lines").innerHTML = items.map((it, i) => {{
++    const st = lineState[i] || {{}};
++    const cls = st.approved === true ? "approved" : st.approved === false ? "rejected" : "";
++    const cmt = st.comment || "";
++    return `<div class="line ${{cls}}" id="line-${{i}}">
++      <div class="head">
++        <div>${{i+1}}. ${{escapeHtml(it.label)}}</div>
++        <div class="price">AED ${{it.price_aed}}</div>
++      </div>
++      <div class="detail">${{escapeHtml(it.detail||"")}}</div>
++      <div class="actions">
++        <button class="ok" onclick="setLine(${{i}}, true)">${{st.approved===true?"✓ Approved":"Approve"}}</button>
++        <button class="no" onclick="setLine(${{i}}, false)">${{st.approved===false?"✕ Rejected":"Reject"}}</button>
++      </div>
++      <textarea placeholder="Comment for this service…" oninput="setComment(${{i}}, this.value)" rows="1">${{escapeHtml(cmt)}}</textarea>
++    </div>`;
++  }}).join("");
++}}
++
++function setLine(i, approved) {{
++  lineState[i] = lineState[i] || {{}};
++  lineState[i].approved = approved;
++  const ln = document.getElementById("line-"+i);
++  ln.classList.remove("approved","rejected");
++  if (approved === true) ln.classList.add("approved");
++  if (approved === false) ln.classList.add("rejected");
++  ln.querySelector(".actions .ok").textContent = approved ? "✓ Approved" : "Approve";
++  ln.querySelector(".actions .no").textContent = approved===false ? "✕ Rejected" : "Reject";
++}}
++function setComment(i, v) {{
++  lineState[i] = lineState[i] || {{}};
++  lineState[i].comment = v;
++}}
++
++function renderPhotos(photos) {{
++  const wrap = document.getElementById("photos");
++  if (!photos.length) {{ wrap.innerHTML = '<div style="color:#64748B;font-size:11px">No photos yet. Photos uploaded by you or our team after service appear here.</div>'; return; }}
++  wrap.innerHTML = photos.map(p =>
++    `<img src="/api/q/${{QID}}/photo/${{p.id}}?t=${{token}}" alt="${{escapeHtml(p.kind||'')}}" title="${{escapeHtml((p.kind||'')+(p.caption?' · '+p.caption:''))}}" onclick="openLightbox(${{p.id}}, '${{escapeHtml(p.mime||'')}}')">`).join("");
++}}
++
++function openLightbox(pid, mime) {{
++  const url = "/api/q/" + QID + "/photo/" + pid + "?t=" + token;
++  document.getElementById("lb-content").innerHTML =
++    mime.startsWith("video/") ? `<video src="${{url}}" controls autoplay></video>` : `<img src="${{url}}">`;
++  document.getElementById("lb").classList.add("open");
++}}
++
++/* --- photo upload with client-side compression --- */
++async function onPhotoSelect(e) {{
++  const f = e.target.files[0];
++  if (!f) return;
++  let dataUrl;
++  if (f.type.startsWith("image/")) {{
++    dataUrl = await compressImage(f, 1200, 0.72);
++  }} else {{
++    dataUrl = await readAsDataUrl(f);
++    if (f.size > 6 * 1024 * 1024) {{
++      if (!confirm("Video is "+ (f.size/1024/1024).toFixed(1)+" MB — upload anyway?")) return;
++    }}
++  }}
++  const caption = prompt("Add a caption (optional):") || "";
++  const r = await fetch("/api/q/" + QID + "/upload", {{
++    method:"POST", headers:{{"Content-Type":"application/json","X-Quote-Token":token}},
++    body: JSON.stringify({{ data_url: dataUrl, mime: f.type, caption }})
++  }});
++  const j = await r.json();
++  if (j.ok) {{ alert("Uploaded ✓"); showCart(); }}
++  else alert("Upload failed: " + (j.error||""));
++}}
++function readAsDataUrl(f) {{
++  return new Promise((res, rej) => {{
++    const r = new FileReader();
++    r.onload = () => res(r.result);
++    r.onerror = rej;
++    r.readAsDataURL(f);
++  }});
++}}
++function compressImage(f, maxDim, quality) {{
++  return new Promise((res, rej) => {{
++    const r = new FileReader();
++    r.onload = () => {{
++      const img = new Image();
++      img.onload = () => {{
++        const canvas = document.createElement("canvas");
++        const ratio = Math.min(maxDim / img.width, maxDim / img.height, 1);
++        canvas.width = Math.round(img.width * ratio);
++        canvas.height = Math.round(img.height * ratio);
++        const ctx = canvas.getContext("2d");
++        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
++        res(canvas.toDataURL("image/jpeg", quality));
++      }};
++      img.onerror = rej;
++      img.src = r.result;
++    }};
++    r.onerror = rej;
++    r.readAsDataURL(f);
++  }});
++}}
++
++/* --- signature pad --- */
++let sigCtx, drawing=false;
++function initSig() {{
++  const c = document.getElementById("sig");
++  sigCtx = c.getContext("2d");
++  sigCtx.lineWidth = 2; sigCtx.lineCap="round"; sigCtx.strokeStyle="#0F172A";
++  function pos(e){{const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return {{x:(t.clientX-r.left)*c.width/r.width,y:(t.clientY-r.top)*c.height/r.height}}}}
++  function down(e){{e.preventDefault();drawing=true;const p=pos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y)}}
++  function move(e){{if(!drawing)return;e.preventDefault();const p=pos(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke()}}
++  function up(){{drawing=false}}
++  c.addEventListener("mousedown",down);c.addEventListener("mousemove",move);
++  c.addEventListener("mouseup",up);c.addEventListener("mouseleave",up);
++  c.addEventListener("touchstart",down,{{passive:false}});
++  c.addEventListener("touchmove",move,{{passive:false}});
++  c.addEventListener("touchend",up);
++}}
++function clearSig() {{ const c=document.getElementById("sig");c.getContext("2d").clearRect(0,0,c.width,c.height); }}
++
++async function approve() {{
++  const dataUrl = document.getElementById("sig").toDataURL("image/png");
++  const note    = document.getElementById("cnote").value.trim();
++  const r = await fetch("/api/q/" + QID + "/sign", {{
++    method:"POST", headers:{{"Content-Type":"application/json","X-Quote-Token":token}},
++    body: JSON.stringify({{ signature_data_url: dataUrl, customer_note: note,
++                           line_status: lineState }})
++  }});
++  const j = await r.json();
++  if (j.ok) {{
++    document.body.innerHTML = `<div style="text-align:center;padding:18vh 16px;font-family:system-ui;color:#F1F5F9;background:#0F172A;min-height:100vh">
++      <h1 style="color:#10B981">✅ Approved!</h1>
++      <p style="color:#94A3B8;margin:10px 0 16px">Quote <code>${{QID}}</code> is signed.<br>Our team is being dispatched.</p>
++      <p><a style="display:inline-block;padding:11px 18px;background:#0D9488;color:#fff;border-radius:8px;text-decoration:none;margin:4px" href="/p/${{QID}}">💳 Pay AED ${{j.total_aed||""}}</a></p>
++      <p><a style="display:inline-block;padding:11px 18px;background:#1E293B;color:#F1F5F9;border-radius:8px;text-decoration:none;margin:4px" href="/i/${{QID}}">📄 View invoice</a></p>
++      <p style="font-size:12px;color:#64748B;margin-top:14px">Or WhatsApp +971 56 4020087</p>
++    </div>`;
++  }} else alert("Could not sign: " + (j.error||"server error"));
++}}
++
++function escapeHtml(s){{return String(s||"").replace(/[&<>"']/g, c=>({{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}}[c]))}}
++function shortAt(iso){{ try {{ return new Date(iso).toLocaleString("en-GB", {{ hour:"2-digit", minute:"2-digit", day:"2-digit", month:"short" }}); }} catch(_) {{ return iso||""; }} }}
++
++if (token) showCart();
++</script>
++</body></html>"""
++
++
++# ---------------------------------------------------------------------------
++class _VerifyBody(BaseModel):
++    phone: str
++
++@public_router.post("/api/q/{quote_id}/verify")
++def verify_phone(quote_id: str, body: _VerifyBody) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404, "quote not found")
++    incoming = "".join(ch for ch in (body.phone or "") if ch.isdigit())
++    stored   = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not stored or stored[-9:] != incoming[-9:]:
++        return {"ok": False, "error": "phone mismatch"}
++    return {"ok": True, "token": _sign_token(quote_id, stored)}
++
++
++@public_router.get("/api/q/{quote_id}")
++def get_quote_data(quote_id: str, request: Request) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    tok = request.headers.get("X-Quote-Token", "") or request.query_params.get("t", "")
++    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not _verify_token(tok, quote_id, stored):
++        return {"ok": False, "error": "invalid token"}
++    return {
++        "ok": True,
++        "quote_id": q["quote_id"],
++        "items": q.get("items") or [],
++        "line_status": q.get("line_status") or {},
++        "subtotal_aed": q.get("subtotal_aed"),
++        "vat_aed":      q.get("vat_aed"),
++        "total_aed":    q.get("total_aed"),
++        "target_date":  q.get("target_date"),
++        "time_slot":    q.get("time_slot"),
++        "address":      q.get("address"),
++        "customer_name": q.get("customer_name"),
++        "phone":        (q.get("phone") or "")[-4:],  # last 4 only for privacy
++        "signed_at":    q.get("signed_at"),
++        "paid_at":      q.get("paid_at"),
++        "status":       q.get("status") or "pending",
++        "history":      _history(quote_id),
++        "photos":       _photos(quote_id),
++    }
++
++
++class _SignBody(BaseModel):
++    signature_data_url: str
++    customer_note: str | None = ""
++    line_status: dict | None = None
++
++@public_router.post("/api/q/{quote_id}/sign")
++def sign(quote_id: str, body: _SignBody, request: Request) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    tok = request.headers.get("X-Quote-Token", "")
++    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not _verify_token(tok, quote_id, stored):
++        return {"ok": False, "error": "invalid token"}
++    line_status = body.line_status or {}
++    with db.connect() as c:
++        c.execute(
++            "UPDATE multi_quotes SET signed_at=?, signature_data_url=?, "
++            "line_status_json=?, status='signed', "
++            "notes=COALESCE(notes,'') || ? WHERE quote_id=?",
++            (_now(), body.signature_data_url[:200000],
++             _json.dumps(line_status),
++             ("\n--- customer note ---\n" + (body.customer_note or "")) if body.customer_note else "",
++             quote_id))
++    _add_event(quote_id, "signed", q.get("phone") or "customer",
++               f"signed {len([k for k,v in line_status.items() if v.get('approved')])} of {len(q.get('items',[]))} services")
++    db.log_event("quote", quote_id, "customer_signed",
++                 actor=q.get("phone") or "?",
++                 details={"approved_count":
++                          len([k for k,v in line_status.items() if v.get("approved")]),
++                          "total": q.get("total_aed")})
++    try:
++        from . import admin_alerts as _aa
++        approved_lines = [it["label"] for i, it in enumerate(q.get("items",[]))
++                          if line_status.get(str(i), {}).get("approved") is True
++                          or line_status.get(i, {}).get("approved") is True]
++        rejected_lines = [it["label"] for i, it in enumerate(q.get("items",[]))
++                          if line_status.get(str(i), {}).get("approved") is False
++                          or line_status.get(i, {}).get("approved") is False]
++        _aa.notify_admin(
++            f"✅ Customer signed quote {quote_id}\n"
++            f"{q.get('customer_name','?')} · {q.get('phone','?')}\n"
++            f"Total: AED {q.get('total_aed')}\n"
++            f"Approved: {', '.join(approved_lines) or 'all'}\n"
++            + (f"Rejected: {', '.join(rejected_lines)}\n" if rejected_lines else "") +
++            f"Schedule: {q.get('target_date')} {q.get('time_slot')}",
++            kind="quote_signed", urgency="normal", meta={"quote_id": quote_id})
++    except Exception: pass
++    return {"ok": True, "quote_id": quote_id, "signed_at": _now(),
++            "total_aed": q.get("total_aed")}
++
++
++# ---------------------------------------------------------------------------
++class _UploadBody(BaseModel):
++    data_url: str
++    mime: str | None = None
++    caption: str | None = None
++    line_index: int | None = None
++    kind: str | None = "customer"   # before|during|after|customer
++
++@public_router.post("/api/q/{quote_id}/upload")
++def customer_upload(quote_id: str, body: _UploadBody, request: Request) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    tok = request.headers.get("X-Quote-Token", "")
++    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not _verify_token(tok, quote_id, stored):
++        return {"ok": False, "error": "invalid token"}
++    return _save_photo(quote_id, body, "customer")
++
++
++def _save_photo(quote_id: str, body: _UploadBody, uploaded_by: str) -> dict:
++    data = body.data_url or ""
++    if not data.startswith("data:"):
++        return {"ok": False, "error": "expected data URL"}
++    sz = len(data) * 3 // 4
++    if sz > 12 * 1024 * 1024:  # 12 MB cap (after client compression)
++        return {"ok": False, "error": "too large (max 12 MB after compression)"}
++    with db.connect() as c:
++        c.execute(
++            "INSERT INTO quote_photos(quote_id, line_index, kind, uploaded_by, "
++            "data_url, mime, bytes, caption, created_at) "
++            "VALUES(?,?,?,?,?,?,?,?,?)",
++            (quote_id, body.line_index, body.kind or "customer", uploaded_by,
++             data, body.mime, sz, body.caption, _now()))
++        pid = c.lastrowid
++    _add_event(quote_id, "photo_uploaded", uploaded_by,
++               f"{body.kind or 'photo'}{' · ' + body.caption if body.caption else ''}")
++    return {"ok": True, "photo_id": pid, "bytes": sz}
++
++
++@public_router.get("/api/q/{quote_id}/photo/{pid}")
++def get_photo(quote_id: str, pid: int, t: str = ""):
++    """Serve a photo by id. Token-gated for customer-side; admin uses /api/admin/quote path."""
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not _verify_token(t, quote_id, stored):
++        raise HTTPException(403, "invalid token")
++    with db.connect() as c:
++        r = c.execute("SELECT data_url, mime FROM quote_photos WHERE id=? AND quote_id=?",
++                      (pid, quote_id)).fetchone()
++    if not r: raise HTTPException(404)
++    # Decode and stream — tiny payload since base64 is small after compression
++    data_url, mime = r["data_url"], (r["mime"] or "image/jpeg")
++    if "," in data_url:
++        b64 = data_url.split(",", 1)[1]
++    else:
++        b64 = data_url
++    raw = _b64.b64decode(b64)
++    from fastapi.responses import Response
++    return Response(content=raw, media_type=mime,
++                    headers={"Cache-Control": "public, max-age=3600"})
++
++
++# ---------------------------------------------------------------------------
++@public_router.get("/p/{quote_id}", response_class=HTMLResponse)
++def pay_landing(quote_id: str) -> str:
++    q = _quote(quote_id)
++    if not q: return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
++    has_stripe = bool(os.getenv("STRIPE_SECRET_KEY"))
++    return f"""<!doctype html><html><head><meta charset="utf-8">
++<meta name="viewport" content="width=device-width,initial-scale=1">
++<title>Servia · Pay {quote_id}</title>
++<style>
++body{{font: 14px system-ui;background:#0F172A;color:#F1F5F9;padding:18px;margin:0;text-align:center}}
++.box{{max-width:360px;margin:14vh auto;background:#1E293B;border:1px solid #334155;
++border-radius:12px;padding:22px}}
++h1{{font-size:30px;color:#FCD34D;margin:0 0 8px}}
++.btn{{display:block;width:100%;padding:13px;background:#0D9488;color:#fff;border:none;
++border-radius:10px;font-weight:600;font-size:15px;text-decoration:none;
++margin:8px 0;cursor:pointer}}
++.btn.alt{{background:#1E293B;color:#F1F5F9;border:1px solid #475569}}
++.btn:disabled{{opacity:.5;cursor:not-allowed}}
++</style></head><body>
++<div class="box">
++  <h1>AED {q.get('total_aed')}</h1>
++  <p style="color:#94A3B8;font-size:13px">Quote <code>{quote_id}</code><br>
++  {q.get('customer_name','')} · {q.get('phone','')}</p>
++  <button class="btn" id="card-btn" onclick="payCard()" {'' if has_stripe else 'disabled title="Stripe not configured"'}>💳 Pay with card</button>
++  <a class="btn alt" href="https://wa.me/971564020087?text=Pay%20{quote_id}">📱 WhatsApp +971 56 4020087</a>
++  <a class="btn alt" href="/i/{quote_id}">📄 View invoice</a>
++  {'<p style="color:#64748B;font-size:11px;margin-top:12px">Card payment unavailable — set STRIPE_SECRET_KEY in Railway env to enable.</p>' if not has_stripe else ''}
++</div>
++<script>
++async function payCard() {{
++  const r = await fetch("/api/p/{quote_id}/checkout", {{ method: "POST" }});
++  const j = await r.json();
++  if (j.url) location.href = j.url;
++  else alert("Could not start checkout: " + (j.error||""));
++}}
++</script></body></html>"""
++
++
++@public_router.post("/api/p/{quote_id}/checkout")
++def stripe_checkout(quote_id: str) -> dict:
++    """Create a Stripe Checkout Session and return its hosted URL."""
++    sk = os.getenv("STRIPE_SECRET_KEY", "")
++    if not sk:
++        return {"ok": False, "error": "Stripe not configured"}
++    q = _quote(quote_id)
++    if not q: return {"ok": False, "error": "quote not found"}
++    try:
++        import urllib.parse, urllib.request
++        s = get_settings()
++        domain = s.brand().get("domain", "servia.ae")
++        line_items_data = []
++        for i, it in enumerate(q.get("items") or []):
++            line_items_data.append((
++                f"line_items[{i}][price_data][currency]", "aed"))
++            line_items_data.append((
++                f"line_items[{i}][price_data][product_data][name]", it["label"]))
++            line_items_data.append((
++                f"line_items[{i}][price_data][unit_amount]", str(int(round(it["price_aed"] * 100)))))
++            line_items_data.append((
++                f"line_items[{i}][quantity]", "1"))
++        line_items_data.append(("mode", "payment"))
++        line_items_data.append(("success_url", f"https://{domain}/i/{quote_id}?paid=1"))
++        line_items_data.append(("cancel_url", f"https://{domain}/p/{quote_id}"))
++        line_items_data.append(("metadata[quote_id]", quote_id))
++        body = urllib.parse.urlencode(line_items_data).encode()
++        req = urllib.request.Request(
++            "https://api.stripe.com/v1/checkout/sessions",
++            data=body,
++            headers={"Authorization": f"Bearer {sk}",
++                     "Content-Type": "application/x-www-form-urlencoded"})
++        with urllib.request.urlopen(req, timeout=10) as r:
++            session = _json.loads(r.read())
++        with db.connect() as c:
++            c.execute("UPDATE multi_quotes SET stripe_session_id=? WHERE quote_id=?",
++                      (session.get("id"), quote_id))
++        _add_event(quote_id, "checkout_started", "customer", "stripe")
++        return {"ok": True, "url": session.get("url"), "session_id": session.get("id")}
++    except Exception as e:
++        return {"ok": False, "error": f"stripe: {e}"}
++
++
++# ---------------------------------------------------------------------------
++@public_router.get("/i/{quote_id}", response_class=HTMLResponse)
++def invoice_view(quote_id: str) -> str:
++    q = _quote(quote_id)
++    if not q: return HTMLResponse("<h1>Invoice not found</h1>", status_code=404)
++    items_html = "".join(
++        f"<tr><td>{i+1}</td><td><b>{it['label']}</b><br><small>{it.get('detail','')}</small></td>"
++        f"<td style='text-align:right'>AED {it['price_aed']}</td></tr>"
++        for i, it in enumerate(q.get("items") or []))
++    paid = bool(q.get("paid_at"))
++    return f"""<!doctype html><html><head><meta charset="utf-8">
++<meta name="viewport" content="width=device-width,initial-scale=1">
++<title>Servia Invoice {quote_id}</title>
++<style>
++body{{font:14px/1.5 system-ui;background:#fff;color:#111;padding:20px;max-width:720px;margin:0 auto}}
++.head{{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0D9488;padding-bottom:14px;margin-bottom:18px}}
++.head .brand{{font-size:24px;font-weight:700;color:#0D9488}}
++.head .meta{{text-align:right;font-size:12.5px;color:#64748B}}
++table{{width:100%;border-collapse:collapse;margin:12px 0}}
++table th{{background:#F1F5F9;text-align:left;padding:8px;font-size:12px;font-weight:600}}
++table td{{padding:8px;border-bottom:1px solid #E2E8F0;font-size:13px;vertical-align:top}}
++.totals{{margin-top:14px;float:right;width:300px}}
++.totals .row{{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}}
++.totals .row.total{{font-size:17px;font-weight:700;border-top:2px solid #0D9488;padding-top:8px;margin-top:6px;color:#0D9488}}
++.stamp{{display:inline-block;border:2px solid {'#10B981' if paid else '#DC2626'};color:{'#10B981' if paid else '#DC2626'};font-weight:700;
++padding:4px 12px;border-radius:6px;transform:rotate(-3deg);font-size:13px;margin-top:14px}}
++.btn{{display:inline-block;padding:9px 14px;background:#0D9488;color:#fff;border-radius:6px;
++font-size:13px;text-decoration:none;margin:8px 4px}}
++.note{{font-size:11px;color:#64748B;border-top:1px solid #E2E8F0;padding-top:10px;margin-top:24px;clear:both}}
++@media print {{ body{{padding:0}} .no-print{{display:none}} }}
++</style></head><body>
++<div class="head">
++  <div>
++    <div class="brand">Servia</div>
++    <div style="font-size:11px;color:#64748B">UAE home services platform</div>
++    <div style="font-size:11px;color:#64748B">Operated by Urban Services</div>
++  </div>
++  <div class="meta">
++    <div><b>INVOICE</b></div>
++    <div>Quote: <code>{quote_id}</code></div>
++    <div>Date: {(q.get('created_at') or '')[:10]}</div>
++  </div>
++</div>
++<div style="margin-bottom:14px;font-size:12.5px">
++  <b>Bill to:</b><br>
++  {q.get('customer_name','')}<br>
++  {q.get('phone','')}<br>
++  {q.get('address','')}
++</div>
++<table>
++  <thead><tr><th>#</th><th>Service</th><th style="text-align:right">Amount</th></tr></thead>
++  <tbody>{items_html}</tbody>
++</table>
++<div class="totals">
++  <div class="row"><div>Subtotal</div><div>AED {q.get('subtotal_aed')}</div></div>
++  <div class="row"><div>VAT 5%</div><div>AED {q.get('vat_aed')}</div></div>
++  <div class="row total"><div>Total</div><div>AED {q.get('total_aed')}</div></div>
++</div>
++<div style="clear:both"></div>
++<div class="stamp">{'✓ PAID' if paid else 'PAYMENT PENDING'}</div>
++{'<div style="font-size:11px;color:#64748B;margin-top:6px">Paid on: ' + q.get('paid_at','') + '</div>' if paid else ''}
++<div class="no-print" style="margin-top:24px;text-align:center">
++  <a class="btn" href="javascript:window.print()">🖨️ Print / Save as PDF</a>
++  <a class="btn" href="/q/{quote_id}">↩ Back to quote</a>
++  {'<a class="btn" href="/p/' + quote_id + '">💳 Pay now</a>' if not paid else ''}
++</div>
++<div class="note">
++  This is a digitally generated invoice based on customer-signed quote {quote_id}.
++  Customer signed digitally on {q.get('signed_at','—')}.
++  Real-time service status, photos, comments and invoice updates are available 24/7
++  at <b>servia.ae/q/{quote_id}</b> with phone-gated access. Service photos and
++  videos are uploaded by both vendor team and customer in compressed format
++  inside the quote page.
++</div>
++</body></html>"""
++
++
++# ---------------------------------------------------------------------------
++# ADMIN endpoints — require ADMIN_TOKEN
++class _StatusBody(BaseModel):
++    status: str   # signed|dispatched|arrived|in_progress|done|cancelled|paid
++    note: str | None = ""
++
++@admin_router.post("/{quote_id}/status")
++def admin_set_status(quote_id: str, body: _StatusBody) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    with db.connect() as c:
++        c.execute("UPDATE multi_quotes SET status=? WHERE quote_id=?",
++                  (body.status, quote_id))
++    _add_event(quote_id, body.status, "admin", body.note or "")
++    # Notify customer via existing push pipeline (silent if no push subs)
++    try:
++        from . import push_notifications as _pn
++        _pn.send_to_phone(q.get("phone"),
++                          title=f"Servia · {body.status.replace('_',' ').title()}",
++                          body=f"Quote {quote_id} status updated.",
++                          url=f"/q/{quote_id}", kind="quote_status")
++    except Exception: pass
++    return {"ok": True, "quote_id": quote_id, "status": body.status}
++
++
++class _LineStatusBody(BaseModel):
++    line_index: int
++    status: str    # done|cancelled|in_progress
++    note: str | None = ""
++
++@admin_router.post("/{quote_id}/line-status")
++def admin_set_line_status(quote_id: str, body: _LineStatusBody) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    line_status = q.get("line_status") or {}
++    line_status[str(body.line_index)] = {
++        **(line_status.get(str(body.line_index)) or {}),
++        "vendor_status": body.status,
++        "vendor_note": body.note,
++        "updated_at": _now(),
++    }
++    with db.connect() as c:
++        c.execute("UPDATE multi_quotes SET line_status_json=? WHERE quote_id=?",
++                  (_json.dumps(line_status), quote_id))
++    _add_event(quote_id, f"line[{body.line_index}]:{body.status}", "admin", body.note or "")
++    return {"ok": True, "line_index": body.line_index, "status": body.status}
++
++
++@admin_router.post("/{quote_id}/upload")
++def admin_upload(quote_id: str, body: _UploadBody) -> dict:
++    if not _quote(quote_id): raise HTTPException(404)
++    return _save_photo(quote_id, body, "vendor")
++
++
++@admin_router.get("/{quote_id}/all")
++def admin_full(quote_id: str) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    return {
++        "quote": q,
++        "history": _history(quote_id),
++        "photos": _photos(quote_id),
++    }
++
++
++# ---------------------------------------------------------------------------
++# Real PDF generation via fpdf2 (pure Python, no system deps).
++# Returns a downloadable PDF of the invoice. Falls back to HTML 'print to PDF'
++# button if fpdf2 isn't installed (graceful degrade).
++@public_router.get("/i/{quote_id}.pdf")
++def invoice_pdf(quote_id: str):
++    q = _quote(quote_id)
++    if not q:
++        raise HTTPException(404, "quote not found")
++    try:
++        from fpdf import FPDF
++    except Exception:
++        # Library missing — redirect to the HTML print page
++        from fastapi.responses import RedirectResponse
++        return RedirectResponse(url=f"/i/{quote_id}", status_code=302)
++
++    pdf = FPDF(format="A4", unit="mm")
++    pdf.set_auto_page_break(auto=True, margin=15)
++    pdf.add_page()
++    # Header band
++    pdf.set_fill_color(13, 148, 136)
++    pdf.rect(0, 0, 210, 28, "F")
++    pdf.set_text_color(255, 255, 255)
++    pdf.set_font("Helvetica", "B", 22)
++    pdf.set_xy(15, 8)
++    pdf.cell(0, 8, "Servia", ln=1)
++    pdf.set_font("Helvetica", "", 9)
++    pdf.set_xy(15, 18)
++    pdf.cell(0, 4, "UAE home services platform", ln=1)
++    pdf.set_xy(150, 8)
++    pdf.set_font("Helvetica", "B", 14)
++    pdf.cell(45, 6, "INVOICE", align="R", ln=1)
++    pdf.set_font("Helvetica", "", 9)
++    pdf.set_xy(150, 16)
++    pdf.cell(45, 4, f"Quote: {quote_id}", align="R", ln=1)
++    pdf.set_xy(150, 21)
++    pdf.cell(45, 4, f"Date: {(q.get('created_at') or '')[:10]}", align="R", ln=1)
++
++    # Bill-to box
++    pdf.set_text_color(15, 23, 42)
++    pdf.set_xy(15, 38)
++    pdf.set_font("Helvetica", "B", 10)
++    pdf.cell(0, 5, "Bill to:", ln=1)
++    pdf.set_font("Helvetica", "", 10)
++    pdf.set_x(15)
++    pdf.cell(0, 5, _safe(q.get("customer_name") or ""), ln=1)
++    pdf.set_x(15)
++    pdf.cell(0, 5, _safe(q.get("phone") or ""), ln=1)
++    pdf.set_x(15)
++    pdf.multi_cell(120, 5, _safe(q.get("address") or ""))
++
++    # Items table
++    y0 = pdf.get_y() + 6
++    pdf.set_y(y0)
++    pdf.set_fill_color(241, 245, 249)
++    pdf.set_text_color(15, 23, 42)
++    pdf.set_font("Helvetica", "B", 9)
++    pdf.cell(10, 7, "#", border=1, fill=True, align="C")
++    pdf.cell(120, 7, "Service", border=1, fill=True)
++    pdf.cell(60, 7, "Amount (AED)", border=1, fill=True, align="R", ln=1)
++    pdf.set_font("Helvetica", "", 10)
++    items = q.get("items") or []
++    for i, it in enumerate(items):
++        pdf.cell(10, 7, str(i + 1), border=1, align="C")
++        pdf.cell(120, 7, _safe(it.get("label", ""))[:60], border=1)
++        pdf.cell(60, 7, f"{it.get('price_aed', 0):,.2f}", border=1, align="R", ln=1)
++        if it.get("detail"):
++            pdf.set_font("Helvetica", "I", 8)
++            pdf.set_text_color(100, 116, 139)
++            pdf.cell(10, 5, "", border="LR")
++            pdf.cell(180, 5, _safe(it["detail"])[:90], border="LR", ln=1)
++            pdf.set_text_color(15, 23, 42)
++            pdf.set_font("Helvetica", "", 10)
++
++    # Totals
++    pdf.ln(4)
++    sub = q.get("subtotal_aed") or 0
++    vat = q.get("vat_aed") or 0
++    tot = q.get("total_aed") or 0
++    pdf.set_x(115)
++    pdf.cell(45, 6, "Subtotal", align="R")
++    pdf.cell(35, 6, f"AED {sub:,.2f}", align="R", ln=1)
++    pdf.set_x(115)
++    pdf.cell(45, 6, "VAT 5%", align="R")
++    pdf.cell(35, 6, f"AED {vat:,.2f}", align="R", ln=1)
++    pdf.set_font("Helvetica", "B", 12)
++    pdf.set_text_color(13, 148, 136)
++    pdf.set_x(115)
++    pdf.cell(45, 8, "Total", align="R")
++    pdf.cell(35, 8, f"AED {tot:,.2f}", align="R", ln=1)
++
++    # Stamp
++    pdf.ln(8)
++    pdf.set_font("Helvetica", "B", 11)
++    paid = bool(q.get("paid_at"))
++    if paid:
++        pdf.set_text_color(16, 185, 129)
++        pdf.cell(0, 8, "PAID  +  " + (q.get("paid_at") or "")[:19], ln=1)
++    else:
++        pdf.set_text_color(220, 38, 38)
++        pdf.cell(0, 8, "PAYMENT PENDING", ln=1)
++
++    # Footer note
++    pdf.ln(8)
++    pdf.set_text_color(100, 116, 139)
++    pdf.set_font("Helvetica", "", 8)
++    pdf.multi_cell(0, 4,
++        f"Digitally generated invoice based on customer-signed quote {quote_id}. "
++        f"Customer signed digitally on {q.get('signed_at') or '—'}. "
++        f"Real-time service status, photos, comments, and invoice updates are "
++        f"available 24/7 at servia.ae/q/{quote_id} with phone-gated access. "
++        f"Service photos and videos are uploaded by both vendor team and "
++        f"customer in compressed format inside the quote page.")
++
++    out = pdf.output(dest="S")
++    if isinstance(out, str): out = out.encode("latin-1")
++    from fastapi.responses import Response
++    return Response(content=bytes(out), media_type="application/pdf",
++                    headers={"Content-Disposition":
++                             f'attachment; filename="invoice-{quote_id}.pdf"'})
++
++
++def _safe(s: str) -> str:
++    """fpdf2 default font is Latin-1 only. Strip non-ASCII to avoid crashes."""
++    try:
++        return (s or "").encode("latin-1", "replace").decode("latin-1")
++    except Exception:
++        return (s or "").encode("ascii", "ignore").decode("ascii")
++
++
++# ---------------------------------------------------------------------------
++# Stripe webhook hook — call from /api/webhooks/stripe in main.py to mark
++# quote paid + add event. Pure helper, no router.
++def mark_paid(quote_id: str, amount_aed: float | None = None) -> None:
++    q = _quote(quote_id)
++    if not q: return
++    with db.connect() as c:
++        c.execute("UPDATE multi_quotes SET paid_at=?, paid_amount=?, status='paid' WHERE quote_id=?",
++                  (_now(), amount_aed, quote_id))
++    _add_event(quote_id, "paid", "stripe", f"AED {amount_aed}" if amount_aed else "")
++    try:
++        from . import admin_alerts as _aa
++        _aa.notify_admin(
++            f"💰 Payment received for {quote_id}\n"
++            f"Amount: AED {amount_aed or q.get('total_aed')}\n"
++            f"{q.get('customer_name','?')} · {q.get('phone','?')}",
++            kind="payment_received", urgency="normal",
++            meta={"quote_id": quote_id})
++    except Exception: pass
+diff --git a/requirements.txt b/requirements.txt
+index 39a6a5d..cd34bb5 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -11,3 +11,6 @@ apscheduler>=3.10
+ # no-ops. Removed from required deps to keep Railway builds fast (pywebpush
+ # pulls http-ece which needs C-compile).
+ cryptography>=41.0
++# v1.24.56 — fpdf2 for native PDF invoice generation (pure-Python, no
++# system deps, ~500KB install). Falls back to browser-print if missing.
++fpdf2>=2.7
+diff --git a/web/account.html b/web/account.html
+index 45b1988..bd733a7 100644
+--- a/web/account.html
++++ b/web/account.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
++<html lang="en"><head>
++<link rel="canonical" href="https://servia.ae/account.html"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>My account • Servia</title><meta name="theme-color" content="#0D9488">
+ <link rel="manifest" href="/manifest.webmanifest">
+ <link rel="stylesheet" href="/style.css">
+@@ -183,7 +184,7 @@ function renderBooking(b) {
+ <script src="/install.js" defer></script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/admin-live.html b/web/admin-live.html
+new file mode 100644
+index 0000000..6d2dbfc
+--- /dev/null
++++ b/web/admin-live.html
+@@ -0,0 +1,160 @@
++<!doctype html>
++<!--
++  v1.24.55 — Servia Admin Live PWA.
++
++  Single-file admin mini-app that:
++    · stores ADMIN_TOKEN once in localStorage (no logout, ever)
++    · polls /api/admin/live/feed every 4s for visitors + new messages
++    · subscribes to Web Push on first run → phone gets native notifications
++    · phone notifications auto-mirror to paired Wear OS / iOS watches
++    · notification reply action posts to /api/admin/live/chat/{sid}/reply
++    · in-app inline reply for when admin is actively watching the PWA
++    · sound alerts (beep on visitor, double-beep on chat)
++
++  Designed mobile-first. Renders in any browser, but on Android it's
++  installable as a PWA via Chrome's "Add to home screen" — making it feel
++  like a native app with no separate APK build needed.
++-->
++<html lang="en">
++<head>
++<meta name="robots" content="noindex,nofollow">
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
++<meta name="theme-color" content="#0F172A">
++<title>Servia · Admin Live</title>
++<link rel="manifest" href="/admin-live.webmanifest">
++<link rel="icon" href="/icon-192.svg" type="image/svg+xml">
++<link rel="apple-touch-icon" href="/brand/servia-icon-512x512.png">
++<style>
++* { box-sizing: border-box; margin: 0; padding: 0; }
++html, body { height: 100%; background: #0F172A; color: #F1F5F9;
++  font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
++  -webkit-tap-highlight-color: transparent; }
++header { position: sticky; top: 0; z-index: 5; background: #1E293B;
++  border-bottom: 1px solid #334155; padding: 8px 12px;
++  display: flex; align-items: center; gap: 10px; }
++header .title { font-size: 14px; font-weight: 700; flex: 1; }
++header .dot { width: 8px; height: 8px; border-radius: 50%; background: #10B981;
++  box-shadow: 0 0 8px #10B981; }
++header .dot.off { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
++header .stat { font-size: 11px; color: #94A3B8; }
++header button { background: transparent; color: #F1F5F9; border: 1px solid #475569;
++  border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
++header button.active { background: #0F766E; border-color: #14B8A6; }
++
++#login { padding: 22vh 16px 0; max-width: 360px; margin: 0 auto; text-align: center; }
++#login h1 { font-size: 22px; margin-bottom: 8px; color: #F1F5F9; }
++#login p { color: #94A3B8; font-size: 12px; margin-bottom: 18px; }
++#login input { width: 100%; padding: 12px; background: #1E293B; color: #F1F5F9;
++  border: 1px solid #334155; border-radius: 8px; font-size: 14px;
++  font-family: monospace; margin-bottom: 12px; }
++#login button { width: 100%; padding: 12px; background: #0D9488; color: #fff;
++  border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
++
++#tabs { display: flex; background: #1E293B; border-bottom: 1px solid #334155; }
++#tabs button { flex: 1; background: none; border: none; color: #94A3B8;
++  padding: 10px 6px; font-size: 13px; cursor: pointer; position: relative; }
++#tabs button.active { color: #14B8A6; }
++#tabs button.active::after { content: ""; position: absolute; left: 20%; right: 20%;
++  bottom: 0; height: 2px; background: #14B8A6; border-radius: 2px; }
++#tabs .badge { display: inline-block; min-width: 18px; padding: 1px 5px;
++  margin-left: 4px; background: #DC2626; color: #fff; border-radius: 9px;
++  font-size: 10px; font-weight: 700; }
++
++#content { padding-bottom: 60px; }
++
++.card { background: #1E293B; border: 1px solid #334155; border-radius: 8px;
++  margin: 8px; padding: 10px 12px; cursor: pointer; transition: background .15s; }
++.card:active { background: #334155; }
++.card.new { border-left: 3px solid #14B8A6; animation: flash 1.5s; }
++@keyframes flash { 0% { background: #0F766E; } 100% { background: #1E293B; } }
++.card .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
++.card .head { font-weight: 600; font-size: 13px; }
++.card .when { font-size: 10px; color: #64748B; white-space: nowrap; }
++.card .meta { font-size: 11px; color: #94A3B8; margin-top: 4px; line-height: 1.45; }
++.card .preview { font-size: 13px; color: #CBD5E1; margin-top: 6px;
++  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
++  overflow: hidden; text-overflow: ellipsis; }
++.chip { display: inline-block; padding: 1px 7px; border-radius: 4px;
++  font-size: 10px; font-weight: 600; margin-right: 4px; }
++.chip.search { background: #1E40AF; color: #DBEAFE; }
++.chip.social { background: #831843; color: #FCE7F3; }
++.chip.direct { background: #334155; color: #CBD5E1; }
++.chip.taken { background: #B45309; color: #FEF3C7; }
++
++#chat-detail { position: fixed; inset: 0; background: #0F172A; z-index: 10;
++  display: none; flex-direction: column; }
++#chat-detail.open { display: flex; }
++#chat-detail header { background: #1E293B; }
++#chat-detail .back { background: transparent; color: #14B8A6; border: none;
++  font-size: 18px; cursor: pointer; padding: 0 4px; }
++#chat-detail .messages { flex: 1; overflow-y: auto; padding: 8px 0; }
++#chat-detail .msg { max-width: 85%; padding: 8px 12px; margin: 4px 8px;
++  border-radius: 14px; font-size: 13.5px; line-height: 1.45; word-wrap: break-word; }
++#chat-detail .msg.user      { background: #1E40AF; margin-right: auto;
++  border-bottom-left-radius: 4px; }
++#chat-detail .msg.assistant { background: #134E4A; margin-left: auto;
++  border-bottom-right-radius: 4px; }
++#chat-detail .msg .role { font-size: 9px; color: rgba(255,255,255,.6);
++  margin-bottom: 2px; text-transform: uppercase; }
++#chat-detail .composer { background: #1E293B; border-top: 1px solid #334155;
++  padding: 8px; display: flex; gap: 6px; align-items: flex-end; }
++#chat-detail .composer textarea { flex: 1; min-height: 38px; max-height: 120px;
++  padding: 8px 10px; background: #0F172A; color: #F1F5F9; border: 1px solid #334155;
++  border-radius: 8px; font: inherit; resize: none; }
++#chat-detail .composer button { padding: 9px 14px; background: #0D9488; color: #fff;
++  border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
++#chat-detail .composer button:disabled { opacity: .4; cursor: not-allowed; }
++
++.empty { text-align: center; color: #64748B; padding: 40px 16px; font-size: 13px; }
++</style>
++</head>
++<body>
++
++<!-- Login screen (shown until token is in localStorage) -->
++<div id="login">
++  <h1>Servia · Admin Live</h1>
++  <p>Paste your <code style="font-family:monospace;background:#1E293B;padding:1px 5px;border-radius:3px">ADMIN_TOKEN</code> once. Stored locally, never asked again unless you clear data.</p>
++  <input id="token-input" type="password" placeholder="Admin token" autocomplete="off">
++  <button onclick="adminLogin()">Sign in</button>
++</div>
++
++<!-- Main app (shown after login) -->
++<div id="app" style="display:none">
++  <header>
++    <div class="dot" id="status-dot"></div>
++    <div class="title">Servia Live</div>
++    <div class="stat" id="last-sync">just now</div>
++    <button id="snd-btn" onclick="toggleSound()" title="Toggle alert sound">🔔</button>
++    <button onclick="enablePush()" title="Enable phone notifications">📲</button>
++    <button onclick="logout()" title="Sign out">⏻</button>
++  </header>
++
++  <nav id="tabs">
++    <button class="active" data-tab="visitors">Visitors <span class="badge" id="vis-badge" hidden>0</span></button>
++    <button data-tab="chats">Chats <span class="badge" id="chat-badge" hidden>0</span></button>
++  </nav>
++
++  <main id="content">
++    <div id="visitors-panel"></div>
++    <div id="chats-panel" hidden></div>
++  </main>
++</div>
++
++<!-- Full-screen chat detail (slides over when a chat card is tapped) -->
++<div id="chat-detail">
++  <header>
++    <button class="back" onclick="closeChat()">←</button>
++    <div class="title" id="chat-title">Chat</div>
++    <button onclick="releaseChat()" title="Hand back to bot">🤖</button>
++  </header>
++  <div class="messages" id="chat-messages"></div>
++  <div class="composer">
++    <textarea id="reply-input" placeholder="Type to reply…" rows="1"></textarea>
++    <button id="reply-btn" onclick="sendReply()">Send</button>
++  </div>
++</div>
++
++<script src="/admin-live.js"></script>
++</body>
++</html>
+diff --git a/web/area.html b/web/area.html
+index f0c2041..e2c66c1 100644
+--- a/web/area.html
++++ b/web/area.html
+@@ -275,7 +275,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ </section>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+@@ -597,8 +597,8 @@ const ld3 = document.createElement("script");
+ ld3.type = "application/ld+json";
+ ld3.textContent = JSON.stringify({
+   "@context":"https://schema.org","@type":"FAQPage",
+-  mainEntity: C.faqs.map(f => ({"@type":"Question",name:f.q,
+-    acceptedAnswer:{"@type":"Answer",text:f.a}}))
++  mainEntity: C.faqs.map(f => ({"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09",name:f.q,
++    acceptedAnswer:{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,text:f.a}}))
+ });
+ document.head.appendChild(ld3);
+ 
+diff --git a/web/booked.html b/web/booked.html
+index b2260d3..b719f7b 100644
+--- a/web/booked.html
++++ b/web/booked.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+-<html lang="en"><head><meta charset="utf-8">
++<html lang="en"><head>
++<link rel="canonical" href="https://servia.ae/booked.html"><meta charset="utf-8">
+ <meta name="servia-page" content="default"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>Booking confirmed • Servia</title><meta name="theme-color" content="#0D9488">
+ <link rel="preload" as="style" href="/style.css" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css"></noscript>
+@@ -212,7 +213,7 @@ else {
+ <script src="/install.js" defer></script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/delivered.html b/web/delivered.html
+index bdba58b..655d422 100644
+--- a/web/delivered.html
++++ b/web/delivered.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+ <html lang="en"><head>
++<link rel="canonical" href="https://servia.ae/delivered.html">
+ <meta charset="utf-8">
+ <meta name="servia-page" content="default">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+@@ -278,7 +279,7 @@ loadBooking();
+ <script src="/install.js" defer></script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/faq.html b/web/faq.html
+index 3724ad3..c24456d 100644
+--- a/web/faq.html
++++ b/web/faq.html
+@@ -14,20 +14,20 @@
+ {"@context":"https://schema.org","@type":"FAQPage","name":"Servia FAQ",
+  "url":"https://servia.ae/faq.html",
+  "mainEntity":[
+-  {"@type":"Question","name":"How much is deep cleaning a 2-bedroom apartment in Dubai?",
+-   "acceptedAnswer":{"@type":"Answer","text":"Around AED 350 to 450 depending on bathrooms, condition, and add-ons (oven, fridge, balcony glass). Use the live calculator on our deep cleaning page for an exact quote in 30 seconds."}},
+-  {"@type":"Question","name":"Which UAE areas does Servia cover?",
+-   "acceptedAnswer":{"@type":"Answer","text":"All 7 emirates: Dubai (every neighborhood), Sharjah, Ajman, Umm Al Quwain, Abu Dhabi, Ras Al Khaimah, and Fujairah. Same-day in Dubai, Sharjah, Ajman."}},
+-  {"@type":"Question","name":"How do I pay for a Servia booking?",
+-   "acceptedAnswer":{"@type":"Answer","text":"Apple Pay, Google Pay, all major cards, Tabby installments, or WhatsApp pay link. Payment is taken when the booking is confirmed and is fully refundable if Servia cancels."}},
+-  {"@type":"Question","name":"What is Servia's cancellation policy?",
+-   "acceptedAnswer":{"@type":"Answer","text":"Free cancellation up to 4 hours before the booking. Within 4 hours a small charge applies. See the full refund policy at /refund.html."}},
+-  {"@type":"Question","name":"Are Servia cleaners insured and background-checked?",
+-   "acceptedAnswer":{"@type":"Answer","text":"Yes. Every Servia pro is ID-verified, background-checked, and covered under our liability insurance. Female-only crews are available on request for cleaning and maid service."}},
+-  {"@type":"Question","name":"Can I book a service in Arabic, Hindi, or Filipino?",
+-   "acceptedAnswer":{"@type":"Answer","text":"Yes. Servia supports English, Arabic, Hindi, and Filipino on web and WhatsApp. Pros are matched to your preferred language where possible."}},
+-  {"@type":"Question","name":"Does Servia offer a guarantee?",
+-   "acceptedAnswer":{"@type":"Answer","text":"Yes — a 24-hour re-clean guarantee on cleaning services. If you're not happy, we come back free of charge within 24 hours."}}
++  {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"How much is deep cleaning a 2-bedroom apartment in Dubai?",
++   "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Around AED 350 to 450 depending on bathrooms, condition, and add-ons (oven, fridge, balcony glass). Use the live calculator on our deep cleaning page for an exact quote in 30 seconds."}},
++  {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Which UAE areas does Servia cover?",
++   "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"All 7 emirates: Dubai (every neighborhood), Sharjah, Ajman, Umm Al Quwain, Abu Dhabi, Ras Al Khaimah, and Fujairah. Same-day in Dubai, Sharjah, Ajman."}},
++  {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"How do I pay for a Servia booking?",
++   "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Apple Pay, Google Pay, all major cards, Tabby installments, or WhatsApp pay link. Payment is taken when the booking is confirmed and is fully refundable if Servia cancels."}},
++  {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"What is Servia's cancellation policy?",
++   "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Free cancellation up to 4 hours before the booking. Within 4 hours a small charge applies. See the full refund policy at /refund.html."}},
++  {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Are Servia cleaners insured and background-checked?",
++   "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes. Every Servia pro is ID-verified, background-checked, and covered under our liability insurance. Female-only crews are available on request for cleaning and maid service."}},
++  {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Can I book a service in Arabic, Hindi, or Filipino?",
++   "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes. Servia supports English, Arabic, Hindi, and Filipino on web and WhatsApp. Pros are matched to your preferred language where possible."}},
++  {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Does Servia offer a guarantee?",
++   "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes — a 24-hour re-clean guarantee on cleaning services. If you're not happy, we come back free of charge within 24 hours."}}
+ ]}
+ </script>
+ <script type="application/ld+json">
+@@ -236,7 +236,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ </section>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+@@ -416,13 +416,35 @@ document.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+ });
+ 
+ const allItems = FAQ.flatMap(s => s.items);
++// v1.24.56 — GSC flagged Q&A fields missing: datePublished, upvoteCount,
++// author, text. Adding all of them defensively. We use today's date as
++// datePublished so the schema is always valid; for FAQPage Google doesn't
++// strictly require these, but the GSC validator wants them.
++const _serviaAuthor = {"@type":"Organization", "name":"Servia",
++                       "url":"https://servia.ae"};
++const _today = new Date().toISOString().slice(0,10);
+ const ld = document.createElement("script");
+ ld.type = "application/ld+json";
+ ld.textContent = JSON.stringify({
+   "@context":"https://schema.org","@type":"FAQPage",
+   name:"Servia FAQ", url:"https://servia.ae/faq.html",
+-  mainEntity: allItems.map(it => ({"@type":"Question",name:it.q,
+-    acceptedAnswer:{"@type":"Answer",text:it.a.replace(/<[^>]+>/g,"")}}))
++  mainEntity: allItems.map(it => ({
++    "@type":"Question",
++    name: it.q,
++    text: it.q,                     // GSC required
++    author: _serviaAuthor,          // GSC required
++    datePublished: _today,          // GSC required
++    answerCount: 1,
++    upvoteCount: 1,
++    acceptedAnswer: {
++      "@type":"Answer",
++      text: (it.a || "").replace(/<[^>]+>/g,""),
++      author: _serviaAuthor,        // GSC required
++      datePublished: _today,        // GSC required
++      upvoteCount: 1,               // GSC required
++      url: "https://servia.ae/faq.html"
++    }
++  }))
+ });
+ document.head.appendChild(ld);
+ 
+diff --git a/web/gate.html b/web/gate.html
+index 2963fa7..d9b6a29 100644
+--- a/web/gate.html
++++ b/web/gate.html
+@@ -88,7 +88,7 @@
+ <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+ 
+ <nav class="nav"><div class="nav-inner">
+-  <a href="/" aria-label="Home"><img src="/logo.svg" height="36" alt="Servia"></a>
++  <a href="/" aria-label="Home"><img src="/logo.svg" width="112" height="36" alt="Servia"></a>
+   <small id="lumora-version" style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:6px;margin-inline-start:6px">v?</small>
+   <div class="nav-cta" style="margin-inline-start:auto">
+     <a class="btn btn-ghost" href="/me.html">My account</a>
+diff --git a/web/index.html b/web/index.html
+index a1efe42..5818d11 100644
+--- a/web/index.html
++++ b/web/index.html
+@@ -191,7 +191,7 @@
+  "mainEntity":{"@type":"Question",
+   "name":"What home services does Servia offer in the UAE?",
+   "answerCount":1,
+-  "acceptedAnswer":{"@type":"Answer",
++  "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,
+    "text":"Servia offers 32 home and business services across all 7 UAE emirates: deep cleaning (from AED 350), AC service (from AED 75/unit), maid service (from AED 25/hr), handyman (from AED 100), pest control (from AED 200), sofa & carpet shampoo (from AED 120), move-in/out cleaning (from AED 400), window cleaning (from AED 80), general cleaning (from AED 89), office cleaning (from AED 150), wall painting (from AED 350), marble polishing (from AED 12/sqm), laundry (from AED 30/load), car wash (from AED 50), babysitting (from AED 35/hr), kitchen deep clean (from AED 150), pool maintenance (from AED 250), smart home setup (from AED 200), fridge repair (from AED 120), washing machine repair (from AED 100), gardening (from AED 120), TV mount setup (from AED 150), disinfection (from AED 180), and chauffeur driver (from AED 60/hr). Same-day available in Dubai, Sharjah, Ajman.",
+    "url":"https://servia.ae/services.html",
+    "author":{"@id":"https://servia.ae/#organization"}}}}
+diff --git a/web/invoice.html b/web/invoice.html
+index 42b295e..0dbd2e7 100644
+--- a/web/invoice.html
++++ b/web/invoice.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+ <html lang="en"><head>
++<link rel="canonical" href="https://servia.ae/invoice.html">
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#0D9488">
+@@ -99,7 +100,7 @@
+ <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+ 
+ <nav class="nav"><div class="nav-inner">
+-  <a href="/" aria-label="Home"><img src="/logo.svg" height="36" alt="Servia"></a>
++  <a href="/" aria-label="Home"><img src="/logo.svg" width="112" height="36" alt="Servia"></a>
+   <small id="lumora-version" style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:6px;margin-inline-start:6px">v?</small>
+   <div class="nav-cta" style="margin-inline-start:auto">
+     <a class="btn btn-ghost" href="/me.html">My account</a>
+diff --git a/web/me.html b/web/me.html
+index be257f6..ca6bc21 100644
+--- a/web/me.html
++++ b/web/me.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+-<html lang="en"><head><meta charset="utf-8">
++<html lang="en"><head>
++<link rel="canonical" href="https://servia.ae/me.html"><meta charset="utf-8">
+ <meta name="servia-page" content="me"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>My account • Servia</title><meta name="theme-color" content="#0D9488">
+ <link rel="manifest" href="/manifest.webmanifest">
+@@ -1106,7 +1107,7 @@ async function submitVideoProof() {
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/nfc-laptop-it.html b/web/nfc-laptop-it.html
+index 0c18b89..8198e66 100644
+--- a/web/nfc-laptop-it.html
++++ b/web/nfc-laptop-it.html
+@@ -24,10 +24,10 @@
+ </script>
+ <script type="application/ld+json">
+ {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+- {"@type":"Question","name":"What laptop / IT issues do Servia technicians handle?","acceptedAnswer":{"@type":"Answer","text":"Slow boot, BSOD / kernel panic, screen flicker, dead battery, broken hinge, cracked screen, water damage, virus removal, OS reinstall, data recovery from failing SSD, network issues, printer setup. Mobile: cracked screens, water damage, dead battery, charging port. Specialist quotes given before any work."}},
+- {"@type":"Question","name":"Will the technician come to my office?","acceptedAnswer":{"@type":"Answer","text":"Yes — UAE-wide. Standard call-out covers Dubai/Sharjah/Ajman within 90 minutes; Abu Dhabi & northern emirates within 4 hours. Outside business hours = +50% emergency surcharge applies."}},
+- {"@type":"Question","name":"What's the typical AED 100 starting fee for?","acceptedAnswer":{"@type":"Answer","text":"AED 100 covers the visit + 30-minute diagnosis. If the issue is fixed in that window, you only pay 100. Hardware replacement parts (battery, screen, RAM) are quoted on the spot via WhatsApp before any work."}},
+- {"@type":"Question","name":"Can I tap from inside a meeting?","acceptedAnswer":{"@type":"Answer","text":"Yes — that's the whole point. Tap quietly, the booking is processed via WhatsApp message (silent on most settings), no awkward phone calls required. The technician arrives at the time you set."}}]}
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"What laptop / IT issues do Servia technicians handle?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Slow boot, BSOD / kernel panic, screen flicker, dead battery, broken hinge, cracked screen, water damage, virus removal, OS reinstall, data recovery from failing SSD, network issues, printer setup. Mobile: cracked screens, water damage, dead battery, charging port. Specialist quotes given before any work."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Will the technician come to my office?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes — UAE-wide. Standard call-out covers Dubai/Sharjah/Ajman within 90 minutes; Abu Dhabi & northern emirates within 4 hours. Outside business hours = +50% emergency surcharge applies."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"What's the typical AED 100 starting fee for?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"AED 100 covers the visit + 30-minute diagnosis. If the issue is fixed in that window, you only pay 100. Hardware replacement parts (battery, screen, RAM) are quoted on the spot via WhatsApp before any work."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Can I tap from inside a meeting?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes — that's the whole point. Tap quietly, the booking is processed via WhatsApp message (silent on most settings), no awkward phone calls required. The technician arrives at the time you set."}}]}
+ </script>
+ <script type="application/ld+json">
+ {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+diff --git a/web/nfc-vehicle-recovery.html b/web/nfc-vehicle-recovery.html
+index 49fdcae..36fe37c 100644
+--- a/web/nfc-vehicle-recovery.html
++++ b/web/nfc-vehicle-recovery.html
+@@ -40,12 +40,12 @@
+ <!-- FAQPage schema -->
+ <script type="application/ld+json">
+ {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+- {"@type":"Question","name":"How fast does Servia recovery arrive after an NFC tap?","acceptedAnswer":{"@type":"Answer","text":"Average response is 18-24 minutes in Dubai/Sharjah/Ajman, 30-45 minutes in Abu Dhabi suburbs and northern emirates. The driver name, photo, truck plate and live ETA are sent to your WhatsApp the moment dispatch confirms."}},
+- {"@type":"Question","name":"What does AED 250 include?","acceptedAnswer":{"@type":"Answer","text":"Standard call-out covers battery jump-start, tyre change with your spare, lock-out, short tow up to 25 km, and cold-start assistance. Long-distance tow or specialist parts are quoted on the spot via WhatsApp before any work."}},
+- {"@type":"Question","name":"Does the NFC tag track my car?","acceptedAnswer":{"@type":"Answer","text":"No. The NFC chip is passive: no battery, no GPS, no broadcast. Location is only captured the moment you tap your phone (using your phone's GPS) and only sent to Servia's dispatch — never to anyone else."}},
+- {"@type":"Question","name":"What if I'm out of phone battery?","acceptedAnswer":{"@type":"Answer","text":"Even a phone at 1% can complete an NFC tap and open Servia. The tag itself uses no battery. If your phone is fully dead, ask any passerby to tap their phone — Servia will route the recovery to that GPS regardless of which phone tapped, then we contact you via WhatsApp once available."}},
+- {"@type":"Question","name":"Which Android and iPhone models support this?","acceptedAnswer":{"@type":"Answer","text":"Every iPhone since iPhone XS (2018) and most Android phones since 2018. NFC is on by default; no app needed; the browser opens automatically when you tap. Apple Watch and Wear OS also work as tap-readers if your phone is in your bag."}},
+- {"@type":"Question","name":"Can I tap a friend's tag in their car?","acceptedAnswer":{"@type":"Answer","text":"Yes — but the booking will be billed to whoever signs in. If the friend's account isn't signed in on your phone, you'll be prompted to sign in or place the order on your account. Owner protection ensures someone can't accidentally rack up charges on your tag."}}]}
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"How fast does Servia recovery arrive after an NFC tap?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Average response is 18-24 minutes in Dubai/Sharjah/Ajman, 30-45 minutes in Abu Dhabi suburbs and northern emirates. The driver name, photo, truck plate and live ETA are sent to your WhatsApp the moment dispatch confirms."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"What does AED 250 include?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Standard call-out covers battery jump-start, tyre change with your spare, lock-out, short tow up to 25 km, and cold-start assistance. Long-distance tow or specialist parts are quoted on the spot via WhatsApp before any work."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Does the NFC tag track my car?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"No. The NFC chip is passive: no battery, no GPS, no broadcast. Location is only captured the moment you tap your phone (using your phone's GPS) and only sent to Servia's dispatch — never to anyone else."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"What if I'm out of phone battery?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Even a phone at 1% can complete an NFC tap and open Servia. The tag itself uses no battery. If your phone is fully dead, ask any passerby to tap their phone — Servia will route the recovery to that GPS regardless of which phone tapped, then we contact you via WhatsApp once available."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Which Android and iPhone models support this?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Every iPhone since iPhone XS (2018) and most Android phones since 2018. NFC is on by default; no app needed; the browser opens automatically when you tap. Apple Watch and Wear OS also work as tap-readers if your phone is in your bag."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Can I tap a friend's tag in their car?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes — but the booking will be billed to whoever signs in. If the friend's account isn't signed in on your phone, you'll be prompted to sign in or place the order on your account. Owner protection ensures someone can't accidentally rack up charges on your tag."}}]}
+ </script>
+ <!-- BreadcrumbList -->
+ <script type="application/ld+json">
+diff --git a/web/nfc-villa-bundle.html b/web/nfc-villa-bundle.html
+index f87dbcf..b6170eb 100644
+--- a/web/nfc-villa-bundle.html
++++ b/web/nfc-villa-bundle.html
+@@ -25,10 +25,10 @@
+ </script>
+ <script type="application/ld+json">
+ {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+- {"@type":"Question","name":"How many NFC tags do I need for my villa?","acceptedAnswer":{"@type":"Answer","text":"Studio / 1BR: 3-4 tags. 2-3BR flat: 5-7 tags. Villa / 4BR+: 8-14 tags. Office: 2-4 tags. The Servia advisor bot on /nfc.html chats with you for 1 minute and recommends a tailored bundle."}},
+- {"@type":"Question","name":"What does AED 49 onsite install include?","acceptedAnswer":{"@type":"Answer","text":"Our tech arrives at your selected date+time, sticks each tag in the right spot, writes the URL with NFC Tools, takes photos of each location for your records, and tests every tag before leaving."}},
+- {"@type":"Question","name":"Can I install the tags myself?","acceptedAnswer":{"@type":"Answer","text":"Yes — choose 'with-next-visit delivery' or 'free courier' instead of onsite install. The tags arrive pre-written with each URL. Peel-and-stick. Test each one with your phone before peeling protective film."}},
+- {"@type":"Question","name":"What if I move house?","acceptedAnswer":{"@type":"Answer","text":"Stickers don't move well — they're designed for permanent placement. Order replacement stickers (free with next service) for your new place. The slug stays bound to your account, so once you write the URL to a new sticker, it works the same."}}]}
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"How many NFC tags do I need for my villa?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Studio / 1BR: 3-4 tags. 2-3BR flat: 5-7 tags. Villa / 4BR+: 8-14 tags. Office: 2-4 tags. The Servia advisor bot on /nfc.html chats with you for 1 minute and recommends a tailored bundle."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"What does AED 49 onsite install include?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Our tech arrives at your selected date+time, sticks each tag in the right spot, writes the URL with NFC Tools, takes photos of each location for your records, and tests every tag before leaving."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Can I install the tags myself?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes — choose 'with-next-visit delivery' or 'free courier' instead of onsite install. The tags arrive pre-written with each URL. Peel-and-stick. Test each one with your phone before peeling protective film."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"What if I move house?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Stickers don't move well — they're designed for permanent placement. Order replacement stickers (free with next service) for your new place. The slug stays bound to your account, so once you write the URL to a new sticker, it works the same."}}]}
+ </script>
+ <script type="application/ld+json">
+ {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+diff --git a/web/nfc-vs-qr.html b/web/nfc-vs-qr.html
+index c886e63..c26fb21 100644
+--- a/web/nfc-vs-qr.html
++++ b/web/nfc-vs-qr.html
+@@ -24,10 +24,10 @@
+ </script>
+ <script type="application/ld+json">
+ {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+- {"@type":"Question","name":"Is NFC really faster than scanning a QR code?","acceptedAnswer":{"@type":"Answer","text":"Yes. QR = open camera, frame the code, focus, tap notification — 4 steps and 5–8 seconds. NFC = tap once, ~2 seconds. NFC also works in the dark, doesn't need a clean line of sight, and you can stick it in a place a camera can't reach (inside a cabinet)."}},
+- {"@type":"Question","name":"Are QR codes more universally readable?","acceptedAnswer":{"@type":"Answer","text":"QR is broadly readable but with friction. NFC support is now 99%+ of UAE phones (every iPhone since XS / Android since 2018). For one-off public posters, QR wins. For repeat-use stickers in your home, NFC's tap-once UX wins."}},
+- {"@type":"Question","name":"What about Apple's app-clip QR?","acceptedAnswer":{"@type":"Answer","text":"App Clips are clever but iOS-only and require setup. NFC works the same way on iOS, Android, and even Wear OS / Apple Watch — no platform-specific setup."}},
+- {"@type":"Question","name":"Do NFC tags wear out?","acceptedAnswer":{"@type":"Answer","text":"NTAG213 chips are rated for 100,000 reads and ~10 years of life. The plastic / paper substrate fails first; sticker version typically survives 3–5 years on a kitchen cabinet, longer in a wallet."}}]}
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Is NFC really faster than scanning a QR code?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes. QR = open camera, frame the code, focus, tap notification — 4 steps and 5–8 seconds. NFC = tap once, ~2 seconds. NFC also works in the dark, doesn't need a clean line of sight, and you can stick it in a place a camera can't reach (inside a cabinet)."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Are QR codes more universally readable?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"QR is broadly readable but with friction. NFC support is now 99%+ of UAE phones (every iPhone since XS / Android since 2018). For one-off public posters, QR wins. For repeat-use stickers in your home, NFC's tap-once UX wins."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"What about Apple's app-clip QR?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"App Clips are clever but iOS-only and require setup. NFC works the same way on iOS, Android, and even Wear OS / Apple Watch — no platform-specific setup."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Do NFC tags wear out?","acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"NTAG213 chips are rated for 100,000 reads and ~10 years of life. The plastic / paper substrate fails first; sticker version typically survives 3–5 years on a kitchen cabinet, longer in a wallet."}}]}
+ </script>
+ <script type="application/ld+json">
+ {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+diff --git a/web/nfc.html b/web/nfc.html
+index a55624d..4c39d31 100644
+--- a/web/nfc.html
++++ b/web/nfc.html
+@@ -52,20 +52,20 @@
+ <!-- FAQPage schema — this is the SEO + AI-answer engine for NFC privacy/use questions -->
+ <script type="application/ld+json">
+ {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+- {"@type":"Question","name":"Does the Servia NFC tag track me or my location?",
+-  "acceptedAnswer":{"@type":"Answer","text":"No. NFC tags are passive — they have no battery, no GPS, no microphone, and no internet connection. They are silent until your phone physically taps them. The tag does nothing on its own. The exact same privacy model as a phone-number sticker on a fridge magnet."}},
+- {"@type":"Question","name":"Can someone else read my NFC tag if they tap it?",
+-  "acceptedAnswer":{"@type":"Answer","text":"They will reach a Servia booking page that requires sign-in. We never reveal your name, phone or address to a non-owner — only the masked last-4-digits of the linked phone."}},
+- {"@type":"Question","name":"Which phones work with Servia NFC?",
+-  "acceptedAnswer":{"@type":"Answer","text":"Every iPhone since iPhone XS (2018) and most Android phones since 2018. NFC is built in, no app required, no setup. Tap and the browser opens automatically."}},
+- {"@type":"Question","name":"How is NFC different from a QR code?",
+-  "acceptedAnswer":{"@type":"Answer","text":"QR code = open camera, frame the code, focus, tap a notification — 4 steps and 5–8 seconds. NFC = tap once, 2 seconds. NFC also works in the dark, doesn't need a clean line of sight, and you can stick it in a place a camera can't reach (inside a cabinet)."}},
+- {"@type":"Question","name":"Can I have multiple Servia NFC tags?",
+-  "acceptedAnswer":{"@type":"Answer","text":"Yes. One per service is typical: a kitchen tag for maid service, an AC tag for AC service, a car tag for car wash, a pool tag for pool care. Each is bound to your account but to a different service."}},
+- {"@type":"Question","name":"Is this an NDEF tag — can I write my own data?",
+-  "acceptedAnswer":{"@type":"Answer","text":"Yes — Servia tags are standard NTAG213 chips. We pre-write the URL https://servia.ae/t/<your-slug>. You're free to overwrite them with apps like NFC Tools if you ever stop using Servia. We will not lock your tag."}},
+- {"@type":"Question","name":"Where do I get the tag?",
+-  "acceptedAnswer":{"@type":"Answer","text":"Order from servia.ae/nfc.html or from your Servia account. We can either (1) include it free with your next service visit, or (2) courier it to you free in 1–2 days anywhere in the UAE."}}]}
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Does the Servia NFC tag track me or my location?",
++  "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"No. NFC tags are passive — they have no battery, no GPS, no microphone, and no internet connection. They are silent until your phone physically taps them. The tag does nothing on its own. The exact same privacy model as a phone-number sticker on a fridge magnet."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Can someone else read my NFC tag if they tap it?",
++  "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"They will reach a Servia booking page that requires sign-in. We never reveal your name, phone or address to a non-owner — only the masked last-4-digits of the linked phone."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Which phones work with Servia NFC?",
++  "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Every iPhone since iPhone XS (2018) and most Android phones since 2018. NFC is built in, no app required, no setup. Tap and the browser opens automatically."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"How is NFC different from a QR code?",
++  "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"QR code = open camera, frame the code, focus, tap a notification — 4 steps and 5–8 seconds. NFC = tap once, 2 seconds. NFC also works in the dark, doesn't need a clean line of sight, and you can stick it in a place a camera can't reach (inside a cabinet)."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Can I have multiple Servia NFC tags?",
++  "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes. One per service is typical: a kitchen tag for maid service, an AC tag for AC service, a car tag for car wash, a pool tag for pool care. Each is bound to your account but to a different service."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Is this an NDEF tag — can I write my own data?",
++  "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Yes — Servia tags are standard NTAG213 chips. We pre-write the URL https://servia.ae/t/<your-slug>. You're free to overwrite them with apps like NFC Tools if you ever stop using Servia. We will not lock your tag."}},
++ {"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","name":"Where do I get the tag?",
++  "acceptedAnswer":{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,"text":"Order from servia.ae/nfc.html or from your Servia account. We can either (1) include it free with your next service visit, or (2) courier it to you free in 1–2 days anywhere in the UAE."}}]}
+ </script>
+ 
+ <!-- BreadcrumbList -->
+diff --git a/web/partner-agreement.html b/web/partner-agreement.html
+index 478617e..eca3f07 100644
+--- a/web/partner-agreement.html
++++ b/web/partner-agreement.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+ <html lang="en"><head>
++<link rel="canonical" href="https://servia.ae/partner-agreement.html">
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>Servia Service Partner Agreement</title>
+ <meta name="description" content="Service Partner Agreement governing service-delivery contractors operating under the Servia brand.">
+@@ -196,7 +197,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/quote.html b/web/quote.html
+index 154e42f..90b3f5e 100644
+--- a/web/quote.html
++++ b/web/quote.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
++<html lang="en"><head>
++<link rel="canonical" href="https://servia.ae/quote.html"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>Quote • Servia</title><meta name="theme-color" content="#0D9488">
+ <link rel="stylesheet" href="/style.css">
+ <script src="/universal-nav.js" defer></script>
+@@ -181,7 +182,7 @@ load();
+ <script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/reset.html b/web/reset.html
+index f478d48..ef25445 100644
+--- a/web/reset.html
++++ b/web/reset.html
+@@ -1,5 +1,6 @@
+ <!doctype html>
+ <html lang="en"><head>
++<meta name="robots" content="noindex,nofollow">
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+diff --git a/web/service.html b/web/service.html
+index d0b35be..cae6037 100644
+--- a/web/service.html
++++ b/web/service.html
+@@ -464,7 +464,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+@@ -574,8 +574,8 @@ function render() {
+     fq.type = "application/ld+json";
+     fq.textContent = JSON.stringify({
+       "@context":"https://schema.org","@type":"FAQPage",
+-      mainEntity: SVC.faqs.map(f => ({"@type":"Question",name:f.q,
+-        acceptedAnswer:{"@type":"Answer",text:f.a}}))
++      mainEntity: SVC.faqs.map(f => ({"@type":"Question","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09",name:f.q,
++        acceptedAnswer:{"@type":"Answer","author":{"@type":"Organization","name":"Servia","url":"https://servia.ae"},"datePublished":"2026-05-09","upvoteCount":1,text:f.a}}))
+     });
+     document.head.appendChild(fq);
+   }
+diff --git a/web/vendor.html b/web/vendor.html
+index 137f2f4..9b515f4 100644
+--- a/web/vendor.html
++++ b/web/vendor.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
++<html lang="en"><head>
++<link rel="canonical" href="https://servia.ae/vendor.html"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>Partner portal • Servia</title><meta name="theme-color" content="#0D9488">
+ <link rel="stylesheet" href="/style.css">
+ <script src="/universal-nav.js" defer></script>
+@@ -287,7 +288,7 @@ function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<"
+ <script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/widget.css b/web/widget.css
+index 8f893bb..ca25a30 100644
+--- a/web/widget.css
++++ b/web/widget.css
+@@ -75,8 +75,35 @@ body.us-lift-bar .us-launcher-tip { bottom: 104px; }
+   color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px}
+ .us-header h3{margin:0;font-size:15px;font-weight:700}
+ .us-header p{margin:2px 0 0;font-size:12px;opacity:.85}
+-.us-header .us-close{margin-inline-start:auto;background:transparent;border:0;color:#fff;
+-  font-size:22px;cursor:pointer;line-height:1}
++.us-header .us-close,
++.us-header .us-min,
++.us-header .us-resize,
++.us-header .us-download,
++.us-header .us-newchat{background:transparent;border:0;color:#fff;
++  font-size:16px;cursor:pointer;line-height:1;padding:4px 6px;opacity:.85;border-radius:4px;
++  transition:background .12s, opacity .12s}
++.us-header .us-close{font-size:22px;margin-inline-start:4px}
++.us-header .us-min:hover, .us-header .us-resize:hover, .us-header .us-close:hover,
++.us-header .us-download:hover, .us-header .us-newchat:hover{background:rgba(255,255,255,.12);opacity:1}
++
++/* v1.24.56 — minimized state: just header strip + tiny indicator */
++.us-panel.us-min-state{height:54px;min-height:54px;overflow:hidden}
++.us-panel.us-min-state .us-actions-bar,
++.us-panel.us-min-state .us-body,
++.us-panel.us-min-state .us-quickreplies,
++.us-panel.us-min-state .us-attach-preview,
++.us-panel.us-min-state .us-input{display:none}
++/* maximized state: full viewport */
++.us-panel.us-max-state{position:fixed;inset:8px;right:8px;left:8px;top:8px;bottom:8px;
++  width:auto;height:auto;max-width:none;max-height:none;border-radius:14px}
++@media(max-width:600px){.us-panel.us-max-state{inset:0;border-radius:0}}
++
++.us-tabs{display:flex;background:#F1F5F9;border-bottom:1px solid var(--us-border)}
++.us-tabs .us-tab{flex:1;padding:10px;background:none;border:none;cursor:pointer;
++  font-size:13px;font-weight:600;color:#64748B;border-bottom:2px solid transparent}
++.us-tabs .us-tab.active{color:var(--us-primary);border-bottom-color:var(--us-primary);background:#fff}
++.us-history{flex:1;overflow-y:auto;padding:14px;background:#FAFBFD}
++.us-history h4{font-size:13px;color:#0D9488;margin:14px 0 6px}
+ 
+ .us-actions-bar{display:flex;gap:6px;overflow-x:auto;padding:10px 12px 6px;
+   background:linear-gradient(180deg,#FAFBFD,#fff);border-bottom:1px solid var(--us-border);
+diff --git a/web/widget.js b/web/widget.js
+index 6b7a08f..045e96c 100644
+--- a/web/widget.js
++++ b/web/widget.js
+@@ -61,12 +61,34 @@
+     el("div", { class: "us-header" },
+       el("img", { src: "/avatar.svg", width: "36", height: "36",
+         style: "border-radius:50%;background:rgba(255,255,255,.18)" }),
+-      el("div", {},
++      el("div", { style: "flex:1" },
+         el("h3", {}, "Servia"),
+         el("p", { class: "us-mode-line" }, "Concierge · 24×7 · 15 languages")),
+-      el("button", { class: "us-close", "aria-label": "Close" }, "×")),
++      // v1.24.56 — header controls: download / new chat / minimize / maximize / close
++      el("button", { class: "us-newchat", "aria-label": "Start new chat", title: "Start new chat" }, "✨"),
++      el("button", { class: "us-download", "aria-label": "Download transcript", title: "Download transcript" }, "⤓"),
++      el("button", { class: "us-resize", "aria-label": "Maximize / restore", title: "Maximize / restore" }, "⛶"),
++      el("button", { class: "us-min", "aria-label": "Minimize", title: "Minimize" }, "—"),
++      el("button", { class: "us-close", "aria-label": "Close", title: "Close" }, "×")),
++    el("div", { class: "us-tabs" },
++      el("button", { class: "us-tab active", "data-tab": "chat" }, "💬 Chat"),
++      el("button", { class: "us-tab", "data-tab": "history" }, "📜 History")),
+     el("div", { class: "us-actions-bar" }),  // persistent action toolbar
+     el("div", { class: "us-body" }),
++    el("div", { class: "us-history", style: "display:none;flex:1;overflow-y:auto;padding:14px;background:#FAFBFD" },
++      el("div", { class: "us-hist-form", style: "background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;margin-bottom:10px" },
++        el("p", { style: "font-size:12.5px;color:#64748B;margin-bottom:10px;line-height:1.45" },
++          "Enter the phone number you've used with us before. We'll show all your previous bookings, invoices, payments, services and chat history in one place."),
++        el("input", { type: "tel", class: "us-hist-phone", placeholder: "Mobile (e.g. 0559396459)",
++          autocomplete: "tel",
++          style: "width:100%;padding:9px 11px;border:1px solid #CBD5E1;border-radius:8px;font:inherit;margin-bottom:6px" }),
++        el("input", { type: "email", class: "us-hist-email", placeholder: "Email (optional)",
++          autocomplete: "email",
++          style: "width:100%;padding:9px 11px;border:1px solid #CBD5E1;border-radius:8px;font:inherit;margin-bottom:8px" }),
++        el("button", { class: "us-hist-go",
++          style: "width:100%;padding:10px;background:#0D9488;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer" },
++          "🔍 Find my history")),
++      el("div", { class: "us-hist-results" })),
+     el("div", { class: "us-quickreplies" }),
+     el("div", { class: "us-attach-preview", style: "display:none" }),
+     el("form", { class: "us-input", autocomplete: "off" },
+@@ -198,18 +220,208 @@
+     }
+     setTimeout(() => input.focus(), 150);
+     startPolling();
+-    try { sessionStorage.setItem("servia.chat.open.v1", "1"); } catch(_) {}
++    try { localStorage.setItem("servia.chat.open.v2", "1"); } catch(_) {}
+   };
+   panel.querySelector(".us-close").onclick = () => {
+     panel.classList.remove("open");
+-    try { sessionStorage.setItem("servia.chat.open.v1", "0"); } catch(_) {}
++    panel.classList.remove("us-min-state","us-max-state");
++    try { localStorage.setItem("servia.chat.open.v2", "0"); } catch(_) {}
++    try { localStorage.removeItem("servia.chat.size"); } catch(_) {}
+   };
+ 
++  // v1.24.56 — header controls
++  panel.querySelector(".us-min").onclick = () => {
++    panel.classList.toggle("us-min-state");
++    panel.classList.remove("us-max-state");
++    try { localStorage.setItem("servia.chat.size",
++      panel.classList.contains("us-min-state") ? "min" : "normal"); } catch(_) {}
++  };
++  panel.querySelector(".us-resize").onclick = () => {
++    panel.classList.toggle("us-max-state");
++    panel.classList.remove("us-min-state");
++    try { localStorage.setItem("servia.chat.size",
++      panel.classList.contains("us-max-state") ? "max" : "normal"); } catch(_) {}
++  };
++  panel.querySelector(".us-newchat").onclick = () => {
++    if (!confirm("Start a new chat? Current conversation stays in our records but the widget resets.")) return;
++    sessionId = null; since = 0; chatStarted = false;
++    localStorage.removeItem(SESSION_KEY);
++    localStorage.removeItem(SINCE_KEY);
++    localStorage.removeItem(STARTED_KEY);
++    body.innerHTML = "";
++    greet();
++  };
++  panel.querySelector(".us-download").onclick = async () => {
++    if (!sessionId) { alert("Nothing to download yet — say hi first."); return; }
++    try {
++      const r = await fetch(API_BASE + "/api/chat/poll?session_id=" + encodeURIComponent(sessionId) + "&since_id=0");
++      const j = await r.json();
++      const lines = (j.messages || []).map(m => {
++        const ts = (m.created_at || "").slice(0,19).replace("T"," ");
++        const who = m.role === "user" ? "You" : (m.agent_handled ? "Agent" : "Servia");
++        return `[${ts}] ${who}:\n${(m.content || "").trim()}\n`;
++      }).join("\n");
++      const header = `Servia chat transcript\nSession: ${sessionId}\nDownloaded: ${new Date().toISOString()}\n\n${"=".repeat(48)}\n\n`;
++      const blob = new Blob([header + lines], { type: "text/plain;charset=utf-8" });
++      const url = URL.createObjectURL(blob);
++      const a = document.createElement("a");
++      a.href = url; a.download = `servia-chat-${sessionId}.txt`;
++      document.body.appendChild(a); a.click(); a.remove();
++      setTimeout(() => URL.revokeObjectURL(url), 5000);
++    } catch (e) { alert("Download failed: " + e.message); }
++  };
++
++  // v1.24.56 — History tab. Customer enters phone (and optionally email)
++  // → /api/me/history → render past bookings, quotes, invoices, chats.
++  function switchTab(name) {
++    panel.querySelectorAll(".us-tab").forEach(t =>
++      t.classList.toggle("active", t.dataset.tab === name));
++    body.style.display = name === "chat" ? "" : "none";
++    panel.querySelector(".us-actions-bar").style.display = name === "chat" ? "" : "none";
++    panel.querySelector(".us-quickreplies").style.display = name === "chat" ? "" : "none";
++    panel.querySelector(".us-input").style.display = name === "chat" ? "" : "none";
++    panel.querySelector(".us-history").style.display = name === "history" ? "flex" : "none";
++  }
++  panel.querySelectorAll(".us-tab").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
++
++  panel.querySelector(".us-hist-go").onclick = async () => {
++    const phone = panel.querySelector(".us-hist-phone").value.trim();
++    const email = panel.querySelector(".us-hist-email").value.trim();
++    if (!phone && !email) { alert("Enter your mobile or email"); return; }
++    const out = panel.querySelector(".us-hist-results");
++    out.innerHTML = '<p style="text-align:center;color:#64748B;padding:18px">Looking up…</p>';
++    try {
++      const r = await fetch(API_BASE + "/api/me/history", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ phone, email }),
++      });
++      const j = await r.json();
++      if (!j.ok) { out.innerHTML = '<p style="text-align:center;color:#DC2626">Lookup failed</p>'; return; }
++      // Persist phone for chat-detail expansion
++      try { localStorage.setItem("servia.history.phone", phone); } catch(_) {}
++      renderHistory(out, j);
++    } catch (e) {
++      out.innerHTML = '<p style="text-align:center;color:#DC2626">Network error</p>';
++    }
++  };
++
++  function renderHistory(container, data) {
++    if ((data.total || 0) === 0) {
++      container.innerHTML = '<p style="text-align:center;color:#64748B;padding:24px">No matches found for this phone / email. Make sure you typed the same number you used to book before.</p>';
++      return;
++    }
++    const counts = data.counts || {};
++    const summary = `<p style="font-size:11.5px;color:#64748B;margin-bottom:10px;text-align:center">
++      <b>${data.total}</b> records found ·
++      ${counts.bookings||0} bookings · ${counts.quotes||0} quotes ·
++      ${counts.invoices||0} invoices · ${counts.chats||0} chats
++    </p>`;
++    let html = summary;
++
++    if (data.quotes && data.quotes.length) {
++      html += '<h4 style="margin:14px 0 6px;font-size:13px;color:#0D9488">📋 Quotes & orders</h4>';
++      html += data.quotes.map(q => `
++        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;margin:6px 0">
++          <div style="display:flex;justify-content:space-between;align-items:start">
++            <div>
++              <b>${escapeQ(q.quote_id)}</b>
++              <span style="display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;margin-left:6px;background:${statusColor(q.status)};color:#fff">${escapeQ((q.status||'pending').toUpperCase())}</span>
++              <div style="font-size:12px;color:#64748B;margin-top:2px">
++                ${q.target_date||''} ${q.time_slot||''} · ${(q.items||[]).length} services
++              </div>
++            </div>
++            <div style="text-align:right">
++              <b style="color:#0D9488">AED ${q.total_aed||'—'}</b>
++              ${q.paid_at ? '<div style="font-size:10px;color:#10B981">✓ PAID</div>' : ''}
++            </div>
++          </div>
++          <div style="font-size:12px;color:#64748B;margin:6px 0">
++            ${(q.items||[]).slice(0,4).map(i => '• ' + escapeQ(i.label)).join('<br>')}
++          </div>
++          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
++            <a href="${q.view_url}" target="_blank" style="flex:1;padding:7px;background:#0D9488;color:#fff;text-align:center;border-radius:6px;font-size:12px;text-decoration:none">View</a>
++            <a href="${q.invoice_url}" target="_blank" style="flex:1;padding:7px;background:#1E293B;color:#fff;text-align:center;border-radius:6px;font-size:12px;text-decoration:none">Invoice</a>
++            <a href="${q.pdf_url}" target="_blank" style="flex:1;padding:7px;background:#F59E0B;color:#fff;text-align:center;border-radius:6px;font-size:12px;text-decoration:none">📄 PDF</a>
++            ${!q.paid_at ? `<a href="${q.pay_url}" target="_blank" style="flex:1;padding:7px;background:#DC2626;color:#fff;text-align:center;border-radius:6px;font-size:12px;text-decoration:none">Pay</a>` : ''}
++          </div>
++        </div>`).join("");
++    }
++
++    if (data.bookings && data.bookings.length) {
++      html += '<h4 style="margin:14px 0 6px;font-size:13px;color:#0D9488">📅 Bookings</h4>';
++      html += data.bookings.map(b => `
++        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:12.5px">
++          <b>${escapeQ(b.service_id||'service')}</b> ·
++          <span style="color:#64748B">${b.target_date||''} ${b.time_slot||''}</span>
++          <br><span style="font-size:11px;color:#64748B">${escapeQ(b.address||'')}</span>
++          <span style="float:right;background:#F1F5F9;padding:1px 6px;border-radius:3px;font-size:10px">${escapeQ(b.status||'?')}</span>
++        </div>`).join("");
++    }
++
++    if (data.invoices && data.invoices.length) {
++      html += '<h4 style="margin:14px 0 6px;font-size:13px;color:#0D9488">🧾 Invoices</h4>';
++      html += data.invoices.map(i => `
++        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:12.5px">
++          <b>${escapeQ(i.id)}</b>: AED ${i.amount_aed||'—'}
++          <span style="float:right;background:${i.paid_at?'#D1FAE5':'#FEE2E2'};padding:1px 6px;border-radius:3px;font-size:10px;color:${i.paid_at?'#065F46':'#991B1B'}">${i.paid_at?'PAID':'PENDING'}</span>
++        </div>`).join("");
++    }
++
++    if (data.chats && data.chats.length) {
++      html += '<h4 style="margin:14px 0 6px;font-size:13px;color:#0D9488">💬 Past chats</h4>';
++      html += data.chats.map(c => `
++        <div onclick="window.__servia_open_history_chat('${c.session_id}')" style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:12px;cursor:pointer">
++          <div style="color:#64748B;font-size:10px">${(c.first_at||'').slice(0,16)} · ${c.msg_count} msgs</div>
++          <div style="margin-top:3px">${escapeQ(c.preview||'(no preview)')}</div>
++        </div>`).join("");
++    }
++
++    container.innerHTML = html;
++  }
++
++  function statusColor(s) {
++    return ({signed:"#0D9488", paid:"#10B981", dispatched:"#F59E0B",
++             arrived:"#3B82F6", in_progress:"#8B5CF6", done:"#10B981",
++             cancelled:"#94A3B8", pending:"#64748B"})[s] || "#64748B";
++  }
++  function escapeQ(s) {
++    return String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
++  }
++
++  // Allow rendered chat cards to expand into the chat tab when tapped
++  window.__servia_open_history_chat = async function(sid) {
++    const phone = localStorage.getItem("servia.history.phone") || "";
++    if (!phone) { alert("Phone not provided"); return; }
++    try {
++      const r = await fetch(API_BASE + "/api/me/chat/" + encodeURIComponent(sid) + "?phone=" + encodeURIComponent(phone));
++      const j = await r.json();
++      if (!j.ok) return alert("Could not load");
++      switchTab("chat");
++      body.innerHTML = "";
++      for (const m of (j.messages || [])) {
++        const role = m.role === "user" ? "user" : "bot";
++        addMsg(role, m.content || "", null, !!m.agent_handled);
++      }
++      // Don't overwrite session_id — this is read-only history view
++      addMsg("bot", "📜 *Viewing past chat from " + (j.messages?.[0]?.created_at?.slice(0,10) || "earlier") + ".* Tap **✨** in the header for a new chat, or just type to continue here.");
++    } catch (e) { alert("Failed: " + e.message); }
++  };
++
++  // v1.24.56 — restore widget size + open state from localStorage on mount
++  setTimeout(() => {
++    try {
++      const sz = localStorage.getItem("servia.chat.size");
++      if (sz === "min") panel.classList.add("us-min-state");
++      else if (sz === "max") panel.classList.add("us-max-state");
++    } catch (_) {}
++  }, 200);
++
+   // Reopen panel automatically on the next page if user had it open.
+   // Stored in sessionStorage so it resets on tab close.
+   setTimeout(() => {
+     try {
+-      if (sessionStorage.getItem("servia.chat.open.v1") === "1" && !panel.classList.contains("open")) {
++      if (localStorage.getItem("servia.chat.open.v2") === "1" && !panel.classList.contains("open")) {
+         launcher.click();
+       }
+     } catch(_) {}

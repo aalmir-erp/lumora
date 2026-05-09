@@ -1,0 +1,869 @@
+diff --git a/app/admin_live.py b/app/admin_live.py
+new file mode 100644
+index 0000000..d153ad4
+--- /dev/null
++++ b/app/admin_live.py
+@@ -0,0 +1,166 @@
++"""Admin Live PWA — backend endpoints (v1.24.55).
++
++Powers the standalone /admin-live.html mini-app. Designed to mirror the
++WhatsApp UX:
++  - Phone gets a Web Push notification when something happens
++  - Wear OS auto-mirrors phone notifications (no separate watch APK)
++  - Notification has a Reply action → admin types/voices a reply
++  - Reply hits POST /api/admin/live/chat/{sid}/reply → posted to chat
++
++Endpoints (all require Bearer ADMIN_TOKEN):
++  GET  /api/admin/live/active-chats     — list open chat sessions in last 30 min
++  GET  /api/admin/live/chat/{sid}       — full message history of a session
++  POST /api/admin/live/chat/{sid}/reply — admin sends a reply to the session
++  POST /api/admin/live/chat/{sid}/take  — mark session as taken-over (silences bot)
++  POST /api/admin/live/chat/{sid}/release — release back to bot
++  GET  /api/admin/live/feed             — combined feed (new visitors + new chats)
++                                          since a `since` timestamp; powers the
++                                          live polling UI
++
++The polling endpoint /api/admin/live/feed is the heart of the PWA. UI
++hits it every 4 seconds with the last-seen ID; server returns deltas only.
++This keeps server load tiny even with one always-open admin PWA.
++"""
++from __future__ import annotations
++import datetime as _dt
++import json as _json
++from typing import Any
++
++from fastapi import APIRouter, Depends, HTTPException
++from pydantic import BaseModel
++
++from . import db
++from .auth import require_admin
++
++
++admin_router = APIRouter(prefix="/api/admin/live", tags=["admin-live-pwa"],
++                         dependencies=[Depends(require_admin)])
++
++
++def _now() -> str:
++    return _dt.datetime.utcnow().isoformat() + "Z"
++
++
++# ---------------------------------------------------------------------------
++@admin_router.get("/active-chats")
++def active_chats(minutes: int = 30) -> dict:
++    """Sessions with at least one message in the last N minutes."""
++    cutoff = (_dt.datetime.utcnow() - _dt.timedelta(minutes=max(1, minutes))).isoformat() + "Z"
++    with db.connect() as c:
++        rows = c.execute(
++            """
++            SELECT
++              session_id,
++              MAX(created_at)            AS last_at,
++              COUNT(*)                   AS msg_count,
++              SUM(CASE WHEN role='user' THEN 1 ELSE 0 END) AS user_msg_count,
++              MAX(CASE WHEN role='user' THEN content END)  AS last_user_msg,
++              MAX(phone)                 AS phone
++            FROM conversations
++            WHERE created_at > ?
++            GROUP BY session_id
++            ORDER BY last_at DESC
++            LIMIT 50
++            """, (cutoff,)).fetchall()
++
++        # Fetch which sessions have an active agent takeover
++        takeover_rows = c.execute(
++            "SELECT session_id, started_at, ended_at FROM agent_takeovers "
++            "WHERE ended_at IS NULL OR ended_at = ''"
++        ).fetchall()
++    taken = {r["session_id"]: dict(r) for r in takeover_rows}
++
++    out = []
++    for r in rows:
++        d = dict(r)
++        d["taken_over"] = bool(taken.get(d["session_id"]))
++        d["preview"] = (d.get("last_user_msg") or "")[:140]
++        out.append(d)
++    return {"chats": out, "count": len(out), "fetched_at": _now()}
++
++
++# ---------------------------------------------------------------------------
++@admin_router.get("/chat/{sid}")
++def chat_messages(sid: str, limit: int = 100) -> dict:
++    with db.connect() as c:
++        rows = c.execute(
++            "SELECT role, content, created_at, phone, model_used "
++            "FROM conversations WHERE session_id=? ORDER BY id DESC LIMIT ?",
++            (sid, limit)).fetchall()
++    msgs = [dict(r) for r in reversed(rows)]
++    return {"session_id": sid, "messages": msgs}
++
++
++# ---------------------------------------------------------------------------
++class _ReplyBody(BaseModel):
++    text: str
++
++@admin_router.post("/chat/{sid}/reply")
++def admin_reply(sid: str, body: _ReplyBody) -> dict:
++    text = (body.text or "").strip()
++    if not text:
++        raise HTTPException(status_code=400, detail="empty reply")
++    with db.connect() as c:
++        # Mark session as taken-over (silences bot for new turns)
++        c.execute(
++            "INSERT OR REPLACE INTO agent_takeovers(session_id, agent_id, started_at) "
++            "VALUES(?,?,?)",
++            (sid, "admin", _now()))
++        c.execute(
++            "INSERT INTO conversations(session_id, role, content, tool_calls_json, "
++            "created_at, phone, model_used) "
++            "VALUES(?,?,?,?,?,?,?)",
++            (sid, "assistant", text, "[]", _now(), None, "agent:admin"))
++    db.log_event("conversation", sid, "agent_reply", actor="admin",
++                 details={"text_preview": text[:80]})
++    return {"ok": True, "session_id": sid, "delivered_at": _now()}
++
++
++# ---------------------------------------------------------------------------
++@admin_router.post("/chat/{sid}/take")
++def take_over(sid: str) -> dict:
++    with db.connect() as c:
++        c.execute(
++            "INSERT OR REPLACE INTO agent_takeovers(session_id, agent_id, started_at) "
++            "VALUES(?,?,?)", (sid, "admin", _now()))
++    return {"ok": True, "session_id": sid, "taken_at": _now()}
++
++
++@admin_router.post("/chat/{sid}/release")
++def release(sid: str) -> dict:
++    with db.connect() as c:
++        c.execute(
++            "UPDATE agent_takeovers SET ended_at=? "
++            "WHERE session_id=? AND (ended_at IS NULL OR ended_at='')",
++            (_now(), sid))
++    return {"ok": True, "session_id": sid, "released_at": _now()}
++
++
++# ---------------------------------------------------------------------------
++@admin_router.get("/feed")
++def live_feed(since: str | None = None) -> dict:
++    """Combined feed of recent events for the polling PWA. Returns:
++       - new_chats:     sessions with first message after `since`
++       - new_messages:  any user messages after `since` in already-active sessions
++       - new_visitors:  brand-new visitor IDs in the last 5 min
++    The PWA passes its last 'until' timestamp as `since` next call so the
++    server only sends deltas. Default since = 60 seconds ago.
++    """
++    if not since:
++        since = (_dt.datetime.utcnow() - _dt.timedelta(seconds=60)).isoformat() + "Z"
++    with db.connect() as c:
++        new_msgs = [dict(r) for r in c.execute(
++            "SELECT session_id, role, content, created_at, phone "
++            "FROM conversations WHERE created_at > ? AND role='user' "
++            "ORDER BY created_at DESC LIMIT 50",
++            (since,)).fetchall()]
++        new_visitors = [dict(r) for r in c.execute(
++            "SELECT visitor_id, last_seen, last_path, country, referrer "
++            "FROM live_visitors WHERE first_seen > ? "
++            "ORDER BY first_seen DESC LIMIT 20",
++            (since,)).fetchall()]
++    return {
++        "until": _now(),
++        "new_messages": new_msgs,
++        "new_visitors": new_visitors,
++    }
+diff --git a/app/main.py b/app/main.py
+index 3150700..bbdcd79 100644
+--- a/app/main.py
++++ b/app/main.py
+@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+ from fastapi.staticfiles import StaticFiles
+ from pydantic import BaseModel, Field
+ 
+-from . import admin, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
++from . import admin, admin_live as _admin_live, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
+ from .auth import ADMIN_TOKEN, require_admin
+ from .config import get_settings
+ 
+@@ -221,6 +221,7 @@ app.include_router(_sos_custom_mod.router)     # /api/sos/custom/* user-saved on
+ app.include_router(_sos_custom_mod.public_router)  # /csos/<slug> NFC-tap landing
+ app.include_router(_gha.router)                # /api/google-home/* + admin
+ app.include_router(_gha.oauth_router)          # /oauth/* (cloud-to-cloud)
++app.include_router(_admin_live.admin_router)   # /api/admin/live/{active-chats,chat,feed,...}
+ app.include_router(admin.router)
+ app.include_router(admin.public_cms_router)
+ app.include_router(admin.public_2fa_router)
+@@ -289,11 +290,25 @@ async def _log_bot_visit_mw(request: Request, call_next):
+             from . import admin_alerts as _aa
+             ua = (request.headers.get("user-agent") or "")[:120]
+             path = str(request.url.path)
+-            ref = (request.headers.get("referer") or "(direct)")[:120]
++            ref = (request.headers.get("referer") or "")[:200]
+             ipc = request.headers.get("cf-ipcountry") or ""
++            # v1.24.55 — parse the referrer so admin sees "via Google · 'ac
++            # repair dubai'" instead of a raw URL. Falls through to "Direct"
++            # when there is no referrer header.
++            src = live_visitors.parse_referrer(ref)
++            if src["traffic_source"] == "search":
++                src_line = (f"From: {src['source_label']} search"
++                            + (f" · query: \"{src['search_query']}\""
++                               if src.get("search_query") else " · (query hidden)"))
++            elif src["traffic_source"] == "social":
++                src_line = f"From: {src['source_label']}"
++            elif src["traffic_source"] == "referral":
++                src_line = f"From: {src['source_label']} (referral)"
++            else:
++                src_line = "From: Direct (typed URL or bookmark)"
+             _aa.notify_admin(
+                 f"👋 New visitor on Servia\n\n"
+-                f"Page: {path}\nReferrer: {ref}\nCountry: {ipc or '?'}\nUA: {ua}",
++                f"Page: {path}\n{src_line}\nCountry: {ipc or '?'}\nUA: {ua}",
+                 kind="new_visitor", urgency="low")
+         except Exception: pass
+     return resp
+diff --git a/web/admin-live-sw.js b/web/admin-live-sw.js
+new file mode 100644
+index 0000000..1fd5317
+--- /dev/null
++++ b/web/admin-live-sw.js
+@@ -0,0 +1,125 @@
++/* v1.24.55 — Servia Admin Live PWA service worker.
++
++   Receives Web Push notifications from server and shows them with a
++   "Reply" action. Wear OS / Apple Watch automatically mirror these
++   notifications to the paired watch with quick-reply support.
++   Tapping the notification opens admin-live.html with the chat focused.
++*/
++'use strict';
++
++self.addEventListener("install", e => self.skipWaiting());
++self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
++
++self.addEventListener("push", event => {
++  let data = {};
++  try { data = event.data ? event.data.json() : {}; } catch (_) {}
++  const kind = (data.kind || "").toLowerCase();
++  const title = data.title || "Servia";
++  const body  = data.body  || "";
++  const sid   = data.session_id || data.sid || "";
++
++  // Per-kind vibration for feel
++  const VIBRATION = {
++    new_visitor:       [80, 60, 80, 60, 80],
++    new_booking:       [120, 80, 200, 80, 200, 80, 400],
++    booking_confirmed: [200, 100, 400],
++    payment_request:   [400, 200, 400],
++    chat_message:      [60, 40, 60, 40, 60],
++    urgent_handoff:    [200, 100, 200, 100, 600],
++  };
++  const vibrate = VIBRATION[kind] || [120, 80, 120];
++
++  // Reply action makes the watch mirror with voice / quick-reply
++  const actions = [];
++  if (sid) {
++    actions.push({
++      action: "reply",
++      title: "💬 Reply",
++      type:  "text",
++      placeholder: "Quick reply…",
++    });
++    actions.push({ action: "open", title: "📂 Open chat" });
++  }
++
++  event.waitUntil(self.registration.showNotification(title, {
++    body,
++    icon: "/icon-192.svg",
++    badge: "/icon-192.svg",
++    image: data.image,
++    data: { sid, url: data.url || "/admin-live.html", kind },
++    tag: data.tag || ("servia-admin-" + (sid || kind)),
++    renotify: true,
++    requireInteraction: kind === "urgent_handoff" || kind === "payment_request",
++    silent: false,
++    vibrate,
++    actions,
++  }));
++});
++
++self.addEventListener("notificationclick", event => {
++  const action = event.action;
++  const data = event.notification.data || {};
++  event.notification.close();
++
++  // Quick-reply from the notification (works on Wear OS + phone)
++  if (action === "reply" && event.reply && data.sid) {
++    const replyText = String(event.reply || "").trim();
++    if (replyText) {
++      event.waitUntil((async () => {
++        // We don't have the admin token in the SW context, so we POST to
++        // a SW-friendly endpoint that re-derives auth from a stored cookie
++        // OR from the most recent admin-live.html session. For now, store
++        // the token via an explicit message from the page.
++        const tok = await getStoredToken();
++        if (!tok) return openOrFocus("/admin-live.html?sid=" + encodeURIComponent(data.sid));
++        await fetch("/api/admin/live/chat/" + encodeURIComponent(data.sid) + "/reply", {
++          method: "POST",
++          headers: { "Authorization": "Bearer " + tok, "Content-Type": "application/json" },
++          body: JSON.stringify({ text: replyText }),
++        }).catch(()=>{});
++      })());
++      return;
++    }
++  }
++
++  // Default: open or focus the admin-live PWA at the right session
++  const url = data.sid ? "/admin-live.html?sid=" + encodeURIComponent(data.sid) : (data.url || "/admin-live.html");
++  event.waitUntil(openOrFocus(url));
++});
++
++async function openOrFocus(url) {
++  const all = await clients.matchAll({ type: "window", includeUncontrolled: true });
++  for (const c of all) {
++    if (c.url.includes("/admin-live.html") && "focus" in c) {
++      try { c.navigate(url); } catch (_) {}
++      return c.focus();
++    }
++  }
++  if (clients.openWindow) return clients.openWindow(url);
++}
++
++// Token bridge — admin-live.html posts its token to the SW so notification
++// reply actions can use it.
++self.addEventListener("message", e => {
++  if (!e.data) return;
++  if (e.data.type === "set-admin-token") {
++    self._adminToken = e.data.token || "";
++  }
++});
++async function getStoredToken() {
++  if (self._adminToken) return self._adminToken;
++  // Fallback: ask any open admin-live page
++  const all = await clients.matchAll({ type: "window", includeUncontrolled: true });
++  for (const c of all) {
++    if (c.url.includes("/admin-live.html")) {
++      const tok = await new Promise(resolve => {
++        const ch = new MessageChannel();
++        ch.port1.onmessage = ev => resolve(ev.data && ev.data.token);
++        c.postMessage({ type: "get-admin-token" }, [ch.port2]);
++        setTimeout(() => resolve(""), 500);
++      });
++      if (tok) { self._adminToken = tok; return tok; }
++    }
++  }
++  return "";
++}
+diff --git a/web/admin-live.html b/web/admin-live.html
+new file mode 100644
+index 0000000..a524f11
+--- /dev/null
++++ b/web/admin-live.html
+@@ -0,0 +1,159 @@
++<!doctype html>
++<!--
++  v1.24.55 — Servia Admin Live PWA.
++
++  Single-file admin mini-app that:
++    · stores ADMIN_TOKEN once in localStorage (no logout, ever)
++    · polls /api/admin/live/feed every 4s for visitors + new messages
++    · subscribes to Web Push on first run → phone gets native notifications
++    · phone notifications auto-mirror to paired Wear OS / iOS watches
++    · notification reply action posts to /api/admin/live/chat/{sid}/reply
++    · in-app inline reply for when admin is actively watching the PWA
++    · sound alerts (beep on visitor, double-beep on chat)
++
++  Designed mobile-first. Renders in any browser, but on Android it's
++  installable as a PWA via Chrome's "Add to home screen" — making it feel
++  like a native app with no separate APK build needed.
++-->
++<html lang="en">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
++<meta name="theme-color" content="#0F172A">
++<title>Servia · Admin Live</title>
++<link rel="manifest" href="/admin-live.webmanifest">
++<link rel="icon" href="/icon-192.svg" type="image/svg+xml">
++<link rel="apple-touch-icon" href="/brand/servia-icon-512x512.png">
++<style>
++* { box-sizing: border-box; margin: 0; padding: 0; }
++html, body { height: 100%; background: #0F172A; color: #F1F5F9;
++  font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
++  -webkit-tap-highlight-color: transparent; }
++header { position: sticky; top: 0; z-index: 5; background: #1E293B;
++  border-bottom: 1px solid #334155; padding: 8px 12px;
++  display: flex; align-items: center; gap: 10px; }
++header .title { font-size: 14px; font-weight: 700; flex: 1; }
++header .dot { width: 8px; height: 8px; border-radius: 50%; background: #10B981;
++  box-shadow: 0 0 8px #10B981; }
++header .dot.off { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
++header .stat { font-size: 11px; color: #94A3B8; }
++header button { background: transparent; color: #F1F5F9; border: 1px solid #475569;
++  border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
++header button.active { background: #0F766E; border-color: #14B8A6; }
++
++#login { padding: 22vh 16px 0; max-width: 360px; margin: 0 auto; text-align: center; }
++#login h1 { font-size: 22px; margin-bottom: 8px; color: #F1F5F9; }
++#login p { color: #94A3B8; font-size: 12px; margin-bottom: 18px; }
++#login input { width: 100%; padding: 12px; background: #1E293B; color: #F1F5F9;
++  border: 1px solid #334155; border-radius: 8px; font-size: 14px;
++  font-family: monospace; margin-bottom: 12px; }
++#login button { width: 100%; padding: 12px; background: #0D9488; color: #fff;
++  border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
++
++#tabs { display: flex; background: #1E293B; border-bottom: 1px solid #334155; }
++#tabs button { flex: 1; background: none; border: none; color: #94A3B8;
++  padding: 10px 6px; font-size: 13px; cursor: pointer; position: relative; }
++#tabs button.active { color: #14B8A6; }
++#tabs button.active::after { content: ""; position: absolute; left: 20%; right: 20%;
++  bottom: 0; height: 2px; background: #14B8A6; border-radius: 2px; }
++#tabs .badge { display: inline-block; min-width: 18px; padding: 1px 5px;
++  margin-left: 4px; background: #DC2626; color: #fff; border-radius: 9px;
++  font-size: 10px; font-weight: 700; }
++
++#content { padding-bottom: 60px; }
++
++.card { background: #1E293B; border: 1px solid #334155; border-radius: 8px;
++  margin: 8px; padding: 10px 12px; cursor: pointer; transition: background .15s; }
++.card:active { background: #334155; }
++.card.new { border-left: 3px solid #14B8A6; animation: flash 1.5s; }
++@keyframes flash { 0% { background: #0F766E; } 100% { background: #1E293B; } }
++.card .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
++.card .head { font-weight: 600; font-size: 13px; }
++.card .when { font-size: 10px; color: #64748B; white-space: nowrap; }
++.card .meta { font-size: 11px; color: #94A3B8; margin-top: 4px; line-height: 1.45; }
++.card .preview { font-size: 13px; color: #CBD5E1; margin-top: 6px;
++  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
++  overflow: hidden; text-overflow: ellipsis; }
++.chip { display: inline-block; padding: 1px 7px; border-radius: 4px;
++  font-size: 10px; font-weight: 600; margin-right: 4px; }
++.chip.search { background: #1E40AF; color: #DBEAFE; }
++.chip.social { background: #831843; color: #FCE7F3; }
++.chip.direct { background: #334155; color: #CBD5E1; }
++.chip.taken { background: #B45309; color: #FEF3C7; }
++
++#chat-detail { position: fixed; inset: 0; background: #0F172A; z-index: 10;
++  display: none; flex-direction: column; }
++#chat-detail.open { display: flex; }
++#chat-detail header { background: #1E293B; }
++#chat-detail .back { background: transparent; color: #14B8A6; border: none;
++  font-size: 18px; cursor: pointer; padding: 0 4px; }
++#chat-detail .messages { flex: 1; overflow-y: auto; padding: 8px 0; }
++#chat-detail .msg { max-width: 85%; padding: 8px 12px; margin: 4px 8px;
++  border-radius: 14px; font-size: 13.5px; line-height: 1.45; word-wrap: break-word; }
++#chat-detail .msg.user      { background: #1E40AF; margin-right: auto;
++  border-bottom-left-radius: 4px; }
++#chat-detail .msg.assistant { background: #134E4A; margin-left: auto;
++  border-bottom-right-radius: 4px; }
++#chat-detail .msg .role { font-size: 9px; color: rgba(255,255,255,.6);
++  margin-bottom: 2px; text-transform: uppercase; }
++#chat-detail .composer { background: #1E293B; border-top: 1px solid #334155;
++  padding: 8px; display: flex; gap: 6px; align-items: flex-end; }
++#chat-detail .composer textarea { flex: 1; min-height: 38px; max-height: 120px;
++  padding: 8px 10px; background: #0F172A; color: #F1F5F9; border: 1px solid #334155;
++  border-radius: 8px; font: inherit; resize: none; }
++#chat-detail .composer button { padding: 9px 14px; background: #0D9488; color: #fff;
++  border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
++#chat-detail .composer button:disabled { opacity: .4; cursor: not-allowed; }
++
++.empty { text-align: center; color: #64748B; padding: 40px 16px; font-size: 13px; }
++</style>
++</head>
++<body>
++
++<!-- Login screen (shown until token is in localStorage) -->
++<div id="login">
++  <h1>Servia · Admin Live</h1>
++  <p>Paste your <code style="font-family:monospace;background:#1E293B;padding:1px 5px;border-radius:3px">ADMIN_TOKEN</code> once. Stored locally, never asked again unless you clear data.</p>
++  <input id="token-input" type="password" placeholder="Admin token" autocomplete="off">
++  <button onclick="adminLogin()">Sign in</button>
++</div>
++
++<!-- Main app (shown after login) -->
++<div id="app" style="display:none">
++  <header>
++    <div class="dot" id="status-dot"></div>
++    <div class="title">Servia Live</div>
++    <div class="stat" id="last-sync">just now</div>
++    <button id="snd-btn" onclick="toggleSound()" title="Toggle alert sound">🔔</button>
++    <button onclick="enablePush()" title="Enable phone notifications">📲</button>
++    <button onclick="logout()" title="Sign out">⏻</button>
++  </header>
++
++  <nav id="tabs">
++    <button class="active" data-tab="visitors">Visitors <span class="badge" id="vis-badge" hidden>0</span></button>
++    <button data-tab="chats">Chats <span class="badge" id="chat-badge" hidden>0</span></button>
++  </nav>
++
++  <main id="content">
++    <div id="visitors-panel"></div>
++    <div id="chats-panel" hidden></div>
++  </main>
++</div>
++
++<!-- Full-screen chat detail (slides over when a chat card is tapped) -->
++<div id="chat-detail">
++  <header>
++    <button class="back" onclick="closeChat()">←</button>
++    <div class="title" id="chat-title">Chat</div>
++    <button onclick="releaseChat()" title="Hand back to bot">🤖</button>
++  </header>
++  <div class="messages" id="chat-messages"></div>
++  <div class="composer">
++    <textarea id="reply-input" placeholder="Type to reply…" rows="1"></textarea>
++    <button id="reply-btn" onclick="sendReply()">Send</button>
++  </div>
++</div>
++
++<script src="/admin-live.js"></script>
++</body>
++</html>
+diff --git a/web/admin-live.js b/web/admin-live.js
+new file mode 100644
+index 0000000..3fe18df
+--- /dev/null
++++ b/web/admin-live.js
+@@ -0,0 +1,320 @@
++/* v1.24.55 — Servia Admin Live PWA frontend.
++   Polls /api/admin/live/feed every 4s, updates the visitor + chat lists,
++   plays sound on new events, and on first run subscribes the browser to
++   Web Push so phone (and paired Wear OS / Apple Watch) gets native
++   notifications even when the PWA is closed.
++*/
++'use strict';
++
++const TOKEN_KEY = "servia.admin.token";
++const SOUND_KEY = "servia.admin.sound_on";
++const POLL_MS   = 4000;
++
++let token = localStorage.getItem(TOKEN_KEY) || "";
++let soundOn = (localStorage.getItem(SOUND_KEY) ?? "1") === "1";
++let pollSince = "";
++let openSid   = null;
++let seenVis   = new Set();
++let seenMsgs  = new Set();
++let visitors  = [];
++let chats     = [];
++
++const $ = id => document.getElementById(id);
++
++/* ----------------------------- login ----------------------------- */
++function adminLogin() {
++  const t = ($("token-input").value || "").trim();
++  if (!t) return alert("Paste the admin token");
++  // Probe — just hit a cheap admin endpoint
++  fetch("/api/admin/live/active-chats", {
++    headers: { Authorization: "Bearer " + t }
++  }).then(r => {
++    if (r.ok) {
++      localStorage.setItem(TOKEN_KEY, t);
++      token = t;
++      bootApp();
++    } else {
++      alert("Token rejected (HTTP " + r.status + "). Check ADMIN_TOKEN in Railway.");
++    }
++  }).catch(e => alert("Network error: " + e.message));
++}
++function logout() {
++  if (!confirm("Sign out and clear token?")) return;
++  localStorage.removeItem(TOKEN_KEY);
++  location.reload();
++}
++function adm(path, init = {}) {
++  init.headers = Object.assign({}, init.headers || {}, {
++    Authorization: "Bearer " + token,
++  });
++  if (init.body && typeof init.body !== "string") {
++    init.body = JSON.stringify(init.body);
++    init.headers["Content-Type"] = "application/json";
++  }
++  return fetch(path, init).then(r => r.ok ? r.json() : Promise.reject(r));
++}
++
++/* ----------------------------- boot ----------------------------- */
++function bootApp() {
++  $("login").style.display = "none";
++  $("app").style.display = "";
++  refreshSoundUi();
++  // Tabs
++  document.querySelectorAll("#tabs button").forEach(b => {
++    b.onclick = () => {
++      document.querySelectorAll("#tabs button").forEach(x => x.classList.remove("active"));
++      b.classList.add("active");
++      const t = b.dataset.tab;
++      $("visitors-panel").hidden = t !== "visitors";
++      $("chats-panel").hidden = t !== "chats";
++    };
++  });
++  // Service worker (for Web Push)
++  if ("serviceWorker" in navigator) {
++    navigator.serviceWorker.register("/admin-live-sw.js").catch(e =>
++      console.warn("[push] sw register failed:", e));
++  }
++  // Initial load + start polling
++  loadInitial();
++  setInterval(poll, POLL_MS);
++  // Send/back keyboard shortcut
++  $("reply-input").addEventListener("keydown", e => {
++    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); }
++  });
++}
++
++async function loadInitial() {
++  try {
++    const [v, c] = await Promise.all([
++      adm("/api/admin/live/visitors"),
++      adm("/api/admin/live/active-chats"),
++    ]);
++    visitors = v.visitors || [];
++    chats = c.chats || [];
++    visitors.forEach(x => seenVis.add(x.visitor_id));
++    chats.forEach(x => seenMsgs.add(x.session_id + "@" + (x.last_at || "")));
++    renderVisitors(); renderChats();
++    pollSince = new Date().toISOString();
++  } catch (e) {
++    setStatus(false);
++  }
++}
++
++/* ----------------------------- polling ----------------------------- */
++async function poll() {
++  try {
++    const url = "/api/admin/live/feed?since=" + encodeURIComponent(pollSince);
++    const j = await adm(url);
++    pollSince = j.until || pollSince;
++    let newVis = false, newMsg = false;
++    (j.new_visitors || []).forEach(v => {
++      if (!seenVis.has(v.visitor_id)) {
++        seenVis.add(v.visitor_id);
++        newVis = true;
++        // Re-fetch full visitor list to get parsed UA + traffic source
++      }
++    });
++    (j.new_messages || []).forEach(m => {
++      const k = m.session_id + "@" + m.created_at;
++      if (!seenMsgs.has(k)) {
++        seenMsgs.add(k);
++        newMsg = true;
++      }
++    });
++    if (newVis || newMsg) {
++      // refresh both panels
++      const [v, c] = await Promise.all([
++        adm("/api/admin/live/visitors"),
++        adm("/api/admin/live/active-chats"),
++      ]);
++      visitors = v.visitors || [];
++      chats = c.chats || [];
++      renderVisitors(); renderChats();
++      if (newMsg)  beep("chat");
++      else if (newVis) beep("visitor");
++      // If the open chat got a new message, refresh it too
++      if (openSid && j.new_messages.find(m => m.session_id === openSid)) {
++        loadChatDetail(openSid);
++      }
++    }
++    setStatus(true);
++    $("last-sync").textContent = new Date().toLocaleTimeString();
++  } catch (e) {
++    setStatus(false);
++  }
++}
++
++function setStatus(ok) {
++  const d = $("status-dot");
++  d.classList.toggle("off", !ok);
++}
++
++/* ----------------------------- render ----------------------------- */
++function renderVisitors() {
++  const p = $("visitors-panel");
++  if (!visitors.length) { p.innerHTML = '<div class="empty">No active visitors right now.</div>'; return; }
++  p.innerHTML = visitors.map(v => {
++    const flag  = v.flag_emoji || (v.country ? "" : "");
++    const ago   = v.seconds_ago != null ? humanAgo(v.seconds_ago) : "";
++    const src   = v.traffic_source || "direct";
++    const label = v.source_label || "Direct";
++    const q     = v.search_query;
++    const chip  = `<span class="chip ${src}">${escapeHtml(label)}${q ? " · \"" + escapeHtml(q.slice(0,30)) + "\"" : ""}</span>`;
++    const ua    = (v.browser || "") + (v.os ? " · " + v.os : "");
++    return `<div class="card">
++      <div class="row">
++        <div class="head">${flag} ${escapeHtml(v.country || "??")} · ${escapeHtml(v.last_path || "/")}</div>
++        <div class="when">${ago}</div>
++      </div>
++      <div class="meta">${chip} ${escapeHtml(ua)}${v.hit_count > 1 ? " · " + v.hit_count + " hits" : ""}</div>
++    </div>`;
++  }).join("");
++  $("vis-badge").textContent = visitors.length;
++  $("vis-badge").hidden = visitors.length === 0;
++}
++
++function renderChats() {
++  const p = $("chats-panel");
++  if (!chats.length) { p.innerHTML = '<div class="empty">No active chats in the last 30 min.</div>'; return; }
++  p.innerHTML = chats.map(c => {
++    const ago = humanAgoIso(c.last_at);
++    const taken = c.taken_over ? '<span class="chip taken">AGENT</span>' : "";
++    const phone = c.phone ? "📞 " + c.phone : "Anonymous";
++    return `<div class="card" onclick="openChat('${c.session_id}')">
++      <div class="row">
++        <div class="head">${taken}${escapeHtml(phone)} · ${c.user_msg_count || 0} msgs</div>
++        <div class="when">${ago}</div>
++      </div>
++      <div class="preview">${escapeHtml(c.preview || "(no preview)")}</div>
++    </div>`;
++  }).join("");
++  const newCount = chats.filter(c => !c.taken_over).length;
++  $("chat-badge").textContent = newCount;
++  $("chat-badge").hidden = newCount === 0;
++}
++
++/* ----------------------------- chat detail ----------------------------- */
++function openChat(sid) {
++  openSid = sid;
++  $("chat-detail").classList.add("open");
++  $("chat-title").textContent = "…" + sid.slice(-8);
++  loadChatDetail(sid);
++}
++function closeChat() {
++  openSid = null;
++  $("chat-detail").classList.remove("open");
++}
++async function loadChatDetail(sid) {
++  try {
++    const j = await adm("/api/admin/live/chat/" + encodeURIComponent(sid));
++    const box = $("chat-messages");
++    box.innerHTML = (j.messages || []).map(m =>
++      `<div class="msg ${m.role}">
++         <div class="role">${m.role}${m.model_used ? " · " + escapeHtml(m.model_used) : ""}</div>
++         ${escapeHtml(m.content || "").replace(/\n/g,"<br>")}
++       </div>`).join("");
++    box.scrollTop = box.scrollHeight;
++  } catch (e) { console.error(e); }
++}
++async function sendReply() {
++  const text = $("reply-input").value.trim();
++  if (!text || !openSid) return;
++  $("reply-btn").disabled = true;
++  try {
++    await adm("/api/admin/live/chat/" + encodeURIComponent(openSid) + "/reply",
++              { method: "POST", body: { text } });
++    $("reply-input").value = "";
++    loadChatDetail(openSid);
++  } catch (e) {
++    alert("Reply failed");
++  } finally {
++    $("reply-btn").disabled = false;
++  }
++}
++async function releaseChat() {
++  if (!openSid) return;
++  if (!confirm("Hand this chat back to the bot?")) return;
++  await adm("/api/admin/live/chat/" + encodeURIComponent(openSid) + "/release",
++            { method: "POST" });
++  closeChat();
++}
++
++/* ----------------------------- sound + push ----------------------------- */
++let audioCtx;
++function beep(kind) {
++  if (!soundOn) return;
++  try {
++    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
++    const t = audioCtx.currentTime;
++    function tone(freq, dur, delay = 0) {
++      const o = audioCtx.createOscillator();
++      const g = audioCtx.createGain();
++      o.type = "sine"; o.frequency.value = freq;
++      g.gain.setValueAtTime(0, t + delay);
++      g.gain.linearRampToValueAtTime(0.18, t + delay + 0.01);
++      g.gain.linearRampToValueAtTime(0, t + delay + dur);
++      o.connect(g); g.connect(audioCtx.destination);
++      o.start(t + delay); o.stop(t + delay + dur + 0.05);
++    }
++    if (kind === "chat")    { tone(880, 0.15); tone(1320, 0.15, 0.18); }
++    else /* visitor */      { tone(660, 0.12); }
++  } catch (_) {}
++}
++function toggleSound() {
++  soundOn = !soundOn;
++  localStorage.setItem(SOUND_KEY, soundOn ? "1" : "0");
++  refreshSoundUi();
++}
++function refreshSoundUi() {
++  const b = $("snd-btn");
++  b.textContent = soundOn ? "🔔" : "🔕";
++  b.classList.toggle("active", soundOn);
++}
++
++async function enablePush() {
++  try {
++    const reg = await navigator.serviceWorker.ready;
++    const k = await fetch("/api/push/vapid-key").then(r => r.json());
++    if (!k.public) return alert("Server has no VAPID key configured.");
++    let sub = await reg.pushManager.getSubscription();
++    if (!sub) {
++      sub = await reg.pushManager.subscribe({
++        userVisibleOnly: true,
++        applicationServerKey: urlB64ToUint8(k.public),
++      });
++    }
++    await adm("/api/admin/push/subscribe", {
++      method: "POST",
++      body: JSON.parse(JSON.stringify(sub)),
++    });
++    alert("✅ Push notifications on. Phone notifications will mirror to your watch automatically.");
++  } catch (e) {
++    alert("Push setup failed: " + e.message);
++  }
++}
++function urlB64ToUint8(s) {
++  const padding = "=".repeat((4 - s.length % 4) % 4);
++  const base = (s + padding).replace(/-/g, "+").replace(/_/g, "/");
++  const raw = atob(base);
++  return Uint8Array.from(raw, c => c.charCodeAt(0));
++}
++
++/* ----------------------------- utils ----------------------------- */
++function escapeHtml(s) {
++  return String(s ?? "").replace(/[&<>"']/g,
++    c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
++}
++function humanAgo(secs) {
++  if (secs < 60) return secs + "s";
++  if (secs < 3600) return Math.floor(secs/60) + "m";
++  return Math.floor(secs/3600) + "h";
++}
++function humanAgoIso(iso) {
++  if (!iso) return "";
++  const t = new Date(iso).getTime();
++  if (isNaN(t)) return "";
++  return humanAgo(Math.floor((Date.now() - t)/1000));
++}
++
++/* ----------------------------- entrypoint ----------------------------- */
++if (token) bootApp();
+diff --git a/web/admin-live.webmanifest b/web/admin-live.webmanifest
+new file mode 100644
+index 0000000..5d7995b
+--- /dev/null
++++ b/web/admin-live.webmanifest
+@@ -0,0 +1,20 @@
++{
++  "name": "Servia Admin Live",
++  "short_name": "Servia Admin",
++  "description": "Live admin console for Servia — visitors, chats, alerts, replies. Mirrors to your watch via OS notifications.",
++  "start_url": "/admin-live.html",
++  "scope": "/admin-live",
++  "display": "standalone",
++  "orientation": "portrait",
++  "background_color": "#0F172A",
++  "theme_color": "#0F172A",
++  "icons": [
++    { "src": "/icon-192.svg",                       "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
++    { "src": "/brand/servia-icon-512x512.png",      "sizes": "512x512", "type": "image/png",     "purpose": "any maskable" }
++  ],
++  "categories": ["business", "productivity"],
++  "shortcuts": [
++    { "name": "Live visitors",  "url": "/admin-live.html#visitors", "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }] },
++    { "name": "Active chats",   "url": "/admin-live.html#chats",    "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }] }
++  ]
++}

@@ -1,0 +1,1001 @@
+diff --git a/app/main.py b/app/main.py
+index 3150700..ddf95de 100644
+--- a/app/main.py
++++ b/app/main.py
+@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+ from fastapi.staticfiles import StaticFiles
+ from pydantic import BaseModel, Field
+ 
+-from . import admin, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
++from . import admin, admin_live as _admin_live, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
+ from .auth import ADMIN_TOKEN, require_admin
+ from .config import get_settings
+ 
+@@ -221,6 +221,10 @@ app.include_router(_sos_custom_mod.router)     # /api/sos/custom/* user-saved on
+ app.include_router(_sos_custom_mod.public_router)  # /csos/<slug> NFC-tap landing
+ app.include_router(_gha.router)                # /api/google-home/* + admin
+ app.include_router(_gha.oauth_router)          # /oauth/* (cloud-to-cloud)
++app.include_router(_admin_live.admin_router)   # /api/admin/live/{active-chats,chat,feed,...}
++from . import multi_quote_pages as _mqp
++app.include_router(_mqp.public_router)         # /q/{id}, /p/{id}, /i/{id}, /api/q/{id}/...
++app.include_router(_mqp.admin_router)          # /api/admin/quote/{id}/status,line-status,upload,all
+ app.include_router(admin.router)
+ app.include_router(admin.public_cms_router)
+ app.include_router(admin.public_2fa_router)
+@@ -289,11 +293,25 @@ async def _log_bot_visit_mw(request: Request, call_next):
+             from . import admin_alerts as _aa
+             ua = (request.headers.get("user-agent") or "")[:120]
+             path = str(request.url.path)
+-            ref = (request.headers.get("referer") or "(direct)")[:120]
++            ref = (request.headers.get("referer") or "")[:200]
+             ipc = request.headers.get("cf-ipcountry") or ""
++            # v1.24.55 — parse the referrer so admin sees "via Google · 'ac
++            # repair dubai'" instead of a raw URL. Falls through to "Direct"
++            # when there is no referrer header.
++            src = live_visitors.parse_referrer(ref)
++            if src["traffic_source"] == "search":
++                src_line = (f"From: {src['source_label']} search"
++                            + (f" · query: \"{src['search_query']}\""
++                               if src.get("search_query") else " · (query hidden)"))
++            elif src["traffic_source"] == "social":
++                src_line = f"From: {src['source_label']}"
++            elif src["traffic_source"] == "referral":
++                src_line = f"From: {src['source_label']} (referral)"
++            else:
++                src_line = "From: Direct (typed URL or bookmark)"
+             _aa.notify_admin(
+                 f"👋 New visitor on Servia\n\n"
+-                f"Page: {path}\nReferrer: {ref}\nCountry: {ipc or '?'}\nUA: {ua}",
++                f"Page: {path}\n{src_line}\nCountry: {ipc or '?'}\nUA: {ua}",
+                 kind="new_visitor", urgency="low")
+         except Exception: pass
+     return resp
+@@ -806,21 +824,41 @@ def chat(req: ChatRequest, request: Request):
+     result = None
+     mode = ""
+     last_err = None
+-    # Only attempt the Anthropic-bound primary path when the admin's customer
+-    # default IS Anthropic. If they've configured a different provider (or none
+-    # at all), skip straight to the cascade so we don't burn 5-10s on a known-
+-    # bad Anthropic call before fallback kicks in.
++    # v1.24.55 — ADMIN AI ARENA ALWAYS WINS.
++    # The admin's choice in /admin.html → AI Arena → "Default model per persona"
++    # is the single source of truth for which provider runs. Railway's
++    # ANTHROPIC_API_KEY env var is a *fallback only* when no admin default is
++    # set AND no other provider has a key configured. This avoids the previous
++    # behaviour where deleting/keeping Railway env was needed to switch models.
+     try:
+         from . import ai_router as _ar
+-        _cust_default = (_ar._load_cfg().get("defaults") or {}).get("customer", "")
+-    except Exception: _cust_default = ""
+-    if settings.use_llm and (_cust_default.startswith("anthropic/") or not _cust_default):
++        _ai_cfg = _ar._load_cfg()
++        _cust_default = (_ai_cfg.get("defaults") or {}).get("customer", "")
++        _ai_keys = _ai_cfg.get("keys") or {}
++    except Exception:
++        _cust_default = ""
++        _ai_keys = {}
++    # Anthropic primary path runs ONLY if:
++    #   (a) admin default explicitly says anthropic/*, OR
++    #   (b) admin default is empty AND no other provider has a key set
++    _other_keys_set = any(
++        bool(_ai_keys.get(p)) for p in ("openai", "google", "openrouter", "groq", "deepseek")
++    )
++    _use_anthropic_primary = (
++        _cust_default.startswith("anthropic/") or
++        (not _cust_default and not _other_keys_set)
++    )
++    if settings.use_llm and _use_anthropic_primary:
++        print(f"[chat] route=anthropic-primary (admin_default={_cust_default!r})", flush=True)
+         try:
+             result = llm.chat(history, session_id=sid, language=lang)
+             mode = "llm"
+         except Exception as e:  # noqa: BLE001
+             last_err = f"primary anthropic: {e}"
+             print(f"[chat] primary LLM failed, cascading: {e}", flush=True)
++    else:
++        print(f"[chat] route=admin-router (admin_default={_cust_default!r}, "
++              f"other_keys_set={_other_keys_set})", flush=True)
+ 
+     if (not result) or not (result.get("text") or "").strip():
+         # 2 & 3: try admin-side AI Router with cascade
+@@ -1007,7 +1045,19 @@ async def stripe_webhook(request: Request):
+     etype = event.get("type") if isinstance(event, dict) else event["type"]
+     obj = (event.get("data") or {}).get("object") if isinstance(event, dict) else event["data"]["object"]
+     if etype == "checkout.session.completed":
+-        invoice_id = (obj.get("metadata") or {}).get("invoice_id")
++        # v1.24.56 — also handle multi_quotes paid by Stripe Checkout
++        # (initiated from /api/p/{quote_id}/checkout). Metadata carries
++        # quote_id for that path.
++        meta = (obj.get("metadata") or {})
++        mq_id = meta.get("quote_id")
++        if mq_id:
++            try:
++                from . import multi_quote_pages as _mqp_mod
++                amount_total = obj.get("amount_total", 0)
++                _mqp_mod.mark_paid(mq_id, amount_aed=(amount_total / 100.0) if amount_total else None)
++            except Exception as e:
++                print(f"[stripe webhook] mark_paid failed for {mq_id}: {e}", flush=True)
++        invoice_id = meta.get("invoice_id")
+         if invoice_id:
+             from . import quotes as _q
+             _q.mark_invoice_paid(invoice_id, source="stripe")
+diff --git a/app/multi_quote_pages.py b/app/multi_quote_pages.py
+new file mode 100644
+index 0000000..144030a
+--- /dev/null
++++ b/app/multi_quote_pages.py
+@@ -0,0 +1,827 @@
++"""Multi-service quote signing + payment + status + photos (v1.24.56).
++
++End-to-end customer + vendor + admin experience around a single quote.
++
++PUBLIC ROUTES:
++  GET  /q/{id}                 customer signing page (phone-gated)
++  POST /api/q/{id}/verify      → token
++  GET  /api/q/{id}             → full quote data (includes line statuses + photos)
++  POST /api/q/{id}/sign        signature + per-line approvals + customer notes
++  POST /api/q/{id}/upload      customer uploads a photo (compressed)
++  GET  /p/{id}                 payment page (Stripe / WA fallback)
++  POST /api/p/{id}/checkout    create Stripe Checkout session (returns hosted url)
++  GET  /i/{id}                 print-friendly invoice page
++
++ADMIN ROUTES (require ADMIN_TOKEN):
++  POST /api/admin/quote/{id}/status     update quote-level status
++  POST /api/admin/quote/{id}/line-status  update per-line status
++  POST /api/admin/quote/{id}/upload     vendor/Servia uploads service photo/video
++  GET  /api/admin/quote/{id}/all        full data + signature + photos for admin
++
++Tables added at first call (idempotent):
++  multi_quotes              (added: status, line_status_json, paid_at, paid_amount)
++  quote_photos              new — base64-stored compressed images, kind='before|during|after|invoice'
++  quote_status_history      new — timeline events
++"""
++from __future__ import annotations
++import base64 as _b64
++import datetime as _dt
++import hashlib
++import hmac
++import json as _json
++import os
++from typing import Any
++
++from fastapi import APIRouter, Depends, HTTPException, Request
++from fastapi.responses import HTMLResponse
++from pydantic import BaseModel
++
++from . import db
++from .auth import require_admin
++from .config import get_settings
++
++
++public_router = APIRouter(tags=["quote-public"])
++admin_router  = APIRouter(prefix="/api/admin/quote", tags=["quote-admin"],
++                          dependencies=[Depends(require_admin)])
++
++
++def _now() -> str:
++    return _dt.datetime.utcnow().isoformat() + "Z"
++
++
++def _ensure_schema() -> None:
++    with db.connect() as c:
++        # Additive columns on multi_quotes (no-op if already there)
++        for ddl in (
++            "ALTER TABLE multi_quotes ADD COLUMN status TEXT DEFAULT 'pending'",
++            "ALTER TABLE multi_quotes ADD COLUMN line_status_json TEXT",
++            "ALTER TABLE multi_quotes ADD COLUMN paid_amount REAL",
++            "ALTER TABLE multi_quotes ADD COLUMN stripe_session_id TEXT",
++        ):
++            try: c.execute(ddl)
++            except Exception: pass
++        c.execute("""CREATE TABLE IF NOT EXISTS quote_photos (
++            id INTEGER PRIMARY KEY AUTOINCREMENT,
++            quote_id TEXT, line_index INTEGER,
++            kind TEXT,           -- before|during|after|invoice|customer
++            uploaded_by TEXT,    -- customer|vendor|admin
++            data_url TEXT,       -- base64 inline (compressed client-side)
++            mime TEXT, bytes INTEGER, caption TEXT,
++            created_at TEXT)""")
++        c.execute("""CREATE TABLE IF NOT EXISTS quote_status_history (
++            id INTEGER PRIMARY KEY AUTOINCREMENT,
++            quote_id TEXT, event TEXT, actor TEXT, note TEXT, at TEXT)""")
++
++
++def _quote(quote_id: str) -> dict | None:
++    _ensure_schema()
++    with db.connect() as c:
++        try:
++            r = c.execute("SELECT * FROM multi_quotes WHERE quote_id=?",
++                          (quote_id,)).fetchone()
++        except Exception: return None
++    if not r: return None
++    d = dict(r)
++    try: d["items"] = _json.loads(d.get("items_json") or "[]")
++    except Exception: d["items"] = []
++    try: d["line_status"] = _json.loads(d.get("line_status_json") or "{}")
++    except Exception: d["line_status"] = {}
++    return d
++
++
++def _photos(quote_id: str) -> list[dict]:
++    with db.connect() as c:
++        rows = c.execute(
++            "SELECT id, line_index, kind, uploaded_by, mime, bytes, caption, "
++            "created_at FROM quote_photos WHERE quote_id=? ORDER BY id DESC",
++            (quote_id,)).fetchall()
++    return [dict(r) for r in rows]
++
++
++def _history(quote_id: str) -> list[dict]:
++    with db.connect() as c:
++        rows = c.execute(
++            "SELECT event, actor, note, at FROM quote_status_history "
++            "WHERE quote_id=? ORDER BY id DESC LIMIT 50",
++            (quote_id,)).fetchall()
++    return [dict(r) for r in rows]
++
++
++def _add_event(quote_id: str, event: str, actor: str, note: str = "") -> None:
++    with db.connect() as c:
++        c.execute(
++            "INSERT INTO quote_status_history(quote_id, event, actor, note, at) "
++            "VALUES(?,?,?,?,?)", (quote_id, event, actor, note, _now()))
++
++
++def _sign_token(quote_id: str, phone: str) -> str:
++    s = get_settings()
++    secret = (getattr(s, "ADMIN_TOKEN", "") or os.getenv("ADMIN_TOKEN", "lumora-token")).encode()
++    msg = f"{quote_id}|{phone}".encode()
++    return hmac.new(secret, msg, hashlib.sha256).hexdigest()[:32]
++
++
++def _verify_token(token: str, quote_id: str, phone: str) -> bool:
++    return hmac.compare_digest(token or "", _sign_token(quote_id, phone))
++
++
++# ---------------------------------------------------------------------------
++@public_router.get("/q/{quote_id}", response_class=HTMLResponse)
++def quote_landing(quote_id: str) -> str:
++    q = _quote(quote_id)
++    if not q:
++        return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
++    return _render_quote_html(quote_id, q)
++
++
++def _render_quote_html(quote_id: str, q: dict) -> str:
++    return f"""<!doctype html><html><head><meta charset="utf-8">
++<meta name="viewport" content="width=device-width,initial-scale=1">
++<title>Servia · Quote {quote_id}</title>
++<style>
++* {{box-sizing: border-box; margin: 0; padding: 0;}}
++body{{font: 14px/1.45 system-ui;background:#0F172A;color:#F1F5F9;padding:14px}}
++.container{{max-width:540px;margin:0 auto}}
++.gate{{max-width:340px;margin:18vh auto;text-align:center;background:#1E293B;
++border:1px solid #334155;border-radius:12px;padding:18px}}
++.gate input{{width:100%;padding:10px;font-size:15px;background:#0F172A;
++color:#fff;border:1px solid #334155;border-radius:8px;margin:8px 0;font-family:monospace}}
++.cart{{display:none}}
++.line{{background:#1E293B;border:1px solid #334155;border-radius:8px;
++padding:10px 12px;margin:6px 0;cursor:default}}
++.line.approved{{border-left:3px solid #10B981}}
++.line.rejected{{border-left:3px solid #EF4444;opacity:.6}}
++.line .head{{display:flex;justify-content:space-between;font-weight:600}}
++.line .price{{color:#FCD34D}}
++.line .detail{{font-size:12px;color:#94A3B8;margin-top:2px}}
++.line .actions{{display:flex;gap:6px;margin-top:6px}}
++.line .actions button{{flex:1;padding:5px;background:#334155;color:#F1F5F9;
++border:none;border-radius:5px;font-size:11px;cursor:pointer}}
++.line .actions button.ok{{background:#0D9488}}
++.line .actions button.no{{background:#7F1D1D}}
++.line textarea{{width:100%;background:#0F172A;border:1px solid #334155;
++color:#F1F5F9;border-radius:5px;padding:6px;margin-top:5px;font:inherit;font-size:12px}}
++.line .photos{{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}}
++.line .photos img{{width:60px;height:60px;object-fit:cover;border-radius:4px;
++cursor:pointer;border:1px solid #475569}}
++.totals{{padding:10px 12px;background:#1E293B;border-radius:8px;margin:10px 0}}
++.totals .row{{display:flex;justify-content:space-between;padding:3px 0}}
++.totals .row.t{{font-size:17px;font-weight:700;color:#14B8A6;border-top:1px solid #334155;padding-top:8px;margin-top:4px}}
++.feature{{font-size:12px;color:#94A3B8;background:#1E293B;border-left:3px solid #14B8A6;
++padding:8px 12px;margin:8px 0;border-radius:0 6px 6px 0}}
++canvas{{background:#fff;border-radius:8px;width:100%;height:130px;display:block;margin:6px 0}}
++.btn{{padding:11px 14px;background:#0D9488;color:#fff;border:none;border-radius:8px;
++font-weight:600;cursor:pointer;width:100%;margin:6px 0;font-size:14px}}
++.btn.alt{{background:#1E293B;color:#F1F5F9;border:1px solid #475569}}
++.timeline{{padding:8px 12px;background:#1E293B;border-radius:8px;margin:10px 0}}
++.timeline .ev{{padding:4px 0;border-bottom:1px dashed #334155;font-size:12px}}
++.timeline .ev:last-child{{border:none}}
++.timeline .ev b{{color:#14B8A6}}
++.lightbox{{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;
++align-items:center;justify-content:center;z-index:99}}
++.lightbox.open{{display:flex}}
++.lightbox img,.lightbox video{{max-width:96vw;max-height:90vh}}
++.lightbox .close{{position:absolute;top:12px;right:14px;background:#fff;color:#000;
++border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer}}
++input[type=text],textarea{{font:inherit}}
++</style></head><body>
++
++<div class="gate" id="gate">
++  <h2>Servia Quote</h2>
++  <p style="color:#94A3B8;font-size:12.5px;margin:8px 0">Quote <code>{quote_id}</code><br>
++  Enter the phone number used to request this quote.</p>
++  <input id="phone" type="tel" placeholder="0559396459" autocomplete="tel">
++  <button class="btn" onclick="verify()">View quote</button>
++  <p id="msg" style="color:#FCA5A5;font-size:12px;margin-top:8px"></p>
++</div>
++
++<div class="cart container" id="cart">
++  <h2>Quote <code>{quote_id}</code></h2>
++  <div id="lines"></div>
++  <div class="totals">
++    <div class="row"><div>Subtotal</div><div id="sub">—</div></div>
++    <div class="row"><div>VAT 5%</div><div id="vat">—</div></div>
++    <div class="row t"><div>Total</div><div id="total">—</div></div>
++  </div>
++  <div class="feature">📅 <span id="date"></span> · 📍 <span id="addr"></span></div>
++  <div class="feature" id="status-line">Status: <b>pending</b></div>
++  <div class="timeline" id="timeline" style="display:none"><b>Status timeline</b><div id="tl-events"></div></div>
++
++  <h3 style="margin:14px 0 6px;font-size:13px">📸 Service photos</h3>
++  <div id="photos" class="photos" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;min-height:50px"></div>
++  <input type="file" id="up-input" accept="image/*,video/*" style="display:none" onchange="onPhotoSelect(event)">
++  <button class="btn alt" onclick="document.getElementById('up-input').click()">📤 Upload photo / video</button>
++
++  <h3 style="margin:14px 0 6px;font-size:13px">✍️ Your signature</h3>
++  <canvas id="sig" width="500" height="130"></canvas>
++  <button class="btn alt" onclick="clearSig()">Clear signature</button>
++
++  <h3 style="margin:14px 0 6px;font-size:13px">💬 General note</h3>
++  <textarea id="cnote" rows="2" placeholder="Any extra instructions…"></textarea>
++
++  <button class="btn" id="approve-btn" onclick="approve()">✅ Approve all &amp; sign</button>
++  <button class="btn alt" onclick="location.href='/p/{quote_id}'">💳 Pay online instead</button>
++  <p style="color:#94A3B8;font-size:11px;text-align:center;margin-top:10px">
++    Or pay manually: WhatsApp <b>+971 56 4020087</b> with quote <code>{quote_id}</code>
++  </p>
++
++  <p style="color:#64748B;font-size:10px;text-align:center;margin-top:14px">
++    All photos and videos are compressed before upload · Per-service approval &amp; comments are recorded with timestamp · Real-time status updates land on your phone · Secure phone-gated access
++  </p>
++</div>
++
++<div class="lightbox" id="lb" onclick="this.classList.remove('open')">
++  <button class="close" onclick="document.getElementById('lb').classList.remove('open');event.stopPropagation()">×</button>
++  <div id="lb-content"></div>
++</div>
++
++<script>
++const QID = "{quote_id}";
++let token = localStorage.getItem("q.token." + QID) || "";
++let lineState = {{}};   // {{ idx: {{ approved: bool, comment: str }} }}
++
++async function verify() {{
++  const phone = document.getElementById("phone").value.replace(/[^\\d]/g,"");
++  const r = await fetch("/api/q/" + QID + "/verify", {{
++    method: "POST", headers: {{"Content-Type":"application/json"}},
++    body: JSON.stringify({{phone}})
++  }});
++  const j = await r.json();
++  if (!j.ok) {{ document.getElementById("msg").textContent = "Phone doesn't match. Try again."; return; }}
++  token = j.token;
++  localStorage.setItem("q.token." + QID, token);
++  showCart();
++}}
++
++async function showCart() {{
++  const r = await fetch("/api/q/" + QID, {{ headers: {{"X-Quote-Token": token}} }});
++  const j = await r.json();
++  if (!j.ok) {{ token=""; localStorage.removeItem("q.token." + QID); return; }}
++  document.getElementById("gate").style.display="none";
++  document.getElementById("cart").style.display="block";
++  lineState = j.line_status || {{}};
++  renderLines(j.items || []);
++  document.getElementById("sub").textContent   = "AED " + j.subtotal_aed;
++  document.getElementById("vat").textContent   = "AED " + j.vat_aed;
++  document.getElementById("total").textContent = "AED " + j.total_aed;
++  document.getElementById("date").textContent  = (j.target_date||"") + " · " + (j.time_slot||"");
++  document.getElementById("addr").textContent  = j.address||"";
++  document.getElementById("status-line").innerHTML = "Status: <b>" + (j.status||"pending") + "</b>";
++  if ((j.history||[]).length) {{
++    document.getElementById("timeline").style.display="block";
++    document.getElementById("tl-events").innerHTML = j.history.map(h =>
++      `<div class="ev"><b>${{escapeHtml(h.event)}}</b> · ${{shortAt(h.at)}} · <i>${{escapeHtml(h.actor||"")}}</i>${{h.note?" — "+escapeHtml(h.note):""}}</div>`).join("");
++  }}
++  renderPhotos(j.photos || []);
++  initSig();
++}}
++
++function renderLines(items) {{
++  document.getElementById("lines").innerHTML = items.map((it, i) => {{
++    const st = lineState[i] || {{}};
++    const cls = st.approved === true ? "approved" : st.approved === false ? "rejected" : "";
++    const cmt = st.comment || "";
++    return `<div class="line ${{cls}}" id="line-${{i}}">
++      <div class="head">
++        <div>${{i+1}}. ${{escapeHtml(it.label)}}</div>
++        <div class="price">AED ${{it.price_aed}}</div>
++      </div>
++      <div class="detail">${{escapeHtml(it.detail||"")}}</div>
++      <div class="actions">
++        <button class="ok" onclick="setLine(${{i}}, true)">${{st.approved===true?"✓ Approved":"Approve"}}</button>
++        <button class="no" onclick="setLine(${{i}}, false)">${{st.approved===false?"✕ Rejected":"Reject"}}</button>
++      </div>
++      <textarea placeholder="Comment for this service…" oninput="setComment(${{i}}, this.value)" rows="1">${{escapeHtml(cmt)}}</textarea>
++    </div>`;
++  }}).join("");
++}}
++
++function setLine(i, approved) {{
++  lineState[i] = lineState[i] || {{}};
++  lineState[i].approved = approved;
++  const ln = document.getElementById("line-"+i);
++  ln.classList.remove("approved","rejected");
++  if (approved === true) ln.classList.add("approved");
++  if (approved === false) ln.classList.add("rejected");
++  ln.querySelector(".actions .ok").textContent = approved ? "✓ Approved" : "Approve";
++  ln.querySelector(".actions .no").textContent = approved===false ? "✕ Rejected" : "Reject";
++}}
++function setComment(i, v) {{
++  lineState[i] = lineState[i] || {{}};
++  lineState[i].comment = v;
++}}
++
++function renderPhotos(photos) {{
++  const wrap = document.getElementById("photos");
++  if (!photos.length) {{ wrap.innerHTML = '<div style="color:#64748B;font-size:11px">No photos yet. Photos uploaded by you or our team after service appear here.</div>'; return; }}
++  wrap.innerHTML = photos.map(p =>
++    `<img src="/api/q/${{QID}}/photo/${{p.id}}?t=${{token}}" alt="${{escapeHtml(p.kind||'')}}" title="${{escapeHtml((p.kind||'')+(p.caption?' · '+p.caption:''))}}" onclick="openLightbox(${{p.id}}, '${{escapeHtml(p.mime||'')}}')">`).join("");
++}}
++
++function openLightbox(pid, mime) {{
++  const url = "/api/q/" + QID + "/photo/" + pid + "?t=" + token;
++  document.getElementById("lb-content").innerHTML =
++    mime.startsWith("video/") ? `<video src="${{url}}" controls autoplay></video>` : `<img src="${{url}}">`;
++  document.getElementById("lb").classList.add("open");
++}}
++
++/* --- photo upload with client-side compression --- */
++async function onPhotoSelect(e) {{
++  const f = e.target.files[0];
++  if (!f) return;
++  let dataUrl;
++  if (f.type.startsWith("image/")) {{
++    dataUrl = await compressImage(f, 1200, 0.72);
++  }} else {{
++    dataUrl = await readAsDataUrl(f);
++    if (f.size > 6 * 1024 * 1024) {{
++      if (!confirm("Video is "+ (f.size/1024/1024).toFixed(1)+" MB — upload anyway?")) return;
++    }}
++  }}
++  const caption = prompt("Add a caption (optional):") || "";
++  const r = await fetch("/api/q/" + QID + "/upload", {{
++    method:"POST", headers:{{"Content-Type":"application/json","X-Quote-Token":token}},
++    body: JSON.stringify({{ data_url: dataUrl, mime: f.type, caption }})
++  }});
++  const j = await r.json();
++  if (j.ok) {{ alert("Uploaded ✓"); showCart(); }}
++  else alert("Upload failed: " + (j.error||""));
++}}
++function readAsDataUrl(f) {{
++  return new Promise((res, rej) => {{
++    const r = new FileReader();
++    r.onload = () => res(r.result);
++    r.onerror = rej;
++    r.readAsDataURL(f);
++  }});
++}}
++function compressImage(f, maxDim, quality) {{
++  return new Promise((res, rej) => {{
++    const r = new FileReader();
++    r.onload = () => {{
++      const img = new Image();
++      img.onload = () => {{
++        const canvas = document.createElement("canvas");
++        const ratio = Math.min(maxDim / img.width, maxDim / img.height, 1);
++        canvas.width = Math.round(img.width * ratio);
++        canvas.height = Math.round(img.height * ratio);
++        const ctx = canvas.getContext("2d");
++        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
++        res(canvas.toDataURL("image/jpeg", quality));
++      }};
++      img.onerror = rej;
++      img.src = r.result;
++    }};
++    r.onerror = rej;
++    r.readAsDataURL(f);
++  }});
++}}
++
++/* --- signature pad --- */
++let sigCtx, drawing=false;
++function initSig() {{
++  const c = document.getElementById("sig");
++  sigCtx = c.getContext("2d");
++  sigCtx.lineWidth = 2; sigCtx.lineCap="round"; sigCtx.strokeStyle="#0F172A";
++  function pos(e){{const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return {{x:(t.clientX-r.left)*c.width/r.width,y:(t.clientY-r.top)*c.height/r.height}}}}
++  function down(e){{e.preventDefault();drawing=true;const p=pos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y)}}
++  function move(e){{if(!drawing)return;e.preventDefault();const p=pos(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke()}}
++  function up(){{drawing=false}}
++  c.addEventListener("mousedown",down);c.addEventListener("mousemove",move);
++  c.addEventListener("mouseup",up);c.addEventListener("mouseleave",up);
++  c.addEventListener("touchstart",down,{{passive:false}});
++  c.addEventListener("touchmove",move,{{passive:false}});
++  c.addEventListener("touchend",up);
++}}
++function clearSig() {{ const c=document.getElementById("sig");c.getContext("2d").clearRect(0,0,c.width,c.height); }}
++
++async function approve() {{
++  const dataUrl = document.getElementById("sig").toDataURL("image/png");
++  const note    = document.getElementById("cnote").value.trim();
++  const r = await fetch("/api/q/" + QID + "/sign", {{
++    method:"POST", headers:{{"Content-Type":"application/json","X-Quote-Token":token}},
++    body: JSON.stringify({{ signature_data_url: dataUrl, customer_note: note,
++                           line_status: lineState }})
++  }});
++  const j = await r.json();
++  if (j.ok) {{
++    document.body.innerHTML = `<div style="text-align:center;padding:18vh 16px;font-family:system-ui;color:#F1F5F9;background:#0F172A;min-height:100vh">
++      <h1 style="color:#10B981">✅ Approved!</h1>
++      <p style="color:#94A3B8;margin:10px 0 16px">Quote <code>${{QID}}</code> is signed.<br>Our team is being dispatched.</p>
++      <p><a style="display:inline-block;padding:11px 18px;background:#0D9488;color:#fff;border-radius:8px;text-decoration:none;margin:4px" href="/p/${{QID}}">💳 Pay AED ${{j.total_aed||""}}</a></p>
++      <p><a style="display:inline-block;padding:11px 18px;background:#1E293B;color:#F1F5F9;border-radius:8px;text-decoration:none;margin:4px" href="/i/${{QID}}">📄 View invoice</a></p>
++      <p style="font-size:12px;color:#64748B;margin-top:14px">Or WhatsApp +971 56 4020087</p>
++    </div>`;
++  }} else alert("Could not sign: " + (j.error||"server error"));
++}}
++
++function escapeHtml(s){{return String(s||"").replace(/[&<>"']/g, c=>({{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}}[c]))}}
++function shortAt(iso){{ try {{ return new Date(iso).toLocaleString("en-GB", {{ hour:"2-digit", minute:"2-digit", day:"2-digit", month:"short" }}); }} catch(_) {{ return iso||""; }} }}
++
++if (token) showCart();
++</script>
++</body></html>"""
++
++
++# ---------------------------------------------------------------------------
++class _VerifyBody(BaseModel):
++    phone: str
++
++@public_router.post("/api/q/{quote_id}/verify")
++def verify_phone(quote_id: str, body: _VerifyBody) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404, "quote not found")
++    incoming = "".join(ch for ch in (body.phone or "") if ch.isdigit())
++    stored   = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not stored or stored[-9:] != incoming[-9:]:
++        return {"ok": False, "error": "phone mismatch"}
++    return {"ok": True, "token": _sign_token(quote_id, stored)}
++
++
++@public_router.get("/api/q/{quote_id}")
++def get_quote_data(quote_id: str, request: Request) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    tok = request.headers.get("X-Quote-Token", "") or request.query_params.get("t", "")
++    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not _verify_token(tok, quote_id, stored):
++        return {"ok": False, "error": "invalid token"}
++    return {
++        "ok": True,
++        "quote_id": q["quote_id"],
++        "items": q.get("items") or [],
++        "line_status": q.get("line_status") or {},
++        "subtotal_aed": q.get("subtotal_aed"),
++        "vat_aed":      q.get("vat_aed"),
++        "total_aed":    q.get("total_aed"),
++        "target_date":  q.get("target_date"),
++        "time_slot":    q.get("time_slot"),
++        "address":      q.get("address"),
++        "customer_name": q.get("customer_name"),
++        "phone":        (q.get("phone") or "")[-4:],  # last 4 only for privacy
++        "signed_at":    q.get("signed_at"),
++        "paid_at":      q.get("paid_at"),
++        "status":       q.get("status") or "pending",
++        "history":      _history(quote_id),
++        "photos":       _photos(quote_id),
++    }
++
++
++class _SignBody(BaseModel):
++    signature_data_url: str
++    customer_note: str | None = ""
++    line_status: dict | None = None
++
++@public_router.post("/api/q/{quote_id}/sign")
++def sign(quote_id: str, body: _SignBody, request: Request) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    tok = request.headers.get("X-Quote-Token", "")
++    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not _verify_token(tok, quote_id, stored):
++        return {"ok": False, "error": "invalid token"}
++    line_status = body.line_status or {}
++    with db.connect() as c:
++        c.execute(
++            "UPDATE multi_quotes SET signed_at=?, signature_data_url=?, "
++            "line_status_json=?, status='signed', "
++            "notes=COALESCE(notes,'') || ? WHERE quote_id=?",
++            (_now(), body.signature_data_url[:200000],
++             _json.dumps(line_status),
++             ("\n--- customer note ---\n" + (body.customer_note or "")) if body.customer_note else "",
++             quote_id))
++    _add_event(quote_id, "signed", q.get("phone") or "customer",
++               f"signed {len([k for k,v in line_status.items() if v.get('approved')])} of {len(q.get('items',[]))} services")
++    db.log_event("quote", quote_id, "customer_signed",
++                 actor=q.get("phone") or "?",
++                 details={"approved_count":
++                          len([k for k,v in line_status.items() if v.get("approved")]),
++                          "total": q.get("total_aed")})
++    try:
++        from . import admin_alerts as _aa
++        approved_lines = [it["label"] for i, it in enumerate(q.get("items",[]))
++                          if line_status.get(str(i), {}).get("approved") is True
++                          or line_status.get(i, {}).get("approved") is True]
++        rejected_lines = [it["label"] for i, it in enumerate(q.get("items",[]))
++                          if line_status.get(str(i), {}).get("approved") is False
++                          or line_status.get(i, {}).get("approved") is False]
++        _aa.notify_admin(
++            f"✅ Customer signed quote {quote_id}\n"
++            f"{q.get('customer_name','?')} · {q.get('phone','?')}\n"
++            f"Total: AED {q.get('total_aed')}\n"
++            f"Approved: {', '.join(approved_lines) or 'all'}\n"
++            + (f"Rejected: {', '.join(rejected_lines)}\n" if rejected_lines else "") +
++            f"Schedule: {q.get('target_date')} {q.get('time_slot')}",
++            kind="quote_signed", urgency="normal", meta={"quote_id": quote_id})
++    except Exception: pass
++    return {"ok": True, "quote_id": quote_id, "signed_at": _now(),
++            "total_aed": q.get("total_aed")}
++
++
++# ---------------------------------------------------------------------------
++class _UploadBody(BaseModel):
++    data_url: str
++    mime: str | None = None
++    caption: str | None = None
++    line_index: int | None = None
++    kind: str | None = "customer"   # before|during|after|customer
++
++@public_router.post("/api/q/{quote_id}/upload")
++def customer_upload(quote_id: str, body: _UploadBody, request: Request) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    tok = request.headers.get("X-Quote-Token", "")
++    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not _verify_token(tok, quote_id, stored):
++        return {"ok": False, "error": "invalid token"}
++    return _save_photo(quote_id, body, "customer")
++
++
++def _save_photo(quote_id: str, body: _UploadBody, uploaded_by: str) -> dict:
++    data = body.data_url or ""
++    if not data.startswith("data:"):
++        return {"ok": False, "error": "expected data URL"}
++    sz = len(data) * 3 // 4
++    if sz > 12 * 1024 * 1024:  # 12 MB cap (after client compression)
++        return {"ok": False, "error": "too large (max 12 MB after compression)"}
++    with db.connect() as c:
++        c.execute(
++            "INSERT INTO quote_photos(quote_id, line_index, kind, uploaded_by, "
++            "data_url, mime, bytes, caption, created_at) "
++            "VALUES(?,?,?,?,?,?,?,?,?)",
++            (quote_id, body.line_index, body.kind or "customer", uploaded_by,
++             data, body.mime, sz, body.caption, _now()))
++        pid = c.lastrowid
++    _add_event(quote_id, "photo_uploaded", uploaded_by,
++               f"{body.kind or 'photo'}{' · ' + body.caption if body.caption else ''}")
++    return {"ok": True, "photo_id": pid, "bytes": sz}
++
++
++@public_router.get("/api/q/{quote_id}/photo/{pid}")
++def get_photo(quote_id: str, pid: int, t: str = ""):
++    """Serve a photo by id. Token-gated for customer-side; admin uses /api/admin/quote path."""
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
++    if not _verify_token(t, quote_id, stored):
++        raise HTTPException(403, "invalid token")
++    with db.connect() as c:
++        r = c.execute("SELECT data_url, mime FROM quote_photos WHERE id=? AND quote_id=?",
++                      (pid, quote_id)).fetchone()
++    if not r: raise HTTPException(404)
++    # Decode and stream — tiny payload since base64 is small after compression
++    data_url, mime = r["data_url"], (r["mime"] or "image/jpeg")
++    if "," in data_url:
++        b64 = data_url.split(",", 1)[1]
++    else:
++        b64 = data_url
++    raw = _b64.b64decode(b64)
++    from fastapi.responses import Response
++    return Response(content=raw, media_type=mime,
++                    headers={"Cache-Control": "public, max-age=3600"})
++
++
++# ---------------------------------------------------------------------------
++@public_router.get("/p/{quote_id}", response_class=HTMLResponse)
++def pay_landing(quote_id: str) -> str:
++    q = _quote(quote_id)
++    if not q: return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
++    has_stripe = bool(os.getenv("STRIPE_SECRET_KEY"))
++    return f"""<!doctype html><html><head><meta charset="utf-8">
++<meta name="viewport" content="width=device-width,initial-scale=1">
++<title>Servia · Pay {quote_id}</title>
++<style>
++body{{font: 14px system-ui;background:#0F172A;color:#F1F5F9;padding:18px;margin:0;text-align:center}}
++.box{{max-width:360px;margin:14vh auto;background:#1E293B;border:1px solid #334155;
++border-radius:12px;padding:22px}}
++h1{{font-size:30px;color:#FCD34D;margin:0 0 8px}}
++.btn{{display:block;width:100%;padding:13px;background:#0D9488;color:#fff;border:none;
++border-radius:10px;font-weight:600;font-size:15px;text-decoration:none;
++margin:8px 0;cursor:pointer}}
++.btn.alt{{background:#1E293B;color:#F1F5F9;border:1px solid #475569}}
++.btn:disabled{{opacity:.5;cursor:not-allowed}}
++</style></head><body>
++<div class="box">
++  <h1>AED {q.get('total_aed')}</h1>
++  <p style="color:#94A3B8;font-size:13px">Quote <code>{quote_id}</code><br>
++  {q.get('customer_name','')} · {q.get('phone','')}</p>
++  <button class="btn" id="card-btn" onclick="payCard()" {'' if has_stripe else 'disabled title="Stripe not configured"'}>💳 Pay with card</button>
++  <a class="btn alt" href="https://wa.me/971564020087?text=Pay%20{quote_id}">📱 WhatsApp +971 56 4020087</a>
++  <a class="btn alt" href="/i/{quote_id}">📄 View invoice</a>
++  {'<p style="color:#64748B;font-size:11px;margin-top:12px">Card payment unavailable — set STRIPE_SECRET_KEY in Railway env to enable.</p>' if not has_stripe else ''}
++</div>
++<script>
++async function payCard() {{
++  const r = await fetch("/api/p/{quote_id}/checkout", {{ method: "POST" }});
++  const j = await r.json();
++  if (j.url) location.href = j.url;
++  else alert("Could not start checkout: " + (j.error||""));
++}}
++</script></body></html>"""
++
++
++@public_router.post("/api/p/{quote_id}/checkout")
++def stripe_checkout(quote_id: str) -> dict:
++    """Create a Stripe Checkout Session and return its hosted URL."""
++    sk = os.getenv("STRIPE_SECRET_KEY", "")
++    if not sk:
++        return {"ok": False, "error": "Stripe not configured"}
++    q = _quote(quote_id)
++    if not q: return {"ok": False, "error": "quote not found"}
++    try:
++        import urllib.parse, urllib.request
++        s = get_settings()
++        domain = s.brand().get("domain", "servia.ae")
++        line_items_data = []
++        for i, it in enumerate(q.get("items") or []):
++            line_items_data.append((
++                f"line_items[{i}][price_data][currency]", "aed"))
++            line_items_data.append((
++                f"line_items[{i}][price_data][product_data][name]", it["label"]))
++            line_items_data.append((
++                f"line_items[{i}][price_data][unit_amount]", str(int(round(it["price_aed"] * 100)))))
++            line_items_data.append((
++                f"line_items[{i}][quantity]", "1"))
++        line_items_data.append(("mode", "payment"))
++        line_items_data.append(("success_url", f"https://{domain}/i/{quote_id}?paid=1"))
++        line_items_data.append(("cancel_url", f"https://{domain}/p/{quote_id}"))
++        line_items_data.append(("metadata[quote_id]", quote_id))
++        body = urllib.parse.urlencode(line_items_data).encode()
++        req = urllib.request.Request(
++            "https://api.stripe.com/v1/checkout/sessions",
++            data=body,
++            headers={"Authorization": f"Bearer {sk}",
++                     "Content-Type": "application/x-www-form-urlencoded"})
++        with urllib.request.urlopen(req, timeout=10) as r:
++            session = _json.loads(r.read())
++        with db.connect() as c:
++            c.execute("UPDATE multi_quotes SET stripe_session_id=? WHERE quote_id=?",
++                      (session.get("id"), quote_id))
++        _add_event(quote_id, "checkout_started", "customer", "stripe")
++        return {"ok": True, "url": session.get("url"), "session_id": session.get("id")}
++    except Exception as e:
++        return {"ok": False, "error": f"stripe: {e}"}
++
++
++# ---------------------------------------------------------------------------
++@public_router.get("/i/{quote_id}", response_class=HTMLResponse)
++def invoice_view(quote_id: str) -> str:
++    q = _quote(quote_id)
++    if not q: return HTMLResponse("<h1>Invoice not found</h1>", status_code=404)
++    items_html = "".join(
++        f"<tr><td>{i+1}</td><td><b>{it['label']}</b><br><small>{it.get('detail','')}</small></td>"
++        f"<td style='text-align:right'>AED {it['price_aed']}</td></tr>"
++        for i, it in enumerate(q.get("items") or []))
++    paid = bool(q.get("paid_at"))
++    return f"""<!doctype html><html><head><meta charset="utf-8">
++<meta name="viewport" content="width=device-width,initial-scale=1">
++<title>Servia Invoice {quote_id}</title>
++<style>
++body{{font:14px/1.5 system-ui;background:#fff;color:#111;padding:20px;max-width:720px;margin:0 auto}}
++.head{{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0D9488;padding-bottom:14px;margin-bottom:18px}}
++.head .brand{{font-size:24px;font-weight:700;color:#0D9488}}
++.head .meta{{text-align:right;font-size:12.5px;color:#64748B}}
++table{{width:100%;border-collapse:collapse;margin:12px 0}}
++table th{{background:#F1F5F9;text-align:left;padding:8px;font-size:12px;font-weight:600}}
++table td{{padding:8px;border-bottom:1px solid #E2E8F0;font-size:13px;vertical-align:top}}
++.totals{{margin-top:14px;float:right;width:300px}}
++.totals .row{{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}}
++.totals .row.total{{font-size:17px;font-weight:700;border-top:2px solid #0D9488;padding-top:8px;margin-top:6px;color:#0D9488}}
++.stamp{{display:inline-block;border:2px solid {'#10B981' if paid else '#DC2626'};color:{'#10B981' if paid else '#DC2626'};font-weight:700;
++padding:4px 12px;border-radius:6px;transform:rotate(-3deg);font-size:13px;margin-top:14px}}
++.btn{{display:inline-block;padding:9px 14px;background:#0D9488;color:#fff;border-radius:6px;
++font-size:13px;text-decoration:none;margin:8px 4px}}
++.note{{font-size:11px;color:#64748B;border-top:1px solid #E2E8F0;padding-top:10px;margin-top:24px;clear:both}}
++@media print {{ body{{padding:0}} .no-print{{display:none}} }}
++</style></head><body>
++<div class="head">
++  <div>
++    <div class="brand">Servia</div>
++    <div style="font-size:11px;color:#64748B">UAE home services platform</div>
++    <div style="font-size:11px;color:#64748B">Operated by Urban Services</div>
++  </div>
++  <div class="meta">
++    <div><b>INVOICE</b></div>
++    <div>Quote: <code>{quote_id}</code></div>
++    <div>Date: {(q.get('created_at') or '')[:10]}</div>
++  </div>
++</div>
++<div style="margin-bottom:14px;font-size:12.5px">
++  <b>Bill to:</b><br>
++  {q.get('customer_name','')}<br>
++  {q.get('phone','')}<br>
++  {q.get('address','')}
++</div>
++<table>
++  <thead><tr><th>#</th><th>Service</th><th style="text-align:right">Amount</th></tr></thead>
++  <tbody>{items_html}</tbody>
++</table>
++<div class="totals">
++  <div class="row"><div>Subtotal</div><div>AED {q.get('subtotal_aed')}</div></div>
++  <div class="row"><div>VAT 5%</div><div>AED {q.get('vat_aed')}</div></div>
++  <div class="row total"><div>Total</div><div>AED {q.get('total_aed')}</div></div>
++</div>
++<div style="clear:both"></div>
++<div class="stamp">{'✓ PAID' if paid else 'PAYMENT PENDING'}</div>
++{'<div style="font-size:11px;color:#64748B;margin-top:6px">Paid on: ' + q.get('paid_at','') + '</div>' if paid else ''}
++<div class="no-print" style="margin-top:24px;text-align:center">
++  <a class="btn" href="javascript:window.print()">🖨️ Print / Save as PDF</a>
++  <a class="btn" href="/q/{quote_id}">↩ Back to quote</a>
++  {'<a class="btn" href="/p/' + quote_id + '">💳 Pay now</a>' if not paid else ''}
++</div>
++<div class="note">
++  This is a digitally generated invoice based on customer-signed quote {quote_id}.
++  Customer signed digitally on {q.get('signed_at','—')}.
++  Real-time service status, photos, comments and invoice updates are available 24/7
++  at <b>servia.ae/q/{quote_id}</b> with phone-gated access. Service photos and
++  videos are uploaded by both vendor team and customer in compressed format
++  inside the quote page.
++</div>
++</body></html>"""
++
++
++# ---------------------------------------------------------------------------
++# ADMIN endpoints — require ADMIN_TOKEN
++class _StatusBody(BaseModel):
++    status: str   # signed|dispatched|arrived|in_progress|done|cancelled|paid
++    note: str | None = ""
++
++@admin_router.post("/{quote_id}/status")
++def admin_set_status(quote_id: str, body: _StatusBody) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    with db.connect() as c:
++        c.execute("UPDATE multi_quotes SET status=? WHERE quote_id=?",
++                  (body.status, quote_id))
++    _add_event(quote_id, body.status, "admin", body.note or "")
++    # Notify customer via existing push pipeline (silent if no push subs)
++    try:
++        from . import push_notifications as _pn
++        _pn.send_to_phone(q.get("phone"),
++                          title=f"Servia · {body.status.replace('_',' ').title()}",
++                          body=f"Quote {quote_id} status updated.",
++                          url=f"/q/{quote_id}", kind="quote_status")
++    except Exception: pass
++    return {"ok": True, "quote_id": quote_id, "status": body.status}
++
++
++class _LineStatusBody(BaseModel):
++    line_index: int
++    status: str    # done|cancelled|in_progress
++    note: str | None = ""
++
++@admin_router.post("/{quote_id}/line-status")
++def admin_set_line_status(quote_id: str, body: _LineStatusBody) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    line_status = q.get("line_status") or {}
++    line_status[str(body.line_index)] = {
++        **(line_status.get(str(body.line_index)) or {}),
++        "vendor_status": body.status,
++        "vendor_note": body.note,
++        "updated_at": _now(),
++    }
++    with db.connect() as c:
++        c.execute("UPDATE multi_quotes SET line_status_json=? WHERE quote_id=?",
++                  (_json.dumps(line_status), quote_id))
++    _add_event(quote_id, f"line[{body.line_index}]:{body.status}", "admin", body.note or "")
++    return {"ok": True, "line_index": body.line_index, "status": body.status}
++
++
++@admin_router.post("/{quote_id}/upload")
++def admin_upload(quote_id: str, body: _UploadBody) -> dict:
++    if not _quote(quote_id): raise HTTPException(404)
++    return _save_photo(quote_id, body, "vendor")
++
++
++@admin_router.get("/{quote_id}/all")
++def admin_full(quote_id: str) -> dict:
++    q = _quote(quote_id)
++    if not q: raise HTTPException(404)
++    return {
++        "quote": q,
++        "history": _history(quote_id),
++        "photos": _photos(quote_id),
++    }
++
++
++# ---------------------------------------------------------------------------
++# Stripe webhook hook — call from /api/webhooks/stripe in main.py to mark
++# quote paid + add event. Pure helper, no router.
++def mark_paid(quote_id: str, amount_aed: float | None = None) -> None:
++    q = _quote(quote_id)
++    if not q: return
++    with db.connect() as c:
++        c.execute("UPDATE multi_quotes SET paid_at=?, paid_amount=?, status='paid' WHERE quote_id=?",
++                  (_now(), amount_aed, quote_id))
++    _add_event(quote_id, "paid", "stripe", f"AED {amount_aed}" if amount_aed else "")
++    try:
++        from . import admin_alerts as _aa
++        _aa.notify_admin(
++            f"💰 Payment received for {quote_id}\n"
++            f"Amount: AED {amount_aed or q.get('total_aed')}\n"
++            f"{q.get('customer_name','?')} · {q.get('phone','?')}",
++            kind="payment_received", urgency="normal",
++            meta={"quote_id": quote_id})
++    except Exception: pass
+diff --git a/app/push_notifications.py b/app/push_notifications.py
+index 3533703..6f2fa48 100644
+--- a/app/push_notifications.py
++++ b/app/push_notifications.py
+@@ -316,3 +316,41 @@ def send_to_all(payload: dict, audience: str = "all", filters: dict | None = Non
+         "matched": len(rows),
+         "errors": failed_errors[:30],   # cap so admin doesn't get a 1MB JSON
+     }
++
++
++# ---------------------------------------------------------------------------
++def send_to_phone(phone: str | None, *, title: str, body: str,
++                  url: str | None = None, kind: str = "info") -> dict:
++    """Convenience helper: send a push to all subscriptions tied to a phone.
++    No-ops if phone is missing or no subs found. Used by quote status updates."""
++    if not phone:
++        return {"sent": 0, "matched": 0}
++    payload = {"title": title, "body": body, "kind": kind, "url": url or "/"}
++    audience = {"phone": phone}
++    try:
++        return broadcast(payload, audience)
++    except NameError:
++        # `broadcast()` may not be defined in older versions; fall back to a
++        # direct send to all subs.
++        return _send_all(payload)
++
++
++def _send_all(payload: dict) -> dict:
++    """Final fallback: send to all subscriptions ignoring audience."""
++    keys = _ensure_vapid_keys()
++    if not keys: return {"sent": 0}
++    with db.connect() as c:
++        rows = c.execute(
++            "SELECT id, endpoint, subscription_json FROM push_subscriptions"
++        ).fetchall()
++    n = 0
++    vapid_claims = {"sub": "mailto:" + os.getenv("ADMIN_EMAIL", "admin@servia.ae")}
++    for r in rows:
++        try:
++            sub = _json.loads(r["subscription_json"])
++            webpush(subscription_info=sub, data=_json.dumps(payload),
++                    vapid_private_key=keys["private"], vapid_claims=vapid_claims, ttl=86400)
++            n += 1
++        except Exception:
++            pass
++    return {"sent": n, "matched": len(rows)}

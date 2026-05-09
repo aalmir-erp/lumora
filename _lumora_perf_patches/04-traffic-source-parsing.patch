@@ -1,0 +1,151 @@
+diff --git a/app/live_visitors.py b/app/live_visitors.py
+index ccca029..cd763c7 100644
+--- a/app/live_visitors.py
++++ b/app/live_visitors.py
+@@ -91,6 +91,102 @@ def visitor_id_for(request: Request) -> str:
+     return "h_" + hashlib.sha1(raw.encode()).hexdigest()[:16]
+ 
+ 
++# ---------------------------------------------------------------------------
++# Referrer parsing — figure out whether visitor came from a search engine,
++# social platform, or another website. If from a search engine, extract the
++# query string when the referer still includes it (Google strips it on
++# HTTPS-to-HTTPS traffic for privacy, but Bing/DDG/Yandex/Brave still pass it).
++#
++# Returned dict has 4 keys:
++#   traffic_source : "direct" | "search" | "social" | "referral"
++#   source_label   : human label like "Google", "Facebook", "Reddit", "Direct"
++#   search_query   : the query string the visitor typed, or None
++#   referrer_domain: cleaned eTLD+1 of referrer, or None
++#
++SEARCH_ENGINES = {
++    # host substring -> (label, query param name)
++    "google.":           ("Google",        "q"),
++    "bing.com":          ("Bing",          "q"),
++    "duckduckgo.com":    ("DuckDuckGo",    "q"),
++    "search.yahoo":      ("Yahoo",         "p"),
++    "yandex.":           ("Yandex",        "text"),
++    "baidu.com":         ("Baidu",         "wd"),
++    "search.brave.com":  ("Brave",         "q"),
++    "ecosia.org":        ("Ecosia",        "q"),
++    "qwant.com":         ("Qwant",         "q"),
++    "kagi.com":          ("Kagi",          "q"),
++    "search.naver.com":  ("Naver",         "query"),
++    "perplexity.ai":     ("Perplexity",    "q"),
++    "chatgpt.com":       ("ChatGPT",       "q"),
++    "claude.ai":         ("Claude",        "q"),
++    "gemini.google":     ("Gemini",        "q"),
++    "copilot.microsoft": ("Copilot",       "q"),
++}
++SOCIAL_PLATFORMS = {
++    # host substring -> label
++    "facebook.com":      "Facebook",
++    "fb.com":            "Facebook",
++    "l.facebook.com":    "Facebook (link wrapper)",
++    "twitter.com":       "Twitter",
++    "x.com":             "X (Twitter)",
++    "t.co":              "Twitter (t.co)",
++    "linkedin.com":      "LinkedIn",
++    "lnkd.in":           "LinkedIn",
++    "instagram.com":     "Instagram",
++    "tiktok.com":        "TikTok",
++    "youtube.com":       "YouTube",
++    "youtu.be":          "YouTube",
++    "reddit.com":        "Reddit",
++    "redd.it":           "Reddit",
++    "pinterest.":        "Pinterest",
++    "snapchat.com":      "Snapchat",
++    "telegram.me":       "Telegram",
++    "t.me":              "Telegram",
++    "wa.me":             "WhatsApp",
++    "web.whatsapp.com":  "WhatsApp Web",
++    "whatsapp.com":      "WhatsApp",
++    "discord.com":       "Discord",
++    "discord.gg":        "Discord",
++    "medium.com":        "Medium",
++    "github.com":        "GitHub",
++    "stackoverflow.com": "Stack Overflow",
++    "ph.com":            "Product Hunt",
++    "producthunt.com":   "Product Hunt",
++}
++def parse_referrer(ref: str) -> dict:
++    if not ref or ref.strip() == "":
++        return {"traffic_source": "direct", "source_label": "Direct",
++                "search_query": None, "referrer_domain": None}
++    try:
++        from urllib.parse import urlparse, parse_qs
++        u = urlparse(ref)
++        host = (u.netloc or "").lower()
++        if not host:
++            return {"traffic_source": "direct", "source_label": "Direct",
++                    "search_query": None, "referrer_domain": None}
++        # Strip leading "www."
++        host_clean = host[4:] if host.startswith("www.") else host
++        # Search engines (highest priority)
++        for sub, (label, qp) in SEARCH_ENGINES.items():
++            if sub in host:
++                qs = parse_qs(u.query or "")
++                q = (qs.get(qp, [None]) or [None])[0]
++                return {"traffic_source": "search", "source_label": label,
++                        "search_query": q.strip() if q else None,
++                        "referrer_domain": host_clean}
++        # Social
++        for sub, label in SOCIAL_PLATFORMS.items():
++            if sub in host:
++                return {"traffic_source": "social", "source_label": label,
++                        "search_query": None, "referrer_domain": host_clean}
++        # Anything else = generic referral from another site
++        return {"traffic_source": "referral", "source_label": host_clean,
++                "search_query": None, "referrer_domain": host_clean}
++    except Exception:
++        return {"traffic_source": "direct", "source_label": "Direct",
++                "search_query": None, "referrer_domain": None}
++
++
+ def track(request: Request) -> bool:
+     """Record this visitor's current activity. Returns True if this is a NEW
+     visitor (first time we've seen them in the last 30 min) so callers can
+@@ -247,6 +343,11 @@ def get_live_visitors(active_minutes: int = 5):
+                                     "pingdom","uptime","monitor","synthetic")):
+             continue
+         d.update(parse_ua(d.get("user_agent","")))
++        # v1.24.55 — figure out where the visitor actually came from. Adds 4
++        # extra keys (traffic_source, source_label, search_query, referrer_domain)
++        # that the admin UI renders as a chip like
++        # "Google · 'ac repair dubai'" or "Direct" or "Facebook"
++        d.update(parse_referrer(d.get("referrer","") or ""))
+         # Bot detection
+         bot_name = _viz.detect_bot(d.get("user_agent",""))
+         d["is_bot"] = bool(bot_name)
+diff --git a/app/main.py b/app/main.py
+index 3150700..060a8c1 100644
+--- a/app/main.py
++++ b/app/main.py
+@@ -289,11 +289,25 @@ async def _log_bot_visit_mw(request: Request, call_next):
+             from . import admin_alerts as _aa
+             ua = (request.headers.get("user-agent") or "")[:120]
+             path = str(request.url.path)
+-            ref = (request.headers.get("referer") or "(direct)")[:120]
++            ref = (request.headers.get("referer") or "")[:200]
+             ipc = request.headers.get("cf-ipcountry") or ""
++            # v1.24.55 — parse the referrer so admin sees "via Google · 'ac
++            # repair dubai'" instead of a raw URL. Falls through to "Direct"
++            # when there is no referrer header.
++            src = live_visitors.parse_referrer(ref)
++            if src["traffic_source"] == "search":
++                src_line = (f"From: {src['source_label']} search"
++                            + (f" · query: \"{src['search_query']}\""
++                               if src.get("search_query") else " · (query hidden)"))
++            elif src["traffic_source"] == "social":
++                src_line = f"From: {src['source_label']}"
++            elif src["traffic_source"] == "referral":
++                src_line = f"From: {src['source_label']} (referral)"
++            else:
++                src_line = "From: Direct (typed URL or bookmark)"
+             _aa.notify_admin(
+                 f"👋 New visitor on Servia\n\n"
+-                f"Page: {path}\nReferrer: {ref}\nCountry: {ipc or '?'}\nUA: {ua}",
++                f"Page: {path}\n{src_line}\nCountry: {ipc or '?'}\nUA: {ua}",
+                 kind="new_visitor", urgency="low")
+         except Exception: pass
+     return resp

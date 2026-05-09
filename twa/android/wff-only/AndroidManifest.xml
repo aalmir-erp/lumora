@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  v1.24.54 — Watch Face Format (WFF) face APK for Watch Face Push API.
+
+  This APK is NEVER installed by the user directly. It is bundled as
+  an asset inside the wf-pusher APK, which calls
+  WatchFacePushManager.addWatchFace() to register it into the watch's
+  pushed-faces registry. Pushed faces bypass the SYSTEM-flag filter
+  that blocks regular sideloaded faces from Samsung One UI Watch
+  picker.
+
+  Rules for a WFF Push payload APK:
+    1. <application android:hasCode="false">  — pure resource APK
+    2. NO activities, NO services with intent-filters
+    3. <property com.google.wear.watchface.format.version="4">
+    4. WFF v4 XML at @raw/watchface
+    5. Preview drawable at @drawable/preview
+    6. Single applicationId (the slot id when registered)
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:name="android.hardware.type.watch" />
+
+    <application
+        android:label="@string/face_label"
+        android:hasCode="false"
+        android:icon="@drawable/preview"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <!-- Watch Face Push API discriminator -->
+        <property
+            android:name="com.google.wear.watchface.format.version"
+            android:value="4" />
+
+        <!-- Default preview rendered in the picker before the runtime
+             rasterises the WFF doc -->
+        <meta-data
+            android:name="com.google.wear.watchface.preview"
+            android:resource="@drawable/preview" />
+
+        <!-- Pointer to the WFF XML document -->
+        <meta-data
+            android:name="com.google.wear.watchface.WATCH_FACE_FILE"
+            android:resource="@raw/watchface" />
+    </application>
+</manifest>

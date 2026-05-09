@@ -1,0 +1,1072 @@
+diff --git a/app/admin_alerts.py b/app/admin_alerts.py
+index 9bb981e..c23a676 100644
+--- a/app/admin_alerts.py
++++ b/app/admin_alerts.py
+@@ -3,7 +3,7 @@
+ Pushes important events (article published, new booking, urgent bot
+ message, daily summary) to the admin's personal WhatsApp via the QR-paired
+ bridge service. Admin number is read from ADMIN_WA_NUMBER env (E.164 digits
+-only, e.g. 971564020087).
++only, e.g. 971XXXXXXXXX — set on Railway, not committed in source).
+ 
+ If the bridge isn't paired or configured, alerts are still recorded in the
+ admin_alerts table so the admin sees them in the admin UI when they next
+@@ -20,7 +20,7 @@ from .config import get_settings
+ 
+ 
+ def _admin_number() -> str:
+-    return os.getenv("ADMIN_WA_NUMBER", "971564020087").strip().lstrip("+")
++    return os.getenv("ADMIN_WA_NUMBER", "").strip().lstrip("+")
+ 
+ 
+ def _ensure_table() -> None:
+@@ -50,10 +50,24 @@ def _store(kind: str, urgency: str, text: str, meta: dict | None,
+         return cur.lastrowid or 0
+ 
+ 
++_BRIDGE_OUTAGE_UNTIL = 0.0   # epoch ts; if now < this, skip the bridge call
++
+ def _send_via_bridge(text: str) -> tuple[bool, str | None]:
++    """Send via WA bridge with graceful auto-degradation.
++
++    v1.24.56 — if the bridge returns 503 (not paired), or 5xx, or times out,
++    we cache that for 5 minutes and skip the call instead of blocking every
++    notify_admin for 8 seconds. Web-Push remains the working channel during
++    bridge outages.
++    """
++    import time as _t
++    global _BRIDGE_OUTAGE_UNTIL
+     s = get_settings()
+     if not s.WA_BRIDGE_URL:
+         return False, "WA_BRIDGE_URL not configured"
++    now = _t.time()
++    if now < _BRIDGE_OUTAGE_UNTIL:
++        return False, "bridge in outage cooldown (auto-skipped)"
+     try:
+         import httpx
+         r = httpx.post(
+@@ -65,11 +79,19 @@ def _send_via_bridge(text: str) -> tuple[bool, str | None]:
+             json={"to": _admin_number(), "text": text},
+             timeout=8,
+         )
++        if r.status_code >= 500 or r.status_code == 503:
++            # Bridge is down (Chromium booting, Puppeteer crashed, container
++            # restarting). Mark unhealthy for 5 minutes so we don't burn
++            # every notify_admin call on the same retry.
++            _BRIDGE_OUTAGE_UNTIL = now + 300
++            return False, f"bridge {r.status_code} (cooldown 5min): {r.text[:160]}"
+         if r.status_code >= 400:
+             return False, f"bridge {r.status_code}: {r.text[:200]}"
+         return True, None
+     except Exception as e:  # noqa: BLE001
+-        return False, str(e)
++        # Network/connection error → also cooldown
++        _BRIDGE_OUTAGE_UNTIL = now + 120
++        return False, f"bridge unreachable (cooldown 2min): {e}"
+ 
+ 
+ def notify_admin(text: str, *, kind: str = "general",
+diff --git a/app/admin_live.py b/app/admin_live.py
+new file mode 100644
+index 0000000..904e4e4
+--- /dev/null
++++ b/app/admin_live.py
+@@ -0,0 +1,218 @@
++"""Admin Live PWA — backend endpoints (v1.24.55).
++
++Powers the standalone /admin-live.html mini-app. Designed to mirror the
++WhatsApp UX:
++  - Phone gets a Web Push notification when something happens
++  - Wear OS auto-mirrors phone notifications (no separate watch APK)
++  - Notification has a Reply action → admin types/voices a reply
++  - Reply hits POST /api/admin/live/chat/{sid}/reply → posted to chat
++
++Endpoints (all require Bearer ADMIN_TOKEN):
++  GET  /api/admin/live/active-chats     — list open chat sessions in last 30 min
++  GET  /api/admin/live/chat/{sid}       — full message history of a session
++  POST /api/admin/live/chat/{sid}/reply — admin sends a reply to the session
++  POST /api/admin/live/chat/{sid}/take  — mark session as taken-over (silences bot)
++  POST /api/admin/live/chat/{sid}/release — release back to bot
++  GET  /api/admin/live/feed             — combined feed (new visitors + new chats)
++                                          since a `since` timestamp; powers the
++                                          live polling UI
++
++The polling endpoint /api/admin/live/feed is the heart of the PWA. UI
++hits it every 4 seconds with the last-seen ID; server returns deltas only.
++This keeps server load tiny even with one always-open admin PWA.
++"""
++from __future__ import annotations
++import datetime as _dt
++import json as _json
++from typing import Any
++
++from fastapi import APIRouter, Depends, HTTPException
++from pydantic import BaseModel
++
++from . import db
++from .auth import require_admin
++
++
++admin_router = APIRouter(prefix="/api/admin/live", tags=["admin-live-pwa"],
++                         dependencies=[Depends(require_admin)])
++
++
++def _now() -> str:
++    return _dt.datetime.utcnow().isoformat() + "Z"
++
++
++# ---------------------------------------------------------------------------
++@admin_router.get("/active-chats")
++def active_chats(minutes: int = 30) -> dict:
++    """Sessions with at least one message in the last N minutes."""
++    cutoff = (_dt.datetime.utcnow() - _dt.timedelta(minutes=max(1, minutes))).isoformat() + "Z"
++    with db.connect() as c:
++        rows = c.execute(
++            """
++            SELECT
++              session_id,
++              MAX(created_at)            AS last_at,
++              COUNT(*)                   AS msg_count,
++              SUM(CASE WHEN role='user' THEN 1 ELSE 0 END) AS user_msg_count,
++              MAX(CASE WHEN role='user' THEN content END)  AS last_user_msg,
++              MAX(phone)                 AS phone
++            FROM conversations
++            WHERE created_at > ?
++            GROUP BY session_id
++            ORDER BY last_at DESC
++            LIMIT 50
++            """, (cutoff,)).fetchall()
++
++        # Fetch which sessions have an active agent takeover
++        takeover_rows = c.execute(
++            "SELECT session_id, started_at, ended_at FROM agent_takeovers "
++            "WHERE ended_at IS NULL OR ended_at = ''"
++        ).fetchall()
++    taken = {r["session_id"]: dict(r) for r in takeover_rows}
++
++    out = []
++    for r in rows:
++        d = dict(r)
++        d["taken_over"] = bool(taken.get(d["session_id"]))
++        d["preview"] = (d.get("last_user_msg") or "")[:140]
++        out.append(d)
++    return {"chats": out, "count": len(out), "fetched_at": _now()}
++
++
++# ---------------------------------------------------------------------------
++@admin_router.get("/chat/{sid}")
++def chat_messages(sid: str, limit: int = 100) -> dict:
++    with db.connect() as c:
++        rows = c.execute(
++            "SELECT role, content, created_at, phone, model_used, tool_calls_json "
++            "FROM conversations WHERE session_id=? ORDER BY id DESC LIMIT ?",
++            (sid, limit)).fetchall()
++    msgs = []
++    for r in reversed(rows):
++        d = dict(r)
++        # v1.24.56 — parse tool calls so admin sees what the bot ran
++        try:
++            tc = _json.loads(d.pop("tool_calls_json", None) or "[]")
++            d["tool_calls"] = [{"name": t.get("name"),
++                                "input": t.get("input") or {},
++                                "result_summary": _summarise(t.get("result"))}
++                               for t in tc] if tc else []
++        except Exception:
++            d["tool_calls"] = []
++        msgs.append(d)
++    return {"session_id": sid, "messages": msgs}
++
++
++def _summarise(result) -> str:
++    if not result: return ""
++    if isinstance(result, str): return result[:120]
++    if isinstance(result, dict):
++        # Cherry-pick the most informative fields for a one-line summary
++        for k in ("quote_id", "booking_id", "invoice_id", "ok",
++                  "total_aed", "share_url", "url", "reason", "error"):
++            if k in result:
++                v = result[k]
++                if isinstance(v, (str, int, float, bool)):
++                    return f"{k}={v}"
++        return "ok" if result.get("ok") else str(result)[:120]
++    return str(result)[:120]
++
++
++# ---------------------------------------------------------------------------
++class _ReplyBody(BaseModel):
++    text: str
++
++@admin_router.post("/chat/{sid}/reply")
++def admin_reply(sid: str, body: _ReplyBody) -> dict:
++    text = (body.text or "").strip()
++    if not text:
++        raise HTTPException(status_code=400, detail="empty reply")
++    with db.connect() as c:
++        # Mark session as taken-over (silences bot for new turns)
++        c.execute(
++            "INSERT OR REPLACE INTO agent_takeovers(session_id, agent_id, started_at) "
++            "VALUES(?,?,?)",
++            (sid, "admin", _now()))
++        c.execute(
++            "INSERT INTO conversations(session_id, role, content, tool_calls_json, "
++            "created_at, phone, model_used) "
++            "VALUES(?,?,?,?,?,?,?)",
++            (sid, "assistant", text, "[]", _now(), None, "agent:admin"))
++    db.log_event("conversation", sid, "agent_reply", actor="admin",
++                 details={"text_preview": text[:80]})
++    return {"ok": True, "session_id": sid, "delivered_at": _now()}
++
++
++# ---------------------------------------------------------------------------
++@admin_router.post("/chat/{sid}/take")
++def take_over(sid: str) -> dict:
++    with db.connect() as c:
++        c.execute(
++            "INSERT OR REPLACE INTO agent_takeovers(session_id, agent_id, started_at) "
++            "VALUES(?,?,?)", (sid, "admin", _now()))
++    return {"ok": True, "session_id": sid, "taken_at": _now()}
++
++
++@admin_router.post("/chat/{sid}/release")
++def release(sid: str) -> dict:
++    with db.connect() as c:
++        c.execute(
++            "UPDATE agent_takeovers SET ended_at=? "
++            "WHERE session_id=? AND (ended_at IS NULL OR ended_at='')",
++            (_now(), sid))
++    return {"ok": True, "session_id": sid, "released_at": _now()}
++
++
++# ---------------------------------------------------------------------------
++# ---------------------------------------------------------------------------
++# v1.24.56 — recent quotes for admin-live PWA Quotes tab
++@admin_router.get("/quotes/recent")
++def recent_quotes(days: int = 7) -> dict:
++    cutoff = (_dt.datetime.utcnow() - _dt.timedelta(days=max(1, days))).isoformat() + "Z"
++    out = []
++    with db.connect() as c:
++        try:
++            rows = c.execute(
++                "SELECT quote_id, customer_name, phone, address, total_aed, "
++                "status, target_date, time_slot, items_json, created_at "
++                "FROM multi_quotes WHERE created_at > ? "
++                "ORDER BY created_at DESC LIMIT 80",
++                (cutoff,)).fetchall()
++            for r in rows:
++                d = dict(r)
++                try:
++                    items = _json.loads(d.pop("items_json") or "[]")
++                    d["items_count"] = len(items)
++                except Exception: d["items_count"] = 0
++                out.append(d)
++        except Exception: pass
++    return {"quotes": out, "count": len(out)}
++
++
++@admin_router.get("/feed")
++def live_feed(since: str | None = None) -> dict:
++    """Combined feed of recent events for the polling PWA. Returns:
++       - new_chats:     sessions with first message after `since`
++       - new_messages:  any user messages after `since` in already-active sessions
++       - new_visitors:  brand-new visitor IDs in the last 5 min
++    The PWA passes its last 'until' timestamp as `since` next call so the
++    server only sends deltas. Default since = 60 seconds ago.
++    """
++    if not since:
++        since = (_dt.datetime.utcnow() - _dt.timedelta(seconds=60)).isoformat() + "Z"
++    with db.connect() as c:
++        new_msgs = [dict(r) for r in c.execute(
++            "SELECT session_id, role, content, created_at, phone "
++            "FROM conversations WHERE created_at > ? AND role='user' "
++            "ORDER BY created_at DESC LIMIT 50",
++            (since,)).fetchall()]
++        new_visitors = [dict(r) for r in c.execute(
++            "SELECT visitor_id, last_seen, last_path, country, referrer "
++            "FROM live_visitors WHERE first_seen > ? "
++            "ORDER BY first_seen DESC LIMIT 20",
++            (since,)).fetchall()]
++    return {
++        "until": _now(),
++        "new_messages": new_msgs,
++        "new_visitors": new_visitors,
++    }
+diff --git a/app/live_visitors.py b/app/live_visitors.py
+index ccca029..dab07ec 100644
+--- a/app/live_visitors.py
++++ b/app/live_visitors.py
+@@ -33,6 +33,16 @@ def _ensure_table() -> None:
+                 hit_count INTEGER DEFAULT 1,
+                 is_new INTEGER DEFAULT 1
+             )""")
++        # v1.24.56 — full click-trail. Every page visit (capped per-visitor)
++        # so admin can replay exactly which pages a user navigated through.
++        c.execute("""
++            CREATE TABLE IF NOT EXISTS visitor_pageviews (
++                id INTEGER PRIMARY KEY AUTOINCREMENT,
++                visitor_id TEXT,
++                path TEXT, referrer TEXT, seen_at TEXT
++            )""")
++        c.execute("CREATE INDEX IF NOT EXISTS idx_pageviews_vid_id "
++                  "ON visitor_pageviews(visitor_id, id DESC)")
+         c.execute("CREATE INDEX IF NOT EXISTS idx_live_last ON live_visitors(last_seen)")
+ 
+ 
+@@ -91,6 +101,102 @@ def visitor_id_for(request: Request) -> str:
+     return "h_" + hashlib.sha1(raw.encode()).hexdigest()[:16]
+ 
+ 
++# ---------------------------------------------------------------------------
++# Referrer parsing — figure out whether visitor came from a search engine,
++# social platform, or another website. If from a search engine, extract the
++# query string when the referer still includes it (Google strips it on
++# HTTPS-to-HTTPS traffic for privacy, but Bing/DDG/Yandex/Brave still pass it).
++#
++# Returned dict has 4 keys:
++#   traffic_source : "direct" | "search" | "social" | "referral"
++#   source_label   : human label like "Google", "Facebook", "Reddit", "Direct"
++#   search_query   : the query string the visitor typed, or None
++#   referrer_domain: cleaned eTLD+1 of referrer, or None
++#
++SEARCH_ENGINES = {
++    # host substring -> (label, query param name)
++    "google.":           ("Google",        "q"),
++    "bing.com":          ("Bing",          "q"),
++    "duckduckgo.com":    ("DuckDuckGo",    "q"),
++    "search.yahoo":      ("Yahoo",         "p"),
++    "yandex.":           ("Yandex",        "text"),
++    "baidu.com":         ("Baidu",         "wd"),
++    "search.brave.com":  ("Brave",         "q"),
++    "ecosia.org":        ("Ecosia",        "q"),
++    "qwant.com":         ("Qwant",         "q"),
++    "kagi.com":          ("Kagi",          "q"),
++    "search.naver.com":  ("Naver",         "query"),
++    "perplexity.ai":     ("Perplexity",    "q"),
++    "chatgpt.com":       ("ChatGPT",       "q"),
++    "claude.ai":         ("Claude",        "q"),
++    "gemini.google":     ("Gemini",        "q"),
++    "copilot.microsoft": ("Copilot",       "q"),
++}
++SOCIAL_PLATFORMS = {
++    # host substring -> label
++    "facebook.com":      "Facebook",
++    "fb.com":            "Facebook",
++    "l.facebook.com":    "Facebook (link wrapper)",
++    "twitter.com":       "Twitter",
++    "x.com":             "X (Twitter)",
++    "t.co":              "Twitter (t.co)",
++    "linkedin.com":      "LinkedIn",
++    "lnkd.in":           "LinkedIn",
++    "instagram.com":     "Instagram",
++    "tiktok.com":        "TikTok",
++    "youtube.com":       "YouTube",
++    "youtu.be":          "YouTube",
++    "reddit.com":        "Reddit",
++    "redd.it":           "Reddit",
++    "pinterest.":        "Pinterest",
++    "snapchat.com":      "Snapchat",
++    "telegram.me":       "Telegram",
++    "t.me":              "Telegram",
++    "wa.me":             "WhatsApp",
++    "web.whatsapp.com":  "WhatsApp Web",
++    "whatsapp.com":      "WhatsApp",
++    "discord.com":       "Discord",
++    "discord.gg":        "Discord",
++    "medium.com":        "Medium",
++    "github.com":        "GitHub",
++    "stackoverflow.com": "Stack Overflow",
++    "ph.com":            "Product Hunt",
++    "producthunt.com":   "Product Hunt",
++}
++def parse_referrer(ref: str) -> dict:
++    if not ref or ref.strip() == "":
++        return {"traffic_source": "direct", "source_label": "Direct",
++                "search_query": None, "referrer_domain": None}
++    try:
++        from urllib.parse import urlparse, parse_qs
++        u = urlparse(ref)
++        host = (u.netloc or "").lower()
++        if not host:
++            return {"traffic_source": "direct", "source_label": "Direct",
++                    "search_query": None, "referrer_domain": None}
++        # Strip leading "www."
++        host_clean = host[4:] if host.startswith("www.") else host
++        # Search engines (highest priority)
++        for sub, (label, qp) in SEARCH_ENGINES.items():
++            if sub in host:
++                qs = parse_qs(u.query or "")
++                q = (qs.get(qp, [None]) or [None])[0]
++                return {"traffic_source": "search", "source_label": label,
++                        "search_query": q.strip() if q else None,
++                        "referrer_domain": host_clean}
++        # Social
++        for sub, label in SOCIAL_PLATFORMS.items():
++            if sub in host:
++                return {"traffic_source": "social", "source_label": label,
++                        "search_query": None, "referrer_domain": host_clean}
++        # Anything else = generic referral from another site
++        return {"traffic_source": "referral", "source_label": host_clean,
++                "search_query": None, "referrer_domain": host_clean}
++    except Exception:
++        return {"traffic_source": "direct", "source_label": "Direct",
++                "search_query": None, "referrer_domain": None}
++
++
+ def track(request: Request) -> bool:
+     """Record this visitor's current activity. Returns True if this is a NEW
+     visitor (first time we've seen them in the last 30 min) so callers can
+@@ -171,6 +277,12 @@ def track(request: Request) -> bool:
+                     "user_agent=?, ip=?, country=?, referrer=?, hit_count=hit_count+1 "
+                     "WHERE visitor_id=?",
+                     (now_s, r["last_path"] or "", path, ua, ip, country, ref, vid))
++                # v1.24.56 — log each pageview into the click-trail
++                try:
++                    c.execute(
++                        "INSERT INTO visitor_pageviews(visitor_id, path, referrer, seen_at) "
++                        "VALUES(?,?,?,?)", (vid, path, ref, now_s))
++                except Exception: pass
+             else:
+                 is_new = True
+                 c.execute(
+@@ -178,6 +290,12 @@ def track(request: Request) -> bool:
+                     "last_path, prev_path, user_agent, ip, country, referrer) "
+                     "VALUES(?,?,?,?,?,?,?,?,?)",
+                     (vid, now_s, now_s, path, "", ua, ip, country, ref))
++                # First pageview row
++                try:
++                    c.execute(
++                        "INSERT INTO visitor_pageviews(visitor_id, path, referrer, seen_at) "
++                        "VALUES(?,?,?,?)", (vid, path, ref, now_s))
++                except Exception: pass
+         return is_new
+     except Exception:
+         return False
+@@ -247,6 +365,11 @@ def get_live_visitors(active_minutes: int = 5):
+                                     "pingdom","uptime","monitor","synthetic")):
+             continue
+         d.update(parse_ua(d.get("user_agent","")))
++        # v1.24.55 — figure out where the visitor actually came from. Adds 4
++        # extra keys (traffic_source, source_label, search_query, referrer_domain)
++        # that the admin UI renders as a chip like
++        # "Google · 'ac repair dubai'" or "Direct" or "Facebook"
++        d.update(parse_referrer(d.get("referrer","") or ""))
+         # Bot detection
+         bot_name = _viz.detect_bot(d.get("user_agent",""))
+         d["is_bot"] = bool(bot_name)
+@@ -371,3 +494,23 @@ def live_stats():
+         "hourly_24h": buckets,
+         "ts": now.isoformat() + "Z",
+     }
++
++
++# ---------------------------------------------------------------------------
++# v1.24.56 — Full click-trail for a visitor.
++@admin_router.get("/visitor/{vid}/trail")
++def visitor_trail(vid: str, limit: int = 200) -> dict:
++    """Returns last N pageviews for a visitor, newest first."""
++    _ensure_table()
++    with db.connect() as c:
++        rows = c.execute(
++            "SELECT path, referrer, seen_at FROM visitor_pageviews "
++            "WHERE visitor_id=? ORDER BY id DESC LIMIT ?",
++            (vid, max(1, min(limit, 500)))).fetchall()
++        v = c.execute("SELECT * FROM live_visitors WHERE visitor_id=?",
++                      (vid,)).fetchone()
++    return {
++        "visitor": dict(v) if v else None,
++        "pageviews": [dict(r) for r in rows],
++        "count": len(rows),
++    }
+diff --git a/web/admin-live.html b/web/admin-live.html
+new file mode 100644
+index 0000000..3bbf997
+--- /dev/null
++++ b/web/admin-live.html
+@@ -0,0 +1,162 @@
++<!doctype html>
++<!--
++  v1.24.55 — Servia Admin Live PWA.
++
++  Single-file admin mini-app that:
++    · stores ADMIN_TOKEN once in localStorage (no logout, ever)
++    · polls /api/admin/live/feed every 4s for visitors + new messages
++    · subscribes to Web Push on first run → phone gets native notifications
++    · phone notifications auto-mirror to paired Wear OS / iOS watches
++    · notification reply action posts to /api/admin/live/chat/{sid}/reply
++    · in-app inline reply for when admin is actively watching the PWA
++    · sound alerts (beep on visitor, double-beep on chat)
++
++  Designed mobile-first. Renders in any browser, but on Android it's
++  installable as a PWA via Chrome's "Add to home screen" — making it feel
++  like a native app with no separate APK build needed.
++-->
++<html lang="en">
++<head>
++<meta name="robots" content="noindex,nofollow">
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
++<meta name="theme-color" content="#0F172A">
++<title>Servia · Admin Live</title>
++<link rel="manifest" href="/admin-live.webmanifest">
++<link rel="icon" href="/icon-192.svg" type="image/svg+xml">
++<link rel="apple-touch-icon" href="/brand/servia-icon-512x512.png">
++<style>
++* { box-sizing: border-box; margin: 0; padding: 0; }
++html, body { height: 100%; background: #0F172A; color: #F1F5F9;
++  font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
++  -webkit-tap-highlight-color: transparent; }
++header { position: sticky; top: 0; z-index: 5; background: #1E293B;
++  border-bottom: 1px solid #334155; padding: 8px 12px;
++  display: flex; align-items: center; gap: 10px; }
++header .title { font-size: 14px; font-weight: 700; flex: 1; }
++header .dot { width: 8px; height: 8px; border-radius: 50%; background: #10B981;
++  box-shadow: 0 0 8px #10B981; }
++header .dot.off { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
++header .stat { font-size: 11px; color: #94A3B8; }
++header button { background: transparent; color: #F1F5F9; border: 1px solid #475569;
++  border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
++header button.active { background: #0F766E; border-color: #14B8A6; }
++
++#login { padding: 22vh 16px 0; max-width: 360px; margin: 0 auto; text-align: center; }
++#login h1 { font-size: 22px; margin-bottom: 8px; color: #F1F5F9; }
++#login p { color: #94A3B8; font-size: 12px; margin-bottom: 18px; }
++#login input { width: 100%; padding: 12px; background: #1E293B; color: #F1F5F9;
++  border: 1px solid #334155; border-radius: 8px; font-size: 14px;
++  font-family: monospace; margin-bottom: 12px; }
++#login button { width: 100%; padding: 12px; background: #0D9488; color: #fff;
++  border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
++
++#tabs { display: flex; background: #1E293B; border-bottom: 1px solid #334155; }
++#tabs button { flex: 1; background: none; border: none; color: #94A3B8;
++  padding: 10px 6px; font-size: 13px; cursor: pointer; position: relative; }
++#tabs button.active { color: #14B8A6; }
++#tabs button.active::after { content: ""; position: absolute; left: 20%; right: 20%;
++  bottom: 0; height: 2px; background: #14B8A6; border-radius: 2px; }
++#tabs .badge { display: inline-block; min-width: 18px; padding: 1px 5px;
++  margin-left: 4px; background: #DC2626; color: #fff; border-radius: 9px;
++  font-size: 10px; font-weight: 700; }
++
++#content { padding-bottom: 60px; }
++
++.card { background: #1E293B; border: 1px solid #334155; border-radius: 8px;
++  margin: 8px; padding: 10px 12px; cursor: pointer; transition: background .15s; }
++.card:active { background: #334155; }
++.card.new { border-left: 3px solid #14B8A6; animation: flash 1.5s; }
++@keyframes flash { 0% { background: #0F766E; } 100% { background: #1E293B; } }
++.card .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
++.card .head { font-weight: 600; font-size: 13px; }
++.card .when { font-size: 10px; color: #64748B; white-space: nowrap; }
++.card .meta { font-size: 11px; color: #94A3B8; margin-top: 4px; line-height: 1.45; }
++.card .preview { font-size: 13px; color: #CBD5E1; margin-top: 6px;
++  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
++  overflow: hidden; text-overflow: ellipsis; }
++.chip { display: inline-block; padding: 1px 7px; border-radius: 4px;
++  font-size: 10px; font-weight: 600; margin-right: 4px; }
++.chip.search { background: #1E40AF; color: #DBEAFE; }
++.chip.social { background: #831843; color: #FCE7F3; }
++.chip.direct { background: #334155; color: #CBD5E1; }
++.chip.taken { background: #B45309; color: #FEF3C7; }
++
++#chat-detail { position: fixed; inset: 0; background: #0F172A; z-index: 10;
++  display: none; flex-direction: column; }
++#chat-detail.open { display: flex; }
++#chat-detail header { background: #1E293B; }
++#chat-detail .back { background: transparent; color: #14B8A6; border: none;
++  font-size: 18px; cursor: pointer; padding: 0 4px; }
++#chat-detail .messages { flex: 1; overflow-y: auto; padding: 8px 0; }
++#chat-detail .msg { max-width: 85%; padding: 8px 12px; margin: 4px 8px;
++  border-radius: 14px; font-size: 13.5px; line-height: 1.45; word-wrap: break-word; }
++#chat-detail .msg.user      { background: #1E40AF; margin-right: auto;
++  border-bottom-left-radius: 4px; }
++#chat-detail .msg.assistant { background: #134E4A; margin-left: auto;
++  border-bottom-right-radius: 4px; }
++#chat-detail .msg .role { font-size: 9px; color: rgba(255,255,255,.6);
++  margin-bottom: 2px; text-transform: uppercase; }
++#chat-detail .composer { background: #1E293B; border-top: 1px solid #334155;
++  padding: 8px; display: flex; gap: 6px; align-items: flex-end; }
++#chat-detail .composer textarea { flex: 1; min-height: 38px; max-height: 120px;
++  padding: 8px 10px; background: #0F172A; color: #F1F5F9; border: 1px solid #334155;
++  border-radius: 8px; font: inherit; resize: none; }
++#chat-detail .composer button { padding: 9px 14px; background: #0D9488; color: #fff;
++  border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
++#chat-detail .composer button:disabled { opacity: .4; cursor: not-allowed; }
++
++.empty { text-align: center; color: #64748B; padding: 40px 16px; font-size: 13px; }
++</style>
++</head>
++<body>
++
++<!-- Login screen (shown until token is in localStorage) -->
++<div id="login">
++  <h1>Servia · Admin Live</h1>
++  <p>Paste your <code style="font-family:monospace;background:#1E293B;padding:1px 5px;border-radius:3px">ADMIN_TOKEN</code> once. Stored locally, never asked again unless you clear data.</p>
++  <input id="token-input" type="password" placeholder="Admin token" autocomplete="off">
++  <button onclick="adminLogin()">Sign in</button>
++</div>
++
++<!-- Main app (shown after login) -->
++<div id="app" style="display:none">
++  <header>
++    <div class="dot" id="status-dot"></div>
++    <div class="title">Servia Live</div>
++    <div class="stat" id="last-sync">just now</div>
++    <button id="snd-btn" onclick="toggleSound()" title="Toggle alert sound">🔔</button>
++    <button onclick="enablePush()" title="Enable phone notifications">📲</button>
++    <button onclick="logout()" title="Sign out">⏻</button>
++  </header>
++
++  <nav id="tabs">
++    <button class="active" data-tab="visitors">Visitors <span class="badge" id="vis-badge" hidden>0</span></button>
++    <button data-tab="chats">Chats <span class="badge" id="chat-badge" hidden>0</span></button>
++    <button data-tab="quotes">Quotes <span class="badge" id="quote-badge" hidden>0</span></button>
++  </nav>
++
++  <main id="content">
++    <div id="visitors-panel"></div>
++    <div id="chats-panel" hidden></div>
++    <div id="quotes-panel" hidden></div>
++  </main>
++</div>
++
++<!-- Full-screen chat detail (slides over when a chat card is tapped) -->
++<div id="chat-detail">
++  <header>
++    <button class="back" onclick="closeChat()">←</button>
++    <div class="title" id="chat-title">Chat</div>
++    <button onclick="releaseChat()" title="Hand back to bot">🤖</button>
++  </header>
++  <div class="messages" id="chat-messages"></div>
++  <div class="composer">
++    <textarea id="reply-input" placeholder="Type to reply…" rows="1"></textarea>
++    <button id="reply-btn" onclick="sendReply()">Send</button>
++  </div>
++</div>
++
++<script src="/admin-live.js"></script>
++</body>
++</html>
+diff --git a/web/admin-live.js b/web/admin-live.js
+new file mode 100644
+index 0000000..a7c52d6
+--- /dev/null
++++ b/web/admin-live.js
+@@ -0,0 +1,420 @@
++/* v1.24.55 — Servia Admin Live PWA frontend.
++   Polls /api/admin/live/feed every 4s, updates the visitor + chat lists,
++   plays sound on new events, and on first run subscribes the browser to
++   Web Push so phone (and paired Wear OS / Apple Watch) gets native
++   notifications even when the PWA is closed.
++*/
++'use strict';
++
++const TOKEN_KEY = "servia.admin.token";
++const SOUND_KEY = "servia.admin.sound_on";
++const POLL_MS   = 4000;
++
++let token = localStorage.getItem(TOKEN_KEY) || "";
++let soundOn = (localStorage.getItem(SOUND_KEY) ?? "1") === "1";
++let pollSince = "";
++let openSid   = null;
++let seenVis   = new Set();
++let seenMsgs  = new Set();
++let visitors  = [];
++let chats     = [];
++let quotes    = [];
++
++const $ = id => document.getElementById(id);
++
++/* ----------------------------- login ----------------------------- */
++function adminLogin() {
++  const t = ($("token-input").value || "").trim();
++  if (!t) return alert("Paste the admin token");
++  // Probe — just hit a cheap admin endpoint
++  fetch("/api/admin/live/active-chats", {
++    headers: { Authorization: "Bearer " + t }
++  }).then(r => {
++    if (r.ok) {
++      localStorage.setItem(TOKEN_KEY, t);
++      token = t;
++      bootApp();
++    } else {
++      alert("Token rejected (HTTP " + r.status + "). Check ADMIN_TOKEN in Railway.");
++    }
++  }).catch(e => alert("Network error: " + e.message));
++}
++function logout() {
++  if (!confirm("Sign out and clear token?")) return;
++  localStorage.removeItem(TOKEN_KEY);
++  location.reload();
++}
++function adm(path, init = {}) {
++  init.headers = Object.assign({}, init.headers || {}, {
++    Authorization: "Bearer " + token,
++  });
++  if (init.body && typeof init.body !== "string") {
++    init.body = JSON.stringify(init.body);
++    init.headers["Content-Type"] = "application/json";
++  }
++  return fetch(path, init).then(r => r.ok ? r.json() : Promise.reject(r));
++}
++
++/* ----------------------------- boot ----------------------------- */
++function bootApp() {
++  $("login").style.display = "none";
++  $("app").style.display = "";
++  refreshSoundUi();
++  // Tabs
++  document.querySelectorAll("#tabs button").forEach(b => {
++    b.onclick = () => {
++      document.querySelectorAll("#tabs button").forEach(x => x.classList.remove("active"));
++      b.classList.add("active");
++      const t = b.dataset.tab;
++      $("visitors-panel").hidden = t !== "visitors";
++      $("chats-panel").hidden    = t !== "chats";
++      $("quotes-panel").hidden   = t !== "quotes";
++    };
++  });
++  // Service worker (for Web Push)
++  if ("serviceWorker" in navigator) {
++    navigator.serviceWorker.register("/admin-live-sw.js").catch(e =>
++      console.warn("[push] sw register failed:", e));
++  }
++  // Initial load + start polling
++  loadInitial();
++  setInterval(poll, POLL_MS);
++  // Send/back keyboard shortcut
++  $("reply-input").addEventListener("keydown", e => {
++    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); }
++  });
++}
++
++async function loadInitial() {
++  try {
++    const [v, c, q] = await Promise.all([
++      adm("/api/admin/live/visitors"),
++      adm("/api/admin/live/active-chats"),
++      adm("/api/admin/quotes/recent").catch(() => ({quotes: []})),
++    ]);
++    visitors = v.visitors || [];
++    chats = c.chats || [];
++    quotes = q.quotes || [];
++    visitors.forEach(x => seenVis.add(x.visitor_id));
++    chats.forEach(x => seenMsgs.add(x.session_id + "@" + (x.last_at || "")));
++    renderVisitors(); renderChats(); renderQuotes();
++    pollSince = new Date().toISOString();
++  } catch (e) {
++    setStatus(false);
++  }
++}
++
++/* ----------------------------- polling ----------------------------- */
++async function poll() {
++  try {
++    const url = "/api/admin/live/feed?since=" + encodeURIComponent(pollSince);
++    const j = await adm(url);
++    pollSince = j.until || pollSince;
++    let newVis = false, newMsg = false;
++    (j.new_visitors || []).forEach(v => {
++      if (!seenVis.has(v.visitor_id)) {
++        seenVis.add(v.visitor_id);
++        newVis = true;
++        // Re-fetch full visitor list to get parsed UA + traffic source
++      }
++    });
++    (j.new_messages || []).forEach(m => {
++      const k = m.session_id + "@" + m.created_at;
++      if (!seenMsgs.has(k)) {
++        seenMsgs.add(k);
++        newMsg = true;
++      }
++    });
++    if (newVis || newMsg) {
++      // refresh both panels
++      const [v, c] = await Promise.all([
++        adm("/api/admin/live/visitors"),
++        adm("/api/admin/live/active-chats"),
++      ]);
++      visitors = v.visitors || [];
++      chats = c.chats || [];
++      renderVisitors(); renderChats();
++      if (newMsg)  beep("chat");
++      else if (newVis) beep("visitor");
++      // If the open chat got a new message, refresh it too
++      if (openSid && j.new_messages.find(m => m.session_id === openSid)) {
++        loadChatDetail(openSid);
++      }
++    }
++    setStatus(true);
++    $("last-sync").textContent = new Date().toLocaleTimeString();
++  } catch (e) {
++    setStatus(false);
++  }
++}
++
++function setStatus(ok) {
++  const d = $("status-dot");
++  d.classList.toggle("off", !ok);
++}
++
++/* ----------------------------- render ----------------------------- */
++function renderVisitors() {
++  const p = $("visitors-panel");
++  if (!visitors.length) { p.innerHTML = '<div class="empty">No active visitors right now.</div>'; return; }
++  p.innerHTML = visitors.map(v => {
++    const flag  = v.flag_emoji || (v.country ? "" : "");
++    const ago   = v.seconds_ago != null ? humanAgo(v.seconds_ago) : "";
++    const src   = v.traffic_source || "direct";
++    const label = v.source_label || "Direct";
++    const q     = v.search_query;
++    const chip  = `<span class="chip ${src}">${escapeHtml(label)}${q ? " · \"" + escapeHtml(q.slice(0,30)) + "\"" : ""}</span>`;
++    const ua    = (v.browser || "") + (v.os ? " · " + v.os : "");
++    return `<div class="card">
++      <div class="row">
++        <div class="head">${flag} ${escapeHtml(v.country || "??")} · ${escapeHtml(v.last_path || "/")}</div>
++        <div class="when">${ago}</div>
++      </div>
++      <div class="meta">${chip} ${escapeHtml(ua)}${v.hit_count > 1 ? " · " + v.hit_count + " hits" : ""}</div>
++    </div>`;
++  }).join("");
++  $("vis-badge").textContent = visitors.length;
++  $("vis-badge").hidden = visitors.length === 0;
++}
++
++function renderChats() {
++  const p = $("chats-panel");
++  if (!chats.length) { p.innerHTML = '<div class="empty">No active chats in the last 30 min.</div>'; return; }
++  p.innerHTML = chats.map(c => {
++    const ago = humanAgoIso(c.last_at);
++    const taken = c.taken_over ? '<span class="chip taken">AGENT</span>' : "";
++    const phone = c.phone ? "📞 " + c.phone : "Anonymous";
++    return `<div class="card" onclick="openChat('${c.session_id}')">
++      <div class="row">
++        <div class="head">${taken}${escapeHtml(phone)} · ${c.user_msg_count || 0} msgs</div>
++        <div class="when">${ago}</div>
++      </div>
++      <div class="preview">${escapeHtml(c.preview || "(no preview)")}</div>
++    </div>`;
++  }).join("");
++  const newCount = chats.filter(c => !c.taken_over).length;
++  $("chat-badge").textContent = newCount;
++  $("chat-badge").hidden = newCount === 0;
++}
++
++/* ----------------------------- chat detail ----------------------------- */
++function openChat(sid) {
++  openSid = sid;
++  $("chat-detail").classList.add("open");
++  $("chat-title").textContent = "…" + sid.slice(-8);
++  loadChatDetail(sid);
++}
++function closeChat() {
++  openSid = null;
++  $("chat-detail").classList.remove("open");
++}
++async function loadChatDetail(sid) {
++  try {
++    const j = await adm("/api/admin/live/chat/" + encodeURIComponent(sid));
++    const box = $("chat-messages");
++    box.innerHTML = (j.messages || []).map(m => {
++      const tools = (m.tool_calls || []).map(t =>
++        `<div style="background:#1e3a8a33;border-left:2px solid #60A5FA;padding:4px 6px;margin-top:4px;font-size:10px;color:#BFDBFE;border-radius:0 4px 4px 0">
++           <b>🛠 ${escapeHtml(t.name)}</b>${t.result_summary ? " · " + escapeHtml(t.result_summary) : ""}
++         </div>`).join("");
++      return `<div class="msg ${m.role}">
++         <div class="role">${m.role}${m.model_used ? " · " + escapeHtml(m.model_used) : ""}</div>
++         ${escapeHtml(m.content || "").replace(/\n/g,"<br>")}
++         ${tools}
++       </div>`;
++    }).join("");
++    box.scrollTop = box.scrollHeight;
++  } catch (e) { console.error(e); }
++}
++
++// v1.24.56 — Quotes panel: list, status update, photo upload
++function renderQuotes() {
++  const p = $("quotes-panel");
++  if (!quotes.length) {
++    p.innerHTML = '<div class="empty">No quotes in the last 7 days.</div>';
++    $("quote-badge").hidden = true;
++    return;
++  }
++  p.innerHTML = quotes.map(q => `
++    <div class="card" onclick="openQuote('${q.quote_id}')">
++      <div class="row">
++        <div class="head">${escapeHtml(q.customer_name||'?')} · <span class="chip ${(q.status||'pending')}">${escapeHtml((q.status||'pending').toUpperCase())}</span></div>
++        <div class="when">${q.created_at ? humanAgoIso(q.created_at) : ''}</div>
++      </div>
++      <div class="meta">${escapeHtml(q.quote_id)} · AED ${q.total_aed} · ${q.items_count||0} svcs · ${escapeHtml(q.phone||'?')}</div>
++      <div class="preview">${escapeHtml(q.target_date||'')} ${escapeHtml(q.time_slot||'')} · ${escapeHtml(q.address||'')}</div>
++    </div>`).join("");
++  $("quote-badge").textContent = quotes.length;
++  $("quote-badge").hidden = quotes.length === 0;
++}
++
++window.openQuote = async function(qid) {
++  // Modal-ish detail with status update + upload buttons
++  let body;
++  try {
++    const j = await adm("/api/admin/quote/" + encodeURIComponent(qid) + "/all");
++    body = j.quote;
++  } catch (e) { alert("Could not load: " + e); return; }
++  const html = `
++    <header>
++      <button class="back" onclick="closeQuoteDetail()">←</button>
++      <div class="title">${qid}</div>
++    </header>
++    <div style="overflow-y:auto;padding:14px;flex:1">
++      <h3 style="margin:0 0 6px;font-size:14px">${escapeHtml(body.customer_name||'')} · ${escapeHtml(body.phone||'')}</h3>
++      <p style="font-size:12px;color:#94A3B8;margin-bottom:10px">${escapeHtml(body.address||'')}</p>
++      <p style="font-size:12px;color:#94A3B8;margin-bottom:10px">${escapeHtml(body.target_date||'')} · ${escapeHtml(body.time_slot||'')}</p>
++      <p style="font-size:14px;color:#FCD34D;margin:8px 0"><b>AED ${body.total_aed}</b> · status: <b>${body.status||'pending'}</b></p>
++      <h4 style="margin:12px 0 4px;font-size:12px;color:#94A3B8">SERVICES</h4>
++      ${(body.items||[]).map((it,i) => `<div style="background:#1E293B;padding:6px 10px;border-radius:6px;margin:3px 0;font-size:12px">${i+1}. ${escapeHtml(it.label)} — AED ${it.price_aed}</div>`).join("")}
++      <h4 style="margin:14px 0 4px;font-size:12px;color:#94A3B8">UPDATE STATUS</h4>
++      <div style="display:flex;flex-wrap:wrap;gap:6px">
++        ${["dispatched","arrived","in_progress","done","cancelled"].map(s =>
++          `<button onclick="setQuoteStatus('${qid}','${s}')" style="padding:7px 11px;background:#0F766E;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer">${s.replace('_',' ')}</button>`).join("")}
++      </div>
++      <h4 style="margin:14px 0 4px;font-size:12px;color:#94A3B8">UPLOAD PHOTO / VIDEO</h4>
++      <input type="file" id="qup-file" accept="image/*,video/*" style="background:#1E293B;color:#fff;padding:6px;border-radius:6px;border:1px solid #334155">
++      <button onclick="uploadQuotePhoto('${qid}')" style="display:block;margin-top:6px;padding:8px 12px;background:#0D9488;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📤 Upload</button>
++      <h4 style="margin:14px 0 4px;font-size:12px;color:#94A3B8">QUICK LINKS</h4>
++      <div style="display:flex;gap:6px;flex-wrap:wrap">
++        <a href="/q/${qid}" target="_blank" style="padding:7px 11px;background:#1E40AF;color:#fff;border-radius:6px;text-decoration:none;font-size:11px">Customer view</a>
++        <a href="/i/${qid}" target="_blank" style="padding:7px 11px;background:#1E40AF;color:#fff;border-radius:6px;text-decoration:none;font-size:11px">Invoice</a>
++        <a href="/i/${qid}.pdf" target="_blank" style="padding:7px 11px;background:#F59E0B;color:#fff;border-radius:6px;text-decoration:none;font-size:11px">📄 PDF</a>
++      </div>
++    </div>`;
++  let det = $("quote-detail");
++  if (!det) {
++    det = document.createElement("div");
++    det.id = "quote-detail";
++    det.style.cssText = "position:fixed;inset:0;background:#0F172A;z-index:11;display:flex;flex-direction:column";
++    document.body.appendChild(det);
++  }
++  det.innerHTML = html;
++  det.style.display = "flex";
++};
++window.closeQuoteDetail = function() {
++  const d = $("quote-detail"); if (d) d.style.display = "none";
++};
++window.setQuoteStatus = async function(qid, status) {
++  await adm("/api/admin/quote/" + encodeURIComponent(qid) + "/status",
++            { method: "POST", body: { status }});
++  alert("Status set: " + status);
++  openQuote(qid); // refresh
++};
++window.uploadQuotePhoto = async function(qid) {
++  const f = $("qup-file").files[0];
++  if (!f) return alert("Pick a file first");
++  const dataUrl = await readDataUrl(f);
++  await adm("/api/admin/quote/" + encodeURIComponent(qid) + "/upload",
++            { method: "POST", body: { data_url: dataUrl, mime: f.type, kind: "vendor" }});
++  alert("Uploaded ✓");
++};
++function readDataUrl(f) {
++  return new Promise((res, rej) => {
++    const r = new FileReader();
++    r.onload = () => res(r.result); r.onerror = rej;
++    r.readAsDataURL(f);
++  });
++}
++async function sendReply() {
++  const text = $("reply-input").value.trim();
++  if (!text || !openSid) return;
++  $("reply-btn").disabled = true;
++  try {
++    await adm("/api/admin/live/chat/" + encodeURIComponent(openSid) + "/reply",
++              { method: "POST", body: { text } });
++    $("reply-input").value = "";
++    loadChatDetail(openSid);
++  } catch (e) {
++    alert("Reply failed");
++  } finally {
++    $("reply-btn").disabled = false;
++  }
++}
++async function releaseChat() {
++  if (!openSid) return;
++  if (!confirm("Hand this chat back to the bot?")) return;
++  await adm("/api/admin/live/chat/" + encodeURIComponent(openSid) + "/release",
++            { method: "POST" });
++  closeChat();
++}
++
++/* ----------------------------- sound + push ----------------------------- */
++let audioCtx;
++function beep(kind) {
++  if (!soundOn) return;
++  try {
++    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
++    const t = audioCtx.currentTime;
++    function tone(freq, dur, delay = 0) {
++      const o = audioCtx.createOscillator();
++      const g = audioCtx.createGain();
++      o.type = "sine"; o.frequency.value = freq;
++      g.gain.setValueAtTime(0, t + delay);
++      g.gain.linearRampToValueAtTime(0.18, t + delay + 0.01);
++      g.gain.linearRampToValueAtTime(0, t + delay + dur);
++      o.connect(g); g.connect(audioCtx.destination);
++      o.start(t + delay); o.stop(t + delay + dur + 0.05);
++    }
++    if (kind === "chat")    { tone(880, 0.15); tone(1320, 0.15, 0.18); }
++    else /* visitor */      { tone(660, 0.12); }
++  } catch (_) {}
++}
++function toggleSound() {
++  soundOn = !soundOn;
++  localStorage.setItem(SOUND_KEY, soundOn ? "1" : "0");
++  refreshSoundUi();
++}
++function refreshSoundUi() {
++  const b = $("snd-btn");
++  b.textContent = soundOn ? "🔔" : "🔕";
++  b.classList.toggle("active", soundOn);
++}
++
++async function enablePush() {
++  try {
++    const reg = await navigator.serviceWorker.ready;
++    const k = await fetch("/api/push/vapid-key").then(r => r.json());
++    if (!k.public) return alert("Server has no VAPID key configured.");
++    let sub = await reg.pushManager.getSubscription();
++    if (!sub) {
++      sub = await reg.pushManager.subscribe({
++        userVisibleOnly: true,
++        applicationServerKey: urlB64ToUint8(k.public),
++      });
++    }
++    await adm("/api/admin/push/subscribe", {
++      method: "POST",
++      body: JSON.parse(JSON.stringify(sub)),
++    });
++    alert("✅ Push notifications on. Phone notifications will mirror to your watch automatically.");
++  } catch (e) {
++    alert("Push setup failed: " + e.message);
++  }
++}
++function urlB64ToUint8(s) {
++  const padding = "=".repeat((4 - s.length % 4) % 4);
++  const base = (s + padding).replace(/-/g, "+").replace(/_/g, "/");
++  const raw = atob(base);
++  return Uint8Array.from(raw, c => c.charCodeAt(0));
++}
++
++/* ----------------------------- utils ----------------------------- */
++function escapeHtml(s) {
++  return String(s ?? "").replace(/[&<>"']/g,
++    c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
++}
++function humanAgo(secs) {
++  if (secs < 60) return secs + "s";
++  if (secs < 3600) return Math.floor(secs/60) + "m";
++  return Math.floor(secs/3600) + "h";
++}
++function humanAgoIso(iso) {
++  if (!iso) return "";
++  const t = new Date(iso).getTime();
++  if (isNaN(t)) return "";
++  return humanAgo(Math.floor((Date.now() - t)/1000));
++}
++
++/* ----------------------------- entrypoint ----------------------------- */
++if (token) bootApp();

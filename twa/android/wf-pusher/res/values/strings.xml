@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Servia Face Push</string>
+    <string name="title">Servia · Push to Watch</string>
+    <string name="subtitle">Burj Sunset · WFF v4</string>
+    <string name="btn_push">Push &amp; Activate</string>
+    <string name="btn_list">List Pushed Faces</string>
+    <string name="btn_remove">Remove Pushed Face</string>
+    <string name="status_idle">Tap a button below.</string>
+</resources>

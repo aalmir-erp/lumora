@@ -1,0 +1,450 @@
+diff --git a/web/404.html b/web/404.html
+index 3887496..9abb090 100644
+--- a/web/404.html
++++ b/web/404.html
+@@ -181,7 +181,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ <script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/account.html b/web/account.html
+index 45b1988..5dca819 100644
+--- a/web/account.html
++++ b/web/account.html
+@@ -183,7 +183,7 @@ function renderBooking(b) {
+ <script src="/install.js" defer></script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/app.js b/web/app.js
+index c384248..d9f1421 100644
+--- a/web/app.js
++++ b/web/app.js
+@@ -340,7 +340,9 @@
+   ["pointerdown","touchstart","scroll","keydown"].forEach(ev =>
+     addEventListener(ev, _runBF, { once: true, passive: true }));
+ 
+-  // Version stamp from /api/health
++  // Version stamp from /api/health — DEFERRED off the critical path.
++  // Was firing on DOMContentLoaded which dragged LCP. Now waits until
++  // browser is idle (or 800ms after load on browsers without idle API).
+   function _setVersion() {
+     fetch("/api/health").then(r => r.json()).then(j => {
+       window.LUMORA_VERSION = j.version;
+@@ -352,11 +354,16 @@
+     document.querySelectorAll(".lang-flags [data-lang]").forEach(b =>
+       b.classList.toggle("active", b.dataset.lang === cur));
+   }
++  // Defer version fetch so it doesn't block LCP. Flag-active runs immediately
++  // (no network — just className toggle).
+   if (document.readyState !== "loading") {
+-    _setVersion(); _refreshFlagActive();
++    _refreshFlagActive();
+   } else {
+-    document.addEventListener("DOMContentLoaded", () => { _setVersion(); _refreshFlagActive(); });
++    document.addEventListener("DOMContentLoaded", _refreshFlagActive);
+   }
++  if (window.requestIdleCallback) requestIdleCallback(_setVersion, {timeout: 5000});
++  else if (document.readyState === 'complete') setTimeout(_setVersion, 1500);
++  else window.addEventListener('load', () => setTimeout(_setVersion, 1500));
+   window.addEventListener("lumora:lang", _refreshFlagActive);
+ 
+ })();
+diff --git a/web/area.html b/web/area.html
+index f0c2041..765ca00 100644
+--- a/web/area.html
++++ b/web/area.html
+@@ -275,7 +275,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ </section>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/book.html b/web/book.html
+index d1334e5..0685248 100644
+--- a/web/book.html
++++ b/web/book.html
+@@ -659,7 +659,7 @@ function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/booked.html b/web/booked.html
+index b2260d3..a0ebeaa 100644
+--- a/web/booked.html
++++ b/web/booked.html
+@@ -212,7 +212,7 @@ else {
+ <script src="/install.js" defer></script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/cart.html b/web/cart.html
+index 40eca80..17cd89c 100644
+--- a/web/cart.html
++++ b/web/cart.html
+@@ -192,7 +192,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ </section>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/contact.html b/web/contact.html
+index ebe5be2..a75f20a 100644
+--- a/web/contact.html
++++ b/web/contact.html
+@@ -196,7 +196,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/coverage.html b/web/coverage.html
+index 1e6c3a6..ab3cd39 100644
+--- a/web/coverage.html
++++ b/web/coverage.html
+@@ -186,7 +186,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/delivered.html b/web/delivered.html
+index bdba58b..a72c54d 100644
+--- a/web/delivered.html
++++ b/web/delivered.html
+@@ -278,7 +278,7 @@ loadBooking();
+ <script src="/install.js" defer></script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/faq.html b/web/faq.html
+index 3724ad3..80d886b 100644
+--- a/web/faq.html
++++ b/web/faq.html
+@@ -236,7 +236,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ </section>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/gallery.html b/web/gallery.html
+index 806f837..fc57fc7 100644
+--- a/web/gallery.html
++++ b/web/gallery.html
+@@ -145,7 +145,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/gate.html b/web/gate.html
+index 2963fa7..d9b6a29 100644
+--- a/web/gate.html
++++ b/web/gate.html
+@@ -88,7 +88,7 @@
+ <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+ 
+ <nav class="nav"><div class="nav-inner">
+-  <a href="/" aria-label="Home"><img src="/logo.svg" height="36" alt="Servia"></a>
++  <a href="/" aria-label="Home"><img src="/logo.svg" width="112" height="36" alt="Servia"></a>
+   <small id="lumora-version" style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:6px;margin-inline-start:6px">v?</small>
+   <div class="nav-cta" style="margin-inline-start:auto">
+     <a class="btn btn-ghost" href="/me.html">My account</a>
+diff --git a/web/invoice.html b/web/invoice.html
+index 42b295e..85e9da4 100644
+--- a/web/invoice.html
++++ b/web/invoice.html
+@@ -99,7 +99,7 @@
+ <div class="uae-flag-strip" aria-hidden="true" style="height:5px;background:linear-gradient(90deg,#00732F 0% 25%,#fff 25% 50%,#000 50% 75%,#FF0000 75% 100%)"></div>
+ 
+ <nav class="nav"><div class="nav-inner">
+-  <a href="/" aria-label="Home"><img src="/logo.svg" height="36" alt="Servia"></a>
++  <a href="/" aria-label="Home"><img src="/logo.svg" width="112" height="36" alt="Servia"></a>
+   <small id="lumora-version" style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:6px;margin-inline-start:6px">v?</small>
+   <div class="nav-cta" style="margin-inline-start:auto">
+     <a class="btn btn-ghost" href="/me.html">My account</a>
+diff --git a/web/login.html b/web/login.html
+index 016709a..79dc8ed 100644
+--- a/web/login.html
++++ b/web/login.html
+@@ -636,7 +636,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/me.html b/web/me.html
+index be257f6..c5ec341 100644
+--- a/web/me.html
++++ b/web/me.html
+@@ -1106,7 +1106,7 @@ async function submitVideoProof() {
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/partner-agreement.html b/web/partner-agreement.html
+index 478617e..b353081 100644
+--- a/web/partner-agreement.html
++++ b/web/partner-agreement.html
+@@ -196,7 +196,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/pay.html b/web/pay.html
+index beb473e..32180c4 100644
+--- a/web/pay.html
++++ b/web/pay.html
+@@ -421,7 +421,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ <script src="/install.js" defer></script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/quote.html b/web/quote.html
+index 154e42f..094a4e6 100644
+--- a/web/quote.html
++++ b/web/quote.html
+@@ -181,7 +181,7 @@ load();
+ <script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/refund.html b/web/refund.html
+index e90e244..dce809f 100644
+--- a/web/refund.html
++++ b/web/refund.html
+@@ -165,7 +165,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/search.html b/web/search.html
+index 3f485ce..3407fa4 100644
+--- a/web/search.html
++++ b/web/search.html
+@@ -629,7 +629,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ <script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/service.html b/web/service.html
+index d0b35be..03b9f1c 100644
+--- a/web/service.html
++++ b/web/service.html
+@@ -464,7 +464,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/services.html b/web/services.html
+index ac9a3e8..56f7f7f 100644
+--- a/web/services.html
++++ b/web/services.html
+@@ -212,7 +212,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/share-rewards.html b/web/share-rewards.html
+index fee2fbc..4c38afa 100644
+--- a/web/share-rewards.html
++++ b/web/share-rewards.html
+@@ -346,7 +346,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/smart-speakers.html b/web/smart-speakers.html
+index 55a7551..5ec4e31 100644
+--- a/web/smart-speakers.html
++++ b/web/smart-speakers.html
+@@ -393,7 +393,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ <script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/terms.html b/web/terms.html
+index 1667002..2b7a131 100644
+--- a/web/terms.html
++++ b/web/terms.html
+@@ -293,7 +293,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/vendor.html b/web/vendor.html
+index 137f2f4..8871d77 100644
+--- a/web/vendor.html
++++ b/web/vendor.html
+@@ -287,7 +287,7 @@ function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<"
+ <script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/videos.html b/web/videos.html
+index db533e8..0b20385 100644
+--- a/web/videos.html
++++ b/web/videos.html
+@@ -194,7 +194,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
+ 
+ <footer><div class="container">
+   <div>
+-    <img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
++    <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
+     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
+   </div>
+   <div><h3>Customers</h3>
+diff --git a/web/vs/index.html b/web/vs/index.html
+index 1542b7b..ef41841 100644
+--- a/web/vs/index.html
++++ b/web/vs/index.html
+@@ -163,7 +163,7 @@
+ </main>
+ 
+ <footer><div class="container">
+-  <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
++  <div><img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
+   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/coverage.html">Coverage map</a><br><a href="/me.html">My account</a><br><a href="/faq.html">FAQ</a></div>
+   <div><h3>Compare</h3><a href="/vs/justlife.html">vs Justlife</a><br><a href="/vs/urban-company.html">vs Urban Company</a><br><a href="/vs/servicemarket.html">vs ServiceMarket</a><br><a href="/vs/matic.html">vs MATIC</a></div>
+   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
+diff --git a/web/vs/justlife.html b/web/vs/justlife.html
+index 87aeb03..3c28823 100644
+--- a/web/vs/justlife.html
++++ b/web/vs/justlife.html
+@@ -141,7 +141,7 @@
+ </main>
+ 
+ <footer><div class="container">
+-  <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
++  <div><img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
+   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/coverage.html">Coverage map</a><br><a href="/me.html">My account</a></div>
+   <div><h3>Compare</h3><a href="/vs/">All comparisons</a><br><a href="/vs/justlife.html">vs Justlife</a><br><a href="/vs/urban-company.html">vs Urban Company</a><br><a href="/vs/servicemarket.html">vs ServiceMarket</a><br><a href="/vs/matic.html">vs MATIC</a></div>
+   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
+diff --git a/web/vs/matic.html b/web/vs/matic.html
+index a8d9063..db69bbb 100644
+--- a/web/vs/matic.html
++++ b/web/vs/matic.html
+@@ -141,7 +141,7 @@
+ </main>
+ 
+ <footer><div class="container">
+-  <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
++  <div><img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
+   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/coverage.html">Coverage map</a><br><a href="/me.html">My account</a></div>
+   <div><h3>Compare</h3><a href="/vs/">All comparisons</a><br><a href="/vs/justlife.html">vs Justlife</a><br><a href="/vs/urban-company.html">vs Urban Company</a><br><a href="/vs/servicemarket.html">vs ServiceMarket</a><br><a href="/vs/matic.html">vs MATIC</a></div>
+   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
+diff --git a/web/vs/servicemarket.html b/web/vs/servicemarket.html
+index 77a9cdd..4f42c6a 100644
+--- a/web/vs/servicemarket.html
++++ b/web/vs/servicemarket.html
+@@ -141,7 +141,7 @@
+ </main>
+ 
+ <footer><div class="container">
+-  <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
++  <div><img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
+   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/coverage.html">Coverage map</a><br><a href="/me.html">My account</a></div>
+   <div><h3>Compare</h3><a href="/vs/">All comparisons</a><br><a href="/vs/justlife.html">vs Justlife</a><br><a href="/vs/urban-company.html">vs Urban Company</a><br><a href="/vs/servicemarket.html">vs ServiceMarket</a><br><a href="/vs/matic.html">vs MATIC</a></div>
+   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
+diff --git a/web/vs/urban-company.html b/web/vs/urban-company.html
+index 6a5f815..3a72c5a 100644
+--- a/web/vs/urban-company.html
++++ b/web/vs/urban-company.html
+@@ -141,7 +141,7 @@
+ </main>
+ 
+ <footer><div class="container">
+-  <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
++  <div><img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async"><p style="margin:12px 0;font-size:13px;opacity:.85">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p></div>
+   <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/coverage.html">Coverage map</a><br><a href="/me.html">My account</a></div>
+   <div><h3>Compare</h3><a href="/vs/">All comparisons</a><br><a href="/vs/justlife.html">vs Justlife</a><br><a href="/vs/urban-company.html">vs Urban Company</a><br><a href="/vs/servicemarket.html">vs ServiceMarket</a><br><a href="/vs/matic.html">vs MATIC</a></div>
+   <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
