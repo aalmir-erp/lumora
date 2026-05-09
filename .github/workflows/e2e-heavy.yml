@@ -73,13 +73,39 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
+          set -x
           git config user.email "e2e-heavy@github-actions"
           git config user.name "E2E Heavy bot"
-          if [ -f TEST_RESULTS_HEAVY.md ] || [ -d _e2e-shots ]; then
-            git add TEST_RESULTS_HEAVY.md _e2e-shots/ 2>/dev/null || true
-            git diff --staged --quiet || git commit -m "e2e-heavy: $(date -u +%Y-%m-%dT%H:%MZ) (run #${{ github.run_number }})"
-            git pull --rebase origin main || true
-            git push origin HEAD:main || echo "push failed"
+          # Tag pushes start in detached-HEAD state. Switch to (or create)
+          # local main so the push has somewhere to push.
+          git fetch origin main
+          git checkout -B main origin/main
+          ls -la _e2e-shots/ 2>/dev/null || echo "(no _e2e-shots dir)"
+          # Re-run the build/prune steps because we're on a different ref now
+          OUT="_e2e-shots/${{ github.run_number }}-${{ github.run_id }}"
+          mkdir -p "$OUT"
+          for f in /tmp/e2e-shots/*.png; do
+            [ -e "$f" ] || continue
+            cp "$f" "$OUT/$(basename "$f")"
+          done
+          # Make thumbs (idempotent — convert in place)
+          for f in "$OUT"/*.png; do
+            [ -e "$f" ] || continue
+            convert "$f" -resize 240x -strip -quality 78 "$f" 2>/dev/null || true
+          done
+          python3 .scripts/e2e-shots-manifest.py "$OUT" || true
+          # Prune
+          (cd _e2e-shots && ls -1 2>/dev/null | sort -n | head -n -14 | while read d; do
+              [ -d "$d" ] && rm -rf "$d" && echo "pruned: $d"
+          done) || true
+          # Commit + push
+          git add -A TEST_RESULTS_HEAVY.md _e2e-shots/ 2>/dev/null || true
+          git status --short | head -20
+          if ! git diff --staged --quiet; then
+            git commit -m "e2e-heavy run #${{ github.run_number }}: $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push origin main || echo "push failed (will retry next run)"
+          else
+            echo "no changes to commit"
           fi
 
       - name: Upload screenshots + log (7-day retention)
