@@ -102,6 +102,22 @@ Phone: 0559396459
         "text": "Click [Book now ↗](/book.html) to start.",
         "expect_q": False,
     },
+    {
+        "name": "v1.24.80 — pre-summary asking for fuller address (no 'Book now' yet)",
+        "text": """Thanks, Khaqan! Just to confirm before I finalize your bookings:
+
+**Your details:**
+• Name: Khaqan Shahehe
+• Phone: 0559396459
+• Location: Furjan, Dubai
+• Time: Tomorrow at 8:00 AM
+• Services: Deep Cleaning + Pest Control + Sofa & Carpet Shampoo
+
+Could you provide the **complete address** (building name/number and street)? This ensures our team arrives at the right spot.
+
+Once you give me that, I'll get you booked! 🙌""",
+        "expect_q": False,  # bot is correctly asking for complete address — must not auto-quote yet
+    },
 ]
 
 passed = 0; failed = []

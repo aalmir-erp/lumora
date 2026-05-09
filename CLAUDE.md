@@ -91,6 +91,43 @@ Visual changes (button colors, page layout, modals, etc.) must be:
    user BEFORE the push happens
 Bug fixes that change rendered output count as visual changes.
 
+### W6. LET THE AI DECIDE — DON'T HARDCODE WHAT IT SHOULD LEARN
+(Added v1.24.80 after user complaint: "you are everything hardcoding
+and not letting AI decide and think")
+
+**Symptom of over-hardcoding**:
+- AI emits "Booking summary + Book now ↗" as plain text
+- I write a regex parser to extract services/name/etc.
+- Parser converts to a `create_multi_quote` call behind the AI's back
+- Every time the AI emits a new format, parser breaks
+- I keep adding regex variants forever
+
+**The right fix**: the AI has a `create_multi_quote` tool — it should
+USE it. My job is to TRAIN the AI (system prompt) to use the tool
+correctly, not parse its prose.
+
+**Hierarchy of approaches** (most to least preferred):
+1. **System-prompt training**: explicit tool-use mandate with example
+   inputs/outputs and a banned-format list. Trust the AI to follow.
+2. **Tool dispatch enforcement**: if the AI calls the WRONG tool, the
+   tool blocker rejects it with a synthetic error pointing it to the
+   right tool. AI retries.
+3. **Output post-processor (LAST RESORT)**: if the AI still emits a
+   bad text format, parse and rewrite. Treat this as a SAFETY NET
+   for cascade-router fallbacks (when AI is bypassed entirely).
+
+**Forbidden patterns (don't do these instead of #1)**:
+- Adding a 12th regex variant when the AI emits a new format (just
+  fix the prompt with an example of the right format)
+- Writing a state machine in main.py that decides quote/no-quote (the
+  AI has the context, let it decide)
+- Hardcoding service-id mappings in conversational logic (the AI has
+  the KB, let it map)
+
+**When you DO use a parser/post-processor**: log every decision so we
+can debug WHY it skipped, and add the failing input as a fixture in
+`tests/test_real_fixtures.py`.
+
 ### W5b. AUTO-UPDATE THIS FILE AFTER EVERY TASK
 After completing any task, before pushing the commit, ASK YOURSELF:
 1. Did this introduce a new product decision the user made
