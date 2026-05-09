@@ -652,8 +652,43 @@
         };
         strip.appendChild(card);
       });
+      // v1.24.74 — append a "Custom date" card at the end that opens a
+      // native <input type="date"> picker for any future date.
+      const customCard = el("button", { type: "button", class: "us-picker-day us-picker-day-custom" });
+      customCard.innerHTML = `<div class="us-picker-day-label">📅 Custom</div>
+        <div class="us-picker-day-sub">pick any</div>`;
+      // Hidden native date input — full Android/iOS native picker
+      const hiddenDate = el("input", {
+        type: "date",
+        style: "position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;left:0;top:0",
+      });
+      // Min = tomorrow, max = +180 days
+      const tomorrow = new Date(today.getTime() + 86400000);
+      const maxDate  = new Date(today.getTime() + 180 * 86400000);
+      hiddenDate.min = tomorrow.toISOString().slice(0,10);
+      hiddenDate.max = maxDate.toISOString().slice(0,10);
+      hiddenDate.onchange = () => {
+        if (!hiddenDate.value) return;
+        const d = new Date(hiddenDate.value + "T00:00:00");
+        const sendStr = `${dayShort[d.getDay()]} ${d.getDate()} ${monthShort[d.getMonth()]} ${d.getFullYear()}`;
+        [...wrap.querySelectorAll("button")].forEach(x => x.disabled = true);
+        customCard.classList.add("us-picker-picked");
+        customCard.innerHTML = `<div class="us-picker-day-label">${dayShort[d.getDay()]}</div>
+          <div class="us-picker-day-sub">${d.getDate()} ${monthShort[d.getMonth()]}</div>`;
+        input.value = sendStr; form.requestSubmit();
+      };
+      customCard.onclick = () => {
+        // showPicker() opens the native date dialog on Chrome/Android/iOS.
+        // Fallback to .focus() + .click() for older browsers.
+        try {
+          if (typeof hiddenDate.showPicker === "function") hiddenDate.showPicker();
+          else { hiddenDate.focus(); hiddenDate.click(); }
+        } catch (_) { hiddenDate.focus(); hiddenDate.click(); }
+      };
+      strip.appendChild(customCard);
       wrap.appendChild(strip);
-      const hint = el("div", { class: "us-picker-hint" }, "← swipe for more days · or type a custom date");
+      wrap.appendChild(hiddenDate);
+      const hint = el("div", { class: "us-picker-hint" }, "← swipe for more days · or tap 📅 Custom for any date");
       wrap.appendChild(hint);
     } else if (kind === "time") {
       // 6-col grid of half-hour slots from 7am to 9pm

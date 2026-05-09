@@ -177,6 +177,11 @@ body.us-lift-bar .us-launcher-tip { bottom: 104px; }
 .us-picker-day-label { font-weight: 700; font-size: 13.5px; color: var(--us-text); }
 .us-picker-day-sub { font-size: 11px; color: var(--us-muted); margin-top: 2px; }
 .us-picker-day-weekend .us-picker-day-label { color: #DC2626; }
+.us-picker-day-custom { border-style: dashed !important; border-color: var(--us-primary) !important; background: #F0FDFA !important; }
+.us-picker-day-custom .us-picker-day-label { color: var(--us-primary-dark); }
+.us-picker-day-custom .us-picker-day-sub { color: var(--us-primary); font-style: italic; }
+.us-picker-day-custom:hover { background: var(--us-primary) !important; }
+.us-picker-day-custom:hover .us-picker-day-label, .us-picker-day-custom:hover .us-picker-day-sub { color: #fff; }
 .us-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px 0 0; }
 .us-picker-time { padding: 9px 4px; border: 2px solid #E2E8F0; background: #fff; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--us-text); font-family: inherit; transition: all .12s; }
 .us-picker-time:hover { border-color: var(--us-primary); background: #F0FDFA; color: var(--us-primary-dark); }
