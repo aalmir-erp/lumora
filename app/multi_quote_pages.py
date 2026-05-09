@@ -276,6 +276,22 @@ def sign(quote_id: str, body: _SignBody, request: Request) -> dict:
 def pay_landing(quote_id: str) -> str:
     q = _quote(quote_id)
     if not q: return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
+    # v1.24.76 — honour GATE_BOOKINGS scope-of-work. The "Pay with card"
+    # button must NOT actually charge during stealth-launch — it routes
+    # to /gate.html where we show a friendly "your card was declined by
+    # bank" message and capture the customer's interest with a 15% off
+    # voucher. This was previously a javascript:alert placeholder.
+    from .config import get_settings as _gs
+    if _gs().GATE_BOOKINGS:
+        pay_url = f"/gate.html?inv={quote_id}&amount={q.get('total_aed') or 0}"
+    else:
+        # In live mode, route through the proper gateway link helper.
+        try:
+            from . import quotes as _qs
+            pay_url = _qs._make_payment_link(
+                quote_id, float(q.get('total_aed') or 0), "AED")
+        except Exception:
+            pay_url = f"/pay/{quote_id}"
     return f"""<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Servia · Pay {quote_id}</title>
@@ -293,7 +309,7 @@ margin:8px 0;cursor:pointer}}
   <h1>AED {q.get('total_aed')}</h1>
   <p style="color:#94A3B8;font-size:13px">Quote <code>{quote_id}</code><br>
   {q.get('customer_name','')} · {q.get('phone','')}</p>
-  <a class="btn" href="javascript:alert('Stripe checkout will be wired by admin.')">💳 Pay with card</a>
+  <a class="btn" href="{pay_url}">💳 Pay with card</a>
   <a class="btn alt" href="https://wa.me/971564020087?text=Pay%20{quote_id}">📱 WhatsApp +971 56 4020087</a>
   <p style="color:#64748B;font-size:11px;margin-top:12px">Pay manually with the quote number for instant confirmation.</p>
 </div></body></html>"""

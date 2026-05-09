@@ -145,6 +145,51 @@ class _ForceMobileMiddleware(_BHM):
 app.add_middleware(_ForceMobileMiddleware)
 
 
+# v1.24.76 — Clean-URL middleware. Modern websites don't expose .html in
+# their URLs. This middleware:
+#   1. /faq            → serves web/faq.html  (transparent rewrite)
+#   2. /services/x     → serves web/services/x.html
+#   3. /faq.html       → 301 redirect to /faq (canonicalisation for SEO)
+# API paths (/api/, /q/, /p/, /i/) and existing files are untouched.
+class _CleanURLMiddleware(_BHM):
+    _NO_REWRITE_PREFIX = ("/api/", "/q/", "/p/", "/i/", "/pay/", "/admin",
+                          "/sitemap", "/robots", "/llms", "/.well-known/",
+                          "/static/", "/img/", "/web/", "/_snippets",
+                          "/manifest", "/sw.js", "/widget.")
+    _NO_REWRITE_EXACT = {"/", "/sw.js", "/manifest.webmanifest"}
+
+    async def dispatch(self, request, call_next):
+        path = request.url.path
+        # Don't touch API routes or files with extensions other than .html.
+        if any(path.startswith(p) for p in self._NO_REWRITE_PREFIX):
+            return await call_next(request)
+        if path in self._NO_REWRITE_EXACT:
+            return await call_next(request)
+
+        # 1. /name.html → 301 redirect to /name (clean-URL canonicalisation).
+        if path.endswith(".html") and request.method == "GET":
+            clean = path[:-5]  # strip ".html"
+            if not clean:
+                clean = "/"
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url=clean, status_code=301)
+
+        # 2. /name (no extension) → if web/name.html exists, rewrite path.
+        if "." not in path.rsplit("/", 1)[-1] and request.method == "GET":
+            from pathlib import Path as _P
+            web_dir = _P(settings.WEB_DIR)
+            candidate = web_dir / (path.lstrip("/") + ".html")
+            if candidate.is_file():
+                # Internal rewrite — fool the rest of the app into thinking
+                # the request was for /name.html
+                request.scope["path"] = path + ".html"
+                request.scope["raw_path"] = (path + ".html").encode()
+        return await call_next(request)
+
+
+app.add_middleware(_CleanURLMiddleware)
+
+
 # v1.24.18 — HTML minification middleware. Strips unnecessary whitespace
 # between tags, comments, and consecutive blank lines from every HTML
 # response. Typical 5-15% reduction on top of GZip — meaningful for LCP
@@ -1991,7 +2036,8 @@ def sitemap_pages(request: Request = None):
                     sid = s.get("id")
                     if not sid: continue
                     slug = sid.replace("_", "-")
-                    urls.append((f"{base}/services/{slug}.html",
+                    # v1.24.76 — clean URLs (no .html) for SEO canonical
+                    urls.append((f"{base}/services/{slug}",
                                  today, "weekly", "0.85"))
             except Exception: pass
         return _xml_response(_wrap_urlset(urls))
@@ -2010,8 +2056,14 @@ def sitemap_pages(request: Request = None):
 # template every other service page uses, with SEO meta hardcoded for the
 # slug + a JS shim that pre-fills the `?id=` param so the dynamic loader
 # picks the right service.
+# v1.24.76 — register BOTH clean and .html paths so the dynamic route
+# wins over StaticFiles and works whether the user lands on /services/x
+# or /services/x.html (the .html form 301-redirects via middleware).
+@app.get("/services/{slug}", include_in_schema=False, response_class=HTMLResponse)
 @app.get("/services/{slug}.html", include_in_schema=False, response_class=HTMLResponse)
 def service_slug_page(slug: str):
+    if slug.endswith(".html"):
+        slug = slug[:-5]
     sid = slug.replace("-", "_")
     try:
         services_by_id = {s["id"]: s for s in kb.services().get("services", [])}
@@ -2030,7 +2082,7 @@ def service_slug_page(slug: str):
     name = svc.get("name") or sid.replace("_", " ").title()
     desc = (svc.get("description") or svc.get("short")
             or f"{name} in the UAE — booked online with {brand['name']}.")
-    canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug}.html"
+    canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug}"
     title = f"{name} · {brand['name']} UAE"
     desc_safe = desc.replace('"', "&quot;")
     title_safe = title.replace('"', "&quot;")

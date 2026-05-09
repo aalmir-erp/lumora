@@ -8,6 +8,62 @@ time. None of these mistakes should ever happen again.
 
 ## 🚨 Top-3 rules — break any of these and you owe the user an apology
 
+### 🔒 SCOPE-OF-WORK contract (NEVER violate, even silently)
+
+These are decisions the founder has already made about how the product
+must behave. They override default coding instincts — DO NOT add
+"normal" implementations that contradict them.
+
+**A) Stealth-launch payment gate (GATE_BOOKINGS=1)**
+"Pay with card" must NOT actually charge a card. It routes to
+`/gate.html?inv=<id>&amount=<n>` which shows a friendly "your card was
+declined by your bank" message and offers a 15% discount voucher in
+exchange for WhatsApp contact. Captures real demand without delivering
+service. Files: `app/quotes.py::_make_payment_link`,
+`app/multi_quote_pages.py::pay_landing`.
+
+If you're writing a new payment-related code path, it MUST honour
+`GATE_BOOKINGS` first — never bypass it with a Stripe / direct gateway
+link. Switch is `app/config.py :: GATE_BOOKINGS`.
+
+**B) Clean URLs (no .html in production paths)**
+The site is served via FastAPI middleware that:
+- `/faq` → serves `web/faq.html` transparently
+- `/faq.html` → 301 redirect to `/faq`
+- `/services/<slug>` and `/services/<slug>.html` both work
+Internal links, sitemap, canonical tags must use the clean form.
+Files: `app/main.py :: _CleanURLMiddleware`, `service_slug_page`.
+
+**C) "Get the Servia app" FAB hidden on transactional pages**
+Never show the install FAB or the install banner on `/book`, `/q/`,
+`/p/`, `/i/`, `/pay/`, `/cart`, `/checkout` — they distract from the
+checkout task. Files: `web/install.js :: injectFAB`.
+
+**D) Multi-service flow uses Q-XXXXXX, not "Book now ↗"**
+When the customer is buying 2+ services, the bot output (or the
+server-side post-processor) MUST produce a structured cart with
+Q-XXXXXX, sign URL, pay URL, manual-pay fallback. The legacy
+single-service `Book now ↗ /book.html?service=X` link is BANNED for
+multi-service. Server-side guards live at:
+- `app/llm.py :: _enforce_multi_quote_when_book_now` (output post-processor)
+- `app/llm.py :: chat()` tool dispatch (rejects create_booking when 2+ services)
+
+**E) Service-specific intake uses ASK_FOR_BOOKING from KB**
+The bot must only ask the fields listed in each service's
+ASK_FOR_BOOKING (e.g. `bedrooms` for cleaning, `ac_units_count` for
+ac_cleaning, `pool_size_sqm` for swimming_pool). Never invent fields
+the KB doesn't list. Never skip required fields the KB lists.
+
+**F) UI uniformity — never fork the canonical template**
+Every service detail page is rendered from the SINGLE canonical
+template `web/service.html` via `app/main.py :: service_slug_page`.
+Do NOT create per-service custom HTML files — it produces visually
+inconsistent pages. New service = add to `services.json` + `pricing.json`,
+the slug page renders automatically.
+
+If you ever feel like duplicating page structure, DON'T. Use the
+canonical template.
+
 ### 0. NEVER say "fixed" / "okay" / "done" without showing test output
 
 **Hard rule (added v1.24.72, refined v1.24.75)**: when the user reports a

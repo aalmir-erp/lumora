@@ -113,6 +113,11 @@
   function injectFAB() {
     if (!FORCE_SHOW && (isStandalone() || localStorage.getItem(KEY_INSTALLED))) return;
     if (document.getElementById("servia-install-fab")) return;
+    // v1.24.76 — never show the FAB on TRANSACTIONAL pages where the
+    // user is mid-task (book / quote sign / pay / invoice / cart). It
+    // overlaps the form and the chat widget → looks like a mess.
+    const TRANSACTIONAL = /^\/(book|q|p|i|pay|cart|quote|invoice|checkout)(\b|\/|\.)/;
+    if (TRANSACTIONAL.test(location.pathname)) return;
     const fab = document.createElement("button");
     fab.id = "servia-install-fab";
     fab.type = "button";
