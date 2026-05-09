@@ -108,6 +108,31 @@ exposes brand fields to the LLM — leaks happen there.
 40% on 2026-05-08 and may bump again. Don't change values without an
 explicit ask. Admin override via DB exists but is admin-controlled.
 
+**Important — pricing lives in TWO files**:
+- `app/data/pricing.json` → used by `get_quote()` for actual computed prices
+- `app/data/services.json` → used by `kb_blob()` (the LLM's KB) for "starting_price"
+  hints the bot quotes when it doesn't call get_quote
+
+If you bump `pricing.json` you MUST also bump `services.json` `starting_price` fields
+by the same multiplier. Otherwise the bot quotes the OLD starting price even though
+get_quote returns the NEW computed price → inconsistent prices in the same chat.
+
+Use this snippet to bump both consistently:
+```python
+import json
+for fname in ('app/data/pricing.json', 'app/data/services.json'):
+    with open(fname) as f: d = json.load(f)
+    PRICE_KEYS = {'base_per_bedroom','min_charge','hourly_rate','starting_price','base_flat',
+                  'per_sqft','per_visit','flat_rate','call_out_fee','base_price','supplies_addon'}
+    def bump(o, mult=1.40):
+        if isinstance(o, dict):
+            return {k: (round(v*mult,2) if k in PRICE_KEYS and isinstance(v,(int,float)) and not isinstance(v,bool)
+                       else bump(v, mult)) for k,v in o.items()}
+        if isinstance(o, list): return [bump(x, mult) for x in o]
+        return o
+    with open(fname,'w') as f: json.dump(bump(d), f, indent=2, ensure_ascii=False)
+```
+
 ---
 
 ## 📦 Project structure (avoid hunting)
