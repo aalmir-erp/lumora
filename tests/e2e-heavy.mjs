@@ -50,14 +50,14 @@ const TESTS = [
     const r = await p.goto(BASE); if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
     rec('T02','Homepage loads (mobile)','pass', 'iPhone 12');
   }, 'iPhone 12'],
-  ['T03','/services.html lists services', async (p) => {
-    await p.goto(BASE+'/services.html');
+  ['T03','/services lists services', async (p) => {
+    await p.goto(BASE+'/services');
     const cards = await p.locator('.svc-card, .svc-tile-hero').count();
     if (cards < 5) throw new Error(`only ${cards} cards`);
-    rec('T03','/services.html lists services','pass',`${cards} cards`);
+    rec('T03','/services lists services','pass',`${cards} cards`);
   }],
   ['T04','/coverage.html renders', async (p) => {
-    const r = await p.goto(BASE+'/coverage.html');
+    const r = await p.goto(BASE+'/coverage');
     if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
     rec('T04','/coverage.html renders','pass','OK');
   }],
@@ -66,12 +66,12 @@ const TESTS = [
     if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
     rec('T05','/blog index loads','pass','OK');
   }],
-  ['T06','Sitemap has /nfc.html', async (p) => {
+  ['T06','Sitemap has /nfc', async (p) => {
     const r = await p.request.get(BASE+'/sitemap.xml');
     if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
     const t = await r.text();
-    if (!t.includes('/nfc.html')) throw new Error('nfc.html missing');
-    rec('T06','Sitemap has /nfc.html','pass','OK');
+    if (!t.includes('/nfc')) throw new Error('nfc.html missing');
+    rec('T06','Sitemap has /nfc','pass','OK');
   }],
   ['T07','robots.txt accessible', async (p) => {
     const r = await p.request.get(BASE+'/robots.txt');
@@ -79,7 +79,7 @@ const TESTS = [
     rec('T07','robots.txt accessible','pass','OK');
   }],
   ['T08','/faq.html FAQPage schema', async (p) => {
-    await p.goto(BASE+'/faq.html');
+    await p.goto(BASE+'/faq');
     const j = await p.locator('script[type="application/ld+json"]').allInnerTexts();
     if (!j.some(s => /FAQPage/.test(s))) throw new Error('no FAQPage schema');
     rec('T08','/faq.html FAQPage schema','pass','present');
@@ -124,30 +124,30 @@ const TESTS = [
     if (await p.locator('footer, .footer').count() === 0) throw new Error('no footer');
     rec('T14','Footer present','pass','OK');
   }],
-  ['T15','/install.html APK card', async (p) => {
-    await p.goto(BASE+'/install.html');
+  ['T15','/install APK card', async (p) => {
+    await p.goto(BASE+'/install');
     if (await p.locator('#apk-download').count() === 0) throw new Error('no apk-download');
-    rec('T15','/install.html APK card','pass','OK');
+    rec('T15','/install APK card','pass','OK');
   }],
-  ['T16','/install.html Wear OS card', async (p) => {
-    await p.goto(BASE+'/install.html');
+  ['T16','/install Wear OS card', async (p) => {
+    await p.goto(BASE+'/install');
     if (await p.locator('#wear-download').count() === 0) throw new Error('no wear-download');
-    rec('T16','/install.html Wear OS card','pass','OK');
+    rec('T16','/install Wear OS card','pass','OK');
   }],
-  ['T17','/install.html iOS section', async (p) => {
-    await p.goto(BASE+'/install.html');
+  ['T17','/install iOS section', async (p) => {
+    await p.goto(BASE+'/install');
     const t = await p.textContent('body');
     if (!/iPhone|iOS|Apple Watch/i.test(t)) throw new Error('no iOS section');
-    rec('T17','/install.html iOS section','pass','OK');
+    rec('T17','/install iOS section','pass','OK');
   }],
   ['T18','Search input has ss-input class', async (p) => {
-    await p.goto(BASE+'/search.html');
+    await p.goto(BASE+'/search');
     const cls = (await p.locator('#q').getAttribute('class')) || '';
     if (!/ss-input/.test(cls)) throw new Error(`class="${cls}"`);
     rec('T18','Search input has ss-input class','pass',cls);
   }],
   ['T19','Search trending chips load', async (p) => {
-    await p.goto(BASE+'/search.html');
+    await p.goto(BASE+'/search');
     const chips = await p.locator('#trending .ss-chip, .ss-chips-row .ss-chip').count();
     rec('T19','Search trending chips load', chips > 0 ? 'pass':'warn', `${chips} chips`);
   }],
@@ -158,32 +158,32 @@ const TESTS = [
   }],
 
   // === NFC feature (21-30) ===
-  ['T21','/nfc.html loads', async (p) => {
-    const r = await p.goto(BASE+'/nfc.html');
+  ['T21','/nfc loads', async (p) => {
+    const r = await p.goto(BASE+'/nfc');
     if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
-    rec('T21','/nfc.html loads','pass','OK');
+    rec('T21','/nfc loads','pass','OK');
   }],
-  ['T22','/nfc.html 3-mode panel', async (p) => {
-    await p.goto(BASE+'/nfc.html');
+  ['T22','/nfc 3-mode panel', async (p) => {
+    await p.goto(BASE+'/nfc');
     const t = await p.textContent('body');
     if (!/Manual|manual_pay/i.test(t) || !/Auto-wallet|preconfigured/i.test(t)) throw new Error('mode panel missing');
-    rec('T22','/nfc.html 3-mode panel','pass','OK');
+    rec('T22','/nfc 3-mode panel','pass','OK');
   }],
-  ['T23','/nfc.html bot widget', async (p) => {
-    await p.goto(BASE+'/nfc.html');
+  ['T23','/nfc bot widget', async (p) => {
+    await p.goto(BASE+'/nfc');
     if (await p.locator('#advisor-card, #advisor-msgs').count() === 0) throw new Error('no advisor');
-    rec('T23','/nfc.html bot widget','pass','OK');
+    rec('T23','/nfc bot widget','pass','OK');
   }],
-  ['T24','/nfc.html bulk-order section', async (p) => {
-    await p.goto(BASE+'/nfc.html');
+  ['T24','/nfc bulk-order section', async (p) => {
+    await p.goto(BASE+'/nfc');
     if (await p.locator('#bulk-rows').count() === 0) throw new Error('no bulk-rows');
-    rec('T24','/nfc.html bulk-order section','pass','OK');
+    rec('T24','/nfc bulk-order section','pass','OK');
   }],
-  ['T25','/nfc.html schema set', async (p) => {
-    await p.goto(BASE+'/nfc.html');
+  ['T25','/nfc schema set', async (p) => {
+    await p.goto(BASE+'/nfc');
     const j = await p.locator('script[type="application/ld+json"]').allInnerTexts();
     if (!j.some(s => /HowTo/.test(s)) || !j.some(s => /FAQPage/.test(s)) || !j.some(s => /Product/.test(s))) throw new Error('schema missing');
-    rec('T25','/nfc.html schema set','pass','HowTo+FAQ+Product');
+    rec('T25','/nfc schema set','pass','HowTo+FAQ+Product');
   }],
   ['T26','/api/nfc/tag bad slug 404', async (p) => {
     const r = await p.request.get(BASE+'/api/nfc/tag/zzzzbogus99');
@@ -196,11 +196,11 @@ const TESTS = [
     if (r.status() !== 302 || !/nfc-not-found/.test(loc)) throw new Error(`${r.status()} → ${loc}`);
     rec('T27','/t/<bad-slug> redirects','pass',loc);
   }],
-  ['T28','/nfc.html vehicle recovery section', async (p) => {
-    await p.goto(BASE+'/nfc.html');
+  ['T28','/nfc vehicle recovery section', async (p) => {
+    await p.goto(BASE+'/nfc');
     const t = await p.textContent('body');
     if (!/Roadside|breakdown|recovery/i.test(t)) throw new Error('missing');
-    rec('T28','/nfc.html vehicle recovery section','pass','OK');
+    rec('T28','/nfc vehicle recovery section','pass','OK');
   }],
   ['T29','/api/nfc/consult endpoint', async (p) => {
     const r = await p.request.post(BASE+'/api/nfc/consult', { data: {messages: []} });
@@ -215,15 +215,15 @@ const TESTS = [
 
   // === Auth + accounts (31-40) ===
   ['T31','/login.html renders', async (p) => {
-    const r = await p.goto(BASE+'/login.html');
+    const r = await p.goto(BASE+'/login');
     if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
     rec('T31','/login.html renders','pass','OK');
   }],
-  ['T32','/me.html requires auth', async (p) => {
-    await p.goto(BASE+'/me.html');
+  ['T32','/me requires auth', async (p) => {
+    await p.goto(BASE+'/me');
     await p.waitForLoadState('networkidle').catch(()=>{});
     if (!/login\.html/.test(p.url())) throw new Error(`url=${p.url()}`);
-    rec('T32','/me.html requires auth','pass','redirected');
+    rec('T32','/me requires auth','pass','redirected');
   }],
   ['T33','Demo customer login (test@servia.ae)', async (p) => {
     const r = await p.request.post(BASE+'/api/auth/customer/login',
@@ -276,7 +276,7 @@ const TESTS = [
     rec('T39','/api/nfc/my-tags authed','pass','OK');
   }],
   ['T40','/admin.html responds', async (p) => {
-    const r = await p.goto(BASE+'/admin.html');
+    const r = await p.goto(BASE+'/admin');
     if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
     rec('T40','/admin.html responds','pass','OK');
   }],
@@ -314,24 +314,24 @@ const TESTS = [
 
   // === Booking + cart (46-50) ===
   ['T46','/book.html renders form', async (p) => {
-    await p.goto(BASE+'/book.html');
+    await p.goto(BASE+'/book');
     if (await p.locator('#book-btn').count() === 0) throw new Error('no book button');
     rec('T46','/book.html renders form','pass','OK');
   }],
   ['T47','/book.html?service=deep_cleaning prefills', async (p) => {
-    await p.goto(BASE+'/book.html?service=deep_cleaning');
+    await p.goto(BASE+'/book?service=deep_cleaning');
     await p.waitForTimeout(800);
     const v = await p.locator('#service').inputValue().catch(()=>null);
     if (v !== 'deep_cleaning') { rec('T47','/book.html?service=deep_cleaning prefills', 'warn', `got=${v}`); return; }
     rec('T47','/book.html?service=deep_cleaning prefills','pass','prefilled');
   }],
   ['T48','/book.html?nfc=<bogus> graceful', async (p) => {
-    await p.goto(BASE+'/book.html?nfc=zzzzbogus99');
+    await p.goto(BASE+'/book?nfc=zzzzbogus99');
     if (await p.locator('#book-btn').count() === 0) throw new Error('book button missing');
     rec('T48','/book.html?nfc=<bogus> graceful','pass','OK');
   }],
   ['T49','/cart.html loads', async (p) => {
-    const r = await p.goto(BASE+'/cart.html');
+    const r = await p.goto(BASE+'/cart');
     if (!r || r.status() >= 400) throw new Error(`HTTP ${r?.status()}`);
     rec('T49','/cart.html loads','pass','OK');
   }],

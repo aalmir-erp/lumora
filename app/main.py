@@ -276,6 +276,10 @@ app.include_router(_mqp_router_mod.public_router)   # /q/{id}, /p/{id}, /i/{id},
 if hasattr(_mqp_router_mod, "admin_router"):
     app.include_router(_mqp_router_mod.admin_router)
 app.include_router(_meh_router_mod.public_router)   # /api/me/history + /api/me/chat/{sid}
+# v1.24.83 — customer profile + auth + ticketing
+from . import customer_profile as _cust_prof
+_cust_prof._ensure_schema()
+app.include_router(_cust_prof.router)               # /api/me/auth/* + /profile + /locations + /family + /tickets
 app.include_router(admin.router)
 app.include_router(admin.public_cms_router)
 app.include_router(admin.public_2fa_router)

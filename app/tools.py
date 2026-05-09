@@ -549,6 +549,11 @@ def create_multi_quote(services: list, customer_name: str, phone: str,
         details={"phone": phone, "items": len(items), "total": total,
                  "session_id": session_id,
                  "revise_of": revise_of if revise_of else None})
+    # v1.24.83 — auto-create or attach customer profile from chat phone
+    try:
+        from . import customer_profile as _cp
+        _cp.ensure_customer(phone, name=customer_name)
+    except Exception: pass
 
     domain = s.brand().get("domain", "servia.ae")
     return {
