@@ -1,20 +1,12 @@
 # Lumora deploy
 
 **URL:** https://lumora-production-4071.up.railway.app
-**Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"nBSW2ZuET3iU-0r7Aax-fw"}`
+**Status:** FAILED
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"17IevdvFSSqWx0lFU79b0g"}`
 
 ## Build logs
 ```
-[10/11] COPY start.sh /app/start.sh
-[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
-[ 7/11] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
-[internal] load build context
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[internal] load build context
 [internal] load build context
 [internal] load build context
 [ 2/11] WORKDIR /app
@@ -33,9 +25,11 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:77eb62b33b56a89eea786abc3e7d642b188605dcfcd14401c6dbab5528f3996a
-containerimage.digest: sha256:f183c84a782fcee1f7a80d4ca7d9b520d6fdcc5c1a4141d61ecb700e0858eeac
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZjE4M2M4NGE3ODJmY2VlMWY3YTgwZDRjYTdkOWI1MjBkNmZkY2M1YzFhNDE0MWQ2MWVjYjcwMGUwODU4ZWVhYyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wOVQxNjoyODowNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:d53e4f9b2aba972573b09bdad2261ae2ad89211fc6c2a8fc159b70186adad589
+containerimage.digest: sha256:785d1c8a10e9495a97c5f3f93ed31816921ca97f28fa89bc46bc3ef7cde6edff
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6Nzg1ZDFjOGExMGU5NDk1YTk3YzVmM2Y5M2VkMzE4MTY5MjFjYTk3ZjI4ZmE4OWJjNDZiYzNlZjdjZGU2ZWRmZiIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wOVQxNjo0MToxMloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+image push
+image push
 image push
 
 [35m====================
@@ -45,39 +39,45 @@ Starting Healthcheck
 [37mPath: /api/health[0m
 [37mRetry window: 1m0s[0m
 
-[92m[1/1] Healthcheck succeeded![0m
+[93mAttempt #1 failed with service unavailable. Continuing to retry for 49s[0m
+[93mAttempt #2 failed with service unavailable. Continuing to retry for 38s[0m
+[93mAttempt #3 failed with service unavailable. Continuing to retry for 26s[0m
+[93mAttempt #4 failed with service unavailable. Continuing to retry for 12s[0m
+
+[91m1/1 replicas never became healthy![0m
+[91mHealthcheck failed![0m
 ```
 
 ## Runtime logs
 ```
-INFO:     100.64.0.4:33210 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.4:33214 - "GET /api/services HTTP/1.1" 200 OK
-INFO:     100.64.0.3:57672 - "GET /api/chat/poll?session_id=sw-Ic8jepbVq2x8mZVK&since_id=428 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:57672 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.3:57686 - "GET /api/site/social HTTP/1.1" 200 OK
-INFO:     100.64.0.4:33214 - "GET /api/chat/poll?session_id=sw-Ic8jepbVq2x8mZVK&since_id=428 HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:18450 - "GET /api/chat/poll?session_id=sw-Ic8jepbVq2x8mZVK&since_id=428 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:27050 - "GET / HTTP/1.1" 200 OK
-INFO:     100.64.0.3:18450 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:18450 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.3:18456 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.3:18472 - "GET /api/blog/latest?limit=10 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:18480 - "GET /api/site/social HTTP/1.1" 200 OK
-INFO:     100.64.0.3:18456 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.4:27050 - "POST /api/app-install HTTP/1.1" 200 OK
-INFO:     100.64.0.4:27060 - "POST /api/app-install HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27652 - "GET /api/chat/poll?session_id=sw-Ic8jepbVq2x8mZVK&since_id=428 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27646 - "GET /api/reviews/platforms HTTP/1.1" 200 OK
-INFO:     100.64.0.4:22016 - "GET /api/chat/poll?session_id=sw-Ic8jepbVq2x8mZVK&since_id=428 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:58724 - "GET /admin-live.html HTTP/1.1" 200 OK
-INFO:     100.64.0.9:34496 - "GET /api/chat/poll?session_id=sw-Ic8jepbVq2x8mZVK&since_id=428 HTTP/1.1" 200 OK
-INFO:     100.64.0.11:50518 - "GET /admin-live.js HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27392 - "GET /admin-live.webmanifest HTTP/1.1" 200 OK
-INFO:     100.64.0.12:59754 - "GET /admin-live.html HTTP/1.1" 200 OK
-INFO:     100.64.0.13:50958 - "GET /admin-live.html HTTP/1.1" 200 OK
-INFO:     100.64.0.14:30038 - "GET /admin-live.html HTTP/1.1" 200 OK
-INFO:     100.64.0.15:34738 - "GET /admin-live.js HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.9:59352 - "GET /api/chat/poll?session_id=sw-Ic8jepbVq2x8mZVK&since_id=428 HTTP/1.1" 200 OK
+    run(
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/main.py", line 617, in run
+    server.run()
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "/usr/local/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/config.py", line 449, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    app.include_router(_mqp_router_mod.admin_router)    # /api/admin/quote/{id}/status, line-status, upload, all
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/app/main.py", line 228, in <module>
+AttributeError: module 'app.multi_quote_pages' has no attribute 'admin_router'
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/df5e9daf-bf2a-484b-9e4f-3a3cd82a5c38/vol_onr647rhdeir9di9
 ```
