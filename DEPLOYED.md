@@ -2,14 +2,15 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"9M1R7tFOSmWRQ4WgY53eZw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"oAyLmPnSTIuzHpvtBT7zVQ"}`
 
 ## Build logs
 ```
-[11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
-[10/11] COPY start.sh /app/start.sh
-[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+[ 9/11] COPY web ./web
+[ 8/11] COPY app ./app
 [internal] load build context
+[internal] load build context
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
@@ -32,9 +33,8 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MDgzMTdlNjBmZDA2OTNjNDVkMWQ3MDZhNTBhNmFlNTIxMDhlOTIyMGM4ZjIzODRhYmRjNjQ5NTE4NDQ2NzVjNyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0wN1QyMjoyNToyMFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:3954f3cd3fb073e5d1e96f944128a7ab21fe9f2c74bad8e8d74a40a376c68caa
-containerimage.digest: sha256:08317e60fd0693c45d1d706a50a6ae52108e9220c8f2384abdc64951844675c7
+containerimage.config.digest: sha256:4be8a12d388ec622a115e6897ff6672c7e5963e503d8f09a2b4577452362b15f
+containerimage.digest: sha256:90ad8a5aa476cd5ca20ad63a51a6b0e84cfdf4bf9abffd151b5483e1ef4a4b89
 image push
 image push
 
@@ -50,10 +50,9 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/660f7a90-bb28-41f2-8bb1-0c3c82db355c/vol_onr647rhdeir9di9
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/4146affc-c713-4518-bc47-996b4ca81d02/vol_onr647rhdeir9di9
 Starting Container
+[start] launching whatsapp_bridge
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
 INFO:     Started server process [1]
 INFO:     Waiting for application startup.
@@ -61,8 +60,7 @@ INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:43913 - "GET /api/health HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:51526 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.2:36787 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:49628 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```

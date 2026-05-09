@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 44
+- ✅ Pass: 43
 - ⚠️ Warn: 1
-- ❌ Fail: 4
+- ❌ Fail: 5
 - ⏭ Skip: 1
 
 ## Items
@@ -38,8 +38,8 @@
 - ✅ **[T29] /api/nfc/consult endpoint** — greets
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
-- ✅ **[T32] /me.html requires auth** — redirected
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_urp2wm9H_...
+- ❌ **[T32] /me.html requires auth** — exception: url=https://servia.ae/
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_Mavs9Bmmt...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,7 +47,7 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.28
+- ✅ **[T41] /api/health responds** — v1.24.52
 - ✅ **[T42] /api/services >=10** — 32
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.15
 - ✅ **[T44] /api/site/social works** — OK
