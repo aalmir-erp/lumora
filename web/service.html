@@ -28,8 +28,8 @@
 
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="preload" as="style" href="/style.css?v=1.24.69" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.69"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.69" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.69"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.70" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.70"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.70" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.70"></noscript>
 
 <!-- Pixels (dormant unless IDs are set) -->
 <script>
@@ -345,7 +345,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
 </section>
 
 <!-- Service-specific mascot video -->
-<section style="padding:36px 16px;background:#0F172A">
+<section id="svc-video-section" style="padding:36px 16px;background:#0F172A;display:none">
   <div class="container">
     <div style="text-align:center;margin-bottom:18px">
       <p style="color:#FCD34D;font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 4px">🎬 SERVIA STUDIO</p>
@@ -358,11 +358,21 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
     <p style="text-align:center;margin-top:14px"><a href="/videos.html" style="color:#FCD34D;font-weight:700;text-decoration:none">📺 More Servia videos →</a></p>
   </div>
   <script>
+  // v1.24.70 — only show video block if a video actually exists for this
+  // service. Previously it would render the API's "Not Found" JSON inside
+  // the iframe (visible as Chrome's pretty-print JSON viewer), making
+  // newly-added services look broken.
   (function(){
     const params = new URLSearchParams(location.search);
     const sid = params.get("id") || "deep_cleaning";
-    const f = document.getElementById("svc-video");
-    if (f) f.src = "/api/videos/play/svc-" + sid.replace(/_/g,"-");
+    const slug = sid.replace(/_/g,"-");
+    const url  = "/api/videos/play/svc-" + slug;
+    fetch(url, {method:"HEAD"}).then(r => {
+      if (!r.ok) return;
+      const sec = document.getElementById("svc-video-section");
+      const f   = document.getElementById("svc-video");
+      if (f && sec) { f.src = url; sec.style.display = "block"; }
+    }).catch(()=>{});
   })();
   </script>
 </section>
@@ -852,7 +862,7 @@ function conv(name) {
 }
 </script>
 
-<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.69";s.dataset.apiBase="";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.70";s.dataset.apiBase="";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 
 <nav class="mobile-nav" aria-label="Primary mobile">
   <div class="mobile-nav-inner">
