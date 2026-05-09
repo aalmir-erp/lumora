@@ -70,8 +70,27 @@
       el("button", { class: "us-resize", "aria-label": "Maximize / restore", title: "Maximize / restore" }, "⛶"),
       el("button", { class: "us-min", "aria-label": "Minimize", title: "Minimize" }, "—"),
       el("button", { class: "us-close", "aria-label": "Close", title: "Close" }, "×")),
-    el("div", { class: "us-actions-bar" }),  // persistent action toolbar
+    // v1.24.55 — Chat / History tabs
+    el("div", { class: "us-tabs" },
+      el("button", { class: "us-tab active", "data-tab": "chat" }, "💬 Chat"),
+      el("button", { class: "us-tab", "data-tab": "history" }, "📜 History")),
+    el("div", { class: "us-actions-bar" }),
     el("div", { class: "us-body" }),
+    // v1.24.55 — History panel (hidden until tab tapped)
+    el("div", { class: "us-history", style: "display:none;flex:1;overflow-y:auto;padding:14px;background:#FAFBFD" },
+      el("div", { class: "us-hist-form", style: "background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;margin-bottom:10px" },
+        el("p", { style: "font-size:12.5px;color:#64748B;margin-bottom:10px;line-height:1.45" },
+          "Enter the phone you've used with us before. We'll show your previous bookings, invoices, payments, and chats."),
+        el("input", { type: "tel", class: "us-hist-phone", placeholder: "Mobile (e.g. 0559396459)",
+          autocomplete: "tel",
+          style: "width:100%;padding:9px 11px;border:1px solid #CBD5E1;border-radius:8px;font:inherit;margin-bottom:6px" }),
+        el("input", { type: "email", class: "us-hist-email", placeholder: "Email (optional)",
+          autocomplete: "email",
+          style: "width:100%;padding:9px 11px;border:1px solid #CBD5E1;border-radius:8px;font:inherit;margin-bottom:8px" }),
+        el("button", { class: "us-hist-go",
+          style: "width:100%;padding:10px;background:#0D9488;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer" },
+          "🔍 Find my history")),
+      el("div", { class: "us-hist-results" })),
     el("div", { class: "us-quickreplies" }),
     el("div", { class: "us-attach-preview", style: "display:none" }),
     el("form", { class: "us-input", autocomplete: "off" },
@@ -253,6 +272,95 @@
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (e) { alert("Download failed: " + e.message); }
   };
+
+  // v1.24.55 — Tab switching + History tab handlers
+  function _switchTab(name) {
+    panel.querySelectorAll(".us-tab").forEach(t =>
+      t.classList.toggle("active", t.dataset.tab === name));
+    body.style.display = name === "chat" ? "" : "none";
+    actionsBar.style.display = name === "chat" ? "" : "none";
+    quickWrap.style.display = name === "chat" ? "" : "none";
+    form.style.display = name === "chat" ? "" : "none";
+    panel.querySelector(".us-history").style.display = name === "history" ? "flex" : "none";
+  }
+  panel.querySelectorAll(".us-tab").forEach(b => b.onclick = () => _switchTab(b.dataset.tab));
+
+  panel.querySelector(".us-hist-go").onclick = async () => {
+    const phone = panel.querySelector(".us-hist-phone").value.trim();
+    const email = panel.querySelector(".us-hist-email").value.trim();
+    if (!phone && !email) { alert("Enter your mobile or email"); return; }
+    const out = panel.querySelector(".us-hist-results");
+    out.innerHTML = '<p style="text-align:center;color:#64748B;padding:18px">Looking up…</p>';
+    try {
+      const r = await fetch(API_BASE + "/api/me/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, email }),
+      });
+      const j = await r.json();
+      if (!j.ok) { out.innerHTML = '<p style="text-align:center;color:#DC2626">Lookup failed</p>'; return; }
+      try { localStorage.setItem("servia.history.phone", phone); } catch(_) {}
+      _renderHistory(out, j);
+    } catch (e) {
+      out.innerHTML = '<p style="text-align:center;color:#DC2626">Network error</p>';
+    }
+  };
+
+  function _renderHistory(container, data) {
+    const esc = s => String(s||"").replace(/[&<>"']/g,
+      c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    if ((data.total || 0) === 0) {
+      container.innerHTML = '<p style="text-align:center;color:#64748B;padding:24px">No matches found for this phone / email.</p>';
+      return;
+    }
+    const counts = data.counts || {};
+    let html = `<p style="font-size:11.5px;color:#64748B;margin-bottom:10px;text-align:center">
+      <b>${data.total}</b> records · ${counts.bookings||0} bookings · ${counts.quotes||0} quotes ·
+      ${counts.invoices||0} invoices · ${counts.chats||0} chats</p>`;
+    const statusColor = s => ({signed:"#0D9488", paid:"#10B981", dispatched:"#F59E0B",
+      arrived:"#3B82F6", in_progress:"#8B5CF6", done:"#10B981",
+      cancelled:"#94A3B8", pending:"#64748B"})[s] || "#64748B";
+    if (data.quotes && data.quotes.length) {
+      html += '<h4 style="margin:14px 0 6px;font-size:13px;color:#0D9488">📋 Quotes & orders</h4>';
+      html += data.quotes.map(q => `
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;margin:6px 0">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div><b>${esc(q.quote_id)}</b>
+              <span style="display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;margin-left:6px;background:${statusColor(q.status)};color:#fff">${esc((q.status||'pending').toUpperCase())}</span>
+              <div style="font-size:12px;color:#64748B;margin-top:2px">${q.target_date||''} ${q.time_slot||''} · ${(q.items||[]).length} services</div></div>
+            <div style="text-align:right"><b style="color:#0D9488">AED ${q.total_aed||'—'}</b>
+              ${q.paid_at ? '<div style="font-size:10px;color:#10B981">✓ PAID</div>' : ''}</div>
+          </div>
+          <div style="font-size:12px;color:#64748B;margin:6px 0">
+            ${(q.items||[]).slice(0,4).map(i => '• ' + esc(i.label)).join('<br>')}</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <a href="${q.view_url}" target="_blank" style="flex:1;padding:7px;background:#0D9488;color:#fff;text-align:center;border-radius:6px;font-size:12px;text-decoration:none">View</a>
+            <a href="${q.invoice_url}" target="_blank" style="flex:1;padding:7px;background:#1E293B;color:#fff;text-align:center;border-radius:6px;font-size:12px;text-decoration:none">Invoice</a>
+            <a href="${q.pdf_url}" target="_blank" style="flex:1;padding:7px;background:#F59E0B;color:#fff;text-align:center;border-radius:6px;font-size:12px;text-decoration:none">📄 PDF</a>
+            ${!q.paid_at ? `<a href="${q.pay_url}" target="_blank" style="flex:1;padding:7px;background:#DC2626;color:#fff;text-align:center;border-radius:6px;font-size:12px;text-decoration:none">Pay</a>` : ''}
+          </div></div>`).join("");
+    }
+    if (data.bookings && data.bookings.length) {
+      html += '<h4 style="margin:14px 0 6px;font-size:13px;color:#0D9488">📅 Bookings</h4>';
+      html += data.bookings.map(b => `<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:12.5px">
+        <b>${esc(b.service_id||'service')}</b> · ${b.target_date||''} ${b.time_slot||''}<br>
+        <span style="font-size:11px;color:#64748B">${esc(b.address||'')}</span>
+        <span style="float:right;background:#F1F5F9;padding:1px 6px;border-radius:3px;font-size:10px">${esc(b.status||'?')}</span></div>`).join("");
+    }
+    if (data.invoices && data.invoices.length) {
+      html += '<h4 style="margin:14px 0 6px;font-size:13px;color:#0D9488">🧾 Invoices</h4>';
+      html += data.invoices.map(i => `<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:12.5px">
+        <b>${esc(i.id)}</b>: AED ${i.amount_aed||'—'}
+        <span style="float:right;background:${i.paid_at?'#D1FAE5':'#FEE2E2'};padding:1px 6px;border-radius:3px;font-size:10px;color:${i.paid_at?'#065F46':'#991B1B'}">${i.paid_at?'PAID':'PENDING'}</span></div>`).join("");
+    }
+    if (data.chats && data.chats.length) {
+      html += '<h4 style="margin:14px 0 6px;font-size:13px;color:#0D9488">💬 Past chats</h4>';
+      html += data.chats.map(c => `<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin:6px 0;font-size:12px">
+        <div style="color:#64748B;font-size:10px">${(c.first_at||'').slice(0,16)} · ${c.msg_count} msgs</div>
+        <div style="margin-top:3px">${esc(c.preview||'(no preview)')}</div></div>`).join("");
+    }
+    container.innerHTML = html;
+  }
 
   // v1.24.56 — restore widget size + open state from localStorage on mount
   setTimeout(() => {
