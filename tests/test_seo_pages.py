@@ -143,6 +143,36 @@ t("25. unknown area returns None (route should 404)",
 t("26. empty / None safe",
   _seo.area_by_slug("") is None and _seo.area_by_slug(None) is None)
 
+# ─── v1.24.101 — regression cases for Loopholes 19+20 ───────────────
+# L19: dict process_steps must NOT be rendered as Python repr
+# L20: SEO content must be ABOVE the footer, not below it
+ac_svc = next((s for s in svcs if s["id"] == "ac_cleaning"), None)
+if ac_svc:
+    h = _seo.render_service_area_page(
+        ac_svc, _seo.area_by_slug("muwaileh"), brand, template, services=svcs)
+    t("27. L19: dict process_steps NOT rendered as Python repr",
+      "{'icon':" not in h and "{'title':" not in h and "{'desc':" not in h,
+      "no '{' '<key>:' Python literals leak into HTML")
+    t("28. L19: process_step icon, title, desc rendered properly",
+      "❄️" in h and "Tell us how many ACs" in h and
+      "Min 2 split units" in h)
+
+# L20: footer placement — verify the SEO content appears BEFORE <footer>
+_idx_content = h.find("seo-content")
+_idx_footer = h.find("<footer")
+t("29. L20: seo-content block appears ABOVE <footer> in source order",
+  _idx_content > 0 and _idx_footer > 0 and _idx_content < _idx_footer,
+  f"seo-content@{_idx_content} footer@{_idx_footer}")
+
+# L21+22: hero image + map blocks injected
+t("30. v1.24.101: Pollinations hero image block injected",
+  "image.pollinations.ai" in h and "seo-hero" in h)
+t("31. v1.24.101: OpenStreetMap iframe block injected",
+  "openstreetmap.org/export/embed" in h and "seo-map" in h)
+t("32. v1.24.101: map uses correct Muwaileh coordinates",
+  "55.479" in h or "25.294" in h,
+  "muwaileh ~ (25.2940, 55.4794)")
+
 # Summary
 total = passed + len(failed)
 print()

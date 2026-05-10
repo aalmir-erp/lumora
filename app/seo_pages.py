@@ -61,6 +61,89 @@ AREA_MAP: dict[str, list[str]] = {
 }
 
 
+# v1.24.101 — approximate centroid coordinates per area (EPSG:4326).
+# Used for the OpenStreetMap embed on each programmatic page so it
+# feels like a REAL local service page (founder request: "include the
+# areas map or location map on the pages so people feel like real").
+# Sources: Wikipedia + Google Maps centroids; rough is fine — the map
+# is for visual context, not navigation.
+AREA_COORDS: dict[str, tuple[float, float, int]] = {
+    # (lat, lng, default_zoom)  — emirate centroids if missing
+    "jumeirah":            (25.2086, 55.2645, 14),
+    "dubai-marina":        (25.0805, 55.1403, 15),
+    "jlt":                 (25.0696, 55.1421, 15),
+    "jvc":                 (25.0573, 55.2073, 15),
+    "mirdif":              (25.2153, 55.4150, 14),
+    "discovery-gardens":   (25.0410, 55.1500, 15),
+    "business-bay":        (25.1856, 55.2784, 15),
+    "downtown":            (25.1972, 55.2744, 15),
+    "al-barsha":           (25.1138, 55.1968, 14),
+    "arabian-ranches":     (25.0500, 55.2700, 13),
+    "damac-hills":         (25.0233, 55.2622, 14),
+    "silicon-oasis":       (25.1241, 55.3855, 14),
+    # Sharjah
+    "al-khan":             (25.3324, 55.3814, 15),
+    "al-majaz":            (25.3299, 55.3806, 15),
+    "al-nahda-sharjah":    (25.2929, 55.3700, 15),
+    "muwaileh":            (25.2940, 55.4794, 14),
+    "al-qasimia":          (25.3375, 55.4097, 15),
+    "al-taawun":            (25.3196, 55.3776, 15),
+    "sharjah-al-suyoh":    (25.2700, 55.5200, 13),
+    "aljada":              (25.2857, 55.4790, 14),
+    # Abu Dhabi
+    "khalifa-city":        (24.4170, 54.5687, 13),
+    "al-reem-island":      (24.5009, 54.4080, 14),
+    "yas-island":          (24.4672, 54.6031, 13),
+    "saadiyat":            (24.5435, 54.4400, 13),
+    "al-raha":             (24.4413, 54.6016, 14),
+    "mussafah":            (24.3667, 54.5021, 13),
+    "mohammed-bin-zayed-city": (24.3650, 54.5550, 13),
+    "corniche":            (24.4750, 54.3450, 14),
+    # Ajman
+    "al-nuaimiya":         (25.4032, 55.4756, 14),
+    "al-rashidiya":        (25.4003, 55.4480, 14),
+    "al-rawda":            (25.3960, 55.4830, 14),
+    "ajman-corniche":      (25.4100, 55.4400, 14),
+    "al-jurf":             (25.4250, 55.4990, 13),
+    "al-mowaihat":         (25.3900, 55.4640, 14),
+    # RAK
+    "al-hamra":            (25.6884, 55.7848, 13),
+    "mina-al-arab":        (25.7022, 55.8104, 14),
+    "al-nakheel":          (25.7800, 55.9450, 13),
+    "khuzam":              (25.7700, 55.9300, 13),
+    # UAQ
+    "al-ramlah":           (25.5400, 55.5700, 13),
+    "al-salamah":          (25.5230, 55.5600, 13),
+    "uaq-marina":          (25.5600, 55.5500, 13),
+    # Fujairah
+    "dibba":               (25.6190, 56.2750, 13),
+    "al-faseel":           (25.1227, 56.3360, 14),
+    "sakamkam":            (25.1450, 56.3600, 13),
+}
+
+
+# Emirate centroid fallback if specific area coords missing
+EMIRATE_COORDS: dict[str, tuple[float, float, int]] = {
+    "dubai":          (25.2048, 55.2708, 11),
+    "sharjah":        (25.3463, 55.4209, 11),
+    "abu-dhabi":      (24.4539, 54.3773, 11),
+    "ajman":          (25.4052, 55.5136, 12),
+    "ras-al-khaimah": (25.7895, 55.9432, 11),
+    "umm-al-quwain":  (25.5200, 55.5500, 11),
+    "fujairah":       (25.1288, 56.3265, 11),
+}
+
+
+def coords_for_area(area_slug: str, emirate_slug: str | None = None) -> tuple[float, float, int]:
+    """Return (lat, lng, zoom) for an area. Falls back to emirate
+    centroid if specific coords are missing."""
+    c = AREA_COORDS.get(area_slug)
+    if c: return c
+    if emirate_slug and emirate_slug in EMIRATE_COORDS:
+        return EMIRATE_COORDS[emirate_slug]
+    return (25.2048, 55.2708, 10)  # Dubai fallback
+
+
 def slugify(text: str) -> str:
     """URL-safe slug. 'Dubai Marina' → 'dubai-marina'."""
     s = (text or "").lower().strip()
@@ -276,13 +359,31 @@ def _why_servia_block(svc: dict, area_info: dict) -> str:
         )
 
     if isinstance(process, list) and process:
+        # v1.24.101 (Loophole 19): KB process_steps are dict objects
+        # like {'icon':'❄️','title':'Tell us how many ACs','desc':'...'}.
+        # Previous code did str(s) → printed Python repr in the UI.
+        # Now: render properly with icon + bold title + desc.
+        step_items = []
+        for s in process[:6]:
+            if isinstance(s, dict):
+                icon = s.get("icon") or "•"
+                title = s.get("title") or s.get("name") or ""
+                desc = s.get("desc") or s.get("description") or ""
+                step_items.append(
+                    f"<li style='margin:8px 0;padding-left:6px'>"
+                    f"<span style='font-size:18px;margin-right:6px'>{_safe(str(icon))}</span>"
+                    f"<strong>{_safe(str(title))}</strong>"
+                    f"{(' &mdash; ' + _safe(str(desc))) if desc else ''}"
+                    f"</li>"
+                )
+            else:
+                # String step or unknown shape — render as plain text
+                step_items.append(f"<li style='margin:8px 0'>{_safe(str(s))}</li>")
         parts.append(
             f'<h3 style="margin:14px 0 6px;color:#0f766e;font-size:16px">'
             f'How a typical {area} booking goes</h3>'
-            '<ol style="margin:0 0 12px 20px;padding:0">' +
-            "".join(f"<li style='margin:3px 0'>{_safe(str(s))}</li>"
-                    for s in process[:6]) +
-            '</ol>'
+            '<ol style="margin:0 0 12px 22px;padding:0">' +
+            "".join(step_items) + '</ol>'
         )
 
     if isinstance(starting, (int, float)) and starting > 0:
@@ -349,6 +450,71 @@ def _get_svc_name(svc_slug: str, services: list[dict]) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────
+# v1.24.101 — area-specific visual blocks (founder request: "include
+# area map or location map + real images so people feel like real")
+# ─────────────────────────────────────────────────────────────────────
+def _hero_image_block(svc: dict, area_info: dict) -> str:
+    """Pollinations.ai hero image specific to {service, area}. Free,
+    no API key, deterministic seed = same image always (caching)."""
+    try:
+        from . import blog_image as _bi
+        slug = f"{(svc.get('id') or '').replace('_','-')}-{slugify(area_info['name'])}"
+        url = _bi.hero_image_url(
+            slug=slug,
+            topic=f"{svc.get('name')} in {area_info['name']}",
+            emirate=area_info.get("emirate_slug"),
+            service=svc.get("id"),
+            width=1200, height=520,
+        )
+    except Exception:
+        return ""
+    name = svc.get("name") or "Home Service"
+    return (
+        '<section class="seo-hero" style="max-width:780px;margin:24px auto 0;'
+        'padding:0">'
+        f'<img src="{url}" alt="{_safe(name)} in {_safe(area_info["name"])}, '
+        f'{_safe(area_info["emirate_name"])}" loading="lazy" '
+        'style="width:100%;height:auto;border-radius:14px;display:block;'
+        'box-shadow:0 8px 24px rgba(0,0,0,.08)">'
+        '</section>'
+    )
+
+
+def _area_map_block(area_info: dict) -> str:
+    """Embed an OpenStreetMap iframe centered on the area. Free, no
+    API key, fully interactive. Uses the bbox URL form so we don't
+    depend on a specific tile-server."""
+    lat, lng, zoom = coords_for_area(slugify(area_info["name"]),
+                                     area_info.get("emirate_slug"))
+    # Compute a small bbox around the center for OSM's iframe
+    delta = 0.012 if zoom >= 14 else 0.025
+    bbox = f"{lng-delta},{lat-delta},{lng+delta},{lat+delta}"
+    osm_url = (f"https://www.openstreetmap.org/export/embed.html?"
+               f"bbox={bbox}&layer=mapnik&marker={lat},{lng}")
+    map_link = (f"https://www.openstreetmap.org/?mlat={lat}&mlon={lng}"
+                f"#map={zoom}/{lat}/{lng}")
+    return (
+        '<section class="seo-map" style="max-width:780px;margin:24px auto;'
+        'padding:18px 22px;background:#fff;border:1px solid #e6efe9;'
+        'border-radius:12px">'
+        f'<h3 style="margin:0 0 10px;color:#0f766e;font-size:17px">'
+        f'Servia coverage map — {_safe(area_info["name"])}</h3>'
+        f'<div style="position:relative;width:100%;padding-top:56.25%;'
+        f'border-radius:10px;overflow:hidden;border:1px solid #e2e8f0">'
+        f'<iframe src="{osm_url}" loading="lazy" referrerpolicy="no-referrer" '
+        f'style="position:absolute;inset:0;width:100%;height:100%;border:0" '
+        f'title="Map of {_safe(area_info["name"])}, {_safe(area_info["emirate_name"])}"></iframe>'
+        f'</div>'
+        f'<p style="margin:10px 0 0;font-size:13px;color:#64748b">'
+        f'Crews dispatched daily across {_safe(area_info["name"])}, '
+        f'{_safe(area_info["emirate_name"])}. '
+        f'<a href="{map_link}" target="_blank" rel="noopener" '
+        f'style="color:#0f766e;font-weight:600">View larger map →</a></p>'
+        '</section>'
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────
 # Main entrypoint — called by /services/{svc}/{area} route handler.
 # ─────────────────────────────────────────────────────────────────────
 def render_service_area_page(svc: dict, area_info: dict, brand: dict,
@@ -410,14 +576,21 @@ def render_service_area_page(svc: dict, area_info: dict, brand: dict,
         extra_ld += '<script type="application/ld+json">' + faq_ld + '</script>'
     html = html.replace("</head>", extra_ld + shim + "</head>", 1)
 
-    # Inject area-aware content block + internal links right before
-    # the closing </main> (or </body> as fallback).
+    # v1.24.101 (Loophole 20): inject content BEFORE <footer> so it
+    # appears as part of the page body, not below the footer. The
+    # service.html template has <footer> at line 475 and no </main>,
+    # so the previous fallback to </body> placed our SEO content
+    # AFTER the footer (founder screenshot).
     services = services or []
+    hero_block = _hero_image_block(svc, area_info)
+    map_block = _area_map_block(area_info)
     why_block = _why_servia_block(svc, area_info)
     links_block = _related_internal_links(svc_slug, slugify(area_name),
                                           services, domain)
-    insert = why_block + links_block
-    if "</main>" in html:
+    insert = hero_block + why_block + map_block + links_block
+    if "<footer" in html:
+        html = html.replace("<footer", insert + "<footer", 1)
+    elif "</main>" in html:
         html = html.replace("</main>", insert + "</main>", 1)
     else:
         html = html.replace("</body>", insert + "</body>", 1)

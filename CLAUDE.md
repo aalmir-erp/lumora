@@ -167,6 +167,29 @@ classification, blocklists), ALWAYS use `\b` word boundaries OR
 that is the bug. Test every keyword detector against the picker
 outputs and other proper-noun-heavy strings before shipping.
 
+**8. NEVER `str()` A COMPLEX OBJECT INTO USER-FACING HTML.**
+(Added v1.24.101 — Loophole 19.) Founder screenshot showed:
+```
+1. {'icon': '❄️', 'title': 'Tell us how many ACs', 'desc': 'Min 2 split units.'}
+```
+Cause: KB stored `process_steps` as `dict`. Code did `_safe(str(s))`.
+Python `str(dict)` produces the repr — raw curly braces and quotes
+shown to users. Fix: detect complex shapes (dict/list/tuple) and
+render their fields explicitly. Before any `str(value)` in a
+template, ask: "what shape is value at runtime?" If you don't know,
+test with the actual KB / DB row before shipping. NEVER assume KB
+fields are strings.
+
+**9. INJECTION POINT MUST RESPECT TEMPLATE STRUCTURE.**
+(Added v1.24.101 — Loophole 20.) `html.replace("</body>", insert + "</body>")`
+puts content AFTER the footer, not before. When injecting visible
+content, the order of preference is:
+  1. Before `<footer` (lands inside main body, above footer)
+  2. Before `</main>` (if template has main)
+  3. Before `</body>` (last resort — places content below footer)
+Always verify the rendered output places content where users will
+see it as part of the page body, not as a stray block under the footer.
+
 This rule is permanent. It is loaded by every session at start. A
 session that violates it ships broken code to a real customer.
 
