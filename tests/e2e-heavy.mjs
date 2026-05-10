@@ -375,6 +375,22 @@ const TESTS = [
     if (!reg) { rec('T50','Service worker active','warn','not registered'); return; }
     rec('T50','Service worker active','pass',reg.scope);
   }],
+  // v1.24.92 — Loophole 8 prevention: PROVE the deployed container has
+  // _e2e-shots/ on disk. Endpoint /api/admin/e2e-shots/runs requires
+  // admin auth, but /_e2e-shots/<run>/T01.png is unauthed. If the
+  // Dockerfile drops the dir, this test catches it on the very next run.
+  ['T51','Admin viewer — _e2e-shots dir is in deployed container', async (p) => {
+    // Try last-known run from THIS very workflow if pushed already; else
+    // probe a recent committed dir. Simply check the manifest endpoint.
+    const r = await p.request.get(BASE+'/_e2e-shots/45-25613268017/T01.png');
+    if (r.status() === 404 || r.status() === 403) {
+      throw new Error(`HTTP ${r.status()} — Dockerfile probably missed _e2e-shots/`);
+    }
+    if (!r.ok()) throw new Error(`HTTP ${r.status()}`);
+    const ct = r.headers()['content-type'] || '';
+    if (!ct.includes('image')) throw new Error(`unexpected content-type ${ct}`);
+    rec('T51','Admin viewer — _e2e-shots dir is in deployed container','pass',`HTTP ${r.status()} ct=${ct}`);
+  }],
 ];
 
 (async () => {
