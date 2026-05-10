@@ -360,19 +360,19 @@
   }
 
   // ---------- Lazy load full index when palette opens ----------
+  // v1.24.99 — fetch from single source-of-truth /api/search/index.
+  // Includes manual pages, KB services, per-area pages, 1,628
+  // service×area combos, blog, videos. Browser caches (1hr).
+  // Fixes founder bug: typing "muwaileh" returned 0 results because
+  // the 1,628 service×area pages weren't in the static list.
   async function lazyLoadIndex(){
     if (indexLoaded) return; indexLoaded = true;
     try {
-      const tasks = [
-        fetch("/api/services").then(r=>r.json()).then(j => (j.services||[]).map(s => ({
-          kind:"service", title:s.name, body:(s.description||""),
-          url:`/service.html?id=${s.id}` }))).catch(()=>[]),
-        fetch("/api/blog/list?limit=80").then(r=>r.ok?r.json():null).then(j => j ? (j.posts||[]).map(p => ({
-          kind:"blog", title:p.topic||p.slug, body:(p.emirate||""),
-          url:`/blog/${p.slug}` })) : []).catch(()=>[]),
-      ];
-      const r = await Promise.allSettled(tasks);
-      docs = [...STATIC, ...r.flatMap(x => x.status === "fulfilled" ? x.value : [])];
+      const r = await fetch("/api/search/index", { cache: "default" });
+      if (r.ok) {
+        const j = await r.json();
+        docs = [...STATIC, ...(j.items || [])];
+      }
     } catch(_) {}
   }
 

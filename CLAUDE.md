@@ -170,6 +170,69 @@ outputs and other proper-noun-heavy strings before shipping.
 This rule is permanent. It is loaded by every session at start. A
 session that violates it ships broken code to a real customer.
 
+### W9. EVERY NEW PAGE IS SEARCHABLE + CONSISTENT — NO EXCEPTIONS
+(Founder rule, v1.24.99, 2026-05-10 — after search returned 0 results
+for "muwaileh" because 1,628 service×area pages weren't in the static
+search index, and 10+ customer-facing pages were missing the chat
+widget for unknown weeks/months.)
+
+**THE FAILURE PATTERN — never repeat this:**
+- v1.24.97 created 1,628 programmatic SEO pages but didn't add them
+  to `/api/search/index` so users searching "muwaileh" got nothing.
+- /web/nfc.html, /privacy.html, /sos.html, /install.html, etc. were
+  never given the chat widget because each `<script src="/widget.js">`
+  inclusion was MANUALLY copy-pasted per page.
+- Same disease: per-page manual maintenance creates drift.
+
+**THE RULE — non-negotiable from v1.24.99 onward:**
+
+1. **EVERY new customer-facing HTML page MUST include**:
+   - The standard `<nav>` + UAE flag strip header (matches services.html)
+   - The standard `</body>`-anchored chat widget loader script
+   - The current `?v=APP_VERSION` cache-bust on every linked asset
+   - The `<meta name="servia-page" content="...">` tag for analytics
+   - A favicon, manifest, and SW registration if not loaded by parent
+
+2. **EVERY new searchable URL MUST appear in `/api/search/index`**.
+   That endpoint is the single source of truth for site-wide search.
+   - Manual pages: add to `MANUAL_PAGES` list in app/main.py
+   - KB-driven pages (services, area combos): already auto-included
+     via `kb.services()` + `seo_pages.iter_all_combos()`
+   - Blog posts: already auto-included via `autoblog_posts` table
+   - Videos: already auto-included via `videos` table
+   - If you add a NEW data source (e.g., partner profiles, vendor
+     pages), you MUST extend `/api/search/index` to include it.
+
+3. **EVERY new sitemap entry must respect the gradual-rollout policy**:
+   For programmatic mass-generated content (1,000+ URLs), split into
+   multiple sitemap files indexed in `sitemap.xml`, and submit one
+   batch per week to GSC + Bing. Submitting 10,000 URLs at once
+   triggers Google's "mass-generated low-quality" filter.
+
+4. **TESTS REQUIRED**: tests/test_search_index.py asserts every new
+   customer-facing HTML file includes /widget.js + nav, and that
+   every required URL is present in `/api/search/index`. Adding a
+   page WITHOUT updating these is a CI failure.
+
+5. **CONTENT QUALITY GATE**: every programmatic page must have ≥500
+   visible words of unique content (KB description + includes +
+   process_steps + pricing + when-to-book + area paragraphs). Carbon-
+   copy templates are doorway-page spam — Google penalises.
+
+6. **NO BLACK-HAT — EVER**:
+   - Never buy backlinks from PBNs, Fiverr gigs, or "1000 backlinks
+     for $50" services. Triggers Penguin penalty within 60 days.
+   - Never hide text via display:none, color matching, or off-screen
+     positioning to stuff keywords. Triggers manual action.
+   - Never cloak (serve different HTML to Googlebot vs users).
+   - Never auto-generate FAQ content with no factual basis. Use the
+     KB facts; don't invent answers.
+   - Never set canonical to a different URL to consolidate juice
+     unless the pages are genuinely duplicate.
+   - When in doubt: Google's John Mueller has a public FAQ — read it.
+
+This rule is permanent. Loaded by every session at start.
+
 ### W7. BLANKET AUTONOMY — "I AUTHORIZE YOU FOR EVERYTHING EVERYTIME"
 (Granted by founder, v1.24.93, 2026-05-10)
 

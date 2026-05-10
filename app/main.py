@@ -1195,6 +1195,109 @@ def list_services():
     return kb.services()
 
 
+# v1.24.99 — single source of truth for site-wide search.
+# Founder reported: "search showing no results for 'muwaileh' even
+# though we created /services/{svc}/muwaileh pages". Cause: the
+# search clients (web/search.html STATIC list + web/search-widget.js)
+# were hardcoded and never knew about the 1,628 service×area pages
+# generated in v1.24.97.
+# This endpoint returns EVERY searchable URL on the site so any
+# new page added (programmatic or manual) is automatically findable.
+# CLAUDE.md W9 codifies the discipline.
+@app.get("/api/search/index")
+def search_index():
+    """Returns the complete searchable catalog: manual pages, KB
+    services, area pages (per neighbourhood), service×area combos,
+    blog posts, videos, NFC pages. Browser caches for 1hr."""
+    from . import seo_pages as _seo
+    out: list[dict] = []
+    # Manual / hand-built customer-facing pages (single source of truth)
+    MANUAL_PAGES = [
+        ("All services",          "browse 37 home services UAE catalogue", "/services"),
+        ("Book a service",        "book online quote pay schedule",         "/book"),
+        ("Coverage map",          "areas emirates covered live map",        "/coverage"),
+        ("Videos",                "how-to explainer video library mascot",  "/videos"),
+        ("Gallery",               "photos before after job results",        "/gallery"),
+        ("Servia Journal (Blog)", "articles tips guides UAE home services", "/blog"),
+        ("Contact us",            "whatsapp email phone support hotline",   "/contact"),
+        ("Ambassador rewards",    "refer earn discount tier program",       "/share-rewards"),
+        ("FAQ",                   "frequently asked questions pricing payment cancellation insurance", "/faq"),
+        ("Refund policy",         "refund cancellation return money",       "/refund"),
+        ("Terms of Service",      "terms conditions legal agreement",       "/terms"),
+        ("Privacy Policy",        "data privacy gdpr personal information", "/privacy"),
+        ("Install Servia app",    "PWA installable iOS Android desktop ChatGPT", "/install"),
+        ("Smart speakers",        "alexa google home voice booking",        "/smart-speakers"),
+        ("SOS emergency",         "emergency contact urgent help",          "/sos"),
+        ("My account",            "profile bookings history saved addresses", "/me"),
+        ("Vendor partner",        "become a partner provider crew vendor",  "/vendor"),
+        ("NFC tags",              "tap to dispatch nfc sticker keychain villa vehicle", "/nfc"),
+        ("NFC for villas",        "nfc bundle villa AC plumbing pest control", "/nfc-villa-bundle"),
+        ("NFC for vehicles",      "vehicle recovery nfc tag tow battery", "/nfc-vehicle-recovery"),
+        ("NFC for laptops & IT",  "laptop IT support nfc tag tech", "/nfc-laptop-it"),
+        ("NFC vs QR",             "nfc tag versus qr code comparison", "/nfc-vs-qr"),
+    ]
+    for title, body, url in MANUAL_PAGES:
+        out.append({"kind": "page", "title": title, "body": body, "url": url})
+    # KB services
+    try:
+        for s in kb.services().get("services", []):
+            out.append({"kind": "service",
+                        "title": s.get("name") or s.get("id"),
+                        "body": (s.get("description") or "") + " " +
+                                (s.get("category") or ""),
+                        "url": f"/services/{(s.get('id') or '').replace('_','-')}"})
+    except Exception: pass
+    services_list = []
+    try:
+        services_list = kb.services().get("services", [])
+    except Exception: pass
+    # Per-neighbourhood area pages
+    for area_slug, area_info in _seo.AREA_INDEX.items():
+        out.append({
+            "kind": "area",
+            "title": f"{area_info['name']}, {area_info['emirate_name']}",
+            "body": f"{area_info['name']} {area_info['emirate_name']} "
+                    f"home services area neighbourhood",
+            "url": f"/area.html?area={area_slug}",
+        })
+    # Programmatic service × area combos (1,628) — the SEO long-tail.
+    # This is the entry the user was missing when "muwaileh" returned 0.
+    for svc_slug, area_slug, area_info, svc in _seo.iter_all_combos(services_list):
+        out.append({
+            "kind": "service_area",
+            "title": f"{svc.get('name')} in {area_info['name']}",
+            "body": f"{svc.get('name')} {area_info['name']} "
+                    f"{area_info['emirate_name']} "
+                    f"{(svc.get('description') or '')[:80]}",
+            "url": f"/services/{svc_slug}/{area_slug}",
+        })
+    # Blog posts (auto-grows as autoblog runs)
+    try:
+        with db.connect() as c:
+            rows = c.execute(
+                "SELECT slug, topic, emirate, service_id FROM autoblog_posts "
+                "ORDER BY published_at DESC LIMIT 500").fetchall()
+            for r in rows:
+                out.append({"kind": "blog",
+                            "title": r["topic"] or r["slug"],
+                            "body": f"{r['emirate'] or ''} {r['service_id'] or ''}",
+                            "url": f"/blog/{r['slug']}"})
+    except Exception: pass
+    # Videos
+    try:
+        with db.connect() as c:
+            rows = c.execute(
+                "SELECT slug, title, tone FROM videos "
+                "ORDER BY created_at DESC LIMIT 500").fetchall()
+            for r in rows:
+                out.append({"kind": "video",
+                            "title": r["title"] or r["slug"],
+                            "body": r["tone"] or "",
+                            "url": f"/api/videos/play/{r['slug']}"})
+    except Exception: pass
+    return {"count": len(out), "items": out, "version": settings.APP_VERSION}
+
+
 @app.get("/api/pricing")
 def get_pricing_pub():
     return kb.pricing()
