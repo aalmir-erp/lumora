@@ -2224,6 +2224,44 @@ def service_slug_page(slug: str):
     return HTMLResponse(html)
 
 
+# v1.24.97 — programmatic SEO. /services/{svc}/{area} renders the
+# same template as /services/{svc} with area-specific SEO injection
+# (title, meta, canonical, JSON-LD with areaServed, internal links).
+# 37 services × 63 UAE neighbourhoods = 2,331 unique landing pages.
+@app.get("/services/{slug}/{area_slug}",
+         include_in_schema=False, response_class=HTMLResponse)
+@app.get("/services/{slug}/{area_slug}.html",
+         include_in_schema=False, response_class=HTMLResponse)
+def service_area_page(slug: str, area_slug: str):
+    if area_slug.endswith(".html"):
+        area_slug = area_slug[:-5]
+    from . import seo_pages as _seo
+    sid = slug.replace("-", "_")
+    try:
+        services_list = kb.services().get("services", [])
+    except Exception:
+        services_list = []
+    services_by_id = {s["id"]: s for s in services_list}
+    svc = services_by_id.get(sid)
+    if not svc:
+        from fastapi import HTTPException as _HE
+        raise _HE(status_code=404, detail="service not found")
+    area_info = _seo.area_by_slug(area_slug)
+    if not area_info:
+        from fastapi import HTTPException as _HE
+        raise _HE(status_code=404, detail="area not found")
+    p = settings.WEB_DIR / "service.html"
+    if not p.exists():
+        from fastapi import HTTPException as _HE
+        raise _HE(status_code=500, detail="template missing")
+    html_template = p.read_text(encoding="utf-8")
+    html = _seo.render_service_area_page(
+        svc, area_info, settings.brand(),
+        html_template, services=services_list,
+    )
+    return HTMLResponse(html)
+
+
 @app.get("/sitemap-services.xml")
 def sitemap_services(request: Request = None):
     try:
@@ -2247,15 +2285,31 @@ def sitemap_services(request: Request = None):
 
 @app.get("/sitemap-areas.xml")
 def sitemap_areas(request: Request = None):
+    """v1.24.97 — programmatic SEO. Was: 7 emirate-level URLs.
+    Now: 7 emirates + 63 neighbourhoods + ~2,331 service×area URLs.
+    Sitemaps support up to 50,000 URLs per file so we're well under."""
     try:
+        from . import seo_pages as _seo
         base = _sitemap_base(request)
         today = _dt.date.today().isoformat()
         EMIRATES = ("dubai", "abu-dhabi", "sharjah", "ajman",
                     "umm-al-quwain", "ras-al-khaimah", "fujairah")
         urls = [(f"{base}/area.html?city={em}", today, "weekly", "0.75")
                 for em in EMIRATES]
+        # Per-area landing URLs (still served by /area.html for now)
+        for area_slug in _seo.all_area_slugs():
+            urls.append((f"{base}/area.html?area={area_slug}",
+                         today, "weekly", "0.65"))
+        # Programmatic service × area combos — the SEO long-tail goldmine.
+        try:
+            svcs = kb.services().get("services", [])
+        except Exception:
+            svcs = []
+        for svc_slug, area_slug, _area, _svc in _seo.iter_all_combos(svcs):
+            urls.append((f"{base}/services/{svc_slug}/{area_slug}",
+                         today, "monthly", "0.70"))
         return _xml_response(_wrap_urlset(urls))
-    except Exception as e:  # noqa: BLE001
+    except Exception:
         return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n',
             fallback=True)
