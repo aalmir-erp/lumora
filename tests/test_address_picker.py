@@ -96,12 +96,12 @@ t("16. /address-picker.js exists in /web",
   js_exists)
 if js_exists:
     js = open("web/address-picker.js").read()
-    t("17. widget loads Leaflet from CDN",
-      "leaflet" in js.lower() and "tile.openstreetmap.org" in js)
+    t("17. widget loads Leaflet + English-label tiles",
+      "leaflet" in js.lower() and ("openstreetmap.org" in js or "cartocdn.com" in js))
     t("18. widget posts to /api/geocode/reverse",
       "/api/geocode/reverse" in js)
-    t("19. widget posts to /api/geocode/check-city",
-      "/api/geocode/check-city" in js)
+    t("19. widget v1.24.91 — auto-fills area+city from reverse-geocode (cross-check removed per UX feedback)",
+      "areaIn.value = j.area" in js and "cityIn.value = j.city" in js)
     t("20. widget exposes window.serviaAddressPicker.mount",
       "window.serviaAddressPicker" in js and "mount" in js)
 

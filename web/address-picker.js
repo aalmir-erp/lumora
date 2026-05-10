@@ -1,24 +1,35 @@
-/* v1.24.84 — Pin-based UAE address picker (Leaflet + OSM, no API key).
+/* v1.24.91 — Pin-based UAE address picker (Leaflet + English-only tiles).
  *
  * USAGE:
  *   <div id="address-picker"></div>
  *   <script src="/address-picker.js"></script>
  *   <script>
  *     window.serviaAddressPicker.mount("#address-picker", {
- *       defaultCity: "Dubai",
  *       onPick: (addr) => console.log(addr),
  *     });
  *   </script>
  *
- * Returns a structured address: { lat, lng, city, area, road, building,
- *   unit, label, full }. Cross-checks city via /api/geocode/check-city
- * before allowing submission.
+ * v1.24.91 changes (per founder review):
+ *   • English-only tile provider (CartoDB Voyager EN) — no Arabic labels
+ *   • City chips REMOVED — pin determines city via reverse-geocode
+ *   • Area + city BOTH update on every pin move (was: area locked after first)
+ *   • ⛶ Fullscreen map toggle
+ *   • Building/area name autocomplete from localStorage (last 30 used)
+ *   • Person-on-site MOBILE field added
+ *   • "💾 Save permanent" toggle → label preset (Home / Office / Mom's / Other)
+ *   • Auto-POST to /api/me/locations when authed + save-permanent ticked
  */
 (function () {
   "use strict";
 
   const LEAFLET_CSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
   const LEAFLET_JS  = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+
+  // English-label tile sources. CartoDB Voyager has Latin scripts for the UAE
+  // (Arabic translit) and is free for non-commercial. Fallback to OSM HOT
+  // which renders English where available.
+  const TILE_EN = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png";
+  const TILE_ATTR = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>';
 
   function loadLeaflet(cb) {
     if (window.L) return cb();
@@ -28,7 +39,6 @@
       document.head.appendChild(link);
     }
     if (document.querySelector('script[data-leaflet]')) {
-      // already loading
       const i = setInterval(() => { if (window.L) { clearInterval(i); cb(); } }, 80);
       return;
     }
@@ -37,38 +47,41 @@
     document.head.appendChild(s);
   }
 
-  // UAE city presets — tap-to-jump
-  const CITY_CENTRES = {
-    "Dubai":         [25.20, 55.27],
-    "Abu Dhabi":     [24.47, 54.37],
-    "Sharjah":       [25.34, 55.42],
-    "Ajman":         [25.40, 55.48],
-    "Umm Al Quwain": [25.55, 55.55],
-    "Ras Al Khaimah":[25.79, 55.95],
-    "Fujairah":      [25.13, 56.34],
-  };
+  // localStorage helpers for autocomplete
+  const HIST_BLDG = "servia.addr.bldgs";
+  const HIST_AREA = "servia.addr.areas";
+  function recall(key) { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } }
+  function remember(key, val) {
+    if (!val || val.length < 2) return;
+    let arr = recall(key);
+    arr = arr.filter(x => x !== val); arr.unshift(val); arr = arr.slice(0, 30);
+    try { localStorage.setItem(key, JSON.stringify(arr)); } catch {}
+  }
 
-  // Inject CSS once
   const STYLE = `
     .ap-wrap{font-family:-apple-system,system-ui,sans-serif;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;max-width:520px;margin:0 auto;color:#0F172A}
-    .ap-title{font-size:14px;font-weight:800;margin:0 0 10px;color:#0F766E}
-    .ap-cities{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-    .ap-city{padding:6px 12px;border:1px solid #E2E8F0;border-radius:999px;background:#fff;color:#0F172A;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
-    .ap-city.on{background:#0F766E;color:#fff;border-color:#0F766E}
-    .ap-map{height:240px;border-radius:10px;overflow:hidden;border:1.5px dashed #14B8A6;margin-bottom:10px}
+    .ap-title{font-size:14px;font-weight:800;margin:0 0 10px;color:#0F766E;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .ap-title .fs{padding:5px 10px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;font-size:12px;font-weight:700;color:#0F766E;cursor:pointer;font-family:inherit}
+    .ap-title .fs:hover{background:#F0FDFA;border-color:#0F766E}
+    .ap-map{height:240px;border-radius:10px;overflow:hidden;border:1.5px dashed #14B8A6;margin-bottom:10px;position:relative}
+    .ap-wrap.fullscreen{position:fixed;inset:8px;max-width:none;margin:0;z-index:99999;overflow:auto}
+    .ap-wrap.fullscreen .ap-map{height:60vh}
     .ap-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
     .ap-row.full{grid-template-columns:1fr}
-    .ap-input{width:100%;padding:9px 10px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:42px;color:#0F172A}
+    .ap-input{width:100%;padding:9px 10px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:42px;color:#0F172A;background:#fff}
     .ap-input:focus{outline:none;border-color:#0F766E;box-shadow:0 0 0 3px rgba(15,118,110,.15)}
     .ap-label{display:block;font-size:11px;font-weight:700;color:#475569;margin:4px 0 3px;text-transform:uppercase;letter-spacing:.04em}
     .ap-msg{font-size:12px;min-height:14px;margin:6px 0}
-    .ap-msg.warn{color:#B45309}
-    .ap-msg.err{color:#DC2626}
-    .ap-msg.ok{color:#0F766E}
+    .ap-msg.warn{color:#B45309}.ap-msg.err{color:#DC2626}.ap-msg.ok{color:#0F766E}
     .ap-btn{display:block;width:100%;padding:13px;background:#0F766E;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;margin-top:8px}
     .ap-btn:hover{background:#0D9488}
     .ap-btn:disabled{opacity:.5;cursor:not-allowed}
     .ap-hint{font-size:11px;color:#94A3B8;text-align:center;margin-top:6px}
+    .ap-toggle{display:flex;align-items:center;gap:8px;background:#F0FDFA;border:1px solid #99F6E4;border-radius:10px;padding:9px 12px;margin:8px 0;font-size:13px;font-weight:600;cursor:pointer}
+    .ap-toggle input{margin:0;width:18px;height:18px;accent-color:#0F766E}
+    .ap-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .ap-pre{padding:6px 12px;border:1.5px solid #E2E8F0;border-radius:999px;background:#fff;font-size:12px;font-weight:700;color:#0F172A;cursor:pointer;font-family:inherit}
+    .ap-pre.on{background:#0F766E;color:#fff;border-color:#0F766E}
   `;
 
   function ensureStyle() {
@@ -89,51 +102,64 @@
     return n;
   }
 
+  function input(id, ph, listId) {
+    const i = el("input", { class: "ap-input", placeholder: ph || "" });
+    if (id) i.id = id;
+    if (listId) i.setAttribute("list", listId);
+    return i;
+  }
+
+  function datalist(id, items) {
+    const d = el("datalist", { id });
+    items.forEach(v => d.appendChild(el("option", { value: v })));
+    return d;
+  }
+
   function mount(target, opts) {
     opts = opts || {};
     const root = (typeof target === "string" ? document.querySelector(target) : target);
     if (!root) return;
     ensureStyle();
 
-    let currentCity = opts.defaultCity || "Dubai";
     let pin = null, marker = null, map = null, geocoded = null;
 
     const wrap = el("div", { class: "ap-wrap" });
-    wrap.appendChild(el("div", { class: "ap-title" }, ["📍 Pin your exact location"]));
-
-    // City chips
-    const cityRow = el("div", { class: "ap-cities" });
-    Object.keys(CITY_CENTRES).forEach(city => {
-      const b = el("button", { type: "button", class: "ap-city" + (city === currentCity ? " on" : "") });
-      b.textContent = city;
-      b.onclick = () => {
-        currentCity = city;
-        [...cityRow.querySelectorAll(".ap-city")].forEach(x => x.classList.remove("on"));
-        b.classList.add("on");
-        if (map) map.setView(CITY_CENTRES[city], 12);
-      };
-      cityRow.appendChild(b);
-    });
-    wrap.appendChild(cityRow);
+    const titleRow = el("div", { class: "ap-title" });
+    titleRow.appendChild(el("span", {}, ["📍 Pin your exact location"]));
+    const fsBtn = el("button", { type: "button", class: "fs" }, ["⛶ Fullscreen"]);
+    fsBtn.onclick = () => {
+      const isFs = wrap.classList.toggle("fullscreen");
+      fsBtn.textContent = isFs ? "✕ Exit fullscreen" : "⛶ Fullscreen";
+      // Re-size leaflet map after CSS change
+      setTimeout(() => map && map.invalidateSize(), 250);
+    };
+    titleRow.appendChild(fsBtn);
+    wrap.appendChild(titleRow);
 
     // Map
     const mapDiv = el("div", { class: "ap-map" });
     wrap.appendChild(mapDiv);
 
-    // Form fields
-    const buildingIn = el("input", { class: "ap-input", placeholder: "e.g. Marina Crown" });
-    const unitIn     = el("input", { class: "ap-input", placeholder: "e.g. 2104" });
-    const areaIn     = el("input", { class: "ap-input", placeholder: "e.g. Dubai Marina (auto-fills)" });
-    const cityIn     = el("input", { class: "ap-input" });
-    cityIn.value = currentCity;
-    const labelIn    = el("input", { class: "ap-input", placeholder: "Home / Office / Mom's place" });
-    labelIn.value = "Home";
-    const contactIn  = el("input", { class: "ap-input", placeholder: "Same as account holder" });
-    const notesIn    = el("input", { class: "ap-input", placeholder: "Park at gate B / door code 1234" });
+    // Datalists for autocomplete
+    const dlBldg = datalist("ap-dl-bldg", recall(HIST_BLDG));
+    const dlArea = datalist("ap-dl-area", recall(HIST_AREA));
+    wrap.appendChild(dlBldg); wrap.appendChild(dlArea);
 
-    function row(label, input, full) {
+    // Form
+    const labelIn    = input("", "Marina Crown");
+    labelIn.value = "Home";
+    const buildingIn = input("", "e.g. Marina Crown", "ap-dl-bldg");
+    const unitIn     = input("", "e.g. 2104");
+    const areaIn     = input("", "Auto-fills from pin", "ap-dl-area");
+    const cityIn     = input("", "Auto-fills from pin");
+    cityIn.readOnly = true; cityIn.style.background = "#F8FAFC";
+    const personIn   = input("", "Same as account holder");
+    const personPhIn = input("", "+971 ..."); personPhIn.type = "tel";
+    const notesIn    = input("", "Park at gate B / door code 1234");
+
+    function row(lab, inp, full) {
       const r = el("div", { class: "ap-row" + (full ? " full" : "") });
-      const w = el("div"); w.appendChild(el("div", { class: "ap-label" }, [label])); w.appendChild(input);
+      const w = el("div"); w.appendChild(el("div", { class: "ap-label" }, [lab])); w.appendChild(inp);
       r.appendChild(w);
       return r;
     }
@@ -144,10 +170,44 @@
     wrap.appendChild(r1);
     const r2 = el("div", { class: "ap-row" });
     const w3 = el("div"); w3.appendChild(el("div",{class:"ap-label"},["Area"])); w3.appendChild(areaIn); r2.appendChild(w3);
-    const w4 = el("div"); w4.appendChild(el("div",{class:"ap-label"},["City"])); w4.appendChild(cityIn); r2.appendChild(w4);
+    const w4 = el("div"); w4.appendChild(el("div",{class:"ap-label"},["City (auto)"])); w4.appendChild(cityIn); r2.appendChild(w4);
     wrap.appendChild(r2);
-    wrap.appendChild(row("Person on-site (optional)", contactIn, true));
+    const r3 = el("div", { class: "ap-row" });
+    const w5 = el("div"); w5.appendChild(el("div",{class:"ap-label"},["Person on-site (optional)"])); w5.appendChild(personIn); r3.appendChild(w5);
+    const w6 = el("div"); w6.appendChild(el("div",{class:"ap-label"},["Their mobile (optional)"])); w6.appendChild(personPhIn); r3.appendChild(w6);
+    wrap.appendChild(r3);
     wrap.appendChild(row("Access notes (optional)", notesIn, true));
+
+    // Save-permanent toggle + label preset
+    const saveTog = el("label", { class: "ap-toggle" });
+    const saveCb  = el("input", { type: "checkbox" });
+    saveTog.appendChild(saveCb);
+    saveTog.appendChild(el("span", {}, ["💾 Save this address to my profile"]));
+    wrap.appendChild(saveTog);
+
+    const presetWrap = el("div", { style: "display:none;margin-top:6px" });
+    presetWrap.appendChild(el("div", { class: "ap-label" }, ["Save as"]));
+    const presets = el("div", { class: "ap-presets" });
+    let chosenPreset = "Home";
+    ["Home","Office","Mom's","Dad's","Holiday home","Other"].forEach((nm, i) => {
+      const b = el("button", { type: "button", class: "ap-pre" + (i === 0 ? " on" : "") }, [nm]);
+      b.onclick = () => {
+        [...presets.querySelectorAll(".ap-pre")].forEach(x => x.classList.remove("on"));
+        b.classList.add("on"); chosenPreset = nm;
+        if (nm === "Other") {
+          const v = prompt("Name this place:", labelIn.value || "My place");
+          if (v) labelIn.value = v;
+        } else {
+          labelIn.value = nm;
+        }
+      };
+      presets.appendChild(b);
+    });
+    presetWrap.appendChild(presets);
+    wrap.appendChild(presetWrap);
+    saveCb.onchange = () => {
+      presetWrap.style.display = saveCb.checked ? "block" : "none";
+    };
 
     const msg = el("div", { class: "ap-msg" });
     wrap.appendChild(msg);
@@ -162,12 +222,10 @@
     root.appendChild(wrap);
 
     loadLeaflet(() => {
-      const c = CITY_CENTRES[currentCity];
-      map = L.map(mapDiv, { zoomControl: true }).setView(c, 12);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap',
-      }).addTo(map);
+      const center = [25.20, 55.27]; // Dubai
+      map = L.map(mapDiv, { zoomControl: true }).setView(center, 11);
+      L.tileLayer(TILE_EN, { maxZoom: 19, subdomains: "abcd",
+                             attribution: TILE_ATTR }).addTo(map);
 
       function setPin(latlng) {
         pin = latlng;
@@ -176,7 +234,6 @@
           marker = L.marker(latlng, { draggable: true }).addTo(map);
           marker.on("dragend", e => setPin(e.target.getLatLng()));
         }
-        // Reverse geocode
         msg.className = "ap-msg"; msg.textContent = "Looking up address…";
         fetch("/api/geocode/reverse", {
           method: "POST", headers: {"Content-Type":"application/json"},
@@ -184,30 +241,20 @@
         }).then(r => r.json()).then(j => {
           geocoded = j;
           if (j.ok) {
-            if (!areaIn.value && j.area) areaIn.value = j.area;
-            if (j.city) {
-              // Cross-check city
-              fetch("/api/geocode/check-city", {
-                method: "POST", headers: {"Content-Type":"application/json"},
-                body: JSON.stringify({lat: latlng.lat, lng: latlng.lng, claimed_city: cityIn.value}),
-              }).then(r => r.json()).then(ck => {
-                if (ck.ok && !ck.matches) {
-                  msg.className = "ap-msg warn";
-                  msg.textContent = "⚠️ " + ck.suggestion;
-                  // Auto-correct city to actual emirate
-                  const friendly = ck.actual_emirate.replace(/_/g," ").replace(/\b\w/g, c=>c.toUpperCase());
-                  cityIn.value = friendly;
-                } else {
-                  msg.className = "ap-msg ok";
-                  msg.textContent = "✓ " + (j.area || j.city || "Pin recorded");
-                }
-              }).catch(() => {});
+            // v1.24.91 fix: ALWAYS overwrite area + city on every pin
+            // move (was: only filled area if empty → stale on subsequent pins)
+            if (j.area) areaIn.value = j.area;
+            if (j.city || j.emirate) {
+              const eName = (j.emirate || "").replace(/_/g," ").replace(/\b\w/g, c=>c.toUpperCase());
+              cityIn.value = j.city || eName;
             }
+            msg.className = "ap-msg ok";
+            msg.textContent = "✓ " + (j.area || j.city || "Pin recorded");
             btn.disabled = false;
           } else {
             msg.className = "ap-msg err";
             msg.textContent = "Couldn't find that location. Try moving the pin.";
-            btn.disabled = false; // still allow submit with manual fields
+            btn.disabled = false;
           }
         }).catch(() => {
           msg.className = "ap-msg err";
@@ -218,7 +265,7 @@
       map.on("click", e => setPin(e.latlng));
     });
 
-    btn.onclick = () => {
+    btn.onclick = async () => {
       if (!pin) {
         msg.className = "ap-msg err";
         msg.textContent = "Please drop a pin on the map first.";
@@ -229,20 +276,48 @@
         msg.textContent = "Please enter the building name or number.";
         buildingIn.focus(); return;
       }
+      // Remember entries for autocomplete
+      remember(HIST_BLDG, buildingIn.value.trim());
+      remember(HIST_AREA, areaIn.value.trim());
+
       const out = {
         lat: pin.lat, lng: pin.lng,
-        label: labelIn.value.trim() || "Home",
+        label: labelIn.value.trim() || chosenPreset || "Home",
         building: buildingIn.value.trim(),
         unit: unitIn.value.trim(),
         area: areaIn.value.trim(),
         city: cityIn.value.trim(),
-        contact_name: contactIn.value.trim(),
+        contact_name: personIn.value.trim(),
+        contact_phone: personPhIn.value.trim(),
         notes: notesIn.value.trim(),
+        save_permanent: !!saveCb.checked,
         full: [buildingIn.value, unitIn.value, areaIn.value, cityIn.value].filter(Boolean).join(", "),
       };
+      // Auto-save to profile if requested + we have a session cookie
+      if (out.save_permanent) {
+        try {
+          const r = await fetch("/api/me/locations", {
+            method: "POST", credentials: "include",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(out),
+          });
+          const j = await r.json();
+          if (j.ok) {
+            msg.className = "ap-msg ok";
+            msg.textContent = "✅ Saved to your profile.";
+          } else {
+            msg.className = "ap-msg warn";
+            msg.textContent = "✓ Address used (sign in to save permanently).";
+          }
+        } catch (_) {
+          msg.className = "ap-msg warn";
+          msg.textContent = "✓ Address used (couldn't save to profile).";
+        }
+      } else {
+        msg.className = "ap-msg ok";
+        msg.textContent = "✅ Saved.";
+      }
       if (typeof opts.onPick === "function") opts.onPick(out);
-      msg.className = "ap-msg ok";
-      msg.textContent = "✅ Saved.";
     };
   }
 
