@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 49
+- ✅ Pass: 48
 - ⚠️ Warn: 1
-- ❌ Fail: 0
+- ❌ Fail: 1
 - ⏭ Skip: 1
 
 ## Items
@@ -39,17 +39,17 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_CpyDrgnIh...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_0hk1kQf9h...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
 - ✅ **[T37] Wallet balance after login** — AED 0
 - ✅ **[T38] /api/me/bookings authed** — OK
-- ✅ **[T39] /api/nfc/my-tags authed** — OK
+- ❌ **[T39] /api/nfc/my-tags authed** — exception: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.94
+- ✅ **[T41] /api/health responds** — v1.24.95
 - ✅ **[T42] /api/services >=10** — 37
-- ✅ **[T43] /api/app/latest works** — apk_v=1.24.93
+- ✅ **[T43] /api/app/latest works** — apk_v=1.24.94
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book renders form** — OK
