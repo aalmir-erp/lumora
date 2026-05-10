@@ -3568,6 +3568,88 @@ async def admin_trigger_e2e():
         raise HTTPException(500, f"trigger failed: {type(e).__name__}: {e}")
 
 
+# v1.24.89 — Slice A: live-watch proxy endpoints. Admin viewer polls
+# these every 10s while a run is in_progress so the founder doesn't
+# need to leave Servia admin to watch a Playwright run.
+@app.get("/api/admin/e2e/runs", dependencies=[Depends(require_admin)])
+async def admin_e2e_runs(limit: int = 10):
+    """Proxy GitHub list-runs API. Limit clamped to 1-30."""
+    try:
+        import httpx
+        token = (db.cfg_get("github_pat", "") or os.getenv("GITHUB_PAT", "") or "").strip()
+        repo = db.cfg_get("github_repo", "") or "aalmir-erp/lumora"
+        if not token:
+            raise HTTPException(400, "Set 'github_pat' in admin cfg first")
+        n = max(1, min(int(limit or 10), 30))
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.get(
+                f"https://api.github.com/repos/{repo}/actions/workflows/e2e-heavy.yml/runs",
+                headers={"Authorization": f"token {token}",
+                         "Accept": "application/vnd.github+json"},
+                params={"per_page": n})
+        if r.status_code != 200:
+            raise HTTPException(502, f"GitHub said {r.status_code}")
+        d = r.json()
+        runs = []
+        for run in d.get("workflow_runs", []):
+            runs.append({
+                "id": run["id"],
+                "run_number": run["run_number"],
+                "status": run["status"],
+                "conclusion": run["conclusion"],
+                "head_sha": (run["head_sha"] or "")[:8],
+                "title": run.get("display_title", "")[:80],
+                "created_at": run["created_at"],
+                "updated_at": run["updated_at"],
+                "html_url": run["html_url"],
+            })
+        return {"ok": True, "runs": runs}
+    except HTTPException: raise
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"runs proxy failed: {type(e).__name__}: {e}")
+
+
+@app.get("/api/admin/e2e/run/{run_id}/jobs",
+         dependencies=[Depends(require_admin)])
+async def admin_e2e_run_jobs(run_id: int):
+    """Proxy GitHub jobs API for a single run — returns step list with
+    statuses so the live panel can show 'Step 5/9: Run heavy Playwright sweep'."""
+    try:
+        import httpx
+        token = (db.cfg_get("github_pat", "") or os.getenv("GITHUB_PAT", "") or "").strip()
+        repo = db.cfg_get("github_repo", "") or "aalmir-erp/lumora"
+        if not token:
+            raise HTTPException(400, "Set 'github_pat' in admin cfg first")
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.get(
+                f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs",
+                headers={"Authorization": f"token {token}",
+                         "Accept": "application/vnd.github+json"})
+        if r.status_code != 200:
+            raise HTTPException(502, f"GitHub said {r.status_code}")
+        d = r.json()
+        jobs = []
+        for j in d.get("jobs", []):
+            steps = [{
+                "number": s.get("number"),
+                "name": s.get("name"),
+                "status": s.get("status"),
+                "conclusion": s.get("conclusion"),
+            } for s in j.get("steps", [])]
+            jobs.append({
+                "name": j["name"],
+                "status": j["status"],
+                "conclusion": j["conclusion"],
+                "started_at": j.get("started_at"),
+                "completed_at": j.get("completed_at"),
+                "steps": steps,
+            })
+        return {"ok": True, "jobs": jobs}
+    except HTTPException: raise
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"jobs proxy failed: {type(e).__name__}: {e}")
+
+
 @app.get("/api/admin/e2e/last-results", dependencies=[Depends(require_admin)])
 async def admin_e2e_last_results():
     """Read the latest TEST_RESULTS_HEAVY.md committed by the workflow.

@@ -39,8 +39,34 @@ a.run-link:hover{text-decoration:underline}
 <div class="hdr">
   <h1>📸 E2E Screenshots</h1>
   <div class="sub">Latest Playwright runs against servia.ae · auto-pruned to last 14 runs</div>
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button id="runNowBtn" class="del" style="background:#fff;color:#0F766E;border-color:#fff;font-weight:800">🚀 Run E2E now</button>
+    <button id="refreshBtn" class="del" style="background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.35)">🔄 Refresh</button>
+    <label style="color:#fff;font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer">
+      <input type="checkbox" id="autoRefreshTog" checked style="margin:0">
+      ⏱ Auto-refresh while running
+    </label>
+  </div>
 </div>
 <div class="wrap">
+  <!-- LIVE STATUS PANEL — visible while a run is in_progress -->
+  <div id="liveBox" class="run" style="display:none;border-color:#F59E0B">
+    <div class="run-head" style="background:linear-gradient(90deg,#FEF3C7,#FFFBEB)">
+      <div>
+        <div class="run-title" id="liveTitle">Run #?</div>
+        <div class="run-meta" id="liveSub">…</div>
+      </div>
+      <div id="liveSpinner" style="font-size:22px;animation:spin 1.4s linear infinite">⚙️</div>
+    </div>
+    <div style="padding:12px 16px">
+      <div id="liveStep" style="font-size:13.5px;color:#0F172A;font-weight:600;margin-bottom:6px">Loading…</div>
+      <div id="liveBar" style="height:8px;background:#F1F5F9;border-radius:999px;overflow:hidden">
+        <div id="liveBarFill" style="height:100%;width:0%;background:linear-gradient(90deg,#F59E0B,#FBBF24);transition:width .4s"></div>
+      </div>
+      <div id="liveSteps" style="margin-top:10px;font-size:11.5px;color:#475569;font-family:monospace"></div>
+    </div>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   <div class="note">Thumbnails (240px) committed by GitHub Actions · click to enlarge · full-resolution PNGs in workflow artifact (7-day retention).</div>
   <div id="runs"><div class="empty">Loading…</div></div>
 </div>
@@ -100,5 +126,88 @@ async function del(dir, btn) {
   if (j.ok) load();
   else { alert("Delete failed: " + (j.error||"")); btn.disabled = false; btn.textContent = "🗑 Delete"; }
 }
+// v1.24.89 Slice A — Run-now button + live polling
+async function adminGet(path) {
+  const token = localStorage.getItem("admin.token");
+  const r = await fetch(path, { headers: {"Authorization": "Bearer " + token} });
+  return r.json();
+}
+async function adminPost(path) {
+  const token = localStorage.getItem("admin.token");
+  const r = await fetch(path, { method:"POST", headers: {"Authorization": "Bearer " + token} });
+  return r.json();
+}
+let livePollTimer = null;
+let liveRunId = null;
+async function pollLive() {
+  const data = await adminGet("/api/admin/e2e/runs?limit=1");
+  if (!data.ok || !data.runs || !data.runs.length) return;
+  const r = data.runs[0];
+  const box = document.getElementById("liveBox");
+  if (r.status === "completed") {
+    box.style.display = "none";
+    liveRunId = null;
+    if (livePollTimer) { clearInterval(livePollTimer); livePollTimer = null; }
+    load(); // pull fresh thumbnails
+    return;
+  }
+  // in-progress — show panel
+  box.style.display = "";
+  liveRunId = r.id;
+  document.getElementById("liveTitle").textContent =
+    `Run #${r.run_number} · ${r.status} · ${r.head_sha}`;
+  document.getElementById("liveSub").textContent = r.title;
+  // Fetch step list
+  const j = await adminGet(`/api/admin/e2e/run/${r.id}/jobs`);
+  const job = (j.ok && j.jobs && j.jobs[0]) || null;
+  if (!job) return;
+  const steps = job.steps || [];
+  const total = steps.length || 1;
+  const done = steps.filter(s => s.status === "completed").length;
+  const cur = steps.find(s => s.status === "in_progress") || steps.find(s => !s.conclusion);
+  const pct = Math.round((done / total) * 100);
+  document.getElementById("liveBarFill").style.width = pct + "%";
+  document.getElementById("liveStep").textContent =
+    cur ? `Step ${cur.number}/${total}: ${cur.name}` :
+          `${done}/${total} steps complete`;
+  document.getElementById("liveSteps").innerHTML = steps.map(s => {
+    const ic = s.conclusion === "success" ? "✓" :
+               s.conclusion === "failure" ? "✗" :
+               s.status === "in_progress" ? "▶" : "·";
+    const col = s.conclusion === "failure" ? "#DC2626" :
+                s.status === "in_progress" ? "#0F766E" : "#94A3B8";
+    return `<span style="color:${col}">${ic}</span> ${s.name}`;
+  }).join("<br>");
+}
+async function runNow() {
+  if (!confirm("Trigger a fresh Playwright run against servia.ae?")) return;
+  const btn = document.getElementById("runNowBtn");
+  btn.disabled = true; btn.textContent = "⏳ Triggering…";
+  const j = await adminPost("/api/admin/e2e/trigger");
+  btn.disabled = false; btn.textContent = "🚀 Run E2E now";
+  if (!j.ok) { alert("Failed: " + (j.detail || j.error || "see logs")); return; }
+  // Start polling immediately
+  document.getElementById("liveBox").style.display = "";
+  document.getElementById("liveTitle").textContent = "Run queued — checking in 5s…";
+  document.getElementById("liveSub").textContent = "GitHub workflow_dispatch sent";
+  setTimeout(() => {
+    pollLive();
+    if (livePollTimer) clearInterval(livePollTimer);
+    livePollTimer = setInterval(pollLive, 10000);
+  }, 5000);
+}
+document.getElementById("runNowBtn").onclick = runNow;
+document.getElementById("refreshBtn").onclick = () => { load(); pollLive(); };
+document.getElementById("autoRefreshTog").onchange = (e) => {
+  if (e.target.checked) {
+    if (!livePollTimer) livePollTimer = setInterval(pollLive, 10000);
+  } else {
+    if (livePollTimer) { clearInterval(livePollTimer); livePollTimer = null; }
+  }
+};
+// Boot: load thumbnails + check for in-progress run + start polling if needed
 load();
+pollLive().then(() => {
+  if (liveRunId) livePollTimer = setInterval(pollLive, 10000);
+});
 </script></body></html>
