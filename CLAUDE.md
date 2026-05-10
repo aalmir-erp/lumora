@@ -149,6 +149,24 @@ Before editing ANY file to fix a reported bug, you MUST:
 regex is not the bug. Grep the codebase for the concept and find
 what's actually instructing the wrong behavior.**
 
+**6. ORPHAN POST-PROCESSOR / GUARDRAIL FUNCTIONS ARE BUGS.** (Added
+v1.24.96 — Loophole 9.) If you see a `def _enforce_*`, `def _maybe_*`,
+`def _guard_*`, or any function that "post-processes" / "auto-corrects"
+LLM output, and a quick `grep -n <function_name> .` shows it is
+DEFINED but never CALLED — that is itself a critical bug. Wire it
+into the pipeline before assuming the missing behavior is in the
+prompt. v1.24.96 found `_enforce_multi_quote_when_book_now` had been
+dead since v1.24.78 (~18 releases) — every customer with 2+ services
+got a broken "Book now ↗" link instead of a proper Q-XXX quote_card
+the whole time.
+
+**7. SUBSTRING vs WORD BOUNDARY.** (Added v1.24.96 — Loophole 11.)
+When matching keywords in user text (language detection, intent
+classification, blocklists), ALWAYS use `\b` word boundaries OR
+" word " with spaces. `"merci" in "Muweilah Commercial"` is True;
+that is the bug. Test every keyword detector against the picker
+outputs and other proper-noun-heavy strings before shipping.
+
 This rule is permanent. It is loaded by every session at start. A
 session that violates it ships broken code to a real customer.
 
