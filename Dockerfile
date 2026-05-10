@@ -31,6 +31,8 @@ RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 
 COPY app ./app
 COPY web ./web
+# v1.24.92 — Playwright thumbnails (auto-committed, pruned to last 14 runs)
+COPY _e2e-shots ./_e2e-shots
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh && \
     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
