@@ -91,9 +91,10 @@ const TESTS = [
     rec('T08','/faq FAQPage schema','pass','present');
   }],
   ['T09','Homepage Org/LocalBusiness schema', async (p) => {
-    await p.goto(BASE);
-    const j = await p.locator('script[type="application/ld+json"]').allInnerTexts();
-    if (!j.some(s => /Organization|LocalBusiness/.test(s))) throw new Error('missing schema');
+    // v1.24.90: same exec-context flake fix as T08 — fetch raw HTML
+    const r = await p.request.get(BASE);
+    const html = await r.text();
+    if (!/Organization|LocalBusiness/.test(html)) throw new Error('missing schema');
     rec('T09','Homepage Org/LocalBusiness schema','pass','present');
   }],
   ['T10','Theme-color is teal #0F766E', async (p) => {

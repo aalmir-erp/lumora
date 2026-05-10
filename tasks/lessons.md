@@ -111,6 +111,26 @@ sends it back.
 
 ---
 
+## L9 — "Picker exists but only on /me-profile, not in chat"
+**Symptom**: user screenshot v1.24.88 showed bot asking "could you
+share the full address in Furjan, Dubai?" as plain text. Customer
+typed "jvc 88384, 7383", bot asked for MORE text.
+**Root cause**: address-picker card was built (Phase 2, v1.24.84) but
+only mounted on `/me-profile`. The chat widget had no way to render
+it. Bot prompt allowed free-text address questions.
+**Prevention**:
+- Every UI primitive (picker, card, modal) must be mounted on EVERY
+  surface where it's needed (chat / book / cart / profile) — not just
+  one demo page.
+- Bot prompt MUST explicitly forbid free-text address questions and
+  point to `[[picker:address]]` marker.
+- Server-side post-processor: regex-detect free-text address asks and
+  auto-inject the marker (defense-in-depth).
+- Test every surface end-to-end via TestClient + mocked LLM with
+  the EXACT verbatim text the user reported.
+
+---
+
 ## How to add a new lesson
 When the user reports a bug or a test fails for a non-obvious reason:
 1. Add a new `## Ln — <one-line title>` entry here

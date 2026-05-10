@@ -17,7 +17,26 @@ Read at session start.
 
 ---
 
-## Slice B — Recurring Scheduler Foundation (v1.24.90)
+## Slice A.5 — Sitewide Pin-First Address Card (v1.24.90, URGENT)
+
+- [ ] Widget: extract `[[picker:address]]` marker, render address card inline
+- [ ] Widget: on submit, send structured JSON as user message + auto-save to profile
+- [ ] Bot prompt: strict rule — NEVER ask address as free text; always emit picker
+- [ ] Bot post-processor: if reply contains "share the full address" / "could you provide the address" patterns, auto-inject `[[picker:address]]`
+- [ ] /book.html — replace free-text address input with card
+- [ ] /cart.html — same
+- [ ] Backend: `POST /api/me/locations/upsert-from-pin` (dedupe within 30m)
+- [ ] Anonymous-session bridge: stash address in sessionStorage; backfill on auth
+- [ ] Saved-places dropdown (top of card) — populated from `/api/me/profile.locations`
+- [ ] Tests: `tests/test_address_card_e2e.py` (10+ scenarios with VERBATIM v1.24.88 screenshot text)
+- [ ] Append to `tests/test_real_fixtures.py`
+- [ ] Visual proof: screenshot the chat showing card rendered in-place
+- [ ] Bumped version, pushed, Playwright green
+- [ ] Lesson L9 added to `tasks/lessons.md`
+
+---
+
+## Slice B — Recurring Scheduler Foundation (v1.24.91)
 
 - [ ] Schema: `schedules` + `schedule_items` + `schedule_recurrence` +
       `schedule_reminders` + `schedule_occurrences` +

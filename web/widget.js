@@ -546,7 +546,7 @@
     let cleanText = text || "";
     let pickerKind = null;   // v1.24.64 — 'date' | 'time' | null
     let quoteCardId = null;  // v1.24.78 — Q-XXXXXX to render as in-chat card
-    cleanText = cleanText.replace(/\[\[\s*picker\s*:\s*(datetime|date|time)\s*\]\]/gi, (_, kind) => {
+    cleanText = cleanText.replace(/\[\[\s*picker\s*:\s*(datetime|date|time|address)\s*\]\]/gi, (_, kind) => {
       pickerKind = kind.toLowerCase();
       return "";
     }).replace(/\[\[\s*quote_card\s*:\s*(Q-[A-Z0-9]+)\s*\]\]/gi, (_, qid) => {
@@ -858,6 +858,83 @@
       }
 
       _renderCalendar();
+    } else if (kind === "address") {
+      // v1.24.90 — Slice A.5: in-chat pin-first address card.
+      // Defers to web/address-picker.js (already in repo, used by /me-profile).
+      // 1. Show "Saved places" dropdown if customer has any (lazy-fetched)
+      // 2. Then the pin-on-map address card
+      // On submit: auto-saves to /api/me/locations/upsert-from-pin AND
+      // sends a structured one-line summary as the next chat message.
+      const head = el("div", { class: "us-addr-head" });
+      head.innerHTML =
+        '<div style="font-weight:800;font-size:14px;color:var(--us-primary)">📍 Where should we come?</div>' +
+        '<div style="font-size:11.5px;color:var(--us-muted);margin-top:3px">Pin the exact spot — area + city auto-fill from the map.</div>';
+      wrap.appendChild(head);
+
+      // Saved-places dropdown (only shown if user has any saved)
+      const savedRow = el("div", { class: "us-addr-saved", style: "display:none;margin:8px 0" });
+      wrap.appendChild(savedRow);
+
+      // Address-picker mount point
+      const apMount = el("div", { class: "us-addr-mount" });
+      wrap.appendChild(apMount);
+
+      function _commitAddress(a) {
+        // Save to profile (upsert-from-pin dedupes)
+        try {
+          fetch("/api/me/locations/upsert-from-pin", {
+            method: "POST", credentials: "include",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(a),
+          }).catch(()=>{});
+        } catch(_) {}
+        // Send a friendly one-line summary back to the bot
+        const summary =
+          (a.label ? `[${a.label}] ` : "") +
+          [a.building, a.unit, a.area, a.city].filter(Boolean).join(", ");
+        input.value = summary;
+        // Tag the structured payload onto the form so /api/chat can read it
+        try { window.__lastAddressPicked = a; } catch(_){}
+        form.requestSubmit();
+      }
+
+      // Lazy-load the address-picker JS if not already on page
+      function _mountPicker() {
+        if (window.serviaAddressPicker && window.serviaAddressPicker.mount) {
+          window.serviaAddressPicker.mount(apMount, { onPick: _commitAddress });
+        } else {
+          // Inject script tag if absent
+          if (!document.querySelector('script[data-ap]')) {
+            const s = document.createElement("script");
+            s.src = "/address-picker.js"; s.dataset.ap = "1";
+            s.onload = () => window.serviaAddressPicker &&
+                              window.serviaAddressPicker.mount(apMount, { onPick: _commitAddress });
+            document.head.appendChild(s);
+          }
+        }
+      }
+
+      // Pull saved locations
+      fetch("/api/me/profile", { credentials: "include" })
+        .then(r => r.json()).then(j => {
+          if (j && j.ok && (j.locations || []).length) {
+            savedRow.style.display = "block";
+            savedRow.innerHTML = '<div style="font-size:11px;color:var(--us-muted);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Saved places</div>';
+            j.locations.forEach(loc => {
+              const b = el("button", {
+                type: "button",
+                style: "display:block;width:100%;text-align:left;padding:8px 10px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;margin-bottom:5px;cursor:pointer;font-family:inherit"
+              });
+              const sub = [loc.building, loc.unit, loc.area, loc.city].filter(Boolean).join(", ");
+              b.innerHTML = `<b>📍 ${loc.label || "Saved"}</b><br><span style="color:#64748B;font-size:11.5px">${sub}</span>`;
+              b.onclick = () => _commitAddress(loc);
+              savedRow.appendChild(b);
+            });
+            const adder = el("div", { style: "font-size:12px;color:var(--us-muted);text-align:center;margin:8px 0" }, "— or pin a new spot below —");
+            savedRow.appendChild(adder);
+          }
+          _mountPicker();
+        }).catch(_mountPicker);
     }
     return wrap;
   }

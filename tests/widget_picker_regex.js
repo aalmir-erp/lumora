@@ -4,7 +4,7 @@ process.stdin.on("end", () => {
   const samples = JSON.parse(raw);
   const out = samples.map(text => {
     let pickerKind = null;
-    const cleanText = text.replace(/\[\[\s*picker\s*:\s*(date|time)\s*\]\]/gi, (_, kind) => {
+    const cleanText = text.replace(/\[\[\s*picker\s*:\s*(datetime|date|time|address)\s*\]\]/gi, (_, kind) => {
       pickerKind = kind.toLowerCase(); return "";
     });
     return { picker: pickerKind, clean: cleanText.trim() };

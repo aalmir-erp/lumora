@@ -292,6 +292,46 @@ def add_location(body: LocationItem, servia_auth: str | None = Cookie(None)):
     return {"ok": True, "location": item}
 
 
+# v1.24.90 Slice A.5 — auto-save from chat / book / cart pin-pickers
+# Dedupes by lat/lng within ~30m so the customer's profile doesn't get
+# spammed when they pin the same place repeatedly across surfaces.
+@router.post("/api/me/locations/upsert-from-pin")
+def upsert_location_from_pin(body: LocationItem, servia_auth: str | None = Cookie(None)):
+    cust = _authed_customer(servia_auth)
+    if not cust:
+        # Anonymous-friendly: silently no-op (the picker still works,
+        # we just don't save). When the customer later authenticates,
+        # backfill is the responsibility of the auth flow.
+        return {"ok": True, "saved": False, "reason": "not authenticated"}
+    item = body.model_dump()
+    if not (item.get("lat") and item.get("lng")):
+        return {"ok": False, "error": "lat/lng required for pin-based upsert"}
+    existing = _json.loads(cust.get("locations_json") or "[]")
+    # ~30m at UAE latitude ≈ 0.00027° (1° lat ≈ 111km, 30m ≈ 0.00027)
+    THRESH = 0.00030
+    duped = None
+    for loc in existing:
+        if loc.get("lat") and loc.get("lng"):
+            if (abs(loc["lat"] - item["lat"]) < THRESH and
+                abs(loc["lng"] - item["lng"]) < THRESH):
+                duped = loc; break
+    if duped:
+        # Update label / building / unit if newly provided
+        for k in ("label","building","unit","area","city",
+                  "contact_name","contact_phone","notes"):
+            if item.get(k) and not duped.get(k):
+                duped[k] = item[k]
+    else:
+        item["id"] = secrets.token_urlsafe(8)
+        item["created_at"] = _now()
+        existing.append(item)
+    with db.connect() as c:
+        c.execute("UPDATE customers SET locations_json=? WHERE id=?",
+                  (_json.dumps(existing), cust["id"]))
+    return {"ok": True, "saved": True, "deduped": bool(duped),
+            "location": duped or item}
+
+
 @router.delete("/api/me/locations/{loc_id}")
 def del_location(loc_id: str, servia_auth: str | None = Cookie(None)):
     cust = _authed_customer(servia_auth)

@@ -697,6 +697,13 @@ def _enforce_picker_and_one_question(text: str) -> str:
         text = text.rstrip() + "\n[[picker:date]]"
     elif asks_time and not has_time_pick and not has_dt_pick and "[[picker:" not in text:
         text = text.rstrip() + "\n[[picker:time]]"
+
+    # v1.24.90 Slice A.5 — address-as-free-text guardrail.
+    # If the LLM asks for address in plain text and there's no picker
+    # marker, inject [[picker:address]] so the widget renders the
+    # pin-on-map card. Pin location is MANDATORY sitewide.
+    if "[[picker:address]]" not in text and _ADDR_TRIGGER.search(text):
+        text = text.rstrip() + "\n[[picker:address]]"
     return text
 
 
@@ -713,6 +720,22 @@ _BOOK_NOW_RE = _re_q.compile(
     _re_q.IGNORECASE,
 )
 _SUMMARY_RE = _re_q.compile(r"(services?|booking summary)\s*[:\-]", _re_q.IGNORECASE)
+
+# v1.24.90 Slice A.5 — bot must NEVER ask for address as plain text.
+# This regex catches the patterns the LLM uses when it slips up; the
+# post-processor then auto-injects [[picker:address]] so the customer
+# gets the pin-on-map card instead of typing free text.
+_ADDR_TRIGGER = _re_q.compile(
+    r"(share|provide|enter|tell\s+me|give\s+(?:me|us))\s+(?:the\s+)?"
+    r"(?:full|complete|exact|detailed)?\s*address|"
+    r"address\s+(?:\(|including|with)|"
+    r"building\s+(?:or|/|name)|"
+    r"villa\s+(?:number|name)|"
+    r"could\s+you\s+(?:please\s+)?(?:share|provide|tell|give)[^?]*address|"
+    r"what(?:'s|\s+is)?\s+(?:your\s+)?(?:full\s+)?address|"
+    r"where\s+(?:are\s+you|do\s+you\s+live|should\s+we\s+come)",
+    _re_q.IGNORECASE,
+)
 
 
 def _parse_summary(text: str) -> dict:
