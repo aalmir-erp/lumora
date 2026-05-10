@@ -21,22 +21,39 @@ function rec(id, name, status, detail, shot) {
   console.log(`${icon} [${id}] ${name}${detail ? ' — ' + String(detail).slice(0,200) : ''}`);
 }
 
+// v1.24.93 — Loophole 7: Cloudflare cold-load returns 5xx "Bad gateway"
+// for any test, not just T01. Retry the whole test once on transient
+// network errors before marking as fail.
+const TRANSIENT = /HTTP 5\d\d|Bad gateway|cloudflare|Timeout 18000ms exceeded|net::ERR_/i;
+
 async function runTest(id, name, fn, deviceName) {
-  const browser = await chromium.launch({ headless: true });
   let shot = join(SHOTS, `${id}.png`);
-  try {
-    const ctx = await browser.newContext({ ...(deviceName ? devices[deviceName] : {}), ignoreHTTPSErrors: true });
-    const page = await ctx.newPage();
-    page.setDefaultTimeout(18000);
+  let lastErr = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const browser = await chromium.launch({ headless: true });
     try {
-      await fn(page);
-      await page.screenshot({ path: shot, fullPage: false }).catch(()=>{});
-    } catch (e) {
-      shot = join(SHOTS, `${id}-FAIL.png`);
-      await page.screenshot({ path: shot, fullPage: false }).catch(()=>{});
-      rec(id, name, 'fail', `exception: ${e.message.slice(0,150)}`, shot);
-    }
-  } finally { await browser.close(); }
+      const ctx = await browser.newContext({ ...(deviceName ? devices[deviceName] : {}), ignoreHTTPSErrors: true });
+      const page = await ctx.newPage();
+      page.setDefaultTimeout(18000);
+      try {
+        await fn(page);
+        await page.screenshot({ path: shot, fullPage: false }).catch(()=>{});
+        return shot;          // success — done
+      } catch (e) {
+        lastErr = e;
+        const transient = TRANSIENT.test(e.message);
+        if (transient && attempt === 1) {
+          await page.waitForTimeout(2000);
+          continue;             // retry once
+        }
+        shot = join(SHOTS, `${id}-FAIL.png`);
+        await page.screenshot({ path: shot, fullPage: false }).catch(()=>{});
+        const tag = (transient ? `(retried) ` : ``);
+        rec(id, name, 'fail', `${tag}exception: ${e.message.slice(0,150)}`, shot);
+        return shot;
+      }
+    } finally { await browser.close(); }
+  }
   return shot;
 }
 
