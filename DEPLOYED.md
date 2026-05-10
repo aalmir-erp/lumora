@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"PsAx9QljR06MdchFGbGh5g"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"8qZXnbx7QGWx8I0uU79b0g"}`
 
 ## Build logs
 ```
@@ -11,7 +11,10 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [11/12] COPY start.sh /app/start.sh
 [10/12] COPY _e2e-shots ./_e2e-shots
+[ 9/12] COPY web ./web
+[ 8/12] COPY app ./app
 [internal] load build context
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
@@ -26,16 +29,13 @@
 [ 8/12] COPY app ./app
 [ 9/12] COPY web ./web
 [10/12] COPY _e2e-shots ./_e2e-shots
-[10/12] COPY _e2e-shots ./_e2e-shots
 [11/12] COPY start.sh /app/start.sh
-[11/12] COPY start.sh /app/start.sh
-[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:ecb9f0ab3cfddcdccbbc5d222f4c5bbf55d90afd9127ba349b422a751ccaae2c
-containerimage.digest: sha256:8daa899cee4c669ae65581e66f339c5f7569c6146fd2777df0ba80e47a0560e7
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OGRhYTg5OWNlZTRjNjY5YWU2NTU4MWU2NmYzMzljNWY3NTY5YzYxNDZmZDI3NzdkZjBiYTgwZTQ3YTA1NjBlNyIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMFQxOTo1NjoyMloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NjE5NGFhYmUwODVhNTNhMDUwZmQ2OGRlNDkwYTNmNmI0YzE0Zjc4MzVkMTczZDJiNjEzOTgwNTViYjQ3NTYxZiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMFQyMDowMzo0OVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:0ba8f7245cda2df24a6b2f3f5ed6bba153f0b1000584bb76e5b2b56c5ca50ef6
+containerimage.digest: sha256:6194aabe085a53a050fd68de490a3f6b4c14f7835d173d2b61398055bb47561f
 image push
 
 [35m====================
@@ -50,34 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Starting Container
-[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.5:33492 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33508 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33484 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33484 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.5:33484 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33508 - "GET /index.html HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33508 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:38831 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.6:34142 - "GET /api/staff/svc-sofa-carpet.svg?service=sofa_carpet HTTP/1.1" 200 OK
-INFO:     100.64.0.7:54016 - "POST /api/app-install HTTP/1.1" 200 OK
-INFO:     100.64.0.6:52644 - "POST /api/app-install HTTP/1.1" 200 OK
-INFO:     100.64.0.9:36486 - "GET /widget.js?v=1.24.98 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:31428 - "GET /services/sofa-carpet/al-reem-island HTTP/1.1" 200 OK
-INFO:     100.64.0.4:48568 - "GET /style.css?v=1.24.98 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:42286 - "GET /widget.css?v=1.24.98 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:34114 - "HEAD /api/videos/play/svc-sofa-carpet HTTP/1.1" 404 Not Found
-INFO:     100.64.0.7:54004 - "GET /api/reviews/sofa_carpet HTTP/1.1" 200 OK
-INFO:     100.64.0.6:34138 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.6:34128 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.8:20994 - "GET /api/services HTTP/1.1" 200 OK
-INFO:     100.64.0.7:54016 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.6:52644 - "GET /social-strip.js?v=29640717 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:23424 - "GET /_snippets.js?v=29640717 HTTP/1.1" 200 OK
-INFO:     100.64.0.12:32136 - "GET /location-bar.js?v=29640717 HTTP/1.1" 200 OK
-INFO:     100.64.0.11:33656 - "GET /cart-badge.js?v=29640717 HTTP/1.1" 200 OK
-INFO:     100.64.0.13:56746 - "GET /about-app.js?v=29640717 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:52644 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.9:50972 - "HEAD /api/videos/play/svc-pest-control HTTP/1.1" 404 Not Found
+INFO:     100.64.0.9:50972 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.9:50988 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.9:50982 - "GET /api/reviews/pest_control HTTP/1.1" 200 OK
+INFO:     100.64.0.9:51002 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.10:36508 - "GET /api/staff/svc-pest-control.svg?service=pest_control HTTP/1.1" 200 OK
+INFO:     100.64.0.9:51002 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.9:50982 - "GET /social-strip.js?v=29640725 HTTP/1.1" 200 OK
+INFO:     100.64.0.9:51014 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.9:50988 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.9:50972 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.11:59348 - "GET /cart-badge.js?v=29640725 HTTP/1.1" 200 OK
+INFO:     100.64.0.13:16216 - "GET /mascots/pest.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.14:44396 - "GET /about-app.js?v=29640725 HTTP/1.1" 200 OK
+INFO:     100.64.0.9:50972 - "GET /api/site/social HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1]
+Stopping Container
+Stopping Container
 ```
