@@ -735,15 +735,29 @@ _SUMMARY_RE = _re_q.compile(r"(services?|booking summary)\s*[:\-]", _re_q.IGNORE
 # This regex catches the patterns the LLM uses when it slips up; the
 # post-processor then auto-injects [[picker:address]] so the customer
 # gets the pin-on-map card instead of typing free text.
+#
+# v1.24.94 — broader verb-near-noun matcher after R94 regression:
+#   founder screenshot of v1.24.93 still showed free-text request
+#   "I just need your full home address in Furjan to finalize the
+#   booking. Could you please share that?" — old regex required the
+#   qualifier slot to be exactly (full|complete|exact|detailed) so
+#   "full HOME address" (extra word "home") slipped through. The
+#   new pattern catches verb-then-address within 80 chars regardless
+#   of qualifier words in between.
 _ADDR_TRIGGER = _re_q.compile(
-    r"(share|provide|enter|tell\s+me|give\s+(?:me|us))\s+(?:the\s+)?"
-    r"(?:full|complete|exact|detailed)?\s*address|"
-    r"address\s+(?:\(|including|with)|"
-    r"building\s+(?:or|/|name)|"
-    r"villa\s+(?:number|name)|"
-    r"could\s+you\s+(?:please\s+)?(?:share|provide|tell|give)[^?]*address|"
+    # Branch 1: any address-asking verb within 80 chars of the word "address"
+    r"\b(?:share|provide|enter|tell|give|need|require|confirm|"
+    r"specify|send|type|drop|let\s+me\s+know)\b[^.?!]{0,80}\baddress\b|"
+    # Branch 2: standalone phrases that always mean an address request
+    r"\bhome\s+address\b|"
+    r"\bfull\s+address\b|"
+    r"\bcomplete\s+address\b|"
+    r"\bexact\s+address\b|"
+    r"\baddress\s+(?:\(|including|with|in|to|for|so|please)|"
+    r"building\s+(?:or|/|name|number)|"
+    r"villa\s+(?:number|name|or)|"
     r"what(?:'s|\s+is)?\s+(?:your\s+)?(?:full\s+)?address|"
-    # v1.24.93 — also catch "confirm the emirate / city" patterns
+    # Branch 3: emirate / city confirmation patterns (v1.24.93)
     r"confirm\s+(?:the\s+)?(?:emirate|city)|"
     r"which\s+(?:emirate|city)|"
     r"what(?:'s|\s+is)?\s+(?:your\s+)?(?:emirate|city)|"

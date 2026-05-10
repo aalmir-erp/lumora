@@ -208,6 +208,55 @@ for txt, name in VARIANTS:
     ok = "[[picker:address]]" in out and "[[choices:" not in out
     t(f"R93-V {name}", ok, out[:120].replace("\n"," "))
 
+# ─── v1.24.94 — verbatim screenshot regression #2 ────────────────────
+# Bug shipped in v1.24.93: founder screenshot showed the bot replying
+# "I just need your full home address in Furjan to finalize the
+# booking. Could you please share that?" — picker NOT injected,
+# customer asked to type address as free text. The v1.24.93 regex
+# did not match because:
+#   - verb list missed "need"
+#   - qualifier slot was strictly (full|complete|exact|detailed)?
+#     followed by \s*address, so "full HOME address" (extra word
+#     between qualifier and noun) failed to match
+# v1.24.94 fix: broader verb-near-noun pattern matches any address-
+# asking verb within 80 chars of the word "address" + standalone
+# phrases like "home address" / "full address".
+print("\n--- v1.24.94 free-text-address regression (verbatim screenshot) ---")
+
+SCREENSHOT_94 = (
+    "Perfect! Thank you, Khaqan. I have:\n\n"
+    "Booking Summary:\n"
+    " • Services: Deep Cleaning, Pest Control, Sofa & Carpet Shampoo\n"
+    " • Location: Furjan, Dubai\n"
+    " • Date & Time: Thursday, 14 May 2026 at 14:00\n"
+    " • Phone: 0559396459\n\n"
+    "I just need your full home address in Furjan to finalize the "
+    "booking. Could you please share that?\n\n"
+    "Once confirmed, I'll provide your booking links for all three "
+    "services."
+)
+out = _enforce_picker_and_one_question(SCREENSHOT_94)
+t("R94-1. picker injected for 'need your full home address'",
+  "[[picker:address]]" in out, out[-80:].replace("\n"," "))
+t("R94-2. summary preserved (Furjan/Khaqan)",
+  "Furjan" in out and "Khaqan" in out)
+t("R94-3. trigger regex matches 'need your full home address'",
+  bool(_ADDR_TRIGGER.search(SCREENSHOT_94)))
+
+# Variants of the v1.24.93-missed family
+VARIANTS_94 = [
+    ("Please send me your home address.", "send-home-address"),
+    ("Could you type your full address for me?", "type-full-address"),
+    ("Drop your address so I can dispatch the team.", "drop-address"),
+    ("I need the exact address please.", "need-exact-address"),
+    ("Let me know your address and we'll head over.", "let-me-know-address"),
+    ("What's the building name and villa number?", "building-villa"),
+]
+for txt, name in VARIANTS_94:
+    out = _enforce_picker_and_one_question(txt)
+    ok = "[[picker:address]]" in out
+    t(f"R94-V {name}", ok, out.replace("\n"," ")[:120])
+
 # Summary
 total = passed + len(failed)
 print()
