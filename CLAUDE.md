@@ -91,6 +91,67 @@ Visual changes (button colors, page layout, modals, etc.) must be:
    user BEFORE the push happens
 Bug fixes that change rendered output count as visual changes.
 
+### W8. EXHAUSTIVE GREP BEFORE EDITING — FIX THE SOURCE OF TRUTH, NOT THE SYMPTOM
+(Founder rule, v1.24.95, 2026-05-10 — after 4 failed releases of the
+"bot asks address as text" bug)
+
+**THE FAILURE PATTERN — never repeat this:**
+- v1.24.91 → v1.24.92 → v1.24.93 → v1.24.94 all "fixed" the same
+  bug by patching the regex post-processor in app/llm.py.
+- The actual cause was the SYSTEM PROMPT instructing the LLM in
+  4 separate places to "ask address as free text" (lines 185, 259,
+  271, 354). The LLM was obeying.
+- A 30-second `grep -n "address" app/llm.py` on the FIRST report
+  would have shown every one of those lines. I never ran it.
+- The founder shipped 4 broken releases to production and tested
+  each one on their phone because of this.
+
+**THE RULE — non-negotiable from v1.24.95 onward:**
+
+Before editing ANY file to fix a reported bug, you MUST:
+
+1. **GREP THE WHOLE CODEBASE for every concept involved in the bug.**
+   Not just the file you think contains the bug. Every layer:
+   - System prompts, persona blobs, KB markdown
+   - Post-processors (regex, string-replace, ENFORCE_* functions)
+   - Frontend (widget.js, *.html scripts, service worker)
+   - API handlers / route registrations
+   - Tests (both unit and e2e)
+   - Documentation / inline comments that re-state the rule
+
+   Example queries for the address bug that would have caught it:
+     grep -rn "address" app/ web/ tests/ kb/
+     grep -rn "free text\|free-form\|free_text" app/
+     grep -rn "picker:address\|address picker" app/ web/
+     grep -rn "STEP.*address\|ask.*address" app/
+
+2. **AUDIT EVERY HIT against the desired behavior.** Build a list:
+     - File:line — current text — desired text — change needed
+   Show the founder the list BEFORE editing if it's more than 3
+   places. If it's ≤ 3, just fix all of them in one commit.
+
+3. **NEVER fix only the symptom layer (regex, post-processor,
+   guardrail).** Always trace UP to the source of truth (the LLM
+   prompt, the route definition, the schema). Fix THAT. Then verify
+   no downstream layer contradicts it.
+
+4. **If a post-processor exists to "correct" LLM output, that is a
+   RED FLAG that the prompt is wrong.** The prompt is the source of
+   truth. Post-processors should be safety nets for rare LLM slips,
+   NOT enforcement against explicit prompt instructions.
+
+5. **Document the audit in the commit message.** List every file
+   you grepped and every place you changed. Future Claudes reading
+   the commit log will see the pattern.
+
+**Recognise the pattern in real time. If you find yourself writing
+"v1.24.X: broader regex for the same bug as v1.24.X-1," STOP. The
+regex is not the bug. Grep the codebase for the concept and find
+what's actually instructing the wrong behavior.**
+
+This rule is permanent. It is loaded by every session at start. A
+session that violates it ships broken code to a real customer.
+
 ### W7. BLANKET AUTONOMY — "I AUTHORIZE YOU FOR EVERYTHING EVERYTIME"
 (Granted by founder, v1.24.93, 2026-05-10)
 
