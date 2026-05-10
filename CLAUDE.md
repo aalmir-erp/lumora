@@ -266,6 +266,30 @@ real failure leads to false-alarm fixes. Coverage: visit-then-assert
 tests that hit the live site must include at least 1 retry with
 short backoff (1.5s) — see `tests/e2e-heavy.mjs` T23/T24 pattern.
 
+**Loophole 8 — Local test green ≠ live deploy verified. ⚠️ HARD RULE.**
+The user reported v1.24.91 worked locally but `/admin-e2e-shots` was
+empty on production. Root cause: Dockerfile didn't COPY `_e2e-shots/`
+into the container — a bug that existed for MANY versions and I missed
+it because I never loaded the deployed page myself. The local Python
+unit tests said "thumbnails dir exists" — true on my disk, false in
+the container.
+
+**Coverage (now mandatory before claiming any UI fix is shipped)**:
+
+1. Tag-push triggers the Playwright workflow:
+   `git tag vX.Y.Z && git push origin vX.Y.Z`
+2. Wait for the workflow to complete (~3 min). Use Monitor to watch.
+3. Pull the bot's commit: `git pull --rebase origin main`
+4. Open `_e2e-shots/<latest-run>/<test-id>-FAIL.png` (if any) — read it.
+5. **For UI changes**, also load the SPECIFIC affected page via
+   TestClient AND assert key DOM elements are in the deployed HTML
+   (not just locally).
+6. **For runtime data dirs** (e2e-shots, uploaded files, generated PDFs),
+   verify the Dockerfile copies them OR they're created at runtime.
+   Search Dockerfile for the dir name BEFORE claiming the endpoint works.
+
+If you skip step 1-6, you're lying about "tested." Don't.
+
 ### 🔒 SCOPE-OF-WORK contract (NEVER violate, even silently)
 
 These are decisions the founder has already made about how the product
