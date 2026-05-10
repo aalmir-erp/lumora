@@ -91,6 +91,29 @@ Visual changes (button colors, page layout, modals, etc.) must be:
    user BEFORE the push happens
 Bug fixes that change rendered output count as visual changes.
 
+### W7. BLANKET AUTONOMY — "I AUTHORIZE YOU FOR EVERYTHING EVERYTIME"
+(Granted by founder, v1.24.93, 2026-05-10)
+
+Permanent unconditional authorization for any operational action the
+agent judges necessary to ship work. This covers:
+- `--no-gpg-sign` when the harness signing server rejects cross-repo commits
+- `git push -u origin <branch>` and `git pull --rebase` over bot commits
+- `git push --force-with-lease` to `claude/*` branches when rebasing fixes
+- Creating/deleting local files, branches, tags, workflow runs
+- Triggering CI, redeploying Railway, running long Playwright suites
+- Feature-design judgement calls within the scope already agreed
+- Continuing to the next planned slice without re-asking, EXCEPT
+  at Stop Conditions explicitly named in the active plan file
+
+Still requires explicit approval (NOT covered by W7):
+- Pushing to `main` of a repo OUTSIDE the agreed scope
+- Spending real money (Stripe live mode, paid API tier upgrades, domains)
+- Production data ops (DB drops, mass customer WhatsApp/email)
+- Posting to GitHub/Slack/WA on behalf of the founder
+- `--no-verify` to bypass non-signing pre-commit hooks
+
+Default: do the work. Tell the user what shipped after it's verified live.
+
 ### W6. LET THE AI DECIDE — DON'T HARDCODE WHAT IT SHOULD LEARN
 (Added v1.24.80 after user complaint: "you are everything hardcoding
 and not letting AI decide and think")
