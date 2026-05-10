@@ -360,6 +360,14 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
     if not r:
         raise HTTPException(404, "Post not found")
     post = db.row_to_dict(r) or {}
+    # v1.24.99 — wire blog_image (Pollinations.ai free SD-XL) into the
+    # blog template. Replaces the legacy /api/blog/hero/{slug}.svg
+    # mascot. Admin can flip back via cfg('blog_image_provider')='svg'.
+    try:
+        from . import blog_image as _bi
+        _hero_url = _bi.hero_url_for_post(post)
+    except Exception:
+        _hero_url = f"/api/blog/hero/{slug}.svg"
     # Record the view + per-article traffic source. Cheap: one row per hit
     # capturing referer host (where visitor came from) so admin can see whether
     # traffic is from Google, Twitter, direct, or another article.
@@ -437,7 +445,7 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         "headline": title,
-        "image": [f"https://servia.ae/api/blog/hero/{slug}.svg"],
+        "image": [_hero_url if _hero_url.startswith("http") else f"https://servia.ae{_hero_url}"],
         "datePublished": post.get("published_at") or _dt.datetime.utcnow().isoformat()+"Z",
         "dateModified": post.get("published_at") or _dt.datetime.utcnow().isoformat()+"Z",
         "author": {
@@ -474,7 +482,7 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
 <meta name="keywords" content="{sv_name.lower()} {em_pretty.lower()}, {sv_name.lower()} dubai, {sv_name.lower()} price uae, servia, home services {em_pretty.lower()}">
 <meta property="og:type" content="article">
 <meta property="og:title" content="{_html.escape(title)}">
-<meta property="og:image" content="https://servia.ae/api/blog/hero/{slug}.svg">
+<meta property="og:image" content="{(_hero_url if _hero_url.startswith('http') else 'https://servia.ae'+_hero_url)}">
 <meta property="og:description" content="{_html.escape(title)} — Servia UAE.">
 <link rel="canonical" href="https://servia.ae/blog/{slug}">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -590,8 +598,8 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
 </div></nav>
 
 <div class="post-hero">
-  <img src="/api/blog/hero/{slug}.svg" alt="{_html.escape(title)} — Servia hero illustration"
-       width="1200" height="480">
+  <img src="{_hero_url}" alt="{_html.escape(title)} — Servia hero image" loading="eager"
+       width="1200" height="800" style="width:100%;height:auto;max-width:1024px;border-radius:12px">
 </div>
 
 <article>
@@ -715,11 +723,18 @@ def render_index() -> HTMLResponse:
         excerpt = (excerpt.strip().split("\n\n", 1)[0])[:180]
         if excerpt and len(body) > 180: excerpt += "…"
         reading = _reading_minutes(body)
+        # v1.24.99 — Pollinations.ai hero (free SD-XL) instead of SVG mascot.
+        try:
+            from . import blog_image as _bi2
+            _card_hero = _bi2.hero_url_for_post({"slug": s, "topic": topic,
+                                                 "emirate": em, "service_id": sv})
+        except Exception:
+            _card_hero = f"/api/blog/hero/{s}.svg"
         cards_html.append(f"""
         <a class="b-card" href="/blog/{s}" data-em="{em}" data-sv="{sv}" data-q="{_html.escape((topic+' '+em_pretty+' '+sv_meta['name']+' '+excerpt).lower())}">
           <div class="b-thumb">
-            <img loading="lazy" src="/api/blog/hero/{s}.svg" alt="{_html.escape(topic)}"
-                 width="600" height="240">
+            <img loading="lazy" src="{_card_hero}" alt="{_html.escape(topic)}"
+                 width="600" height="400" style="width:100%;height:auto">
           </div>
           <div class="b-body">
             <div class="b-meta">

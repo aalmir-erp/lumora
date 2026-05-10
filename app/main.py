@@ -2386,11 +2386,58 @@ def sitemap_services(request: Request = None):
             fallback=True)
 
 
+@app.get("/sitemap-areas-batch-{batch_num}.xml")
+def sitemap_areas_batch(batch_num: int, request: Request = None):
+    """v1.24.100 — gradual SEO rollout. Splits the 1,628 service×area
+    URLs into 5 weekly batches so we don't dump the entire long-tail
+    on Google in one shot (which can trigger the mass-generated-content
+    filter). Submit one batch per week to GSC + Bing.
+
+    Batches:
+      batch-1.xml: services 0-7 × all areas   (~340 URLs)
+      batch-2.xml: services 8-15 × all areas  (~340 URLs)
+      batch-3.xml: services 16-22 × all areas (~308 URLs)
+      batch-4.xml: services 23-29 × all areas (~308 URLs)
+      batch-5.xml: services 30-37 × all areas (~352 URLs)
+    """
+    try:
+        from . import seo_pages as _seo
+        if batch_num < 1 or batch_num > 5:
+            return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n')
+        base = _sitemap_base(request)
+        today = _dt.date.today().isoformat()
+        try:
+            svcs = kb.services().get("services", [])
+        except Exception:
+            svcs = []
+        # Even split across 5 batches
+        per_batch = max(1, (len(svcs) + 4) // 5)
+        start = (batch_num - 1) * per_batch
+        end = min(start + per_batch, len(svcs))
+        urls = []
+        for svc in svcs[start:end]:
+            sid = svc.get("id") or ""
+            if not sid: continue
+            svc_slug = sid.replace("_", "-")
+            for area_slug in _seo.AREA_INDEX.keys():
+                urls.append((f"{base}/services/{svc_slug}/{area_slug}",
+                             today, "monthly", "0.70"))
+        return _xml_response(_wrap_urlset(urls))
+    except Exception:
+        return _xml_response('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n')
+
+
 @app.get("/sitemap-areas.xml")
 def sitemap_areas(request: Request = None):
     """v1.24.97 — programmatic SEO. Was: 7 emirate-level URLs.
-    Now: 7 emirates + 63 neighbourhoods + ~2,331 service×area URLs.
-    Sitemaps support up to 50,000 URLs per file so we're well under."""
+    Now: 7 emirates + 44 neighbourhoods + ~1,628 service×area URLs.
+    Sitemaps support up to 50,000 URLs per file so we're well under.
+
+    v1.24.100: ALSO available as /sitemap-areas-batch-{1..5}.xml for
+    gradual GSC submission — recommended over dropping all 1,628 URLs
+    at once which can trigger Google's mass-generated-content filter."""
     try:
         from . import seo_pages as _seo
         base = _sitemap_base(request)
@@ -3833,6 +3880,30 @@ try:
             "db_warning": warning,
             "last_run": last,
         }
+
+    @app.get("/api/admin/autoblog/list",
+             dependencies=[Depends(require_admin)])
+    def autoblog_list(limit: int = 20):
+        """v1.24.100 — list recent posts with hero image URLs so admin
+        can verify autoblog + image gen are actually producing content.
+        Returns the same data the founder sees on /blog."""
+        from . import db as _db, blog_image as _bi
+        try:
+            with _db.connect() as c:
+                rows = c.execute(
+                    "SELECT slug, topic, emirate, service_id, "
+                    "published_at, length(body_md) AS chars "
+                    "FROM autoblog_posts ORDER BY published_at DESC LIMIT ?",
+                    (limit,)).fetchall()
+        except Exception as e:
+            return {"ok": False, "error": str(e), "posts": []}
+        posts = []
+        for r in rows:
+            d = dict(r)
+            d["url"] = f"/blog/{d['slug']}"
+            d["image_url"] = _bi.hero_url_for_post(d)
+            posts.append(d)
+        return {"ok": True, "count": len(posts), "posts": posts}
 
     @app.post("/api/admin/autoblog/run-now",
               dependencies=[Depends(require_admin)])
