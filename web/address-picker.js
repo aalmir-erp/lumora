@@ -28,8 +28,13 @@
   // English-label tile sources. CartoDB Voyager has Latin scripts for the UAE
   // (Arabic translit) and is free for non-commercial. Fallback to OSM HOT
   // which renders English where available.
-  const TILE_EN = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png";
-  const TILE_ATTR = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>';
+  // v1.24.95 — CartoDB Voyager *does* serve local-language labels
+  // (Arabic in UAE) despite the v1.24.91 assumption otherwise. Switch
+  // to ArcGIS World_Street_Map which renders English labels globally
+  // and is free without an API key for non-commercial / light use.
+  // Fallback to a no-labels Carto raster if ArcGIS rate-limits.
+  const TILE_EN = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
+  const TILE_ATTR = 'Tiles &copy; Esri — Source: Esri, HERE, Garmin, OpenStreetMap contributors';
 
   function loadLeaflet(cb) {
     if (window.L) return cb();
@@ -317,6 +322,24 @@
         msg.className = "ap-msg ok";
         msg.textContent = "✅ Saved.";
       }
+      // v1.24.95 — exit fullscreen so the user can see the chat
+      // response. Previously the picker stayed frozen in fullscreen
+      // after onPick fired, making the user think nothing happened
+      // (rage-click loop confirmed by founder screenshot).
+      if (wrap.classList.contains("fullscreen")) {
+        wrap.classList.remove("fullscreen");
+        fsBtn.textContent = "⛶ Fullscreen";
+      }
+      // v1.24.95 — also collapse the form into a compact "✅ Pinned"
+      // confirmation so user knows the action was accepted. Tapping
+      // the confirmation re-opens the picker for edits.
+      btn.disabled = true;
+      btn.textContent = "✅ Address recorded";
+      setTimeout(() => {
+        if (mapDiv && mapDiv.parentNode) mapDiv.style.display = "none";
+        const detail = wrap.querySelectorAll(".ap-row, .ap-presets, .ap-msg, .ap-hint");
+        detail.forEach(n => { n.style.display = "none"; });
+      }, 250);
       if (typeof opts.onPick === "function") opts.onPick(out);
     };
   }

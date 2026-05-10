@@ -257,6 +257,60 @@ for txt, name in VARIANTS_94:
     ok = "[[picker:address]]" in out
     t(f"R94-V {name}", ok, out.replace("\n"," ")[:120])
 
+# ─── v1.24.95 — verbatim screenshot regression #3 ────────────────────
+# Bug shipped in v1.24.94: founder filled the in-chat picker, submitted,
+# the bot received a synthesized "[Office] Liberty, BJKJ, ..." message,
+# treated it as a normal customer message containing the address, and
+# created Q-0B1FB9 without ever EMITTING [[picker:address]] in the
+# turn that asked for address.
+#
+# Root cause: 3 places in the system prompt explicitly said "ask address
+# as free text". The LLM was obeying instructions. Regex post-processor
+# was fighting the prompt and lost.
+#
+# v1.24.95 fix:
+#   - STEP 7 now says "emit [[picker:address]] and STOP"
+#   - "When location/address, ask in free text" → "...end with
+#     [[picker:address]]"
+#   - "Then ask name, phone, full address" → "...then emit
+#     [[picker:address]]"
+#   - "For free-form input (name, address, phone, custom date), do NOT
+#     include the marker" → address removed from free-form list
+#   - New "ADDRESS PICKER PROTOCOL" section: 5 absolute rules, never
+#     accept typed addresses, re-emit picker if user types
+#
+# These are SYSTEM PROMPT changes — not testable by static unit tests
+# without a real LLM call. The regression detector here is the persona
+# blob itself: assert that the persona STRING contains the new rules
+# and does NOT contain the old free-text instruction.
+print("\n--- v1.24.95 system-prompt audit (R95) ---")
+
+# The system prompt is built dynamically. Grab the file source and
+# audit the literal strings so this test catches any future regression
+# that re-adds the "ask address as free text" instruction.
+import app.llm as _llm_mod
+import inspect as _inspect
+persona = _inspect.getsource(_llm_mod)
+
+t("R95-1. persona declares ADDRESS PICKER PROTOCOL",
+  "ADDRESS PICKER PROTOCOL" in persona)
+t("R95-2. STEP 7 emits picker, not 'free text'",
+  "STEP 7" in persona and
+  "address with building / area (one question, free text)" not in persona)
+t("R95-3. 'When location/address, ask in free text' is gone",
+  "When location/address, ask in free text" not in persona)
+t("R95-4. free-form list no longer includes 'address'",
+  "input (name, address, phone, custom date)" not in persona and
+  "input (name, phone, custom date)" in persona)
+t("R95-5. persona explicitly mentions 'NEVER accept a typed address'"
+  " or equivalent",
+  "Never accept a typed address" in persona or
+  "NEVER accept a typed address" in persona or
+  "typed address as the customer" in persona)
+t("R95-6. STEP 7 contains the literal [[picker:address]] marker",
+  "STEP 7" in persona and
+  persona.split("STEP 7")[1].split("STEP 8")[0].count("[[picker:address]]") >= 1)
+
 # Summary
 total = passed + len(failed)
 print()

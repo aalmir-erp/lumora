@@ -97,7 +97,9 @@ t("16. /address-picker.js exists in /web",
 if js_exists:
     js = open("web/address-picker.js").read()
     t("17. widget loads Leaflet + English-label tiles",
-      "leaflet" in js.lower() and ("openstreetmap.org" in js or "cartocdn.com" in js))
+      "leaflet" in js.lower() and
+      # v1.24.95: arcgisonline serves English globally incl. UAE
+      ("arcgisonline.com" in js or "openstreetmap.org" in js or "cartocdn.com" in js))
     t("18. widget posts to /api/geocode/reverse",
       "/api/geocode/reverse" in js)
     t("19. widget v1.24.91 — auto-fills area+city from reverse-geocode (cross-check removed per UX feedback)",
