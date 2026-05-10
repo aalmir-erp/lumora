@@ -527,6 +527,15 @@ def chat(messages: list[dict], *, session_id: str | None = None,
         convo.append({"role": "user", "content": results})
 
     final_text = _enforce_picker_and_one_question(final_text)
+    # v1.24.96 — wire up the Book-now → quote_card auto-converter.
+    # This function was DEFINED at line ~1019 but NEVER CALLED until
+    # now, which is why founder screenshots of v1.24.94/95 showed
+    # raw "Final Summary: ... [Book now ↗] ..." text instead of the
+    # proper [[quote_card: Q-XXXXXX]] with signature pad. Loophole 9
+    # (dead post-processor). See CLAUDE.md W8 — exhaustive grep
+    # before editing would have caught this in any of the prior 4
+    # release attempts.
+    final_text = _enforce_multi_quote_when_book_now(final_text, session_id=session_id)
     return {"text": final_text, "tool_calls": tool_calls,
             "usage": usage_total, "stop_reason": stop_reason}
 

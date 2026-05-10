@@ -311,6 +311,51 @@ t("R95-6. STEP 7 contains the literal [[picker:address]] marker",
   "STEP 7" in persona and
   persona.split("STEP 7")[1].split("STEP 8")[0].count("[[picker:address]]") >= 1)
 
+# ─── v1.24.96 — Loophole 9/10 regressions ────────────────────────────
+# Founder screenshot showed bot replying in French ("Parfait! J'ai bien
+# enregistré...") + writing a plain-text "Final Summary" with a legacy
+# "Book now ↗" link instead of calling create_multi_quote to render a
+# quote_card. Two root causes from per-W8 audit:
+#
+#   L9: _enforce_multi_quote_when_book_now is DEFINED in app/llm.py
+#       but was NEVER CALLED. Pure dead code. Bot text passed through
+#       unchanged.
+#   L10: _detect_lang_from_text returned None for Latin-script messages
+#        without specific French/Spanish/Filipino markers. Fell back to
+#        ui_lang. localStorage.lumora.lang somehow got "fr". Bot
+#        replied French to UAE customer typing English.
+print("\n--- v1.24.96 Book-now wire-up + language audit (R96) ---")
+
+# L9 wire-up: the post-processor must be CALLED, not just defined.
+import inspect as _inspect2
+llm_src = _inspect2.getsource(_llm_mod)
+t("R96-1. _enforce_multi_quote_when_book_now is now called",
+  "_enforce_multi_quote_when_book_now(" in llm_src and
+  llm_src.count("_enforce_multi_quote_when_book_now") >= 2,
+  "definition + at least one call site")
+t("R96-2. wired up in the chat() pipeline next to picker enforcer",
+  "_enforce_picker_and_one_question" in llm_src and
+  "_enforce_multi_quote_when_book_now(final_text" in llm_src)
+
+# L10 language detection — Latin script with English stopwords → "en"
+import importlib as _imp
+_main = _imp.import_module("app.main")
+_dl = _main._detect_lang_from_text
+t("R96-3. 'Yes' detects as English (was: None → ui_lang fallback)",
+  _dl("Yes") == "en")
+t("R96-4. 'thanks please' detects as English",
+  _dl("thanks please") == "en")
+t("R96-5. 'bonjour merci' still detects as French",
+  _dl("bonjour merci où c'est") == "fr")
+t("R96-6. picker output has no stopwords → still None (history fallback handles it)",
+  _dl("[Homehh] Liberty Building 2720, 8293, Muweilah Commercial, Sharjah") is None,
+  "intentional: short proper-noun strings → server uses conv history")
+t("R96-7. French diacritics block English default",
+  _dl("réservation pour mercredi à 14h") in ("fr", None),
+  "explicit French (via réservation keyword) OR None (history wins)")
+t("R96-8. Arabic still detects as Arabic",
+  _dl("أهلاً، أحتاج خدمة تنظيف") == "ar")
+
 # Summary
 total = passed + len(failed)
 print()

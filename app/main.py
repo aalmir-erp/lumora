@@ -745,13 +745,29 @@ async def _cascade_via_router(prompt: str, history: list[dict], lang: str) -> di
 
 # ---------- chat helpers: auto language detect + job filter ----------
 
+_ENGLISH_STOPWORDS = frozenset((
+    "the", "and", "is", "are", "was", "were", "have", "has", "had",
+    "would", "could", "should", "will", "can", "my", "your", "this",
+    "that", "yes", "no", "ok", "okay", "please", "thanks", "thank",
+    "what", "when", "where", "why", "how", "with", "for", "from",
+    "about", "want", "need", "book", "looking", "service",
+))
+
+
 def _detect_lang_from_text(text: str) -> str | None:
     """Best-effort language detection from the user's message body so the
     bot replies in whatever language they wrote in, not just whatever the
     UI dropdown says. Uses Unicode script ranges for high-confidence
     classes (Arabic, Devanagari, Cyrillic, etc.) since those are visually
-    unambiguous; latin-script languages need text content (English wins
-    by default for short messages, which is fine for the UAE)."""
+    unambiguous; latin-script languages need text content.
+
+    v1.24.96 (per W8 — Loophole 10 root-cause): previously Latin-script
+    messages with no French/Spanish/Filipino markers returned None and
+    fell back to ui_lang. If ui_lang was "fr" (e.g. accidental dropdown
+    tap or browser default), the bot replied in French to UAE customers
+    typing English. Founder screenshot of Q-0B1FB9 booking showed this.
+    Now: Latin script with no specific markers AND no French diacritics
+    defaults to "en" — UAE's lingua franca."""
     if not text or len(text.strip()) < 2:
         return None
     s = text.strip()
@@ -783,13 +799,32 @@ def _detect_lang_from_text(text: str) -> str | None:
         if top[1] >= max(2, len(s) * 0.2):
             return top[0]
     # Latin-script: simple keyword heuristic for Filipino / French / Spanish.
+    # v1.24.96 (Loophole 11): use word-boundary checks. Prior version
+    # matched "merci" inside "comMERCIal" → picker output containing
+    # "Muweilah Commercial" was mis-detected as French.
+    import re as _re_lang
     low = s.lower()
-    if any(t in low for t in [" ang ", " ng ", " ako ", " mo "]):
+    def _has(words):
+        pat = r"\b(?:" + "|".join(_re_lang.escape(w) for w in words) + r")\b"
+        return bool(_re_lang.search(pat, low))
+    if _has(["ang", "ng", "ako", "mo"]):
         return "tl"
-    if any(t in low for t in ["bonjour", "merci", "où ", "c'est "]):
+    if _has(["bonjour", "merci", "où", "c'est",
+             "réserver", "réservation", "votre", "adresse",
+             "parfait", "voici"]):
         return "fr"
-    if any(t in low for t in ["hola ", "gracias", "dónde", "puede"]):
+    if _has(["hola", "gracias", "dónde", "puede"]):
         return "es"
+    # v1.24.96: if Latin script AND no French diacritics AND no specific
+    # non-English markers AND at least one common English stopword,
+    # default to "en". This stops the "ui_lang=fr accidentally locked
+    # in" → bot replies French to UAE customer typing English bug.
+    has_french_diacritics = any(c in s for c in "éèêëàâäîïôöùûüçœÉÈÀÂÔÙÇ")
+    if not has_french_diacritics:
+        words = set(low.replace(",", " ").replace(".", " ")
+                    .replace("?", " ").replace("!", " ").split())
+        if words & _ENGLISH_STOPWORDS:
+            return "en"
     return None  # fall back to UI-supplied language
 
 
@@ -876,6 +911,23 @@ def chat(req: ChatRequest, request: Request):
     # an English reply (since their text is Latin), but typing "एसी साफ
     # करना है" gets a Hindi reply, regardless of what the dropdown says.
     detected = _detect_lang_from_text(req.message or "")
+    # v1.24.96 — if current message has no detectable signal, scan the
+    # last 5 customer messages. Picker outputs ("[Homehh] Liberty
+    # Building 2720, ...") have no stopwords, so they'd silently fall
+    # back to a stale ui_lang. Looking at history fixes that without
+    # taking the "default everything to en" sledgehammer.
+    if detected is None:
+        try:
+            recent = _history(sid, limit=10) or []
+            for h in reversed(recent):
+                if h.get("role") != "user":
+                    continue
+                d = _detect_lang_from_text(h.get("content") or "")
+                if d:
+                    detected = d
+                    break
+        except Exception:
+            pass
     lang = detected or ui_lang
 
     # Capture browser/IP for the admin Conversations view.
