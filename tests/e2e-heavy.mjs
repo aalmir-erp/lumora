@@ -221,6 +221,14 @@ const TESTS = [
   }],
   ['T25','/nfc schema set', async (p) => {
     await p.goto(BASE+'/nfc');
+    // v1.24.94 — Cloudflare cold-load sometimes returns its 502 page
+    // with HTTP status 200 (the interstitial HTML body is served while
+    // origin is still warming). Detect it via title/body so the test
+    // throws HTTP 502 → matches TRANSIENT regex → retried automatically.
+    const title = await p.title();
+    if (/bad\s+gateway|cloudflare|error\s+1\d{3}/i.test(title)) {
+      throw new Error(`HTTP 502 (cf interstitial: "${title.slice(0,60)}")`);
+    }
     const j = await p.locator('script[type="application/ld+json"]').allInnerTexts();
     if (!j.some(s => /HowTo/.test(s)) || !j.some(s => /FAQPage/.test(s)) || !j.some(s => /Product/.test(s))) throw new Error('schema missing');
     rec('T25','/nfc schema set','pass','HowTo+FAQ+Product');
