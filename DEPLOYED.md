@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"NfQj2UGYShutNiwkGbGh5g"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"UELEBZQ5QrWYdW1BCx5-qw"}`
 
 ## Build logs
 ```
@@ -16,7 +16,7 @@
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
-[internal] load build context
+[ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/11] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
@@ -33,9 +33,9 @@
 [11/11] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:c9225886b3b6ba1aeda36dfd0a59b698e2935544c2d31bf1841b1f65256c3cc1
-containerimage.digest: sha256:82c65d689d66727d3aae9c5f3414b7c484ed766dc2f7d2d16a41710a4a058666
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODJjNjVkNjg5ZDY2NzI3ZDNhYWU5YzVmMzQxNGI3YzQ4NGVkNzY2ZGMyZjdkMmQxNmE0MTcxMGE0YTA1ODY2NiIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMFQwOToyMTozOFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:f6843962028e44b94947a880c77880d84bd10f52d4cc0e89273e0b08cfc633f6
+containerimage.digest: sha256:602f3fa93cc89277c43a01cb8f7129b8ad65b71ea505ccfd781d5744245b0e07
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NjAyZjNmYTkzY2M4OTI3N2M0M2EwMWNiOGY3MTI5YjhhZDY1YjcxZWE1MDVjY2ZkNzgxZDU3NDQyNDViMGUwNyIsInNpemUiOjI5NTksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMFQwOTo1OToxNFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 
 [35m====================
@@ -50,18 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/eb1ab427-ad03-4ace-ad87-cc6938453063/vol_onr647rhdeir9di9
-Starting Container
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
-INFO:     Waiting for application startup.
-[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Started server process [1]
+INFO:     100.64.0.4:56158 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.4:56162 - "GET /api/nfc/tag/zzzzbogus99 HTTP/1.1" 404 Not Found
+INFO:     100.64.0.4:56166 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.4:56168 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.4:23990 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.4:56166 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.4:56170 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.3:29380 - "GET /cart.html HTTP/1.1" 200 OK
+INFO:     100.64.0.7:37962 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.7:37978 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.7:37954 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.13:35028 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.7:37936 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.7:37944 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.7:37954 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.7:37958 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.3:29380 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.3:29390 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:29396 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.3:29380 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.3:29390 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.3:29396 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:29412 - "GET /index.html HTTP/1.1" 200 OK
+INFO:     100.64.0.3:29396 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:39737 - "GET /api/health HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
+Stopping Container
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Finished server process [1]
+Stopping Container
 ```
