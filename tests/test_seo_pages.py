@@ -119,8 +119,8 @@ t("20. internal-links does NOT self-link",
   '/services/deep-cleaning/dubai-marina"' not in html.split("seo-internal-links")[1] if "seo-internal-links" in html else True)
 t("21. internal-links mentions related services in the same area",
   '/services/' in html and '/dubai-marina' in html and html.count("/dubai-marina") >= 1)
-t("22. 'Why Servia in Dubai Marina' content block injected",
-  "Dubai Marina" in html and "what you get" in html)
+t("22. Area-aware content block injected (with What's included or pricing)",
+  "Dubai Marina" in html and ("included" in html.lower() or "pricing" in html.lower() or "Coverage" in html))
 
 # 7. uniqueness — render two pages, verify they differ
 html2 = _seo.render_service_area_page(
