@@ -2,13 +2,10 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"A5K3SnfrQuSa5UBqFFmdQQ"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"ZcAK1-t5Qxayiy35xtoGcA"}`
 
 ## Build logs
 ```
-[ 5/12] RUN pip install -r requirements.txt
-[ 4/12] COPY requirements.txt ./
-[internal] load build context
 [ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 2/12] WORKDIR /app
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
@@ -29,13 +26,16 @@
 [ 8/12] COPY app ./app
 [ 9/12] COPY web ./web
 [10/12] COPY _e2e-shots ./_e2e-shots
+[10/12] COPY _e2e-shots ./_e2e-shots
 [11/12] COPY start.sh /app/start.sh
+[11/12] COPY start.sh /app/start.sh
+[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NGRjOTgwZmExMTBmMjdhNzU4YmI5NjQzY2NhMzAxZDQ2YTJkZjhmMjllMzA1ODE1MmQ4N2Y0ODJlMTMwMGI5MCIsInNpemUiOjMxNTEsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMFQxNDo1NTowMFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:fe7a6d509b5e182bc76ee5f92353b0b66a30065ec18d6a9ab5adc5997ade3d73
-containerimage.digest: sha256:4dc980fa110f27a758bb9643cca301d46a2df8f29e3058152d87f482e1300b90
+containerimage.digest: sha256:2bc158d0a597942375c08badc7bf865c8acad515d07c3e895322362aee64f36c
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MmJjMTU4ZDBhNTk3OTQyMzc1YzA4YmFkYzdiZjg2NWM4YWNhZDUxNWQwN2MzZTg5NTMyMjM2MmFlZTY0ZjM2YyIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMFQxNTozNjo0OVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:367af445014e14b70648d26094a28f0502bca882dc534a4388ed02ebfd191450
 image push
 
 [35m====================
@@ -50,10 +50,10 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/66e93e04-a4f1-48fc-8a75-9e04a48fcec2/vol_onr647rhdeir9di9
-Starting Container
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/ea83dc9b-dd62-4c27-85b4-9853f1a18a8c/vol_onr647rhdeir9di9
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
+Starting Container
 [scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
 INFO:     Started server process [1]
 INFO:     Waiting for application startup.
@@ -61,13 +61,12 @@ INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:60595 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:47538 - "GET /me-profile.html HTTP/1.1" 200 OK
-INFO:     100.64.0.4:31218 - "GET /api/me/profile HTTP/1.1" 200 OK
-INFO:     100.64.0.5:19230 - "GET /address-picker.js?v=1.24.93 HTTP/1.1" 200 OK
+INFO:     100.64.0.2:49855 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
+Stopping Container
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1]
+Stopping Container
 ```
