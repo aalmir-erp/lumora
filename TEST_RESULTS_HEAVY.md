@@ -1,13 +1,13 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 47
-- ⚠️ Warn: 1
-- ❌ Fail: 2
+- ✅ Pass: 48
+- ⚠️ Warn: 2
+- ❌ Fail: 0
 - ⏭ Skip: 1
 
 ## Items
 
-- ❌ **[T01] Homepage loads (desktop)** — exception: HTTP 502
+- ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
 - ✅ **[T03] /services lists services** — 37 cards
 - ✅ **[T04] /coverage.html renders** — OK
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_eZlvbKw2R...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_p3vIotQJk...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -53,8 +53,8 @@
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book renders form** — OK
-- ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
-- ❌ **[T48] /book.html?nfc=<bogus> graceful** — exception: book button missing
+- ⚠️ **[T47] /book.html?service=deep_cleaning prefills** — got=
+- ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
 - ✅ **[T49] /cart.html loads** — OK
 - ⚠️ **[T50] Service worker active** — not registered
 - ✅ **[T51] Admin viewer — _e2e-shots dir is in deployed container** — HTTP 200 ct=image/png
