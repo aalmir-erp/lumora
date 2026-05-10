@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
 - ✅ Pass: 48
-- ⚠️ Warn: 2
-- ❌ Fail: 0
+- ⚠️ Warn: 1
+- ❌ Fail: 1
 - ⏭ Skip: 1
 
 ## Items
@@ -17,7 +17,7 @@
 - ✅ **[T08] /faq FAQPage schema** — present
 - ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
-- ✅ **[T11] Mobile nav single-row** — Δy=-3
+- ✅ **[T11] Mobile nav single-row** — Δy=1
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
 - ✅ **[T14] Footer present** — OK
@@ -31,7 +31,7 @@
 - ✅ **[T22] /nfc 3-mode panel** — OK
 - ✅ **[T23] /nfc bot widget** — OK
 - ✅ **[T24] /nfc bulk-order section** — OK
-- ✅ **[T25] /nfc schema set** — HowTo+FAQ+Product
+- ❌ **[T25] /nfc schema set** — exception: schema missing
 - ✅ **[T26] /api/nfc/tag bad slug 404** — OK
 - ✅ **[T27] /t/<bad-slug> redirects** — /nfc-not-found.html?slug=zzzzbogus99
 - ✅ **[T28] /nfc vehicle recovery section** — OK
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_p3vIotQJk...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_51lI7S4bX...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,13 +47,13 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.92
+- ✅ **[T41] /api/health responds** — v1.24.93
 - ✅ **[T42] /api/services >=10** — 37
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.92
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book renders form** — OK
-- ⚠️ **[T47] /book.html?service=deep_cleaning prefills** — got=
+- ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
 - ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
 - ✅ **[T49] /cart.html loads** — OK
 - ⚠️ **[T50] Service worker active** — not registered
