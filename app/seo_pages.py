@@ -576,11 +576,22 @@ def render_service_area_page(svc: dict, area_info: dict, brand: dict,
         extra_ld += '<script type="application/ld+json">' + faq_ld + '</script>'
     html = html.replace("</head>", extra_ld + shim + "</head>", 1)
 
-    # v1.24.101 (Loophole 20): inject content BEFORE <footer> so it
-    # appears as part of the page body, not below the footer. The
-    # service.html template has <footer> at line 475 and no </main>,
-    # so the previous fallback to </body> placed our SEO content
-    # AFTER the footer (founder screenshot).
+    # v1.24.103 (Loophole 22): content was injected ABOVE footer but
+    # BELOW all the existing service.html sections (description, FAQ,
+    # reviews etc.) — meaning users had to scroll past 5 screens to
+    # see our area-aware content. Founder: "soon mostly people don't
+    # go to that stage". Now: inject IMMEDIATELY AFTER the hero
+    # section (first </section> close) so it's the second screen.
+    # Order on page is now:
+    #   1. Logo + nav
+    #   2. svc-hero (existing H1 + price + chat CTA)
+    #   3. ⬇ INJECTED ⬇
+    #      a. Hero image (Pollinations: employees doing the service)
+    #      b. Why Servia in {area} (~3,400-word KB-driven content)
+    #      c. Area map (OSM iframe centered on real coords)
+    #      d. Internal links (4 nearby areas + 4 related services)
+    #   4. Existing service detail sections (process, FAQ, reviews)
+    #   5. Footer
     services = services or []
     hero_block = _hero_image_block(svc, area_info)
     map_block = _area_map_block(area_info)
@@ -588,7 +599,10 @@ def render_service_area_page(svc: dict, area_info: dict, brand: dict,
     links_block = _related_internal_links(svc_slug, slugify(area_name),
                                           services, domain)
     insert = hero_block + why_block + map_block + links_block
-    if "<footer" in html:
+    # Inject right after the FIRST </section> (end of svc-hero)
+    if "</section>" in html:
+        html = html.replace("</section>", "</section>\n" + insert, 1)
+    elif "<footer" in html:
         html = html.replace("<footer", insert + "<footer", 1)
     elif "</main>" in html:
         html = html.replace("</main>", insert + "</main>", 1)

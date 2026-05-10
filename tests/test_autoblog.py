@@ -63,8 +63,11 @@ t("7. different slugs → different seeds",
 # Prompt builder
 prompt = _bi._build_prompt("AC Cleaning in Dubai Marina (Dubai): summer guide May 2026",
                            emirate="dubai", service="ac_cleaning")
-t("8. prompt mentions service",
-  "ac cleaning" in prompt.lower())
+t("8. prompt mentions service contextually",
+  "ac cleaning" in prompt.lower() or
+  "ac technician" in prompt.lower() or
+  "hvac" in prompt.lower(),
+  "v1.24.103: prompt now uses verb-style 'HVAC technician unscrewing split AC unit cover'")
 t("9. prompt mentions emirate (title-cased)",
   "Dubai" in prompt)
 t("10. prompt forbids text/watermark/logos",

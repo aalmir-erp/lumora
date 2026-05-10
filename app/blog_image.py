@@ -41,19 +41,61 @@ import urllib.parse
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt/"
 
 
+# v1.24.103 — service-specific prompt vocab so the hero image actually
+# shows uniformed workers doing THE WORK, not generic interiors.
+# Founder: "use real images of services being performed along with
+# our employees doing that service professionally".
+_SERVICE_VERBS = {
+    "deep_cleaning":     "professional cleaner in mint-green branded uniform wiping down a kitchen counter with microfiber cloth and spray bottle, before-and-after spotless surface",
+    "general_cleaning":  "uniformed home cleaner mopping a marble floor in a modern UAE living room",
+    "ac_cleaning":       "HVAC technician in mint uniform on a step-ladder unscrewing a split AC unit cover, vacuum hose and spray bottle visible, ladder, professional tool kit on floor",
+    "pest_control":      "pest-control technician in protective gear with backpack sprayer treating skirting boards in a UAE villa kitchen, professional tool belt",
+    "sofa_carpet":       "uniformed cleaner using a steam-cleaning machine on a fabric sofa in a UAE living room, foam visible, mint-branded equipment",
+    "maid_service":      "smiling housekeeper in mint uniform folding fresh laundry in a sunlit UAE bedroom",
+    "laundry":           "delivery rider in mint uniform handing a sealed laundry bag to a customer at a UAE villa door",
+    "handyman":          "handyman in mint branded uniform installing a wall shelf with a power drill in a modern UAE apartment",
+    "plumbing":          "plumber in mint uniform under a kitchen sink with pipe wrench and torch, organized tool kit on tile floor",
+    "ac_repair":         "AC technician in mint uniform with multimeter checking outdoor compressor unit on a UAE villa balcony",
+    "ac_installation":   "two AC technicians in mint uniforms mounting a split AC indoor unit on a wall, ladder, drill, tool kit",
+    "marble_polish":     "floor specialist with rotary polisher buffing a marble floor in a UAE villa hallway",
+    "curtain_cleaning":  "uniformed worker steaming long curtains hanging in a UAE living room with floor-to-ceiling windows",
+    "car_wash":          "car-wash technician in mint uniform foaming a luxury sedan in a UAE villa driveway, microfiber cloths, professional pressure washer",
+    "swimming_pool":     "pool-service technician in mint uniform skimming a sparkling private pool in a UAE villa, test kit and pole on poolside",
+    "gardening":         "gardener in mint uniform pruning hedges in a UAE villa garden, wheelbarrow with tools",
+    "painting":          "painter in mint uniform on a step-ladder rolling fresh white paint on a UAE living-room wall, drop cloth on floor",
+    "window_cleaning":   "window-cleaner in mint uniform squeegeeing a tall floor-to-ceiling window in a UAE apartment, bucket and microfiber visible",
+    "babysitting":       "smiling certified nanny reading a picture book to two children on a UAE living-room rug",
+    "smart_home":        "smart-home installer in mint uniform mounting a smart switch on a UAE wall, tablet showing app on coffee table",
+    "move_in_out":       "two cleaners in mint uniforms with industrial steam cleaners doing move-out clean of empty UAE apartment",
+    "villa_deep":        "team of three cleaners in mint uniforms scrubbing a UAE villa kitchen and bathrooms",
+    "kitchen_deep":      "cleaner in mint uniform degreasing a UAE kitchen extractor hood with foam and brush",
+    "gym_deep_cleaning": "industrial cleaner in mint uniform sanitising gym equipment in a UAE residential gym",
+    "school_deep_cleaning": "cleaning crew in mint uniforms disinfecting a UAE school classroom",
+    "commercial_cleaning": "commercial cleaning crew in mint uniforms vacuuming and wiping a Dubai office reception",
+}
+
+
 def _build_prompt(topic: str, emirate: str | None = None,
                   service: str | None = None) -> str:
-    """Compose a clean hero-image prompt. Strips topic suffixes and
-    forces a consistent style so all blog heroes share visual DNA."""
-    base_topic = (topic or "UAE home services").split(":")[0].strip()
+    """Compose a service-specific photoreal prompt. Aim: make the
+    image LOOK like our own staff doing the actual work in a real
+    UAE home — NOT a generic stock interior shot.
+
+    v1.24.103 — switched from "modern photography style hero of clean
+    professional setup" (interior magazine vibe, no humans) to a
+    service-specific verb describing UNIFORMED WORKERS performing
+    the work. Founder rule: photos must look like our employees,
+    not catalog renders."""
     emirate_clean = (emirate or "Dubai").replace("-", " ").title()
-    service_clean = (service or "home services").replace("_", " ")
+    sid = (service or "deep_cleaning").lower()
+    verb = _SERVICE_VERBS.get(sid, _SERVICE_VERBS["deep_cleaning"])
     return (
-        f"Modern photography style hero image of a clean professional "
-        f"{service_clean} setup in a UAE villa apartment in {emirate_clean}, "
-        f"natural daylight, neutral palette with mint and gold accents, "
-        f"high-end editorial composition, no text, no watermark, no logos, "
-        f"shot from chest-level angle, sharp focus, 4k"
+        f"Documentary photography, {verb}, "
+        f"natural daylight from window, residential UAE setting in {emirate_clean}, "
+        f"warm realistic colour grade, sharp focus, 50mm lens, "
+        f"shallow depth of field, photoreal, "
+        f"no text, no watermark, no logos, no brand names visible, "
+        f"high-end editorial photography, 4k"
     )
 
 
