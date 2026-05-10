@@ -169,6 +169,45 @@ r = c.post("/api/me/locations/upsert-from-pin", json={
 t("UP8. lat/lng missing → ok=false",
   r.json().get("ok") is False)
 
+# ─── v1.24.93 — verbatim screenshot regression ────────────────────
+# Bug shipped in v1.24.92: bot replied "could you please confirm the
+# emirate for Furjan" + emitted [[choices: Dubai=Dubai; Sharjah=...]]
+# WHILE the address picker also rendered. UX showed duplicate
+# emirate selectors. The post-processor must (a) inject the picker
+# AND (b) strip the redundant emirate-only [[choices:]] block.
+print("\n--- v1.24.93 emirate-duplicate regression (verbatim screenshot) ---")
+
+SCREENSHOT_TEXT = (
+    "Great! So that's Deep Cleaning, Pest Control, and Sofa & Carpet "
+    "Shampoo for Wednesday, May 20, 2026, at 12:00 PM.\n\n"
+    "To finalize your booking, could you please confirm the emirate "
+    "for Furjan and provide the full address?\n"
+    "[[choices: Dubai=Dubai; Sharjah=Sharjah; Ajman=Ajman; "
+    "Abu Dhabi=Abu Dhabi]]"
+)
+out = _enforce_picker_and_one_question(SCREENSHOT_TEXT)
+t("R93-1. picker injected for 'confirm the emirate'",
+  "[[picker:address]]" in out, out[-60:].replace("\n"," "))
+t("R93-2. emirate [[choices:]] block stripped",
+  "[[choices:" not in out and "Dubai=Dubai" not in out,
+  out)
+t("R93-3. summary text retained",
+  "Deep Cleaning" in out and "Furjan" in out)
+
+# Variants of the same family that all must strip + inject
+VARIANTS = [
+    ("which emirate is this in?\n[[choices: Dubai=Dubai; Sharjah=Sharjah]]",
+     "which emirate variant"),
+    ("Could you confirm the city for me?\n[[choices: Dubai; Abu Dhabi; Ajman]]",
+     "confirm the city variant"),
+    ("Where should we come?\n[[choices: Dubai=Dubai; Ras Al Khaimah=RAK]]",
+     "where should we come variant"),
+]
+for txt, name in VARIANTS:
+    out = _enforce_picker_and_one_question(txt)
+    ok = "[[picker:address]]" in out and "[[choices:" not in out
+    t(f"R93-V {name}", ok, out[:120].replace("\n"," "))
+
 # Summary
 total = passed + len(failed)
 print()

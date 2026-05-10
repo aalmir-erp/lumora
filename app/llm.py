@@ -703,6 +703,16 @@ def _enforce_picker_and_one_question(text: str) -> str:
     # marker, inject [[picker:address]] so the widget renders the
     # pin-on-map card. Pin location is MANDATORY sitewide.
     if "[[picker:address]]" not in text and _ADDR_TRIGGER.search(text):
+        # v1.24.93 — also strip any redundant emirate-only [[choices:]]
+        # block (Dubai/Sharjah/Ajman/Abu Dhabi/RAK/UAQ/Fujairah) since
+        # the picker handles city auto-detect from the pin. Otherwise UX
+        # shows duplicate emirate selectors stacked above the picker.
+        text = _re_q.sub(
+            r"\[\[\s*choices?\s*:[^\]]*"
+            r"(?:Dubai|Sharjah|Ajman|Abu\s+Dhabi|"
+            r"Ras\s+Al\s+Khaimah|Umm\s+Al\s+Quwain|Fujairah|emirate)"
+            r"[^\]]*\]\]",
+            "", text, flags=_re_q.IGNORECASE)
         text = text.rstrip() + "\n[[picker:address]]"
     return text
 
@@ -733,6 +743,10 @@ _ADDR_TRIGGER = _re_q.compile(
     r"villa\s+(?:number|name)|"
     r"could\s+you\s+(?:please\s+)?(?:share|provide|tell|give)[^?]*address|"
     r"what(?:'s|\s+is)?\s+(?:your\s+)?(?:full\s+)?address|"
+    # v1.24.93 — also catch "confirm the emirate / city" patterns
+    r"confirm\s+(?:the\s+)?(?:emirate|city)|"
+    r"which\s+(?:emirate|city)|"
+    r"what(?:'s|\s+is)?\s+(?:your\s+)?(?:emirate|city)|"
     r"where\s+(?:are\s+you|do\s+you\s+live|should\s+we\s+come)",
     _re_q.IGNORECASE,
 )
