@@ -4,7 +4,7 @@
 <meta name="googlebot" content="noindex,nofollow">
 <meta name="bingbot" content="noindex,nofollow">
 <title>Admin: Servia</title><meta name="theme-color" content="#0D9488">
-<link rel="stylesheet" href="/style.css?v=1.24.101">
+<link rel="stylesheet" href="/style.css?v=1.24.102">
 <style>
   /* Mobile drawer for the admin sidebar — style.css hides .admin-side on
    * <=880px with no way to bring it back. Re-introduce it as a slide-out
@@ -5202,24 +5202,69 @@ function updateAreaList() {
     list.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
 }
 async function runAutoblog() {
-  const em = document.getElementById("ab-emirate").value;
-  const ar = document.getElementById("ab-area").value;
-  const md = document.getElementById("ab-model").value;
-  const tp = document.getElementById("ab-topic").value.trim();
+  // v1.24.102 — fixed: previously called /api/admin/autoblog/run which
+  // never existed (silent 404). Now uses /run-now (background thread)
+  // and polls /status until last_run.ts changes, then shows the
+  // generated post inline.
   const out = document.getElementById("ab-result");
-  out.textContent = "⏳ Generating — cascading through providers if needed…";
+  out.innerHTML = "⏳ Triggering generation… (Gemini Flash takes 10-30s)";
+  let beforeTs = "";
   try {
-    const params = new URLSearchParams({ emirate: em });
-    if (ar) params.set("area", ar);
-    if (tp) params.set("topic", tp);
-    if (md) params.set("model", md);
-    const r = await adm("/api/admin/autoblog/run?" + params.toString(), { method: "POST" });
-    if (r.ok) {
-      out.innerHTML = '✓ Published <a href="'+escapeHtml(r.url)+'" target="_blank" style="color:#0F766E;font-weight:700">'+escapeHtml(r.topic)+'</a> · <b>'+escapeHtml(r.area||'')+'</b> · '+r.len+' chars · <small style="color:var(--muted)">via '+escapeHtml(r.model||'?')+'</small>';
-      document.getElementById("ab-topic").value = "";
+    const s0 = await adm("/api/admin/autoblog/status");
+    beforeTs = (s0.last_run || {}).ts || "";
+  } catch (_) {}
+  try {
+    const r = await adm("/api/admin/autoblog/run-now?slot=manual",
+                        { method: "POST" });
+    if (!r.ok) {
+      out.innerHTML = '<span style="color:#B91C1C">✗ ' +
+                      escapeHtml(r.error||"failed to trigger") + '</span>';
+      return;
+    }
+    out.innerHTML = "⏳ Generating… polling status (max 60s)";
+    // Poll status every 3s until last_run.ts changes (or timeout)
+    const start = Date.now();
+    let last = null;
+    while (Date.now() - start < 60000) {
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        const st = await adm("/api/admin/autoblog/status");
+        last = st.last_run || {};
+        if (last.ts && last.ts !== beforeTs) break;
+      } catch (_) {}
+    }
+    if (!last || !last.ts || last.ts === beforeTs) {
+      out.innerHTML = '<span style="color:#B45309">⚠ Timed out waiting for ' +
+                      'result. Check /api/admin/autoblog/status for details.</span>';
+      return;
+    }
+    if (last.ok && last.slug) {
+      // Pull the post + image from the list endpoint
+      let imgUrl = "";
+      try {
+        const lst = await adm("/api/admin/autoblog/list?limit=1");
+        if (lst.ok && lst.posts && lst.posts.length) {
+          imgUrl = lst.posts[0].image_url || "";
+        }
+      } catch (_) {}
+      out.innerHTML = '<div style="border:1px solid #99F6E4;background:#F0FDFA;' +
+        'border-radius:12px;padding:14px;margin-top:8px">' +
+        '<div style="font-weight:700;color:#0F766E;margin-bottom:6px">' +
+        '✅ Generated via ' + escapeHtml(last.provider || "?") + '</div>' +
+        '<div style="margin-bottom:8px">' +
+        '<a href="/blog/' + escapeHtml(last.slug) + '" target="_blank" ' +
+        'style="color:#0F766E;font-weight:700">/blog/' +
+        escapeHtml(last.slug) + ' ↗</a></div>' +
+        (imgUrl ? '<img src="' + escapeHtml(imgUrl) + '" loading="lazy" ' +
+                  'style="width:100%;max-width:480px;border-radius:8px;' +
+                  'border:1px solid #E2E8F0;margin-top:6px" alt="hero">' : '') +
+        '</div>';
       loadAutoblog();
     } else {
-      out.innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(r.error||"Failed") + '</span>';
+      out.innerHTML = '<span style="color:#B91C1C">✗ ' +
+        escapeHtml(last.err || "Generation failed") + '</span>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:4px">' +
+        'slot: ' + escapeHtml(last.slot || "?") + '</div>';
     }
   } catch (e) {
     out.innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(e.message) + '</span>';

@@ -360,7 +360,7 @@
   }
 
   // ---------- Lazy load full index when palette opens ----------
-  // v1.24.101 — fetch from single source-of-truth /api/search/index.
+  // v1.24.102 — fetch from single source-of-truth /api/search/index.
   // Includes manual pages, KB services, per-area pages, 1,628
   // service×area combos, blog, videos. Browser caches (1hr).
   // Fixes founder bug: typing "muwaileh" returned 0 results because
