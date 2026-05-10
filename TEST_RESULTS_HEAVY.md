@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 49
+- ✅ Pass: 48
 - ⚠️ Warn: 1
-- ❌ Fail: 0
+- ❌ Fail: 1
 - ⏭ Skip: 1
 
 ## Items
@@ -20,7 +20,7 @@
 - ✅ **[T11] Mobile nav single-row** — Δy=-3
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
-- ✅ **[T14] Footer present** — OK
+- ❌ **[T14] Footer present** — exception: no footer
 - ✅ **[T15] /install APK card** — OK
 - ✅ **[T16] /install Wear OS card** — OK
 - ✅ **[T17] /install iOS section** — OK
@@ -39,7 +39,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_yRntptksm...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_uwtMIdms6...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,9 +47,9 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.97
+- ✅ **[T41] /api/health responds** — v1.24.99
 - ✅ **[T42] /api/services >=10** — 37
-- ✅ **[T43] /api/app/latest works** — apk_v=1.24.97
+- ✅ **[T43] /api/app/latest works** — apk_v=1.24.98
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book renders form** — OK
