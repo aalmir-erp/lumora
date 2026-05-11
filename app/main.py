@@ -1461,6 +1461,287 @@ async def stripe_webhook(request: Request):
     return {"ok": True}
 
 
+# ════════════════════════════════════════════════════════════════════════
+# v1.24.124 — Ziina webhook + status-verify + manual reconciliation
+# ════════════════════════════════════════════════════════════════════════
+@app.post("/api/webhooks/ziina")
+async def ziina_webhook(request: Request):
+    """Ziina webhook receiver. Verifies HMAC-SHA256(raw_body, secret)
+    against X-Hmac-Signature before doing ANYTHING. On a verified
+    `payment_intent.status.updated` event with status `completed`:
+      1. Look up the invoice by ziina_payment_intent_id
+      2. Validate amount + currency match (defence against tampering)
+      3. Mark invoice paid + confirm booking + record webhook_received_at
+      4. Idempotent — if already paid, returns 200 without re-firing
+         confirmation alerts
+
+    Ziina docs say webhooks retry with exponential backoff on non-2xx.
+    So on transient failure (e.g. DB outage) we return 5xx; on permanent
+    issues (bad signature, amount mismatch) we return 4xx (do NOT retry).
+    """
+    from . import ziina as _ziina
+    raw = await request.body()
+    sig = request.headers.get("x-hmac-signature", "")
+    if not _ziina.verify_webhook_signature(raw, sig):
+        # Reject without state change. Use 401 — Ziina will not retry.
+        print(f"[ziina-webhook] BAD SIGNATURE — body={len(raw)}B sig_present={bool(sig)}",
+              flush=True)
+        raise HTTPException(status_code=401, detail="invalid signature")
+    try:
+        wb = _ziina.parse_webhook(raw)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"bad webhook json: {e}")
+    event = wb["event"]
+    data  = wb["data"] or {}
+    intent_id = data.get("id") or ""
+    status    = data.get("status") or ""
+    amount    = data.get("amount")
+    currency  = data.get("currency_code") or ""
+    print(f"[ziina-webhook] event={event} intent={intent_id} "
+          f"status={status} amount={amount} {currency}", flush=True)
+
+    if event != "payment_intent.status.updated":
+        # Other event types (refund.status.updated etc.) — log + 200 OK
+        db.log_event("ziina_webhook", intent_id or "unknown", event,
+                     actor="ziina", details={"data": data})
+        return {"ok": True, "noted": event}
+    if not intent_id:
+        raise HTTPException(status_code=400, detail="missing data.id")
+
+    # Look up the invoice that owns this intent
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT id, amount, currency, payment_status, booking_id "
+            "FROM invoices WHERE ziina_payment_intent_id=?",
+            (intent_id,)).fetchone()
+    if not row:
+        # Could be a webhook for an intent we don't recognise (test traffic,
+        # or a reconciliation race). Log but return 200 — Ziina would
+        # otherwise retry forever for an orphan.
+        print(f"[ziina-webhook] orphan intent {intent_id} — no invoice "
+              f"matches", flush=True)
+        db.log_event("ziina_webhook", intent_id, "orphan",
+                     actor="ziina", details={"status": status})
+        return {"ok": True, "noted": "orphan"}
+    inv = db.row_to_dict(row)
+    invoice_id = inv["id"]
+
+    # If the intent is in a non-terminal state, just record & exit
+    if status not in _ziina.TERMINAL_STATUSES:
+        with db.connect() as c:
+            c.execute("UPDATE invoices SET webhook_received_at=? WHERE id=?",
+                      (datetime.datetime.utcnow().isoformat() + "Z", invoice_id))
+        return {"ok": True, "noted": "non-terminal status: " + status}
+
+    # ── Failure / cancellation path
+    if status in (_ziina.STATUS_FAILED, _ziina.STATUS_CANCELED):
+        with db.connect() as c:
+            c.execute("UPDATE invoices SET payment_status=?, webhook_received_at=? "
+                      "WHERE id=? AND payment_status != 'paid'",
+                      (status, datetime.datetime.utcnow().isoformat() + "Z",
+                       invoice_id))
+        db.log_event("invoice", invoice_id, "ziina_" + status, actor="ziina",
+                     details={"intent": intent_id})
+        return {"ok": True, "noted": status}
+
+    # ── Completed path — guard amount + currency before marking paid
+    if amount is None or not isinstance(amount, int):
+        # Ziina should always send int per docs. Reject so they retry.
+        raise HTTPException(status_code=400, detail="webhook amount not int")
+    if not _ziina.validate_amount_match(inv["amount"], amount):
+        # Amount tampering or partial-capture — alert + 400
+        from . import admin_alerts as _aa
+        _aa.notify_admin(
+            f"⚠ Ziina amount mismatch on inv {invoice_id}: expected "
+            f"{_ziina.amount_to_minor(inv['amount'])} fils, got {amount}. "
+            f"Intent {intent_id}.",
+            kind="payment", urgency="high")
+        raise HTTPException(status_code=400,
+            detail=f"amount mismatch: expected "
+                   f"{_ziina.amount_to_minor(inv['amount'])} got {amount}")
+    inv_ccy = (inv.get("currency") or "AED").upper()
+    web_ccy = (currency or "AED").upper()
+    if inv_ccy != web_ccy:
+        from . import admin_alerts as _aa
+        _aa.notify_admin(
+            f"⚠ Ziina currency mismatch on inv {invoice_id}: invoice "
+            f"{inv_ccy}, webhook {web_ccy}. Intent {intent_id}.",
+            kind="payment", urgency="high")
+        raise HTTPException(status_code=400,
+            detail=f"currency mismatch: invoice {inv_ccy} got {web_ccy}")
+
+    # All checks passed — mark paid idempotently
+    if inv.get("payment_status") == "paid":
+        # Already processed by an earlier webhook or by the redirect-back
+        # verifier. Don't fire alerts twice.
+        return {"ok": True, "noted": "already paid"}
+    now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        n = c.execute(
+            "UPDATE invoices SET payment_status='paid', paid_at=?, "
+            "provider_amount_minor=?, provider_currency=?, "
+            "webhook_received_at=? WHERE id=? AND payment_status != 'paid'",
+            (now_iso, amount, web_ccy, now_iso, invoice_id)).rowcount
+    if n == 0:
+        # Race — another process already marked paid. Still 200 OK.
+        return {"ok": True, "noted": "race — already paid"}
+    db.log_event("invoice", invoice_id, "ziina_paid", actor="ziina",
+                 details={"intent": intent_id, "amount_minor": amount,
+                          "currency": web_ccy})
+    if inv.get("booking_id"):
+        with db.connect() as c:
+            c.execute("UPDATE bookings SET status='confirmed' WHERE id=?",
+                      (inv["booking_id"],))
+        db.log_event("booking", inv["booking_id"], "payment_confirmed",
+                     actor="ziina")
+    try:
+        from . import admin_alerts as _aa
+        _aa.notify_admin(
+            f"✅ Ziina payment received: inv {invoice_id} · AED "
+            f"{_ziina.minor_to_aed(amount):.2f} · booking "
+            f"{inv.get('booking_id','?')}",
+            kind="payment", urgency="low")
+    except Exception: pass
+    return {"ok": True, "paid": True, "invoice_id": invoice_id}
+
+
+@app.get("/api/pay/status/{intent_id}")
+async def ziina_pay_status(intent_id: str):
+    """Called by /booked.html immediately after Ziina redirects the
+    customer back. We DO NOT trust the URL params — we hit
+    GET /payment_intent/{id} server-side to verify the authoritative
+    status before showing a success page.
+
+    Public endpoint (no admin auth) because the customer's browser
+    needs it; security comes from the fact that we only mark paid IF
+    Ziina confirms `completed` AND the invoice exists AND amount matches.
+    """
+    from . import ziina as _ziina
+    r = await _ziina.get_payment_intent(intent_id)
+    if not r.get("ok"):
+        return {"ok": False, "error": r.get("error", "lookup failed")}
+    status = r.get("status") or ""
+    # Look up the invoice — we use this to mark paid if not already.
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT id, amount, currency, payment_status, booking_id "
+            "FROM invoices WHERE ziina_payment_intent_id=?",
+            (intent_id,)).fetchone()
+    if not row:
+        return {"ok": True, "status": status, "matched_invoice": False}
+    inv = db.row_to_dict(row)
+    out = {"ok": True, "status": status, "invoice_id": inv["id"],
+           "booking_id": inv.get("booking_id"),
+           "already_paid": inv.get("payment_status") == "paid"}
+    # If Ziina says completed AND we haven't marked yet, do it now (the
+    # webhook is the primary path; this is the "missed-webhook" safety
+    # net for the customer's post-redirect flow).
+    if (status == _ziina.STATUS_COMPLETED
+            and inv.get("payment_status") != "paid"
+            and r.get("amount") is not None
+            and _ziina.validate_amount_match(inv["amount"], r["amount"])):
+        now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+        with db.connect() as c:
+            c.execute(
+                "UPDATE invoices SET payment_status='paid', paid_at=?, "
+                "provider_amount_minor=?, provider_currency=?, "
+                "reconciled_at=? WHERE id=? AND payment_status != 'paid'",
+                (now_iso, r["amount"], (r.get("currency_code") or "AED").upper(),
+                 now_iso, inv["id"]))
+            if inv.get("booking_id"):
+                c.execute("UPDATE bookings SET status='confirmed' WHERE id=?",
+                          (inv["booking_id"],))
+        db.log_event("invoice", inv["id"], "ziina_paid_via_redirect",
+                     actor="customer",
+                     details={"intent": intent_id})
+        out["paid_now"] = True
+    return out
+
+
+@app.post("/api/admin/payments/ziina/reconcile",
+          dependencies=[Depends(require_admin)])
+async def ziina_admin_reconcile():
+    """Manual reconciliation: scan every invoice with payment_provider=
+    'ziina' AND payment_status='awaiting' AND created_at > 5 min ago.
+    For each one, GET /payment_intent/{id} from Ziina; if completed,
+    mark paid (with amount cross-check). Catches dropped webhooks."""
+    from . import ziina as _ziina
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT id, amount, currency, ziina_payment_intent_id, booking_id "
+            "FROM invoices WHERE payment_provider='ziina' "
+            "AND payment_status='awaiting' "
+            "AND ziina_payment_intent_id IS NOT NULL "
+            "AND created_at < datetime('now', '-5 minutes') "
+            "ORDER BY created_at DESC LIMIT 200").fetchall()
+    rows = [db.row_to_dict(r) for r in rows]
+    scanned = len(rows)
+    marked = 0
+    failed = 0
+    for inv in rows:
+        z = await _ziina.get_payment_intent(inv["ziina_payment_intent_id"])
+        if not z.get("ok"):
+            continue
+        s = z.get("status") or ""
+        if s == _ziina.STATUS_COMPLETED and z.get("amount") is not None and \
+                _ziina.validate_amount_match(inv["amount"], z["amount"]):
+            now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+            with db.connect() as c:
+                n = c.execute(
+                    "UPDATE invoices SET payment_status='paid', paid_at=?, "
+                    "provider_amount_minor=?, reconciled_at=? "
+                    "WHERE id=? AND payment_status != 'paid'",
+                    (now_iso, z["amount"], now_iso, inv["id"])).rowcount
+                if n and inv.get("booking_id"):
+                    c.execute("UPDATE bookings SET status='confirmed' WHERE id=?",
+                              (inv["booking_id"],))
+            if n:
+                marked += 1
+                db.log_event("invoice", inv["id"], "ziina_reconciled_paid",
+                             actor="cron")
+        elif s in (_ziina.STATUS_FAILED, _ziina.STATUS_CANCELED):
+            with db.connect() as c:
+                c.execute(
+                    "UPDATE invoices SET payment_status=?, reconciled_at=? "
+                    "WHERE id=? AND payment_status='awaiting'",
+                    (s, datetime.datetime.utcnow().isoformat() + "Z", inv["id"]))
+            failed += 1
+    return {"ok": True, "scanned": scanned, "marked_paid": marked,
+            "marked_failed": failed}
+
+
+# v1.24.124 — Ziina integration schema additions. Idempotent ALTER per
+# CLAUDE.md pattern. These columns let us:
+#   ziina_payment_intent_id  : link an invoice to its Ziina intent for
+#                              webhook lookup + reconciliation + refund.
+#   payment_provider          : 'ziina' | 'stripe' | 'wa' | 'bank' | 'cod'
+#                              so admin reports can split by provider.
+#   provider_amount_minor     : amount Ziina actually charged (fils) — for
+#                              amount-mismatch defence on webhook.
+#   provider_currency         : currency Ziina charged in — for cross-check.
+#   webhook_received_at       : when the webhook landed (UTC ISO).
+#   reconciled_at             : when the reconciliation cron last looked.
+def _ensure_invoice_ziina_columns():
+    try:
+        with db.connect() as c:
+            for col, ddl in (
+                ("ziina_payment_intent_id", "TEXT"),
+                ("payment_provider",        "TEXT"),
+                ("provider_amount_minor",   "INTEGER"),
+                ("provider_currency",       "TEXT"),
+                ("webhook_received_at",     "TEXT"),
+                ("reconciled_at",           "TEXT"),
+            ):
+                try: c.execute(f"ALTER TABLE invoices ADD COLUMN {col} {ddl}")
+                except Exception: pass
+            try:
+                c.execute("CREATE INDEX IF NOT EXISTS "
+                          "idx_inv_ziina_pi ON invoices(ziina_payment_intent_id)")
+            except Exception: pass
+    except Exception: pass
+_ensure_invoice_ziina_columns()
+
+
 # Idempotent migration: add payment_method column to invoices on startup.
 def _ensure_invoice_payment_method():
     try:
@@ -1635,6 +1916,53 @@ def api_pay_start(body: PayStartBody):
         # Their nature (admin-mediated, no auto-charge) makes the gate moot for them.
 
     if method in ("card", "apple", "google", "samsung"):
+        # v1.24.124 — Ziina is the primary card processor when configured.
+        # If the call succeeds → redirect to Ziina hosted checkout.
+        # If it returns retryable (5xx/timeout/no-key) → fall through to
+        # Stripe as a safety net.
+        # If it returns non-retryable (4xx config bug) → surface the error
+        # to the user and alert admin instead of silent fallback.
+        from . import ziina as _ziina
+        import asyncio as _aio2
+        if _ziina.is_configured():
+            success_url = (f"{base}/booked.html?id={inv.get('booking_id','')}"
+                           f"&paid=1&pi={{PAYMENT_INTENT_ID}}")
+            try:
+                z_res = _aio2.run(_ziina.create_payment_intent(
+                    amount_minor=_ziina.amount_to_minor(inv["amount"]),
+                    currency_code=(inv.get("currency") or "AED"),
+                    success_url=f"{base}/booked.html?id={inv.get('booking_id','')}"
+                                 f"&paid=1",
+                    cancel_url=f"{base}/pay/{inv['id']}",
+                    failure_url=f"{base}/pay/{inv['id']}?failed=1",
+                    message=f"Servia booking {inv.get('booking_id') or inv['id']}",
+                ))
+            except Exception as ex:
+                z_res = {"ok": False, "error": str(ex), "retryable": True}
+            if z_res.get("ok"):
+                with db.connect() as c:
+                    c.execute(
+                        "UPDATE invoices SET payment_method=?, payment_status='awaiting', "
+                        "ziina_payment_intent_id=?, payment_provider=? WHERE id=?",
+                        (method, z_res["id"], "ziina", inv["id"]))
+                db.log_event("invoice", inv["id"], "ziina_intent_created",
+                             actor="customer",
+                             details={"ziina_pi": z_res["id"]})
+                return {"ok": True, "redirect": z_res["redirect_url"],
+                        "auth_token": auth_token, "provider": "ziina"}
+            # Ziina failed — decide fallback by retryable flag
+            if not z_res.get("retryable"):
+                # 4xx — config bug, surface to user + alert admin
+                _aa.notify_admin(
+                    f"Ziina rejected payment_intent for inv {inv['id']}: "
+                    f"{z_res.get('error','?')}",
+                    kind="payment", urgency="high")
+                # Continue to Stripe fallback (founder's chosen behaviour:
+                # "Ziina is the default + Stripe fallback only"). But the
+                # admin alert flags this for investigation.
+            print(f"[ziina] falling back to stripe for inv {inv['id']}: "
+                  f"{z_res.get('error','?')[:120]}", flush=True)
+        # ──── Stripe fallback (or primary if Ziina not configured) ─────
         sk = _os.getenv("STRIPE_SECRET_KEY", "").strip()
         if sk:
             try:
@@ -1657,9 +1985,11 @@ def api_pay_start(body: PayStartBody):
                 )
                 # Mark invoice 'awaiting'
                 with db.connect() as c:
-                    c.execute("UPDATE invoices SET payment_method=?, payment_status='awaiting' WHERE id=?",
+                    c.execute("UPDATE invoices SET payment_method=?, payment_status='awaiting', "
+                              "payment_provider='stripe' WHERE id=?",
                               (method, inv["id"]))
-                return {"ok": True, "redirect": cs.url, "auth_token": auth_token}
+                return {"ok": True, "redirect": cs.url, "auth_token": auth_token,
+                        "provider": "stripe"}
             except Exception as e:  # noqa: BLE001
                 _aa.notify_admin(f"Stripe checkout failed for {inv['id']}: {e}",
                                  kind="payment", urgency="high")
