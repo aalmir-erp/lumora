@@ -2,40 +2,40 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"evDecGrfSFOPbHI_Y53eZw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"lrlPE2ODTUmSkSoOHn5Ytg"}`
 
 ## Build logs
 ```
-[ 4/12] COPY requirements.txt ./
-[internal] load build context
-[ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
-[ 2/12] WORKDIR /app
-[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
-[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
-[internal] load build context
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[internal] load build context
-[internal] load build context
-[ 2/12] WORKDIR /app
-[ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
-[ 4/12] COPY requirements.txt ./
-[ 5/12] RUN pip install -r requirements.txt
-[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+npm warn deprecated fluent-ffmpeg@2.1.3: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+
+
+added 301 packages in 7s
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.14.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.14.1
+npm notice To update run: npm install -g npm@11.14.1
+npm notice
+
 [ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/12] COPY app ./app
+[ 8/12] COPY app ./app
+[ 9/12] COPY web ./web
 [ 9/12] COPY web ./web
 [10/12] COPY _e2e-shots ./_e2e-shots
+[10/12] COPY _e2e-shots ./_e2e-shots
+[11/12] COPY start.sh /app/start.sh
 [11/12] COPY start.sh /app/start.sh
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:81aa2a4e9ec99ab93768a6783fbc380186c7a99b0e6501ea9c8955ab466aae75
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODFhYTJhNGU5ZWM5OWFiOTM3NjhhNjc4M2ZiYzM4MDE4NmM3YTk5YjBlNjUwMWVhOWM4OTU1YWI0NjZhYWU3NSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQxMjoyNjowNFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:491b8bd34401d28c2d9c96f12cab1adc3059f0b8876e917a4aa885ed4ddf8558
+containerimage.config.digest: sha256:12159e769a6e2fda0e1914f1cf95b423d59bdc2790931063c347088a3578a63c
+containerimage.digest: sha256:1a6b0c587442ad3aa91597aec9f54ea14c0782852c781d63fb7a871326651c29
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MWE2YjBjNTg3NDQyYWQzYWE5MTU5N2FlYzlmNTRlYTE0YzA3ODI4NTJjNzgxZDYzZmI3YTg3MTMyNjY1MWMyOSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQxNjoxODo1MVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+image push
 image push
 
 [35m====================
@@ -50,34 +50,19 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.3:26466 - "GET /cart.html HTTP/1.1" 200 OK
-INFO:     100.64.0.8:61534 - "POST /api/app-install HTTP/1.1" 200 OK
-INFO:     100.64.0.8:61548 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.9:40208 - "GET / HTTP/1.1" 200 OK
-INFO:     100.64.0.8:61526 - "GET /index.html HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.9:40188 - "GET /api/site/social HTTP/1.1" 200 OK
-INFO:     100.64.0.9:40188 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.9:40210 - "GET /index.html HTTP/1.1" 200 OK
-INFO:     100.64.0.9:40184 - "GET /api/services HTTP/1.1" 200 OK
-INFO:     100.64.0.9:40204 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.3:26466 - "GET /api/services HTTP/1.1" 200 OK
-INFO:     100.64.0.3:26466 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.3:26484 - "POST /api/app-install HTTP/1.1" 200 OK
-INFO:     100.64.0.3:26474 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:26498 - "GET /index.html HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.3:26466 - "GET / HTTP/1.1" 200 OK
-INFO:     100.64.0.3:26474 - "GET /cart.html HTTP/1.1" 304 Not Modified
-INFO:     100.64.0.3:26484 - "GET /index.html HTTP/1.1" 200 OK
-INFO:     100.64.0.9:40220 - "GET / HTTP/1.1" 200 OK
-INFO:     100.64.0.7:20394 - "GET / HTTP/1.1" 304 Not Modified
-INFO:     100.64.0.7:20414 - "POST /api/app-install HTTP/1.1" 200 OK
-INFO:     100.64.0.7:20394 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.7:20402 - "GET /index.html HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.7:20414 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
-INFO:     100.64.0.7:20416 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.7:20402 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.7:20414 - "GET /index.html HTTP/1.1" 200 OK
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/2911b42d-22c9-4564-825e-0ac3d23688af/vol_onr647rhdeir9di9
+Starting Container
+[start] launching whatsapp_bridge
+[wa-bridge] listening on :3001
+[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.2:52947 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.14:50710 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:20096 - "POST /api/app-install HTTP/1.1" 200 OK
 ```
