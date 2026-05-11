@@ -595,8 +595,13 @@
         }).catch(()=>{});
       }
     } catch (_) {}
-    const m = document.getElementById("servia-loc-modal");
-    if (m) m.remove();
+    // v1.24.105 — renamed to `mEl` to avoid re-declaring `m` which
+    // was already declared at line 547 in the same saveFromModal
+    // scope. PSI flagged: "SyntaxError: Identifier 'm' has already
+    // been declared at /location-bar.js:598:10". Script failed to
+    // parse → location-bar features dead until next reload.
+    const mEl = document.getElementById("servia-loc-modal");
+    if (mEl) mEl.remove();
   }
   function getVal(id) {
     const el = document.getElementById(id);
