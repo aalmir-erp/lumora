@@ -531,6 +531,7 @@
         </select>
         <input id="ab-topic" placeholder="Topic (optional, leave blank for auto)" style="flex:1;min-width:240px;padding:8px 12px;border:1px solid var(--border);border-radius:8px">
         <button class="btn btn-primary" onclick="runAutoblog()">Generate now</button>
+        <button class="btn btn-ghost" style="background:#FEE2E2;color:#991B1B;font-weight:700" onclick="auditAutoblog()" title="Scan every existing post for defamation risk (named developers/buildings + negative claims). Lets you rewrite each risky post.">🛡 Audit posts</button>
         <button class="btn btn-ghost" onclick="openAutoblogPrompt()">⚙️ Prompt &amp; areas</button>
       </div>
       <p style="font-size:11.5px;color:var(--muted);margin:0">⚡ Auto cascades through OpenAI → Google → Anthropic → OpenRouter → Groq using whichever keys are configured. If Anthropic credit is low it skips silently.</p>
@@ -5162,6 +5163,77 @@ async function loadAutoblog() {
   wrap.innerHTML = statsHtml + selectBar + rows;
   _bulkSetup("#ab-list", "blog", loadAutoblog);
 }
+// ---------- v1.24.113: defamation audit + bulk rewrite ----------
+// Scans every existing autoblog post for defamation patterns (named
+// developers/buildings + negative claims). Per-post "Rewrite" button
+// runs the cascade again with the new defamation-safe prompt.
+async function auditAutoblog() {
+  const out = document.getElementById("ab-result");
+  out.innerHTML = '<div style="background:#FEE2E2;border:1px solid #FECACA;color:#7C2D12;padding:12px;border-radius:10px">🛡 Scanning every published post for defamation risk…</div>';
+  let r;
+  try { r = await adm("/api/admin/autoblog/audit"); }
+  catch (e) {
+    out.innerHTML = '<div style="color:#B91C1C">Audit failed: ' + escapeHtml(e.message) + '</div>';
+    return;
+  }
+  if (!r.ok) {
+    out.innerHTML = '<div style="color:#B91C1C">' + escapeHtml(r.error || "audit failed") + '</div>';
+    return;
+  }
+  let html = '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:8px">';
+  html += '<h3 style="margin:0 0 8px;font-size:15px">🛡 Defamation audit results</h3>';
+  html += `<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Scanned ${r.total} posts · <b style="color:#15803D">${r.clean} clean</b> · <b style="color:#B91C1C">${r.risky_count} risky</b></div>`;
+  if (r.risky_count === 0) {
+    html += '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px;color:#15803D;font-size:13px">✓ No defamation risk found. All posts are clean.</div>';
+  } else {
+    html += '<div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:10px;color:#7C2D12;font-size:12px;margin-bottom:12px">⚠️ Each risky post below names a developer or building in a negative/factual-claim context. Click <b>Rewrite</b> to regenerate the body with the defamation-safe prompt. URL + view count are preserved.</div>';
+    for (const p of r.risky) {
+      const findings = (p.findings || []).slice(0, 3).map(f =>
+        `<div style="font-family:ui-monospace,monospace;font-size:10.5px;color:#7C2D12;margin-top:3px;padding:4px 8px;background:#FEF3C7;border-radius:4px"><b>${escapeHtml(f.rule)}</b><br>“…${escapeHtml((f.snippet||'').slice(0, 200))}…”</div>`
+      ).join("");
+      html += `<div style="background:#FEE2E2;border:1px solid #FECACA;border-radius:8px;padding:10px 12px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <a href="/blog/${escapeHtml(p.slug)}" target="_blank" style="font-weight:700;color:#0F172A;text-decoration:none">${escapeHtml(p.topic || p.slug)}</a>
+            <div style="font-size:11px;color:#7C2D12;margin-top:2px">${escapeHtml(p.emirate || '')} · ${escapeHtml(p.service_id || '')} · <b>${p.issue_count} issue(s)</b></div>
+          </div>
+          <button class="btn btn-ghost" data-slug="${escapeHtml(p.slug)}" style="background:#0F766E;color:#fff;font-weight:700;padding:6px 14px" onclick="rewriteAutoblogPost(this.dataset.slug, this)">🔁 Rewrite safely</button>
+        </div>
+        ${findings}
+      </div>`;
+    }
+    if (r.risky_count > 1) {
+      html += `<div style="text-align:right;margin-top:8px"><button class="btn btn-primary" onclick="rewriteAllRisky(${JSON.stringify(r.risky.map(p => p.slug))})">🔁 Rewrite all ${r.risky_count}</button></div>`;
+    }
+  }
+  html += '</div>';
+  out.innerHTML = html;
+}
+async function rewriteAutoblogPost(slug, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Rewriting…"; }
+  try {
+    const r = await adm("/api/admin/autoblog/rewrite/" + encodeURIComponent(slug),
+                        { method: "POST" });
+    if (!r.ok) {
+      if (btn) { btn.style.background = "#B91C1C"; btn.textContent = "✗ " + (r.error || "failed").slice(0, 30); btn.disabled = false; }
+      return false;
+    }
+    if (btn) { btn.style.background = "#15803D"; btn.textContent = "✓ Rewritten (" + r.chars + " chars)"; }
+    return true;
+  } catch (e) {
+    if (btn) { btn.style.background = "#B91C1C"; btn.textContent = "✗ error"; btn.disabled = false; }
+    return false;
+  }
+}
+async function rewriteAllRisky(slugs) {
+  if (!confirm(`Rewrite ${slugs.length} risky posts? Each takes ~10-30s.`)) return;
+  for (const slug of slugs) {
+    const card = document.querySelector(`[data-slug="${slug}"]`);
+    await rewriteAutoblogPost(slug, card);
+  }
+  setTimeout(() => { auditAutoblog(); loadAutoblog(); }, 600);
+}
+
 // ---------- v1.24.109: regenerate blog hero image with the AI cascade ----------
 // Founder feedback: Pollinations (default free generator) produces obvious AI
 // artifacts (3 hands, swollen eyes). This opens a modal that pre-fills the

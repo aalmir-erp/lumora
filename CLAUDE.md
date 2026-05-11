@@ -91,6 +91,73 @@ Visual changes (button colors, page layout, modals, etc.) must be:
    user BEFORE the push happens
 Bug fixes that change rendered output count as visual changes.
 
+### W14. NO DEFAMATION — NEVER NAME A SPECIFIC BUILDING / DEVELOPER / PROJECT IN A NEGATIVE OR FACTUAL-CLAIM CONTEXT
+(Founder rule, v1.24.113, 2026-05-11 — after a live article on
+/blog/sharjah-aljada-... titled "Silverfish in Aljada bathrooms" said
+"Aljada towers built between 2021-2024 have a bathroom-humidity design
+issue". Aljada is a real Arada master-plan. That single sentence
+exposed Servia to a defamation claim under UAE Penal Code Article 372
+and could have caused property-value damage to thousands of residents.)
+
+**THE FAILURE PATTERN — never repeat this:**
+
+The autoblog system prompt at app/main.py:_autoblog_prompt() contained
+the instruction "Mention real towers / streets / landmarks in {area}."
+The LLM dutifully obeyed and invented a factual-sounding claim about a
+named real-estate project. There was no content filter on the output
+side, so the article shipped to /blog/ on the public site.
+
+**THE RULE — non-negotiable from v1.24.113 onward:**
+
+Any AI-generated content (blog posts, social-image captions, video
+scripts, chatbot replies) MUST NOT:
+
+1. Name a specific developer (Arada, Emaar, Damac, Nakheel, Sobha,
+   Aldar, Meraas, Dubai Properties, Wasl, Al Habtoor, Ellington,
+   Azizi, Bloom, MAG, Tiger, Deyaar, Union Properties, Dubai Holding,
+   etc.) in any context.
+2. Name a specific master-plan or branded community (Aljada, Damac
+   Hills, Arabian Ranches, Tilal City, Mudon, Jumeirah Park, Town
+   Square, City Walk, Bluewaters, Madinat Jumeirah, Mira, Mirdif
+   Hills, Saadiyat Beach, Yas Acres, Reem Hills, Ghantoot, Al Zahia,
+   Azha, etc.) as the subject of any negative or factual-defect claim.
+3. Claim ANY specific tower, building, compound, or community has a
+   design issue, construction problem, design flaw, structural fault,
+   infestation problem, humidity issue, damp problem, leak issue,
+   plumbing fault, electrical fault, AC fault, or any similar defect.
+4. Cite specific construction dates for any named development
+   ("towers built between 2021-2024 have…"). That's unsubstantiated.
+5. Compare two neighborhoods saying one has more pests, crime, damp,
+   or any negative quality than the other.
+6. Single out a competitor business by name in any context.
+
+ALLOWED:
+- Generic facts about UAE homes ("UAE summer humidity routinely
+  reaches 80-90% indoors").
+- Neutral description of a neighborhood ("Dubai Marina is a waterfront
+  area with high-rise residential towers").
+- Mentioning the area Servia operates in without claims about specific
+  buildings ("we serve customers in Al Khan").
+
+**ENFORCEMENT — two-layer defense:**
+
+1. **Prompt-side** (app/main.py:_autoblog_prompt) carries an explicit
+   anti-defamation block in every generation request.
+2. **Output-side** (app/content_safety.py:review) scans every
+   generated post before persist. If it detects a defamation pattern,
+   the tick retries up to 2 times with stricter prompt, then fails
+   with a clear `last_run.err` instead of shipping.
+
+**WHENEVER ADDING A NEW GENERATION FLOW:**
+Wire content_safety.review() into the publish path. Don't trust the
+prompt alone — LLMs hallucinate even with strict instructions. The
+filter is the safety net.
+
+**WHENEVER NEW DEVELOPER/PROJECT NAMES EMERGE:**
+Add them to DEVELOPER_NAMES in app/content_safety.py. The list is
+intentionally short right now (~60 entries). Treat it as a living
+allowlist of "places we will not let the LLM mention".
+
 ### W8. EXHAUSTIVE GREP BEFORE EDITING — FIX THE SOURCE OF TRUTH, NOT THE SYMPTOM
 (Founder rule, v1.24.95, 2026-05-10 — after 4 failed releases of the
 "bot asks address as text" bug)

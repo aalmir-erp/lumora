@@ -3588,24 +3588,127 @@ try:
         "fujairah":       ["Dibba", "Al Faseel", "Sakamkam"],
     }
 
-    def _autoblog_prompt(em: str, sv: str, area: str, slant: str, topic: str) -> str:
+    def _autoblog_prompt(em: str, sv: str, area: str, slant: str, topic: str,
+                          lifestyle: bool = False) -> str:
         """Default prompt template. Admin can override by setting db.cfg key
-        'autoblog_prompt_template' — placeholders {em},{sv},{area},{slant},{topic}."""
+        'autoblog_prompt_template' — placeholders {em},{sv},{area},{slant},{topic}.
+
+        v1.24.113 — DEFAMATION-SAFE rewrite. Founder reported a live article
+        titled "Silverfish in Aljada bathrooms — the humidity fix" that
+        claimed "Aljada towers built between 2021-2024 have a bathroom-
+        humidity design issue". Aljada is a real Arada master-plan; this
+        is unsubstantiated and exposes Servia to defamation claims under
+        UAE Penal Code Article 372. The old prompt actively instructed the
+        LLM to "mention real towers / streets / landmarks" — root cause.
+        New prompt explicitly bans naming developers / projects / buildings
+        in any negative or even specific-factual context.
+        """
         from . import db as _db
         tpl = _db.cfg_get("autoblog_prompt_template", "") or ""
         if tpl:
             try:
                 return tpl.format(em=em, sv=sv, area=area, slant=slant, topic=topic)
             except Exception: pass
-        # Default — area-aware. NO em-dashes (AI tell) and lots of UAE specifics.
-        # Updated to require scannable structure: bullets, callout boxes, and
-        # an explicit "Key takeaways" section so articles never read as walls
-        # of text. Renderer (blog_render.py) extracts these into a card at
-        # the top automatically.
+
+        emirate_pretty = em.replace('-', ' ').title()
+
+        # ---- Hard-coded anti-defamation block — appears in EVERY prompt
+        # (service + lifestyle), even if admin overrides the template, the
+        # content_safety filter will still enforce these at output time.
+        safety_block = (
+            "\n\n=== ANTI-DEFAMATION RULES (legally required, non-negotiable) ===\n"
+            "NEVER name a specific developer (Arada, Emaar, Damac, Nakheel, Sobha, "
+            "Aldar, Meraas, Dubai Properties, Wasl, Al Habtoor, Ellington, Azizi, "
+            "Bloom, MAG, Tiger, Deyaar, Union Properties, Dubai Holding, etc.) in "
+            "ANY context. Don't praise them, don't criticize them, just don't "
+            "name them.\n"
+            "NEVER name a specific master-plan or development (Aljada, Damac Hills, "
+            "Arabian Ranches, Tilal City, Mudon, Jumeirah Park, JVC, JLT, Mira, "
+            "Town Square, City Walk, Bluewaters, Madinat Jumeirah, Mirdif Hills, "
+            "Saadiyat Beach, Yas Acres, Reem Hills, Ghantoot, Al Zahia, etc.) as "
+            "the SUBJECT of any negative or factual problem claim.\n"
+            "NEVER claim ANY specific tower, building, compound, or community has "
+            "a 'design issue', 'construction problem', 'design flaw', 'structural "
+            "fault', 'infestation problem', 'humidity issue', 'damp problem', "
+            "'leak issue', 'plumbing fault', 'AC fault', or any similar defect.\n"
+            "NEVER cite specific construction dates for any named development "
+            "('towers built between 2021-2024 have…'). That's unsubstantiated.\n"
+            "NEVER compare two neighborhoods saying one has more pests, crime, "
+            "damp, or any negative quality than the other.\n"
+            "NEVER single out a competitor business (cleaning company, AC shop, "
+            "real-estate agent) by name in any context.\n"
+            "ALLOWED: mentioning a neighborhood neutrally as a place where "
+            "Servia operates (e.g. 'we serve customers in " + area + "'). "
+            "ALLOWED: generic facts that apply to ALL UAE homes ('UAE summer "
+            "humidity routinely hits 80-90% indoors'). \n"
+            "ALLOWED: descriptive geography ('Dubai Marina is a waterfront area "
+            "with high-rise residential towers'). NO MORE THAN THAT.\n"
+            "If you find yourself wanting to write 'X tower has Y problem', "
+            "rewrite as 'UAE homes often have Y problem'. The advice is the "
+            "same; the legal exposure is zero.\n"
+            "If the article cannot honestly be written without naming a "
+            "specific building defect, write about the general issue instead.\n"
+            "FAILURE TO FOLLOW: the article will be auto-rejected by "
+            "content_safety.review() before publish. Don't waste a generation.\n"
+            "=== END ANTI-DEFAMATION RULES ===\n"
+        )
+
+        # ---- Internal + external linking (white-hat SEO, no penalties)
+        link_block = (
+            "\n=== LINKING (white-hat SEO) ===\n"
+            "Include 2-3 INTERNAL links to Servia service pages. Use the exact "
+            "URL paths: /services/" + sv + ", /services, /book. Format as proper "
+            "markdown [anchor text](path). Anchor text must be natural — never "
+            "'click here' or 'this page'. Example: '[same-day deep cleaning]"
+            "(/services/" + sv + ")'.\n"
+            "OPTIONAL: 1 external link to ONE authoritative source (government, "
+            "Dubai Municipality, Sharjah Municipality, official tourism site, "
+            "WHO, .gov.ae domain). NEVER link to a competitor, NEVER link to "
+            "a private business, NEVER use affiliate links. If unsure, omit.\n"
+            "=== END LINKING ===\n"
+        )
+
+        if lifestyle:
+            # ---- Lifestyle mode: write about UAE living broadly, not a service.
+            return (
+                f"Write a 700-900-word lifestyle blog post about living in "
+                f"{emirate_pretty}.\n\n"
+                f"Title: {topic}\n"
+                f"Emirate focus: {emirate_pretty}\n"
+                f"Area context: {area}\n"
+                f"Season: {slant}\n\n"
+                "TONE: a long-time UAE resident giving honest practical advice "
+                "to a new arrival or curious reader. Like a friend, not a brand. "
+                "No fluff, no 'discover the magic of'.\n\n"
+                "STRUCTURE:\n"
+                "- 1-line hook (a real, relatable observation about life here).\n"
+                "- '## Key takeaways' with 5 dash-bullet points (12 words max each).\n"
+                "- 3-4 H2 sections framed as honest questions a reader would ask.\n"
+                "- Inside each section, lead with one tight paragraph, then a "
+                "bulleted list of 3-5 specifics.\n"
+                "- 1-2 callout boxes: '> 💡 Pro tip: ...', '> ⚠️ Common mistake: "
+                "...', '> ✅ What to check first: ...'.\n"
+                "- A natural one-line CTA pointing to /book or /services at the end.\n"
+                "- '## Frequently asked' with 3 Q+A (2 sentences each).\n\n"
+                "STYLE RULES:\n"
+                "- NEVER use em-dashes, en-dashes, semicolons.\n"
+                "- Avoid 'delve, tapestry, navigate, crucial, vital, comprehensive, "
+                "leverage, utilize, streamline, robust, seamless, unlock, elevate, "
+                "plethora, myriad, embark, in conclusion, in summary, foster, "
+                "nestled, bustling, vibrant, iconic, stunning'.\n"
+                "- Use contractions (don't, you'll, we've). Speak to one person.\n"
+                "- Mention Servia at most 1-2 times naturally. The post is about "
+                "UAE living, not selling.\n"
+                + safety_block
+                + link_block +
+                "\nOutput ONLY the markdown article. No preamble."
+            )
+
+        # ---- Service-area mode (the original use case, defamation-safe)
         return (
             f"Write a 700-800-word blog post for Servia (UAE home services).\n\n"
             f"Title: {topic}\n"
-            f"Emirate: {em.replace('-',' ').title()}  Neighborhood: {area}  Service: {sv.replace('_',' ')}\n"
+            f"Emirate: {emirate_pretty}  Area: {area}  Service: {sv.replace('_',' ')}\n"
             f"Season: {slant}\n\n"
             "WRITE LIKE A REAL UAE TRADESPERSON TALKING TO A NEIGHBOR. Hard rules:\n"
             "1. NEVER use em-dashes. Use periods, commas, or 'and' instead.\n"
@@ -3619,36 +3722,37 @@ try:
             "5. Use contractions: don't, won't, isn't, you'll, we've.\n"
             "6. Vary sentence length wildly. Short. Then long ones that ramble a bit.\n"
             "7. Address the reader directly with 'you'. Speak to one specific person.\n"
-            f"8. Be specific to {area}. Mention real towers / streets / landmarks in {area} "
-            f"({em.replace('-',' ').title()}). Real prices in AED. Real timings.\n"
-            f"9. Open with a 1-line hook tied to {area} that names a real problem the "
-            f"reader is probably feeling RIGHT NOW. Not 'In the UAE...'. Something like "
-            f"'It's 6pm in {area} and your AC just made that grinding sound again, didn't it?'\n"
-            "10. Include 2 to 3 personal stories. Use 'I' freely. Make it sound like you've "
-            "done this work in that specific neighborhood last week.\n"
+            f"8. Stay generic about {area} — describe what TYPE of place it is "
+            f"(e.g. 'a waterfront high-rise area' or 'a family villa community') "
+            "rather than naming individual towers, buildings, or compounds. The "
+            "anti-defamation block below explains why.\n"
+            "9. Open with a 1-line hook that names a real problem the reader is "
+            "feeling RIGHT NOW. Not 'In the UAE...'. Something like 'It's 6pm "
+            f"in {area} and your AC just made that grinding sound again, right?'\n"
+            "10. Include 1 to 2 generic anecdotes ('we usually find...', 'on a "
+            "typical job...'). Do NOT name any specific customer, building, or "
+            "company.\n"
             "\n"
-            "STRUCTURE — STRICT (this is what makes the article scannable, not a wall of text):\n"
+            "STRUCTURE — STRICT (this is what makes the article scannable):\n"
             "A. NO long paragraphs. Maximum 3 sentences per paragraph.\n"
-            "B. After the hook intro, output an explicit '## Key takeaways' section with "
-            "5 dash-bullet points (each one short — 12 words max). The renderer auto-promotes "
-            "this to a teal scannable card at the top of the page.\n"
-            "C. Then 3 to 4 H2 sections (## in markdown). Short, scannable headings, "
-            "ideally posed as questions: '## How long does deep cleaning actually take?'\n"
-            "D. Inside each section: lead with one tight paragraph, then a bulleted "
-            "list of 3 to 5 specifics. Always at least one bulleted list per section.\n"
-            "E. Sprinkle 1 to 2 callout boxes using this exact markdown syntax:\n"
-            "    > 💡 Pro tip: ...\n"
-            "    > ⚠️ Common mistake: ...\n"
-            "    > ✅ What to check first: ...\n"
-            "    The renderer turns these into colored boxes. Use them for the most "
-            "useful piece of information in the article.\n"
-            "F. Mention Servia 2 to 3 times naturally. Don't sell. Just say 'Servia '\n"
-            "    techs do X' or 'we usually find Y in {area}'.\n"
-            "G. End with a one-line CTA pointing to https://servia.ae/book.html.\n"
-            "H. Append a '## Frequently asked' section with 3 questions and short direct "
-            "answers (2 sentences max each).\n"
-            "\n"
-            "Output ONLY the markdown article. No preamble, no explanation."
+            "B. After the hook, output '## Key takeaways' with 5 dash-bullet "
+            "points (12 words max each). The renderer auto-promotes this to a "
+            "teal scannable card at the top of the page.\n"
+            "C. Then 3 to 4 H2 sections (## in markdown). Headings posed as "
+            "questions where possible.\n"
+            "D. Inside each section: lead with one tight paragraph, then a "
+            "bulleted list of 3 to 5 specifics. At least one bulleted list per "
+            "section.\n"
+            "E. 1 to 2 callout boxes: '> 💡 Pro tip: ...', '> ⚠️ Common mistake: "
+            "...', '> ✅ What to check first: ...'. The renderer makes them "
+            "colored boxes.\n"
+            "F. Mention Servia 2 to 3 times naturally. Don't sell. Just say "
+            "'Servia techs do X' or 'we usually find Y on these jobs'.\n"
+            "G. End with a one-line CTA pointing to /book.\n"
+            "H. Append '## Frequently asked' with 3 Q+A (2 sentences each).\n"
+            + safety_block
+            + link_block +
+            "\nOutput ONLY the markdown article. No preamble."
         )
 
     # v1.24.98 — observability: every tick writes its result to db.cfg
@@ -3731,53 +3835,116 @@ try:
         sv = services[(ts // len(emirates_pool)) % len(services)]
         areas = AREA_MAP.get(em, [em.replace("-"," ").title()])
         area = areas[ts % len(areas)]
-        topic = f"{sv.replace('_',' ').title()} in {area} ({em.replace('-',' ').title()}): {slant} guide for {_d.datetime.now().strftime('%B %Y')}"
 
-        # v1.24.110 — switched to ai_router.call_with_cascade (same cascade
-        # used by /chat, blog regen, etc.) instead of a hardcoded Gemini-only
-        # list. Reason: founder's autoblog was silently failing for 6 days
-        # because they had OpenAI/Anthropic keys configured but no Google key,
-        # so the old FREE_MODELS list (Google-only) had nothing to try and
-        # exited with "no FREE provider succeeded". The cascade tries the
-        # admin-preferred model first, then every other provider with a key.
-        # Free quota signal is still detected — when ALL providers return
-        # quota errors, we defer 6 hours so we don't burn paid credit on a
-        # forced retry.
+        # v1.24.113 — lifestyle/service topic mix. About every 3rd tick we
+        # publish a "what it's like to live in X" lifestyle piece instead of
+        # a service guide. Broadens topical relevance for SEO without
+        # diluting the service catalog.
+        em_pretty = em.replace('-', ' ').title()
+        LIFESTYLE_TOPICS = [
+            f"Moving to {em_pretty}: a practical first-month checklist",
+            f"First Ramadan in {em_pretty}: home-prep guide for new residents",
+            f"Summer survival in {em_pretty}: what your home needs in May to September",
+            f"Family-friendly areas in {em_pretty}: a parent's honest take",
+            f"Apartment vs villa in {em_pretty}: the real running-cost difference",
+            f"Working from home in {em_pretty}: setup, internet, and silent-hours tips",
+            f"What new residents wish they'd known about UAE home maintenance",
+            f"Renting in {em_pretty}: the checks and questions most tenants forget",
+            f"Pet-friendly homes in {em_pretty}: what to look for and what to ask",
+            f"Living through DEWA/SEWA peak season in {em_pretty}: cutting your bill",
+            f"Smart-home upgrades that actually pay back in UAE apartments",
+            f"After the rain: what UAE homeowners check first",
+        ]
+        is_lifestyle = (ts % 3) == 0
+        if is_lifestyle:
+            topic = LIFESTYLE_TOPICS[ts % len(LIFESTYLE_TOPICS)] + f" ({_d.datetime.now().strftime('%B %Y')})"
+        else:
+            topic = f"{sv.replace('_',' ').title()} in {area} ({em_pretty}): {slant} guide for {_d.datetime.now().strftime('%B %Y')}"
+
+        # v1.24.110 — call_with_cascade (every configured provider).
+        # v1.24.113 — content_safety.review() now gates publish. If the
+        # generated text contains defamation/safety patterns, we retry up
+        # to 2 times with a slightly different prompt; if all 3 attempts
+        # fail safety, we log + skip rather than ship a risky post.
         try:
-            from . import ai_router as _ar
+            from . import ai_router as _ar, content_safety as _cs
             import asyncio as _aio
-            prompt = _autoblog_prompt(em, sv, area, slant, topic)
-            try:
-                res = _aio.run(_ar.call_with_cascade(prompt, persona="blog", cfg=cfg))
-            except Exception as ex:
-                res = {"ok": False, "error": str(ex), "tried": []}
-            if not res.get("ok"):
-                tried = res.get("tried") or []
-                quota_hits = sum(
-                    1 for t in tried
-                    if any(s in (t.get("error") or "").lower() for s in (
-                        "quota", "rate limit", "rate_limit", "resource_exhausted",
-                        "429", "billing", "exceeded"))
+
+            attempts: list[dict] = []
+            body = None
+            res = None
+            for attempt_idx in range(3):
+                prompt = _autoblog_prompt(em, sv, area, slant, topic,
+                                          lifestyle=is_lifestyle)
+                if attempt_idx == 1:
+                    prompt += (
+                        "\n\nIMPORTANT: A previous attempt was rejected by "
+                        "the content safety filter for defamation. DO NOT "
+                        "name any developer, building, tower, or compound. "
+                        "Speak about the neighborhood only as a generic "
+                        "area type ('a Dubai Marina apartment'). NO "
+                        "construction-date claims. NO design-issue claims.\n"
+                    )
+                elif attempt_idx == 2:
+                    prompt += (
+                        "\n\nFINAL ATTEMPT: Write completely generically. "
+                        "Use 'UAE home', 'UAE apartment', 'UAE villa' as "
+                        "your subject. Do not name ANY specific place "
+                        "beyond the emirate.\n"
+                    )
+                try:
+                    res = _aio.run(_ar.call_with_cascade(prompt, persona="blog", cfg=cfg))
+                except Exception as ex:
+                    res = {"ok": False, "error": str(ex), "tried": []}
+                if not res.get("ok"):
+                    tried = res.get("tried") or []
+                    quota_hits = sum(
+                        1 for t in tried
+                        if any(s in (t.get("error") or "").lower() for s in (
+                            "quota", "rate limit", "rate_limit", "resource_exhausted",
+                            "429", "billing", "exceeded"))
+                    )
+                    tried_summary = "; ".join(
+                        f"{t.get('provider')}/{t.get('model')}={'ok' if t.get('ok') else (t.get('error') or 'no key')[:40]}"
+                        for t in tried) or "no providers attempted"
+                    if quota_hits > 0 and quota_hits == len(tried):
+                        import datetime as _d2
+                        defer_until = (_d2.datetime.utcnow() +
+                                       _d2.timedelta(hours=6)).isoformat() + "Z"
+                        try: _db.cfg_set("autoblog_defer_until", defer_until)
+                        except Exception: pass
+                        return _fail(f"all providers quota-blocked ({quota_hits}) "
+                                     f"— deferred until {defer_until}. tried: {tried_summary[:300]}")
+                    return _fail(f"cascade failed — {res.get('error') or 'no provider succeeded'}. "
+                                 f"tried: {tried_summary[:300]}")
+                draft = _humanize_text(res.get("text") or "")
+                safety = _cs.review(draft)
+                attempts.append({"attempt": attempt_idx + 1, "safety_ok": safety["ok"],
+                                  "issues": len(safety["findings"])})
+                if safety["ok"]:
+                    body = draft
+                    print(f"[autoblog] attempt {attempt_idx+1}: SAFE", flush=True)
+                    break
+                print(f"[autoblog] attempt {attempt_idx+1}: REJECTED — "
+                      f"{safety['summary']}", flush=True)
+                print(_cs.explain(safety["findings"]), flush=True)
+
+            if body is None:
+                # All 3 attempts hit defamation. Record + skip.
+                last_safety = _cs.review(_humanize_text(res.get("text") or ""))
+                return _fail(
+                    f"3 attempts rejected by content_safety filter. "
+                    f"Last issues: {last_safety['summary'][:200]}. "
+                    f"Topic: '{topic[:80]}'. "
+                    f"Suggest: rewrite the topic or expand prompt rules."
                 )
-                tried_summary = "; ".join(
-                    f"{t.get('provider')}/{t.get('model')}={'ok' if t.get('ok') else (t.get('error') or 'no key')[:40]}"
-                    for t in tried) or "no providers attempted"
-                if quota_hits > 0 and quota_hits == len(tried):
-                    import datetime as _d2
-                    defer_until = (_d2.datetime.utcnow() +
-                                   _d2.timedelta(hours=6)).isoformat() + "Z"
-                    try: _db.cfg_set("autoblog_defer_until", defer_until)
-                    except Exception: pass
-                    return _fail(f"all providers quota-blocked ({quota_hits}) "
-                                 f"— deferred until {defer_until}. tried: {tried_summary[:300]}")
-                return _fail(f"cascade failed — {res.get('error') or 'no provider succeeded'}. "
-                             f"tried: {tried_summary[:300]}")
-            body = res.get("text") or ""
-            body = _humanize_text(body)
+
             prov = res.get("provider") or "?"
             mdl = res.get("model") or "?"
             _AUTOBLOG_LAST["provider"] = f"{prov}/{mdl}"
-            print(f"[autoblog] generated via {prov}/{mdl} ({len(body)} chars)", flush=True)
+            print(f"[autoblog] generated via {prov}/{mdl} ({len(body)} chars, "
+                  f"{'lifestyle' if is_lifestyle else 'service'} topic, "
+                  f"{len(attempts)} attempt(s) to pass safety)", flush=True)
         except Exception as e:  # noqa: BLE001
             return _fail(f"exception during generation: {e}")
 
@@ -4072,6 +4239,9 @@ try:
         _th.Thread(target=_autoblog_tick, args=(slot,), daemon=True).start()
         return {"ok": True, "started": True, "slot": slot,
                 "note": "Generation runs in background. Poll /api/admin/autoblog/status to see result (typically 10-30s)."}
+
+    # Note: audit + rewrite endpoints live in app/admin.py (must be
+    # registered before /autoblog/{slug} catch-all there).
     _AUTOBLOG_TICK_REF = _autoblog_tick  # expose to outer scope for fallback endpoint
 
 except Exception as _se:  # noqa: BLE001

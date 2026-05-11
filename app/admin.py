@@ -2377,6 +2377,107 @@ def autoblog_list():
     }
 
 
+# v1.24.113 — defamation audit + bulk rewrite. MUST be declared BEFORE
+# the catch-all /autoblog/{slug} below, otherwise /audit and /rewrite are
+# captured as slugs and return 404.
+@router.get("/autoblog/audit", dependencies=[Depends(require_admin)])
+def autoblog_audit():
+    """Scan every published post against content_safety.review().
+    Returns the list of risky posts so admin can rewrite each one."""
+    from . import content_safety as _cs
+    risky: list[dict] = []
+    clean_count = 0
+    with db.connect() as c:
+        try:
+            rows = c.execute(
+                "SELECT slug, topic, emirate, service_id, "
+                "published_at, body_md FROM autoblog_posts "
+                "ORDER BY published_at DESC").fetchall()
+        except Exception:
+            rows = []
+    for r in rows:
+        d = dict(r)
+        safety = _cs.review(d.get("body_md") or "")
+        if safety["ok"]:
+            clean_count += 1
+            continue
+        risky.append({
+            "slug": d["slug"],
+            "topic": d["topic"],
+            "emirate": d["emirate"],
+            "service_id": d.get("service_id"),
+            "published_at": d.get("published_at"),
+            "issue_count": len(safety["findings"]),
+            "summary": safety["summary"],
+            "findings": [{"rule": f.rule, "snippet": f.snippet}
+                          for f in safety["findings"][:5]],
+        })
+    return {"ok": True, "total": len(rows), "clean": clean_count,
+            "risky": risky, "risky_count": len(risky)}
+
+
+@router.post("/autoblog/rewrite/{slug}",
+             dependencies=[Depends(require_admin)])
+def autoblog_rewrite_one(slug: str):
+    """Re-generate one post using the new defamation-safe prompt. Slug
+    is preserved (so blog URLs + view counts stay stable for SEO).
+    Returns the new safety verdict.
+
+    Implementation note: we call back into the autoblog tick's internals
+    by reusing _autoblog_prompt + content_safety.review. Lives here so
+    it's registered before the /autoblog/{slug} catch-all."""
+    from . import ai_router as _ar, content_safety as _cs
+    import asyncio as _aio, datetime as _d3
+    from .main import _autoblog_prompt, _humanize_text
+    with db.connect() as c:
+        try:
+            row = c.execute(
+                "SELECT slug, topic, emirate, service_id "
+                "FROM autoblog_posts WHERE slug=?", (slug,)).fetchone()
+        except Exception:
+            row = None
+    if not row:
+        return {"ok": False, "error": "post not found"}
+    d = dict(row)
+    em2 = d.get("emirate") or "dubai"
+    sv2 = d.get("service_id") or "deep_cleaning"
+    slant2 = "year-round"
+    area2 = ((d.get("topic") or "").split(" in ", 1)[-1].split("(")[0].strip()
+             or em2.replace("-", " ").title())
+    topic2 = d.get("topic") or f"{sv2} in {area2}"
+    cfg2 = _ar._load_cfg()
+
+    body2 = None
+    last_summary = "no attempts made"
+    for attempt in range(3):
+        p = _autoblog_prompt(em2, sv2, area2, slant2, topic2, lifestyle=False)
+        if attempt > 0:
+            p += ("\n\nIMPORTANT: previous attempt was rejected for defamation. "
+                  "Write completely generically about UAE homes. Do not name "
+                  "any developer, building, tower, compound, or named project.\n")
+        try:
+            r2 = _aio.run(_ar.call_with_cascade(p, persona="blog", cfg=cfg2))
+        except Exception as ex:
+            r2 = {"ok": False, "error": str(ex)}
+        if not r2.get("ok"):
+            return {"ok": False, "error": "cascade failed: " + (r2.get("error") or "")}
+        draft = _humanize_text(r2.get("text") or "")
+        safety = _cs.review(draft)
+        last_summary = safety["summary"]
+        if safety["ok"]:
+            body2 = draft
+            break
+    if not body2:
+        return {"ok": False, "error": "3 attempts failed safety filter: " + last_summary}
+    with db.connect() as c:
+        c.execute("UPDATE autoblog_posts SET body_md=?, published_at=? WHERE slug=?",
+                  (body2, _d3.datetime.utcnow().isoformat() + "Z", slug))
+    db.log_event("autoblog", slug, "rewritten", actor="admin",
+                 details={"new_chars": len(body2)})
+    return {"ok": True, "slug": slug, "chars": len(body2),
+            "safety": last_summary}
+
+
 @router.get("/autoblog/{slug}", dependencies=[Depends(require_admin)])
 def autoblog_get(slug: str):
     """Full body of one article — used by the edit modal."""
