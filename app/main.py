@@ -4497,6 +4497,63 @@ def _auto_seed_market_vendors_if_empty():
 
 # ---------- v1.22.88: seed test customer + vendor accounts on first deploy ----------
 @app.on_event("startup")
+def _autoblog_defamation_purge_v1_24_115():
+    """v1.24.115 — ONE-SHOT auto-purge of defamation-flagged blog posts.
+
+    Founder reported a live post at /blog/sharjah-aljada-silverfish-bathrooms
+    naming 'Aljada towers built between 2021-2024 have a design issue'.
+    v1.24.113 added the audit + rewrite tools but DID NOT touch existing
+    posts — admin had to click the button. After v1.24.114 deploy, the
+    post was still live because the audit wasn't run.
+
+    This hook fixes that automatically: every Railway deploy scans every
+    autoblog post through content_safety.review() and DELETES the ones
+    that fail. Idempotent — clean posts are untouched. Logs every deletion
+    to db.event_log so admin sees exactly what was removed.
+
+    To skip (e.g. if you want to keep a flagged post for manual review):
+    set cfg.autoblog_skip_defamation_purge = "1" before deploy.
+    """
+    try:
+        if db.cfg_get("autoblog_skip_defamation_purge", "") == "1":
+            print("[purge] skipped — autoblog_skip_defamation_purge=1", flush=True)
+            return
+        from . import content_safety as _cs
+        with db.connect() as c:
+            try:
+                rows = c.execute(
+                    "SELECT slug, topic, body_md FROM autoblog_posts"
+                ).fetchall()
+            except Exception:
+                # autoblog_posts table doesn't exist yet — nothing to purge
+                return
+        risky_slugs: list[tuple[str, str, str]] = []
+        for r in rows:
+            d = dict(r)
+            safety = _cs.review(d.get("body_md") or "")
+            if safety["ok"]:
+                continue
+            risky_slugs.append((d["slug"], d["topic"] or "", safety["summary"]))
+        if not risky_slugs:
+            print(f"[purge] scan complete — {len(rows)} posts, 0 flagged", flush=True)
+            return
+        for slug, topic, summary in risky_slugs:
+            with db.connect() as c:
+                c.execute("DELETE FROM autoblog_posts WHERE slug=?", (slug,))
+            try:
+                db.log_event("autoblog", slug, "defamation_purge",
+                              actor="startup-hook",
+                              details={"reason": summary[:300],
+                                       "topic": topic[:120]})
+            except Exception: pass
+            print(f"[purge] DELETED {slug} — {summary[:120]}", flush=True)
+        print(f"[purge] removed {len(risky_slugs)} defamation-flagged "
+              f"posts (kept {len(rows)-len(risky_slugs)})", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"[purge] startup hook failed: {e}", flush=True)
+
+
+@app.on_event("startup")
 def _seed_demo_data_first_run():
     """v1.22.96 — auto-seed once on the FIRST run (cfg.demo_seeded_at empty)
     AND when there are < 5 real customer rows, so production never gets
