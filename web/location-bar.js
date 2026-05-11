@@ -595,7 +595,7 @@
         }).catch(()=>{});
       }
     } catch (_) {}
-    // v1.24.105 — renamed to `mEl` to avoid re-declaring `m` which
+    // v1.24.106 — renamed to `mEl` to avoid re-declaring `m` which
     // was already declared at line 547 in the same saveFromModal
     // scope. PSI flagged: "SyntaxError: Identifier 'm' has already
     // been declared at /location-bar.js:598:10". Script failed to

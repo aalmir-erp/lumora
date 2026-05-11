@@ -360,7 +360,7 @@
   }
 
   // ---------- Lazy load full index when palette opens ----------
-  // v1.24.105 — fetch from single source-of-truth /api/search/index.
+  // v1.24.106 — fetch from single source-of-truth /api/search/index.
   // Includes manual pages, KB services, per-area pages, 1,628
   // service×area combos, blog, videos. Browser caches (1hr).
   // Fixes founder bug: typing "muwaileh" returned 0 results because
@@ -784,5 +784,21 @@
     document.addEventListener("DOMContentLoaded", injectInlineNavSearch);
   } else {
     injectInlineNavSearch();
+  }
+  // v1.24.106 (Bug 30) — pre-warm the full /api/search/index so the
+  // first user keystroke matches against 1,700+ items, not the
+  // 20-item STATIC fallback. Founder reported typing "muwa" returned
+  // only 1 STATIC area entry instead of 38 muwaileh service-area
+  // pages. Schedule when the browser is idle so it doesn't compete
+  // with LCP-critical work.
+  function _prewarmIndex() {
+    if (typeof lazyLoadIndex === "function") {
+      try { lazyLoadIndex(); } catch (_) {}
+    }
+  }
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(_prewarmIndex, { timeout: 4000 });
+  } else {
+    setTimeout(_prewarmIndex, 1500);
   }
 })();

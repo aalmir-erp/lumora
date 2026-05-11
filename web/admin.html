@@ -4,7 +4,7 @@
 <meta name="googlebot" content="noindex,nofollow">
 <meta name="bingbot" content="noindex,nofollow">
 <title>Admin: Servia</title><meta name="theme-color" content="#0D9488">
-<link rel="stylesheet" href="/style.css?v=1.24.105">
+<link rel="stylesheet" href="/style.css?v=1.24.106">
 <style>
   /* Mobile drawer for the admin sidebar — style.css hides .admin-side on
    * <=880px with no way to bring it back. Re-introduce it as a slide-out
@@ -5202,7 +5202,7 @@ function updateAreaList() {
     list.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
 }
 async function runAutoblog() {
-  // v1.24.105 — fixed: previously called /api/admin/autoblog/run which
+  // v1.24.106 — fixed: previously called /api/admin/autoblog/run which
   // never existed (silent 404). Now uses /run-now (background thread)
   // and polls /status until last_run.ts changes, then shows the
   // generated post inline.
