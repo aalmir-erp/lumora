@@ -693,75 +693,100 @@ We respond to commercial enquiries within 4 working hours. New customer onboardi
 """,
     ),
     (
-        "sharjah-aljada-silverfish-bathrooms-humidity-fix",
+        # v1.24.120 — DEFAMATION SCRUB. Previous slug was
+        # "sharjah-aljada-silverfish-bathrooms-humidity-fix" with a body
+        # that named Aljada (Arada master-plan) + claimed specific towers
+        # had a "design issue". 301 redirect for the old URL is registered
+        # in _CleanURLMiddleware so external backlinks still resolve.
+        "sharjah-silverfish-bathrooms-humidity-fix-2026",
         "sharjah", "pest_control",
-        "Silverfish in Aljada bathrooms — the humidity fix that ends it permanently (2026)",
+        "Silverfish in UAE bathrooms — the humidity fix that ends it permanently (2026)",
         """## Key takeaways
 
-- Aljada towers built between 2021-2024 have a bathroom-humidity design issue.
-- Silverfish thrive in 75%+ relative humidity. Your bathroom likely sits at 80-90%.
+- Silverfish thrive at 75%+ relative humidity. Most UAE bathrooms run 80-90%.
 - Treatment costs AED 200 to 280 per bathroom and lasts 3-4 months.
-- Fixing the airflow is the permanent solution — costs nothing.
+- Fixing the airflow is the permanent solution and costs nothing.
 - The 4 specific changes you can make today are listed below.
+- Same-day pest treatment available across all 7 emirates.
 
-## Why silverfish love Aljada bathrooms specifically
+## Why silverfish love UAE bathrooms
 
-Aljada towers (Nasaq, Naseej, Sokoon, Areej, and the East Village clusters) were built in a 2021-2024 wave with tight modern envelopes — energy-efficient sealing, double glazing, no through-draught. That is great for AC cooling cost but creates a humidity trap in the bathrooms.
+Modern UAE apartments and villas across every emirate share a common
+trait that supports silverfish populations: tight sealed building
+envelopes that are great for AC efficiency but bad for indoor humidity
+management. Most apartment bathrooms in the country have:
 
-The bathrooms in most Aljada units have:
+- A single ceiling extractor fan, often weak or under-maintained.
+- An extractor vent that terminates into a shared riser shaft rather than directly outside, so humidity loads across floors.
+- No external window, meaning the extractor is the only way moisture leaves the room.
 
-- An extractor fan that is often weak or never serviced (the original fans are 80 m³/hr units, which is below the minimum for a bathroom of 4-5 sqm with two shower users a day).
-- An extractor vent that terminates into the riser shaft, not directly outside. So the shaft humidity loads up across all floors.
-- No window. So the only way to expel moisture is through that one extractor fan.
-
-Result: relative humidity stays at 80-92% for hours after every shower. Mould forms behind silicone seals. Silverfish move in to feast on the mould, on the cellulose in toilet paper, on the starch in soap powders, and on dead skin cells.
+Result: relative humidity stays at 80-92% for hours after every shower.
+Mould forms behind silicone seals. Silverfish move in to feast on the
+mould, on the cellulose in toilet paper, on the starch in soap powders,
+and on dead skin cells. Same dynamics apply whether you are in Dubai,
+Sharjah, Abu Dhabi or any other emirate.
 
 ## Treatment + the AED 200-280 fix
 
-For an Aljada 2-bath flat:
+For a typical 2-bath UAE flat:
 
-- Insecticide dust applied to all crack and crevice (skirting, behind sink pedestals, behind WC pan, inside vanity unit).
+- Insecticide dust applied to crack and crevice (skirting, behind sink pedestals, behind WC pan, inside vanity unit).
 - Residual spray on threshold and tile grout lines.
 - Bait stations in any cabinet under the sink.
-- IGR (insect growth regulator) — stops nymph development. Critical for silverfish because adults live 3+ years.
+- IGR (insect growth regulator) to stop nymph development. Critical for silverfish because adults live 3+ years.
 - Photo report.
 
 45-60 minutes per visit. Effective for 3-4 months.
 
-But if you do not also fix the humidity, the population recovers. Within 9 months you are back where you started.
+If you do not also fix the humidity, the population recovers. Within 9
+months you are back where you started.
 
 ## The 4 humidity fixes that end it permanently
 
 ### 1. Run the extractor fan 30 minutes AFTER each shower, not during
 
-The factory fan is timed to run during your shower and stop when you leave. That is wrong. The humidity AFTER you finish showering needs to leave the room — keep the fan running for 30 more minutes. Some Aljada units have a "humidistat" mode in the panel that does this automatically. Check yours.
+The factory timing usually runs the fan during your shower and stops
+when you leave. That is wrong. The humidity AFTER you finish showering
+is what needs to leave the room. Keep the fan running for 30 more
+minutes. Some panel timers include a "humidistat" mode that does this
+automatically.
 
-### 2. Squeegee the shower walls + door dry after each use
+### 2. Squeegee the shower walls and door dry after each use
 
-15 seconds of work. Removes 60% of the residual water that would otherwise evaporate into the air. The single highest-impact change.
+15 seconds of work removes about 60% of the residual water that would
+otherwise evaporate into the air. The single highest-impact change.
 
 ### 3. Leave the bathroom door open after showering
 
-Counter-intuitive (you want privacy) but the bathroom needs to share air with the rest of the apartment to dry. With the door closed, the AED 200 humidity sits in that 4 sqm volume for 4 hours.
+Counter-intuitive if you want privacy, but the bathroom needs to share
+air with the rest of the home to dry. With the door closed, the
+humidity sits in a 4 sqm volume for hours.
 
 ### 4. Replace the extractor fan if your unit is over 3 years old
 
-A new 100-120 m³/hr extractor fan with timer + humidistat costs AED 250 from Ace Hardware, AED 350 to install via Servia handyman. Pays for itself in mould and silverfish savings within 6 months.
+A new 100-120 m³/hr extractor fan with timer plus humidistat costs
+around AED 250 from a UAE hardware retailer, AED 350 to install via
+a [Servia handyman](/services/handyman). Pays for itself in mould and
+silverfish savings within 6 months.
 
 ## What does silverfish damage look like?
 
 - Holes in toilet paper rolls (eaten from inside out).
-- Yellowed silvery trails on tile grout (where they have been walking).
+- Yellowed silvery trails on tile grout where they have been walking.
 - Tiny dark fecal pellets on the floor around shower drains and toilet base.
-- Damage to wallpaper or paint on bathroom walls — they eat the paste.
+- Damage to wallpaper or paint on bathroom walls; they eat the paste.
 - Damage to towels stored long-term (the starch in residual detergent).
 - Damage to bath mats (cotton + skin cell crumbs).
 
-If you see ANY of these, you have an established population, not a one-off visitor.
+If you see ANY of these, you have an established population, not a
+one-off visitor.
 
-## Health-wise are they a problem?
+## Health-wise, are they a problem?
 
-Not directly — silverfish do not bite, do not carry disease, do not contaminate food (much). They are a nuisance pest. BUT their presence proves you have a humidity problem, and the same humidity that supports silverfish also supports:
+Not directly. Silverfish do not bite, do not carry disease, and do not
+significantly contaminate food. They are a nuisance pest. BUT their
+presence proves you have a humidity problem, and the same humidity
+that supports silverfish also supports:
 
 - Mould (especially black mould)
 - Cockroaches
@@ -770,13 +795,15 @@ Not directly — silverfish do not bite, do not carry disease, do not contaminat
 
 So treating the humidity treats all five issues at once.
 
-## Booking + service area
+## Booking
 
-[Book pest control in Aljada →](/book?service=pest_control&area=aljada)
+[Book pest control →](/book?service=pest_control)
 
-We service all Aljada towers + East Village + the older Muwaileh strip. Same-day available for confirmed silverfish cases. Average dispatch time 50-70 minutes during peak hours.
-
-If you want a complete "fix it for good" package — pest treatment + extractor fan upgrade + grout sealing — book the combined service at AED 750-1,100 for a 2-bath flat. One Saturday morning visit. Problem stays gone.
+Same-day pest control across all seven emirates. Average dispatch time
+50-70 minutes during peak hours. If you want a complete fix-it-for-good
+package, including pest treatment plus extractor fan upgrade plus grout
+sealing, book the combined service at around AED 750-1,100 for a 2-bath
+flat. One Saturday morning visit; problem stays gone.
 """,
     ),
 ]

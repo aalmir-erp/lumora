@@ -170,6 +170,11 @@ class _CleanURLMiddleware(_BHM):
         "/vs/urban-company":    "/vs/others#large-platforms",
         "/vs/servicemarket":    "/vs/others#marketplaces",
         "/vs/matic":            "/vs/others#single-service",
+        # v1.24.120 — DEFAMATION SCRUB: the old slug named Aljada (a real
+        # Arada master-plan) with construction-date defect claims. New
+        # slug + body are generic UAE-wide. 301 preserves any backlinks.
+        "/blog/sharjah-aljada-silverfish-bathrooms-humidity-fix":
+            "/blog/sharjah-silverfish-bathrooms-humidity-fix-2026",
     }
 
     async def dispatch(self, request, call_next):
@@ -1783,8 +1788,15 @@ async def _smart_cache(request, call_next):
         resp.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive, nosnippet"
         resp.headers["Cache-Control"] = "private, no-store, max-age=0"
         return resp
+    # v1.24.120 — blog pages MUST revalidate on every request. Admin
+    # rewrites (defamation scrubs) need to land instantly; with a 5-minute
+    # browser cache the founder kept seeing stale defamatory content after
+    # clicking "Rewrite". no-cache lets the browser keep a copy but forces
+    # an If-Modified-Since check on every load, so changes propagate.
+    if p.startswith("/blog/") and not p.startswith("/blog/api"):
+        resp.headers["Cache-Control"] = "no-cache, must-revalidate"
     # HTML — short cache + long SWR so deploys land in <1 min
-    if p.endswith(".html") or p == "/" or p.endswith("/"):
+    elif p.endswith(".html") or p == "/" or p.endswith("/"):
         resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
     # JS / CSS — 1-year cache (PSI requires ≥30d for 'efficient cache lifetimes' to score
     # well). Cache invalidation handled by the service-worker version bump (sw.js bumps

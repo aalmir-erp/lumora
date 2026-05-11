@@ -103,10 +103,15 @@ DATE_CLAIM_PATTERNS = (
 
 # Comparative defamation: "X has more pests than Y", "X is worse than Y",
 # etc. Anything that ranks a real neighborhood negatively against
-# another.
+# another. These patterns are applied to the ORIGINAL-case text (not
+# lowercased) so the [A-Z][a-zA-Z]+ proper-noun gate actually works.
+# v1.24.120 bug fix: previously the engine lowercased AND set IGNORECASE,
+# which defeated the capital-letter check and flagged generic phrases
+# like "more cockroaches than before" as defamation. Now these patterns
+# run case-sensitively against original text via _find_pattern_cased().
 COMPARATIVE_PATTERNS = (
-    r"\b(?:more|worse|poorer|fewer|less)\s+\w+\s+than\s+[A-Z][a-zA-Z]+\b",
-    r"\b(?:unlike|compared to)\s+[A-Z][a-zA-Z]+,?\s+[A-Z][a-zA-Z]+\s+(?:has|suffers|struggles)\b",
+    r"\b(?:more|worse|poorer|fewer|less)\s+\w+\s+than\s+(?:[A-Z][a-zA-Z]+\s+){0,2}[A-Z][a-zA-Z]+\b",
+    r"\b(?:Unlike|Compared to)\s+[A-Z][a-zA-Z]+,?\s+[A-Z][a-zA-Z]+\s+(?:has|suffers|struggles)\b",
 )
 
 
@@ -132,6 +137,22 @@ def _find_pattern(text: str, patterns: tuple[str, ...]) -> list[Finding]:
         for m in re.finditer(pat, lower, flags=re.IGNORECASE):
             start, end = m.span()
             # Pull 80 chars of context on each side
+            ctx_start = max(0, start - 80)
+            ctx_end = min(len(text), end + 80)
+            out.append(Finding(rule=pat, snippet=text[ctx_start:ctx_end],
+                                span=(start, end)))
+    return out
+
+
+def _find_pattern_cased(text: str, patterns: tuple[str, ...]) -> list[Finding]:
+    """Like _find_pattern but case-SENSITIVE on the original text. Used
+    for proper-noun-gated patterns (comparative defamation) where the
+    [A-Z][a-zA-Z]+ gate is the whole point — lowercasing would defeat it.
+    """
+    out: list[Finding] = []
+    for pat in patterns:
+        for m in re.finditer(pat, text):  # no flags → case-sensitive
+            start, end = m.span()
             ctx_start = max(0, start - 80)
             ctx_end = min(len(text), end + 80)
             out.append(Finding(rule=pat, snippet=text[ctx_start:ctx_end],
@@ -200,7 +221,8 @@ def review(text: str) -> dict:
     findings: list[Finding] = []
     findings.extend(_find_negative_near_project(text))
     findings.extend(_find_pattern(text, DATE_CLAIM_PATTERNS))
-    findings.extend(_find_pattern(text, COMPARATIVE_PATTERNS))
+    # Comparative patterns need ORIGINAL case so the proper-noun gate works
+    findings.extend(_find_pattern_cased(text, COMPARATIVE_PATTERNS))
     findings.extend(_find_competitor_names(text))
 
     if findings:
