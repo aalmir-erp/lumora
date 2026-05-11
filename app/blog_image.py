@@ -77,25 +77,38 @@ _SERVICE_VERBS = {
 
 def _build_prompt(topic: str, emirate: str | None = None,
                   service: str | None = None) -> str:
-    """Compose a service-specific photoreal prompt. Aim: make the
-    image LOOK like our own staff doing the actual work in a real
-    UAE home — NOT a generic stock interior shot.
+    """Compose a service-specific documentary-realism prompt.
 
-    v1.24.103 — switched from "modern photography style hero of clean
-    professional setup" (interior magazine vibe, no humans) to a
-    service-specific verb describing UNIFORMED WORKERS performing
-    the work. Founder rule: photos must look like our employees,
-    not catalog renders."""
+    v1.24.108 — founder feedback: previous output looked too magazine-shoot,
+    too polished, obviously AI-generated. Rewrote to push SD-XL hard toward
+    candid documentary photography:
+      - "shot on iPhone 15 Pro" tames the SD-XL polish bias
+      - "amateur photography" + "candid" reduces composed-looking poses
+      - "no makeup, natural skin texture, slight wear on uniform"
+        breaks the uncanny-perfect-skin SD-XL tell
+      - "fluorescent indoor light" + "no bokeh" kills the cinematic look
+      - "real product brands visible (generic spray bottle, plastic bucket)"
+        anchors the scene in reality
+    NOTE: Pollinations.ai is still SD-XL and will sometimes produce
+    AI-looking results no matter what we prompt. For truly realistic
+    images, install a Pexels API key (Bug 35 fix in v1.24.109).
+    """
     emirate_clean = (emirate or "Dubai").replace("-", " ").title()
     sid = (service or "deep_cleaning").lower()
     verb = _SERVICE_VERBS.get(sid, _SERVICE_VERBS["deep_cleaning"])
     return (
-        f"Documentary photography, {verb}, "
-        f"natural daylight from window, residential UAE setting in {emirate_clean}, "
-        f"warm realistic colour grade, sharp focus, 50mm lens, "
-        f"shallow depth of field, photoreal, "
-        f"no text, no watermark, no logos, no brand names visible, "
-        f"high-end editorial photography, 4k"
+        f"Candid documentary photograph, {verb}, "
+        f"shot on iPhone 15 Pro by someone walking past, "
+        f"caught mid-action not posed, "
+        f"natural fluorescent indoor lighting (no bokeh, no soft golden hour), "
+        f"slight motion blur, "
+        f"realistic skin texture with normal pores, no makeup, "
+        f"uniform shows light wear (slight wrinkles, real fabric), "
+        f"generic mass-market tools and spray bottles (no fancy brands), "
+        f"UAE residential apartment in {emirate_clean}, "
+        f"unstaged, looks like a quick photo for a WhatsApp status update, "
+        f"no text, no watermark, no logos, no brand names, "
+        f"amateur photography, slightly off-centre composition, 35mm"
     )
 
 

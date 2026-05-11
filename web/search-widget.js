@@ -121,7 +121,7 @@
     @keyframes cmdkdot { 0%,80%,100% { opacity:.3 } 40% { opacity:1 } }
     .cmdk-empty { text-align:center; padding:22px 16px; color:#64748B; font-size:13px }
     .cmdk-empty a { color:#5B21B6; font-weight:700; text-decoration:none }
-    /* v1.24.107 (Bug 32) — moved to bottom:184px / right:30px to sit above
+    /* v1.24.108 (Bug 32) — moved to bottom:184px / right:30px to sit above
        the 56x56 WA fab at bottom:104px without overlap. 6px right-inset
        cascade gives the FAB stack a clean visual rhythm. */
     .cmdk-fab { position:fixed; bottom:184px; right:30px; z-index:90; width:48px; height:48px; border-radius:50%;
@@ -363,7 +363,7 @@
   }
 
   // ---------- Lazy load full index when palette opens ----------
-  // v1.24.107 — fetch from single source-of-truth /api/search/index.
+  // v1.24.108 — fetch from single source-of-truth /api/search/index.
   // Includes manual pages, KB services, per-area pages, 1,628
   // service×area combos, blog, videos. Browser caches (1hr).
   // Fixes founder bug: typing "muwaileh" returned 0 results because
@@ -788,7 +788,7 @@
   } else {
     injectInlineNavSearch();
   }
-  // v1.24.107 (Bug 30) — pre-warm the full /api/search/index so the
+  // v1.24.108 (Bug 30) — pre-warm the full /api/search/index so the
   // first user keystroke matches against 1,700+ items, not the
   // 20-item STATIC fallback. Founder reported typing "muwa" returned
   // only 1 STATIC area entry instead of 38 muwaileh service-area

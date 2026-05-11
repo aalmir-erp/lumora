@@ -203,6 +203,60 @@ class _CleanURLMiddleware(_BHM):
 app.add_middleware(_CleanURLMiddleware)
 
 
+# v1.24.108 — chrome unification (Bug 35). 34 customer-facing HTML
+# pages each shipped their own hardcoded <nav> + <footer>. They've
+# drifted over months of edits. This middleware substitutes both
+# with the canonical version from app/chrome.py on every HTML
+# response. Skip list excludes admin/transactional pages.
+class _ChromeMiddleware(_BHM):
+    async def dispatch(self, request, call_next):
+        # Skip non-GET; only customer-facing GET HTML pages get chrome.
+        if request.method != "GET":
+            return await call_next(request)
+        response = await call_next(request)
+        # Only HTML responses
+        ct = response.headers.get("content-type", "")
+        if "text/html" not in ct.lower():
+            return response
+        # SKIP compressed responses (gzip/br/deflate). Decompress-modify-
+        # recompress is fragile; the middleware should run BEFORE any
+        # compression middleware. If we hit this branch the response was
+        # already encoded — bail rather than corrupt.
+        if response.headers.get("content-encoding"):
+            return response
+        from . import chrome as _chrome
+        path = request.url.path
+        if _chrome.should_skip_chrome(path):
+            return response
+        try:
+            body_chunks = []
+            async for chunk in response.body_iterator:
+                body_chunks.append(chunk)
+            body = b"".join(body_chunks)
+            html = body.decode("utf-8", errors="replace")
+            new_html = _chrome.inject_chrome(html, path=path)
+            if new_html == html:
+                # No substitution happened — return original body
+                from starlette.responses import Response as _R
+                return _R(content=body,
+                          status_code=response.status_code,
+                          headers=dict(response.headers))
+            from starlette.responses import Response as _R
+            new_body = new_html.encode("utf-8")
+            new_headers = dict(response.headers)
+            new_headers.pop("content-length", None)
+            new_headers.pop("Content-Length", None)
+            return _R(content=new_body,
+                      status_code=response.status_code,
+                      headers=new_headers,
+                      media_type="text/html")
+        except Exception:
+            return response
+
+
+app.add_middleware(_ChromeMiddleware)
+
+
 # v1.24.18 — HTML minification middleware. Strips unnecessary whitespace
 # between tags, comments, and consecutive blank lines from every HTML
 # response. Typical 5-15% reduction on top of GZip — meaningful for LCP

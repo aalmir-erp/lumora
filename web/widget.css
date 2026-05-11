@@ -5,7 +5,7 @@
   --us-text:#0F172A; --us-muted:#64748B; --us-border:#E2E8F0;
 }
 
-/* v1.24.107 (Bug 32) — FAB stack ladder. Founder reported overlapping
+/* v1.24.108 (Bug 32) — FAB stack ladder. Founder reported overlapping
    floating buttons on right edge. New stack bottom-to-top:
      .us-launcher  (chat, primary)     bottom:24px  right:18px  64x64
      #servia-wa-fab (WhatsApp)         bottom:104px right:24px  56x56
@@ -31,7 +31,7 @@ body.us-lift-bar .us-launcher-tip { bottom: 104px; }
   body.us-lift-bar .us-launcher { bottom: 76px; }
 }
 
-/* v1.24.107 (Bug 32) — WhatsApp FAB sits ABOVE chat-launcher, not at the
+/* v1.24.108 (Bug 32) — WhatsApp FAB sits ABOVE chat-launcher, not at the
    same level. Was bottom:88px which collided with us-launcher's lift
    position (92px). Now bottom:104px (88+76 gap) so they never overlap. */
 #servia-wa-fab, .wa-fab {

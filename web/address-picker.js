@@ -28,7 +28,7 @@
   // English-label tile sources. CartoDB Voyager has Latin scripts for the UAE
   // (Arabic translit) and is free for non-commercial. Fallback to OSM HOT
   // which renders English where available.
-  // v1.24.107 — CartoDB Voyager *does* serve local-language labels
+  // v1.24.108 — CartoDB Voyager *does* serve local-language labels
   // (Arabic in UAE) despite the v1.24.91 assumption otherwise. Switch
   // to ArcGIS World_Street_Map which renders English labels globally
   // and is free without an API key for non-commercial / light use.
@@ -322,7 +322,7 @@
         msg.className = "ap-msg ok";
         msg.textContent = "✅ Saved.";
       }
-      // v1.24.107 — exit fullscreen so the user can see the chat
+      // v1.24.108 — exit fullscreen so the user can see the chat
       // response. Previously the picker stayed frozen in fullscreen
       // after onPick fired, making the user think nothing happened
       // (rage-click loop confirmed by founder screenshot).
@@ -330,7 +330,7 @@
         wrap.classList.remove("fullscreen");
         fsBtn.textContent = "⛶ Fullscreen";
       }
-      // v1.24.107 — also collapse the form into a compact "✅ Pinned"
+      // v1.24.108 — also collapse the form into a compact "✅ Pinned"
       // confirmation so user knows the action was accepted. Tapping
       // the confirmation re-opens the picker for edits.
       btn.disabled = true;
