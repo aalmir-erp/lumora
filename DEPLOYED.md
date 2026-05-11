@@ -2,18 +2,18 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"ioa2WfuJQ5izXdpZGbGh5g"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"2XCjEogvRbSWFp54yCLmYg"}`
 
 ## Build logs
 ```
-[ 4/12] COPY requirements.txt ./
-[1/8] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[1/8] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[1/8] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+[runtime  2/12] WORKDIR /app
+[11/12] COPY start.sh /app/start.sh
+[10/12] COPY _e2e-shots ./_e2e-shots
+[ 9/12] COPY web ./web
+[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [internal] load build context
 [internal] load build context
 [internal] load build context
-[ 2/12] WORKDIR /app
 [ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
 [ 4/12] COPY requirements.txt ./
 [ 5/12] RUN pip install -r requirements.txt
@@ -32,9 +32,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZjA5OTViNjJjY2IxYWU4NjliMjcyMmU0ZjE0NzI1NjBhZmEzZWI3MzA5MzJlNmMwNTRlYjM4NGEyMzc3OTU4ZiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQyMDoyNDo0MFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:8cf193f069e613796264b8c9d2f3041bc85954f97d45880161c5e6f94713da5c
-containerimage.digest: sha256:f0995b62ccb1ae869b2722e4f1472560afa3eb730932e6c054eb384a2377958f
+containerimage.config.digest: sha256:b5f98e28f45a6221cdcbdc6dc6d132f4f73b130b6208b094db48a1588baa88a0
+containerimage.digest: sha256:5aea753b7be0a9b8eabb1f6cf5d2d89b32deb377ddf8820a3146e6c42bc5bc10
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NWFlYTc1M2I3YmUwYTliOGVhYmIxZjZjZjVkMmQ4OWIzMmRlYjM3N2RkZjg4MjBhMzE0NmU2YzQyYmM1YmMxMCIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQyMDo0MjoyMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 image push
 
@@ -50,34 +50,24 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.4:30766 - "GET /api/admin/stats HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30812 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30814 - "GET /api/admin/analytics HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30830 - "GET /api/admin/alerts?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30840 - "GET /api/admin/bookings?limit=8 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30856 - "GET /api/admin/bookings?status=pending&limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30860 - "GET /api/admin/psi/latest HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30812 - "GET /api/admin/bookings?limit=300 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30812 - "GET /api/admin/analytics HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30812 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30812 - "POST /api/admin/push/subscribe HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30766 - "GET /api/admin/llm/diagnose HTTP/1.1" 200 OK
-INFO:     100.64.0.5:42940 - "GET /api/wa/status HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30766 - "GET /api/admin/stats HTTP/1.1" 200 OK
-INFO:     100.64.0.5:42940 - "GET /api/videos/list?limit=500 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:41744 - "GET /api/blog/latest?limit=200 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30766 - "GET /api/admin/autoblog/prompt HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30812 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30812 - "GET /api/admin/ai/catalog HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30766 - "GET /api/admin/autoblog HTTP/1.1" 200 OK
-INFO:     100.64.0.4:30766 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:41750 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:31196 - "GET /api/admin/autoblog/audit HTTP/1.1" 200 OK
-INFO:     100.64.0.5:41750 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:31196 - "GET /api/admin/autoblog/status HTTP/1.1" 404 Not Found
-INFO:     100.64.0.5:41750 - "POST /api/admin/autoblog/run-now?slot=manual HTTP/1.1" 200 OK
+[start] launching whatsapp_bridge
+[wa-bridge] listening on :3001
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/02955cdb-5c7f-4e33-900e-93427c138e75/vol_onr647rhdeir9di9
+Starting Container
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
+[purge] scan complete — 23 posts, 0 flagged
+[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.5:41750 - "GET /api/admin/autoblog/status HTTP/1.1" 404 Not Found
-INFO:     100.64.0.4:31196 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:41750 - "GET /api/admin/autoblog/status HTTP/1.1" 404 Not Found
+INFO:     100.64.0.2:37717 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:34776 - "GET /services/car-wash?id=car_wash HTTP/1.1" 200 OK
+INFO:     100.64.0.4:41534 - "GET /area.html HTTP/1.1" 200 OK
+INFO:     100.64.0.4:56716 - "HEAD /api/videos/play/svc-car-wash HTTP/1.1" 404 Not Found
+INFO:     100.64.0.4:56716 - "GET /api/activity/live HTTP/1.1" 200 OK
+[autoblog] catch-up SKIP (last_run @ 2026-05-11T20:29:39.173006Z is fresh AND ok)
+[wa-bridge] QR received. Open /qr in your browser to scan.
+[wa-bridge] QR received. Open /qr in your browser to scan.
 ```
