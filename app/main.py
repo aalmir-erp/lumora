@@ -4255,59 +4255,16 @@ try:
             posts.append(d)
         return {"ok": True, "count": len(posts), "posts": posts}
 
-    @app.post("/api/admin/autoblog/run-now",
-              dependencies=[Depends(require_admin)])
-    def autoblog_run_now(slot: str = "manual"):
-        """Trigger an immediate autoblog tick. Returns the result of the
-        tick + the latest status so admin sees success/failure inline."""
-        import threading as _th
-        # Run in background thread so the HTTP request returns fast
-        # (LLM calls take 10-30s and can time-out the proxy).
-        _th.Thread(target=_autoblog_tick, args=(slot,), daemon=True).start()
-        return {"ok": True, "started": True, "slot": slot,
-                "note": "Generation runs in background. Poll /api/admin/autoblog/status to see result (typically 10-30s)."}
-
-    # Note: audit + rewrite endpoints live in app/admin.py (must be
-    # registered before /autoblog/{slug} catch-all there).
-    _AUTOBLOG_TICK_REF = _autoblog_tick  # expose to outer scope for fallback endpoint
+    # v1.24.116 — run-now + audit + rewrite endpoints all live in app/admin.py
+    # so they register BEFORE the /autoblog/{slug} catch-all in that router.
+    # If they were here at the @app level, FastAPI would route POST
+    # /api/admin/autoblog/run-now to admin.py's autoblog_update(slug="run-now")
+    # first, which tries to read an empty body as JSON and returns HTTP 500.
+    _AUTOBLOG_TICK_REF = _autoblog_tick  # exposed for admin.py:autoblog_run_now
 
 except Exception as _se:  # noqa: BLE001
     print(f"[scheduler] not loaded: {_se}", flush=True)
     _AUTOBLOG_TICK_REF = None
-
-
-# v1.24.110 — fallback run-now endpoint mounted OUTSIDE the apscheduler
-# try-block so /api/admin/autoblog/run-now ALWAYS exists, even if apscheduler
-# failed to import. Founder's "Generate now" toast was showing a bare "Error"
-# because the whole try-block (including the run-now route) wasn't loading
-# — root cause was a 404 with empty HTTP/2 statusText. This safety route
-# kicks in only when the primary route inside the try-block didn't register.
-def _autoblog_run_now_fallback(slot: str = "manual"):
-    """Used only if apscheduler import failed and the primary endpoint
-    isn't registered. Returns a useful diagnostic so admin sees why."""
-    if _AUTOBLOG_TICK_REF is not None:
-        # Primary registered fine — but FastAPI tried to call this fallback.
-        # Spawn the real tick and return ok.
-        import threading as _th
-        _th.Thread(target=_AUTOBLOG_TICK_REF, args=(slot,), daemon=True).start()
-        return {"ok": True, "started": True, "slot": slot}
-    return {"ok": False,
-            "error": ("Scheduler failed to load — autoblog disabled. "
-                      "Check Railway logs for '[scheduler] not loaded'. "
-                      "Likely cause: apscheduler import failed or a syntax "
-                      "error in the autoblog block. Redeploy after fixing.")}
-
-
-# Only register the fallback if the in-scheduler one didn't take. We probe by
-# trying to find the existing route — FastAPI lets multiple decorators stack
-# but FIRST wins, so if the in-try-block route registered, this is harmless.
-_existing = [r for r in app.routes
-             if getattr(r, "path", "") == "/api/admin/autoblog/run-now"]
-if not _existing:
-    app.add_api_route("/api/admin/autoblog/run-now",
-                      _autoblog_run_now_fallback,
-                      methods=["POST"],
-                      dependencies=[Depends(require_admin)])
 
 
 # ---------- v1.24.109: high-quality blog hero images via the AI cascade ----------

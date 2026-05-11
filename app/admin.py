@@ -2380,6 +2380,29 @@ def autoblog_list():
 # v1.24.113 — defamation audit + bulk rewrite. MUST be declared BEFORE
 # the catch-all /autoblog/{slug} below, otherwise /audit and /rewrite are
 # captured as slugs and return 404.
+# v1.24.116 — also moving /autoblog/run-now here. Same root cause: the
+# /{slug} POST handler below was catching POST /autoblog/run-now (slug=
+# "run-now"), trying to read an empty body as JSON, and returning HTTP 500
+# (founder's "⚠ /api/admin/autoblog/run-now: HTTP 500" toast).
+@router.post("/autoblog/run-now", dependencies=[Depends(require_admin)])
+def autoblog_run_now(slot: str = "manual"):
+    """Trigger an immediate autoblog tick. Returns fast (spawns a daemon
+    thread); admin polls /api/admin/autoblog/status to see the result."""
+    import threading as _th
+    try:
+        from .main import _AUTOBLOG_TICK_REF
+    except Exception as e:
+        return {"ok": False, "error": f"main module import failed: {e}"}
+    if _AUTOBLOG_TICK_REF is None:
+        return {"ok": False,
+                "error": ("Scheduler failed to load — _autoblog_tick "
+                          "unavailable. Check Railway logs for "
+                          "'[scheduler] not loaded'.")}
+    _th.Thread(target=_AUTOBLOG_TICK_REF, args=(slot,), daemon=True).start()
+    return {"ok": True, "started": True, "slot": slot,
+            "note": "Generation runs in background. Poll /api/admin/autoblog/status to see result (typically 10-30s)."}
+
+
 @router.get("/autoblog/audit", dependencies=[Depends(require_admin)])
 def autoblog_audit():
     """Scan every published post against content_safety.review().
