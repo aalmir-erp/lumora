@@ -235,6 +235,54 @@ async def get_payment_intent(intent_id: str) -> dict:
     }
 
 
+async def register_webhook(*, url: str, secret: str) -> dict:
+    """POST /webhook — register a webhook URL + signing secret with
+    Ziina (docs section 7 registration step). Returns {ok, raw} on
+    success or {ok:False, error, http_status}.
+
+    Per docs: 'Registration: POST /webhook with url and secret'.
+
+    Idempotency note: Ziina docs don't specify whether re-POSTing
+    the same URL replaces the existing record or creates a duplicate.
+    The admin endpoint that wraps this surfaces Ziina's raw response
+    so the founder can inspect the dashboard if a duplicate appears.
+    """
+    api_key = get_api_key()
+    if not api_key:
+        return {"ok": False, "error": "ZIINA_API_KEY not configured",
+                "http_status": 0}
+    if not url or not url.startswith("https://"):
+        return {"ok": False, "error": "webhook url must be an https URL",
+                "http_status": 0}
+    if not secret or len(secret) < 16:
+        return {"ok": False, "error": "secret must be >= 16 chars",
+                "http_status": 0}
+
+    headers = {
+        "Authorization": "Bearer " + api_key,
+        "Content-Type":  "application/json",
+        "Accept":        "application/json",
+    }
+    payload = {"url": url, "secret": secret}
+
+    try:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as c:
+            r = await c.post(BASE_URL + "/webhook",
+                              headers=headers, json=payload)
+    except httpx.HTTPError as e:
+        return {"ok": False, "error": f"network: {e}", "http_status": 0}
+
+    if r.status_code >= 400:
+        return {"ok": False,
+                "error": f"ziina {r.status_code}: {r.text[:300]}",
+                "http_status": r.status_code}
+    try:
+        raw = r.json()
+    except Exception:
+        raw = {"text": r.text[:300]}
+    return {"ok": True, "http_status": r.status_code, "raw": raw}
+
+
 async def refund(
     *,
     payment_intent_id: str,

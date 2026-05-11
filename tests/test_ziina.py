@@ -292,3 +292,55 @@ def test_15_amount_conversion():
     assert ziina.amount_to_minor("25.50") == 2550
     assert ziina.minor_to_aed(2500) == 25.00
     assert ziina.minor_to_aed(35050) == 350.50
+
+
+# ════════════════════════════════════════════════════════════════════════
+# 16. REGISTER WEBHOOK — POST /webhook with url + secret
+# ════════════════════════════════════════════════════════════════════════
+def test_16_register_webhook(monkeypatch):
+    _seed_cfg()
+    captured = {}
+    def handler(req: httpx.Request):
+        captured["path"]    = req.url.path
+        captured["method"]  = req.method
+        captured["headers"] = dict(req.headers)
+        captured["body"]    = json.loads(req.content.decode())
+        return httpx.Response(200, json={
+            "id": "wh_FAKE1",
+            "url": captured["body"]["url"],
+            "status": "active",
+        })
+    _patch_httpx_async(monkeypatch, handler)
+    r = asyncio.run(ziina.register_webhook(
+        url="https://servia.ae/api/webhooks/ziina",
+        secret="a" * 64,
+    ))
+    assert r["ok"] is True
+    assert captured["method"] == "POST"
+    assert captured["path"]   == "/api/webhook"
+    assert captured["headers"]["authorization"] == "Bearer " + TEST_API_KEY
+    assert captured["body"]["url"]    == "https://servia.ae/api/webhooks/ziina"
+    assert captured["body"]["secret"] == "a" * 64
+    assert r["raw"]["id"] == "wh_FAKE1"
+
+    # Reject http:// (not https)
+    r2 = asyncio.run(ziina.register_webhook(
+        url="http://servia.ae/api/webhooks/ziina", secret="a" * 64))
+    assert r2["ok"] is False
+    assert "https" in r2["error"]
+
+    # Reject short secret
+    r3 = asyncio.run(ziina.register_webhook(
+        url="https://servia.ae/api/webhooks/ziina", secret="short"))
+    assert r3["ok"] is False
+    assert ">= 16" in r3["error"]
+
+    # Ziina rejects with 409 — re-patch fresh so we don't stack mocks
+    monkeypatch.undo()  # drop the first patch
+    _patch_httpx_async(monkeypatch,
+        lambda req: httpx.Response(409, json={"error": "URL already registered"}))
+    r4 = asyncio.run(ziina.register_webhook(
+        url="https://servia.ae/api/webhooks/ziina", secret="a" * 64))
+    assert r4["ok"] is False, f"expected ok=False, got {r4}"
+    assert r4["http_status"] == 409
+    assert "already registered" in r4["error"]

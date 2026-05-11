@@ -2420,6 +2420,54 @@ class _PaymentProvidersBody(BaseModel):
     ziina_test_mode: bool | None = None
 
 
+class _RegisterZiinaWebhookBody(BaseModel):
+    # Optional — if omitted, server generates a 64-hex-char secret.
+    secret: str | None = None
+    # Optional — if omitted, server uses BRAND_DOMAIN.
+    url:    str | None = None
+
+
+@router.post("/payment-providers/register-ziina-webhook",
+             dependencies=[Depends(require_admin)])
+async def payment_providers_register_ziina_webhook(body: _RegisterZiinaWebhookBody):
+    """One-click webhook registration with Ziina.
+    1. Generate a fresh 64-hex-char secret (or use admin-supplied).
+    2. POST it to Ziina /webhook with our webhook URL.
+    3. On success, save the SAME secret to db.cfg so HMAC verify works.
+    4. Return masked secret (NEVER plaintext) so admin sees confirmation
+       without re-exposing it.
+    """
+    import secrets as _secrets
+    from . import ziina as _ziina
+    from .config import get_settings as _gs
+    if not _ziina.is_configured():
+        return {"ok": False,
+                "error": "ZIINA_API_KEY not set. Save the API key first, then register the webhook."}
+    secret = (body.secret or "").strip() or _secrets.token_hex(32)
+    if len(secret) < 16:
+        return {"ok": False,
+                "error": "secret must be at least 16 characters"}
+    brand_domain = (_gs().BRAND_DOMAIN or "servia.ae").strip()
+    url = (body.url or "").strip() or f"https://{brand_domain}/api/webhooks/ziina"
+    if not url.startswith("https://"):
+        return {"ok": False, "error": "webhook url must be https://"}
+
+    res = await _ziina.register_webhook(url=url, secret=secret)
+    if not res.get("ok"):
+        return {"ok": False, "error": res.get("error", "registration failed"),
+                "http_status": res.get("http_status")}
+
+    # Save the secret we sent — that's what Ziina will use to sign webhooks.
+    cur = db.cfg_get("payment_providers", {}) or {}
+    cur["ziina_webhook_secret"] = secret
+    db.cfg_set("payment_providers", cur)
+    db.log_event("admin", "payment_providers", "ziina_webhook_registered",
+                 actor="admin", details={"url": url})
+    return {"ok": True, "url": url,
+            "secret_masked": _mask_key(secret),
+            "ziina_response": res.get("raw")}
+
+
 @router.post("/payment-providers", dependencies=[Depends(require_admin)])
 def payment_providers_set(body: _PaymentProvidersBody):
     """Save payment-provider keys. Pass only the fields you want to

@@ -698,10 +698,12 @@
             <div style="font-size:11px;color:var(--muted);margin-top:4px">Toggle ON until you've completed a sandbox transaction end-to-end.</div>
           </div>
         </div>
-        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="savePaymentProviders()">💾 Save payment keys</button>
+          <button class="btn btn-ghost" style="background:#FEF3C7;color:#7C2D12;font-weight:700" onclick="registerZiinaWebhook()" title="Generate a fresh signing secret + register https://servia.ae/api/webhooks/ziina with Ziina in one call. Auto-saves the secret so HMAC verification works immediately.">🔗 Register webhook with Ziina</button>
           <span id="pay-save-status" style="font-size:12px;color:var(--muted)"></span>
         </div>
+        <div id="pay-webhook-result" style="margin-top:10px;font-size:12px;line-height:1.55"></div>
       </div>
 
       <!-- Snippet editor -->
@@ -4827,6 +4829,37 @@ async function loadPaymentProviders() {
     if (tMode) tMode.value = String(z.test_mode === false ? "false" : "true");
   } catch (_) {}
 }
+async function registerZiinaWebhook() {
+  const out = document.getElementById("pay-webhook-result");
+  if (!confirm("Register https://servia.ae/api/webhooks/ziina with Ziina?\n\n" +
+                "This will generate a new 64-char signing secret, POST it to " +
+                "Ziina's /webhook endpoint, and save it here automatically. " +
+                "Any previous webhook registration with the same URL may be " +
+                "overwritten or duplicated — check your Ziina dashboard after.")) return;
+  out.innerHTML = '<span style="color:#64748B">⏳ Registering webhook with Ziina…</span>';
+  try {
+    const r = await adm("/api/admin/payment-providers/register-ziina-webhook",
+                        { method: "POST", body: JSON.stringify({}) });
+    if (!r.ok) {
+      out.innerHTML = '<div style="background:#FEE2E2;border:1px solid #FECACA;color:#991B1B;padding:10px;border-radius:8px"><b>✗ Registration failed</b><br>' +
+                      escapeHtml(r.error || "unknown error") +
+                      (r.http_status ? "<br><span style=\"font-size:11px\">HTTP " + r.http_status + "</span>" : "") +
+                      '</div>';
+      return;
+    }
+    out.innerHTML = '<div style="background:#F0FDFA;border:1px solid #99F6E4;color:#0F766E;padding:10px;border-radius:8px">' +
+                    '<b>✅ Webhook registered with Ziina</b><br>' +
+                    '<span style="font-family:ui-monospace,monospace">URL: ' + escapeHtml(r.url) + '</span><br>' +
+                    '<span style="font-family:ui-monospace,monospace">Secret saved: ' + escapeHtml(r.secret_masked) + '</span><br>' +
+                    '<span style="font-size:11px;color:#475569">Ziina will sign every webhook with this secret. Our HMAC verifier is now active.</span>' +
+                    '</div>';
+    // Refresh masked display
+    setTimeout(loadPaymentProviders, 400);
+  } catch (e) {
+    out.innerHTML = '<div style="background:#FEE2E2;border:1px solid #FECACA;color:#991B1B;padding:10px;border-radius:8px">✗ ' + escapeHtml(e.message || "request failed") + '</div>';
+  }
+}
+
 async function savePaymentProviders() {
   const body = {};
   const apiK  = (document.getElementById("pay-ziina-api-key")        || {}).value || "";
