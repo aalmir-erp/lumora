@@ -2,23 +2,23 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"lrlPE2ODTUmSkSoOHn5Ytg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"TGI1JWlQRFullmngWUN5dQ"}`
 
 ## Build logs
 ```
-npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-
-npm warn deprecated fluent-ffmpeg@2.1.3: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
-
-
-added 301 packages in 7s
-
-npm notice
-npm notice New major version of npm available! 10.8.2 -> 11.14.1
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.14.1
-npm notice To update run: npm install -g npm@11.14.1
-npm notice
-
+[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+[internal] load build context
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+[internal] load build context
+[internal] load build context
+uploading snapshot
+[ 2/12] WORKDIR /app
+[ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[ 4/12] COPY requirements.txt ./
+[ 5/12] RUN pip install -r requirements.txt
+[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/12] COPY app ./app
 [ 8/12] COPY app ./app
@@ -32,9 +32,9 @@ npm notice
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:12159e769a6e2fda0e1914f1cf95b423d59bdc2790931063c347088a3578a63c
-containerimage.digest: sha256:1a6b0c587442ad3aa91597aec9f54ea14c0782852c781d63fb7a871326651c29
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MWE2YjBjNTg3NDQyYWQzYWE5MTU5N2FlYzlmNTRlYTE0YzA3ODI4NTJjNzgxZDYzZmI3YTg3MTMyNjY1MWMyOSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQxNjoxODo1MVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZDYzZTg0Y2U1MTZlYzdmMjdhMDI4NWFiMjJjZGY2NTQ0MzMxNmFhMWYzZjk2NzA2ZGU2NDQ4NzBiZjUxOWM4OSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQxNjoyNDo0NFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:4dff7a57920de07bb702e3d3f95d6725e40d415808b3ec80b8148d8dc3679f9a
+containerimage.digest: sha256:d63e84ce516ec7f27a0285ab22cdf65443316aa1f3f96706de644870bf519c89
 image push
 image push
 
@@ -50,19 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/2911b42d-22c9-4564-825e-0ac3d23688af/vol_onr647rhdeir9di9
-Starting Container
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
-[scheduler] not loaded: BaseScheduler.add_job() got multiple values for argument 'replace_existing'
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.4:53634 - "GET /api/admin/bookings?limit=300 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:53634 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:53624 - "GET /api/admin/llm/diagnose HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33074 - "GET /api/wa/status HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33074 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     100.64.0.3:45190 - "GET /api/admin/vendors HTTP/1.1" 200 OK
+INFO:     100.64.0.3:45202 - "GET /api/videos/list?limit=500 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:45212 - "GET /api/blog/latest?limit=200 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:53624 - "GET /api/admin/services-summary HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33074 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.2:52947 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33074 - "GET /api/admin/services-summary HTTP/1.1" 200 OK
+INFO:     100.64.0.3:44506 - "GET /api/admin/scraper/google-key HTTP/1.1" 200 OK
+INFO:     100.64.0.4:23096 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:23108 - "GET /api/admin/scraper/apify-token HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33074 - "GET /api/admin/outreach/smtp HTTP/1.1" 200 OK
+INFO:     100.64.0.5:33074 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:21338 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:47590 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:14404 - "GET /api/admin/e2e/scenarios HTTP/1.1" 200 OK
+INFO:     100.64.0.5:14404 - "GET /api/admin/e2e/last-results HTTP/1.1" 200 OK
+INFO:     100.64.0.3:49846 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.4:20096 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.4:47076 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:24788 - "GET /api/admin/cfg HTTP/1.1" 404 Not Found
+INFO:     100.64.0.5:24788 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:15606 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:37072 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:45256 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:45256 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 ```
