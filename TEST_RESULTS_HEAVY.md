@@ -1,15 +1,17 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 49
+- ✅ Pass: 48
 - ⚠️ Warn: 1
-- ❌ Fail: 0
+- ❌ Fail: 1
 - ⏭ Skip: 1
 
 ## Items
 
 - ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
-- ✅ **[T03] /services lists services** — 37 cards
+- ❌ **[T03] /services lists services** — (retried) exception: page.goto: net::ERR_TOO_MANY_REDIRECTS at https://servia.ae/services
+Call log:
+  - navigating to "https://servia.ae/ser
 - ✅ **[T04] /coverage.html renders** — OK
 - ✅ **[T05] /blog index loads** — OK
 - ✅ **[T06] Sitemap has /nfc** — OK
@@ -39,7 +41,7 @@
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_pYUMWDKiz...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_dDj6Eehpo...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -47,7 +49,7 @@
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.103
+- ✅ **[T41] /api/health responds** — v1.24.104
 - ✅ **[T42] /api/services >=10** — 37
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.103
 - ✅ **[T44] /api/site/social works** — OK
