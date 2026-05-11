@@ -158,7 +158,11 @@
   // ---------- service worker ----------
   // One-time purge: existing visitors are stuck on the old cache-first SW
   // (lumora-v0.2.0). Force a clean re-register so they pick up new deploys.
-  const SW_RESET_KEY = "servia.sw.reset.v1.22.65";
+  // v1.24.114 — bumped to force every browser to clear its service-worker
+  // cache and pick up the v1.24.113 admin.html (which has the new "🛡 Audit
+  // posts" button) + the v1.24.114 brand-free /vs/* pages. Founder reported
+  // the audit button wasn't visible after deploy — SW cache was the cause.
+  const SW_RESET_KEY = "servia.sw.reset.v1.24.114";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {
