@@ -2272,6 +2272,33 @@ def sitemap_pages(request: Request = None):
 # like the rest of the site (different CSS, no nav, no widget, no mascot,
 # hero SVG referenced only as og:image). This route serves the SAME
 # template every other service page uses, with SEO meta hardcoded for the
+# v1.24.104 — 301 redirect legacy /services.html?service=X&area=Y to
+# the canonical pretty URL /services/{slug}/{area}. Founder's GSC
+# flagged 24 URLs as "Alternative page with proper canonical tag"
+# because both forms returned 200 with self-canonical. This collapses
+# them to a single indexable URL per page.
+@app.get("/services.html", include_in_schema=False)
+def services_legacy_redirect(service: str = "", area: str = "",
+                              city: str = "", lang: str = ""):
+    # area + service → /services/{svc}/{area}
+    if service and (area or city):
+        a = (area or city).lower().replace("_", "-").replace(" ", "-")
+        s = service.lower().replace("_", "-")
+        return RedirectResponse(url=f"/services/{s}/{a}", status_code=301)
+    # only service → /services/{svc}
+    if service:
+        s = service.lower().replace("_", "-")
+        return RedirectResponse(url=f"/services/{s}", status_code=301)
+    # only area or city → /area.html?city={x} (existing handler)
+    if area or city:
+        return RedirectResponse(url=f"/area.html?city={(area or city).lower()}",
+                                 status_code=301)
+    # bare /services.html (no params) → clean /services (handled by
+    # CleanURLMiddleware which 301s /services.html → /services anyway,
+    # but be explicit here)
+    return RedirectResponse(url="/services", status_code=301)
+
+
 # slug + a JS shim that pre-fills the `?id=` param so the dynamic loader
 # picks the right service.
 # v1.24.76 — register BOTH clean and .html paths so the dynamic route
@@ -2308,10 +2335,10 @@ def service_slug_page(slug: str):
         "<title>Service • Servia</title>",
         f"<title>{title_safe}</title>",
     ).replace(
-        '<meta name="description" content="">',
+        '<meta name="description" content="Professional home services across all 7 UAE emirates. Same-day booking, transparent AED pricing, fully insured crews.">',
         f'<meta name="description" content="{desc_safe}">',
     ).replace(
-        '<link rel="canonical" href="">',
+        '<link rel="canonical" href="https://servia.ae/services">',
         f'<link rel="canonical" href="{canonical}">',
     )
     # Inject ?id=<sid> into the URL early so service.html JS reads the

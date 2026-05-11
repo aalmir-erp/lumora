@@ -546,16 +546,34 @@ def render_service_area_page(svc: dict, area_info: dict, brand: dict,
     )
 
     html = html_template
+    # v1.24.104 (Loophole 23): service.html has TWO existing
+    # `<script type="application/ld+json">` blocks with @type=Service
+    # (line 10 static + line 556 dynamic JS). Plus my route injects
+    # a THIRD Service block with areaServed. Google's structured-data
+    # parser flags this as "Duplicate unique property" (WNC-20237597
+    # in GSC). Fix: strip the static Service+Breadcrumb JSON-LD from
+    # the template before we inject our area-specific replacements.
+    # The JS-added Service (line 556) WILL still run client-side but
+    # Googlebot indexes the pre-JS HTML so only our injected version
+    # is seen.
+    import re as _re_ld
+    html = _re_ld.sub(
+        r'<script[^>]*type="application/ld\+json"[^>]*>\s*\{[^<]*?"@type"\s*:\s*"(Service|BreadcrumbList)"[^<]*?</script>',
+        '', html, flags=_re_ld.DOTALL | _re_ld.IGNORECASE)
     html = html.replace(
         "<title>Service • Servia</title>",
         f"<title>{_safe(title)}</title>",
     )
+    # v1.24.104 — service.html now ships with a default canonical +
+    # description (not empty strings) so Googlebot pre-JS sees a
+    # valid value. Programmatic /services/{svc}/{area} pages overwrite
+    # both with area-specific values.
     html = html.replace(
-        '<meta name="description" content="">',
+        '<meta name="description" content="Professional home services across all 7 UAE emirates. Same-day booking, transparent AED pricing, fully insured crews.">',
         f'<meta name="description" content="{_safe(desc)}">',
     )
     html = html.replace(
-        '<link rel="canonical" href="">',
+        '<link rel="canonical" href="https://servia.ae/services">',
         f'<link rel="canonical" href="{canonical}">',
     )
 
@@ -566,10 +584,23 @@ def render_service_area_page(svc: dict, area_info: dict, brand: dict,
         'history.replaceState(null,"",u.toString());'
         '}catch(_){}})();</script>'
     )
-    # Service + LocalBusiness JSON-LD (extra, in addition to template defaults)
+    # Service + LocalBusiness JSON-LD (replaces the stripped statics)
     svc_ld = _localbusiness_jsonld(svc, area_info, brand, canonical)
+    # v1.24.104 — also inject a 4-level BreadcrumbList so Google has
+    # the proper Home → Services → Service → Area trail. Previously
+    # we relied on the template's static one which we now strip.
+    bc_ld = (
+        '{"@context":"https://schema.org","@type":"BreadcrumbList",'
+        '"itemListElement":['
+        f'{{"@type":"ListItem","position":1,"name":"Home","item":"https://{domain}/"}},'
+        f'{{"@type":"ListItem","position":2,"name":"Services","item":"https://{domain}/services"}},'
+        f'{{"@type":"ListItem","position":3,"name":"{_safe(name)}","item":"https://{domain}/services/{svc_slug}"}},'
+        f'{{"@type":"ListItem","position":4,"name":"{_safe(area_name)}, {_safe(em_name)}","item":"{canonical}"}}'
+        ']}'
+    )
     extra_ld = (
-        '<script type="application/ld+json">' + svc_ld + '</script>'
+        '<script type="application/ld+json">' + svc_ld + '</script>' +
+        '<script type="application/ld+json">' + bc_ld + '</script>'
     )
     faq_ld = _faq_jsonld(svc, area_info)
     if faq_ld:
