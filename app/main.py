@@ -3827,18 +3827,18 @@ try:
     # skews Ajman+Abu-Dhabi+RAK so we cover all emirates over time. Both ticks
     # use neighborhood-targeted topics (Jumeirah, Al Khan, Mirdif, etc).
     @_scheduler.scheduled_job("cron", hour=6, minute=0, id="autoblog_morning",
-                              max_instances=1, coalesce=True, replace_existing=True)
+                              max_instances=1, coalesce=True)
     def _job_autoblog_morning():
         _autoblog_tick("morning")
 
     @_scheduler.scheduled_job("cron", hour=18, minute=0, id="autoblog_evening",
-                              max_instances=1, coalesce=True, replace_existing=True)
+                              max_instances=1, coalesce=True)
     def _job_autoblog_evening():
         _autoblog_tick("evening")
 
     # Daily summary push at 21:00 Asia/Dubai
     @_scheduler.scheduled_job("cron", hour=21, minute=0, id="daily_summary",
-                              max_instances=1, coalesce=True, replace_existing=True)
+                              max_instances=1, coalesce=True)
     def _job_daily_summary():
         try:
             from . import admin_alerts as _aa
@@ -3850,7 +3850,7 @@ try:
     # PSI auto-check: 03:00 daily (low-traffic window) so admin sees fresh
     # score by morning. Also runs once on startup (5 min after boot).
     @_scheduler.scheduled_job("cron", hour=3, minute=0, id="psi_daily",
-                              max_instances=1, coalesce=True, replace_existing=True)
+                              max_instances=1, coalesce=True)
     def _job_psi_daily():
         try:
             import asyncio as _aio
@@ -3862,7 +3862,7 @@ try:
     # Daily social-image generation — 10 images at 09:00 Asia/Dubai
     # (overridable via admin: cfg key social_image_cron_daily, _hour, _enabled)
     @_scheduler.scheduled_job("cron", hour=9, minute=0, id="social_images_daily",
-                              max_instances=1, coalesce=True, replace_existing=True)
+                              max_instances=1, coalesce=True)
     def _job_social_images_daily():
         try:
             from . import db as _db, social_images as _sim
