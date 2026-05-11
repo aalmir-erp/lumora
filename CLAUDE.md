@@ -91,6 +91,47 @@ Visual changes (button colors, page layout, modals, etc.) must be:
    user BEFORE the push happens
 Bug fixes that change rendered output count as visual changes.
 
+### W15. BRAND REFERENCE — ALWAYS CHECK web/brand/BRAND.md + web/brand/reference/ BEFORE TOUCHING ANY VISUAL ASSET
+(Founder rule, v1.24.119, 2026-05-11 — after three iterations of the
+Ziina avatar + background where I shipped a made-up "S" icon, then
+whitened the real logo into a blank box, before finally checking what
+the canonical Servia logo actually looks like.)
+
+**THE FAILURE PATTERN — never repeat this:**
+
+I built brand assets (Ziina avatar, banners, social images, Ziina
+background) by inventing the logo from scratch or by destroying the
+real logo with a blanket .whiten() call. The founder had to send the
+canonical logo + homepage screenshots THREE TIMES.
+
+**THE RULE — non-negotiable from v1.24.119 onward:**
+
+Before generating, modifying, or rasterising any Servia visual asset:
+
+1. **Read `web/brand/BRAND.md`** — the canonical brand spec lives here.
+2. **Look at the founder reference images in `web/brand/reference/`**:
+   - `logo-canonical-1-with-blessing.jpg`
+   - `logo-canonical-2-with-blessing-star.jpg`
+   - `logo-canonical-3-with-blessing-no-tagline.jpg`
+   - `homepage-mobile.jpg`
+   - `homepage-desktop.jpg`
+3. **Use the canonical SVGs as source**:
+   - `web/brand/servia-logo-full.svg` for marketing / brand placements
+     (has Arabic blessing + tagline)
+   - `web/logo.svg` for compact header / nav use
+   - `web/mascot.svg` for the mascot (strip the multilingual speech
+     bubble when rasterising — see BRAND.md)
+4. **Brand colours are listed in BRAND.md** — don't invent new shades.
+5. **For Arabic text in PIL/cairosvg rasterisations**: pre-shape with
+   arabic_reshaper + bidi (recipe in BRAND.md). Do NOT paste raw
+   Arabic into a rasterised SVG — it'll render as disconnected glyphs.
+6. **Mascot chest "SERVIA" badge**: the badge in mascot.svg is tiny
+   (9-pt text). When the mascot appears at any size below 1024px, the
+   badge is illegible. Overlay a clearer SERVIA pill on top.
+
+**IF YOU CATCH YOURSELF inventing a logo, picking a colour out of
+thin air, or whitening the entire logo image**: STOP. Re-read BRAND.md.
+
 ### W14. NO DEFAMATION — NEVER NAME A SPECIFIC BUILDING / DEVELOPER / PROJECT IN A NEGATIVE OR FACTUAL-CLAIM CONTEXT
 (Founder rule, v1.24.113, 2026-05-11 — after a live article on
 /blog/sharjah-aljada-... titled "Silverfish in Aljada bathrooms" said

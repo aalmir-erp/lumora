@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  v1.24.119 — CANONICAL FULL SERVIA LOGO
+
+  Matches founder's reference images in web/brand/reference/:
+    logo-canonical-1-with-blessing.jpg
+    logo-canonical-2-with-blessing-star.jpg
+    logo-canonical-3-with-blessing-no-tagline.jpg
+
+  Composition:
+    1. Icon (rounded gradient square, 96x96):
+       - Soft UAE-flag halo ribbon on the LEFT edge (green/white/black/red)
+       - Mint→deeper-teal gradient body
+       - Inner teal circle frame
+       - White "S" letterform centred
+       - Small gold sparkle/star at the upper-right of the icon
+    2. Arabic blessing "إن شاء الله" (Insha'Allah, "God willing") in gold,
+       centered above the wordmark
+    3. Wordmark "Servia":
+       - "Serv" in brand teal (#0F766E)
+       - "ia"   in brand gold (#F59E0B)
+       - Small gold star/dot above the "i"
+       - Gold underline-curl flourish below the wordmark
+    4. Tagline "YOUR UAE FIX-IT IN 60 SECONDS" in dark teal at the bottom
+
+  Use this for: large brand placements (Ziina, marketing posters, social
+  images, OG tags). For tiny header use (124x40), use web/logo.svg which
+  is the compact version (no Arabic blessing, no tagline).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 220" width="880" height="220"
+     role="img" aria-label="Servia — UAE home services">
+  <defs>
+    <linearGradient id="icon-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#0D9488"/>
+      <stop offset="60%"  stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#0F766E"/>
+    </linearGradient>
+    <radialGradient id="icon-glow" cx="0.5" cy="0.5" r="0.55">
+      <stop offset="0%"   stop-color="#FCD34D" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#FCD34D" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="uae-halo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#00732F"/>
+      <stop offset="33%"  stop-color="#00732F"/>
+      <stop offset="33.1%" stop-color="#FFFFFF"/>
+      <stop offset="66%"  stop-color="#FFFFFF"/>
+      <stop offset="66.1%" stop-color="#000000"/>
+      <stop offset="80%"  stop-color="#000000"/>
+      <stop offset="80.1%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#EF4444"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ICON BLOCK (96x96) at left -->
+  <g transform="translate(20, 60)">
+    <!-- Soft UAE-flag halo behind the icon (only the left/top crescent peeks out) -->
+    <rect x="-12" y="-12" width="120" height="120" rx="28" fill="url(#uae-halo)" opacity="0.55"/>
+    <!-- White shadow ring (separates halo from icon body) -->
+    <rect x="-6" y="-6" width="108" height="108" rx="26" fill="#FFFFFF" opacity="0.8"/>
+    <!-- Main icon body -->
+    <rect x="0" y="0" width="96" height="96" rx="22" fill="url(#icon-grad)"/>
+    <!-- Gloss highlight -->
+    <rect x="4" y="4" width="88" height="36" rx="20" fill="#FFFFFF" opacity="0.16"/>
+    <!-- Subtle warm glow centre -->
+    <circle cx="48" cy="50" r="34" fill="url(#icon-glow)"/>
+    <!-- Inner darker teal ring -->
+    <circle cx="48" cy="50" r="32" fill="none" stroke="#064E3B" stroke-width="2.5" opacity="0.55"/>
+    <!-- Big white "S" -->
+    <path d="M64 30 Q34 30 34 44 Q34 53 46 56 L58 58 Q66 60 66 66 Q66 74 46 74 Q34 74 28 68"
+          stroke="#FFFFFF" stroke-width="7"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- Gold sparkle top-right -->
+    <g transform="translate(78 14)">
+      <path d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="#FCD34D"/>
+      <circle cx="0" cy="0" r="3" fill="#F59E0B"/>
+    </g>
+  </g>
+
+  <!-- WORDMARK BLOCK at right -->
+  <g transform="translate(150, 0)">
+    <!-- Arabic blessing "إن شاء الله" pre-shaped (Arabic Presentation Forms)
+         so cairosvg / non-shaping renderers display the connected letterforms
+         correctly. Source: arabic_reshaper.reshape() + bidi.get_display(). -->
+    <text x="280" y="40"
+          font-family="'Amiri', 'Noto Naskh Arabic', 'Geeza Pro', 'Noto Sans Arabic', system-ui, sans-serif"
+          font-size="34" font-weight="700" fill="#F59E0B" text-anchor="middle">ﻪﻠﻟﺍ ﺀﺎﺷ ﻥﺇ</text>
+
+    <!-- "Serv" in teal -->
+    <text x="0" y="124"
+          font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+          font-weight="800" font-size="98" fill="#0F766E" letter-spacing="-2">Serv</text>
+
+    <!-- "ia" in gold (with star above the i) -->
+    <text x="230" y="124"
+          font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+          font-weight="800" font-size="98" fill="#F59E0B" letter-spacing="-2">ia</text>
+
+    <!-- Star/sparkle above the "i" of "ia" -->
+    <g transform="translate(255, 56)">
+      <path d="M0 -10 L2.4 -2.4 L10 0 L2.4 2.4 L0 10 L-2.4 2.4 L-10 0 L-2.4 -2.4 Z"
+            fill="#F59E0B"/>
+    </g>
+
+    <!-- Gold underline-curl flourish below the wordmark -->
+    <path d="M0 152 Q160 174 320 150"
+          stroke="#F59E0B" stroke-width="6"
+          stroke-linecap="round" fill="none"/>
+    <path d="M310 148 Q325 150 320 162"
+          stroke="#F59E0B" stroke-width="6"
+          stroke-linecap="round" fill="none"/>
+
+    <!-- Tagline -->
+    <text x="0" y="200"
+          font-family="ui-sans-serif, -apple-system, 'Segoe UI', sans-serif"
+          font-weight="700" font-size="22" fill="#134E4A" letter-spacing="4">
+      YOUR UAE FIX-IT IN 60 SECONDS
+    </text>
+  </g>
+</svg>
