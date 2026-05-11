@@ -451,7 +451,7 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
         "author": {
             "@type": "Person",
             "name": "Servia Editorial Team",
-            "url": "https://servia.ae/about.html",
+            "url": "https://servia.ae/contact",
             "worksFor": {"@type": "Organization", "name": "Servia",
                          "url": "https://servia.ae"},
             "jobTitle": "UAE home services editor",
@@ -472,7 +472,7 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
     import json as _json
     schema_json = _json.dumps(schema, ensure_ascii=False)
 
-    book_url = f"/book.html?service={service_id}&area={emirate}"
+    book_url = f"/book?service={service_id}&area={emirate}"
 
     html = f"""<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -589,12 +589,12 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
   <a href="/"><img src="/logo.svg" height="36" alt="Servia"></a>
   <small id="lumora-version" style="font-size:10px;color:var(--muted);margin-inline-start:6px;font-weight:600;background:var(--bg);padding:2px 6px;border-radius:6px">v?</small>
   <div class="nav-links">
-    <a href="/services.html">Services</a>
-    <a href="/book.html">Book</a>
+    <a href="/services">Services</a>
+    <a href="/book">Book</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html">My account</a>
+    <a href="/me">My account</a>
   </div>
-  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book.html">Book now</a></div>
+  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book">Book now</a></div>
 </div></nav>
 
 <div class="post-hero">
@@ -605,8 +605,8 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
 
 <article>
   <div class="post-meta-row">
-    <a class="post-tag" href="/area.html?city={emirate}">📍 {em_pretty}</a>
-    <a class="post-tag" href="/services.html#{service_id}">{sv_meta['emoji']} {sv_name}</a>
+    <a class="post-tag" href="/area?city={emirate}">📍 {em_pretty}</a>
+    <a class="post-tag" href="/services#{service_id}">{sv_meta['emoji']} {sv_name}</a>
     <span>📅 {pub}</span>
     <span>⏱ {reading} min read</span>
     <span>👁 {post.get('view_count') or 0} views</span>
@@ -640,8 +640,8 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
   <div class="links-card">
     <h4>🔗 Helpful Servia links</h4>
     Looking for more on this topic? See our
-    <a href="/services.html#{service_id}">{sv_name} pricing &amp; details</a>,
-    explore <a href="/area.html?city={emirate}">{em_pretty} coverage</a>,
+    <a href="/services#{service_id}">{sv_name} pricing &amp; details</a>,
+    explore <a href="/area?city={emirate}">{em_pretty} coverage</a>,
     or browse <a href="/blog">all UAE service articles</a>.
     For official UAE info, see <a href="{ext['url']}" target="_blank" rel="noopener nofollow">{ext['label']}</a>
     or the <a href="https://u.ae" target="_blank" rel="noopener nofollow">UAE Government Portal</a>.
@@ -666,9 +666,9 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
 
 <footer><div class="container">
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
-  <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
-  <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
-  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:support@servia.ae">support@servia.ae</a></div>
+  <div><h3>Customers</h3><a href="/services">All services</a><br><a href="/book">Book online</a><br><a href="/me">My account</a></div>
+  <div><h3>Legal</h3><a href="/terms">Terms</a><br><a href="/privacy">Privacy</a><br><a href="/refund">Refund</a></div>
+  <div><h3>Contact</h3><a href="/contact">Contact us</a><br><a href="mailto:support@servia.ae">support@servia.ae</a></div>
 </div></footer>
 
 <script src="/theme.js" defer></script>
@@ -855,12 +855,12 @@ def render_index() -> HTMLResponse:
 <nav class="nav"><div class="nav-inner">
   <a href="/"><img src="/logo.svg" height="36" alt="Servia"></a>
   <div class="nav-links">
-    <a href="/services.html">Services</a>
-    <a href="/book.html">Book</a>
+    <a href="/services">Services</a>
+    <a href="/book">Book</a>
     <a href="/blog">Blog</a>
-    <a href="/me.html">My account</a>
+    <a href="/me">My account</a>
   </div>
-  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book.html">Book now</a></div>
+  <div class="nav-cta" style="margin-inline-start:auto"><a class="btn btn-primary" href="/book">Book now</a></div>
 </div></nav>
 
 <header class="b-hero">
@@ -894,9 +894,9 @@ def render_index() -> HTMLResponse:
 
 <footer><div class="container">
   <div><img src="/logo.svg" height="36" alt="Servia" style="filter:brightness(0) invert(1)"></div>
-  <div><h3>Customers</h3><a href="/services.html">All services</a><br><a href="/book.html">Book online</a><br><a href="/me.html">My account</a></div>
-  <div><h3>Legal</h3><a href="/terms.html">Terms</a><br><a href="/privacy.html">Privacy</a><br><a href="/refund.html">Refund</a></div>
-  <div><h3>Contact</h3><a href="/contact.html">Contact us</a><br><a href="mailto:support@servia.ae">support@servia.ae</a></div>
+  <div><h3>Customers</h3><a href="/services">All services</a><br><a href="/book">Book online</a><br><a href="/me">My account</a></div>
+  <div><h3>Legal</h3><a href="/terms">Terms</a><br><a href="/privacy">Privacy</a><br><a href="/refund">Refund</a></div>
+  <div><h3>Contact</h3><a href="/contact">Contact us</a><br><a href="mailto:support@servia.ae">support@servia.ae</a></div>
 </div></footer>
 
 <script>
