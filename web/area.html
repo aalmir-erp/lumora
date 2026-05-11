@@ -10,8 +10,8 @@
 <link rel="canonical" href="https://servia.ae/area">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="preload" as="style" href="/style.css?v=1.24.106" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.106"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.106" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.106"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.107" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.107"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.107" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.107"></noscript>
 <link rel="preload" as="image" href="/mascot.svg" type="image/svg+xml" fetchpriority="high">
 <link rel="preload" as="fetch" href="/api/services" crossorigin="anonymous">
 
@@ -173,7 +173,7 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
   </div>
   <p style="text-align:center;margin:10px 0 0"><a href="/videos" style="color:#FCD34D;font-weight:700;text-decoration:none;font-size:13px">📺 More Servia videos →</a></p>
   <script>
-  // v1.24.106 — guard against empty/invalid city slug. GSC indexed
+  // v1.24.107 — guard against empty/invalid city slug. GSC indexed
   // /api/videos/play/em- as a 404 because some crawler hit this page
   // with no ?city= param AND something flagged the default. Belt +
   // braces: validate, fall back, and skip if the video doesn't exist.
@@ -630,7 +630,7 @@ document.querySelectorAll(".reveal").forEach(el => io.observe(el));
 
   const mapEl = document.getElementById("ar-map");
   if (!mapEl) return;
-  // v1.24.106 (Bug 29) — Leaflet has `defer` so it loads AFTER this
+  // v1.24.107 (Bug 29) — Leaflet has `defer` so it loads AFTER this
   // inline script runs. Previous code did `if (!window.L) return;`
   // and exited silently → empty teal area on every emirate page.
   // Now: poll until window.L is ready (max 5s), then init.
@@ -769,7 +769,7 @@ document.querySelectorAll(".reveal").forEach(el => io.observe(el));
   });  // close _waitForL(function(){...
 })();
 </script>
-<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.106";s.dataset.apiBase="";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.107";s.dataset.apiBase="";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 <script src="/cms.js" defer></script>
 <script src="/share.js" defer></script>
 <script src="/install.js" defer></script>

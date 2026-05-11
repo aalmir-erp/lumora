@@ -172,6 +172,14 @@ class _CleanURLMiddleware(_BHM):
             clean = path[:-5]  # strip ".html"
             if not clean:
                 clean = "/"
+            # v1.24.107 (Bug 31): preserve the query string. Previously
+            # /search.html?q=muw 301'd to /search, dropping ?q=muw —
+            # search input was blank, no results loaded. Founder reported
+            # this exact bug when clicking "See all matches" in the
+            # search dropdown.
+            qs = request.url.query
+            if qs:
+                clean = clean + "?" + qs
             from fastapi.responses import RedirectResponse
             return RedirectResponse(url=clean, status_code=301)
 
@@ -3855,6 +3863,50 @@ try:
         threading.Thread(target=_later, daemon=True).start()
 
     @app.on_event("startup")
+    def _seed_pest_control_blog_posts():
+        """v1.24.107 — seed 10 hand-written pest-control blog posts
+        on startup if not already present. Each ~800-1000 words,
+        SEO-optimised, area-specific (JLT, Reem Island, Muwaileh,
+        Dubai Marina, Jumeirah, JVC, Business Bay, Damac Hills,
+        Al Barsha, Aljada). W9-compliant: ≥500 unique words per post.
+        Founder requested: 'on pest control get written SEO friendly
+        10 blogs at least now.'"""
+        try:
+            from .data.seed_pest_control_blog import PEST_CONTROL_POSTS
+            from . import db as _db
+            import datetime as _d
+            with _db.connect() as c:
+                try:
+                    c.execute("""CREATE TABLE IF NOT EXISTS autoblog_posts(
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        slug TEXT UNIQUE, emirate TEXT, topic TEXT,
+                        body_md TEXT, published_at TEXT,
+                        view_count INTEGER DEFAULT 0)""")
+                except Exception: pass
+                try: c.execute("ALTER TABLE autoblog_posts ADD COLUMN service_id TEXT")
+                except Exception: pass
+                seeded = 0
+                # Spread published dates across the last 10 days so they
+                # don't all appear with identical timestamps (looks
+                # spammy + makes blog index ordering useless).
+                base_date = _d.datetime.utcnow()
+                for i, (slug, emirate, service_id, topic, body) in enumerate(PEST_CONTROL_POSTS):
+                    # Only insert if slug not already in DB
+                    row = c.execute("SELECT 1 FROM autoblog_posts WHERE slug=?", (slug,)).fetchone()
+                    if row: continue
+                    pub_at = (base_date - _d.timedelta(days=i * 2 + 1)).isoformat() + "Z"
+                    c.execute(
+                        "INSERT INTO autoblog_posts(slug, emirate, topic, "
+                        "body_md, published_at, service_id) VALUES(?,?,?,?,?,?)",
+                        (slug, emirate, topic, body, pub_at, service_id),
+                    )
+                    seeded += 1
+                if seeded:
+                    print(f"[seed] pest control blog: +{seeded} posts", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[seed] pest control blog failed: {e}", flush=True)
+
+    @app.on_event("startup")
     def _autoblog_catchup_on_boot():
         """v1.24.102 — fire ONE autoblog tick within 60s of container
         boot if last_run is missing or > 12 hours old. Founder reported
@@ -3870,17 +3922,25 @@ try:
                 last = _db.cfg_get("autoblog_last_run", None) or {}
                 last_ts = (last or {}).get("ts") or ""
                 stale = True
+                last_ok = bool(last.get("ok"))
                 try:
                     if last_ts:
                         from datetime import datetime as _dt2
                         cutoff = _dt2.fromisoformat(last_ts.rstrip("Z"))
                         stale = (_dt2.utcnow() - cutoff).total_seconds() > 12 * 3600
                 except Exception: pass
-                if stale:
-                    print("[autoblog] catch-up tick (last_run stale or missing)", flush=True)
+                # v1.24.107 — also fire catch-up if the previous attempt
+                # FAILED (last_ok=False), not just if timestamp is old.
+                # Founder reported no blogs since 2026-05-05 even though
+                # the system claimed to be running. Cause: catch-up was
+                # skipping because last_run.ts was fresh (recent failure
+                # within 12h), so the failure perpetuated indefinitely.
+                if stale or not last_ok:
+                    why = "stale or missing" if stale else f"last attempt failed: {last.get('err')!r}"
+                    print(f"[autoblog] catch-up tick ({why})", flush=True)
                     _autoblog_tick("startup-catchup")
                 else:
-                    print(f"[autoblog] catch-up SKIP (last_run @ {last_ts} is fresh)", flush=True)
+                    print(f"[autoblog] catch-up SKIP (last_run @ {last_ts} is fresh AND ok)", flush=True)
             except Exception as e:  # noqa: BLE001
                 print(f"[autoblog] catch-up failed: {e}", flush=True)
         threading.Thread(target=_later, daemon=True).start()

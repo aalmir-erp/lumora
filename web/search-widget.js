@@ -121,12 +121,15 @@
     @keyframes cmdkdot { 0%,80%,100% { opacity:.3 } 40% { opacity:1 } }
     .cmdk-empty { text-align:center; padding:22px 16px; color:#64748B; font-size:13px }
     .cmdk-empty a { color:#5B21B6; font-weight:700; text-decoration:none }
-    .cmdk-fab { position:fixed; bottom:152px; right:18px; z-index:90; width:48px; height:48px; border-radius:50%;
+    /* v1.24.107 (Bug 32) — moved to bottom:184px / right:30px to sit above
+       the 56x56 WA fab at bottom:104px without overlap. 6px right-inset
+       cascade gives the FAB stack a clean visual rhythm. */
+    .cmdk-fab { position:fixed; bottom:184px; right:30px; z-index:90; width:48px; height:48px; border-radius:50%;
       background:#fff; border:1px solid #E2E8F0; box-shadow:0 8px 22px rgba(15,23,42,.18);
       cursor:pointer; font-size:18px; color:#0F766E; display:flex; align-items:center; justify-content:center;
       transition:transform .15s }
     .cmdk-fab:hover { transform:scale(1.06); box-shadow:0 12px 28px rgba(15,118,110,.3) }
-    @media (max-width:720px) { .cmdk-fab { bottom:140px; right:14px; width:44px; height:44px; font-size:16px } }
+    @media (max-width:720px) { .cmdk-fab { bottom:160px; right:24px; width:44px; height:44px; font-size:16px } }
   `;
   document.head.appendChild(css);
   document.body.appendChild(overlay);
@@ -360,7 +363,7 @@
   }
 
   // ---------- Lazy load full index when palette opens ----------
-  // v1.24.106 — fetch from single source-of-truth /api/search/index.
+  // v1.24.107 — fetch from single source-of-truth /api/search/index.
   // Includes manual pages, KB services, per-area pages, 1,628
   // service×area combos, blog, videos. Browser caches (1hr).
   // Fixes founder bug: typing "muwaileh" returned 0 results because
@@ -785,7 +788,7 @@
   } else {
     injectInlineNavSearch();
   }
-  // v1.24.106 (Bug 30) — pre-warm the full /api/search/index so the
+  // v1.24.107 (Bug 30) — pre-warm the full /api/search/index so the
   // first user keystroke matches against 1,700+ items, not the
   // 20-item STATIC fallback. Founder reported typing "muwa" returned
   // only 1 STATIC area entry instead of 38 muwaileh service-area

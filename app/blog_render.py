@@ -599,7 +599,8 @@ def render_post(slug: str, request: Request | None = None) -> HTMLResponse:
 
 <div class="post-hero">
   <img src="{_hero_url}" alt="{_html.escape(title)} — Servia hero image" loading="eager"
-       width="1200" height="800" style="width:100%;height:auto;max-width:1024px;border-radius:12px">
+       width="1200" height="800" style="width:100%;height:auto;max-width:1024px;border-radius:12px"
+       onerror="this.onerror=null;this.src='/api/blog/hero/{slug}.svg'">
 </div>
 
 <article>
@@ -734,7 +735,8 @@ def render_index() -> HTMLResponse:
         <a class="b-card" href="/blog/{s}" data-em="{em}" data-sv="{sv}" data-q="{_html.escape((topic+' '+em_pretty+' '+sv_meta['name']+' '+excerpt).lower())}">
           <div class="b-thumb">
             <img loading="lazy" src="{_card_hero}" alt="{_html.escape(topic)}"
-                 width="600" height="400" style="width:100%;height:auto">
+                 width="600" height="400" style="width:100%;height:auto"
+                 onerror="this.onerror=null;this.src='/api/blog/hero/{s}.svg'">
           </div>
           <div class="b-body">
             <div class="b-meta">

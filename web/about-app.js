@@ -17,11 +17,11 @@
   const css = document.createElement("style");
   css.textContent = `
     #servia-about-fab {
-      /* v1.22.90: moved AWAY from the chat-launcher (.us-launcher at
-         right:18 bottom:18, ~56x56). Chat overlaps with the prior
-         right:6 bottom:34 placement, hijacking taps. New position is
-         far above the chat button — bottom:160px — well clear of it. */
-      position:fixed; right:14px; bottom:160px; z-index:1001;
+      /* v1.24.107 (Bug 32): re-positioned to top of FAB stack.
+         Stack order bottom-to-top:
+           us-launcher (chat) 24px → wa-fab 104px → cmdk-fab 184px
+           → about-fab 252px. 6px right-inset cascade. */
+      position:fixed; right:36px; bottom:252px; z-index:1001;
       width:32px; height:32px; border-radius:50%;
       background:#0F172A; color:#fff; font-size:14px;
       border:2px solid rgba(255,255,255,.85);
@@ -30,8 +30,9 @@
       display:inline-flex; align-items:center; justify-content:center;
       opacity:.92; transition:opacity .15s, transform .15s;
     }
-    /* When mobile-nav is on screen, push ⓘ even higher above the bar */
-    .mobile-nav ~ #servia-about-fab { bottom:226px }
+    /* When mobile-nav (~56px) is on screen, push the entire FAB stack
+       up by 64px so all 4 FABs stay above the nav. */
+    .mobile-nav ~ #servia-about-fab { bottom:316px }
     #servia-about-fab:hover, #servia-about-fab:active {
       opacity:1; transform:scale(1.08);
     }

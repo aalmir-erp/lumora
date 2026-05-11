@@ -5,7 +5,15 @@
   --us-text:#0F172A; --us-muted:#64748B; --us-border:#E2E8F0;
 }
 
-.us-launcher{position:fixed;right:24px;bottom:24px;width:64px;height:64px;border-radius:50%;
+/* v1.24.107 (Bug 32) — FAB stack ladder. Founder reported overlapping
+   floating buttons on right edge. New stack bottom-to-top:
+     .us-launcher  (chat, primary)     bottom:24px  right:18px  64x64
+     #servia-wa-fab (WhatsApp)         bottom:104px right:24px  56x56
+     .cmdk-fab     (search)            bottom:184px right:30px  48x48
+     #servia-about-fab (info)          bottom:252px right:36px  32x32
+   Centres ~76px apart with 6px right-inset cascade. Tested on
+   320-1920px viewports. Lift-bar offsets add 64px to all. */
+.us-launcher{position:fixed;right:18px;bottom:24px;width:64px;height:64px;border-radius:50%;
   background:linear-gradient(135deg,var(--us-primary),var(--us-primary-dark));color:#fff;
   border:0;box-shadow:0 12px 32px rgba(13,148,136,.45);cursor:pointer;font-size:26px;
   z-index:99998;transition:transform .18s ease, bottom .25s ease;
@@ -17,10 +25,32 @@
    Uses class-based selectors instead of :has() — :has() forces expensive style
    recalc on every DOM mutation (PSI flagged 6s+ Style & Layout work).
    widget.js adds .us-lift-bar class on <body> when sticky-cta or mobile-nav exists. */
-body.us-lift-bar .us-launcher { bottom: 92px; right: 16px; }
+body.us-lift-bar .us-launcher { bottom: 88px; right: 18px; }
 body.us-lift-bar .us-launcher-tip { bottom: 104px; }
 @media (max-width:720px) {
-  body.us-lift-bar .us-launcher { bottom: 80px; }
+  body.us-lift-bar .us-launcher { bottom: 76px; }
+}
+
+/* v1.24.107 (Bug 32) — WhatsApp FAB sits ABOVE chat-launcher, not at the
+   same level. Was bottom:88px which collided with us-launcher's lift
+   position (92px). Now bottom:104px (88+76 gap) so they never overlap. */
+#servia-wa-fab, .wa-fab {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 104px !important;
+  width: 56px !important;
+  height: 56px !important;
+  z-index: 99997 !important;
+}
+body.us-lift-bar #servia-wa-fab,
+body.us-lift-bar .wa-fab { bottom: 168px !important; }
+@media (max-width:720px) {
+  #servia-wa-fab, .wa-fab {
+    bottom: 92px !important; right: 20px !important;
+    width: 52px !important; height: 52px !important;
+  }
+  body.us-lift-bar #servia-wa-fab,
+  body.us-lift-bar .wa-fab { bottom: 144px !important; }
 }
 
 /* Pulsing ring around the launcher — attracts attention without nagging */
