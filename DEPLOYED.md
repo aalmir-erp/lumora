@@ -2,10 +2,11 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"YzEya0uRS0WIvz59yCLmYg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"OQLk16BzQBGg0_bxwoOzXw"}`
 
 ## Build logs
 ```
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 5/12] RUN pip install -r requirements.txt
 [ 4/12] COPY requirements.txt ./
 [internal] load build context
@@ -15,7 +16,6 @@
 [ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
@@ -33,9 +33,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MWJmZmEyZWU4ZDEzNDI5ZjVkYWI1ZjYzNzNkMTYzODM4ZjRiNjEwZTMxOWQ2ZWQ4YjYwODNjZmMxNmU2YTdmZiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMFQyMDo0MDo1NloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:cbc9ef2a2669c2879fc7bbafe78cea3505c30fb9ddc74316aaa35bcacc34f72c
-containerimage.digest: sha256:1bffa2ee8d13429f5dab5f6373d163838f4b610e319d6ed8b6083cfc16e6a7ff
+containerimage.config.digest: sha256:8ebf469d8a86308b52e91513eee57fbd2894356c58f58fc1ea7136cc0a910790
+containerimage.digest: sha256:30d5e290a404755a74dbe093356506e311dbb3ef8242a3589cf1636275798e11
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MzBkNWUyOTBhNDA0NzU1YTc0ZGJlMDkzMzU2NTA2ZTMxMWRiYjNlZjgyNDJhMzU4OWNmMTYzNjI3NTc5OGUxMSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQwNjoyODo1MloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 
 [35m====================
@@ -50,34 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.3:51622 - "GET /book.html?nfc=zzzzbogus99 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:51058 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.6:51052 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.6:32970 - "GET /api/services HTTP/1.1" 200 OK
-INFO:     100.64.0.6:32974 - "GET /api/nfc/tag/zzzzbogus99 HTTP/1.1" 404 Not Found
-INFO:     100.64.0.6:32970 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.6:32974 - "GET /api/services HTTP/1.1" 200 OK
-INFO:     100.64.0.6:32970 - "GET /index.html HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.6:32974 - "GET / HTTP/1.1" 200 OK
-INFO:     100.64.0.6:32974 - "GET /index.html HTTP/1.1" 200 OK
-INFO:     100.64.0.6:32974 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
-INFO:     100.64.0.3:51622 - "GET /cart.html HTTP/1.1" 200 OK
-INFO:     100.64.0.13:58840 - "GET /api/services HTTP/1.1" 200 OK
-INFO:     100.64.0.13:58840 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.13:58840 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.13:58840 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.13:58848 - "GET /index.html HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.13:58840 - "GET / HTTP/1.1" 200 OK
-INFO:     100.64.0.13:58840 - "GET /index.html HTTP/1.1" 200 OK
-INFO:     100.64.0.13:58840 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
-INFO:     100.64.0.13:58840 - "GET / HTTP/1.1" 200 OK
-INFO:     100.64.0.8:26648 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.8:26658 - "POST /api/app-install HTTP/1.1" 200 OK
-INFO:     100.64.0.6:32974 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.7:36114 - "GET /index.html HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.7:36114 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.8:26658 - "GET /index.html HTTP/1.1" 200 OK
-INFO:     100.64.0.8:26648 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.8:26658 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.4:62436 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.6:60668 - "GET /book.html?nfc=zzzzbogus99 HTTP/1.1" 200 OK
+INFO:     100.64.0.13:18008 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.13:18020 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.13:18038 - "GET /api/nfc/tag/zzzzbogus99 HTTP/1.1" 404 Not Found
+INFO:     100.64.0.13:18046 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.13:18056 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.13:18008 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.13:18038 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.13:18090 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.10:57866 - "GET /cart.html HTTP/1.1" 200 OK
+INFO:     100.64.0.9:31688 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.9:37716 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.9:37708 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.9:37718 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.9:31688 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.9:37728 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.9:37708 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.6:60668 - "GET / HTTP/1.1" 200 OK
+INFO:     100.64.0.6:60668 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.6:37758 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.6:60668 - "GET /index.html HTTP/1.1" 301 Moved Permanently
+INFO:     100.64.0.6:37772 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.6:37780 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.6:60668 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
+INFO:     100.64.0.6:37772 - "GET /index.html HTTP/1.1" 200 OK
+INFO:     100.64.0.6:60668 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.14:11126 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
