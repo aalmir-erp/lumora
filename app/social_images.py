@@ -539,6 +539,63 @@ async def admin_generate_bulk(body: BulkBody):
             "msg": f"Generating {body.target} images. Poll /api/admin/social-images/status."}
 
 
+# v1.24.110 — founder request: "get at least 30 generated for top services".
+# Per-service bulk: N images per service, cycling aspects + models so each
+# service gets visual variety. Default 5/service × ~24 services = ~120 images.
+async def generate_per_service(per_service: int = 5,
+                                service_ids: list[str] | None = None) -> dict:
+    """Generate `per_service` images for each service. If service_ids is
+    given, only those services; otherwise all configured services."""
+    all_services = [s["id"] for s in kb.services().get("services", [])]
+    services = [s for s in (service_ids or all_services) if s in all_services]
+    if not services:
+        return {"ok": False, "error": "no matching services"}
+    aspects = ["1x1", "4x5", "9x16", "2x3"]
+    aesthetics = list(IMAGE_PROVIDERS_BY_AESTHETIC.keys())
+    target = per_service * len(services)
+    _LIVE_STATUS.update({"running": True, "step": "starting", "made": 0,
+                         "target": target, "log": [], "errors": []})
+    _push(f"🎯 Starting per-service gen: {per_service} × {len(services)} services = {target} images")
+    made = 0
+    i = 0
+    for sid in services:
+        for n in range(per_service):
+            aspect = aspects[(i + n) % len(aspects)]
+            aest_hint = aesthetics[(i + n) % len(aesthetics)]
+            em, ar = random.choice(AREA_POOL)
+            _push(f"  🎯 [{sid} {n+1}/{per_service}] {ar} · {aspect} · {aest_hint}",
+                  step=f"{sid} {n+1}/{per_service}")
+            r = await generate_one(sid, area=ar, emirate=em, aspect=aspect, model=aest_hint)
+            if r.get("ok"):
+                made += 1
+                _push(f"    ✓ {r.get('slug')} via {r.get('model')}", made=made)
+            else:
+                _LIVE_STATUS["errors"].append(f"{sid}: {r.get('error')}")
+                _push(f"    ✗ {sid} failed: {r.get('error')}")
+            await asyncio.sleep(0.4)
+            i += 1
+    _push(f"✅ Done. {made}/{target} images created across {len(services)} services.",
+          running=False, step="done")
+    return {"ok": True, "made": made, "target": target, "services": len(services)}
+
+
+class PerServiceBody(BaseModel):
+    per_service: int = 5
+    service_ids: list[str] | None = None
+
+
+@admin_router.post("/generate-per-service")
+async def admin_generate_per_service(body: PerServiceBody):
+    """Generate N images for each service (or a subset). Runs in background."""
+    if _LIVE_STATUS.get("running"):
+        raise HTTPException(409, "Another bulk gen is already running. Check /status.")
+    if body.per_service > 20:
+        raise HTTPException(400, "per_service capped at 20 to prevent runaway cost")
+    asyncio.create_task(generate_per_service(body.per_service, body.service_ids))
+    return {"ok": True, "background": True,
+            "msg": f"Generating {body.per_service} images per service. Poll /api/admin/social-images/status."}
+
+
 @admin_router.get("/status")
 def get_status():
     return _LIVE_STATUS

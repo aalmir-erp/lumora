@@ -3733,67 +3733,51 @@ try:
         area = areas[ts % len(areas)]
         topic = f"{sv.replace('_',' ').title()} in {area} ({em.replace('-',' ').title()}): {slant} guide for {_d.datetime.now().strftime('%B %Y')}"
 
-        # Reuse the admin endpoint helper inline (avoid import loop)
-        # v1.24.98 — founder rule: autoblog (and image / future video gen)
-        # MUST use FREE-tier credits ONLY. Prefer Gemini 1.5/2.0 Flash
-        # (1500 req/day free tier on AI Studio), fall back to OpenRouter
-        # free models, then DEFER if all free quotas exhausted.
+        # v1.24.110 — switched to ai_router.call_with_cascade (same cascade
+        # used by /chat, blog regen, etc.) instead of a hardcoded Gemini-only
+        # list. Reason: founder's autoblog was silently failing for 6 days
+        # because they had OpenAI/Anthropic keys configured but no Google key,
+        # so the old FREE_MODELS list (Google-only) had nothing to try and
+        # exited with "no FREE provider succeeded". The cascade tries the
+        # admin-preferred model first, then every other provider with a key.
+        # Free quota signal is still detected — when ALL providers return
+        # quota errors, we defer 6 hours so we don't burn paid credit on a
+        # forced retry.
         try:
             from . import ai_router as _ar
             import asyncio as _aio
             prompt = _autoblog_prompt(em, sv, area, slant, topic)
-            # Try Gemini free-tier models first. If both fail with
-            # quota-style errors, defer the job to next tick (~12hr) by
-            # writing autoblog_defer_until cfg key.
-            FREE_MODELS = (
-                "google/gemini-2.0-flash-exp",
-                "google/gemini-1.5-flash",
-                "google/gemini-2.5-flash",
-                "openrouter/google/gemini-2.0-flash-exp:free",
-                "openrouter/meta-llama/llama-3.3-70b-instruct:free",
-            )
-            res = None
-            quota_hits = 0
-            for m in FREE_MODELS:
-                provider, _, model = m.partition("/")
-                if not (cfg.get("keys") or {}).get(provider, "").strip():
-                    continue
-                try:
-                    r = _aio.run(_ar.call_model(provider, model, prompt, cfg))
-                except Exception as ex:
-                    r = {"ok": False, "error": str(ex)}
-                err_text = (r.get("error") or "").lower()
-                # Quota / rate-limit signatures across providers
-                quota_signal = any(s in err_text for s in (
-                    "quota", "rate limit", "rate_limit", "resource_exhausted",
-                    "429", "billing", "exceeded"))
-                if r.get("ok"):
-                    res = r
-                    res["provider"] = provider
-                    res["model"] = model
-                    break
-                if quota_signal:
-                    quota_hits += 1
-                    print(f"[autoblog] quota hit on {provider}/{model}: "
-                          f"{(r.get('error') or '')[:80]}", flush=True)
-            if not res:
-                # All free models failed. If at least one was quota,
-                # defer 6 hours (3 cron ticks). Otherwise it's a real
-                # error — log and skip this tick.
-                if quota_hits > 0:
+            try:
+                res = _aio.run(_ar.call_with_cascade(prompt, persona="blog", cfg=cfg))
+            except Exception as ex:
+                res = {"ok": False, "error": str(ex), "tried": []}
+            if not res.get("ok"):
+                tried = res.get("tried") or []
+                quota_hits = sum(
+                    1 for t in tried
+                    if any(s in (t.get("error") or "").lower() for s in (
+                        "quota", "rate limit", "rate_limit", "resource_exhausted",
+                        "429", "billing", "exceeded"))
+                )
+                tried_summary = "; ".join(
+                    f"{t.get('provider')}/{t.get('model')}={'ok' if t.get('ok') else (t.get('error') or 'no key')[:40]}"
+                    for t in tried) or "no providers attempted"
+                if quota_hits > 0 and quota_hits == len(tried):
                     import datetime as _d2
                     defer_until = (_d2.datetime.utcnow() +
                                    _d2.timedelta(hours=6)).isoformat() + "Z"
                     try: _db.cfg_set("autoblog_defer_until", defer_until)
                     except Exception: pass
-                    return _fail(f"all FREE quotas exhausted ({quota_hits} hits) "
-                                 f"— deferred until {defer_until}")
-                return _fail("no FREE provider succeeded (and no quota signal — check keys / network)")
+                    return _fail(f"all providers quota-blocked ({quota_hits}) "
+                                 f"— deferred until {defer_until}. tried: {tried_summary[:300]}")
+                return _fail(f"cascade failed — {res.get('error') or 'no provider succeeded'}. "
+                             f"tried: {tried_summary[:300]}")
             body = res.get("text") or ""
             body = _humanize_text(body)
-            _AUTOBLOG_LAST["provider"] = f"{res.get('provider')}/{res.get('model')}"
-            print(f"[autoblog] generated via {res.get('provider')}/{res.get('model')} "
-                  f"({len(body)} chars)", flush=True)
+            prov = res.get("provider") or "?"
+            mdl = res.get("model") or "?"
+            _AUTOBLOG_LAST["provider"] = f"{prov}/{mdl}"
+            print(f"[autoblog] generated via {prov}/{mdl} ({len(body)} chars)", flush=True)
         except Exception as e:  # noqa: BLE001
             return _fail(f"exception during generation: {e}")
 
@@ -4088,9 +4072,45 @@ try:
         _th.Thread(target=_autoblog_tick, args=(slot,), daemon=True).start()
         return {"ok": True, "started": True, "slot": slot,
                 "note": "Generation runs in background. Poll /api/admin/autoblog/status to see result (typically 10-30s)."}
+    _AUTOBLOG_TICK_REF = _autoblog_tick  # expose to outer scope for fallback endpoint
 
 except Exception as _se:  # noqa: BLE001
     print(f"[scheduler] not loaded: {_se}", flush=True)
+    _AUTOBLOG_TICK_REF = None
+
+
+# v1.24.110 — fallback run-now endpoint mounted OUTSIDE the apscheduler
+# try-block so /api/admin/autoblog/run-now ALWAYS exists, even if apscheduler
+# failed to import. Founder's "Generate now" toast was showing a bare "Error"
+# because the whole try-block (including the run-now route) wasn't loading
+# — root cause was a 404 with empty HTTP/2 statusText. This safety route
+# kicks in only when the primary route inside the try-block didn't register.
+def _autoblog_run_now_fallback(slot: str = "manual"):
+    """Used only if apscheduler import failed and the primary endpoint
+    isn't registered. Returns a useful diagnostic so admin sees why."""
+    if _AUTOBLOG_TICK_REF is not None:
+        # Primary registered fine — but FastAPI tried to call this fallback.
+        # Spawn the real tick and return ok.
+        import threading as _th
+        _th.Thread(target=_AUTOBLOG_TICK_REF, args=(slot,), daemon=True).start()
+        return {"ok": True, "started": True, "slot": slot}
+    return {"ok": False,
+            "error": ("Scheduler failed to load — autoblog disabled. "
+                      "Check Railway logs for '[scheduler] not loaded'. "
+                      "Likely cause: apscheduler import failed or a syntax "
+                      "error in the autoblog block. Redeploy after fixing.")}
+
+
+# Only register the fallback if the in-scheduler one didn't take. We probe by
+# trying to find the existing route — FastAPI lets multiple decorators stack
+# but FIRST wins, so if the in-try-block route registered, this is harmless.
+_existing = [r for r in app.routes
+             if getattr(r, "path", "") == "/api/admin/autoblog/run-now"]
+if not _existing:
+    app.add_api_route("/api/admin/autoblog/run-now",
+                      _autoblog_run_now_fallback,
+                      methods=["POST"],
+                      dependencies=[Depends(require_admin)])
 
 
 # ---------- v1.24.109: high-quality blog hero images via the AI cascade ----------

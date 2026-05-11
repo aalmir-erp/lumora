@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Servia deep home cleaning in UAE">
+  <defs>
+    <linearGradient id="bgClean" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#0D9488"/>
+    </linearGradient>
+    <radialGradient id="sparkle" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FEF3C7"/>
+      <stop offset="1" stop-color="#FEF3C7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bgClean)"/>
+
+  <!-- Bubble particles floating up -->
+  <g fill="#fff" opacity="0.5">
+    <circle cx="120" cy="600" r="14">
+      <animate attributeName="cy" values="600;-30" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.6;0" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="220" cy="600" r="10">
+      <animate attributeName="cy" values="600;-30" dur="5s" begin="0.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.6;0" dur="5s" begin="0.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="980" cy="600" r="18">
+      <animate attributeName="cy" values="600;-30" dur="7s" begin="1.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.6;0" dur="7s" begin="1.4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1080" cy="600" r="8">
+      <animate attributeName="cy" values="600;-30" dur="5.5s" begin="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.6;0" dur="5.5s" begin="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="600" cy="600" r="12">
+      <animate attributeName="cy" values="600;-30" dur="6.5s" begin="2.6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.6;0" dur="6.5s" begin="2.6s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Sparkle bursts -->
+  <g>
+    <g transform="translate(880,180)">
+      <circle r="60" fill="url(#sparkle)">
+        <animate attributeName="r" values="20;80;20" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0.3;0.8" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <g stroke="#FEF3C7" stroke-width="4" stroke-linecap="round">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s" repeatCount="indefinite"/>
+        <line x1="0" y1="-40" x2="0" y2="-26"/>
+        <line x1="0" y1="40"  x2="0" y2="26"/>
+        <line x1="-40" y1="0" x2="-26" y2="0"/>
+        <line x1="40"  y1="0" x2="26"  y2="0"/>
+      </g>
+    </g>
+    <g transform="translate(1020,420)">
+      <circle r="40" fill="url(#sparkle)">
+        <animate attributeName="r" values="14;60;14" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- Mop scene (bottom-right) -->
+  <g transform="translate(700,340)">
+    <!-- Floor -->
+    <rect x="-700" y="220" width="1900" height="50" fill="#0B1220" opacity="0.45"/>
+    <!-- Floor shine sweep -->
+    <rect x="-200" y="218" width="200" height="6" fill="#FEF3C7" opacity="0.7">
+      <animate attributeName="x" values="-300;1300" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.8;0" dur="4s" repeatCount="indefinite"/>
+    </rect>
+    <!-- Mop -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate"
+                        values="-8;12;-8" dur="2.2s" repeatCount="indefinite"/>
+      <rect x="-4" y="-220" width="8" height="220" fill="#92400E"/>
+      <ellipse cx="0" cy="10" rx="56" ry="22" fill="#F59E0B"/>
+      <ellipse cx="0" cy="14" rx="56" ry="22" fill="#FBBF24" opacity="0.7"/>
+      <g stroke="#92400E" stroke-width="2">
+        <line x1="-40" y1="22" x2="-40" y2="40"/>
+        <line x1="-20" y1="26" x2="-20" y2="44"/>
+        <line x1="0"   y1="28" x2="0"   y2="46"/>
+        <line x1="20"  y1="26" x2="20"  y2="44"/>
+        <line x1="40"  y1="22" x2="40"  y2="40"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- Headline + CTA overlay -->
+  <g>
+    <text x="80" y="180" font-family="Segoe UI,Arial,sans-serif" font-size="64" font-weight="900" fill="#FFFFFF">
+      Deep Cleaning
+    </text>
+    <text x="80" y="232" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="700" fill="#FEF3C7">
+      Floor-to-ceiling spotless · 2-4 hours
+    </text>
+    <text x="80" y="274" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="500" fill="#fff" opacity="0.95">
+      Move-in / move-out · villas · apartments · 100% satisfaction guarantee
+    </text>
+    <g>
+      <rect x="80" y="430" width="320" height="68" rx="34" fill="#F59E0B"/>
+      <text x="240" y="474" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="800" fill="#0F172A" text-anchor="middle">
+        Book in 60s →
+      </text>
+      <animate attributeName="opacity" values="1;0.85;1" dur="2s" repeatCount="indefinite"/>
+    </g>
+  </g>
+</svg>
