@@ -655,6 +655,55 @@
         </label>
       </div>
 
+      <!-- v1.24.123 — payment provider keys (server-side ONLY, never injected into pages) -->
+      <div style="background:#fff;border:2px solid #F59E0B;border-radius:14px;padding:18px;margin:16px 0">
+        <h3 style="margin:0 0 4px;font-size:16px;color:#92400E">💳 Payment provider keys <span style="font-size:11px;background:#FEF3C7;color:#7C2D12;padding:2px 8px;border-radius:6px;font-weight:700;margin-inline-start:8px">SERVER-SIDE ONLY</span></h3>
+        <p style="color:var(--muted);font-size:13px;margin:0 0 12px">These keys never leave the server. They're stored encrypted, displayed masked (last 4 chars), and never injected into any page. Use this to store secrets like the Ziina API key.</p>
+        <div style="background:#FEE2E2;border:1px solid #FECACA;color:#991B1B;padding:10px 12px;border-radius:8px;font-size:12.5px;margin-bottom:12px;line-height:1.55">
+          <b>⚠ Security rules:</b>
+          <ul style="margin:6px 0 0 18px;padding:0">
+            <li>If you ever paste a key in chat / Slack / email — <b>rotate it</b> immediately at the provider dashboard.</li>
+            <li>Never share this admin URL with anyone who shouldn't have payment access.</li>
+            <li>Each save is logged to the admin event log (without the key value).</li>
+          </ul>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Ziina API key
+              <input id="pay-ziina-api-key" placeholder="paste new key, never the leaked one" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px" autocomplete="off"></label>
+            <div id="pay-ziina-api-status" style="font-size:11px;color:#15803D;margin-top:4px">— not set —</div>
+            <details class="snip-help" style="font-size:11.5px;color:var(--muted);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <summary style="cursor:pointer;font-weight:700;color:#15803D">▸ How to get this</summary>
+              <ol style="padding-inline-start:16px;margin:6px 0">
+                <li>Open <a href="https://ziina.com/business" target="_blank" rel="noopener" style="color:#0F766E">ziina.com/business</a> dashboard.</li>
+                <li>Settings → <b>Other builder or custom</b> → <b>Generate new key</b>.</li>
+                <li>Ziina shows the key ONE TIME — copy it.</li>
+                <li>Paste here, click Save below. The full key never re-displays.</li>
+                <li>To rotate: go back to Ziina + click Generate again; previous key becomes invalid instantly.</li>
+              </ol>
+            </details>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Ziina webhook secret
+              <input id="pay-ziina-webhook-secret" placeholder="from Ziina → Webhooks → signing secret" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px" autocomplete="off"></label>
+            <div id="pay-ziina-webhook-status" style="font-size:11px;color:#15803D;margin-top:4px">— not set —</div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Test mode
+              <select id="pay-ziina-test-mode" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px">
+                <option value="true">ON — sandbox (no real charges)</option>
+                <option value="false">OFF — live charges</option>
+              </select>
+            </label>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Toggle ON until you've completed a sandbox transaction end-to-end.</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <button class="btn btn-primary" onclick="savePaymentProviders()">💾 Save payment keys</button>
+          <span id="pay-save-status" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+      </div>
+
       <!-- Snippet editor -->
       <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin:16px 0">
         <h3 style="margin:0 0 4px;font-size:16px">🔌 Site-wide tracking codes</h3>
@@ -4757,8 +4806,55 @@ async function loadGateMode() {
   } catch (_) {}
 }
 
+// v1.24.123 — Ziina (and future) payment-provider keys. Server-side only.
+async function loadPaymentProviders() {
+  try {
+    const p = await adm("/api/admin/payment-providers");
+    const z = p.ziina || {};
+    const sIn = document.getElementById("pay-ziina-api-key");
+    const sStat = document.getElementById("pay-ziina-api-status");
+    const wIn = document.getElementById("pay-ziina-webhook-secret");
+    const wStat = document.getElementById("pay-ziina-webhook-status");
+    const tMode = document.getElementById("pay-ziina-test-mode");
+    if (sStat) sStat.textContent = z.set ? "✓ set · " + (z.api_key_masked || "") : "— not set —";
+    if (sStat) sStat.style.color = z.set ? "#15803D" : "#7C2D12";
+    if (wStat) wStat.textContent = z.webhook_secret_masked
+                                    ? "✓ set · " + z.webhook_secret_masked
+                                    : "— not set —";
+    if (wStat) wStat.style.color = z.webhook_secret_masked ? "#15803D" : "#7C2D12";
+    if (sIn) sIn.value = "";  // never restore plaintext into the field
+    if (wIn) wIn.value = "";
+    if (tMode) tMode.value = String(z.test_mode === false ? "false" : "true");
+  } catch (_) {}
+}
+async function savePaymentProviders() {
+  const body = {};
+  const apiK  = (document.getElementById("pay-ziina-api-key")        || {}).value || "";
+  const whSec = (document.getElementById("pay-ziina-webhook-secret") || {}).value || "";
+  const tMode = (document.getElementById("pay-ziina-test-mode")      || {}).value;
+  if (apiK.trim())  body.ziina_api_key        = apiK.trim();
+  if (whSec.trim()) body.ziina_webhook_secret = whSec.trim();
+  if (tMode !== undefined) body.ziina_test_mode = (tMode === "true");
+  const st = document.getElementById("pay-save-status");
+  if (st) st.textContent = "⏳ saving…";
+  try {
+    const r = await adm("/api/admin/payment-providers",
+                        { method: "POST", body: JSON.stringify(body) });
+    if (st) {
+      st.textContent = r.ok ? "✓ saved · key now masked above" : "✗ save failed";
+      st.style.color = r.ok ? "#15803D" : "#B91C1C";
+    }
+    // Re-load to refresh masked display + clear input fields
+    setTimeout(loadPaymentProviders, 600);
+  } catch (e) {
+    if (st) { st.textContent = "✗ " + (e.message || "save failed"); st.style.color = "#B91C1C"; }
+  }
+}
+
 async function loadLaunch() {
   loadVizScan(); loadVizBots(); loadGateMode();
+  // v1.24.123 — payment-provider keys (server-side only, masked display)
+  loadPaymentProviders();
   try {
     const s = await adm("/api/admin/launch/snippets");
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
@@ -5359,30 +5455,38 @@ function updateAreaList() {
     list.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
 }
 async function runAutoblog() {
-  // v1.24.108 — fixed: previously called /api/admin/autoblog/run which
-  // never existed (silent 404). Now uses /run-now (background thread)
-  // and polls /status until last_run.ts changes, then shows the
-  // generated post inline.
+  // v1.24.123 — passes emirate/area/topic from dropdowns + bumped poll
+  // window from 60s to 120s (founder hit the old timeout on slow LLM
+  // attempts even when generation succeeded a moment later).
   const out = document.getElementById("ab-result");
-  out.innerHTML = "⏳ Triggering generation… (Gemini Flash takes 10-30s)";
+  const em    = (document.getElementById("ab-emirate") || {}).value || "";
+  const area  = (document.getElementById("ab-area")    || {}).value || "";
+  const topic = (document.getElementById("ab-topic")   || {}).value || "";
+  out.innerHTML = "⏳ Triggering generation… (cascade takes 10-60s)";
   let beforeTs = "";
   try {
     const s0 = await adm("/api/admin/autoblog/status");
     beforeTs = (s0.last_run || {}).ts || "";
   } catch (_) {}
   try {
-    const r = await adm("/api/admin/autoblog/run-now?slot=manual",
+    const qs = "?slot=manual"
+             + "&emirate=" + encodeURIComponent(em)
+             + "&area="    + encodeURIComponent(area)
+             + "&topic="   + encodeURIComponent(topic);
+    const r = await adm("/api/admin/autoblog/run-now" + qs,
                         { method: "POST" });
     if (!r.ok) {
       out.innerHTML = '<span style="color:#B91C1C">✗ ' +
                       escapeHtml(r.error||"failed to trigger") + '</span>';
       return;
     }
-    out.innerHTML = "⏳ Generating… polling status (max 60s)";
+    const hintEm = r.emirate && r.emirate !== "(auto)" ? r.emirate : "auto";
+    out.innerHTML = "⏳ Generating for <b>" + escapeHtml(hintEm) +
+                    "</b>… polling status (max 120s)";
     // Poll status every 3s until last_run.ts changes (or timeout)
     const start = Date.now();
     let last = null;
-    while (Date.now() - start < 60000) {
+    while (Date.now() - start < 120000) {
       await new Promise(r => setTimeout(r, 3000));
       try {
         const st = await adm("/api/admin/autoblog/status");

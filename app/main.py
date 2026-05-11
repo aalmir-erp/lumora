@@ -3801,11 +3801,19 @@ try:
     _AUTOBLOG_LAST = {"slot": None, "ts": None, "ok": None, "err": None,
                        "slug": None, "provider": None}
 
-    def _autoblog_tick(slot: str = "morning"):
+    def _autoblog_tick(slot: str = "morning",
+                        emirate_override: str | None = None,
+                        area_override: str | None = None,
+                        topic_override: str | None = None):
         """Generate one area-targeted article. Runs twice daily (06:00 + 18:00).
         Each tick rotates through (emirate, neighborhood, service, slant) so we
         get hyper-local content like 'AC service in Al Khan, Sharjah May 2026'.
-        slot='morning' favours Dubai+Sharjah, slot='evening' favours Ajman+AD."""
+        slot='morning' favours Dubai+Sharjah, slot='evening' favours Ajman+AD.
+
+        v1.24.123 — admin can now override emirate/area/topic from the
+        Auto-blog tab dropdowns. If overrides are passed, they win over
+        the time-bucket rotation. Founder reported: 'city selected Dubai
+        but generated article was Ras Al Khaimah'."""
         import os, datetime as _d
         from . import db as _db, kb as _kb
         _AUTOBLOG_LAST.update({"slot": slot,
@@ -3870,10 +3878,11 @@ try:
         }
         slant = next((v for k,v in season_slant.items() if m in k), "year-round")
         ts = int(_d.datetime.now().timestamp() / 43200)  # half-day buckets so AM/PM differ
-        em = emirates_pool[ts % len(emirates_pool)]
+        # v1.24.123 — overrides win over the time-bucket rotation
+        em = (emirate_override or "").strip().lower() or emirates_pool[ts % len(emirates_pool)]
         sv = services[(ts // len(emirates_pool)) % len(services)]
         areas = AREA_MAP.get(em, [em.replace("-"," ").title()])
-        area = areas[ts % len(areas)]
+        area = (area_override or "").strip() or areas[ts % len(areas)]
 
         # v1.24.113 — lifestyle/service topic mix. About every 3rd tick we
         # publish a "what it's like to live in X" lifestyle piece instead of
@@ -3895,7 +3904,11 @@ try:
             f"After the rain: what UAE homeowners check first",
         ]
         is_lifestyle = (ts % 3) == 0
-        if is_lifestyle:
+        if topic_override and topic_override.strip():
+            # Founder typed a topic in the dropdown → use exactly that
+            topic = topic_override.strip()
+            is_lifestyle = False
+        elif is_lifestyle:
             topic = LIFESTYLE_TOPICS[ts % len(LIFESTYLE_TOPICS)] + f" ({_d.datetime.now().strftime('%B %Y')})"
         else:
             topic = f"{sv.replace('_',' ').title()} in {area} ({em_pretty}): {slant} guide for {_d.datetime.now().strftime('%B %Y')}"
@@ -4488,6 +4501,15 @@ def _autoblog_defamation_purge_v1_24_115():
             print("[purge] skipped — autoblog_skip_defamation_purge=1", flush=True)
             return
         from . import content_safety as _cs
+        # v1.24.123 — known-bad slugs that must ALWAYS be deleted, even
+        # if their body was hand-rewritten and is now clean. The slug
+        # itself contains the defamed name. Founder reported the Aljada
+        # post still appeared in the admin list AFTER rewriting the body
+        # because the title + slug still named the development.
+        ALWAYS_DELETE_SLUGS = (
+            "sharjah-aljada-silverfish-bathrooms-humidity-fix",
+            "sharjah-aljada-silverfish-bathrooms",
+        )
         with db.connect() as c:
             try:
                 rows = c.execute(
@@ -4499,10 +4521,21 @@ def _autoblog_defamation_purge_v1_24_115():
         risky_slugs: list[tuple[str, str, str]] = []
         for r in rows:
             d = dict(r)
-            safety = _cs.review(d.get("body_md") or "")
+            slug = d["slug"]
+            topic = d.get("topic") or ""
+            # Known-bad slugs first (no body check needed — slug/title itself defames)
+            if slug in ALWAYS_DELETE_SLUGS:
+                risky_slugs.append((slug, topic,
+                                    "known-bad slug (defamed name in slug/title)"))
+                continue
+            # v1.24.123 — scan TITLE + body together so posts whose body
+            # was rewritten clean but title still names a developer get
+            # flagged. Previously the purge only saw body_md.
+            combined = (topic + "\n\n" + (d.get("body_md") or ""))
+            safety = _cs.review(combined)
             if safety["ok"]:
                 continue
-            risky_slugs.append((d["slug"], d["topic"] or "", safety["summary"]))
+            risky_slugs.append((slug, topic, safety["summary"]))
         if not risky_slugs:
             print(f"[purge] scan complete — {len(rows)} posts, 0 flagged", flush=True)
             return

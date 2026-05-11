@@ -2384,10 +2384,81 @@ def autoblog_list():
 # /{slug} POST handler below was catching POST /autoblog/run-now (slug=
 # "run-now"), trying to read an empty body as JSON, and returning HTTP 500
 # (founder's "⚠ /api/admin/autoblog/run-now: HTTP 500" toast).
+# v1.24.123 — server-side-only payment provider keys.
+# Founder needs a safe place to paste the Ziina API key without exposing
+# it via the public /_snippets.js (which is for client-side tracking IDs
+# only). Stored in db.cfg("payment_providers") — encrypted on disk by the
+# db layer. GET always returns the key MASKED (last 4 chars only). POST
+# accepts the full key but echoes back masked.
+
+def _mask_key(k: str) -> str:
+    if not k: return ""
+    s = str(k).strip()
+    if len(s) < 8: return "•" * len(s)
+    return "•" * (len(s) - 4) + s[-4:]
+
+
+@router.get("/payment-providers", dependencies=[Depends(require_admin)])
+def payment_providers_get():
+    """Returns currently-stored payment-provider keys with values MASKED.
+    Admin sees the last 4 chars only — full value never leaves the
+    server. Use POST to set a new value."""
+    cur = db.cfg_get("payment_providers", {}) or {}
+    return {
+        "ziina": {
+            "api_key_masked": _mask_key(cur.get("ziina_api_key", "")),
+            "webhook_secret_masked": _mask_key(cur.get("ziina_webhook_secret", "")),
+            "test_mode": bool(cur.get("ziina_test_mode", True)),
+            "set": bool(cur.get("ziina_api_key")),
+        },
+    }
+
+
+class _PaymentProvidersBody(BaseModel):
+    ziina_api_key: str | None = None
+    ziina_webhook_secret: str | None = None
+    ziina_test_mode: bool | None = None
+
+
+@router.post("/payment-providers", dependencies=[Depends(require_admin)])
+def payment_providers_set(body: _PaymentProvidersBody):
+    """Save payment-provider keys. Pass only the fields you want to
+    update. Empty string clears a field. Field-by-field merge — sending
+    just ziina_api_key does NOT wipe ziina_webhook_secret."""
+    cur = db.cfg_get("payment_providers", {}) or {}
+    if body.ziina_api_key is not None:
+        cur["ziina_api_key"] = body.ziina_api_key.strip()
+    if body.ziina_webhook_secret is not None:
+        cur["ziina_webhook_secret"] = body.ziina_webhook_secret.strip()
+    if body.ziina_test_mode is not None:
+        cur["ziina_test_mode"] = bool(body.ziina_test_mode)
+    db.cfg_set("payment_providers", cur)
+    # Audit log (no key values, just the fact of the change)
+    db.log_event("admin", "payment_providers", "updated", actor="admin",
+                 details={"fields": list({"ziina_api_key", "ziina_webhook_secret",
+                                           "ziina_test_mode"} &
+                                          set(body.dict(exclude_none=True).keys()))})
+    return {"ok": True,
+            "ziina": {
+                "api_key_masked": _mask_key(cur.get("ziina_api_key", "")),
+                "webhook_secret_masked": _mask_key(cur.get("ziina_webhook_secret", "")),
+                "test_mode": bool(cur.get("ziina_test_mode", True)),
+                "set": bool(cur.get("ziina_api_key")),
+            }}
+
+
 @router.post("/autoblog/run-now", dependencies=[Depends(require_admin)])
-def autoblog_run_now(slot: str = "manual"):
+def autoblog_run_now(slot: str = "manual",
+                      emirate: str = "",
+                      area: str = "",
+                      topic: str = ""):
     """Trigger an immediate autoblog tick. Returns fast (spawns a daemon
-    thread); admin polls /api/admin/autoblog/status to see the result."""
+    thread); admin polls /api/admin/autoblog/status to see the result.
+
+    v1.24.123: accepts emirate/area/topic overrides from the Auto-blog
+    admin dropdowns so the founder can target a specific emirate/area
+    instead of waiting for the cron rotation. Empty strings = use the
+    automatic rotation (preserves backward compatibility)."""
     import threading as _th
     try:
         from .main import _AUTOBLOG_TICK_REF
@@ -2398,9 +2469,14 @@ def autoblog_run_now(slot: str = "manual"):
                 "error": ("Scheduler failed to load — _autoblog_tick "
                           "unavailable. Check Railway logs for "
                           "'[scheduler] not loaded'.")}
-    _th.Thread(target=_AUTOBLOG_TICK_REF, args=(slot,), daemon=True).start()
+    _th.Thread(target=_AUTOBLOG_TICK_REF,
+                args=(slot, emirate or None, area or None, topic or None),
+                daemon=True).start()
     return {"ok": True, "started": True, "slot": slot,
-            "note": "Generation runs in background. Poll /api/admin/autoblog/status to see result (typically 10-30s)."}
+            "emirate": emirate or "(auto)",
+            "area": area or "(auto)",
+            "topic": topic or "(auto)",
+            "note": "Generation runs in background. Poll /api/admin/autoblog/status to see result (typically 10-45s)."}
 
 
 @router.get("/autoblog/audit", dependencies=[Depends(require_admin)])
@@ -2418,16 +2494,38 @@ def autoblog_audit():
                 "ORDER BY published_at DESC").fetchall()
         except Exception:
             rows = []
+    # v1.24.123 — known-bad slugs always flag, and we scan TITLE + BODY
+    # so posts whose body was hand-rewritten clean but title still names
+    # a developer/project get flagged.
+    ALWAYS_FLAG_SLUGS = (
+        "sharjah-aljada-silverfish-bathrooms-humidity-fix",
+        "sharjah-aljada-silverfish-bathrooms",
+    )
     for r in rows:
         d = dict(r)
-        safety = _cs.review(d.get("body_md") or "")
+        topic = d.get("topic") or ""
+        slug = d["slug"]
+        if slug in ALWAYS_FLAG_SLUGS:
+            risky.append({
+                "slug": slug, "topic": topic, "emirate": d.get("emirate"),
+                "service_id": d.get("service_id"),
+                "published_at": d.get("published_at"),
+                "issue_count": 1,
+                "summary": "Known-bad slug (defamed name in slug/title)",
+                "findings": [{"rule": "known-bad slug",
+                              "snippet": slug + " — " + topic}],
+            })
+            continue
+        # Scan TITLE + body combined
+        combined = topic + "\n\n" + (d.get("body_md") or "")
+        safety = _cs.review(combined)
         if safety["ok"]:
             clean_count += 1
             continue
         risky.append({
-            "slug": d["slug"],
-            "topic": d["topic"],
-            "emirate": d["emirate"],
+            "slug": slug,
+            "topic": topic,
+            "emirate": d.get("emirate"),
             "service_id": d.get("service_id"),
             "published_at": d.get("published_at"),
             "issue_count": len(safety["findings"]),
