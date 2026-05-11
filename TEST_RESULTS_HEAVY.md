@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 48
+- ✅ Pass: 49
 - ⚠️ Warn: 1
-- ❌ Fail: 1
+- ❌ Fail: 0
 - ⏭ Skip: 1
 
 ## Items
@@ -17,11 +17,8 @@
 - ✅ **[T08] /faq FAQPage schema** — present
 - ✅ **[T09] Homepage Org/LocalBusiness schema** — present
 - ✅ **[T10] Theme-color is teal #0F766E** — #0F766E
-- ✅ **[T11] Mobile nav single-row** — Δy=-3
-- ❌ **[T12] Topbanner placeholder bg teal** — (retried) exception: locator.evaluate: Timeout 18000ms exceeded.
-Call log:
-  - waiting for locator('#servia-topbanner').first()
-
+- ✅ **[T11] Mobile nav single-row** — Δy=1
+- ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
 - ✅ **[T14] Footer present** — OK
 - ✅ **[T15] /install APK card** — OK
@@ -42,7 +39,7 @@ Call log:
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_RemfChBTE...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_pYUMWDKiz...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -50,9 +47,9 @@ Call log:
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.102
+- ✅ **[T41] /api/health responds** — v1.24.103
 - ✅ **[T42] /api/services >=10** — 37
-- ✅ **[T43] /api/app/latest works** — apk_v=1.24.101
+- ✅ **[T43] /api/app/latest works** — apk_v=1.24.103
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book renders form** — OK
