@@ -2,14 +2,14 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"yFOKd4EKQWq1F40iPvyhXg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"HgzsuyNgQXaeqBM3PvyhXg"}`
 
 ## Build logs
 ```
+[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
+[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
 [internal] load build context
@@ -32,9 +32,9 @@
 exporting to docker image format
 uploading snapshot
 exporting to docker image format
-containerimage.config.digest: sha256:a53cc5566ec0f8c062905f57b34757c829dc1493352ffdf53c26fa9e4f0d5985
-containerimage.digest: sha256:97717afae5c816962b0484c9b8df15226531f1e922ca445fbd20930f28982439
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OTc3MTdhZmFlNWM4MTY5NjJiMDQ4NGM5YjhkZjE1MjI2NTMxZjFlOTIyY2E0NDVmYmQyMDkzMGYyODk4MjQzOSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQyMTowNzozMFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:720829f32db96ac845fd521c60759036d7b88fd15d8155d2fc7b774a1ff74dfd
+containerimage.digest: sha256:dd3b53e24b38ed1c4a322b80c2bd887d780fff8d707ee62f843037fc66c4a4e3
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZGQzYjUzZTI0YjM4ZWQxYzRhMzIyYjgwYzJiZDg4N2Q3ODBmZmY4ZDcwN2VlNjJmODQzMDM3ZmM2NmM0YTRlMyIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMVQyMToyODoxMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 image push
 
@@ -50,21 +50,21 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/fd82d5e6-0a56-4743-a8fe-cc9e148584a6/vol_onr647rhdeir9di9
-[start] launching whatsapp_bridge
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/23daf297-f15a-465e-afe9-21c475c88a84/vol_onr647rhdeir9di9
 Starting Container
+[start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
-INFO:     Waiting for application startup.
 INFO:     Started server process [1]
+INFO:     Waiting for application startup.
 [scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
-[purge] DELETED sharjah-aljada-silverfish-bathrooms-humidity-fix — known-bad slug (defamed name in slug/title)
-[purge] removed 1 defamation-flagged posts (kept 23)
-[wa-bridge] QR received. Open /qr in your browser to scan.
+[purge] scan complete — 24 posts, 0 flagged
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:59099 - "GET /api/health HTTP/1.1" 200 OK
-[autoblog] catch-up SKIP (last_run @ 2026-05-11T20:56:13.350948Z is fresh AND ok)
+INFO:     100.64.0.2:46041 - "GET /api/health HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+[autoblog] catch-up SKIP (last_run @ 2026-05-11T21:22:59.228344Z is fresh AND ok)
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
