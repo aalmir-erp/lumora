@@ -550,8 +550,8 @@ def list_images(limit: int = 200, service_id: str | None = None):
     where = []; params = []
     if service_id: where.append("service_id=?"); params.append(service_id)
     sql = ("SELECT id, slug, service_id, area, emirate, aspect, model, title, "
-           "description, view_count, created_at, posted_facebook, "
-           "posted_instagram, posted_tiktok, posted_pinterest "
+           "description, alt_text, prompt, view_count, created_at, "
+           "posted_facebook, posted_instagram, posted_tiktok, posted_pinterest "
            "FROM social_images")
     if where: sql += " WHERE " + " AND ".join(where)
     sql += " ORDER BY id DESC LIMIT ?"
@@ -560,6 +560,22 @@ def list_images(limit: int = 200, service_id: str | None = None):
         try: rows = c.execute(sql, params).fetchall()
         except Exception: rows = []
     return {"images": [db.row_to_dict(r) for r in rows], "count": len(rows)}
+
+
+@admin_router.get("/get/{slug}")
+def get_image(slug: str):
+    """Return the full record for one image — drives the regen prompt editor."""
+    _ensure_table()
+    with db.connect() as c:
+        try:
+            r = c.execute(
+                "SELECT slug, service_id, area, emirate, aspect, model, title, "
+                "description, alt_text, prompt, created_at FROM social_images "
+                "WHERE slug=?", (slug,)).fetchone()
+        except Exception:
+            r = None
+    if not r: return {"ok": False, "error": "not found"}
+    return {"ok": True, "image": db.row_to_dict(r)}
 
 
 @admin_router.delete("/{slug}")

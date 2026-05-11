@@ -2492,16 +2492,18 @@ async function adm(path, opts={}) {
     return await api(path, { ...opts, headers: { "Authorization": "Bearer "+TOK, ...(opts.headers||{}) }});
   } catch (e) {
     console.error("[admin]", path, e);
-    const msg = (e && e.message) || String(e);
+    // v1.24.109 — always include the HTTP status if available. Some HTTP/2
+    // responses on Railway have empty statusText which previously rendered
+    // as a useless ": Error" toast.
+    let msg = (e && e.message) || String(e);
+    if (!msg || msg === "Error") msg = (e && e.status) ? ("HTTP " + e.status) : "request failed";
+    else if (e && e.status && !msg.includes(String(e.status))) msg = "HTTP " + e.status + " · " + msg;
     if (msg.includes("403") || msg.includes("Invalid admin")) {
       toast("⚠ Token rejected. Sign in again.", true);
       setTimeout(() => { localStorage.removeItem(KEY); location.reload(); }, 1500);
     } else if (msg.includes("401")) {
       toast("⚠ Not authenticated. Sign in again.", true);
     } else {
-      // Only toast on USER-TRIGGERED actions (POST/DELETE/PATCH).
-      // Silent failure on auto-loaded GETs — section just stays blank with
-      // its own inline error if needed. Stops the random red corner spam.
       const m = (opts.method || "GET").toUpperCase();
       if (m !== "GET") toast("⚠ " + path + ": " + msg, true);
     }
@@ -5138,6 +5140,7 @@ async function loadAutoblog() {
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
           <button class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px" onclick="abEdit('${escapeHtml(p.slug)}')">✏️ Edit</button>
+          <button class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px;background:#FEF3C7;color:#7C2D12;font-weight:700" onclick="abRegenHero('${escapeHtml(p.slug)}')" title="Regenerate hero image with your stored AI keys (Google AI / OpenAI / fal.ai cascade). Optionally edit the prompt to fix bad outputs.">🎨 Regen hero</button>
           <a class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px;text-align:center" href="/blog/${escapeHtml(p.slug)}" target="_blank">↗ View live</a>
           <button class="btn btn-ghost" style="font-size:11.5px;padding:5px 10px;color:#B91C1C" onclick="abDelete('${escapeHtml(p.slug)}')">🗑 Delete</button>
         </div>
@@ -5151,6 +5154,80 @@ async function loadAutoblog() {
   wrap.innerHTML = statsHtml + selectBar + rows;
   _bulkSetup("#ab-list", "blog", loadAutoblog);
 }
+// ---------- v1.24.109: regenerate blog hero image with the AI cascade ----------
+// Founder feedback: Pollinations (default free generator) produces obvious AI
+// artifacts (3 hands, swollen eyes). This opens a modal that pre-fills the
+// current prompt, lets admin edit it, and calls /regenerate-hero which uses
+// the stored Gemini / OpenAI / fal.ai keys for much better output.
+async function abRegenHero(slug) {
+  let meta;
+  try { meta = await adm("/api/admin/blog/" + encodeURIComponent(slug) + "/hero-meta"); }
+  catch (e) { toast("⚠ Could not load hero metadata: " + e.message, true); return; }
+  const currentPrompt = meta.current_prompt || meta.default_prompt || "";
+  const provider = meta.provider ? (meta.provider + "/" + (meta.model || "")) : "— not regenerated yet (using Pollinations) —";
+  const created = meta.created_at ? new Date(meta.created_at).toLocaleString() : "never";
+  // Build a one-shot modal
+  let bg = document.getElementById("regen-hero-modal");
+  if (bg) bg.remove();
+  bg = document.createElement("div");
+  bg.id = "regen-hero-modal";
+  bg.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  bg.innerHTML = `
+    <div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px">
+        <div>
+          <h3 style="margin:0;font-size:17px">🎨 Regenerate hero image</h3>
+          <div style="font-size:12px;color:#64748B;margin-top:2px">${escapeHtml(slug)}</div>
+        </div>
+        <button class="btn btn-ghost" onclick="document.getElementById('regen-hero-modal').remove()" style="padding:4px 10px">✕ Close</button>
+      </div>
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:#475569">
+        <b>Current image:</b> ${escapeHtml(provider)} · generated ${escapeHtml(created)}
+      </div>
+      <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:#78350F">
+        💡 Edit the prompt below to fix bad outputs (e.g. add <b>"two hands per person, normal anatomy, no extra limbs"</b> to fix the three-hands issue, or <b>"natural eyes, no swelling"</b> for distorted faces). Cascades through Google AI → OpenAI → fal.ai → xAI → Stability using your stored keys.
+      </div>
+      <label style="display:block;font-weight:700;font-size:12px;color:#0F172A;margin-bottom:4px">Prompt</label>
+      <textarea id="regen-hero-prompt" style="width:100%;min-height:200px;padding:10px;border:1px solid #CBD5E1;border-radius:8px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">${escapeHtml(currentPrompt)}</textarea>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="btn btn-ghost" onclick="document.getElementById('regen-hero-modal').remove()">Cancel</button>
+        <button class="btn btn-primary" id="regen-hero-submit" onclick="abRegenHeroSubmit('${escapeHtml(slug)}')">🎨 Generate</button>
+      </div>
+      <div id="regen-hero-result" style="margin-top:12px"></div>
+    </div>`;
+  document.body.appendChild(bg);
+}
+async function abRegenHeroSubmit(slug) {
+  const btn = document.getElementById("regen-hero-submit");
+  const result = document.getElementById("regen-hero-result");
+  const prompt = document.getElementById("regen-hero-prompt").value.trim();
+  btn.disabled = true;
+  btn.textContent = "⏳ Generating (10-30s)…";
+  result.innerHTML = '<div style="color:#64748B;font-size:12px">Trying providers in cascade order — cancel by closing the modal if it hangs.</div>';
+  try {
+    const r = await adm("/api/admin/blog/" + encodeURIComponent(slug) + "/regenerate-hero", {
+      method: "POST", body: JSON.stringify({ prompt }),
+    });
+    if (!r.ok) {
+      result.innerHTML = '<div style="background:#FEE2E2;border:1px solid #FECACA;color:#991B1B;padding:10px;border-radius:8px;font-size:12px">✗ ' + escapeHtml(r.error || "regen failed") + '</div>';
+      btn.disabled = false; btn.textContent = "🎨 Try again";
+      return;
+    }
+    const ts = Date.now();
+    result.innerHTML = '<div style="background:#F0FDFA;border:1px solid #99F6E4;color:#0F766E;padding:10px;border-radius:8px;font-size:12.5px">' +
+      '✅ Generated via <b>' + escapeHtml(r.provider || "?") + '/' + escapeHtml(r.model || "?") + '</b>' +
+      '<div style="margin-top:8px"><img src="' + escapeHtml(r.url) + '?t=' + ts + '" alt="new hero" style="width:100%;max-width:480px;border-radius:8px;border:1px solid #E2E8F0"></div>' +
+      '<div style="margin-top:6px;font-size:11.5px">Hero now used on <a href="/blog/' + escapeHtml(slug) + '" target="_blank" style="color:#0F766E;font-weight:700">/blog/' + escapeHtml(slug) + '</a></div>' +
+      '</div>';
+    btn.textContent = "🎨 Regenerate again";
+    btn.disabled = false;
+    loadAutoblog();  // refresh row
+  } catch (e) {
+    result.innerHTML = '<div style="background:#FEE2E2;border:1px solid #FECACA;color:#991B1B;padding:10px;border-radius:8px;font-size:12px">✗ ' + escapeHtml(e.message) + '</div>';
+    btn.disabled = false; btn.textContent = "🎨 Try again";
+  }
+}
+
 // ---------- AI model picker (shared by autoblog + video tabs) ----------
 let _aiModelsCache = null;
 async function _loadAiModels() {
@@ -5931,9 +6008,10 @@ async function loadSocImages() {
             ${i.posted_tiktok?'<span style="background:#0F172A;color:#fff;padding:1px 6px;border-radius:4px">TT</span>':''}
             ${i.posted_pinterest?'<span style="background:#BD081C;color:#fff;padding:1px 6px;border-radius:4px">P</span>':''}
           </div>
-          <div style="display:flex;gap:4px;margin-top:auto;padding-top:6px">
-            <a class="btn btn-ghost" href="/image/${escapeHtml(i.slug)}" target="_blank" style="font-size:10.5px;padding:3px 8px">↗ Page</a>
-            <a class="btn btn-ghost" href="/api/social-images/img/${escapeHtml(i.slug)}.png" download style="font-size:10.5px;padding:3px 8px">⬇ PNG</a>
+          <div style="display:flex;gap:4px;margin-top:auto;padding-top:6px;flex-wrap:wrap">
+            <a class="btn btn-ghost" href="/image/${escapeHtml(i.slug)}" target="_blank" style="font-size:10.5px;padding:3px 8px">↗</a>
+            <a class="btn btn-ghost" href="/api/social-images/img/${escapeHtml(i.slug)}.png" download style="font-size:10.5px;padding:3px 8px">⬇</a>
+            <button class="btn btn-ghost" style="font-size:10.5px;padding:3px 8px;background:#FEF3C7;color:#7C2D12;font-weight:700" data-slug="${escapeHtml(i.slug)}" onclick="regenSocImage(this.dataset.slug)" title="Regenerate with edited prompt — fixes extra hands, distorted faces, etc.">🔄 Regen</button>
             <button class="btn btn-ghost" style="font-size:10.5px;padding:3px 8px;color:#B91C1C;margin-inline-start:auto" onclick="delSocImage('${escapeHtml(i.slug)}')">🗑</button>
           </div>
         </div>
@@ -5950,6 +6028,81 @@ async function delSocImage(slug) {
     toast("✓ Deleted");
     loadSocImages();
   } catch {}
+}
+
+// v1.24.109 — per-image regenerate with prompt editor. Fixes AI artifacts
+// (extra hands, swollen eyes) by letting admin edit the prompt and retry.
+async function regenSocImage(slug) {
+  let currentPrompt = "";
+  try {
+    const got = await adm("/api/admin/social-images/get/" + encodeURIComponent(slug));
+    if (got && got.ok) currentPrompt = (got.image || {}).prompt || "";
+  } catch (e) { /* fall through with empty prompt */ }
+  return _openSocImgRegen(slug, currentPrompt);
+}
+function _openSocImgRegen(slug, currentPrompt) {
+  let bg = document.getElementById("si-regen-modal");
+  if (bg) bg.remove();
+  bg = document.createElement("div");
+  bg.id = "si-regen-modal";
+  bg.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  bg.innerHTML = `
+    <div style="background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px">
+        <div>
+          <h3 style="margin:0;font-size:17px">🔄 Regenerate social image</h3>
+          <div style="font-size:12px;color:#64748B;margin-top:2px">${escapeHtml(slug)}</div>
+        </div>
+        <button class="btn btn-ghost" onclick="document.getElementById('si-regen-modal').remove()" style="padding:4px 10px">✕ Close</button>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:140px">
+          <div style="font-size:11px;color:#64748B;margin-bottom:4px;font-weight:700">CURRENT</div>
+          <img src="/api/social-images/img/${encodeURIComponent(slug)}.png" style="width:100%;border-radius:8px;border:1px solid #E2E8F0" alt="current">
+        </div>
+        <div style="flex:1;min-width:140px">
+          <div style="font-size:11px;color:#64748B;margin-bottom:4px;font-weight:700">NEW (after generate)</div>
+          <div id="si-regen-preview" style="width:100%;aspect-ratio:1/1;background:#F1F5F9;border-radius:8px;border:1px dashed #CBD5E1;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:11px;text-align:center;padding:8px">Click <b style="margin:0 3px">🎨 Generate</b> to see preview</div>
+        </div>
+      </div>
+      <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:#78350F">
+        💡 Add fixers like <b>"normal anatomy, two hands per person, natural eyes, no extra limbs, no deformed faces"</b> to clean up AI artifacts. Cascades through your stored keys.
+      </div>
+      <label style="display:block;font-weight:700;font-size:12px;color:#0F172A;margin-bottom:4px">Prompt</label>
+      <textarea id="si-regen-prompt" style="width:100%;min-height:180px;padding:10px;border:1px solid #CBD5E1;border-radius:8px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">${escapeHtml(currentPrompt || "")}</textarea>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="btn btn-ghost" onclick="document.getElementById('si-regen-modal').remove()">Cancel</button>
+        <button class="btn btn-primary" id="si-regen-submit" onclick="regenSocImageSubmit('${escapeHtml(slug)}')">🎨 Generate</button>
+      </div>
+      <div id="si-regen-result" style="margin-top:10px;font-size:12px"></div>
+    </div>`;
+  document.body.appendChild(bg);
+}
+async function regenSocImageSubmit(slug) {
+  const btn = document.getElementById("si-regen-submit");
+  const out = document.getElementById("si-regen-result");
+  const preview = document.getElementById("si-regen-preview");
+  const prompt = document.getElementById("si-regen-prompt").value.trim();
+  btn.disabled = true; btn.textContent = "⏳ Generating…";
+  out.innerHTML = '<span style="color:#64748B">Trying providers in cascade order (10-30s)…</span>';
+  try {
+    const r = await adm("/api/admin/social-images/" + encodeURIComponent(slug) + "/regenerate", {
+      method: "POST", body: JSON.stringify({ prompt }),
+    });
+    if (!r.ok) {
+      out.innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(r.error || "regen failed") + '</span>';
+      btn.disabled = false; btn.textContent = "🎨 Try again";
+      return;
+    }
+    const ts = Date.now();
+    preview.innerHTML = '<img src="' + escapeHtml(r.url) + '" alt="new" style="width:100%;border-radius:8px">';
+    out.innerHTML = '<span style="color:#0F766E;font-weight:700">✓ via ' + escapeHtml((r.provider||'?') + '/' + (r.model||'?')) + '</span>';
+    btn.disabled = false; btn.textContent = "🎨 Regenerate again";
+    loadSocImages();
+  } catch (e) {
+    out.innerHTML = '<span style="color:#B91C1C">✗ ' + escapeHtml(e.message) + '</span>';
+    btn.disabled = false; btn.textContent = "🎨 Try again";
+  }
 }
 
 async function genSocImageOne() {

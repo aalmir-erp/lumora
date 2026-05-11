@@ -4093,6 +4093,149 @@ except Exception as _se:  # noqa: BLE001
     print(f"[scheduler] not loaded: {_se}", flush=True)
 
 
+# ---------- v1.24.109: high-quality blog hero images via the AI cascade ----------
+# Mounted OUTSIDE the scheduler try-block so it works even if apscheduler fails
+# to import. Founder feedback: Pollinations.ai (the default free generator)
+# produces classic SD-XL artifacts — extra hands, swollen eyes. These endpoints
+# let admin regenerate any blog hero using the stored Gemini / OpenAI / fal.ai
+# keys (same cascade as Social Images) and edit the prompt to fix bad outputs.
+from fastapi import Response as _FastResponse  # safe — already used elsewhere
+
+
+@app.get("/api/blog/hero-png/{slug}.png")
+def blog_hero_png(slug: str):
+    """Public endpoint — serves the admin-regenerated PNG hero for a post.
+    No auth: blog images need to be embeddable from share previews. If no
+    stored hero exists, returns 404 and the page falls back to Pollinations."""
+    from . import blog_image as _bi
+    got = _bi.get_hero_bytes(slug)
+    if not got:
+        raise HTTPException(status_code=404, detail="no stored hero — regen via admin")
+    bytes_, ct = got
+    return _FastResponse(content=bytes_, media_type=ct,
+                          headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/api/admin/blog/{slug}/hero-meta",
+         dependencies=[Depends(require_admin)])
+def admin_blog_hero_meta(slug: str):
+    """Return current stored prompt + provider for a post's hero, plus the
+    default prompt we would use if admin just clicks Regen. Drives the
+    edit-prompt modal in the admin Auto-blog tab."""
+    from . import blog_image as _bi, db as _db
+    meta = _bi.get_hero_meta(slug) or {}
+    post: dict = {"slug": slug}
+    try:
+        with _db.connect() as c:
+            row = c.execute(
+                "SELECT slug, topic, emirate, service_id "
+                "FROM autoblog_posts WHERE slug=?", (slug,)).fetchone()
+            if row: post = dict(row)
+    except Exception: pass
+    return {
+        "ok": True,
+        "slug": slug,
+        "current_prompt": meta.get("prompt") or "",
+        "default_prompt": _bi.get_default_prompt_for_post(post),
+        "provider": meta.get("provider"),
+        "model": meta.get("model"),
+        "created_at": meta.get("created_at"),
+        "has_stored": bool(meta),
+    }
+
+
+class _BlogHeroRegenBody(BaseModel):
+    prompt: str | None = None
+
+
+@app.post("/api/admin/blog/{slug}/regenerate-hero",
+          dependencies=[Depends(require_admin)])
+async def admin_blog_regenerate_hero(slug: str, body: _BlogHeroRegenBody):
+    """Regenerate a blog post's hero image using the AI cascade (Google AI →
+    OpenAI → fal.ai → xAI → Stability). Optional `prompt` overrides the
+    default — lets admin fix bad outputs ("three hands") by tweaking the
+    instructions. Stores the PNG in autoblog_hero_images so it sticks
+    across deploys + serves at /api/blog/hero-png/<slug>.png."""
+    from . import blog_image as _bi
+    res = await _bi.regenerate_hero(slug, prompt=(body.prompt or None))
+    return res
+
+
+# ---------- v1.24.109: per-image regen with prompt edit for Social Images ----------
+class _SocImgRegenBody(BaseModel):
+    prompt: str | None = None
+
+
+@app.post("/api/admin/social-images/{slug}/regenerate",
+          dependencies=[Depends(require_admin)])
+async def admin_social_image_regenerate(slug: str, body: _SocImgRegenBody):
+    """Regenerate a single social image. If `prompt` is provided, uses that
+    text directly with the cascade — admin can fix the "three hands" /
+    distorted-face issues by editing the prompt and trying again. Without
+    a prompt, uses the originally stored prompt for that image so admin
+    can just retry on the same prompt (different seed via provider rotation)."""
+    from . import db as _db, social_images as _si, kb as _kb
+    import datetime as _dt
+    try:
+        with _db.connect() as c:
+            row = c.execute(
+                "SELECT slug, service_id, area, emirate, aspect, prompt, title "
+                "FROM social_images WHERE slug=?",
+                (slug,)).fetchone()
+    except Exception as e:
+        return {"ok": False, "error": f"db read failed: {e}"}
+    if not row:
+        return {"ok": False, "error": f"no social image with slug={slug}"}
+    rec = dict(row)
+    prompt = (body.prompt or rec.get("prompt") or "").strip()
+    if not prompt:
+        return {"ok": False, "error": "no prompt available for this image"}
+    res = await _si._gen_one_image(prompt)
+    if not res.get("ok"):
+        return {"ok": False, "error": res.get("error") or "image cascade failed"}
+    bg = res.get("image_data_url") or res.get("image_url") or ""
+    if bg.startswith("http"):
+        # Fetch URL → data URL so _overlay_branding can composite branding
+        try:
+            import httpx, base64
+            async with httpx.AsyncClient(timeout=30) as cx:
+                r = await cx.get(bg)
+                if r.status_code == 200:
+                    ct = r.headers.get("content-type", "image/png")
+                    bg = "data:" + ct + ";base64," + base64.b64encode(r.content).decode()
+        except Exception:
+            return {"ok": False, "error": "image generated but fetch failed"}
+    # Reconstruct branding inputs from the stored record (the table doesn't
+    # persist headline/cta/text_side — they're derived from title/service).
+    services_map = {s["id"]: s for s in _kb.services().get("services", [])}
+    svc = services_map.get(rec.get("service_id") or "", {})
+    head = (rec.get("title") or svc.get("name") or
+            (rec.get("service_id") or "").replace("_", " ").title())
+    head = head.split("|")[0].split(":")[0].strip()[:70]
+    branded = _si._overlay_branding(
+        bg, headline=head, cta="Book in 60s →",
+        service_pretty=svc.get("name") or (rec.get("service_id") or ""),
+        area=rec.get("area") or "",
+        text_side="left",
+    )
+    final = branded or bg
+    if not final.startswith("data:image"):
+        return {"ok": False, "error": "image generated but couldn't be encoded"}
+    try:
+        with _db.connect() as c:
+            c.execute(
+                "UPDATE social_images SET image_data_url=?, prompt=?, model=? "
+                "WHERE slug=?",
+                (final, prompt,
+                 (res.get("provider") or "?") + "/" + (res.get("model") or "?"),
+                 slug))
+    except Exception as e:
+        return {"ok": False, "error": f"db write failed: {e}"}
+    return {"ok": True, "slug": slug, "provider": res.get("provider"),
+            "model": res.get("model"), "prompt": prompt,
+            "url": f"/api/social-images/img/{slug}.png?t=" + str(int(_dt.datetime.utcnow().timestamp()))}
+
+
 @app.on_event("startup")
 def _auto_seed_market_vendors_if_empty():
     """One-shot: if vendors table is empty, auto-load market seed so the admin
