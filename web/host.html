@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Airbnb / Vrbo Host Portal · Auto-Schedule Turnovers · Servia</title>
+<meta name="description" content="Connect your Airbnb / Vrbo / Booking.com calendar — we auto-schedule turnover cleaning between every guest checkout and check-in. Free to set up, pay per clean.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://servia.ae/host">
+<style>
+  :root { --primary:#0F766E; --primary-dark:#0D9488; --bg:#F8FAFC; --text:#0F172A; --muted:#64748B; --border:#E2E8F0; --good:#10B981; --warn:#F59E0B; --bad:#DC2626; }
+  *,*::before,*::after { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  .container { max-width:980px; margin:0 auto; padding:24px 16px; }
+  .hero { background:linear-gradient(135deg,#0F766E,#0D9488); color:#fff; padding:48px 16px; text-align:center; }
+  .hero h1 { margin:0 0 12px; font-size:32px; letter-spacing:-.02em; }
+  .hero p { margin:0; opacity:.92; max-width:640px; margin:0 auto; font-size:16px; line-height:1.55; }
+  .card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:20px; margin:16px 0; box-shadow:0 4px 12px rgba(15,23,42,.04); }
+  .card h2 { margin:0 0 14px; font-size:20px; letter-spacing:-.01em; }
+  .field { margin:10px 0; }
+  .field label { display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:4px; }
+  .field input, .field select { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:15px; }
+  .btn { background:var(--primary); color:#fff; border:0; padding:11px 20px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14.5px; transition:opacity .15s; }
+  .btn:hover { opacity:.88; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-ghost { background:transparent; color:var(--primary); border:1px solid var(--primary); }
+  .badge { display:inline-block; padding:3px 9px; border-radius:99px; font-size:11.5px; font-weight:700; }
+  .badge-planned { background:#DBEAFE; color:#1E40AF; }
+  .badge-confirmed { background:#D1FAE5; color:#065F46; }
+  .badge-review { background:#FEF3C7; color:#92400E; }
+  .badge-booked { background:#E0E7FF; color:#3730A3; }
+  .badge-declined { background:#FEE2E2; color:#991B1B; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:10px; border-bottom:1px solid var(--border); font-size:14px; }
+  th { background:#F1F5F9; font-weight:700; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  .platforms { display:flex; gap:10px; flex-wrap:wrap; margin:8px 0 14px; }
+  .platform-pill { background:#fff; border:1px solid var(--border); padding:6px 11px; border-radius:99px; font-size:12px; color:#475569; }
+  .empty { text-align:center; padding:24px; color:var(--muted); }
+  .helper { font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.5; }
+  .row-actions button { padding:5px 11px; font-size:12px; border-radius:6px; margin-right:4px; cursor:pointer; border:1px solid var(--border); background:#fff; }
+  .row-actions .confirm { background:var(--good); color:#fff; border-color:var(--good); }
+  .row-actions .decline { background:#fff; color:var(--bad); border-color:var(--bad); }
+  .status-bar { padding:10px 14px; border-radius:8px; margin:12px 0; font-size:13px; }
+  .status-ok { background:#D1FAE5; color:#065F46; }
+  .status-err { background:#FEE2E2; color:#991B1B; }
+  .auth-gate { text-align:center; padding:36px; }
+  .auth-gate p { color:var(--muted); }
+  @media(max-width:640px){ .hero h1{font-size:24px} .hero{padding:36px 16px} }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Airbnb / Vrbo Host Portal</h1>
+  <p>Connect your reservation calendar once. We auto-schedule turnover cleaning between every checkout and the next guest. Free to set up — you pay per clean (AED 250-480 typical, deep clean rate).</p>
+  <div class="platforms" style="justify-content:center;margin-top:18px">
+    <span class="platform-pill" style="background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.3)">Airbnb</span>
+    <span class="platform-pill" style="background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.3)">Vrbo</span>
+    <span class="platform-pill" style="background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.3)">Booking.com</span>
+    <span class="platform-pill" style="background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.3)">Hospitable</span>
+    <span class="platform-pill" style="background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.3)">Hostfully</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="auth-required" class="card auth-gate" style="display:none">
+    <h2>Login required</h2>
+    <p>Please log in or sign up so we can save your listings.</p>
+    <a class="btn" href="/login.html">Log in</a>
+    <a class="btn btn-ghost" href="/login.html?signup=1" style="margin-left:8px">Create account</a>
+  </div>
+
+  <div id="app" style="display:none">
+
+    <!-- Add a listing -->
+    <div class="card">
+      <h2>➕ Add a listing</h2>
+      <p class="helper">Paste your iCal export URL from Airbnb / Vrbo / Booking.com / your channel manager. We poll it daily to detect new reservations and schedule turnovers automatically.</p>
+      <form id="add-host-form">
+        <div class="field">
+          <label>Listing name (optional)</label>
+          <input type="text" name="listing_name" placeholder="e.g. Marina 2BR — Yacht Bay Tower">
+        </div>
+        <div class="field">
+          <label>iCal feed URL *</label>
+          <input type="url" name="ical_url" required placeholder="https://www.airbnb.com/calendar/ical/12345.ics?s=abc123">
+          <div class="helper">
+            <b>How to find this in Airbnb:</b> Calendar → Availability settings → Export calendar → copy the URL.<br>
+            <b>Vrbo:</b> Calendar → iCal Export.&nbsp;
+            <b>Booking.com:</b> Extranet → Calendar → Sync calendars.
+          </div>
+        </div>
+        <div class="field">
+          <label>Default cleaning service</label>
+          <select name="default_service_id">
+            <option value="deep_cleaning">Deep cleaning (most common — AED 280-480)</option>
+            <option value="general_cleaning">General cleaning (faster, AED 150-280)</option>
+            <option value="move_in_out_cleaning">Move-in/out clean (heaviest, AED 380-580)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Cleaning duration (minutes)</label>
+          <input type="number" name="cleaning_duration_min" value="180" min="60" max="600">
+          <div class="helper">Default 3 hours. We'll schedule the cleaner to start 1hr after checkout and finish at least 4hrs before next check-in. Shorter gaps get flagged for manual review.</div>
+        </div>
+        <button class="btn" type="submit">Connect listing</button>
+      </form>
+    </div>
+
+    <!-- Connected listings -->
+    <div class="card">
+      <h2>🏠 Your connected listings</h2>
+      <div id="hosts-list"><div class="empty">Loading…</div></div>
+    </div>
+
+    <!-- Upcoming turnovers -->
+    <div class="card">
+      <h2>🧹 Upcoming turnovers (next 30 days)</h2>
+      <div id="turnovers-list"><div class="empty">Loading…</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const TOKEN_KEY = "lumora.auth.token";
+const token = localStorage.getItem(TOKEN_KEY);
+
+// Demo override: if URL has ?customer_id=N&admin=ADMIN_TOKEN, use admin
+// auth + override customer (for QA without a real customer login).
+const _qs = new URLSearchParams(location.search);
+const adminToken = _qs.get("admin");
+const overrideCid = _qs.get("customer_id");
+
+function authHeaders() {
+  if (adminToken) return { "Authorization": "Bearer " + adminToken };
+  if (token) return { "Authorization": "Bearer " + token };
+  return {};
+}
+function urlWithCid(path) {
+  if (adminToken && overrideCid) {
+    return path + (path.includes("?") ? "&" : "?") + "customer_id=" + overrideCid;
+  }
+  return path;
+}
+
+if (!token && !adminToken) {
+  document.getElementById("auth-required").style.display = "";
+} else {
+  document.getElementById("app").style.display = "";
+  loadHosts();
+  loadTurnovers();
+}
+
+async function loadHosts() {
+  try {
+    const r = await fetch(urlWithCid("/api/host/airbnb/hosts"), { headers: authHeaders() });
+    const d = await r.json();
+    const wrap = document.getElementById("hosts-list");
+    if (!d.hosts || d.hosts.length === 0) {
+      wrap.innerHTML = '<div class="empty">No listings yet. Add one above.</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>Listing</th><th>Platform</th><th>Last sync</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+    for (const h of d.hosts) {
+      const last = h.last_synced_at ? new Date(h.last_synced_at).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "never";
+      const stat = h.last_sync_status || "—";
+      const statClass = stat.startsWith("error") ? "badge-review" : "badge-confirmed";
+      html += `<tr>
+        <td><b>${h.listing_name || ('Listing #' + h.id)}</b></td>
+        <td>${h.platform || "—"}</td>
+        <td>${last}</td>
+        <td><span class="badge ${statClass}">${stat}</span></td>
+        <td class="row-actions"><button onclick="syncHost(${h.id})">↻ Sync now</button></td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  } catch (e) {
+    document.getElementById("hosts-list").innerHTML = '<div class="status-err status-bar">Failed to load: ' + e.message + '</div>';
+  }
+}
+
+async function syncHost(hostId) {
+  try {
+    const r = await fetch(urlWithCid("/api/host/airbnb/sync?host_id=" + hostId), {
+      method: "POST", headers: authHeaders(),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      alert(`Synced. ${d.reservations_parsed} reservations parsed, ${d.turnovers_planned} turnovers scheduled, ${d.turnovers_manual_review} flagged for review.`);
+      loadHosts(); loadTurnovers();
+    } else {
+      alert("Sync failed: " + (d.detail || JSON.stringify(d)));
+    }
+  } catch (e) {
+    alert("Sync error: " + e.message);
+  }
+}
+
+async function loadTurnovers() {
+  try {
+    const r = await fetch(urlWithCid("/api/host/airbnb/upcoming?days=30"), { headers: authHeaders() });
+    const d = await r.json();
+    const wrap = document.getElementById("turnovers-list");
+    if (!d.turnovers || d.turnovers.length === 0) {
+      wrap.innerHTML = '<div class="empty">No upcoming turnovers. Sync a listing to populate.</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>Listing</th><th>Checkout</th><th>Cleaner arrives</th><th>Next guest</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+    for (const t of d.turnovers) {
+      const co = new Date(t.checkout_dt).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+      const start = new Date(t.scheduled_start_dt).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+      const ci = new Date(t.next_checkin_dt).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+      const badgeClass = "badge-" + (t.status === "manual-review" ? "review" : t.status);
+      const review = t.review_reason ? `<br><span style="color:#92400E;font-size:11px">${t.review_reason}</span>` : "";
+      let actions = "";
+      if (t.status === "planned") {
+        actions = `<button class="confirm" onclick="confirmTurnover(${t.id})">✓ Confirm</button>
+                   <button class="decline" onclick="declineTurnover(${t.id})">✗ Skip</button>`;
+      }
+      html += `<tr>
+        <td><b>${t.listing_name || ('Listing #' + t.host_id)}</b></td>
+        <td>${co}</td>
+        <td><b>${start}</b> (${t.duration_min}min)</td>
+        <td>${ci}</td>
+        <td><span class="badge ${badgeClass}">${t.status}</span>${review}</td>
+        <td class="row-actions">${actions}</td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  } catch (e) {
+    document.getElementById("turnovers-list").innerHTML = '<div class="status-err status-bar">Failed to load: ' + e.message + '</div>';
+  }
+}
+
+async function confirmTurnover(id) {
+  await fetch(urlWithCid("/api/host/airbnb/turnover/" + id + "/confirm"), { method: "POST", headers: authHeaders() });
+  loadTurnovers();
+}
+async function declineTurnover(id) {
+  await fetch(urlWithCid("/api/host/airbnb/turnover/" + id + "/decline"), { method: "POST", headers: authHeaders() });
+  loadTurnovers();
+}
+
+document.getElementById("add-host-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const payload = {
+    listing_name: fd.get("listing_name") || null,
+    ical_url: fd.get("ical_url"),
+    default_service_id: fd.get("default_service_id"),
+    cleaning_duration_min: parseInt(fd.get("cleaning_duration_min")) || 180,
+  };
+  const r = await fetch(urlWithCid("/api/host/airbnb/host"), {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const d = await r.json();
+  if (d.ok) {
+    e.target.reset();
+    alert("Listing connected. Click 'Sync now' below to fetch reservations.");
+    loadHosts();
+  } else {
+    alert("Failed: " + (d.detail || JSON.stringify(d)));
+  }
+});
+</script>
+</body>
+</html>

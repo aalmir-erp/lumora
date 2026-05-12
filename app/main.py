@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, admin_live as _admin_live, ai_router, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, rlaif as _rlaif, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
+from . import admin, admin_live as _admin_live, ai_router, airbnb_ical as _airbnb_ical, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, rlaif as _rlaif, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
 from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
 
@@ -350,6 +350,7 @@ app.include_router(_vo.router)
 app.include_router(_si.admin_router)
 app.include_router(_si.public_router)
 app.include_router(_rlaif.router)               # /api/chat/feedback + /api/admin/feedback/* + /api/admin/critic/run
+app.include_router(_airbnb_ical.router)         # /api/host/airbnb/* + /api/admin/airbnb/*
 app.include_router(_nfc_mod.router)            # /api/nfc/*  + /api/admin/nfc/*
 app.include_router(_nfc_mod.public_router)     # /t/<slug> tap handler
 app.include_router(_recovery_mod.router)       # /api/recovery/* one-tap dispatch
@@ -3095,6 +3096,10 @@ def _sitemap_xml_inner():
         # (vehicle recovery / villa bundle / laptop IT / NFC-vs-QR).
         ("/nfc.html", "0.95", "weekly"),
         ("/sos.html", "0.95", "weekly"),
+        # v1.24.135 — Airbnb host portal (auto-schedule turnover cleans
+        # via iCal sync). Indexed because the host audience searches for
+        # "airbnb cleaning dubai" and similar long-tail terms.
+        ("/host.html", "0.90", "weekly"),
         ("/nfc-vehicle-recovery.html", "0.85", "weekly"),
         ("/nfc-villa-bundle.html", "0.80", "weekly"),
         ("/nfc-laptop-it.html", "0.80", "weekly"),
