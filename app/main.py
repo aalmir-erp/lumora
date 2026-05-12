@@ -5777,28 +5777,187 @@ def _register_lp_routes():
     except Exception:
         pass
     for alias, target in [
+        # AC variations — competitors bid heavily on "ac repair", "ac
+        # maintenance", "ac installation" (much more searched than the
+        # literal "ac cleaning"). All point at ac_cleaning since that's
+        # the AC-related service in the KB.
         ("ac-service", "ac_cleaning"),
         ("ac-repair", "ac_cleaning"),
+        ("ac-maintenance", "ac_cleaning"),
+        ("ac-installation", "ac_cleaning"),
+        ("ac-gas-refill", "ac_cleaning"),
+        ("ac-duct-cleaning", "ac_cleaning"),
+        ("split-ac-cleaning", "ac_cleaning"),
+        ("chiller-cleaning", "ac_cleaning"),
         ("air-conditioning", "ac_cleaning"),
+        ("air-conditioning-repair", "ac_cleaning"),
+        # General / house cleaning variants — competitor sites all bid
+        # on "house cleaning" + "home cleaning" + "apartment cleaning"
         ("house-cleaning", "general_cleaning"),
         ("home-cleaning", "general_cleaning"),
         ("apartment-cleaning", "general_cleaning"),
+        ("flat-cleaning", "general_cleaning"),
+        ("party-cleaning", "general_cleaning"),
+        ("post-party-cleaning", "general_cleaning"),
+        # Maid variants
         ("maids", "maid_service"),
         ("hourly-maid", "maid_service"),
-        ("phone-repair", "mobile_repair"),
-        ("laptop-mobile-repair", "laptop_repair"),
-        ("computer-repair", "laptop_repair"),
+        ("part-time-maid", "maid_service"),
+        ("weekly-maid", "maid_service"),
+        ("monthly-maid", "maid_service"),
+        ("cleaning-lady", "maid_service"),
+        # Sofa / carpet / mattress / upholstery — this is THE most
+        # competitive PPC space in UAE home services (Justlife, Urban
+        # Company, Urbanmop, Carpet Pro, Al-Falaj all bid here). Map
+        # them all to sofa_carpet which is "Sofa & Carpet Shampoo".
+        ("carpet-cleaning", "sofa_carpet"),
+        ("sofa-cleaning", "sofa_carpet"),
+        ("mattress-cleaning", "sofa_carpet"),
+        ("upholstery-cleaning", "sofa_carpet"),
+        ("rug-cleaning", "sofa_carpet"),
+        ("furniture-cleaning", "sofa_carpet"),
+        ("couch-cleaning", "sofa_carpet"),
+        ("steam-cleaning", "sofa_carpet"),
+        ("chair-cleaning", "sofa_carpet"),
+        ("recliner-cleaning", "sofa_carpet"),
+        # Pest control — competitors bid on every pest type separately
+        # (high-intent searches with low CPC). All → pest_control.
         ("termite-treatment", "pest_control"),
         ("cockroach-treatment", "pest_control"),
-        ("refrigerator-repair", "fridge_repair"),
-        ("geyser-repair", "water_heater_repair"),
-        ("babysitter", "babysitting"),
-        ("nanny", "babysitting"),
+        ("bed-bug-treatment", "pest_control"),
+        ("bed-bugs-treatment", "pest_control"),
+        ("bedbug-control", "pest_control"),
+        ("mosquito-control", "pest_control"),
+        ("rat-control", "pest_control"),
+        ("rodent-control", "pest_control"),
+        ("mice-control", "pest_control"),
+        ("ant-control", "pest_control"),
+        ("bee-removal", "pest_control"),
+        ("wasp-removal", "pest_control"),
+        ("fumigation", "pest_control"),
+        ("anti-termite-treatment", "pest_control"),
+        # Disinfection — pandemic-era keyword still has high search vol
+        # in UAE corporate / commercial space.
+        ("sanitization", "disinfection"),
+        ("sanitisation", "disinfection"),
+        ("disinfection-service", "disinfection"),
+        ("covid-disinfection", "disinfection"),
+        ("water-tank-cleaning", "disinfection"),
+        ("tank-cleaning", "disinfection"),
+        # Move-in / move-out / end-of-tenancy — every UAE expat searches
+        # this when changing apartments. Different ad copy → different
+        # alias → same /move_in_out page.
         ("move-in-cleaning", "move_in_out"),
         ("move-out-cleaning", "move_in_out"),
+        ("move-in-move-out-cleaning", "move_in_out"),
         ("end-of-tenancy-cleaning", "deep_cleaning"),
+        ("end-of-lease-cleaning", "deep_cleaning"),
+        ("checkout-cleaning", "deep_cleaning"),
+        # Post-construction variants
+        ("post-construction-cleaning", "post_construction_cleaning"),
+        ("after-construction-cleaning", "post_construction_cleaning"),
+        ("post-renovation-cleaning", "post_construction_cleaning"),
+        ("renovation-cleaning", "post_construction_cleaning"),
+        # Kitchen / villa deep-clean variants
         ("villa-cleaning", "villa_deep"),
         ("kitchen-cleaning", "kitchen_deep"),
+        ("bbq-cleaning", "kitchen_deep"),
+        ("chimney-cleaning", "kitchen_deep"),
+        ("spring-cleaning", "deep_cleaning"),
+        # Repair variants
+        ("phone-repair", "mobile_repair"),
+        ("smartphone-repair", "mobile_repair"),
+        ("screen-repair", "mobile_repair"),
+        ("battery-replacement", "mobile_repair"),
+        ("iphone-repair", "mobile_repair"),
+        ("samsung-repair", "mobile_repair"),
+        ("laptop-mobile-repair", "laptop_repair"),
+        ("computer-repair", "laptop_repair"),
+        ("pc-repair", "laptop_repair"),
+        ("macbook-repair", "laptop_repair"),
+        ("refrigerator-repair", "fridge_repair"),
+        ("ice-maker-repair", "fridge_repair"),
+        ("freezer-repair", "fridge_repair"),
+        ("washer-repair", "washing_machine_repair"),
+        ("dryer-repair", "washing_machine_repair"),
+        ("stove-repair", "oven_microwave_repair"),
+        ("cooktop-repair", "oven_microwave_repair"),
+        ("hob-repair", "oven_microwave_repair"),
+        ("geyser-repair", "water_heater_repair"),
+        ("boiler-repair", "water_heater_repair"),
+        ("water-heater-installation", "water_heater_repair"),
+        # Handyman-adjacent — Servia's handyman covers light plumbing/
+        # electrical/carpentry (typical UAE handyman). Mapping these
+        # competitor PPC keywords broadens reach. If handyman scope
+        # doesn't actually cover the keyword, ads get disapproved on
+        # LP-experience score — flag for review before scaling spend.
+        ("plumber", "handyman"),
+        ("plumbing-services", "handyman"),
+        ("plumbing-repair", "handyman"),
+        ("electrician", "handyman"),
+        ("electrical-services", "handyman"),
+        ("electrical-repair", "handyman"),
+        ("carpenter", "handyman"),
+        ("furniture-assembly", "handyman"),
+        ("ikea-assembly", "handyman"),
+        ("shelf-installation", "handyman"),
+        ("door-repair", "handyman"),
+        ("locksmith", "handyman"),
+        ("handyman-services", "handyman"),
+        ("home-repair", "handyman"),
+        # Outdoor / pool / garden
+        ("pool-cleaning", "swimming_pool"),
+        ("pool-maintenance", "swimming_pool"),
+        ("jacuzzi-cleaning", "swimming_pool"),
+        ("landscaping", "gardening"),
+        ("garden-maintenance", "gardening"),
+        ("lawn-care", "gardening"),
+        ("tree-trimming", "gardening"),
+        ("garden-design", "gardening"),
+        # Car
+        ("car-detailing", "car_wash"),
+        ("car-cleaning", "car_wash"),
+        ("car-polish", "car_wash"),
+        ("vehicle-wash", "car_wash"),
+        # Marble / floor
+        ("marble-polishing", "marble_polish"),
+        ("floor-polishing", "marble_polish"),
+        ("granite-polishing", "marble_polish"),
+        ("floor-restoration", "marble_polish"),
+        # Painting
+        ("wall-painting", "painting"),
+        ("house-painting", "painting"),
+        ("painter", "painting"),
+        ("painters", "painting"),
+        ("interior-painting", "painting"),
+        ("exterior-painting", "painting"),
+        ("paint-service", "painting"),
+        # TV / smart home
+        ("tv-mounting", "tv_setup"),
+        ("tv-installation", "tv_setup"),
+        ("tv-wall-mount", "tv_setup"),
+        ("smart-home-installation", "smart_home"),
+        ("home-automation", "smart_home"),
+        # Laundry / ironing
+        ("ironing", "laundry"),
+        ("ironing-service", "laundry"),
+        ("laundry-service", "laundry"),
+        ("dry-cleaning", "laundry"),
+        # Babysitting
+        ("babysitter", "babysitting"),
+        ("nanny", "babysitting"),
+        ("nanny-service", "babysitting"),
+        ("child-care", "babysitting"),
+        # Chauffeur / driver
+        ("driver", "chauffeur"),
+        ("personal-driver", "chauffeur"),
+        ("driver-service", "chauffeur"),
+        # Window
+        ("window-washing", "window_cleaning"),
+        ("glass-cleaning", "window_cleaning"),
+        # Curtain
+        ("drapery-cleaning", "curtain_cleaning"),
+        ("blinds-cleaning", "curtain_cleaning"),
     ]:
         alias_to_id[alias] = target
 
