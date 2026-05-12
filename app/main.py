@@ -2683,6 +2683,27 @@ def sitemap_pages(request: Request = None):
                     urls.append((f"{base}/services/{slug}",
                                  today, "weekly", "0.85"))
             except Exception: pass
+            # v1.24.133 — Rich indexed variant landing pages. These are the
+            # 5 high-CPC variant URLs (e.g. /bed-bug-treatment-dubai) that
+            # have ~600-800 words of unique editorial content and ARE indexed
+            # (self-canonical, robots=index,follow). Priority 0.9 because they
+            # consolidate the canonical signal from 50+ sister LPs.
+            try:
+                from .data.seed_variant_pages import VARIANT_PAGES as _RVP
+                for _v in _RVP:
+                    urls.append((f"{base}/{_v['slug']}", today, "weekly", "0.9"))
+            except Exception: pass
+            # v1.24.133 — Arabic LP URLs (noindex but in sitemap so Google
+            # discovers them and uses the hreflang signal on the English
+            # canonical pages to surface Arabic results to Arabic users).
+            # Priority 0.6 because they're translation pages, not unique content.
+            try:
+                from .data.i18n_ar_slugs import SERVICE_AR, EMIRATE_AR
+                for svc_id, (ar_svc_slug, _) in SERVICE_AR.items():
+                    for em_id, (ar_em_slug, _) in EMIRATE_AR.items():
+                        urls.append((f"{base}/{ar_svc_slug}-{ar_em_slug}",
+                                     today, "weekly", "0.6"))
+            except Exception: pass
         return _xml_response(_wrap_urlset(urls))
     except Exception as e:  # noqa: BLE001
         print(f"[sitemap-pages] error: {e}", flush=True)
@@ -3092,6 +3113,17 @@ def _sitemap_xml_inner():
     # Service detail pages (one per service)
     for s in services:
         urls.append((f"/service.html?id={s['id']}", "0.85", "weekly", today))
+
+    # v1.24.133 — Rich indexed variant landing pages (the high-CPC variants
+    # we wrote unique editorial content for). These ARE indexed (the LPs in
+    # _register_lp_routes are not). Priority 0.9 because they're keyword-rich
+    # AND have real content that should rank organically.
+    try:
+        from .data.seed_variant_pages import VARIANT_PAGES as _VP
+        for _v in _VP:
+            urls.append((f"/{_v['slug']}", "0.9", "weekly", today))
+    except Exception:
+        pass
 
     # Service × Emirate landing pages — high SEO value (long-tail "ac-cleaning-dubai")
     for s in services:
@@ -5707,9 +5739,25 @@ async def _custom_404(request, exc):
 # ─────────────────────────────────────────────────────────────────────────
 
 def _render_lp_page(svc_id: str, area_slug: str, area_display: str,
-                     area_type: str, qualifier: str = "") -> HTMLResponse:
+                     area_type: str, qualifier: str = "",
+                     alias: str = "") -> HTMLResponse:
     from fastapi import HTTPException as _HE
     from fastapi.responses import HTMLResponse as _HR
+
+    # v1.24.133 — rich-variant dispatch. If this URL is one of the 5 indexed
+    # high-CPC variants (e.g. /bed-bug-treatment-dubai, /plumber-dubai), hand
+    # off to the rich renderer instead of the thin LP path. Only un-qualified
+    # base URLs qualify (no "/same-day-..." or "/.../near-me" variants).
+    if alias and not qualifier and area_type != "near_me":
+        try:
+            from . import rich_variant_pages as _rvp
+            rich = _rvp.get_rich_variant(alias, area_slug)
+            if rich is not None:
+                return _rvp.render_rich_variant(rich)
+        except Exception:
+            # Fall through to the thin LP path on any rendering failure.
+            pass
+
     try:
         services_by_id = {s["id"]: s for s in kb.services().get("services", [])}
     except Exception:
@@ -5750,10 +5798,25 @@ def _render_lp_page(svc_id: str, area_slug: str, area_display: str,
     # neighborhoods, or the bare /services/{slug} for emirates + near-me +
     # any qualifier variants (since /services/{slug}/{area} only exists for
     # neighborhoods in seo_pages.AREA_INDEX).
-    if area_type == "neighborhood" and not qualifier:
-        canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug_kebab}/{area_slug}"
-    else:
-        canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug_kebab}"
+    #
+    # v1.24.133 — EXCEPTION: when the alias has a rich variant page (e.g.
+    # alias="bed-bug-treatment" has rich page /bed-bug-treatment-dubai), all
+    # sister LPs of that alias canonical to the rich page instead. This
+    # concentrates link equity from 50+ thin LPs onto one indexed URL.
+    canonical = None
+    if alias:
+        try:
+            from . import rich_variant_pages as _rvp
+            rich_canonical = _rvp.canonical_for_sister_lp(alias, brand.get('domain', 'servia.ae'))
+            if rich_canonical:
+                canonical = rich_canonical
+        except Exception:
+            pass
+    if canonical is None:
+        if area_type == "neighborhood" and not qualifier:
+            canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug_kebab}/{area_slug}"
+        else:
+            canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug_kebab}"
     title_safe = title.replace('"', "&quot;")
     desc_safe = desc.replace('"', "&quot;")
     html = (
@@ -6030,14 +6093,18 @@ def _register_lp_routes():
     ]
 
     count = 0
-    # Base routes: /{svc_alias}-{area_slug} (~9k routes from existing matrix)
+    # Base routes: /{svc_alias}-{area_slug} (~9k routes from existing matrix).
+    # v1.24.133 — alias is passed through to _render_lp_page so the rich-variant
+    # dispatcher can detect URLs like /bed-bug-treatment-dubai and serve the
+    # indexed rich page instead of the thin noindex LP.
     for svc_alias, svc_id in alias_to_id.items():
         for area_slug, (area_display, area_type) in areas.items():
             flat = f"{svc_alias}-{area_slug}"
 
-            def make_handler(sid=svc_id, asg=area_slug, adisp=area_display, atyp=area_type):
+            def make_handler(sid=svc_id, asg=area_slug, adisp=area_display,
+                             atyp=area_type, al=svc_alias):
                 def handler():
-                    return _render_lp_page(sid, asg, adisp, atyp)
+                    return _render_lp_page(sid, asg, adisp, atyp, alias=al)
                 return handler
 
             app.add_api_route(
@@ -6061,9 +6128,10 @@ def _register_lp_routes():
                 flat = f"{qual_slug}-{svc_alias}-{area_slug}"
 
                 def make_qh(sid=svc_id, asg=area_slug, adisp=area_display,
-                            atyp=area_type, qual=qual_label):
+                            atyp=area_type, qual=qual_label, al=svc_alias):
                     def handler():
-                        return _render_lp_page(sid, asg, adisp, atyp, qualifier=qual)
+                        return _render_lp_page(sid, asg, adisp, atyp,
+                                                qualifier=qual, alias=al)
                     return handler
 
                 app.add_api_route(
@@ -6081,9 +6149,9 @@ def _register_lp_routes():
     for svc_alias, svc_id in alias_to_id.items():
         flat = f"{svc_alias}-near-me"
 
-        def make_nh(sid=svc_id):
+        def make_nh(sid=svc_id, al=svc_alias):
             def handler():
-                return _render_lp_page(sid, "", "Your Area", "near_me")
+                return _render_lp_page(sid, "", "Your Area", "near_me", alias=al)
             return handler
 
         app.add_api_route(
@@ -6099,6 +6167,15 @@ def _register_lp_routes():
     print(f"[lp] {total} Google Ads landing-page routes registered "
           f"(base={count}, qualifier={qual_count}, near-me={near_count}, "
           f"{len(alias_to_id)} service aliases × {len(areas)} areas)")
+
+    # v1.24.133 — Arabic LPs (49 = 7 services × 7 emirates). For Arabic
+    # Google Ads. Same noindex / canonical-to-English strategy as the EN LPs.
+    try:
+        from . import ar_lp_pages
+        ar_count = ar_lp_pages.register_ar_routes(app)
+        print(f"[lp-ar] {ar_count} Arabic landing-page routes registered")
+    except Exception as e:
+        print(f"[lp-ar] FAILED to register Arabic routes: {e}")
 
 
 _register_lp_routes()
