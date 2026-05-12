@@ -596,7 +596,88 @@
     return { cleanText, actions: out, picker: pickerKind, quoteCard: quoteCardId };
   }
 
+  // v1.24.134 — Track the last user prompt so feedback can be paired to it.
+  // Updated inside addMsg() whenever a 'user' role bubble is rendered.
+  let _rlaifLastUserMsg = "";
+
+  // Attach a 👍/👎 feedback widget to a bot bubble.
+  // On thumbs-down, expand a quick reason picker. POSTs to /api/chat/feedback.
+  function _attachFeedbackUI(botDiv, replyText, toolCalls) {
+    try {
+      const fb = el("div", { class: "us-feedback" });
+      fb.style.cssText = "display:flex;gap:6px;margin-top:6px;align-items:center;font-size:12px;color:#94A3B8;flex-wrap:wrap";
+      const up = el("button", { type: "button", "aria-label": "Helpful",
+                                  title: "Helpful" }, "👍");
+      const down = el("button", { type: "button", "aria-label": "Not helpful",
+                                    title: "Not helpful" }, "👎");
+      const btnCss = "background:transparent;border:1px solid #E2E8F0;border-radius:99px;padding:2px 8px;cursor:pointer;font-size:13px;line-height:1;transition:all .15s";
+      up.style.cssText = btnCss;
+      down.style.cssText = btnCss;
+      const thanks = el("span", {}, "");
+      thanks.style.cssText = "color:#10B981;font-weight:600;font-size:11px;display:none";
+      const TAGS = [
+        ["wrong_price",     "💰 wrong price"],
+        ["off_brand_tone",  "🎭 tone off"],
+        ["missed_context",  "🧠 lost context"],
+        ["tool_failed",     "🔧 tool failed"],
+        ["too_long",        "📏 too long"],
+        ["factually_wrong", "❌ factually wrong"],
+        ["wrong_language",  "🌍 wrong language"],
+        ["other",           "✏️ other"],
+      ];
+      function _send(rating, reasonTag, reasonText) {
+        const payload = {
+          session_id: sessionId || localStorage.getItem(SESSION_KEY) || "",
+          rating: rating,
+          reason_tag: reasonTag || null,
+          reason_text: reasonText || null,
+          prompt_text: _rlaifLastUserMsg || null,
+          response_text: replyText || null,
+          tools_called: (toolCalls || []).map(t => t.name).filter(Boolean),
+        };
+        fetch(API_BASE + "/api/chat/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "same-origin",
+        }).catch(() => {/* never break UI */});
+      }
+      up.onclick = () => {
+        up.style.background = "#D1FAE5"; up.style.borderColor = "#10B981";
+        down.disabled = true;
+        thanks.textContent = "Thanks!"; thanks.style.display = "inline";
+        _send(1);
+      };
+      down.onclick = () => {
+        down.style.background = "#FEE2E2"; down.style.borderColor = "#DC2626";
+        up.disabled = true;
+        // Reason picker
+        const reasonWrap = el("div", {});
+        reasonWrap.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;margin-top:6px";
+        TAGS.forEach(([tag, lbl]) => {
+          const t = el("button", { type: "button" }, lbl);
+          t.style.cssText = "background:#F1F5F9;border:1px solid #CBD5E1;border-radius:99px;padding:3px 9px;cursor:pointer;font-size:11.5px;color:#475569";
+          t.onclick = () => {
+            [...reasonWrap.querySelectorAll("button")].forEach(x => x.disabled = true);
+            t.style.background = "#0F766E"; t.style.color = "#fff";
+            thanks.textContent = "Thanks — we'll review."; thanks.style.display = "inline";
+            _send(-1, tag, null);
+            reasonWrap.remove();
+          };
+          reasonWrap.appendChild(t);
+        });
+        fb.appendChild(reasonWrap);
+        _send(-1);  // record initial rating immediately so we capture it even if user closes widget before picking a tag
+      };
+      fb.appendChild(up);
+      fb.appendChild(down);
+      fb.appendChild(thanks);
+      botDiv.appendChild(fb);
+    } catch (_) {/* fail silent */}
+  }
+
   function addMsg(who, text, toolCalls, isAgent) {
+    if (who === "user") _rlaifLastUserMsg = text || _rlaifLastUserMsg;
     let cleanText = text;
     let actions = [];
     let picker = null;
@@ -614,6 +695,12 @@
     else if (toolCalls && toolCalls.length) {
       const names = [...new Set(toolCalls.map(t => t.name))].join(", ");
       div.appendChild(el("div", { class: "us-tool-tag" }, "Used: " + names));
+    }
+    // v1.24.134 — RLAIF thumbs feedback. Only show on bot replies (not user
+    // messages or live agent — those don't need scoring). Stores rating +
+    // optional reason via /api/chat/feedback.
+    if (who === "bot" && !isAgent) {
+      _attachFeedbackUI(div, cleanText, toolCalls);
     }
     body.appendChild(div);
     if (who === "bot" && actions.length) {
