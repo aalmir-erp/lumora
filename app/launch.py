@@ -229,17 +229,66 @@ def public_snippets_js() -> str:
 
     body_blocks: list[str] = list(s.get("body") or [])
 
-    # Build the payload as JS that injects everything
-    head_js = _json.dumps("".join(head_blocks))
-    body_js = _json.dumps("".join(body_blocks))
+    # v1.24.127 — Real-script-element injection.
+    # insertAdjacentHTML('beforeend', html) inserts the markup but does
+    # NOT EXECUTE <script> tags (HTML5 spec). Founder reported GA4
+    # showing "Data collection isn't active for your website" for days
+    # because the injected gtag.js never actually ran. Fix: emit JS
+    # that creates real <script> elements via document.createElement +
+    # appendChild, which browsers DO execute. Non-script HTML (meta
+    # verification tags, etc.) still goes through insertAdjacentHTML.
+    head_html_safe = "".join(head_blocks)
+    body_html_safe = "".join(body_blocks)
+    head_html_js = _json.dumps(head_html_safe)
+    body_html_js = _json.dumps(body_html_safe)
     return (
-        "/* Servia public snippets — injected into every page. */\n"
+        "/* Servia public snippets — injected into every page.\n"
+        " * v1.24.127: <script> tags are recreated via\n"
+        " * document.createElement so they actually execute. */\n"
         "(function(){\n"
-        f"  var H={head_js};\n"
-        f"  var B={body_js};\n"
-        "  if(H && document.head) document.head.insertAdjacentHTML('beforeend', H);\n"
-        "  if(B && document.body) document.body.insertAdjacentHTML('beforeend', B);\n"
-        "  else if(B) document.addEventListener('DOMContentLoaded', function(){ document.body.insertAdjacentHTML('beforeend', B); });\n"
+        "  function injectAll(html, target){\n"
+        "    if(!html || !target) return;\n"
+        "    // Parse the HTML in a detached container, then walk it.\n"
+        "    var tmp = document.createElement('div');\n"
+        "    tmp.innerHTML = html;\n"
+        "    var node = tmp.firstChild;\n"
+        "    while(node){\n"
+        "      var next = node.nextSibling;\n"
+        "      if(node.tagName === 'SCRIPT'){\n"
+        "        // Re-create as a REAL script element so the browser\n"
+        "        // executes it. insertAdjacentHTML does NOT execute\n"
+        "        // <script> tags — they get inserted but never run.\n"
+        "        var s = document.createElement('script');\n"
+        "        // copy every attribute (src, async, defer, type, etc.)\n"
+        "        for(var i=0;i<node.attributes.length;i++){\n"
+        "          var a = node.attributes[i];\n"
+        "          s.setAttribute(a.name, a.value);\n"
+        "        }\n"
+        "        // Inline body (no src) — copy the JS text\n"
+        "        if(!node.src && node.textContent){\n"
+        "          s.text = node.textContent;\n"
+        "        }\n"
+        "        // Default async=true for external scripts so they\n"
+        "        // don't block page render.\n"
+        "        if(node.src && !node.hasAttribute('async') && !node.hasAttribute('defer')){\n"
+        "          s.async = true;\n"
+        "        }\n"
+        "        target.appendChild(s);\n"
+        "      } else {\n"
+        "        // Non-script (meta, link, noscript) — insertAdjacentHTML works.\n"
+        "        target.appendChild(node.cloneNode(true));\n"
+        "      }\n"
+        "      node = next;\n"
+        "    }\n"
+        "  }\n"
+        f"  var H={head_html_js};\n"
+        f"  var B={body_html_js};\n"
+        "  if(H && document.head) injectAll(H, document.head);\n"
+        "  if(B){\n"
+        "    if(document.body) injectAll(B, document.body);\n"
+        "    else document.addEventListener('DOMContentLoaded',\n"
+        "          function(){ injectAll(B, document.body); });\n"
+        "  }\n"
         "})();\n"
     )
 
