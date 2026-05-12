@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, admin_live as _admin_live, ai_router, airbnb_ical as _airbnb_ical, cart, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, rlaif as _rlaif, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
+from . import admin, admin_live as _admin_live, ai_router, airbnb_ical as _airbnb_ical, cart, commerce as _commerce, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, rlaif as _rlaif, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
 from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
 
@@ -351,6 +351,7 @@ app.include_router(_si.admin_router)
 app.include_router(_si.public_router)
 app.include_router(_rlaif.router)               # /api/chat/feedback + /api/admin/feedback/* + /api/admin/critic/run
 app.include_router(_airbnb_ical.router)         # /api/host/airbnb/* + /api/admin/airbnb/*
+app.include_router(_commerce.router)            # /api/admin/quotes/* + sales-orders/* + invoices/* + purchase-orders/* + payments/* + reports/*
 
 
 # v1.24.136 — Explicit handler for the PIN-gated investor pitch. We serve
@@ -2808,6 +2809,8 @@ _PRIVATE_PAGES = {
     # v1.24.136 — PIN-gated investor memo. noindex,nofollow at HTML level
     # plus excluded from every sitemap. Accessed by direct URL only.
     "pitch.html",
+    # v1.24.141 — Commerce admin panel. Admin-token gated; not customer-facing.
+    "admin-commerce.html",
 }
 
 # Per-page priority + change frequency overrides (anything not listed

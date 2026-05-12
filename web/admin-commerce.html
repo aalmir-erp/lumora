@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Commerce · Sales / Invoices / POs / Reports · Servia Admin</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --p:#0F766E;--p2:#0D9488;--p3:#134E4A;
+    --a:#F59E0B;--a2:#B45309;
+    --bg:#F1F5F9;--panel:#fff;--text:#0F172A;--mut:#64748B;--border:#E2E8F0;
+    --g:#10B981;--g-soft:#D1FAE5;
+    --b:#3B82F6;--b-soft:#DBEAFE;
+    --r:#DC2626;--r-soft:#FEE2E2;
+  }
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+  .top{background:linear-gradient(135deg,var(--p3),var(--p));color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .top h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  .top .auth-input{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 12px;border-radius:8px;font-size:12px;width:200px}
+  .top .auth-input::placeholder{color:rgba(255,255,255,.6)}
+  nav.tabs{background:#fff;border-bottom:1px solid var(--border);padding:0 24px;display:flex;overflow-x:auto;gap:2px;position:sticky;top:0;z-index:10;box-shadow:0 1px 0 var(--border)}
+  nav.tabs a{padding:14px 16px;text-decoration:none;color:var(--mut);font-weight:700;font-size:13px;border-bottom:3px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px}
+  nav.tabs a.active{color:var(--p);border-color:var(--p)}
+  nav.tabs a:hover{color:var(--text);background:var(--bg)}
+  nav.tabs .count{background:var(--bg);color:var(--mut);font-size:10px;padding:2px 6px;border-radius:99px;font-weight:800}
+  nav.tabs a.active .count{background:var(--p);color:#fff}
+  main{padding:24px;max-width:1400px;margin:0 auto}
+  .filters{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+  .filters input,.filters select{padding:7px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#fff}
+  .filters input[type="text"]{min-width:200px}
+  .filters input[type="date"]{min-width:140px}
+  .filters .lbl{font-size:11.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-right:-4px}
+  .filters .actions{margin-left:auto;display:flex;gap:8px}
+  .btn{background:var(--p);color:#fff;border:0;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;text-decoration:none}
+  .btn:hover{background:var(--p2)}
+  .btn-ghost{background:transparent;color:var(--p);border:1px solid var(--p)}
+  .btn-amber{background:var(--a);color:#fff}
+  .btn-sm{padding:5px 10px;font-size:11.5px}
+  .panel{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:#F8FAFC;text-align:left;padding:11px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:800;border-bottom:1px solid var(--border)}
+  td{padding:12px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:hover{background:#FAFBFC}
+  tr.click{cursor:pointer}
+  .docnum{font-family:Menlo,monospace;font-size:12px;font-weight:700;color:var(--p)}
+  .amount{font-weight:800;font-size:13px;color:var(--text)}
+  .badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.04em}
+  .badge-draft{background:#F1F5F9;color:#475569}
+  .badge-sent,.badge-open,.badge-confirmed{background:var(--b-soft);color:#1E40AF}
+  .badge-accepted,.badge-paid,.badge-completed{background:var(--g-soft);color:#065F46}
+  .badge-in_progress{background:var(--b-soft);color:#1E40AF}
+  .badge-rejected,.badge-cancelled,.badge-overdue{background:var(--r-soft);color:#7F1D1D}
+  .badge-unpaid{background:#FEF3C7;color:#92400E}
+  .badge-customer_in{background:var(--g-soft);color:#065F46}
+  .badge-vendor_out{background:#FEF3C7;color:#92400E}
+  .empty{text-align:center;padding:48px 24px;color:var(--mut);font-size:14px}
+  .empty .ic{font-size:42px;margin-bottom:10px;display:block;opacity:.5}
+  .row-actions{display:flex;gap:5px}
+  .row-actions a,.row-actions button{padding:5px 9px;font-size:11px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--mut);text-decoration:none;cursor:pointer;font-weight:700}
+  .row-actions a:hover,.row-actions button:hover{background:var(--bg);color:var(--text)}
+  /* Modal */
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;z-index:50;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto}
+  .modal.open{display:flex}
+  .modal-box{background:#fff;border-radius:14px;max-width:760px;width:100%;padding:24px;box-shadow:0 32px 64px rgba(0,0,0,.2)}
+  .modal-box h2{margin:0 0 14px;font-size:20px}
+  .modal-close{float:right;background:none;border:0;font-size:22px;cursor:pointer;color:var(--mut);line-height:1}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-bottom:4px}
+  .field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .line-items-builder{margin:14px 0;background:var(--bg);padding:14px;border-radius:10px;border:1px dashed var(--border)}
+  .li-row{display:grid;grid-template-columns:2fr 70px 100px 60px auto;gap:8px;margin-bottom:6px;align-items:center}
+  .li-row input{padding:6px 9px;font-size:12.5px}
+  .li-row button{background:transparent;border:0;color:var(--r);cursor:pointer;font-size:16px}
+  /* KPI cards (Reports tab) */
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  .kpi{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+  .kpi .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:800;margin-bottom:6px}
+  .kpi .val{font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--text)}
+  .kpi .val.profit{color:var(--g)}
+  .kpi .val.cost{color:var(--r)}
+  .kpi .val.vat{color:var(--a2)}
+  .kpi .sub{font-size:11px;color:var(--mut);margin-top:4px}
+  /* Detail flow links */
+  .flow{display:flex;align-items:center;gap:8px;margin:14px 0;flex-wrap:wrap;padding:10px;background:var(--bg);border-radius:8px}
+  .flow .step{font-size:11px;font-weight:800;padding:5px 10px;border-radius:99px;background:#fff;color:var(--mut);text-decoration:none}
+  .flow .step.active{background:var(--p);color:#fff}
+  .flow .arr{color:var(--mut);font-size:14px}
+  @media(max-width:760px){
+    .kpi-row{grid-template-columns:repeat(2,1fr)}
+    .filters{gap:6px}
+    .filters input,.filters select{font-size:12px;padding:6px 9px}
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>💼 Commerce · Servia Admin</h1>
+  <input id="token" class="auth-input" type="password" placeholder="Admin token" autocomplete="off">
+</div>
+
+<nav class="tabs">
+  <a href="#reports" class="active" data-tab="reports">📊 Reports</a>
+  <a href="#quotes" data-tab="quotes">📝 Quotes <span class="count" id="cnt-quotes">…</span></a>
+  <a href="#sales-orders" data-tab="sales-orders">📋 Sales Orders <span class="count" id="cnt-sales-orders">…</span></a>
+  <a href="#invoices" data-tab="invoices">🧾 Invoices <span class="count" id="cnt-invoices">…</span></a>
+  <a href="#delivery-notes" data-tab="delivery-notes">🚚 Delivery Notes <span class="count" id="cnt-delivery-notes">…</span></a>
+  <a href="#purchase-orders" data-tab="purchase-orders">🛒 Purchase Orders <span class="count" id="cnt-purchase-orders">…</span></a>
+  <a href="#payments" data-tab="payments">💳 Payments <span class="count" id="cnt-payments">…</span></a>
+</nav>
+
+<main>
+
+<!-- ━━━━━━━━━━━ REPORTS TAB ━━━━━━━━━━━ -->
+<div id="tab-reports" class="tab-body">
+  <div class="filters">
+    <span class="lbl">Range</span>
+    <input type="date" id="rep-from">
+    <input type="date" id="rep-to">
+    <span class="lbl">Group by</span>
+    <select id="rep-group">
+      <option value="day">Day</option>
+      <option value="week">Week</option>
+      <option value="month" selected>Month</option>
+      <option value="quarter">Quarter</option>
+      <option value="year">Year</option>
+    </select>
+    <button class="btn" onclick="loadProfit()">↻ Refresh</button>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="lab">Revenue (excl VAT)</div><div class="val" id="kpi-rev">—</div><div class="sub">customer pays after-VAT</div></div>
+    <div class="kpi"><div class="lab">Vendor cost</div><div class="val cost" id="kpi-cost">—</div><div class="sub">paid to crews</div></div>
+    <div class="kpi"><div class="lab">Card fees deducted</div><div class="val" id="kpi-ccfee" style="color:var(--a2)">—</div><div class="sub" id="kpi-ccpct">@2.5%</div></div>
+    <div class="kpi"><div class="lab">Net profit</div><div class="val profit" id="kpi-profit">—</div><div class="sub" id="kpi-margin">margin —%</div></div>
+  </div>
+
+  <div class="panel">
+    <h3 style="padding:14px 18px;margin:0;font-size:14px;border-bottom:1px solid var(--border)">Profit breakdown by period</h3>
+    <table>
+      <thead><tr>
+        <th>Period</th><th>Orders</th><th>Revenue</th><th>VAT collected</th>
+        <th>Vendor cost</th><th>Card fees</th><th>Profit</th><th>Margin</th>
+      </tr></thead>
+      <tbody id="profit-rows"><tr><td colspan="8" class="empty">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+    <div class="panel">
+      <h3 style="padding:14px 18px;margin:0;font-size:14px;border-bottom:1px solid var(--border)">🏆 Top customers (last 12mo)</h3>
+      <table><thead><tr><th>Customer</th><th>Orders</th><th>Revenue</th></tr></thead>
+        <tbody id="top-customers"><tr><td colspan="3" class="empty">…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h3 style="padding:14px 18px;margin:0;font-size:14px;border-bottom:1px solid var(--border)">🤝 Top vendors (last 12mo)</h3>
+      <table><thead><tr><th>Vendor</th><th>POs</th><th>Paid out</th></tr></thead>
+        <tbody id="top-vendors"><tr><td colspan="3" class="empty">…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <h3 style="padding:14px 18px;margin:0;font-size:14px;border-bottom:1px solid var(--border)">💸 Outstanding</h3>
+    <div id="outstanding-content" style="padding:14px 18px">Loading…</div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━ QUOTES TAB ━━━━━━━━━━━ -->
+<div id="tab-quotes" class="tab-body" style="display:none">
+  <div class="filters">
+    <input type="text" id="q-search" placeholder="🔍 Search by number, customer, phone…">
+    <select id="q-status">
+      <option value="">All status</option>
+      <option value="draft">Draft</option><option value="sent">Sent</option>
+      <option value="accepted">Accepted</option><option value="rejected">Rejected</option>
+    </select>
+    <input type="date" id="q-from"><input type="date" id="q-to">
+    <button class="btn" onclick="loadList('quotes')">↻</button>
+    <div class="actions"><button class="btn btn-amber" onclick="openCreateQuote()">+ New quote</button></div>
+  </div>
+  <div class="panel"><table><thead><tr>
+    <th>#</th><th>Customer</th><th>Service</th><th>Total</th>
+    <th>Status</th><th>Created</th><th>Valid until</th><th></th>
+  </tr></thead><tbody id="quotes-rows"></tbody></table></div>
+</div>
+
+<!-- ━━━━━━━━━━━ SALES ORDERS TAB ━━━━━━━━━━━ -->
+<div id="tab-sales-orders" class="tab-body" style="display:none">
+  <div class="filters">
+    <input type="text" id="so-search" placeholder="🔍 Search…">
+    <select id="so-status">
+      <option value="">All</option>
+      <option value="confirmed">Confirmed</option><option value="in_progress">In progress</option>
+      <option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+    </select>
+    <input type="date" id="so-from"><input type="date" id="so-to">
+    <button class="btn" onclick="loadList('sales-orders')">↻</button>
+  </div>
+  <div class="panel"><table><thead><tr>
+    <th>SO #</th><th>Customer</th><th>Total</th><th>Status</th>
+    <th>Confirmed</th><th>Completed</th><th></th>
+  </tr></thead><tbody id="sales-orders-rows"></tbody></table></div>
+</div>
+
+<!-- ━━━━━━━━━━━ INVOICES TAB ━━━━━━━━━━━ -->
+<div id="tab-invoices" class="tab-body" style="display:none">
+  <div class="filters">
+    <input type="text" id="i-search" placeholder="🔍 Search…">
+    <select id="i-status">
+      <option value="">All</option>
+      <option value="unpaid">Unpaid</option><option value="paid">Paid</option>
+      <option value="overdue">Overdue</option>
+    </select>
+    <input type="date" id="i-from"><input type="date" id="i-to">
+    <button class="btn" onclick="loadList('invoices')">↻</button>
+  </div>
+  <div class="panel"><table><thead><tr>
+    <th>Invoice #</th><th>Customer</th><th>Subtotal</th><th>VAT</th><th>Total</th>
+    <th>Status</th><th>Issued</th><th>Due</th><th></th>
+  </tr></thead><tbody id="invoices-rows"></tbody></table></div>
+</div>
+
+<!-- ━━━━━━━━━━━ DELIVERY NOTES TAB ━━━━━━━━━━━ -->
+<div id="tab-delivery-notes" class="tab-body" style="display:none">
+  <div class="filters">
+    <input type="date" id="d-from"><input type="date" id="d-to">
+    <button class="btn" onclick="loadList('delivery-notes')">↻</button>
+  </div>
+  <div class="panel"><table><thead><tr>
+    <th>DN #</th><th>Customer</th><th>Delivered</th><th>Signed</th><th>SO total</th><th></th>
+  </tr></thead><tbody id="delivery-notes-rows"></tbody></table></div>
+</div>
+
+<!-- ━━━━━━━━━━━ PURCHASE ORDERS TAB ━━━━━━━━━━━ -->
+<div id="tab-purchase-orders" class="tab-body" style="display:none">
+  <div class="filters">
+    <input type="text" id="po-search" placeholder="🔍 Search…">
+    <select id="po-status">
+      <option value="">All</option>
+      <option value="open">Open</option><option value="sent">Sent</option>
+      <option value="accepted">Accepted</option><option value="completed">Completed</option>
+      <option value="paid">Paid</option><option value="cancelled">Cancelled</option>
+    </select>
+    <input type="date" id="po-from"><input type="date" id="po-to">
+    <button class="btn" onclick="loadList('purchase-orders')">↻</button>
+  </div>
+  <div class="panel"><table><thead><tr>
+    <th>PO #</th><th>Vendor</th><th>Service</th><th>Vendor total</th>
+    <th>Status</th><th>Created</th><th>Paid</th><th></th>
+  </tr></thead><tbody id="purchase-orders-rows"></tbody></table></div>
+</div>
+
+<!-- ━━━━━━━━━━━ PAYMENTS TAB ━━━━━━━━━━━ -->
+<div id="tab-payments" class="tab-body" style="display:none">
+  <div class="filters">
+    <select id="pay-type">
+      <option value="">All payments</option>
+      <option value="customer_in">📥 Customer in</option>
+      <option value="vendor_out">📤 Vendor out</option>
+    </select>
+    <input type="date" id="pay-from"><input type="date" id="pay-to">
+    <button class="btn" onclick="loadList('payments')">↻</button>
+  </div>
+  <div class="panel"><table><thead><tr>
+    <th>Date</th><th>Type</th><th>Reference</th><th>Counterparty</th>
+    <th>Amount</th><th>Method</th><th>Ref #</th><th>Notes</th>
+  </tr></thead><tbody id="payments-rows"></tbody></table></div>
+</div>
+
+</main>
+
+<!-- Detail modal -->
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-content">Loading…</div>
+  </div>
+</div>
+
+<script>
+const TOKEN_KEY = "servia.admin.token";
+const tokenInput = document.getElementById("token");
+tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
+tokenInput.addEventListener("change", () => localStorage.setItem(TOKEN_KEY, tokenInput.value));
+
+function H() { return { "Authorization": "Bearer " + tokenInput.value }; }
+async function api(path) {
+  const r = await fetch(path, { headers: H() });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+async function apiPost(path, body) {
+  const r = await fetch(path, { method: "POST", headers: { ...H(), "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+
+// ───────── TAB SWITCHING ─────────
+document.querySelectorAll("nav.tabs a").forEach(a => {
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.querySelectorAll("nav.tabs a").forEach(x => x.classList.remove("active"));
+    a.classList.add("active");
+    document.querySelectorAll(".tab-body").forEach(b => b.style.display = "none");
+    const id = "tab-" + a.dataset.tab;
+    document.getElementById(id).style.display = "";
+    if (a.dataset.tab === "reports") loadReports();
+    else loadList(a.dataset.tab);
+    location.hash = a.dataset.tab;
+  });
+});
+
+// ───────── REPORTS ─────────
+async function loadReports() {
+  await loadProfit();
+  await loadTopLists();
+  await loadOutstanding();
+}
+async function loadProfit() {
+  const from = document.getElementById("rep-from").value;
+  const to = document.getElementById("rep-to").value;
+  const group = document.getElementById("rep-group").value;
+  const params = new URLSearchParams();
+  if (from) params.set("from_date", from);
+  if (to) params.set("to_date", to);
+  params.set("group_by", group);
+  try {
+    const d = await api("/api/admin/reports/profit?" + params);
+    const t = d.totals || {};
+    document.getElementById("kpi-rev").textContent = "AED " + (t.revenue_excl_vat || 0).toLocaleString();
+    document.getElementById("kpi-cost").textContent = "AED " + (t.vendor_cost || 0).toLocaleString();
+    document.getElementById("kpi-ccfee").textContent = "AED " + (t.card_fees_deducted || 0).toLocaleString();
+    document.getElementById("kpi-ccpct").textContent = "@ " + (t.cc_fee_pct_applied || 2.5) + "%";
+    document.getElementById("kpi-profit").textContent = "AED " + (t.profit || 0).toLocaleString();
+    document.getElementById("kpi-margin").textContent = "margin " + (t.margin_pct || 0) + "%";
+    const rows = (d.periods || []).map(p => `<tr>
+      <td><b>${p.period}</b></td><td>${p.so_count}</td>
+      <td>AED ${(p.revenue_excl_vat).toLocaleString()}</td>
+      <td>AED ${(p.vat_collected).toLocaleString()}</td>
+      <td style="color:var(--r)">AED ${(p.vendor_cost).toLocaleString()}</td>
+      <td style="color:var(--a2)">AED ${(p.card_fees).toLocaleString()}</td>
+      <td style="color:var(--g);font-weight:800">AED ${(p.profit).toLocaleString()}</td>
+      <td><span class="badge" style="background:var(--p);color:#fff">${p.margin_pct}%</span></td>
+    </tr>`).join("");
+    document.getElementById("profit-rows").innerHTML = rows || `<tr><td colspan="8" class="empty">No data in range.</td></tr>`;
+  } catch (e) {
+    document.getElementById("profit-rows").innerHTML = `<tr><td colspan="8" class="empty">${e.message} — check admin token.</td></tr>`;
+  }
+}
+async function loadTopLists() {
+  try {
+    const cust = await api("/api/admin/reports/top-customers?limit=8");
+    document.getElementById("top-customers").innerHTML = (cust.items || []).map(c => `
+      <tr><td><b>${c.customer_name || "—"}</b><br><small style="color:var(--mut)">${c.customer_phone || ""}</small></td>
+      <td>${c.orders}</td><td><b>AED ${(c.revenue || 0).toLocaleString()}</b></td></tr>
+    `).join("") || `<tr><td colspan="3" class="empty">No data.</td></tr>`;
+    const vend = await api("/api/admin/reports/top-vendors?limit=8");
+    document.getElementById("top-vendors").innerHTML = (vend.items || []).map(v => `
+      <tr><td><b>${v.vendor_name || "—"}</b></td>
+      <td>${v.po_count}</td><td><b>AED ${(v.payouts || 0).toLocaleString()}</b></td></tr>
+    `).join("") || `<tr><td colspan="3" class="empty">No data.</td></tr>`;
+  } catch (e) {}
+}
+async function loadOutstanding() {
+  try {
+    const d = await api("/api/admin/reports/outstanding");
+    document.getElementById("outstanding-content").innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div class="kpi"><div class="lab">Accounts Receivable</div>
+          <div class="val cost">AED ${(d.accounts_receivable?.total||0).toLocaleString()}</div>
+          <div class="sub">${d.accounts_receivable?.items.length||0} unpaid invoices · ${d.accounts_receivable?.overdue_count||0} overdue</div></div>
+        <div class="kpi"><div class="lab">Accounts Payable</div>
+          <div class="val">AED ${(d.accounts_payable?.total||0).toLocaleString()}</div>
+          <div class="sub">${d.accounts_payable?.items.length||0} pending POs</div></div>
+        <div class="kpi"><div class="lab">Net Working Capital</div>
+          <div class="val ${d.net_working_capital>=0?'profit':'cost'}">AED ${d.net_working_capital.toLocaleString()}</div>
+          <div class="sub">A/R − A/P</div></div>
+      </div>`;
+  } catch (e) {}
+}
+
+// ───────── LISTS ─────────
+async function loadList(tab) {
+  try {
+    let url = "/api/admin/" + tab;
+    const params = new URLSearchParams();
+    if (tab === "quotes") {
+      const s = document.getElementById("q-search").value;
+      const st = document.getElementById("q-status").value;
+      const f = document.getElementById("q-from").value, t = document.getElementById("q-to").value;
+      if (s) params.set("q", s); if (st) params.set("status", st);
+      if (f) params.set("from_date", f); if (t) params.set("to_date", t);
+    } else if (tab === "sales-orders") {
+      const s = document.getElementById("so-search").value;
+      const st = document.getElementById("so-status").value;
+      const f = document.getElementById("so-from").value, t = document.getElementById("so-to").value;
+      if (s) params.set("q", s); if (st) params.set("status", st);
+      if (f) params.set("from_date", f); if (t) params.set("to_date", t);
+    } else if (tab === "invoices") {
+      const s = document.getElementById("i-search").value;
+      const st = document.getElementById("i-status").value;
+      const f = document.getElementById("i-from").value, t = document.getElementById("i-to").value;
+      if (s) params.set("q", s); if (st) params.set("status", st);
+      if (f) params.set("from_date", f); if (t) params.set("to_date", t);
+    } else if (tab === "purchase-orders") {
+      const s = document.getElementById("po-search").value;
+      const st = document.getElementById("po-status").value;
+      const f = document.getElementById("po-from").value, t = document.getElementById("po-to").value;
+      if (s) params.set("q", s); if (st) params.set("status", st);
+      if (f) params.set("from_date", f); if (t) params.set("to_date", t);
+    } else if (tab === "delivery-notes") {
+      const f = document.getElementById("d-from").value, t = document.getElementById("d-to").value;
+      if (f) params.set("from_date", f); if (t) params.set("to_date", t);
+    } else if (tab === "payments") {
+      const ty = document.getElementById("pay-type").value;
+      const f = document.getElementById("pay-from").value, t = document.getElementById("pay-to").value;
+      if (ty) params.set("payment_type", ty);
+      if (f) params.set("from_date", f); if (t) params.set("to_date", t);
+    }
+    const qs = params.toString();
+    const d = await api(url + (qs ? "?" + qs : ""));
+    document.getElementById("cnt-" + tab).textContent = d.count;
+    renderRows(tab, d.items || []);
+  } catch (e) {
+    document.getElementById(tab + "-rows").innerHTML = `<tr><td colspan="9" class="empty">${e.message} — check admin token in top-right.</td></tr>`;
+  }
+}
+
+function fmtD(s) { if (!s) return "—"; const d = new Date(s); return isNaN(d) ? s.substring(0,10) : d.toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" }); }
+function fmtA(n) { return "AED " + (Number(n)||0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function b(status) { return `<span class="badge badge-${status||'draft'}">${(status||'?').toUpperCase()}</span>`; }
+function rowActions(tab, id, doc_num, customer_phone, customer_email) {
+  const printUrl = `/admin/print/${tab.replace("-","-").replace("s","")}/${id}`.replace(/(invoice|payment|deliverynote|salesorder|purchaseorder|quote)s/, "$1");
+  // Correct mapping per doc type
+  const printMap = { "quotes":"quote", "sales-orders":"sales-order", "invoices":"invoice",
+                     "delivery-notes":"delivery-note", "purchase-orders":"purchase-order" };
+  const printType = printMap[tab];
+  if (!printType) return "";
+  return `<div class="row-actions">
+    <a href="/admin/print/${printType}/${id}?token=${encodeURIComponent(tokenInput.value)}" target="_blank">View / Print</a>
+    <button onclick="event.stopPropagation();openDetail('${tab}','${id}')">⋯</button>
+  </div>`;
+}
+
+function renderRows(tab, items) {
+  const tbody = document.getElementById(tab + "-rows");
+  if (!items.length) {
+    const cols = tab === "delivery-notes" ? 6 : (tab === "payments" ? 8 : 9);
+    tbody.innerHTML = `<tr><td colspan="${cols}" class="empty"><span class="ic">📭</span>No items. Filters may be too restrictive.</td></tr>`;
+    return;
+  }
+  let html = "";
+  if (tab === "quotes") {
+    html = items.map(i => `<tr class="click" onclick="openDetail('quotes','${i.id}')">
+      <td class="docnum">${i.quote_number || i.id.substring(0,12)}</td>
+      <td>${i.customer_name || "—"}<br><small style="color:var(--mut)">${i.customer_phone || ""}</small></td>
+      <td>${i.service_id}</td>
+      <td class="amount">${fmtA(i.total)}</td>
+      <td>${b(i.status)}</td>
+      <td>${fmtD(i.created_at)}</td>
+      <td>${fmtD(i.valid_until)}</td>
+      <td>${rowActions(tab, i.id)}</td>
+    </tr>`).join("");
+  } else if (tab === "sales-orders") {
+    html = items.map(i => `<tr class="click" onclick="openDetail('sales-orders','${i.id}')">
+      <td class="docnum">${i.so_number}</td>
+      <td>${i.customer_name || "—"}<br><small style="color:var(--mut)">${i.customer_phone || ""}</small></td>
+      <td class="amount">${fmtA(i.total)}</td>
+      <td>${b(i.status)}</td>
+      <td>${fmtD(i.confirmed_at)}</td>
+      <td>${fmtD(i.completed_at)}</td>
+      <td>${rowActions(tab, i.id)}</td>
+    </tr>`).join("");
+  } else if (tab === "invoices") {
+    html = items.map(i => `<tr class="click" onclick="openDetail('invoices','${i.id}')">
+      <td class="docnum">${i.invoice_number || i.id.substring(0,12)}</td>
+      <td>${i.customer_name || "—"}<br><small style="color:var(--mut)">${i.customer_phone || ""}</small></td>
+      <td>${fmtA(i.subtotal)}</td>
+      <td>${fmtA(i.vat_amount)}</td>
+      <td class="amount">${fmtA(i.amount)}</td>
+      <td>${b(i.payment_status)}</td>
+      <td>${fmtD(i.issued_at || i.created_at)}</td>
+      <td>${fmtD(i.due_at)}</td>
+      <td>${rowActions(tab, i.id)}</td>
+    </tr>`).join("");
+  } else if (tab === "delivery-notes") {
+    html = items.map(i => `<tr class="click" onclick="openDetail('delivery-notes','${i.id}')">
+      <td class="docnum">${i.dn_number}</td>
+      <td>${i.customer_name || "—"}</td>
+      <td>${fmtD(i.delivered_at)}</td>
+      <td>${i.customer_signed_at ? "✅" : "⏳"}</td>
+      <td class="amount">${fmtA(i.so_total)}</td>
+      <td>${rowActions(tab, i.id)}</td>
+    </tr>`).join("");
+  } else if (tab === "purchase-orders") {
+    html = items.map(i => `<tr class="click" onclick="openDetail('purchase-orders','${i.id}')">
+      <td class="docnum">${i.po_number}</td>
+      <td>${i.vendor_name || "—"}<br><small style="color:var(--mut)">${i.vendor_phone || ""}</small></td>
+      <td>${i.service_id}</td>
+      <td class="amount">${fmtA(i.vendor_total)}</td>
+      <td>${b(i.status)}</td>
+      <td>${fmtD(i.created_at)}</td>
+      <td>${fmtD(i.paid_at)}</td>
+      <td>${rowActions(tab, i.id)}</td>
+    </tr>`).join("");
+  } else if (tab === "payments") {
+    html = items.map(i => `<tr>
+      <td>${fmtD(i.payment_date)}</td>
+      <td>${b(i.payment_type)}</td>
+      <td><code style="font-size:11px">${i.reference_type}/${i.reference_id.substring(0,10)}</code></td>
+      <td>${i.counterparty_name || "—"}</td>
+      <td class="amount">${fmtA(i.amount)}</td>
+      <td>${i.method || "—"}</td>
+      <td>${i.reference_number || "—"}</td>
+      <td style="font-size:12px;color:var(--mut)">${i.notes || ""}</td>
+    </tr>`).join("");
+  }
+  tbody.innerHTML = html;
+}
+
+// ───────── DETAIL MODAL ─────────
+async function openDetail(tab, id) {
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("modal-content").innerHTML = "Loading…";
+  try {
+    const d = await api("/api/admin/" + tab + "/" + id);
+    const printMap = { "quotes":"quote", "sales-orders":"sales-order", "invoices":"invoice",
+                       "delivery-notes":"delivery-note", "purchase-orders":"purchase-order" };
+    const docType = printMap[tab];
+    const item = d.quote || d.sales_order || d.invoice || d.delivery_note || d.purchase_order || {};
+    const num = item.quote_number || item.so_number || item.invoice_number || item.dn_number || item.po_number || item.id;
+    let related = "";
+    if (d.purchase_orders) related += `<div style="margin-top:10px"><b>Linked Purchase Orders</b>: ${d.purchase_orders.length || 0}</div>`;
+    if (d.invoices) related += `<div><b>Linked Invoices</b>: ${d.invoices.length || 0}</div>`;
+    if (d.delivery_notes) related += `<div><b>Linked Delivery Notes</b>: ${d.delivery_notes.length || 0}</div>`;
+    let actions = "";
+    if (tab === "quotes" && (item.status === "draft" || item.status === "sent")) {
+      actions += `<button class="btn" onclick="acceptQuote('${id}')">✅ Mark accepted (creates SO + invoice)</button> `;
+    }
+    if (tab === "invoices" && item.payment_status === "unpaid") {
+      actions += `<button class="btn" onclick="markInvoicePaid('${id}')">💳 Mark paid</button> `;
+    }
+    if (tab === "purchase-orders" && item.status !== "paid") {
+      actions += `<button class="btn" onclick="markPoPaid('${id}')">💸 Mark paid out</button> `;
+    }
+    if (tab === "sales-orders") {
+      actions += `<button class="btn" onclick="markSoCompleted('${id}')">✅ Mark completed (creates DN)</button> `;
+    }
+    document.getElementById("modal-content").innerHTML = `
+      <h2>${num}</h2>
+      <p style="color:var(--mut);font-size:13px;margin-top:-8px">${JSON.stringify(item.line_items_json ? JSON.parse(item.line_items_json) : []).substring(0,200)}…</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin:10px 0">
+        <div><b>Customer / Vendor:</b> ${item.customer_name || item.vendor_name || "—"}</div>
+        <div><b>Phone:</b> ${item.customer_phone || item.vendor_phone || "—"}</div>
+        <div><b>Total:</b> ${fmtA(item.total || item.amount || item.vendor_total || 0)}</div>
+        <div><b>Status:</b> ${b(item.status || item.payment_status)}</div>
+      </div>
+      ${related}
+      <div style="margin-top:18px;display:flex;gap:6px;flex-wrap:wrap">
+        <a class="btn btn-ghost" href="/admin/print/${docType}/${id}?token=${encodeURIComponent(tokenInput.value)}" target="_blank">📄 Open printable</a>
+        ${actions}
+      </div>
+    `;
+  } catch (e) {
+    document.getElementById("modal-content").innerHTML = `<div style="color:var(--r)">Failed: ${e.message}</div>`;
+  }
+}
+function closeModal() { document.getElementById("modal").classList.remove("open"); }
+async function acceptQuote(id) {
+  if (!confirm("Accept quote? This creates a Sales Order + auto-generates an Invoice.")) return;
+  try { await apiPost(`/api/admin/quotes/${id}/accept`); alert("Accepted!"); closeModal(); loadList("quotes"); }
+  catch (e) { alert("Failed: " + e.message); }
+}
+async function markInvoicePaid(id) {
+  const method = prompt("Payment method (card / bank_transfer / cash / wallet / cheque)?", "bank_transfer");
+  if (!method) return;
+  const ref = prompt("Reference number (optional)?", "");
+  try { await apiPost(`/api/admin/invoices/${id}/mark-paid`, { method, reference_number: ref }); alert("Marked paid!"); closeModal(); loadList("invoices"); }
+  catch (e) { alert("Failed: " + e.message); }
+}
+async function markPoPaid(id) {
+  const method = prompt("Payment method?", "bank_transfer");
+  if (!method) return;
+  try { await apiPost(`/api/admin/purchase-orders/${id}/mark-paid`, { method }); alert("Marked paid!"); closeModal(); loadList("purchase-orders"); }
+  catch (e) { alert("Failed: " + e.message); }
+}
+async function markSoCompleted(id) {
+  if (!confirm("Mark SO completed? This creates a Delivery Note.")) return;
+  try { await apiPost(`/api/admin/sales-orders/${id}/mark-completed`, {}); alert("Completed!"); closeModal(); loadList("sales-orders"); }
+  catch (e) { alert("Failed: " + e.message); }
+}
+
+function openCreateQuote() {
+  alert("Manual quote creation UI is next session — use the bot for now via /api/admin/quotes/create. JSON body: { customer_name, customer_phone, line_items:[{svc_id,name,qty,unit_price}], discount }");
+}
+
+// ───────── INIT ─────────
+const today = new Date();
+const monthAgo = new Date(today.getTime() - 30*86400000);
+document.getElementById("rep-from").value = monthAgo.toISOString().substring(0,10);
+document.getElementById("rep-to").value = today.toISOString().substring(0,10);
+
+// Initial tab from hash
+const hash = location.hash.replace("#", "");
+if (hash) {
+  const tab = document.querySelector(`nav.tabs a[data-tab="${hash}"]`);
+  if (tab) tab.click();
+} else {
+  loadReports();
+}
+
+// Pre-load counts for tab badges
+["quotes","sales-orders","invoices","delivery-notes","purchase-orders","payments"].forEach(t => {
+  api("/api/admin/" + t + "?limit=1").then(d => { document.getElementById("cnt-" + t).textContent = d.count; }).catch(()=>{});
+});
+</script>
+
+</body>
+</html>
