@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Checkout · Servia</title>
+<meta name="description" content="Review your service details and pay securely to confirm your Servia booking.">
+<meta name="robots" content="noindex,nofollow">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --p:#0F766E;--p2:#0D9488;--p3:#134E4A;--p-soft:#CCFBF1;
+    --a:#F59E0B;--a2:#B45309;--a-soft:#FEF3C7;
+    --bg:#F8FAFC;--text:#0F172A;--mut:#64748B;--border:#E2E8F0;
+    --g:#10B981;--g-soft:#D1FAE5;
+    --r:#DC2626;--r-soft:#FEE2E2;
+  }
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;background:linear-gradient(180deg,#F8FAFC,#fff);color:var(--text);line-height:1.55;min-height:100vh}
+  .head{background:linear-gradient(135deg,var(--p3),var(--p));color:#fff;padding:20px 24px;display:flex;align-items:center;justify-content:space-between}
+  .head .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+  .head .brand .dot{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:18px}
+  .head .secure{font-size:11px;opacity:.85;display:flex;align-items:center;gap:5px;font-weight:600}
+  .container{max-width:920px;margin:0 auto;padding:24px 16px 60px}
+  .progress{display:flex;align-items:center;gap:6px;margin-bottom:24px;font-size:11.5px;font-weight:700;color:var(--mut);justify-content:center;flex-wrap:wrap}
+  .progress .step{padding:6px 13px;background:#fff;border:1px solid var(--border);border-radius:99px}
+  .progress .step.active{background:var(--p);color:#fff;border-color:var(--p)}
+  .progress .arr{color:#CBD5E1}
+  .grid{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+  .card h2{margin:0 0 14px;font-size:17px;display:flex;align-items:center;gap:8px;letter-spacing:-.01em}
+  .card .edit{margin-left:auto;font-size:12px;color:var(--p);text-decoration:none;font-weight:700;background:#F0FDFA;padding:4px 10px;border-radius:6px}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:4px}
+  .field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:8px;font-size:14.5px;background:#fff;transition:border-color .15s}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--p)}
+  .field input[readonly]{background:#F8FAFC;color:#475569}
+  .summary-rows{font-size:13.5px}
+  .summary-rows .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--border)}
+  .summary-rows .row:last-child{border-bottom:0}
+  .summary-rows .row b{color:var(--text)}
+  .summary-rows .row .v{font-weight:700}
+  .addons{margin:8px 0}
+  .addon{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+  .addon:hover{border-color:var(--p);background:#F0FDFA}
+  .addon input{margin:0;width:18px;height:18px;accent-color:var(--p)}
+  .addon .name{flex:1;font-size:13.5px;font-weight:600}
+  .addon .price{font-weight:800;color:var(--p);font-size:13px}
+  .addon .desc{font-size:11.5px;color:var(--mut);margin-top:2px}
+  .totals{background:linear-gradient(180deg,#FFFBEB,#FEF3C7);border-radius:14px;padding:20px;margin-top:14px;border:1px solid #FCD34D}
+  .totals .row{display:flex;justify-content:space-between;padding:6px 0;font-size:13.5px;color:#7C2D12}
+  .totals .row.grand{font-size:24px;font-weight:800;color:#7C2D12;border-top:2px solid #FCD34D;padding-top:14px;margin-top:8px}
+  .totals .row.grand .val{color:var(--p3)}
+  .pay-section{margin-top:18px}
+  .pay-btn{display:block;width:100%;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;border:0;padding:18px;border-radius:14px;font-size:17px;font-weight:800;cursor:pointer;letter-spacing:.02em;box-shadow:0 8px 24px rgba(15,118,110,.3);transition:transform .15s}
+  .pay-btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+  .pay-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .pay-methods{margin-top:14px;text-align:center;font-size:11px;color:var(--mut)}
+  .pay-methods img{height:22px;margin:0 4px;vertical-align:middle;opacity:.7}
+  .pay-methods .chip{display:inline-block;background:#fff;border:1px solid var(--border);padding:4px 10px;border-radius:6px;margin:2px;font-weight:700;font-size:11px;color:#475569}
+  .trust{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;font-size:11.5px;color:var(--mut);justify-content:center}
+  .trust .t{display:inline-flex;align-items:center;gap:4px}
+  .trust .t::before{content:"✓";color:var(--g);font-weight:800}
+  .empty,.error{text-align:center;padding:48px 24px;color:var(--mut)}
+  .error{color:var(--r);background:#FEF2F2;border:1px solid #FCA5A5;border-radius:12px}
+  .loading{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--mut);padding:32px}
+  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--p);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .service-hero{background:linear-gradient(135deg,#F0FDFA,#CCFBF1);padding:18px;border-radius:14px;margin-bottom:14px;display:flex;align-items:center;gap:14px;border:1px solid #A7F3D0}
+  .service-hero .ico{font-size:36px}
+  .service-hero h3{margin:0;font-size:18px;color:var(--p3)}
+  .service-hero .sub{font-size:12.5px;color:#0F766E;margin-top:2px;font-weight:600}
+  .intake-summary{background:#F8FAFC;border-radius:8px;padding:10px 14px;font-size:12px;color:#475569;margin-top:8px;line-height:1.7}
+  .intake-summary b{color:var(--text)}
+  .terms{font-size:11.5px;color:var(--mut);text-align:center;margin-top:14px;line-height:1.6}
+  .terms a{color:var(--p)}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="brand"><span class="dot">S</span>Servia · Checkout</div>
+  <div class="secure">🔒 Secured by Servia · UAE FTA-compliant</div>
+</div>
+
+<div class="container">
+
+<div class="progress">
+  <span class="step">💬 Chat</span><span class="arr">→</span>
+  <span class="step">📋 Quote</span><span class="arr">→</span>
+  <span class="step active">💳 Review & pay</span><span class="arr">→</span>
+  <span class="step">✅ Confirmed</span>
+</div>
+
+<div id="loading" class="loading"><span class="spinner"></span>Loading your quote…</div>
+
+<div id="content" style="display:none">
+<div class="grid">
+
+  <div>
+    <!-- Service summary -->
+    <div class="card">
+      <div class="service-hero">
+        <div class="ico" id="svc-ic">✨</div>
+        <div>
+          <h3 id="svc-name">—</h3>
+          <div class="sub" id="svc-sub">—</div>
+        </div>
+      </div>
+      <div class="intake-summary" id="intake-summary"></div>
+    </div>
+
+    <!-- Customer details (pre-filled, editable) -->
+    <div class="card">
+      <h2>👤 Your details <a href="#" class="edit" onclick="toggleEdit();return false">Edit</a></h2>
+      <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Full name</label>
+          <input id="c-name" type="text" readonly></div>
+        <div class="field"><label>Mobile number</label>
+          <input id="c-phone" type="tel" readonly></div>
+        <div class="field" style="grid-column:1/-1"><label>Address</label>
+          <input id="c-address" type="text" readonly></div>
+        <div class="field"><label>Date</label>
+          <input id="c-date" type="text" readonly></div>
+        <div class="field"><label>Time slot</label>
+          <input id="c-time" type="text" readonly></div>
+        <div class="field" style="grid-column:1/-1"><label>Email (optional, for invoice)</label>
+          <input id="c-email" type="email" placeholder="you@example.com"></div>
+        <div class="field" style="grid-column:1/-1"><label>Notes for the team (optional)</label>
+          <textarea id="c-notes" rows="2" placeholder="Parking instructions, gate code, pet warnings…"></textarea></div>
+      </div>
+    </div>
+
+    <!-- Optional add-ons -->
+    <div class="card" id="addons-card" style="display:none">
+      <h2>➕ Add-ons (optional)</h2>
+      <div id="addons-list"></div>
+    </div>
+  </div>
+
+  <div>
+    <!-- Price breakdown sticky on desktop -->
+    <div class="card" style="position:sticky;top:14px">
+      <h2>💰 Price breakdown</h2>
+      <div class="summary-rows" id="line-items"></div>
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span class="val" id="t-sub">AED 0.00</span></div>
+        <div class="row" id="t-discount-row" style="display:none"><span>Discount</span><span class="val" id="t-discount">−AED 0.00</span></div>
+        <div class="row"><span>UAE VAT 5%</span><span class="val" id="t-vat">AED 0.00</span></div>
+        <div class="row grand"><span>TOTAL</span><span class="val" id="t-total">AED 0.00</span></div>
+      </div>
+
+      <div class="pay-section">
+        <button id="pay-btn" class="pay-btn" onclick="payNow()">🔒 Pay AED <span id="pay-amount">0</span> securely</button>
+        <div class="pay-methods">
+          We accept
+          <span class="chip">Visa</span>
+          <span class="chip">Mastercard</span>
+          <span class="chip">Apple Pay</span>
+          <span class="chip">Google Pay</span>
+          <span class="chip">Bank transfer</span>
+        </div>
+        <div class="trust">
+          <span class="t">SSL encrypted</span>
+          <span class="t">Cancel up to 12h before</span>
+          <span class="t">Servia guarantee</span>
+        </div>
+        <div class="terms">
+          By paying, you agree to our <a href="/terms" target="_blank">Terms</a> &amp; <a href="/refund" target="_blank">Refund policy</a>. UAE 5% VAT included. A tax invoice will be emailed after payment.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div id="error" class="error" style="display:none"></div>
+
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const quoteId = params.get("q") || params.get("quote_id");
+let quote = null, locked = true;
+
+async function load() {
+  if (!quoteId) {
+    showError("Missing quote reference. Please return to chat to get a quote.");
+    return;
+  }
+  try {
+    const r = await fetch("/api/checkout/quote/" + encodeURIComponent(quoteId));
+    if (!r.ok) throw new Error("Quote not found or expired (status " + r.status + ").");
+    quote = await r.json();
+    if (!quote.ok) throw new Error(quote.detail || "Unable to load quote.");
+    render();
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+function showError(msg) {
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("content").style.display = "none";
+  const el = document.getElementById("error");
+  el.style.display = "block";
+  el.innerHTML = `<div style="font-size:42px;margin-bottom:8px">⚠️</div><b>${msg}</b><div style="margin-top:14px"><a href="/" style="color:var(--p);font-weight:700">← Back to Servia</a></div>`;
+}
+
+function fmt(n) { return "AED " + (Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function render() {
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("content").style.display = "";
+
+  // Hero
+  const svc = quote.service || {};
+  document.getElementById("svc-ic").textContent = svc.icon || "✨";
+  document.getElementById("svc-name").textContent = svc.name || quote.service_id || "Service";
+  document.getElementById("svc-sub").textContent = (svc.category || "") + " · " + (quote.area || "UAE");
+
+  // Intake summary
+  const intake = quote.intake || {};
+  const intakeBits = [];
+  if (intake.bedrooms) intakeBits.push(`<b>${intake.bedrooms}</b> bedroom${intake.bedrooms>1?'s':''}`);
+  if (intake.hours) intakeBits.push(`<b>${intake.hours}</b> hour${intake.hours>1?'s':''}`);
+  if (intake.units) intakeBits.push(`<b>${intake.units}</b> AC unit${intake.units>1?'s':''}`);
+  if (intake.materials_needed !== undefined) intakeBits.push(`Cleaning materials: <b>${intake.materials_needed?"yes":"no"}</b>`);
+  if (intake.cleaning_type) intakeBits.push(`Type: <b>${intake.cleaning_type}</b>`);
+  if (intakeBits.length) {
+    document.getElementById("intake-summary").innerHTML = "📋 " + intakeBits.join(" · ");
+  }
+
+  // Customer
+  const cust = quote.customer || {};
+  document.getElementById("c-name").value = cust.name || "";
+  document.getElementById("c-phone").value = cust.phone || "";
+  document.getElementById("c-address").value = cust.address || "";
+  document.getElementById("c-date").value = (quote.target_date || "") + (quote.time_slot ? " (slot)" : "");
+  document.getElementById("c-time").value = quote.time_slot || "";
+  document.getElementById("c-email").value = cust.email || "";
+  document.getElementById("c-notes").value = quote.notes || "";
+
+  // Line items
+  const items = quote.line_items || [];
+  let liHtml = "";
+  for (const it of items) {
+    const qty = it.qty || 1;
+    const total = it.line_total != null ? it.line_total : (qty * (it.unit_price||0));
+    liHtml += `<div class="row"><span>${it.name || it.svc_id} ${qty>1?'× '+qty:''}</span><span class="v">${fmt(total)}</span></div>`;
+  }
+  document.getElementById("line-items").innerHTML = liHtml;
+
+  // Totals
+  document.getElementById("t-sub").textContent = fmt(quote.subtotal);
+  if (quote.discount > 0) {
+    document.getElementById("t-discount-row").style.display = "flex";
+    document.getElementById("t-discount").textContent = "−" + fmt(quote.discount);
+  }
+  document.getElementById("t-vat").textContent = fmt(quote.vat_amount);
+  document.getElementById("t-total").textContent = fmt(quote.total);
+  document.getElementById("pay-amount").textContent = (Number(quote.total)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // Add-ons (if any)
+  if (quote.available_addons && quote.available_addons.length) {
+    document.getElementById("addons-card").style.display = "";
+    const ah = quote.available_addons.map(a => `
+      <label class="addon">
+        <input type="checkbox" data-addon-id="${a.id}" data-addon-price="${a.price}" onchange="recalcAddons()">
+        <div style="flex:1">
+          <div class="name">${a.icon || ""} ${a.name}</div>
+          ${a.desc ? `<div class="desc">${a.desc}</div>` : ""}
+        </div>
+        <span class="price">+${fmt(a.price)}</span>
+      </label>
+    `).join("");
+    document.getElementById("addons-list").innerHTML = ah;
+  }
+}
+
+function recalcAddons() {
+  const adds = [...document.querySelectorAll('input[data-addon-id]:checked')]
+    .reduce((s, el) => s + (parseFloat(el.dataset.addonPrice) || 0), 0);
+  const sub = (quote.subtotal || 0) + adds;
+  const vat = Math.round(sub * 0.05 * 100) / 100;
+  const total = sub + vat;
+  document.getElementById("t-sub").textContent = fmt(sub);
+  document.getElementById("t-vat").textContent = fmt(vat);
+  document.getElementById("t-total").textContent = fmt(total);
+  document.getElementById("pay-amount").textContent = total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function toggleEdit() {
+  locked = !locked;
+  ["c-name","c-phone","c-address","c-date","c-time"].forEach(id => {
+    document.getElementById(id).readOnly = locked;
+  });
+  document.querySelector(".edit").textContent = locked ? "Edit" : "Lock";
+}
+
+async function payNow() {
+  const btn = document.getElementById("pay-btn");
+  btn.disabled = true;
+  btn.innerHTML = "Generating secure payment link…";
+  // Collect any edits + addon selections
+  const addons = [...document.querySelectorAll('input[data-addon-id]:checked')]
+    .map(el => ({ id: el.dataset.addonId, price: parseFloat(el.dataset.addonPrice) }));
+  const payload = {
+    customer_name: document.getElementById("c-name").value,
+    customer_phone: document.getElementById("c-phone").value,
+    customer_address: document.getElementById("c-address").value,
+    customer_email: document.getElementById("c-email").value,
+    notes: document.getElementById("c-notes").value,
+    addons,
+  };
+  try {
+    const r = await fetch("/api/checkout/" + encodeURIComponent(quoteId) + "/pay", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "Payment init failed.");
+    if (d.payment_url) {
+      window.location.href = d.payment_url;
+    } else if (d.bank_transfer) {
+      // Show bank-transfer instructions inline
+      btn.outerHTML = `<div class="card" style="background:#F0FDFA;border:2px solid var(--p)">
+        <h2>🏦 Bank transfer details</h2>
+        <div style="font-size:13px;line-height:1.7">
+          <b>Account name:</b> ${d.bank_transfer.account_name}<br>
+          <b>IBAN:</b> ${d.bank_transfer.iban}<br>
+          <b>Bank:</b> ${d.bank_transfer.bank}<br>
+          <b>Amount:</b> ${fmt(d.bank_transfer.amount)}<br>
+          <b>Reference:</b> ${d.bank_transfer.reference}
+        </div>
+        <p style="font-size:12px;color:var(--mut);margin-top:10px">After transfer, WhatsApp the receipt to confirm your booking.</p>
+      </div>`;
+    } else {
+      throw new Error("No payment method configured. Contact support.");
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.innerHTML = `❌ ${e.message} — try again`;
+    setTimeout(() => { btn.innerHTML = `🔒 Pay AED ${document.getElementById("pay-amount").textContent} securely`; }, 4000);
+  }
+}
+
+load();
+</script>
+</body>
+</html>

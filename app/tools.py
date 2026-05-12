@@ -207,6 +207,70 @@ def create_booking(service_id: str, target_date: str, time_slot: str,
             )}
 
 
+def prepare_checkout(service_id: str, customer_name: str, phone: str, address: str,
+                     target_date: str, time_slot: str,
+                     bedrooms: int | None = None, hours: int | None = None,
+                     units: int | None = None, materials_needed: bool | None = None,
+                     cleaning_type: str | None = None,
+                     customer_email: str | None = None, area: str | None = None,
+                     notes: str | None = None, session_id: str | None = None) -> dict:
+    """v1.24.142 — RECOMMENDED tool when customer is ready to book.
+
+    Creates a DRAFT quote (NOT a booking yet) and returns a checkout_url that
+    the customer opens to review the price + pay. This replaces calling
+    create_booking directly — calling create_booking without taking the
+    customer through /checkout means they never see a quote, never agree
+    to a price, and never pay. Use prepare_checkout for every booking
+    intent EXCEPT the legacy /book.html form submissions.
+
+    Service-specific intake parameters that the bot MUST collect BEFORE
+    calling this tool:
+      - bedrooms (for deep/general cleaning, maid service)
+      - hours (for hourly maid, handyman, babysitter, chauffeur)
+      - units (for AC cleaning, fridge/laptop/mobile repair)
+      - materials_needed (for maid/cleaning — yes/no)
+      - cleaning_type (for cleaning — home/clothes/windows/etc)
+      - area (the emirate or neighbourhood for routing)
+    """
+    from . import checkout_central
+    from pydantic import BaseModel
+    body = checkout_central.CheckoutInitBody(
+        service_id=service_id,
+        customer_name=customer_name,
+        customer_phone=phone,
+        customer_address=address,
+        customer_email=customer_email,
+        target_date=target_date,
+        time_slot=time_slot,
+        bedrooms=bedrooms, hours=hours, units=units,
+        materials_needed=materials_needed,
+        cleaning_type=cleaning_type,
+        area=area,
+        notes=notes,
+        session_id=session_id,
+    )
+    try:
+        out = checkout_central.checkout_init(body)
+        return {
+            "ok": True,
+            "quote_id": out["quote_id"],
+            "quote_number": out["quote_number"],
+            "subtotal": out["subtotal"],
+            "vat_amount": out["vat_amount"],
+            "total": out["total"],
+            "checkout_url": out["checkout_url"],
+            "customer_message": (
+                f"Here's your quote {out['quote_number']}:\n"
+                f"Subtotal: AED {out['subtotal']:.2f}\n"
+                f"UAE VAT 5%: AED {out['vat_amount']:.2f}\n"
+                f"Total: AED {out['total']:.2f}\n\n"
+                f"Review & pay securely: https://servia.ae{out['checkout_url']}"
+            ),
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 def _booking_dict(bid: str) -> dict | None:
     with db.connect() as c:
         r = c.execute("SELECT * FROM bookings WHERE id=?", (bid,)).fetchone()
@@ -645,8 +709,31 @@ TOOL_SCHEMAS: list[dict] = [
      "input_schema": {"type": "object", "properties": {
          "target_date": {"type": "string"}, "service_id": {"type": "string"}},
          "required": ["target_date"]}},
+    {"name": "prepare_checkout",
+     "description": ("PREFERRED tool when customer is ready to book a single service. "
+                     "Creates a DRAFT quote + returns checkout_url. Customer opens the "
+                     "URL to see price + UAE VAT 5% + pay via Stripe/Ziina/bank. "
+                     "After payment, booking is auto-confirmed via webhook. NEVER use "
+                     "create_booking directly — it bypasses the customer-facing quote "
+                     "review + payment step which is mandatory per company policy. "
+                     "Returns: {quote_id, quote_number, subtotal, vat_amount, total, "
+                     "checkout_url, customer_message — share the customer_message verbatim}."),
+     "input_schema": {"type": "object", "properties": {
+         "service_id": {"type": "string"}, "target_date": {"type": "string"},
+         "time_slot": {"type": "string"}, "customer_name": {"type": "string"},
+         "phone": {"type": "string"}, "address": {"type": "string"},
+         "bedrooms": {"type": "integer", "description": "Cleaning services: bedroom count"},
+         "hours": {"type": "integer", "description": "Hourly services: estimated hours"},
+         "units": {"type": "integer", "description": "AC/appliance services: unit count"},
+         "materials_needed": {"type": "boolean", "description": "Maid/cleaning: cleaning materials needed yes/no"},
+         "cleaning_type": {"type": "string", "description": "Cleaning: home/clothes/windows/both"},
+         "customer_email": {"type": "string"},
+         "area": {"type": "string", "description": "Emirate or neighbourhood for routing"},
+         "notes": {"type": "string"}},
+         "required": ["service_id", "target_date", "time_slot",
+                      "customer_name", "phone", "address"]}},
     {"name": "create_booking",
-     "description": "Confirm a booking. Returns booking_id and track_url. Auto-creates a quote.",
+     "description": "LEGACY — do not use for new customer-facing bookings. Use prepare_checkout instead. Only retained for /book.html form submissions.",
      "input_schema": {"type": "object", "properties": {
          "service_id": {"type": "string"}, "target_date": {"type": "string"},
          "time_slot": {"type": "string"}, "customer_name": {"type": "string"},
@@ -723,6 +810,7 @@ TOOL_SCHEMAS: list[dict] = [
 TOOL_DISPATCH = {
     "get_quote": get_quote, "check_coverage": check_coverage,
     "list_slots": list_slots, "create_booking": create_booking,
+    "prepare_checkout": prepare_checkout,   # v1.24.142 PREFERRED
     "lookup_booking": lookup_booking, "list_my_bookings": list_my_bookings,
     "repeat_last_booking": repeat_last_booking,
     "get_live_status": get_live_status,

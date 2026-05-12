@@ -1048,7 +1048,7 @@ def latest_blog(limit: int = 4):
                         f"## What you get with Servia\n\n"
                         f"- Background-checked, insured pros\n"
                         f"- Transparent fixed pricing — no surprise charges\n"
-                        f"- 7-day re-do guarantee + AED 25,000 damage cover\n"
+                        f"- 7-day re-do guarantee + AED 1,000 damage cover (per visit, subject to T&Cs at /terms)\n"
                         f"- Same-day slots if booked before 11am\n\n"
                         f"Book at https://servia.ae/book.html — 60 seconds, no phone calls.")
                 try:
