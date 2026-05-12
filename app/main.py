@@ -351,6 +351,31 @@ app.include_router(_si.admin_router)
 app.include_router(_si.public_router)
 app.include_router(_rlaif.router)               # /api/chat/feedback + /api/admin/feedback/* + /api/admin/critic/run
 app.include_router(_airbnb_ical.router)         # /api/host/airbnb/* + /api/admin/airbnb/*
+
+
+# v1.24.136 — Explicit handler for the PIN-gated investor pitch. We serve
+# the static file directly + add X-Robots-Tag: noindex,nofollow,noarchive
+# as a belt-and-suspenders defense (the HTML already has <meta robots>
+# and /pitch is blocked in robots.txt + excluded from every sitemap).
+#
+# Why three layers of noindex? Because once a crawler accidentally caches
+# the URL, removing it takes weeks. We over-protect on purpose.
+@app.get("/pitch", include_in_schema=False)
+@app.get("/pitch.html", include_in_schema=False)
+def pitch_page():
+    from fastapi.responses import Response as _Resp
+    p = settings.WEB_DIR / "pitch.html"
+    if not p.exists():
+        return _Resp("Not found", status_code=404)
+    return _Resp(
+        content=p.read_text(encoding="utf-8"),
+        media_type="text/html; charset=utf-8",
+        headers={
+            "X-Robots-Tag": "noindex,nofollow,noarchive,nosnippet,noimageindex",
+            "Cache-Control": "private, no-store, max-age=0",
+            "Referrer-Policy": "no-referrer",
+        },
+    )
 app.include_router(_nfc_mod.router)            # /api/nfc/*  + /api/admin/nfc/*
 app.include_router(_nfc_mod.public_router)     # /t/<slug> tap handler
 app.include_router(_recovery_mod.router)       # /api/recovery/* one-tap dispatch
@@ -2186,6 +2211,9 @@ def robots_txt():
         "Disallow: /me.html\n"
         "Disallow: /vendor\n"
         "Disallow: /portal-vendor\n"
+        # v1.24.136 — PIN-gated investor pitch. Direct-URL + PIN only.
+        "Disallow: /pitch\n"
+        "Disallow: /pitch.html\n"
         "\n"
         # AI crawlers — explicitly ALLOWED for public surfaces, blocked from
         # admin/private. Listed individually so that adding a global Disallow
@@ -2602,6 +2630,9 @@ _PRIVATE_PAGES = {
     "vendor.html", "partner-agreement.html",
     "booked.html", "delivered.html", "invoice.html", "quote.html",
     "brand-preview.html",
+    # v1.24.136 — PIN-gated investor memo. noindex,nofollow at HTML level
+    # plus excluded from every sitemap. Accessed by direct URL only.
+    "pitch.html",
 }
 
 # Per-page priority + change frequency overrides (anything not listed

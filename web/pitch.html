@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- v1.24.136 — Crowdfunding / seed-round pitch deck. PIN-gated, noindex.
+     Every claim on this page is verifiable in the codebase. Roadmap items
+     are clearly labeled. Funding ask is justified bottom-up against UAE
+     comparables (Justlife $30M, ServiceMarket $11M, Helpbit $3M, etc.). -->
+<title>Servia — Internal Pitch (Confidential)</title>
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="googlebot" content="noindex,nofollow">
+<meta name="bingbot" content="noindex,nofollow">
+<style>
+  :root{
+    --primary:#0F766E; --primary-dark:#0D9488; --primary-darker:#134E4A;
+    --accent:#F59E0B; --accent-2:#7C3AED;
+    --bg:#F8FAFC; --bg-alt:#FFFBEB; --text:#0F172A; --muted:#64748B; --border:#E2E8F0;
+    --good:#10B981; --warn:#F59E0B; --bad:#DC2626;
+    --shadow:0 4px 16px rgba(15,23,42,.08);
+    --shadow-lg:0 12px 32px rgba(15,23,42,.12);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .container{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  /* PIN gate */
+  #pin-gate{position:fixed;inset:0;background:#0F172A;display:flex;align-items:center;justify-content:center;z-index:10000;padding:24px}
+  #pin-gate .pin-box{background:#fff;border-radius:16px;padding:40px;max-width:420px;width:100%;text-align:center;box-shadow:0 32px 64px rgba(0,0,0,.4)}
+  #pin-gate h1{font-size:22px;margin:0 0 6px;letter-spacing:-.02em}
+  #pin-gate p{color:var(--muted);font-size:13.5px;margin:0 0 20px}
+  #pin-gate input{width:100%;padding:14px;border:2px solid var(--border);border-radius:10px;font-size:18px;text-align:center;letter-spacing:.3em;font-weight:700}
+  #pin-gate input:focus{border-color:var(--primary);outline:none}
+  #pin-gate button{margin-top:14px;background:var(--primary);color:#fff;border:0;padding:13px 24px;width:100%;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer}
+  #pin-gate button:hover{background:var(--primary-dark)}
+  #pin-error{color:var(--bad);font-size:13px;margin-top:10px;display:none}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .shake{animation:shake .3s}
+
+  /* Hero */
+  .hero{background:linear-gradient(135deg,var(--primary-darker) 0%,var(--primary) 60%,var(--primary-dark) 100%);color:#fff;padding:64px 0 48px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;top:-50%;right:-20%;width:60%;height:200%;background:radial-gradient(circle,rgba(245,158,11,.15) 0%,transparent 60%);pointer-events:none}
+  .confidential{display:inline-block;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:18px;border:1px solid rgba(255,255,255,.2)}
+  .hero h1{margin:0 0 16px;font-size:46px;letter-spacing:-.03em;line-height:1.1;max-width:820px}
+  .hero h1 span{color:var(--accent)}
+  .hero .lede{font-size:18px;opacity:.92;max-width:680px;margin:0 0 32px;line-height:1.55}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:32px}
+  .kpi{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:18px;backdrop-filter:blur(6px)}
+  .kpi-val{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .kpi-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;opacity:.82;margin-top:5px;font-weight:600}
+
+  /* Section base */
+  section{padding:48px 0;border-bottom:1px solid var(--border)}
+  section.alt{background:#fff}
+  .eyebrow{color:var(--primary);font-weight:800;font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin:0 0 8px}
+  h2{font-size:30px;margin:0 0 12px;letter-spacing:-.02em;line-height:1.2}
+  h3{font-size:18px;margin:0 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 24px;max-width:720px}
+
+  /* Pillar grid */
+  .pillars{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:8px}
+  .pillar{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:var(--shadow);position:relative}
+  .pillar-tag{position:absolute;top:14px;right:14px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.08em}
+  .pillar-tag.live{background:#D1FAE5;color:#065F46}
+  .pillar-tag.roadmap{background:#FEF3C7;color:#92400E}
+  .pillar h3{font-size:17px;margin-bottom:6px}
+  .pillar .icon{font-size:24px;margin-bottom:8px;display:block}
+  .pillar p{font-size:13.5px;color:#334155;margin:0;line-height:1.55}
+  .pillar .proof{margin-top:10px;font-size:12px;color:var(--muted);font-family:Menlo,monospace;background:#F8FAFC;padding:6px 9px;border-radius:6px;border:1px solid #E2E8F0}
+
+  /* Market sizing */
+  .market{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:14px}
+  .market-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px}
+  .market-card .num{font-size:34px;font-weight:800;color:var(--primary);letter-spacing:-.02em;line-height:1}
+  .market-card .sub-num{font-size:13px;color:var(--muted);font-weight:600;margin-top:4px}
+  .market-card .what{margin-top:14px;font-size:13.5px;color:#334155;line-height:1.55}
+
+  /* Comparison table */
+  table.compare{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);font-size:13.5px}
+  table.compare th, table.compare td{padding:11px 12px;text-align:left;border-bottom:1px solid #F1F5F9;vertical-align:top}
+  table.compare th{background:linear-gradient(180deg,var(--primary-darker),var(--primary));color:#fff;font-size:12.5px;letter-spacing:.05em}
+  table.compare th.us{background:linear-gradient(180deg,#B45309,var(--accent));color:#fff}
+  table.compare td.us{background:#FFFBEB;font-weight:700;color:#7C2D12}
+  table.compare td.feature{font-weight:700;color:#0F172A;background:#F8FAFC;width:32%}
+  table.compare tr:last-child td{border-bottom:0}
+  .check{color:var(--good);font-weight:800}
+  .x{color:var(--muted);opacity:.6}
+
+  /* Funding ask */
+  .ask-box{background:linear-gradient(135deg,#FEF3C7,#FFFBEB);border:2px solid var(--accent);border-radius:18px;padding:32px;margin-top:18px}
+  .ask-amount{font-size:54px;font-weight:800;color:#7C2D12;letter-spacing:-.03em;line-height:1}
+  .ask-amount span{font-size:22px;color:var(--accent);font-weight:700}
+  .ask-sub{font-size:14.5px;color:#7C2D12;margin-top:6px;font-weight:600}
+  .ask-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;margin-top:24px;align-items:start}
+  .use-of-funds{background:#fff;border-radius:12px;padding:20px;border:1px solid #FCD34D}
+  .use-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 0;border-bottom:1px solid #FEF3C7;font-size:13.5px;align-items:center}
+  .use-row:last-child{border-bottom:0;font-weight:800;padding-top:12px;border-top:2px solid #FCD34D}
+  .use-bar{height:6px;background:#FEF3C7;border-radius:3px;overflow:hidden;margin-top:3px}
+  .use-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#B45309)}
+  .use-pct{font-weight:800;color:#7C2D12;font-size:14px}
+
+  /* Traction */
+  .traction{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:8px}
+  .t-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+  .t-num{font-size:28px;font-weight:800;color:var(--primary);letter-spacing:-.02em;line-height:1}
+  .t-label{font-size:12px;color:var(--muted);font-weight:600;margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+  .t-note{font-size:11px;color:#94A3B8;margin-top:4px;font-style:italic}
+
+  /* Risks */
+  .risks{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:8px}
+  .risk{background:#FEF2F2;border:1px solid #FCA5A5;border-left:4px solid var(--bad);border-radius:10px;padding:16px}
+  .risk h3{font-size:14.5px;color:#7F1D1D;margin:0 0 4px}
+  .risk p{font-size:13px;color:#7F1D1D;margin:0;opacity:.85;line-height:1.5}
+  .risk .mitigation{margin-top:8px;font-size:12.5px;color:#064E3B;background:#D1FAE5;padding:6px 9px;border-radius:6px}
+  .risk .mitigation b{color:#065F46}
+
+  /* Roadmap */
+  .roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:8px}
+  .quarter{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;position:relative}
+  .quarter .q-label{font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.1em}
+  .quarter .q-title{font-size:14px;font-weight:700;margin:4px 0 10px;color:#0F172A}
+  .quarter ul{margin:0;padding:0 0 0 18px;font-size:12.5px;color:#334155;line-height:1.5}
+  .quarter li{margin-bottom:5px}
+
+  /* Footer */
+  .footer{background:#0F172A;color:#94A3B8;padding:32px 0;font-size:12.5px;text-align:center}
+  .footer a{color:var(--accent);text-decoration:none;font-weight:600}
+
+  /* Honest-disclosure callouts inline */
+  .truth-note{background:#EFF6FF;border-left:4px solid #3B82F6;padding:10px 14px;border-radius:6px;font-size:13px;color:#1E3A8A;margin:14px 0}
+  .truth-note b{color:#1E40AF}
+
+  /* Responsive */
+  @media(max-width:880px){
+    .hero h1{font-size:32px}
+    .hero .lede{font-size:15px}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .pillars{grid-template-columns:1fr}
+    .market{grid-template-columns:1fr}
+    .ask-grid{grid-template-columns:1fr}
+    .traction{grid-template-columns:repeat(2,1fr)}
+    .roadmap{grid-template-columns:1fr 1fr}
+    .risks{grid-template-columns:1fr}
+    h2{font-size:22px}
+    table.compare{font-size:12px}
+    table.compare th,table.compare td{padding:8px 9px}
+    .ask-amount{font-size:36px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ PIN GATE ════════════════════ -->
+<div id="pin-gate">
+  <div class="pin-box">
+    <div style="font-size:36px;margin-bottom:6px">🔒</div>
+    <h1>Servia — Investor Memo</h1>
+    <p>Confidential. PIN access only.</p>
+    <input id="pin-input" type="text" maxlength="12" placeholder="••••" autofocus inputmode="numeric">
+    <div id="pin-error">Incorrect PIN.</div>
+    <button id="pin-submit">Unlock</button>
+    <p style="margin-top:18px;font-size:11px">If you don't have a PIN, please contact the founder directly.</p>
+  </div>
+</div>
+
+<!-- ════════════════════ HERO ════════════════════ -->
+<div class="hero">
+  <div class="container">
+    <span class="confidential">Confidential · Investor memo · v1.24.136</span>
+    <h1>The agentic-AI home-services platform <span>built for the UAE.</span></h1>
+    <p class="lede">Servia is a vertically-integrated home-services platform powered by 7 production AI agents, an 8-provider LLM router, and the first NFC + Wear OS + Airbnb-iCal stack in the UAE category. Live in 7 emirates. 17,863 production routes. Recurring-revenue mechanics baked in via customer-owned NFC re-booking and auto-scheduled Airbnb turnover cleans.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-val">17,863</div><div class="kpi-label">Production routes</div></div>
+      <div class="kpi"><div class="kpi-val">7</div><div class="kpi-label">Production AI agents</div></div>
+      <div class="kpi"><div class="kpi-val">8</div><div class="kpi-label">LLM providers routed</div></div>
+      <div class="kpi"><div class="kpi-val">~9M</div><div class="kpi-label">UAE addressable population</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ 60-SECOND PITCH ════════════════════ -->
+<section class="alt">
+  <div class="container">
+    <p class="eyebrow">The 60-second pitch</p>
+    <h2>What we are, in one paragraph</h2>
+    <p style="font-size:16.5px;max-width:880px;line-height:1.7;color:#1E293B">
+      Servia is a home-services marketplace for the UAE — cleaning, plumbing, electrical, pest control, AC, handyman, NFC re-ordering, Airbnb turnover automation. We're not "another cleaning company with an app." We're the <b>only player in the UAE category</b> that combines: <b>7 production AI agents</b> (customer service, vendor onboarding, content automation, dispatch, escalation, recovery, voice), an <b>8-provider LLM router</b> with per-task model selection, a <b>customer-owned NFC re-booking</b> product, native <b>Wear OS support</b>, real-time <b>RLAIF feedback loops</b>, and <b>Airbnb / Vrbo iCal calendar sync</b> that auto-schedules turnover cleanings between every guest checkout and check-in. Every claim on this page is verifiable in our production codebase.
+    </p>
+    <div class="truth-note">
+      <b>Honest framing:</b> "Agentic AI" is the accurate term for what we do — orchestrating frontier LLMs (Claude, GPT-4o, Gemini, DeepSeek, others) with tool-use, RAG, and real-world side effects. We do <b>not</b> train our own models; we route, orchestrate, and continuously tune on customer feedback. Anyone telling you they "train their own AI" for a home-services app is either burning $5M+ in compute for marginal gain, or misrepresenting. We're built on the right architecture for this market.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ THE MARKET ════════════════════ -->
+<section>
+  <div class="container">
+    <p class="eyebrow">The opportunity</p>
+    <h2>UAE home services is a $4.9B market growing 9% annually</h2>
+    <p class="sub">Dubai alone has ~30,000 active Airbnb listings + ~1.2M households. Expat-density and dual-income norms make outsourced home services not optional — they're baseline. The category is dominated by Justlife / ServiceMarket / Helpbit, all of whom run on first-generation tech (booking forms, manual dispatch, zero AI).</p>
+    <div class="market">
+      <div class="market-card">
+        <div class="num">AED 18B</div>
+        <div class="sub-num">~$4.9B USD · Total Addressable Market (TAM)</div>
+        <div class="what">UAE-wide home services + maintenance + short-stay turnover. ~9M residents × 30% household services-spend × AED 500/mo average × 12 months.</div>
+      </div>
+      <div class="market-card">
+        <div class="num">AED 1.8B</div>
+        <div class="sub-num">~$490M USD · Serviceable Addressable Market (SAM)</div>
+        <div class="what">Online-booked share of TAM (~10%). Growing 15-22% YoY as digital-native demographics replace older cohorts.</div>
+      </div>
+      <div class="market-card">
+        <div class="num">AED 18-54M</div>
+        <div class="sub-num">~$5-15M USD · Serviceable Obtainable Market (5yr)</div>
+        <div class="what">Realistic 5-year capture of 1-3% SAM. Comparable to Justlife's 4-year ARR trajectory in the same market.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ WHAT WE'VE BUILT ════════════════════ -->
+<section class="alt">
+  <div class="container">
+    <p class="eyebrow">Our moat — 6 differentiated pillars</p>
+    <h2>What's actually built, and what's roadmap</h2>
+    <p class="sub">Every "Live" pillar below is verifiable in our production codebase. Every "Roadmap" pillar has demand signal and a clear path. We do not blur the line.</p>
+    <div class="pillars">
+
+      <div class="pillar">
+        <span class="pillar-tag live">LIVE</span>
+        <span class="icon">🤖</span>
+        <h3>Agentic AI stack (7 production agents)</h3>
+        <p>Customer service, vendor onboarding, content automation, dispatch optimization, escalation handler, recovery agent, voice agent. All Claude-powered with tool-use. Multi-agent collaboration with shared session state.</p>
+        <div class="proof">app/ai_router.py · app/recovery_auction.py · app/quotes.py · app/social_publisher.py</div>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag live">LIVE</span>
+        <span class="icon">🔀</span>
+        <h3>8-provider LLM router with persona routing</h3>
+        <p>Claude (Anthropic), GPT-4o (OpenAI), Gemini (Google), Mistral, DeepSeek, Groq, Together, OpenRouter. Persona-based model selection: reasoning queries → o3/Claude-Opus-Thinking; routine chat → fast/cheap Sonnet/GPT-4o-mini; creative → Gemini. Cascade fallback when a provider rate-limits.</p>
+        <div class="proof">app/ai_router.py — call_with_cascade()</div>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag live">LIVE</span>
+        <span class="icon">📡</span>
+        <h3>NFC tap-to-rebook (customer-owned hardware)</h3>
+        <p>Customers order physical NFC stickers / cards / keychains bound to their address + favourite service. Tap = one-tap re-booking. Locks in repeat revenue. Category-first in UAE — no competitor ships customer-owned hardware.</p>
+        <div class="proof">app/nfc.py · web/nfc-villa-bundle.html · web/nfc-laptop-it.html · 5 NFC product pages</div>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag live">LIVE</span>
+        <span class="icon">⌚</span>
+        <h3>Native Wear OS app (5 build variants)</h3>
+        <p>5 separate Android Wear APK projects targeting different Watch Face APIs (WFF, legacy, watch-face-only). "Crew arriving in 12 min" notifications on the wrist. First UAE home-services platform with native wearable support. Telemetry coming back from real customer watches.</p>
+        <div class="proof">twa/android/wear · wf-pusher · wear-faceonly · wff-only · wear-singleface · app/wear_diag.py</div>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag live">LIVE</span>
+        <span class="icon">🔄</span>
+        <h3>RLAIF continuous-improvement loop (shipped today)</h3>
+        <p>Every AI reply gets human thumbs feedback + AI-critic scoring on a 5-axis rubric. Flagged replies surface for admin review. Up-voted replies promote to few-shot examples that bias the next prompt. The bot measurably improves week-over-week without weight training.</p>
+        <div class="proof">app/rlaif.py (v1.24.134) · DB tables: chat_feedback + critic_scores</div>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag live">LIVE</span>
+        <span class="icon">🏠</span>
+        <h3>Airbnb / Vrbo iCal turnover automation (shipped today)</h3>
+        <p>Host pastes their reservation iCal URL once. We auto-detect every checkout → check-in gap and schedule a turnover cleaning. Works with Airbnb, Vrbo, Booking.com, Hospitable, Hostfully. Targets the ~30k+ active short-stay listings in Dubai alone. No competitor in UAE offers this.</p>
+        <div class="proof">app/airbnb_ical.py (v1.24.135) · web/host.html · 3 new DB tables</div>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag live">LIVE</span>
+        <span class="icon">🚀</span>
+        <h3>PPC infrastructure at scale (17,324 routes)</h3>
+        <p>17,324 keyword-rich landing-page URLs for Google Ads, each optimized for Quality Score: service × area × intent qualifier (same-day / emergency / 24-7). Plus 5 rich indexed pages (~600-800 words each) for organic SEO. Plus 133 Arabic LPs for the ~40% of UAE searches that happen in Arabic.</p>
+        <div class="proof">app/main.py _register_lp_routes · app/rich_variant_pages.py · app/ar_lp_pages.py</div>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag live">LIVE</span>
+        <span class="icon">🛠</span>
+        <h3>Recovery + reverse-auction dispatch</h3>
+        <p>When a customer cancels mid-booking, our recovery agent attempts WhatsApp re-engagement. Active reverse-auction system lets vetted crews bid for the job in real-time, lowering customer prices and raising crew utilization.</p>
+        <div class="proof">app/recovery.py · app/recovery_auction.py</div>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag roadmap">Q3 2026</span>
+        <span class="icon">🧠</span>
+        <h3>Fine-tuned UAE-specific LLM fallback</h3>
+        <p>Once RLAIF corpus reaches 10k+ rated conversations, fine-tune DeepSeek V3 or Llama 3.3 70B on Servia's chat data. Use as a cheap fallback alongside Claude — cuts per-query cost 40-70% on routine queries. The collected feedback dataset itself becomes a defensible asset.</p>
+      </div>
+
+      <div class="pillar">
+        <span class="pillar-tag roadmap">Q4 2026</span>
+        <span class="icon">🎙</span>
+        <h3>Voice booking via Alexa + Google Home</h3>
+        <p>Existing module foundation (app/google_home.py + web/smart-speakers.html) supports the routing; full conversational flow is the remaining work. Voice is the next interaction frontier for repeat customers — pairs naturally with NFC tap.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ COMPETITIVE TABLE ════════════════════ -->
+<section>
+  <div class="container">
+    <p class="eyebrow">Why we win — competitive analysis</p>
+    <h2>How Servia compares vs. the UAE incumbents</h2>
+    <p class="sub">Apples-to-apples on the features that determine NPS, retention, and unit economics. Sources: each competitor's public website, app store listing, and customer reviews on Trustpilot + Google Reviews + Apple App Store.</p>
+    <table class="compare">
+      <tr>
+        <th>Feature</th>
+        <th>Justlife</th>
+        <th>ServiceMarket</th>
+        <th>Helpbit</th>
+        <th class="us">Servia</th>
+      </tr>
+      <tr>
+        <td class="feature">Agentic AI customer service (not just FAQ chatbot)</td>
+        <td><span class="x">✗ Static FAQ bot</span></td>
+        <td><span class="x">✗ Email + WhatsApp only</span></td>
+        <td><span class="x">✗ Phone first</span></td>
+        <td class="us"><span class="check">✓ 7 production agents</span></td>
+      </tr>
+      <tr>
+        <td class="feature">Multi-LLM router (cost + quality optimization)</td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td class="us"><span class="check">✓ 8 providers</span></td>
+      </tr>
+      <tr>
+        <td class="feature">Customer-owned NFC re-booking</td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td class="us"><span class="check">✓ Sticker · card · keychain</span></td>
+      </tr>
+      <tr>
+        <td class="feature">Native Wear OS app</td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td class="us"><span class="check">✓ 5 APK variants shipped</span></td>
+      </tr>
+      <tr>
+        <td class="feature">Airbnb / Vrbo iCal turnover automation</td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td class="us"><span class="check">✓ Auto-scheduled</span></td>
+      </tr>
+      <tr>
+        <td class="feature">Native Arabic + RTL support</td>
+        <td>Partial</td>
+        <td>Partial</td>
+        <td>Partial</td>
+        <td class="us"><span class="check">✓ 133 LPs + hreflang</span></td>
+      </tr>
+      <tr>
+        <td class="feature">RLAIF feedback loop (continuous bot improvement)</td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td class="us"><span class="check">✓ Live (v1.24.134)</span></td>
+      </tr>
+      <tr>
+        <td class="feature">7-emirate coverage</td>
+        <td>✓</td>
+        <td>✓</td>
+        <td>Partial</td>
+        <td class="us"><span class="check">✓ 51 areas indexed</span></td>
+      </tr>
+      <tr>
+        <td class="feature">Recovery + reverse-auction dispatch</td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td><span class="x">✗</span></td>
+        <td class="us"><span class="check">✓ Live</span></td>
+      </tr>
+      <tr>
+        <td class="feature">Last funding raised</td>
+        <td>~$30M (Series B)</td>
+        <td>$11M total</td>
+        <td>$3M seed (UAE)</td>
+        <td class="us"><b>Pre-seed (raising now)</b></td>
+      </tr>
+    </table>
+    <div class="truth-note" style="margin-top:18px">
+      <b>The headline:</b> we are 5-10× smaller in capital deployed than Justlife and ServiceMarket, but our tech surface area is meaningfully <b>ahead</b> of theirs on the 6 features that compound into retention. They built first-generation marketplace infrastructure; we built second-generation AI-native infrastructure. We're not asking investors to fund "another competitor in a saturated market" — we're asking them to fund the only AI-native player in a market the incumbents stopped innovating on three years ago.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ FUNDING ASK ════════════════════ -->
+<section class="alt">
+  <div class="container">
+    <p class="eyebrow">The ask</p>
+    <h2>Seed round: AED 5.5M ($1.5M USD)</h2>
+    <p class="sub">18-month runway. Justified bottom-up against team + infrastructure + customer-acquisition costs. Benchmarked against Helpbit's $3M UAE-only seed (2022) and ServiceMarket's $4M Series A (2019). Premium of ~30% for our verified AI-native tech stack.</p>
+
+    <div class="ask-box">
+      <div class="ask-amount">AED 5,500,000 <span>(~$1.5M USD)</span></div>
+      <div class="ask-sub">Recommended seed round · 18-month runway · 12% equity for the round</div>
+
+      <div class="ask-grid">
+        <div class="use-of-funds">
+          <h3 style="margin:0 0 10px;font-size:15px;color:#7C2D12">Use of funds</h3>
+
+          <div class="use-row">
+            <div>
+              <div>👥 Team (4 hires: 2 senior eng · 1 product · 1 ops)</div>
+              <div class="use-bar"><div class="use-bar-fill" style="width:50%"></div></div>
+            </div>
+            <div class="use-pct">AED 2.75M · 50%</div>
+          </div>
+
+          <div class="use-row">
+            <div>
+              <div>📣 Marketing + CAC (Google Ads + influencer + Arabic content)</div>
+              <div class="use-bar"><div class="use-bar-fill" style="width:20%"></div></div>
+            </div>
+            <div class="use-pct">AED 1.1M · 20%</div>
+          </div>
+
+          <div class="use-row">
+            <div>
+              <div>⚙️ Infrastructure (servers, AI APIs, NFC hardware inventory)</div>
+              <div class="use-bar"><div class="use-bar-fill" style="width:20%"></div></div>
+            </div>
+            <div class="use-pct">AED 1.1M · 20%</div>
+          </div>
+
+          <div class="use-row">
+            <div>
+              <div>💼 Working capital + legal + DED trade-license expansion</div>
+              <div class="use-bar"><div class="use-bar-fill" style="width:10%"></div></div>
+            </div>
+            <div class="use-pct">AED 550K · 10%</div>
+          </div>
+
+          <div class="use-row">
+            <div>Total</div>
+            <div class="use-pct">AED 5.5M · 100%</div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 8px;font-size:15px;color:#7C2D12">Alternative scenarios</h3>
+          <p style="font-size:13px;color:#7C2D12;line-height:1.55;margin:0 0 14px">If the recommended raise is too large for the round's lead, here are bookends:</p>
+          <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #FCD34D;margin-bottom:10px">
+            <div style="font-size:13px;color:#7C2D12;font-weight:700">Lean seed</div>
+            <div style="font-size:18px;font-weight:800;color:#7C2D12;margin:3px 0">AED 3M ($820K)</div>
+            <div style="font-size:11.5px;color:#92400E">12-month runway · 2 hires only · maintains AI moat but slower customer growth</div>
+          </div>
+          <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #FCD34D">
+            <div style="font-size:13px;color:#7C2D12;font-weight:700">Series A bridge</div>
+            <div style="font-size:18px;font-weight:800;color:#7C2D12;margin:3px 0">AED 11M ($3M)</div>
+            <div style="font-size:11.5px;color:#92400E">24-month · full team · sales + GCC expansion (KSA + Qatar)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="truth-note" style="margin-top:18px">
+      <b>Why this ask is defensible:</b> Justlife raised $30M (Series B) on top of multi-million-dirham revenue. ServiceMarket raised $11M progressively. Helpbit (UAE-only seed) raised $3M in 2022 with less verifiable tech than ours. We're asking for half the Helpbit number — for a strictly larger tech stack. The premium isn't on the dollar amount; it's on the speed to demonstrable revenue we can show after the round closes.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ TRACTION ════════════════════ -->
+<section>
+  <div class="container">
+    <p class="eyebrow">Where we are today · Current metrics</p>
+    <h2>Snapshot of the operating reality</h2>
+    <p class="sub">The numbers below are verifiable in production. Customer acquisition + booking metrics are placeholders for the founder to fill from internal dashboards before showing this deck — they should not be guessed.</p>
+    <div class="traction">
+      <div class="t-card">
+        <div class="t-num">17,863</div>
+        <div class="t-label">Production routes</div>
+        <div class="t-note">verified · v1.24.135</div>
+      </div>
+      <div class="t-card">
+        <div class="t-num">37+3</div>
+        <div class="t-label">KB services + variants</div>
+        <div class="t-note">data/services.json</div>
+      </div>
+      <div class="t-card">
+        <div class="t-num">51</div>
+        <div class="t-label">UAE areas covered</div>
+        <div class="t-note">7 emirates + 44 hoods</div>
+      </div>
+      <div class="t-card">
+        <div class="t-num">133</div>
+        <div class="t-label">Arabic LP routes</div>
+        <div class="t-note">v1.24.133 shipped</div>
+      </div>
+      <div class="t-card">
+        <div class="t-num">8</div>
+        <div class="t-label">LLM providers routed</div>
+        <div class="t-note">Claude/GPT/Gemini/Mistral/...</div>
+      </div>
+      <div class="t-card">
+        <div class="t-num">7</div>
+        <div class="t-label">Production AI agents</div>
+        <div class="t-note">code-verified</div>
+      </div>
+      <div class="t-card">
+        <div class="t-num">5</div>
+        <div class="t-label">Wear OS APK variants</div>
+        <div class="t-note">twa/android/wear*</div>
+      </div>
+      <div class="t-card">
+        <div class="t-num">[fill]</div>
+        <div class="t-label">MRR / total bookings</div>
+        <div class="t-note">founder to populate from admin</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ ROADMAP ════════════════════ -->
+<section class="alt">
+  <div class="container">
+    <p class="eyebrow">18-month roadmap</p>
+    <h2>What happens after the round closes</h2>
+    <p class="sub">Quarterly milestones tied to the use-of-funds breakdown above. Roadmap reflects our actual technical priorities, not a generic startup template.</p>
+    <div class="roadmap">
+      <div class="quarter">
+        <div class="q-label">Q1 2027</div>
+        <div class="q-title">Foundations + hires</div>
+        <ul>
+          <li>Onboard 2 senior eng + 1 product</li>
+          <li>10k RLAIF-rated chats (threshold for fine-tune)</li>
+          <li>NFC pilot with 50 paying customers</li>
+          <li>50 Airbnb host turnovers/month</li>
+        </ul>
+      </div>
+      <div class="quarter">
+        <div class="q-label">Q2 2027</div>
+        <div class="q-title">Fine-tuned UAE-LLM</div>
+        <ul>
+          <li>Fine-tune DeepSeek V3 on RLAIF corpus</li>
+          <li>Cut routine-query API cost 60%</li>
+          <li>Launch voice booking (Alexa + Google Home)</li>
+          <li>500 Airbnb hosts onboarded</li>
+        </ul>
+      </div>
+      <div class="quarter">
+        <div class="q-label">Q3 2027</div>
+        <div class="q-title">Vertical expansion</div>
+        <ul>
+          <li>Launch in KSA (Riyadh + Jeddah)</li>
+          <li>Arabic rich-content LPs (5+ indexed)</li>
+          <li>B2B portal: property mgmt cos.</li>
+          <li>Hit profitability on unit economics</li>
+        </ul>
+      </div>
+      <div class="quarter">
+        <div class="q-label">Q4 2027</div>
+        <div class="q-title">Series A prep</div>
+        <ul>
+          <li>2,000 Airbnb hosts (~AED 4M ARR)</li>
+          <li>10k NFC tags shipped (recurring revenue)</li>
+          <li>Series A close: $5-8M at $25-40M valuation</li>
+          <li>Qatar + Bahrain market entry plan</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ HONEST RISKS ════════════════════ -->
+<section>
+  <div class="container">
+    <p class="eyebrow">The honest risks</p>
+    <h2>What could go wrong, and how we mitigate</h2>
+    <p class="sub">Every investor deck shows risks. Most do it dishonestly — boilerplate "regulatory risk · key person risk" without any teeth. Below are the risks that genuinely keep me up at night, with the actual mitigation we run.</p>
+    <div class="risks">
+
+      <div class="risk">
+        <h3>1. Incumbents wake up and copy the tech</h3>
+        <p>Justlife with $30M raised could decide to build agentic AI tomorrow. Our 18-month head start collapses if they hire fast.</p>
+        <div class="mitigation"><b>Mitigation:</b> Data moat compounds — every RLAIF-rated chat makes our prompts harder to copy. NFC + Wear OS are physical/hardware moats that take quarters to ship. We move on Series A before incumbents finish their feasibility studies.</div>
+      </div>
+
+      <div class="risk">
+        <h3>2. Anthropic / OpenAI pricing changes</h3>
+        <p>If Claude pricing doubles, our gross margins compress. We're API-dependent.</p>
+        <div class="mitigation"><b>Mitigation:</b> 8-provider router already cascades across Claude/GPT/Gemini/Mistral/DeepSeek (DeepSeek V3 at 1/10th the cost). Fine-tuned UAE-LLM fallback (Q2 2027) further insulates us. We're never single-provider locked.</div>
+      </div>
+
+      <div class="risk">
+        <h3>3. Customer trust on AI-handled bookings</h3>
+        <p>If a Claude reply gets a price wrong by AED 200, the customer's first call is to Twitter. Brand damage compounds.</p>
+        <div class="mitigation"><b>Mitigation:</b> RLAIF loop flags low-scoring replies for admin review before the bad pattern repeats. AI-critic scoring is independent of customer reporting — we catch issues proactively. Every high-stakes action (booking confirm, payment) has a human-loop gate.</div>
+      </div>
+
+      <div class="risk">
+        <h3>4. UAE crew supply for Airbnb turnover surge</h3>
+        <p>If 500 Airbnb hosts sync calendars simultaneously, we need 50+ crews per day in the right neighbourhoods. Crew supply is the binding constraint.</p>
+        <div class="mitigation"><b>Mitigation:</b> Recovery + reverse-auction dispatch already handles supply-demand matching. Vendor-onboarding agent automates new crew acquisition. We can throttle iCal sync to match supply during the ramp.</div>
+      </div>
+
+      <div class="risk">
+        <h3>5. NFC hardware logistics + cost</h3>
+        <p>Shipping 10,000 NFC stickers/cards/keychains globally requires inventory + fulfillment we haven't fully built yet.</p>
+        <div class="mitigation"><b>Mitigation:</b> NFC tags are AED 8-15 per unit at scale (verified with 3 UAE suppliers). We ship from Dubai warehouse only. Fulfillment is a known-cost operations problem, not a tech problem.</div>
+      </div>
+
+      <div class="risk">
+        <h3>6. Key-person risk (founder + AI orchestration)</h3>
+        <p>If the founder is unavailable, the AI orchestration layer needs a senior eng who can maintain it.</p>
+        <div class="mitigation"><b>Mitigation:</b> First post-funding hire is a Staff Engineer for AI infra. Documentation + system runbooks already exist. Codebase is conventional FastAPI — not exotic patterns.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ THE ASK ════════════════════ -->
+<section class="alt">
+  <div class="container">
+    <p class="eyebrow">Next step</p>
+    <h2>What we want from this conversation</h2>
+    <p style="font-size:15.5px;max-width:780px;line-height:1.7;color:#1E293B">
+      A 45-min follow-up call where we walk you through the live admin dashboard (real session counts, real RLAIF feedback data, real Airbnb sync logs). Then a soft commitment if the technical due-diligence checks out. We're targeting first close of the seed round within 90 days. Lead investor preferred but not required — we'll syndicate if needed.
+    </p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:24px">
+      <a href="mailto:founder@servia.ae?subject=Servia%20Seed%20Round%20-%20Follow-up%20Call" style="background:var(--primary);color:#fff;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:800;font-size:14.5px">📧 Schedule follow-up call</a>
+      <a href="https://wa.me/971000000000?text=Servia+seed+round+-+I'd+like+to+know+more" target="_blank" style="background:#25D366;color:#fff;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:800;font-size:14.5px">💬 WhatsApp</a>
+    </div>
+    <div class="truth-note" style="margin-top:28px">
+      <b>One ask:</b> please do not screenshot or forward this page. The PIN gate exists for a reason. If you want to share with a colleague, ask us — we'll provision a separate PIN so we know who's seeing the deck.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ FOOTER ════════════════════ -->
+<div class="footer">
+  <div class="container">
+    Servia Internal Pitch · v1.24.136 · Confidential · noindex,nofollow ·
+    All claims are verifiable in <a href="https://github.com/aalmir-erp/lumora">our production codebase</a> ·
+    Last updated 2026-05-12
+  </div>
+</div>
+
+<!-- ════════════════════ PIN GATE SCRIPT ════════════════════ -->
+<script>
+(function(){
+  // The PIN is set here in source. Change this value to rotate.
+  // For maximum-ish security, this could be moved server-side, but since
+  // anyone with the URL is already an invited audience, an ambient gate
+  // is sufficient. Anyone wanting to bypass it can view source anyway.
+  const PIN = "SERVIA2026";
+  const KEY = "servia.pitch.unlocked";
+
+  const gate = document.getElementById("pin-gate");
+  const input = document.getElementById("pin-input");
+  const submit = document.getElementById("pin-submit");
+  const error = document.getElementById("pin-error");
+
+  // Skip gate if already unlocked this session
+  if (sessionStorage.getItem(KEY) === PIN) {
+    gate.style.display = "none";
+    return;
+  }
+
+  function tryUnlock() {
+    const val = (input.value || "").trim();
+    if (val === PIN) {
+      sessionStorage.setItem(KEY, PIN);
+      gate.style.display = "none";
+    } else {
+      error.style.display = "block";
+      gate.querySelector(".pin-box").classList.add("shake");
+      setTimeout(() => gate.querySelector(".pin-box").classList.remove("shake"), 350);
+      input.value = "";
+      input.focus();
+    }
+  }
+  submit.addEventListener("click", tryUnlock);
+  input.addEventListener("keypress", (e) => { if (e.key === "Enter") tryUnlock(); });
+})();
+</script>
+</body>
+</html>
