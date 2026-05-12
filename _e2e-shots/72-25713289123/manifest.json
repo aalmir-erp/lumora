@@ -1,8 +1,8 @@
 {
-  "run_number": "57",
-  "run_id": "25636288685",
-  "commit_sha": "d23e9f61",
-  "created_at": "2026-05-10T18:24:43.293520Z",
+  "run_number": "72",
+  "run_id": "25713289123",
+  "commit_sha": "8b4cbc1b",
+  "created_at": "2026-05-12T04:27:23.559866Z",
   "pass": 48,
   "warn": 1,
   "fail": 1,
@@ -10,7 +10,7 @@
   "shots": [
     "T01.png",
     "T02.png",
-    "T03.png",
+    "T03-FAIL.png",
     "T04.png",
     "T05.png",
     "T06.png",
@@ -19,7 +19,7 @@
     "T09.png",
     "T10.png",
     "T11.png",
-    "T12-FAIL.png",
+    "T12.png",
     "T13.png",
     "T14.png",
     "T15.png",
@@ -60,5 +60,5 @@
     "T50.png",
     "T51.png"
   ],
-  "workflow_run_url": "https://github.com/aalmir-erp/lumora/actions/runs/25636288685"
+  "workflow_run_url": "https://github.com/aalmir-erp/lumora/actions/runs/25713289123"
 }
