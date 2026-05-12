@@ -2,13 +2,13 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"nmVyrzf2TIGhitTxPvyhXg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"XJ-5jMGnRcmZ0xwNPvyhXg"}`
 
 ## Build logs
 ```
+[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
 [internal] load build context
@@ -32,9 +32,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:489607a067f06c59c5bc2760472bcdc39d9dc9e2e137c7b2366e6d2bcaf5b671
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NDg5NjA3YTA2N2YwNmM1OWM1YmMyNzYwNDcyYmNkYzM5ZDlkYzllMmUxMzdjN2IyMzY2ZTZkMmJjYWY1YjY3MSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMlQyMDo1MDoxOFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:b8a5707984b3cadefe19da63a61ba409253c1fcc5a8f2c57683cec613c26222b
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6Y2Y3MzZjNzJiMTU0NTBiZWQyMGNmOGFiMmYxZjYwODViNTc5OWVhZWNlNjk5NWI0OTU3NmViMTFjMmMzMDM1MiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMlQyMTowNTowM1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:c5270798c1df3c82e9c578cb75128b0303a6985dde2b70dd28611e08e9734ba6
+containerimage.digest: sha256:cf736c72b15450bed20cf8ab2f1f6085b5799eaece6995b49576eb11c2c30352
 image push
 image push
 
@@ -50,34 +50,23 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "POST /api/cart/quote HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "POST /api/cart/checkout HTTP/1.1" 200 OK
-INFO:     100.64.0.3:61808 - "GET /q/Q-A98C73 HTTP/1.1" 200 OK
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/9c407fa6-6ffe-4c94-be97-e0603133c701/vol_onr647rhdeir9di9
+Starting Container
+[start] launching whatsapp_bridge
+[wa-bridge] listening on :3001
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.3:39040 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:39046 - "POST /api/app-install HTTP/1.1" 200 OK
+[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
+[lp-ar] 133 Arabic landing-page routes registered
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
+[purge] scan complete — 27 posts, 0 flagged
+[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.2:42739 - "GET /api/health HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [autoblog] catch-up SKIP (last_run @ 2026-05-12T20:49:01.229312Z is fresh AND ok)
-INFO:     100.64.0.3:39046 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:39046 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:39052 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=635 HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
