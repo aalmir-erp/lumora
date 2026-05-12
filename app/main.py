@@ -5686,6 +5686,168 @@ async def _custom_404(request, exc):
     return JSONResponse({"detail": "Not Found"}, status_code=404)
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# v1.24.130 — Google Ads keyword-rich landing pages.
+#
+# Generates flat URLs of the form /{service-alias}-{area-slug} for every
+# service × every emirate/neighborhood combo (~2,000 routes). Each route
+# serves the existing service.html template with:
+#
+#   • Title injected with area name           (Adwords Quality Score boost)
+#   • Meta desc injected with area name        (Adwords + organic snippet)
+#   • <meta name="robots" content="noindex,follow">  (SEO-safe — no
+#     duplicate-content competition with the canonical organic URL)
+#   • <link rel="canonical" href="…/services/{slug}/{area}">  (consolidates
+#     SEO ranking on the existing programmatic page; flat URL is paid-only)
+#
+# These routes are EXCLUDED from sitemap-pages.xml on purpose. They exist
+# only as Google Ads "final URLs" — the keyword-rich URL appears in the ad
+# display and improves CTR + landing-page-experience score, but Google
+# Search will not index the flat URL (the canonical is the indexed one).
+# ─────────────────────────────────────────────────────────────────────────
+
+def _render_lp_page(svc_id: str, area_slug: str, area_display: str,
+                     area_type: str) -> HTMLResponse:
+    from fastapi import HTTPException as _HE
+    from fastapi.responses import HTMLResponse as _HR
+    try:
+        services_by_id = {s["id"]: s for s in kb.services().get("services", [])}
+    except Exception:
+        services_by_id = {}
+    svc = services_by_id.get(svc_id)
+    if not svc:
+        raise _HE(status_code=404, detail="service not found")
+    tpl = settings.WEB_DIR / "service.html"
+    if not tpl.exists():
+        raise _HE(status_code=500, detail="template missing")
+    html = tpl.read_text(encoding="utf-8")
+    brand = settings.brand()
+    slug_kebab = svc_id.replace("_", "-")
+    name = svc.get("name") or svc_id.replace("_", " ").title()
+    title = f"{name} in {area_display} · {brand['name']} UAE"
+    desc = (f"{name} in {area_display} — booked online with {brand['name']}. "
+            "Same-day available, fully insured crews, transparent AED pricing.")
+    # Canonical → the existing programmatic /services/{slug}/{area} page for
+    # neighborhoods, or the bare /services/{slug} for emirates (those don't
+    # have area-level pages in seo_pages.AREA_INDEX).
+    if area_type == "neighborhood":
+        canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug_kebab}/{area_slug}"
+    else:
+        canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug_kebab}"
+    title_safe = title.replace('"', "&quot;")
+    desc_safe = desc.replace('"', "&quot;")
+    html = (
+        html
+        .replace("<title>Service • Servia</title>",
+                 f"<title>{title_safe}</title>")
+        .replace(
+            '<meta name="description" content="Professional home services across all 7 UAE emirates. Same-day booking, transparent AED pricing, fully insured crews.">',
+            f'<meta name="description" content="{desc_safe}">')
+        .replace(
+            '<link rel="canonical" href="https://servia.ae/services">',
+            f'<link rel="canonical" href="{canonical}">'
+            '<meta name="robots" content="noindex,follow">')
+    )
+    # Inject ?id=<svc_id> so service.html JS reads the correct service from
+    # URLSearchParams. Done via replaceState so the address bar still shows
+    # the keyword-rich slug URL (the whole point for Google Ads CTR).
+    shim = (
+        '<script>(function(){try{var u=new URL(location.href);'
+        f'if(!u.searchParams.get("id"))u.searchParams.set("id","{svc_id}");'
+        'history.replaceState(null,"",u.toString());'
+        '}catch(_){}})();</script>'
+    )
+    html = html.replace("</head>", shim + "</head>", 1)
+    return _HR(html)
+
+
+def _register_lp_routes():
+    """Build the alias × area matrix and register one explicit route per
+    combination. Run at module load — adds ~2k routes to the FastAPI router.
+    Explicit registration (not catch-all) keeps the StaticFiles mount safe."""
+    # Service alias → service_id. Every service auto-gets its kebab-case slug
+    # plus manual aliases for common Google Ads keyword variants ("ac-service"
+    # is a much more common search than the literal "ac-cleaning").
+    alias_to_id: dict[str, str] = {}
+    try:
+        for s in kb.services().get("services", []):
+            sid = s.get("id", "")
+            if sid:
+                alias_to_id[sid.replace("_", "-")] = sid
+    except Exception:
+        pass
+    for alias, target in [
+        ("ac-service", "ac_cleaning"),
+        ("ac-repair", "ac_cleaning"),
+        ("air-conditioning", "ac_cleaning"),
+        ("house-cleaning", "general_cleaning"),
+        ("home-cleaning", "general_cleaning"),
+        ("apartment-cleaning", "general_cleaning"),
+        ("maids", "maid_service"),
+        ("hourly-maid", "maid_service"),
+        ("phone-repair", "mobile_repair"),
+        ("laptop-mobile-repair", "laptop_repair"),
+        ("computer-repair", "laptop_repair"),
+        ("termite-treatment", "pest_control"),
+        ("cockroach-treatment", "pest_control"),
+        ("refrigerator-repair", "fridge_repair"),
+        ("geyser-repair", "water_heater_repair"),
+        ("babysitter", "babysitting"),
+        ("nanny", "babysitting"),
+        ("move-in-cleaning", "move_in_out"),
+        ("move-out-cleaning", "move_in_out"),
+        ("end-of-tenancy-cleaning", "deep_cleaning"),
+        ("villa-cleaning", "villa_deep"),
+        ("kitchen-cleaning", "kitchen_deep"),
+    ]:
+        alias_to_id[alias] = target
+
+    # Area slug → (display, type). Emirates first, then neighborhoods from
+    # seo_pages.AREA_INDEX.
+    areas: dict[str, tuple[str, str]] = {
+        "dubai":            ("Dubai",            "emirate"),
+        "abu-dhabi":        ("Abu Dhabi",        "emirate"),
+        "sharjah":          ("Sharjah",          "emirate"),
+        "ajman":            ("Ajman",            "emirate"),
+        "umm-al-quwain":    ("Umm Al Quwain",    "emirate"),
+        "ras-al-khaimah":   ("Ras Al Khaimah",   "emirate"),
+        "fujairah":         ("Fujairah",         "emirate"),
+    }
+    try:
+        from . import seo_pages as _seo
+        for slug, info in (_seo.AREA_INDEX or {}).items():
+            if slug in areas:
+                continue
+            disp = info.get("name") or slug.replace("-", " ").title()
+            areas[slug] = (disp, "neighborhood")
+    except Exception:
+        pass
+
+    count = 0
+    for svc_alias, svc_id in alias_to_id.items():
+        for area_slug, (area_display, area_type) in areas.items():
+            flat = f"{svc_alias}-{area_slug}"
+
+            def make_handler(sid=svc_id, asg=area_slug, adisp=area_display, atyp=area_type):
+                def handler():
+                    return _render_lp_page(sid, asg, adisp, atyp)
+                return handler
+
+            app.add_api_route(
+                f"/{flat}",
+                make_handler(),
+                methods=["GET"],
+                include_in_schema=False,
+                response_class=HTMLResponse,
+            )
+            count += 1
+    print(f"[lp] {count} Google Ads landing-page routes registered "
+          f"({len(alias_to_id)} service aliases × {len(areas)} areas)")
+
+
+_register_lp_routes()
+
+
 if settings.WEB_DIR.exists():
     app.mount("/widget", StaticFiles(directory=str(settings.WEB_DIR), html=False), name="widget")
     app.mount("/", StaticFiles(directory=str(settings.WEB_DIR), html=True), name="site")

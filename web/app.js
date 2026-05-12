@@ -162,7 +162,7 @@
   // cache and pick up the v1.24.113 admin.html (which has the new "🛡 Audit
   // posts" button) + the v1.24.114 brand-free /vs/* pages. Founder reported
   // the audit button wasn't visible after deploy — SW cache was the cause.
-  const SW_RESET_KEY = "servia.sw.reset.v1.24.128";
+  const SW_RESET_KEY = "servia.sw.reset.v1.24.130";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {
