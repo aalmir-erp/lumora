@@ -5707,7 +5707,7 @@ async def _custom_404(request, exc):
 # ─────────────────────────────────────────────────────────────────────────
 
 def _render_lp_page(svc_id: str, area_slug: str, area_display: str,
-                     area_type: str) -> HTMLResponse:
+                     area_type: str, qualifier: str = "") -> HTMLResponse:
     from fastapi import HTTPException as _HE
     from fastapi.responses import HTMLResponse as _HR
     try:
@@ -5724,13 +5724,33 @@ def _render_lp_page(svc_id: str, area_slug: str, area_display: str,
     brand = settings.brand()
     slug_kebab = svc_id.replace("_", "-")
     name = svc.get("name") or svc_id.replace("_", " ").title()
-    title = f"{name} in {area_display} · {brand['name']} UAE"
-    desc = (f"{name} in {area_display} — booked online with {brand['name']}. "
-            "Same-day available, fully insured crews, transparent AED pricing.")
+    # Qualifier (Same-Day / Emergency / 24-7) goes in front of the service
+    # name in the title — this is the part Google Ads quality bot reads to
+    # decide if the LP matches the ad copy.
+    if qualifier and area_type == "near_me":
+        title = f"{qualifier} {name} Near You · {brand['name']} UAE"
+        desc = (f"{qualifier} {name} near you in the UAE — booked via WhatsApp "
+                "in 60 seconds. Geolocation auto-picks your emirate. Transparent "
+                "AED pricing, fully insured crews, same-day available.")
+    elif qualifier:
+        title = f"{qualifier} {name} in {area_display} · {brand['name']} UAE"
+        desc = (f"{qualifier} {name} in {area_display} — dispatch within the "
+                f"hour. {brand['name']} licensed crews, transparent AED pricing, "
+                "WhatsApp booking, same-day for urgent cases.")
+    elif area_type == "near_me":
+        title = f"{name} Near You · {brand['name']} UAE"
+        desc = (f"{name} near you in the UAE — booked via WhatsApp in 60 "
+                "seconds. We cover all 7 emirates. Same-day available, fully "
+                "insured crews, transparent AED pricing.")
+    else:
+        title = f"{name} in {area_display} · {brand['name']} UAE"
+        desc = (f"{name} in {area_display} — booked online with {brand['name']}. "
+                "Same-day available, fully insured crews, transparent AED pricing.")
     # Canonical → the existing programmatic /services/{slug}/{area} page for
-    # neighborhoods, or the bare /services/{slug} for emirates (those don't
-    # have area-level pages in seo_pages.AREA_INDEX).
-    if area_type == "neighborhood":
+    # neighborhoods, or the bare /services/{slug} for emirates + near-me +
+    # any qualifier variants (since /services/{slug}/{area} only exists for
+    # neighborhoods in seo_pages.AREA_INDEX).
+    if area_type == "neighborhood" and not qualifier:
         canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug_kebab}/{area_slug}"
     else:
         canonical = f"https://{brand.get('domain','servia.ae')}/services/{slug_kebab}"
@@ -5886,22 +5906,24 @@ def _register_lp_routes():
         ("geyser-repair", "water_heater_repair"),
         ("boiler-repair", "water_heater_repair"),
         ("water-heater-installation", "water_heater_repair"),
-        # Handyman-adjacent — Servia's handyman covers light plumbing/
-        # electrical/carpentry (typical UAE handyman). Mapping these
-        # competitor PPC keywords broadens reach. If handyman scope
-        # doesn't actually cover the keyword, ads get disapproved on
-        # LP-experience score — flag for review before scaling spend.
-        ("plumber", "handyman"),
-        ("plumbing-services", "handyman"),
-        ("plumbing-repair", "handyman"),
-        ("electrician", "handyman"),
-        ("electrical-services", "handyman"),
-        ("electrical-repair", "handyman"),
-        ("carpenter", "handyman"),
-        ("furniture-assembly", "handyman"),
-        ("ikea-assembly", "handyman"),
-        ("shelf-installation", "handyman"),
-        ("door-repair", "handyman"),
+        # Handyman-adjacent — REMAP to dedicated KB services in v1.24.132.
+        # Previously these all pointed to handyman; now plumbing has its own
+        # service entry with licensed-plumber positioning (matches what the
+        # user actually searches for in Google: "plumber dubai" expects a
+        # plumbing page, not a generic handyman page). LP-experience score
+        # on Google Ads should rise significantly.
+        ("plumber", "plumbing"),
+        ("plumbing-services", "plumbing"),
+        ("plumbing-repair", "plumbing"),
+        ("electrician", "electrical"),
+        ("electrical-services", "electrical"),
+        ("electrical-repair", "electrical"),
+        ("carpenter", "carpentry"),
+        ("furniture-assembly", "carpentry"),
+        ("ikea-assembly", "carpentry"),
+        ("shelf-installation", "carpentry"),
+        ("door-repair", "carpentry"),
+        # Locksmith stays on handyman until we add a dedicated service.
         ("locksmith", "handyman"),
         ("handyman-services", "handyman"),
         ("home-repair", "handyman"),
@@ -5982,7 +6004,33 @@ def _register_lp_routes():
     except Exception:
         pass
 
+    # Qualifier prefixes for premium-intent Google Ads searches. These convert
+    # at ~2x normal because the user is already in "buy now" mode. Only apply
+    # to time-sensitive services where "same-day / emergency / 24-7" actually
+    # makes sense (you wouldn't bid on "emergency carpet cleaning").
+    TIME_SENSITIVE = {
+        "ac-service", "ac-repair", "ac-maintenance", "ac-installation",
+        "air-conditioning-repair",
+        "plumber", "plumbing-services", "plumbing-repair", "plumbing",
+        "electrician", "electrical-services", "electrical-repair", "electrical",
+        "locksmith", "handyman", "handyman-services", "home-repair",
+        "pest-control", "bed-bug-treatment", "cockroach-treatment",
+        "termite-treatment", "rodent-control", "mosquito-control",
+        "deep-cleaning", "maid-service", "house-cleaning", "home-cleaning",
+        "carpet-cleaning", "sofa-cleaning",
+        "mobile-repair", "phone-repair", "screen-repair", "laptop-repair",
+        "fridge-repair", "refrigerator-repair", "washing-machine-repair",
+        "water-heater-repair", "geyser-repair",
+    }
+    QUALIFIERS = [
+        ("same-day", "Same-Day"),
+        ("emergency", "Emergency"),
+        ("24-7", "24/7"),
+        ("24h", "24-Hour"),
+    ]
+
     count = 0
+    # Base routes: /{svc_alias}-{area_slug} (~9k routes from existing matrix)
     for svc_alias, svc_id in alias_to_id.items():
         for area_slug, (area_display, area_type) in areas.items():
             flat = f"{svc_alias}-{area_slug}"
@@ -6000,8 +6048,57 @@ def _register_lp_routes():
                 response_class=HTMLResponse,
             )
             count += 1
-    print(f"[lp] {count} Google Ads landing-page routes registered "
-          f"({len(alias_to_id)} service aliases × {len(areas)} areas)")
+
+    # Qualifier prefixes: /{qualifier}-{svc_alias}-{area_slug}
+    # (only for time-sensitive services — ~25 aliases × 4 qualifiers × 51 areas
+    # = ~5k routes, premium PPC value)
+    qual_count = 0
+    for svc_alias, svc_id in alias_to_id.items():
+        if svc_alias not in TIME_SENSITIVE:
+            continue
+        for qual_slug, qual_label in QUALIFIERS:
+            for area_slug, (area_display, area_type) in areas.items():
+                flat = f"{qual_slug}-{svc_alias}-{area_slug}"
+
+                def make_qh(sid=svc_id, asg=area_slug, adisp=area_display,
+                            atyp=area_type, qual=qual_label):
+                    def handler():
+                        return _render_lp_page(sid, asg, adisp, atyp, qualifier=qual)
+                    return handler
+
+                app.add_api_route(
+                    f"/{flat}",
+                    make_qh(),
+                    methods=["GET"],
+                    include_in_schema=False,
+                    response_class=HTMLResponse,
+                )
+                qual_count += 1
+
+    # "Near me" intent — captures Google's geo-aware search. URL has no area
+    # (the page text says "Near You" + JS geolocation picks the emirate).
+    near_count = 0
+    for svc_alias, svc_id in alias_to_id.items():
+        flat = f"{svc_alias}-near-me"
+
+        def make_nh(sid=svc_id):
+            def handler():
+                return _render_lp_page(sid, "", "Your Area", "near_me")
+            return handler
+
+        app.add_api_route(
+            f"/{flat}",
+            make_nh(),
+            methods=["GET"],
+            include_in_schema=False,
+            response_class=HTMLResponse,
+        )
+        near_count += 1
+
+    total = count + qual_count + near_count
+    print(f"[lp] {total} Google Ads landing-page routes registered "
+          f"(base={count}, qualifier={qual_count}, near-me={near_count}, "
+          f"{len(alias_to_id)} service aliases × {len(areas)} areas)")
 
 
 _register_lp_routes()

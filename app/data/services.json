@@ -2955,6 +2955,180 @@
           "price": 168
         }
       ]
+    },
+    {
+      "id": "plumbing",
+      "name": "Plumbing Service",
+      "category": "Maintenance",
+      "icon": "droplet",
+      "description": "Leaking taps, blocked drains, low water pressure, geyser install, toilet flush repair. UAE-licensed plumber, parts at cost.",
+      "starting_price": 180,
+      "includes": [
+        "Diagnosis",
+        "Repair labour",
+        "Hourly rate"
+      ],
+      "excludes": [
+        "Full re-piping (separate quote)",
+        "Slab leak excavation"
+      ],
+      "addons": [
+        {"id": "parts", "name": "Parts (at cost)", "price": 0, "icon": "🔩"},
+        {"id": "emergency_rush", "name": "Same-day rush", "price": 80, "icon": "⚡"}
+      ],
+      "benefits": [
+        "Licensed by Dubai Municipality / DEWA",
+        "Common parts in stock — finish in one visit",
+        "Same-day for water leaks"
+      ],
+      "when_to_book": [
+        "Leaking tap or showerhead",
+        "Blocked kitchen / bathroom drain",
+        "Low water pressure",
+        "Toilet flush stuck",
+        "Water heater not working",
+        "Burst hose under sink",
+        "Mixer / diverter replacement"
+      ],
+      "process_steps": [
+        {"icon": "📞", "title": "Describe + photo", "desc": "WhatsApp a photo of the leak or fixture."},
+        {"icon": "🚐", "title": "Plumber dispatched", "desc": "30–60 min ETA for water leaks."},
+        {"icon": "🔧", "title": "Diagnose + fix", "desc": "Most jobs done in one visit."},
+        {"icon": "🧾", "title": "Itemised invoice", "desc": "Hours + parts at cost — no markup."}
+      ],
+      "duration_label": "30 min – 2 hrs",
+      "team_label": "1 licensed plumber",
+      "faqs": [
+        {"q": "Do you handle emergency leaks at night?", "a": "Yes — emergency rush AED 80 surcharge after 22:00. Burst pipes get priority dispatch."},
+        {"q": "Are parts included?", "a": "Labour is hourly. Parts (washers, cartridges, hoses) charged at supplier cost with receipt."},
+        {"q": "Can you install a new water heater?", "a": "Yes — supply + install for Ariston / Modena / Crown geysers. Old unit removal included."}
+      ],
+      "intake": [
+        "problem_type (leak/blockage/install/pressure/heater)",
+        "fixture_location (kitchen/bathroom/balcony)",
+        "urgency (now/today/this_week)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
+      "emoji": "🚰"
+    },
+    {
+      "id": "electrical",
+      "name": "Electrical Service",
+      "category": "Maintenance",
+      "icon": "zap",
+      "description": "Socket / switch replacement, ceiling fan & light install, MCB trip diagnosis, short circuit repair. UAE-licensed electrician, DEWA-compliant work.",
+      "starting_price": 180,
+      "includes": [
+        "Diagnosis",
+        "Repair labour",
+        "Hourly rate"
+      ],
+      "excludes": [
+        "Full apartment rewiring (separate quote)",
+        "DEWA meter work (requires DEWA contractor)"
+      ],
+      "addons": [
+        {"id": "parts", "name": "Parts (at cost)", "price": 0, "icon": "🔌"},
+        {"id": "emergency_rush", "name": "Same-day rush", "price": 80, "icon": "⚡"}
+      ],
+      "benefits": [
+        "Licensed by DEWA / SEWA / AADC",
+        "Test pen + multimeter on every visit",
+        "Same-day for power outage / short circuit"
+      ],
+      "when_to_book": [
+        "Power socket sparking or dead",
+        "Ceiling fan / light installation",
+        "MCB keeps tripping",
+        "Short circuit somewhere — can't find it",
+        "Light fitting replacement",
+        "Chandelier hanging",
+        "USB / smart socket upgrade"
+      ],
+      "process_steps": [
+        {"icon": "📞", "title": "Describe + photo", "desc": "WhatsApp a photo of the issue + the MCB panel."},
+        {"icon": "🚐", "title": "Electrician dispatched", "desc": "30–60 min ETA for outages."},
+        {"icon": "⚡", "title": "Test + repair", "desc": "Power off → diagnose → fix → test."},
+        {"icon": "🧾", "title": "Itemised invoice", "desc": "Hours + parts at cost — no markup."}
+      ],
+      "duration_label": "30 min – 2 hrs",
+      "team_label": "1 licensed electrician",
+      "faqs": [
+        {"q": "What if my whole apartment has no power?", "a": "Likely an MCB trip or DEWA meter issue. We diagnose first — if it's DEWA-side, we'll tell you and not charge for the visit."},
+        {"q": "Can you install a chandelier?", "a": "Yes, including heavy fittings up to 25 kg. Bring your own fixture or we can source it."},
+        {"q": "Do you do EV charger install?", "a": "For Tesla / Lucid / Polestar wall chargers, yes — separate quote after site visit (DEWA approval required for >7kW)."}
+      ],
+      "intake": [
+        "problem_type (no_power/install/spark/fan/light)",
+        "affected_area (room/whole_apartment)",
+        "urgency (now/today/this_week)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
+      "emoji": "⚡"
+    },
+    {
+      "id": "carpentry",
+      "name": "Carpentry Service",
+      "category": "Maintenance",
+      "icon": "hammer",
+      "description": "Door & lock repair, hinge replacement, IKEA / Pan Emirates / Home Centre assembly, custom shelves, cabinet repair, drawer slider fix.",
+      "starting_price": 150,
+      "includes": [
+        "Tools",
+        "Labour",
+        "Hourly rate"
+      ],
+      "excludes": [
+        "Custom-build full kitchens (separate quote)",
+        "Wood supply (we can source, charged at cost)"
+      ],
+      "addons": [
+        {"id": "wood_supply", "name": "Wood / hardware supply", "price": 0, "icon": "🪵"},
+        {"id": "rush", "name": "Same-day rush", "price": 60, "icon": "⚡"}
+      ],
+      "benefits": [
+        "Tools + drill + hardware kit on van",
+        "IKEA assembly fixed price per unit",
+        "Save the receipt — we re-tighten free for 30 days"
+      ],
+      "when_to_book": [
+        "Door won't close or lock properly",
+        "IKEA / Pan Emirates flat-pack assembly",
+        "Shelves or floating bookshelf install",
+        "Drawer slider broken",
+        "Cabinet hinge replacement",
+        "Wardrobe door re-align",
+        "Mounting wall art or mirrors"
+      ],
+      "process_steps": [
+        {"icon": "📞", "title": "Tell us the job", "desc": "Furniture model / photo of broken hinge / wall material."},
+        {"icon": "🚐", "title": "Carpenter dispatched", "desc": "Same-day if booked before 14:00."},
+        {"icon": "🔨", "title": "Assemble / repair", "desc": "Most flat-pack jobs done in 60–90 min."},
+        {"icon": "✅", "title": "Test + clean up", "desc": "All packaging removed, area swept."}
+      ],
+      "duration_label": "30 min – 3 hrs",
+      "team_label": "1 carpenter",
+      "faqs": [
+        {"q": "How much for IKEA assembly?", "a": "PAX wardrobe AED 280, MALM bed AED 180, BILLY shelf AED 90, KALLAX 8-cube AED 220. We follow IKEA instructions exactly."},
+        {"q": "What if my drill bit doesn't fit the wall?", "a": "We carry concrete, hollow-block, plasterboard + tile bits + the right anchors for each (most Dubai apartments are hollow block)."},
+        {"q": "Can you fix a sliding wardrobe door that came off the rail?", "a": "Yes — usually a 20 min job, AED 120-180 with wheels replacement if needed."}
+      ],
+      "intake": [
+        "job_type (assembly/repair/install/door/wardrobe)",
+        "furniture_or_item",
+        "wall_material (concrete/hollow_block/plasterboard/tile)",
+        "preferred_date",
+        "time_slot",
+        "emirate",
+        "property_address"
+      ],
+      "emoji": "🔨"
     }
   ],
   "areas_served": [
