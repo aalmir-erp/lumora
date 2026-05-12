@@ -41,7 +41,7 @@ Call log:
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_-MV-2bx9m...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_EHVHrHvai...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -49,7 +49,7 @@ Call log:
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.126
+- ✅ **[T41] /api/health responds** — v1.24.130
 - ✅ **[T42] /api/services >=10** — 37
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.108
 - ✅ **[T44] /api/site/social works** — OK
