@@ -376,6 +376,179 @@ def pitch_page():
             "Referrer-Policy": "no-referrer",
         },
     )
+
+
+# v1.24.139 — Arabic LP index. Server-renders a clickable list of all 133
+# Arabic landing pages so the founder can browse them without typing
+# Arabic into the address bar. Noindex (same as /pitch — private tool).
+@app.get("/ar-preview", include_in_schema=False)
+def arabic_lp_preview():
+    from fastapi.responses import HTMLResponse as _HR
+    from .data.i18n_ar_slugs import SERVICE_AR, EMIRATE_AR
+    # English display names for context column
+    en_service_names = {
+        "deep_cleaning":           "Deep cleaning",
+        "ac_cleaning":             "AC cleaning",
+        "sofa_carpet":             "Sofa &amp; carpet shampoo",
+        "maid_service":            "Maid service",
+        "plumbing":                "Plumber",
+        "electrical":              "Electrician",
+        "carpentry":               "Carpenter",
+        "handyman":                "Handyman",
+        "pest_control":            "Pest control",
+        "mobile_repair":           "Mobile repair",
+        "laptop_repair":           "Laptop repair",
+        "fridge_repair":           "Fridge repair",
+        "washing_machine_repair":  "Washing machine repair",
+        "babysitting":             "Babysitter",
+        "car_wash":                "Car wash",
+        "chauffeur":               "Chauffeur",
+        "painting":                "Painting",
+        "gardening":               "Gardening",
+        "moving":                  "Moving",
+    }
+    en_emirate_names = {
+        "dubai":          "Dubai",
+        "abu-dhabi":      "Abu Dhabi",
+        "sharjah":        "Sharjah",
+        "ajman":          "Ajman",
+        "ras-al-khaimah": "Ras Al Khaimah",
+        "fujairah":       "Fujairah",
+        "umm-al-quwain":  "Umm Al Quwain",
+    }
+
+    rows_html = ""
+    for svc_id, (ar_svc_slug, ar_svc_name) in SERVICE_AR.items():
+        en_svc = en_service_names.get(svc_id, svc_id)
+        cells = f'<td class="svc"><div class="en">{en_svc}</div><div class="ar">{ar_svc_name}</div></td>'
+        for em_id, (ar_em_slug, ar_em_name) in EMIRATE_AR.items():
+            slug = f"{ar_svc_slug}-{ar_em_slug}"
+            en_em = en_emirate_names.get(em_id, em_id)
+            cells += (
+                f'<td><a class="ar-link" href="/{slug}" target="_blank" '
+                f'rel="noopener noreferrer">'
+                f'<span class="ar-text">{ar_svc_name} · {ar_em_name}</span>'
+                f'<span class="en-text">{en_svc} · {en_em} →</span>'
+                f'</a></td>'
+            )
+        rows_html += f"<tr>{cells}</tr>"
+
+    em_headers = ""
+    for em_id, (_, ar_em_name) in EMIRATE_AR.items():
+        en_em = en_emirate_names.get(em_id, em_id)
+        em_headers += (
+            f'<th><div class="ar-h">{ar_em_name}</div>'
+            f'<div class="en-h">{en_em}</div></th>'
+        )
+
+    total = len(SERVICE_AR) * len(EMIRATE_AR)
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Arabic LP Preview · {total} routes · Servia (Internal)</title>
+<style>
+  *,*::before,*::after{{box-sizing:border-box}}
+  body{{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;background:#F1F5F9;color:#0F172A;line-height:1.5;-webkit-font-smoothing:antialiased}}
+  .head{{background:linear-gradient(135deg,#0F172A,#0F766E);color:#fff;padding:36px 24px}}
+  .head .wrap{{max-width:1320px;margin:0 auto}}
+  .head h1{{margin:0 0 8px;font-size:28px;letter-spacing:-.02em;font-weight:800}}
+  .head p{{margin:0;opacity:.85;font-size:14px;max-width:760px;line-height:1.6}}
+  .kpi-row{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px;max-width:760px}}
+  .kpi{{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:12px 16px;border-radius:10px;backdrop-filter:blur(8px)}}
+  .kpi .v{{font-size:22px;font-weight:800;letter-spacing:-.02em}}
+  .kpi .l{{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-top:3px;font-weight:700}}
+  .conf{{display:inline-block;background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.4);color:#FCD34D;font-size:10px;font-weight:800;letter-spacing:.12em;padding:3px 10px;border-radius:99px;margin-bottom:12px}}
+  .note{{background:#FFFBEB;border-left:4px solid #F59E0B;padding:14px 18px;margin:24px;border-radius:8px;font-size:13px;color:#7C2D12;max-width:1320px;margin-left:auto;margin-right:auto;line-height:1.6}}
+  .note b{{color:#451A03}}
+  .grid-wrap{{max-width:1320px;margin:24px auto;padding:0 24px;overflow-x:auto;-webkit-overflow-scrolling:touch}}
+  table.matrix{{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(15,23,42,.06);font-size:13px;min-width:1200px}}
+  table.matrix th{{padding:14px 10px;background:#0F172A;color:#fff;font-weight:700;text-align:center;font-size:12px;border-right:1px solid rgba(255,255,255,.05);position:sticky;top:0;z-index:5}}
+  table.matrix th:first-child{{text-align:left;background:#1E293B;padding-left:16px}}
+  .ar-h{{font-size:14px;direction:rtl;margin-bottom:3px}}
+  .en-h{{font-size:10.5px;opacity:.6;font-weight:600;letter-spacing:.04em;text-transform:uppercase}}
+  table.matrix td{{padding:0;border-right:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;vertical-align:middle}}
+  table.matrix td.svc{{background:#F8FAFC;padding:10px 14px;font-weight:700;color:#0F172A;position:sticky;left:0;z-index:3;min-width:200px;border-right:2px solid #CBD5E1}}
+  table.matrix td.svc .en{{font-size:13px;font-weight:800}}
+  table.matrix td.svc .ar{{font-size:14px;direction:rtl;color:#0F766E;font-weight:700;margin-top:2px}}
+  .ar-link{{display:block;padding:12px 10px;text-decoration:none;color:#0F172A;transition:background .15s,color .15s;text-align:center}}
+  .ar-link:hover{{background:linear-gradient(135deg,#CCFBF1,#F0FDFA);color:#0F766E}}
+  .ar-link .ar-text{{display:block;font-size:13px;direction:rtl;font-weight:700}}
+  .ar-link .en-text{{display:block;font-size:10.5px;color:#94A3B8;margin-top:3px;font-weight:600;letter-spacing:.02em}}
+  .ar-link:hover .en-text{{color:#0D9488}}
+  .legend{{max-width:1320px;margin:24px auto 36px;padding:0 24px;display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:#64748B}}
+  .legend b{{color:#0F172A}}
+  .swatch{{display:inline-block;width:14px;height:14px;border-radius:4px;background:#0F766E;vertical-align:middle;margin-right:6px}}
+  footer{{background:#0F172A;color:#64748B;padding:20px;text-align:center;font-size:11px;letter-spacing:.05em}}
+  footer a{{color:#F59E0B;text-decoration:none}}
+  @media(max-width:760px){{
+    .head h1{{font-size:22px}}
+    .head p{{font-size:13px}}
+    .kpi-row{{grid-template-columns:repeat(2,1fr)}}
+  }}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="wrap">
+    <span class="conf">⚠ INTERNAL TOOL · noindex</span>
+    <h1>Arabic LP Preview · {total} routes live</h1>
+    <p>Every cell below is a clickable Arabic landing page in production. Click any cell to open the actual page in a new tab. URLs are real Arabic — your browser will percent-encode them in the address bar but they resolve correctly.</p>
+    <div class="kpi-row">
+      <div class="kpi"><div class="v">{len(SERVICE_AR)}</div><div class="l">Services in Arabic</div></div>
+      <div class="kpi"><div class="v">{len(EMIRATE_AR)}</div><div class="l">UAE emirates</div></div>
+      <div class="kpi"><div class="v">{total}</div><div class="l">Total Arabic LPs</div></div>
+      <div class="kpi"><div class="v">~40%</div><div class="l">UAE searches in Arabic</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <b>How these pages work:</b> Each cell links to <code>servia.ae/&lt;arabic-service&gt;-&lt;arabic-emirate&gt;</code>.
+  The page renders <code>&lt;html lang="ar" dir="rtl"&gt;</code> with Arabic title + meta, canonicals to the
+  English <code>/services/&lt;slug&gt;</code> page (so SEO equity concentrates), and includes hreflang link
+  alternates for ar-AE + en-AE. All Arabic LPs are <b>noindex,follow</b> for now — designed as
+  destinations for Arabic Google Ads campaigns, not organic search (yet — Phase 4 will write unique
+  Arabic editorial content for ~5 high-CPC Arabic variants and flip those to indexed, same playbook
+  as the 5 English rich variants in v1.24.133).
+</div>
+
+<div class="grid-wrap">
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th>Service</th>
+        {em_headers}
+      </tr>
+    </thead>
+    <tbody>
+      {rows_html}
+    </tbody>
+  </table>
+</div>
+
+<div class="legend">
+  <div><b>Services per row:</b> {len(SERVICE_AR)}</div>
+  <div><b>Emirates per column:</b> {len(EMIRATE_AR)}</div>
+  <div><b>Click any cell</b> to open the Arabic LP in a new tab.</div>
+  <div><b>Source data:</b> <code>app/data/i18n_ar_slugs.py</code></div>
+</div>
+
+<footer>
+  Servia internal · <a href="/pitch">/pitch</a> · <a href="/admin">/admin</a> · v1.24.139 · noindex,nofollow
+</footer>
+
+</body>
+</html>"""
+    return _HR(content=html, headers={
+        "X-Robots-Tag": "noindex,nofollow,noarchive,nosnippet",
+        "Cache-Control": "private, no-store, max-age=0",
+    })
+
+
 app.include_router(_nfc_mod.router)            # /api/nfc/*  + /api/admin/nfc/*
 app.include_router(_nfc_mod.public_router)     # /t/<slug> tap handler
 app.include_router(_recovery_mod.router)       # /api/recovery/* one-tap dispatch
@@ -2214,6 +2387,8 @@ def robots_txt():
         # v1.24.136 — PIN-gated investor pitch. Direct-URL + PIN only.
         "Disallow: /pitch\n"
         "Disallow: /pitch.html\n"
+        # v1.24.139 — Internal Arabic-LP preview tool. Direct-URL only.
+        "Disallow: /ar-preview\n"
         "\n"
         # AI crawlers — explicitly ALLOWED for public surfaces, blocked from
         # admin/private. Listed individually so that adding a global Disallow
