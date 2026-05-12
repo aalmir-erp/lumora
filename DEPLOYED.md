@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"MKnkopKvRzeJYgboAax-fw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"PtDCExdBQLWh828iLPU1MQ"}`
 
 ## Build logs
 ```
@@ -32,9 +32,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:59f2d48160c690fdadf515d9951789358953463fa3989985afcc9c573789dcea
-containerimage.digest: sha256:b348892e8c218cdd849fd8aedefdddeb4f2a78f6de3497d626f679ed667e11e1
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6YjM0ODg5MmU4YzIxOGNkZDg0OWZkOGFlZGVmZGRkZWI0ZjJhNzhmNmRlMzQ5N2Q2MjZmNjc5ZWQ2NjdlMTFlMSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMlQxMTo0NTozNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6YzA4ZDc2YWM2YWJkMjc4M2E0ZTI1ZTIyNWFhZDRlNzY2ZDdlNzVjYjNjMjhlNzBmZGJiNTI1MDFjMDI3NDY4NiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMlQxMzo1NToxNVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:b812492e22500c9182f631c6b7abfa87105218bf47564a5d90b42bf8a293c7db
+containerimage.digest: sha256:c08d76ac6abd2783a4e25e225aad4e766d7e75cb3c28e70fdbb52501c0274686
 image push
 image push
 
@@ -50,21 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/92d9d7ba-58c5-445d-a275-26b9919a94b1/vol_onr647rhdeir9di9
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
-Starting Container
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[purge] scan complete — 25 posts, 0 flagged
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:55515 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.2:34587 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:11170 - "GET /api/blog/hero/al-barsha-restaurant-pest-control-dm-compliance.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.4:34734 - "GET /api/blog/hero/ras-al-khaimah-mina-al-arab-gym-deep-cleaning-in-mina-al-arab--ras-al-khaimah---pre-summer-prep-guid.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.5:14648 - "GET /api/blog/hero/sharjah-silverfish-bathrooms-humidity-fix-2026.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.6:56584 - "GET /api/blog/hero/ajman-al-jurf-sofa-carpet-in-al-jurf--ajman---pre-summer-prep-guide-for-may-2026.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.7:34956 - "GET /api/blog/hero/ras-al-khaimah-mina-al-arab-living-through-dewa-sewa-peak-season-in-ras-al-khaimah--cutting-your-bil.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.8:62308 - "GET /api/blog/hero/dubai-arabian-ranches-living-through-dewa-sewa-peak-season-in-dubai--cutting-your-bill--may-2026.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55738 - "GET /faq.html HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55738 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55742 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55752 - "POST /api/app-install HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55738 - "GET /api/search/index HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55742 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55738 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.4:55562 - "GET /_snippets.js?v=29643236 HTTP/1.1" 200 OK
+INFO:     100.64.0.9:34156 - "GET /cart-badge.js?v=29643236 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:49278 - "GET /social-strip.js?v=29643236 HTTP/1.1" 200 OK
+INFO:     100.64.0.11:56370 - "GET /location-bar.js?v=29643236 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55738 - "GET /api/site/social HTTP/1.1" 200 OK
+INFO:     100.64.0.3:55738 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.11:56370 - "GET /api/blog/hero/damac-hills-mosquito-balconies-2026-dengue-alert.svg HTTP/1.1" 200 OK
+INFO:     100.64.0.8:15368 - "GET /about-app.js?v=29643236 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:54822 - "POST /api/app-install HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [autoblog] catch-up SKIP (last_run @ 2026-05-12T02:00:00.000558Z is fresh AND ok)
 [wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.12:53024 - "GET / HTTP/1.1" 200 OK
 ```
