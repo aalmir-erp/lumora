@@ -47,7 +47,7 @@ Deploys on Railway from this folder. Brand name and colors configurable.
 
 **WhatsApp QR bridge (separate Node service)**
 - `whatsapp_bridge/index.js` — `whatsapp-web.js` + Express; QR page + `/send`
-- Pairs your **personal WhatsApp** via QR scan (same flow as the Aalmir Plastic bot)
+- Pairs your **personal WhatsApp** via QR scan (standard whatsapp-web.js flow)
 - Forwards inbound msgs to FastAPI; FastAPI pushes replies back via `/send`
 - Persistent session via `LocalAuth` directory (mount as Railway volume)
 
