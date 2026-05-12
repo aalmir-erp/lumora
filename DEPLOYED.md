@@ -2,23 +2,22 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"-C7KZQcGS6mE9lHdHn5Ytg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"HvG7fOEpSMOxkCYiO8poTA"}`
 
 ## Build logs
 ```
-npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-
-npm warn deprecated fluent-ffmpeg@2.1.3: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
-
-
-added 300 packages in 8s
-
-npm notice
-npm notice New major version of npm available! 10.8.2 -> 11.14.1
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.14.1
-npm notice To update run: npm install -g npm@11.14.1
-npm notice
-
+[internal] load build context
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+[internal] load build context
+[internal] load build context
+[ 2/12] WORKDIR /app
+[ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[ 4/12] COPY requirements.txt ./
+[ 5/12] RUN pip install -r requirements.txt
+[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
+[ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/12] COPY app ./app
 [ 8/12] COPY app ./app
@@ -31,10 +30,11 @@ npm notice
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
+uploading snapshot
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NjlmYTFmZWQ2MmQ1ZmIzOTY0MTM2NWU3NGVjOTIxZjk2ZjAwOWJhODEwYjgxZDc3MGU3Y2FiZTU5YmYwODA4MSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMlQxNjo0Nzo1MFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:b377ba815a434cbc1eae3fc4ad0e5a08976f4252f72473b52ca90afa27a985d8
-containerimage.digest: sha256:69fa1fed62d5fb39641365e74ec921f96f009ba810b81d770e7cabe59bf08081
+containerimage.digest: sha256:1cfd270803d217fef7cdbb4dd7c3542c0f1cc6f39860b5b41900747e5e5220fc
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MWNmZDI3MDgwM2QyMTdmZWY3Y2RiYjRkZDdjMzU0MmMwZjFjYzZmMzk4NjBiNWI0MTkwMDc0N2U1ZTUyMjBmYyIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xMlQxNzo0OTo1OFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:fa196ca26a23f58da5885c7dbe2a37380e81a7342e5c52218db8a1f350b6b852
 image push
 image push
 
@@ -50,20 +50,22 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/64b28cef-e6a0-4084-a4d4-b0da28842993/vol_onr647rhdeir9di9
-Starting Container
 [start] launching whatsapp_bridge
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/9afdafb7-017f-4608-b0d1-2716f363ff0a/vol_onr647rhdeir9di9
+Starting Container
 [wa-bridge] listening on :3001
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     Waiting for application startup.
 [lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
+[lp-ar] 133 Arabic landing-page routes registered
 INFO:     Started server process [1]
+INFO:     Waiting for application startup.
 [scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
 [purge] scan complete — 26 posts, 0 flagged
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:55577 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.2:48159 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [autoblog] catch-up SKIP (last_run @ 2026-05-12T14:00:00.000611Z is fresh AND ok)
+[wa-bridge] QR received. Open /qr in your browser to scan.
 ```
