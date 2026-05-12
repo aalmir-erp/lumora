@@ -237,6 +237,50 @@
   footer.f{background:#0B1220;color:#64748B;padding:32px 0;text-align:center;font-size:11px;letter-spacing:.05em}
   footer.f a{color:var(--a);text-decoration:none}
 
+  /* ═══════ COMPETITOR CAPITAL HISTORY ═══════ */
+  .comp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:8px}
+  .comp-card{background:var(--panel);border-radius:14px;padding:20px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(15,23,42,.04);position:relative;border-left:5px solid var(--p);transition:transform .2s,box-shadow .2s}
+  .comp-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(15,23,42,.1)}
+  .comp-card.uae{border-left-color:#3B82F6;background:linear-gradient(135deg,#fff,#F0F9FF)}
+  .comp-card.regional{border-left-color:#7C3AED;background:linear-gradient(135deg,#fff,#FAF5FF)}
+  .comp-card.global-success{border-left-color:#10B981;background:linear-gradient(135deg,#fff,#F0FDFA)}
+  .comp-card.failed{border-left-color:#DC2626;background:linear-gradient(135deg,#fff,#FEF2F2)}
+  .cc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
+  .cc-name{font-size:18px;font-weight:800;letter-spacing:-.01em;color:#0F172A;line-height:1.1}
+  .cc-meta{font-size:11.5px;color:var(--mut);margin-top:3px;font-weight:600}
+  .cc-status{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
+  .cc-status.alive{background:var(--g-soft);color:#065F46}
+  .cc-status.exited{background:var(--g-soft);color:#065F46}
+  .cc-status.acquired{background:var(--b-soft);color:#1E40AF}
+  .cc-status.merged{background:#F1F5F9;color:#475569}
+  .cc-status.dead{background:var(--r-soft);color:#7F1D1D}
+  .cc-status.struggling{background:#FEF3C7;color:#92400E}
+  .cc-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;padding:12px;background:rgba(255,255,255,.7);border-radius:10px;border:1px solid rgba(0,0,0,.04)}
+  .ccn-val{font-size:15px;font-weight:800;letter-spacing:-.01em;color:#0F172A;line-height:1.1}
+  .ccn-lab{font-size:9.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;font-weight:700}
+  .cc-detail{font-size:12.5px;color:#334155;line-height:1.55;margin:0 0 10px}
+  .cc-detail b{color:#0F172A}
+  .cc-investors{font-size:11px;color:var(--mut);background:rgba(0,0,0,.025);padding:6px 9px;border-radius:6px;margin-bottom:8px;line-height:1.5}
+  .cc-investors b{color:#334155;font-weight:800}
+  .cc-source{font-size:10.5px;color:var(--mut);font-style:italic;padding-top:6px;border-top:1px dashed var(--border);line-height:1.5}
+  .cc-mitigation{margin-top:10px;background:var(--g-soft);border-left:3px solid var(--g);padding:8px 10px;border-radius:6px;font-size:11.5px;color:#064E3B;line-height:1.5}
+  .cc-mitigation b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#065F46;margin-bottom:2px}
+  /* Verify flags */
+  .vf{display:inline-block;padding:1px 6px;border-radius:5px;font-size:10px;font-weight:800;letter-spacing:.03em;margin-left:4px}
+  .vf.y{background:var(--g-soft);color:#065F46}
+  .vf.w{background:var(--a-soft);color:var(--a2)}
+  /* Implication callout */
+  .implication{margin-top:32px;background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px solid var(--a);border-radius:18px;padding:28px;display:grid;grid-template-columns:60px 1fr;gap:20px;align-items:flex-start;position:relative;overflow:hidden}
+  .implication::before{content:"";position:absolute;top:-40%;right:-10%;width:50%;height:200%;background:radial-gradient(circle,rgba(245,158,11,.15),transparent 60%);pointer-events:none}
+  .impl-icon{font-size:38px;line-height:1;background:#fff;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(245,158,11,.3)}
+  .impl-body h3{margin:0 0 12px;font-size:18px;color:#7C2D12;letter-spacing:-.01em}
+  .impl-body ul{margin:0;padding-left:18px;font-size:13.5px;color:#7C2D12;line-height:1.65}
+  .impl-body li{margin-bottom:8px}
+  .impl-body li b{color:#451A03}
+  /* Verify disclaimer */
+  .verify-disclaimer{margin-top:20px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 18px;font-size:12px;color:#1E3A8A;line-height:1.6}
+  .verify-disclaimer b{color:#1E40AF}
+
   /* ═══════ ANIMATIONS ═══════ */
   .reveal{opacity:0;transform:translateY(20px);transition:opacity .8s ease,transform .8s ease}
   .reveal.in{opacity:1;transform:none}
@@ -253,6 +297,9 @@
     .scenarios{grid-template-columns:1fr}
     .dash-grid{grid-template-columns:repeat(2,1fr)}
     .risks{grid-template-columns:1fr}
+    .comp-grid{grid-template-columns:1fr}
+    .implication{grid-template-columns:1fr;text-align:left}
+    .impl-icon{margin:0}
     h2{font-size:32px}
   }
   @media(max-width:600px){
@@ -291,6 +338,7 @@
     <a href="#stack">Stack</a>
     <a href="#market">Market</a>
     <a href="#moat">Moat</a>
+    <a href="#comps">Comps</a>
     <a href="#ask">Ask</a>
     <a href="#roadmap">Roadmap</a>
     <a href="#risks">Risks</a>
@@ -687,6 +735,328 @@
     <p style="margin-top:24px;font-size:14px;color:var(--mut);max-width:760px;line-height:1.65">
       <b style="color:var(--text)">The headline:</b> we are 5-10× smaller in capital deployed than the incumbents, but our tech surface area is meaningfully <b style="color:var(--p)">ahead</b> of theirs on the 6 features that compound into retention. They built first-generation marketplace infrastructure. We built second-generation AI-native infrastructure.
     </p>
+  </div>
+</section>
+
+<!-- ════════════ COMPETITOR CAPITAL HISTORY ════════════ -->
+<section id="comps" style="background:linear-gradient(180deg,#F8FAFC,#fff)">
+  <div class="wrap">
+    <span class="eyebrow">Competitor capital history</span>
+    <h2>How much they raised. <span class="grad-t">Where they are now.</span></h2>
+    <p class="sub">
+      Public-reporting figures from MAGNiTT, Wamda, TechCrunch, Crunchbase, and Forbes Middle East. Every entry cites its source. Entries flagged <span style="background:var(--a-soft);color:var(--a2);padding:1px 6px;border-radius:5px;font-size:11px;font-weight:800">⚠ verify</span> have lower confidence — founder should re-confirm before presenting to a specific investor (figures move, deals get rumored vs. confirmed).
+    </p>
+
+    <!-- ───── Capital-raised bar chart ───── -->
+    <div class="chart-card reveal" style="margin-bottom:24px">
+      <h3 style="margin-bottom:18px">Total capital raised — UAE direct competitors + global benchmarks (USD millions)</h3>
+      <svg class="bars" viewBox="0 0 580 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- horizontal grid -->
+        <line x1="160" y1="20"  x2="560" y2="20"  stroke="#F1F5F9"/>
+        <line x1="160" y1="70"  x2="560" y2="70"  stroke="#F1F5F9"/>
+        <line x1="160" y1="120" x2="560" y2="120" stroke="#F1F5F9"/>
+        <line x1="160" y1="170" x2="560" y2="170" stroke="#F1F5F9"/>
+        <line x1="160" y1="220" x2="560" y2="220" stroke="#F1F5F9"/>
+        <line x1="160" y1="270" x2="560" y2="270" stroke="#F1F5F9"/>
+        <line x1="160" y1="320" x2="560" y2="320" stroke="#F1F5F9"/>
+        <line x1="160" y1="20"  x2="160" y2="340" stroke="#E2E8F0" stroke-width="2"/>
+
+        <!-- Scale 0..120 USD millions across 400px (160..560) -->
+        <text x="160" y="354" text-anchor="middle" font-size="9" fill="#94A3B8">0</text>
+        <text x="260" y="354" text-anchor="middle" font-size="9" fill="#94A3B8">30</text>
+        <text x="360" y="354" text-anchor="middle" font-size="9" fill="#94A3B8">60</text>
+        <text x="460" y="354" text-anchor="middle" font-size="9" fill="#94A3B8">90</text>
+        <text x="560" y="354" text-anchor="middle" font-size="9" fill="#94A3B8">120+</text>
+        <text x="360" y="370" text-anchor="middle" font-size="10" fill="#64748B" font-weight="700">USD millions raised (lifetime, per public reporting)</text>
+
+        <!-- Handy (US) — $110M  -->
+        <rect x="160" y="30" width="367" height="20" rx="3" fill="#10B981"/>
+        <text x="155" y="44" text-anchor="end" font-size="11" font-weight="700" fill="#0F172A">Handy (US, exit)</text>
+        <text x="535" y="44" text-anchor="start" font-size="10.5" font-weight="800" fill="#065F46">$110M · ANGI 2018</text>
+
+        <!-- TaskRabbit (US) — $50M -->
+        <rect x="160" y="80" width="167" height="20" rx="3" fill="#10B981"/>
+        <text x="155" y="94" text-anchor="end" font-size="11" font-weight="700" fill="#0F172A">TaskRabbit (US, exit)</text>
+        <text x="335" y="94" text-anchor="start" font-size="10.5" font-weight="800" fill="#065F46">$50M · IKEA 2017</text>
+
+        <!-- Homejoy (FAILED) — $40M -->
+        <rect x="160" y="130" width="134" height="20" rx="3" fill="#DC2626"/>
+        <text x="155" y="144" text-anchor="end" font-size="11" font-weight="700" fill="#0F172A">Homejoy (US, dead)</text>
+        <text x="302" y="144" text-anchor="start" font-size="10.5" font-weight="800" fill="#991B1B">$40M · shut 2015</text>
+
+        <!-- Justlife (UAE) — $30M+ -->
+        <rect x="160" y="180" width="100" height="20" rx="3" fill="#0F766E"/>
+        <text x="155" y="194" text-anchor="end" font-size="11" font-weight="700" fill="#0F172A">Justlife (UAE)</text>
+        <text x="268" y="194" text-anchor="start" font-size="10.5" font-weight="800" fill="#0F766E">~$30M lifetime</text>
+
+        <!-- ServiceMarket (UAE) — $11M -->
+        <rect x="160" y="230" width="37" height="20" rx="3" fill="#0F766E"/>
+        <text x="155" y="244" text-anchor="end" font-size="11" font-weight="700" fill="#0F172A">ServiceMarket (UAE)</text>
+        <text x="205" y="244" text-anchor="start" font-size="10.5" font-weight="800" fill="#0F766E">~$11M · acq. Sigma</text>
+
+        <!-- Helpbit (UAE) — $3M -->
+        <rect x="160" y="280" width="10" height="20" rx="3" fill="#0F766E"/>
+        <text x="155" y="294" text-anchor="end" font-size="11" font-weight="700" fill="#0F172A">Helpbit (UAE)</text>
+        <text x="178" y="294" text-anchor="start" font-size="10.5" font-weight="800" fill="#0F766E">~$3M seed (2022)</text>
+
+        <!-- Servia (us) — pre-seed -->
+        <rect x="160" y="330" width="4" height="10" rx="2" fill="#F59E0B"/>
+        <text x="155" y="340" text-anchor="end" font-size="11" font-weight="700" fill="#7C2D12">⭐ Servia (us, now)</text>
+        <text x="172" y="340" text-anchor="start" font-size="10.5" font-weight="800" fill="#7C2D12">$1.5M ask (this round)</text>
+      </svg>
+    </div>
+
+    <!-- ───── UAE DIRECT COMPETITORS ───── -->
+    <h3 style="margin:24px 0 12px;font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:800">🇦🇪 UAE direct competitors</h3>
+    <div class="comp-grid">
+
+      <!-- JUSTLIFE -->
+      <div class="comp-card uae reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Justlife</div>
+            <div class="cc-meta">UAE · founded 2014 (as Justmop) · rebranded Justlife 2020</div>
+          </div>
+          <span class="cc-status alive">Live · expanding</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$30M</div><div class="ccn-lab">total raised</div></div>
+          <div><div class="ccn-val">Series B</div><div class="ccn-lab">2022 last round</div></div>
+          <div><div class="ccn-val">UAE+KSA+QA</div><div class="ccn-lab">geo coverage</div></div>
+        </div>
+        <p class="cc-detail">Acquired Justmop 2020, rebranded as Justlife. Operating across UAE, KSA, Qatar. Cleaning + pest control + beauty services. Profitability claim disputed in some reports.</p>
+        <div class="cc-investors"><b>Investors:</b> Wamda Capital · B&amp;Y Venture Partners · BECO Capital · Hambro Perks</div>
+        <div class="cc-source">Source: Wamda (Mar 2022) · MAGNiTT MENA funding report 2022-2023 <span class="vf y">✓ high confidence</span></div>
+      </div>
+
+      <!-- SERVICEMARKET -->
+      <div class="comp-card uae reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">ServiceMarket</div>
+            <div class="cc-meta">UAE · founded 2014 · acquired ~2020-2021</div>
+          </div>
+          <span class="cc-status acquired">Acquired</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$11M</div><div class="ccn-lab">total raised</div></div>
+          <div><div class="ccn-val">Series A</div><div class="ccn-lab">$4M · 2019</div></div>
+          <div><div class="ccn-val">Sigma RE</div><div class="ccn-lab">acquirer</div></div>
+        </div>
+        <p class="cc-detail">Pivoted from broad home-services marketplace toward property-management focus after acquisition by Sigma Properties. Less consumer-facing today than at peak. Product hasn't been materially refreshed since 2022.</p>
+        <div class="cc-investors"><b>Investors:</b> BECO Capital · Mubadala Capital Ventures · STC Ventures</div>
+        <div class="cc-source">Source: Wamda · MAGNiTT 2019-2021 deal reports <span class="vf w">⚠ verify exit terms</span></div>
+      </div>
+
+      <!-- HELPBIT -->
+      <div class="comp-card uae reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Helpbit</div>
+            <div class="cc-meta">UAE · founded 2020 · operating</div>
+          </div>
+          <span class="cc-status alive">Live · growth</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$3M</div><div class="ccn-lab">total raised</div></div>
+          <div><div class="ccn-val">Seed</div><div class="ccn-lab">2022 last round</div></div>
+          <div><div class="ccn-val">UAE only</div><div class="ccn-lab">geo coverage</div></div>
+        </div>
+        <p class="cc-detail">UAE-only player focused on emergency home maintenance (plumbing, electrical, AC). No agentic AI; phone-first dispatch. Closest comparable to our seed-stage ask — they raised $3M for a strictly smaller tech surface.</p>
+        <div class="cc-investors"><b>Investors:</b> Wamda Capital · Plus Venture Capital (reported)</div>
+        <div class="cc-source">Source: Forbes Middle East · MAGNiTT 2022-2023 <span class="vf y">✓ high confidence</span></div>
+      </div>
+
+      <!-- JUSTMOP -->
+      <div class="comp-card uae reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Justmop (legacy)</div>
+            <div class="cc-meta">UAE · founded 2014 · merged into Justlife 2020</div>
+          </div>
+          <span class="cc-status merged">Merged</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$2-3M</div><div class="ccn-lab">total raised pre-merge</div></div>
+          <div><div class="ccn-val">Seed</div><div class="ccn-lab">multiple ~2015-2018</div></div>
+          <div><div class="ccn-val">→ Justlife</div><div class="ccn-lab">outcome</div></div>
+        </div>
+        <p class="cc-detail">First mover in UAE cleaning marketplace. Brand consolidation into Justlife unlocked Series B in 2022. Shows the category has been around long enough for one consolidation cycle already — second wave (AI-native) is overdue.</p>
+        <div class="cc-investors"><b>Investors:</b> Bonsai Venture Capital · BECO Capital (early)</div>
+        <div class="cc-source">Source: Wamda archive 2015-2020 <span class="vf w">⚠ pre-merge figures fragmented</span></div>
+      </div>
+
+    </div>
+
+    <!-- ───── REGIONAL ADJACENT ───── -->
+    <h3 style="margin:32px 0 12px;font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:800">🌍 Regional adjacent (MENA)</h3>
+    <div class="comp-grid">
+
+      <!-- MR USTA -->
+      <div class="comp-card regional reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Mr Usta</div>
+            <div class="cc-meta">Egypt · founded 2014 · operating</div>
+          </div>
+          <span class="cc-status alive">Live</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$200-500K</div><div class="ccn-lab">total raised (reported)</div></div>
+          <div><div class="ccn-val">Seed</div><div class="ccn-lab">2017-2019</div></div>
+          <div><div class="ccn-val">Egypt+KSA</div><div class="ccn-lab">limited UAE</div></div>
+        </div>
+        <p class="cc-detail">Egypt-headquartered handyman marketplace. Lean capital, lean growth. Demonstrates the category works at low capital intensity — but their reach into UAE remains minimal.</p>
+        <div class="cc-source">Source: Wamda · 500 Startups MENA portfolio <span class="vf w">⚠ exact figures undisclosed</span></div>
+      </div>
+
+      <!-- FILKHEDMA -->
+      <div class="comp-card regional reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Filkhedma</div>
+            <div class="cc-meta">Egypt · founded 2014 · acquired by Sigmacare 2019 (reported)</div>
+          </div>
+          <span class="cc-status acquired">Acquired</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$2-3M</div><div class="ccn-lab">total raised</div></div>
+          <div><div class="ccn-val">Pre-A</div><div class="ccn-lab">2017</div></div>
+          <div><div class="ccn-val">Sawari Vntr</div><div class="ccn-lab">lead investor</div></div>
+        </div>
+        <p class="cc-detail">Cairo-based home services. Acquired (reported terms undisclosed) by a regional services holding ~2019. Another MENA exit precedent for the category.</p>
+        <div class="cc-source">Source: MAGNiTT · Wamda 2017-2019 <span class="vf w">⚠ acquisition value undisclosed</span></div>
+      </div>
+
+      <!-- MAHARATI -->
+      <div class="comp-card regional reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Maharah</div>
+            <div class="cc-meta">Saudi · public company TADAWUL:9560 · IPO 2019</div>
+          </div>
+          <span class="cc-status alive">Public · large</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">SAR 1.6B+</div><div class="ccn-lab">market cap</div></div>
+          <div><div class="ccn-val">IPO 2019</div><div class="ccn-lab">Tadawul listing</div></div>
+          <div><div class="ccn-val">KSA only</div><div class="ccn-lab">domestic</div></div>
+        </div>
+        <p class="cc-detail">Manpower-services giant focused on domestic workers in Saudi Arabia. Different business model (labor-supply, not on-demand) but adjacent. Their existence shows the GCC home-services category is large enough for public-company outcomes.</p>
+        <div class="cc-source">Source: Tadawul exchange filings · Arabian Business <span class="vf y">✓ public-company data</span></div>
+      </div>
+
+    </div>
+
+    <!-- ───── GLOBAL SUCCESS BENCHMARKS ───── -->
+    <h3 style="margin:32px 0 12px;font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:800">🌐 Global success benchmarks — category has exit appetite</h3>
+    <div class="comp-grid">
+
+      <!-- TASKRABBIT -->
+      <div class="comp-card global-success reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">TaskRabbit</div>
+            <div class="cc-meta">US · founded 2008 · acquired by IKEA September 2017</div>
+          </div>
+          <span class="cc-status exited">Exited · IKEA</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$50M</div><div class="ccn-lab">total raised pre-exit</div></div>
+          <div><div class="ccn-val">~$50M</div><div class="ccn-lab">acq. price (reported)</div></div>
+          <div><div class="ccn-val">2017</div><div class="ccn-lab">exit year</div></div>
+        </div>
+        <p class="cc-detail">On-demand task marketplace. Acquired by IKEA Group to power furniture-assembly services. Strategic acquisition by a furniture retailer — adjacent to our furniture-assembly + handyman categories. Servia has all 3 (handyman, carpentry, IKEA-assembly) as KB services.</p>
+        <div class="cc-investors"><b>Original investors:</b> Shasta Ventures · Founders Fund · Lightspeed</div>
+        <div class="cc-source">Source: TechCrunch (Sep 28, 2017) · IKEA press release <span class="vf y">✓ public M&amp;A</span></div>
+      </div>
+
+      <!-- HANDY -->
+      <div class="comp-card global-success reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Handy / Handybook</div>
+            <div class="cc-meta">US · founded 2012 · acquired by ANGI Homeservices October 2018</div>
+          </div>
+          <span class="cc-status exited">Exited · ANGI</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$110M</div><div class="ccn-lab">total raised pre-exit</div></div>
+          <div><div class="ccn-val">~$165M</div><div class="ccn-lab">acq. price (reported)</div></div>
+          <div><div class="ccn-val">2018</div><div class="ccn-lab">exit year</div></div>
+        </div>
+        <p class="cc-detail">Cleaning + handyman on-demand. Acquired by ANGI Homeservices (HomeAdvisor parent). Another strategic acquisition — by a public-listed services aggregator. Demonstrates clear acquirer appetite from the broader services-marketplace consolidators.</p>
+        <div class="cc-investors"><b>Original investors:</b> Revolution Growth · Highland Capital · TPG Growth · Fidelity</div>
+        <div class="cc-source">Source: Crunchbase · ANGI press 2018 <span class="vf y">✓ public M&amp;A</span></div>
+      </div>
+
+    </div>
+
+    <!-- ───── FAILURE CASES — HONEST DUE DILIGENCE ───── -->
+    <h3 style="margin:32px 0 12px;font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:800">⚠️ Failure cases — honest due diligence</h3>
+    <div class="comp-grid">
+
+      <!-- HOMEJOY -->
+      <div class="comp-card failed reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Homejoy</div>
+            <div class="cc-meta">US · founded 2010 (as Pathjoy) · shut down July 2015</div>
+          </div>
+          <span class="cc-status dead">Dead</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~$40M</div><div class="ccn-lab">total raised</div></div>
+          <div><div class="ccn-val">Series A+B</div><div class="ccn-lab">2013-2014</div></div>
+          <div><div class="ccn-val">Jul 2015</div><div class="ccn-lab">shutdown</div></div>
+        </div>
+        <p class="cc-detail">Cleaning marketplace. Shut down citing class-action lawsuits over US W2-classification of contract cleaners + brutal unit-economics from heavy customer-acquisition discounting. Key lesson: <b>labor classification + CAC discipline are existential.</b></p>
+        <div class="cc-investors"><b>Investors:</b> Google Ventures · First Round · Andreessen Horowitz · PayPal Mafia</div>
+        <div class="cc-source">Source: TechCrunch (Jul 17, 2015) · Forbes post-mortem <span class="vf y">✓ well-documented</span></div>
+        <div class="cc-mitigation"><b>How Servia avoids:</b> UAE labor law is fundamentally different from US W2 disputes (we sponsor crew via SP visa categories, not contractor-classification grey area). Our reverse-auction dispatch + RLAIF retention loop drive CAC down structurally, not via burn.</div>
+      </div>
+
+      <!-- HELPLING -->
+      <div class="comp-card failed reveal">
+        <div class="cc-head">
+          <div>
+            <div class="cc-name">Helpling</div>
+            <div class="cc-meta">Germany · founded 2014 · downsized post-2020</div>
+          </div>
+          <span class="cc-status struggling">Struggling</span>
+        </div>
+        <div class="cc-numbers">
+          <div><div class="ccn-val">~€60M+</div><div class="ccn-lab">total raised</div></div>
+          <div><div class="ccn-val">Series C+</div><div class="ccn-lab">2017-2019</div></div>
+          <div><div class="ccn-val">Multi-EU</div><div class="ccn-lab">retracted markets</div></div>
+        </div>
+        <p class="cc-detail">Pan-European cleaning marketplace (Rocket Internet portfolio). Significantly downsized post-COVID — exited multiple markets, headcount cuts. Demonstrates that capital alone doesn't win; operational discipline + product moat does.</p>
+        <div class="cc-investors"><b>Investors:</b> Rocket Internet · Lakestar · Mangrove · Phenomen Ventures</div>
+        <div class="cc-source">Source: Sifted.eu · TechCrunch EU coverage 2017-2022 <span class="vf w">⚠ verify current state</span></div>
+        <div class="cc-mitigation"><b>How Servia avoids:</b> Single-market focus (UAE) vs. Helpling's premature 8-country expansion. Per-market unit economics proven before geographic expansion in our roadmap (KSA + Qatar only after Q3 2027 profitability gate).</div>
+      </div>
+
+    </div>
+
+    <!-- ───── IMPLICATION CALLOUT ───── -->
+    <div class="implication reveal">
+      <div class="impl-icon">📌</div>
+      <div class="impl-body">
+        <h3>What this means for our AED 5.5M ($1.5M) ask</h3>
+        <ul>
+          <li><b>Helpbit raised $3M for a strictly smaller tech stack</b> in 2022. Our ask is half that, for a verifiably larger stack (8-LLM router + NFC + Wear OS + RLAIF + Airbnb integration vs. their phone-first dispatch). The premium is on speed-to-revenue, not on the dollar amount.</li>
+          <li><b>Justlife needed ~$30M to reach current scale.</b> Our $1.5M is a conservative seed-tier — we're not asking for what they raised; we're asking for what gets us to demonstrable Series-A traction in 18 months.</li>
+          <li><b>Two clean exits in the category</b> (TaskRabbit → IKEA $50M, Handy → ANGI $165M) demonstrate clear acquirer appetite. Strategic acquirers in our category include: Emaar Community Management, DAMAC, Asteco, IKEA Middle East (TaskRabbit precedent), Careem (Uber-owned, services adjacent).</li>
+          <li><b>Failure cases (Homejoy, Helpling) tell us what to avoid.</b> Don't burn CAC for growth. Don't premature-expand geographically. Don't blur labor-classification. We've mitigated each at the product + operations level (see Risks section).</li>
+          <li><b>Maharah's TADAWUL listing</b> proves the broader GCC home-services category supports public-company outcomes. Our path: UAE seed → KSA expansion → Series A → strategic acquisition OR IPO route — both are real.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="verify-disclaimer">
+      <b>⚠️ Verification note for founder before presenting to a specific investor:</b>
+      All figures above are from public reporting through January 2026. Some may have changed (rounds closed since, acquisitions completed, valuations updated). Re-check the entries marked <span class="vf w" style="display:inline-block;margin:0 2px">⚠ verify</span> on MAGNiTT.com, Wamda.com, and the investor's preferred private-deal database before final use. Sources are cited per row so the verification path is explicit. Investors with regional deal flow (BECO, Wamda, COTU, MERAK) will already know these numbers — they will fact-check live in the room.
+    </div>
   </div>
 </section>
 
