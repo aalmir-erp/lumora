@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>📬 Unified Inbox · Servia Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F1F5F9;color:#0F172A;line-height:1.5}
+.head{background:linear-gradient(135deg,#134E4A,#0F766E);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.head h1{margin:0;font-size:20px}
+.head input{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 12px;border-radius:8px;font-size:12px;width:200px}
+.container{max-width:1280px;margin:0 auto;padding:18px}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:14px}
+.kpi .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#64748B;font-weight:800}
+.kpi .v{font-size:22px;font-weight:800;letter-spacing:-.02em;color:#0F172A}
+.kpi.unread .v{color:#DC2626}
+.filters{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters input,.filters select{padding:7px 10px;border:1px solid #E2E8F0;border-radius:7px;font-size:13px}
+.filters .btn{background:#0F766E;color:#fff;border:0;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer}
+.layout{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+@media(max-width:880px){.layout{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(3,1fr)}}
+.panel{background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#F8FAFC;text-align:left;padding:10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#64748B;font-weight:800}
+td{padding:11px 10px;border-bottom:1px solid #F1F5F9}
+tr.unread{background:#FFFBEB}
+tr.click{cursor:pointer}
+tr:hover{background:#FAFBFC}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.04em}
+.badge-in{background:#D1FAE5;color:#065F46}
+.badge-out{background:#DBEAFE;color:#1E40AF}
+.badge-whatsapp{background:#DCFCE7;color:#166534}
+.badge-email{background:#E0E7FF;color:#3730A3}
+.badge-sms{background:#FEF3C7;color:#92400E}
+.badge-delivered{background:#D1FAE5;color:#065F46}
+.badge-failed{background:#FEE2E2;color:#7F1D1D}
+.badge-pending{background:#FEF3C7;color:#92400E}
+.badge-read{background:#F1F5F9;color:#475569}
+.detail{padding:18px}
+.detail h3{margin:0 0 4px;font-size:15px}
+.detail .meta{font-size:12px;color:#64748B;margin-bottom:14px}
+.detail .body{background:#F8FAFC;padding:14px;border-radius:8px;white-space:pre-wrap;font-size:13.5px;line-height:1.6;max-height:400px;overflow-y:auto}
+.detail .actions{margin-top:12px;display:flex;gap:8px}
+.detail .actions a,.detail .actions button{background:#0F766E;color:#fff;border:0;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:700;text-decoration:none;cursor:pointer}
+.empty{padding:48px;text-align:center;color:#94A3B8}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>📬 Unified Inbox — emails + WhatsApp + SMS</h1>
+  <input id="token" type="password" placeholder="Admin token">
+</div>
+<div class="container">
+
+  <div class="kpi-row">
+    <div class="kpi unread"><div class="lab">Unread inbound</div><div class="v" id="k-unread">—</div></div>
+    <div class="kpi"><div class="lab">📩 WA in (7d)</div><div class="v" id="k-wa-in">—</div></div>
+    <div class="kpi"><div class="lab">📤 WA out (7d)</div><div class="v" id="k-wa-out">—</div></div>
+    <div class="kpi"><div class="lab">📩 Email in (7d)</div><div class="v" id="k-em-in">—</div></div>
+    <div class="kpi"><div class="lab">📤 Email out (7d)</div><div class="v" id="k-em-out">—</div></div>
+  </div>
+
+  <div class="filters">
+    <input id="q" type="text" placeholder="🔍 Search body / subject / sender">
+    <select id="channel">
+      <option value="">All channels</option>
+      <option value="whatsapp">WhatsApp</option>
+      <option value="email">Email</option>
+      <option value="sms">SMS</option>
+    </select>
+    <select id="direction">
+      <option value="">In + Out</option>
+      <option value="in">📩 Inbound only</option>
+      <option value="out">📤 Outbound only</option>
+    </select>
+    <select id="status">
+      <option value="">Any status</option>
+      <option value="delivered">Delivered</option>
+      <option value="failed">Failed</option>
+      <option value="pending">Pending</option>
+      <option value="read">Read</option>
+    </select>
+    <input id="from" type="date"><input id="to" type="date">
+    <button class="btn" onclick="load()">↻ Refresh</button>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <table>
+        <thead><tr>
+          <th>Time</th><th>📡</th><th>↔</th><th>Sender / Recipient</th><th>Preview</th><th>Status</th>
+        </tr></thead>
+        <tbody id="rows"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div id="detail" class="empty">← Select a message to view</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TOK="servia.admin.token";
+const tk=document.getElementById("token");
+tk.value=localStorage.getItem(TOK)||"";
+tk.onchange=()=>localStorage.setItem(TOK,tk.value);
+const H=()=>({"Authorization":"Bearer "+tk.value});
+
+async function api(p){const r=await fetch(p,{headers:H()});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
+
+function fmtT(s){if(!s)return"—";const d=new Date(s);if(isNaN(d))return s.substr(0,16);const now=new Date();const days=Math.floor((now-d)/86400000);if(days===0)return d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});if(days===1)return"Yesterday "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short"})+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+function chIcon(c){return {whatsapp:"💬",email:"✉️",sms:"📱"}[c]||"📨"}
+function dirIcon(d){return d==="in"?"📩":"📤"}
+function badge(cls,txt){return `<span class="badge badge-${cls}">${txt}</span>`}
+
+async function load(){
+  const p=new URLSearchParams();
+  ["q","channel","direction","status","from","to"].forEach(k=>{const v=document.getElementById(k).value;if(v){p.set(k==="from"?"from_date":k==="to"?"to_date":k,v)}});
+  try{
+    const d=await api("/api/admin/inbox?"+p);
+    const rows=(d.items||[]).map(m=>`
+      <tr class="click ${m.status==='delivered'&&m.direction==='in'?'unread':''}" onclick="openDetail(${m.id})">
+        <td>${fmtT(m.created_at)}</td>
+        <td>${chIcon(m.channel)}</td>
+        <td>${dirIcon(m.direction)}</td>
+        <td><b>${m.direction==='in'?(m.sender||'—'):(m.recipient||'—')}</b>
+            ${m.subject?'<br><small style="color:#94A3B8">'+m.subject.substring(0,40)+'</small>':''}</td>
+        <td style="font-size:12px;color:#475569">${(m.body_preview||'').substring(0,80)}…</td>
+        <td>${badge(m.status,m.status)}</td>
+      </tr>`).join("");
+    document.getElementById("rows").innerHTML=rows||`<tr><td colspan="6" class="empty">No messages. Filters may be too narrow.</td></tr>`;
+    loadStats();
+  }catch(e){document.getElementById("rows").innerHTML=`<tr><td colspan="6" class="empty">Load failed: ${e.message} — check admin token</td></tr>`}
+}
+async function loadStats(){
+  try{
+    const d=await api("/api/admin/inbox/stats?days=7");
+    document.getElementById("k-unread").textContent=d.unread_inbound||0;
+    document.getElementById("k-wa-in").textContent=d.by_channel?.in_whatsapp||0;
+    document.getElementById("k-wa-out").textContent=d.by_channel?.out_whatsapp||0;
+    document.getElementById("k-em-in").textContent=d.by_channel?.in_email||0;
+    document.getElementById("k-em-out").textContent=d.by_channel?.out_email||0;
+  }catch(e){}
+}
+async function openDetail(id){
+  document.getElementById("detail").innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const r=await api("/api/admin/inbox/"+id);
+    const m=r.message;
+    const replyHref=m.channel==="whatsapp"?
+      `https://wa.me/${(m.direction==='in'?m.sender:m.recipient).replace(/[^0-9]/g,'')}`:
+      m.channel==="email"?
+      `mailto:${m.direction==='in'?m.sender:m.recipient}?subject=Re: ${encodeURIComponent(m.subject||'')}`:"#";
+    document.getElementById("detail").innerHTML=`
+      <div class="detail">
+        <h3>${dirIcon(m.direction)} ${chIcon(m.channel)} ${m.subject||(m.direction==='in'?'From '+m.sender:'To '+m.recipient)}</h3>
+        <div class="meta">
+          <b>${m.direction==='in'?'From':'To'}:</b> ${m.direction==='in'?m.sender:m.recipient}<br>
+          <b>Status:</b> ${badge(m.status,m.status)} · ${fmtT(m.created_at)}<br>
+          ${m.related_type?'<b>Linked:</b> '+m.related_type+' '+m.related_id:''}
+          ${m.error?'<br><b style="color:#DC2626">Error:</b> '+m.error:''}
+        </div>
+        <div class="body">${(m.body||'(empty)').replace(/</g,'&lt;')}</div>
+        <div class="actions">
+          <a href="${replyHref}" target="_blank">↩ Reply via ${m.channel}</a>
+          ${m.status==='delivered'?`<button onclick="markRead(${m.id})">✓ Mark read</button>`:''}
+        </div>
+      </div>`;
+  }catch(e){document.getElementById("detail").innerHTML=`<div class="empty">Load failed: ${e.message}</div>`}
+}
+async function markRead(id){
+  try{await fetch("/api/admin/inbox/"+id+"/mark-read",{method:"POST",headers:H()});load()}catch(e){}
+}
+
+load();
+setInterval(load,30000);  // refresh every 30 sec
+</script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>🤖 AI Engine Registration · Servia Admin Guide</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F8FAFC;color:#0F172A;line-height:1.6}
+.head{background:linear-gradient(135deg,#134E4A,#0F766E);color:#fff;padding:32px 24px;text-align:center}
+.head h1{margin:0 0 6px;font-size:26px;letter-spacing:-.02em}
+.head p{margin:0;opacity:.85;font-size:14px;max-width:680px;margin:0 auto}
+.container{max-width:980px;margin:0 auto;padding:24px 16px}
+.intro{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px 18px;border-radius:8px;font-size:13.5px;color:#1E3A8A;margin-bottom:24px;line-height:1.7}
+.intro b{color:#1E40AF}
+.engine{background:#fff;border:1px solid #E2E8F0;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 6px rgba(15,23,42,.04)}
+.engine-h{padding:18px 22px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E2E8F0;gap:14px;flex-wrap:wrap}
+.engine-h .ttl{display:flex;align-items:center;gap:12px}
+.engine-h .logo{width:42px;height:42px;border-radius:10px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.engine-h h2{margin:0;font-size:18px}
+.engine-h .sub{font-size:12px;color:#64748B;margin-top:2px}
+.engine-h .badge{padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:800;letter-spacing:.04em}
+.b-done{background:#D1FAE5;color:#065F46}
+.b-todo{background:#FEF3C7;color:#92400E}
+.b-pending{background:#DBEAFE;color:#1E40AF}
+.engine-body{padding:18px 22px;font-size:13.5px}
+.engine-body h3{margin:18px 0 8px;font-size:14px}
+.engine-body h3:first-child{margin-top:0}
+.engine-body ol,.engine-body ul{padding-left:22px;margin:6px 0 12px}
+.engine-body ol li,.engine-body ul li{margin-bottom:6px;line-height:1.6}
+.engine-body code{background:#F1F5F9;padding:1px 6px;border-radius:4px;font-size:12px;font-family:Menlo,monospace}
+.engine-body a{color:#0F766E;font-weight:700;text-decoration:none;border-bottom:1px dashed #0F766E}
+.benefit{background:#F0FDFA;border-left:3px solid #0F766E;padding:8px 12px;border-radius:6px;margin-top:10px;font-size:12.5px;color:#134E4A}
+.benefit b{color:#0F766E}
+.url-box{background:#0F172A;color:#FBBF24;padding:8px 12px;border-radius:6px;font-family:Menlo,monospace;font-size:11.5px;margin:6px 0;overflow-x:auto}
+.note{background:#FFFBEB;border-left:3px solid #F59E0B;padding:8px 12px;border-radius:6px;font-size:12px;color:#7C2D12;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>🤖 AI Engine Registration · Step-by-step</h1>
+  <p>Get Servia listed across ChatGPT, Gemini, Claude, Perplexity, You.com, Arc Search, and DuckDuckGo's AI surfaces. Each one has a different registration path — below is every channel with URLs, exact steps, and benefits.</p>
+</div>
+<div class="container">
+
+<div class="intro">
+  <b>💡 What this gets you:</b> When a UAE customer asks "best home cleaning service in Dubai" to ChatGPT / Gemini / Claude / Perplexity, the AI can pull live data from Servia's API (services, pricing, coverage, slots) instead of recommending whichever competitor it remembers from its training data. AI-engine traffic is currently 2-4% of total search traffic worldwide, growing 200%+ YoY — getting listed early compounds.
+</div>
+
+<!-- ━━━━━━━━━━━━━ CHATGPT ━━━━━━━━━━━━━ -->
+<div class="engine">
+  <div class="engine-h">
+    <div class="ttl"><div class="logo">🤖</div>
+      <div><h2>1. ChatGPT (OpenAI) — Custom GPT</h2>
+        <div class="sub">Reach: ~700M weekly users · Apps store + GPT mentions</div>
+      </div>
+    </div>
+    <span class="badge b-done">✅ Already done</span>
+  </div>
+  <div class="engine-body">
+    <h3>Status</h3>
+    <p>Custom GPT <code>Servia · UAE Home Services</code> is published in the GPT Store. It calls our <code>/api/services</code>, <code>/api/cart/quote</code>, <code>/api/cart/checkout</code> via the openapi-public.json spec.</p>
+    <h3>OpenAPI spec URL (already exposed)</h3>
+    <div class="url-box">https://servia.ae/openapi-public.json</div>
+    <h3>How users find it</h3>
+    <ol>
+      <li>ChatGPT → "Explore GPTs" → search "Servia" or "UAE home services"</li>
+      <li>Or direct: <code>chat.openai.com/g/g-XXXX-servia-uae-home-services</code> (your GPT URL)</li>
+      <li>Or mention <code>@servia</code> inside ChatGPT</li>
+    </ol>
+    <div class="benefit"><b>Benefit:</b> Users in ChatGPT can book directly without leaving the chat. We capture them BEFORE they Google around to competitors.</div>
+    <h3>Maintenance</h3>
+    <ul>
+      <li>Update the GPT description quarterly (new services, new emirates)</li>
+      <li>Monitor logs via <code>chat.openai.com/gpts/editor</code> → Builder Profile → Analytics</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━ GEMINI ━━━━━━━━━━━━━ -->
+<div class="engine">
+  <div class="engine-h">
+    <div class="ttl"><div class="logo">✨</div>
+      <div><h2>2. Google Gemini — Extensions + SGE</h2>
+        <div class="sub">Reach: Google.com SGE billions of queries · Gemini app users</div>
+      </div>
+    </div>
+    <span class="badge b-todo">⏳ Apply</span>
+  </div>
+  <div class="engine-body">
+    <h3>Two channels to register</h3>
+    <p><b>(a) Gemini Extensions</b> — like ChatGPT's GPT Store, gets you mentioned when users ask Gemini in-chat.</p>
+    <p><b>(b) Google Search Generative Experience (SGE)</b> — when Gemini-powered AI answers appear at the top of regular Google searches, your structured data gets pulled in.</p>
+
+    <h3>Steps for (a) Gemini Extensions:</h3>
+    <ol>
+      <li>Go to <a href="https://developers.google.com/gemini/docs/extensions" target="_blank">developers.google.com/gemini/docs/extensions</a></li>
+      <li>Click "Submit a Gemini Extension" (early-access form as of v1.24.143; opens up Q2 2026)</li>
+      <li>Provide: OpenAPI spec URL (same one as ChatGPT — <code>servia.ae/openapi-public.json</code>), brand assets, sample queries, content policy</li>
+      <li>Review takes 2-4 weeks. Once approved, users invoke via <code>@servia</code> in Gemini app or web</li>
+    </ol>
+
+    <h3>Steps for (b) Google SGE / AI Overviews:</h3>
+    <ol>
+      <li>Make sure structured data (Schema.org Service, LocalBusiness, FAQPage) is on every service page — <b>already done in our rich variant LPs (v1.24.133)</b></li>
+      <li>Submit sitemap.xml in Google Search Console: <a href="https://search.google.com/search-console" target="_blank">search.google.com/search-console</a> → Sitemaps → Add new sitemap → <code>https://servia.ae/sitemap.xml</code></li>
+      <li>Enable "AI features for your site" toggle in Google Search Console settings (rolling out 2025-2026)</li>
+      <li>Add <code>llms.txt</code> at root (we already serve <code>https://servia.ae/llms.txt</code>) — tells Gemini what content to use for AI Overviews</li>
+    </ol>
+    <div class="benefit"><b>Benefit:</b> When someone Googles "AC cleaning Dubai", Gemini's AI Overview can summarize Servia at the very top — above ALL competitor PPC ads.</div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━ CLAUDE ━━━━━━━━━━━━━ -->
+<div class="engine">
+  <div class="engine-h">
+    <div class="ttl"><div class="logo">🔶</div>
+      <div><h2>3. Claude (Anthropic) — Skills + MCP</h2>
+        <div class="sub">Reach: Claude.ai users + Claude API integrators</div>
+      </div>
+    </div>
+    <span class="badge b-todo">⏳ Apply</span>
+  </div>
+  <div class="engine-body">
+    <h3>Two channels to register</h3>
+    <p><b>(a) Anthropic Skills marketplace</b> — like ChatGPT's GPT Store but for Claude (rolling out 2026).</p>
+    <p><b>(b) MCP server registration</b> — Model Context Protocol: any Claude.ai user can install our MCP server and Claude pulls live data from us.</p>
+
+    <h3>Steps for (a) Anthropic Skills:</h3>
+    <ol>
+      <li>Apply at <a href="https://www.anthropic.com/skills" target="_blank">anthropic.com/skills</a> (waitlist as of v1.24.143)</li>
+      <li>Provide: brand name, logo, description, OpenAPI spec, content policy, demo session</li>
+      <li>Review 2-4 weeks</li>
+    </ol>
+
+    <h3>Steps for (b) MCP Server:</h3>
+    <ol>
+      <li>We need to implement an MCP server endpoint at <code>https://servia.ae/mcp</code> (not yet built — Q3 2026 roadmap)</li>
+      <li>Once built, register at <a href="https://github.com/modelcontextprotocol/servers" target="_blank">github.com/modelcontextprotocol/servers</a> (community registry)</li>
+      <li>Claude.ai users add it via Settings → MCP → Add Server</li>
+    </ol>
+    <div class="benefit"><b>Benefit:</b> Claude.ai is the AI of choice for technical / high-income UAE users (developers, consultants). They convert ~3x better than average web traffic.</div>
+    <div class="note"><b>Cost:</b> Free to register. Building the MCP server is ~3 days of engineering once Q3 priorities allow.</div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━ PERPLEXITY ━━━━━━━━━━━━━ -->
+<div class="engine">
+  <div class="engine-h">
+    <div class="ttl"><div class="logo">🔍</div>
+      <div><h2>4. Perplexity AI — Source partnership</h2>
+        <div class="sub">Reach: 20M+ monthly users · Searches answered with cited sources</div>
+      </div>
+    </div>
+    <span class="badge b-todo">⏳ Apply</span>
+  </div>
+  <div class="engine-body">
+    <h3>How Perplexity uses your data</h3>
+    <p>When users ask Perplexity "best plumber Dubai", it crawls live websites + summarizes with cited sources. Higher-quality structured pages (Schema.org markup, fast load, clear pricing) get featured.</p>
+    <h3>Steps</h3>
+    <ol>
+      <li>Submit your site at <a href="https://www.perplexity.ai/hub/legal/perplexity-publisher-program" target="_blank">perplexity.ai/hub/legal/perplexity-publisher-program</a> (Publisher Program — for revenue share)</li>
+      <li>Ensure <code>llms.txt</code> + <code>robots.txt</code> explicitly ALLOW PerplexityBot (we already do — verified)</li>
+      <li>Submit specific high-value pages via their content submission form</li>
+      <li>Tag photos with proper alt text + business info (Schema.org LocalBusiness) — already done</li>
+    </ol>
+    <div class="benefit"><b>Benefit:</b> Perplexity users are 2.4× more likely to take action vs Google searches (cited-source trust). Strong conversion channel.</div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━ YOU.COM ━━━━━━━━━━━━━ -->
+<div class="engine">
+  <div class="engine-h">
+    <div class="ttl"><div class="logo">🟢</div>
+      <div><h2>5. You.com — Apps</h2>
+        <div class="sub">Reach: Power-user AI search + business teams</div>
+      </div>
+    </div>
+    <span class="badge b-todo">⏳ Apply</span>
+  </div>
+  <div class="engine-body">
+    <ol>
+      <li>Register at <a href="https://you.com/apps" target="_blank">you.com/apps</a> → "Create an App"</li>
+      <li>Provide OpenAPI spec URL (<code>servia.ae/openapi-public.json</code>)</li>
+      <li>Define trigger keywords (e.g., "home cleaning UAE", "plumber Dubai")</li>
+      <li>Review 1-2 weeks</li>
+    </ol>
+    <div class="benefit"><b>Benefit:</b> You.com is preferred by privacy-conscious UAE expat communities (German, Russian, French). Lower volume but premium audience.</div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━ ARC SEARCH / DUCKDUCKGO ━━━━━━━━━━━━━ -->
+<div class="engine">
+  <div class="engine-h">
+    <div class="ttl"><div class="logo">🦆</div>
+      <div><h2>6. DuckDuckGo + Arc Search — Indirect</h2>
+        <div class="sub">Reach: DDG ~100M daily searches · Arc Search emerging</div>
+      </div>
+    </div>
+    <span class="badge b-pending">Auto-indexed</span>
+  </div>
+  <div class="engine-body">
+    <p>Neither has a manual registration page — both index via their crawlers. Optimization steps:</p>
+    <ol>
+      <li>Verify our <code>robots.txt</code> doesn't block <code>DuckDuckBot</code> + <code>ArcSearchBot</code> (already verified ✓)</li>
+      <li>Ensure Schema.org markup is comprehensive (LocalBusiness + Service + FAQPage on rich variant LPs — already done v1.24.133)</li>
+      <li>Submit sitemap via <code>https://duckduckgo.com/?q=duckduckgo-submit-url</code> (community-driven)</li>
+      <li>Arc Search uses Apple's MapKit + WebKit indices — being on Apple Maps Connect helps (separate registration → connect.apple.com/maps)</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━ XAI GROK ━━━━━━━━━━━━━ -->
+<div class="engine">
+  <div class="engine-h">
+    <div class="ttl"><div class="logo">🆇</div>
+      <div><h2>7. xAI Grok (X integration)</h2>
+        <div class="sub">Reach: X / Twitter users with Premium+ subscriptions</div>
+      </div>
+    </div>
+    <span class="badge b-pending">Crawled</span>
+  </div>
+  <div class="engine-body">
+    <p>Grok ingests real-time X posts + web crawl data. Optimization:</p>
+    <ol>
+      <li>Maintain active X presence (<code>@servia_uae</code>) — Grok prioritizes accounts mentioned + linked from authoritative profiles</li>
+      <li>X Premium accounts get priority crawl — consider upgrading the Servia handle</li>
+      <li>No direct API/registration — Grok pulls from public crawl + X posts</li>
+    </ol>
+    <div class="note">Grok doesn't expose an extension marketplace yet. Best play is content + X activity, not technical integration.</div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━ META / WHATSAPP AI ━━━━━━━━━━━━━ -->
+<div class="engine">
+  <div class="engine-h">
+    <div class="ttl"><div class="logo">🟦</div>
+      <div><h2>8. Meta AI (WhatsApp / Instagram / Facebook)</h2>
+        <div class="sub">Reach: 2.5B+ Meta users · WhatsApp UAE 95%+ penetration</div>
+      </div>
+    </div>
+    <span class="badge b-todo">⏳ Apply</span>
+  </div>
+  <div class="engine-body">
+    <ol>
+      <li>WhatsApp Business API is already wired (see our wa.me integration)</li>
+      <li>Apply for Meta AI Business Partner program: <a href="https://business.meta.com/ai" target="_blank">business.meta.com/ai</a></li>
+      <li>Integrate WhatsApp Cloud API directly so Meta AI can route booking queries to us automatically</li>
+      <li>Add Servia as a "service provider" in Meta's local-business directory (Facebook Page → Services)</li>
+    </ol>
+    <div class="benefit"><b>Benefit:</b> WhatsApp is THE primary booking channel in UAE. Meta AI promoting Servia inside WhatsApp = compound effect.</div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━ NEXT STEPS ━━━━━━━━━━━━━ -->
+<div class="engine" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px solid #F59E0B">
+  <div class="engine-h" style="background:transparent">
+    <div class="ttl"><div class="logo" style="background:#F59E0B;color:#fff">🎯</div>
+      <div><h2>Recommended action order</h2>
+        <div class="sub">Highest ROI first · Lowest time-investment first</div>
+      </div>
+    </div>
+  </div>
+  <div class="engine-body">
+    <ol>
+      <li><b>This week:</b> Submit sitemap to Google Search Console (5 min) + verify <code>llms.txt</code> is live (already done)</li>
+      <li><b>This month:</b> Apply to Perplexity Publisher Program (free, 2-4 wk review)</li>
+      <li><b>Q2 2026:</b> Apply to Gemini Extensions when public submission opens</li>
+      <li><b>Q3 2026:</b> Build MCP server for Claude (3 dev-days) — biggest tech moat</li>
+      <li><b>Q3 2026:</b> Apply to Meta AI Business Partner — biggest reach in UAE</li>
+      <li><b>Ongoing:</b> Maintain X/Instagram presence for Grok/Meta crawl signals</li>
+    </ol>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

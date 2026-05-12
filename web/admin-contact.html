@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Brand Contact · Servia Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;background:#F1F5F9;color:#0F172A;line-height:1.55}
+.head{background:linear-gradient(135deg,#134E4A,#0F766E);color:#fff;padding:24px;display:flex;justify-content:space-between;align-items:center}
+.head h1{margin:0;font-size:22px}
+.container{max-width:780px;margin:0 auto;padding:24px 16px}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:24px;margin-bottom:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+.card h2{margin:0 0 6px;font-size:18px}
+.card p{margin:0 0 18px;color:#64748B;font-size:13.5px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#64748B;margin-bottom:4px}
+.field input,.field textarea{width:100%;padding:11px 13px;border:1px solid #E2E8F0;border-radius:8px;font-size:14.5px}
+.field input:focus,.field textarea:focus{outline:none;border-color:#0F766E}
+.field .hint{font-size:11px;color:#94A3B8;margin-top:4px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{background:#0F766E;color:#fff;border:0;padding:12px 22px;border-radius:9px;font-weight:800;cursor:pointer;font-size:14px}
+.btn:hover{background:#0D9488}
+.status{padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:14px;display:none}
+.status.ok{background:#D1FAE5;color:#065F46;display:block}
+.status.err{background:#FEE2E2;color:#7F1D1D;display:block}
+.token-input{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:8px;font-size:12px;width:200px}
+.token-input::placeholder{color:rgba(255,255,255,.6)}
+.callout{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px;border-radius:8px;font-size:13px;color:#1E3A8A;margin-bottom:14px;line-height:1.6}
+.callout b{color:#1E40AF}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>📞 Brand contact · single source of truth</h1>
+  <input id="token" class="token-input" type="password" placeholder="Admin token">
+</div>
+<div class="container">
+  <div id="status" class="status"></div>
+
+  <div class="callout">
+    <b>💡 Where these values are used:</b> Every contact phone/email/WhatsApp number across the entire website pulls from the fields below. Change a number here once and it updates across the footer, contact page, chat widget, NFC products, OpenAPI spec, autoblog signatures, vendor outreach reply-to, push notification VAPID, admin alerts — everywhere. <br><br>
+    <b>How:</b> Frontend HTML pages auto-populate via <code>data-bc-phone</code>, <code>data-bc-email</code>, <code>data-bc-whatsapp</code> attributes when <code>/brand-contact.js</code> loads. Server-side code uses <code>app.brand_contact.get_contact_*()</code>.
+  </div>
+
+  <div class="card">
+    <h2>Customer-facing contact</h2>
+    <p>Shown publicly on the website footer, contact page, chat widget, and printable invoices.</p>
+    <div class="field"><label>Brand name</label>
+      <input id="brand_name" type="text" placeholder="Servia">
+      <div class="hint">Used in page titles + email signatures.</div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Main phone (landline / mobile)</label>
+        <input id="contact_phone" type="tel" placeholder="+971 4 123 4567">
+        <div class="hint">For tel: links + footer.</div>
+      </div>
+      <div class="field"><label>WhatsApp number</label>
+        <input id="contact_whatsapp" type="tel" placeholder="+971 50 123 4567">
+        <div class="hint">If different from main phone. Falls back to main phone if blank.</div>
+      </div>
+    </div>
+    <div class="field"><label>Support email</label>
+      <input id="contact_email" type="email" placeholder="support@servia.ae">
+      <div class="hint">Where customer queries land.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Internal routing</h2>
+    <p>Where system-generated messages and admin alerts go.</p>
+    <div class="row">
+      <div class="field"><label>Bookings inbox</label>
+        <input id="bookings_email" type="email" placeholder="bookings@servia.ae">
+        <div class="hint">All form submissions + booking confirmations cc'd here. Falls back to support email.</div>
+      </div>
+      <div class="field"><label>Admin alerts</label>
+        <input id="admin_email" type="email" placeholder="admin@servia.ae">
+        <div class="hint">Critical system events. Falls back to support email.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Company / legal</h2>
+    <p>Shown on tax invoices and legal pages.</p>
+    <div class="row">
+      <div class="field"><label>Legal company name</label>
+        <input id="company_legal_name" type="text" placeholder="Servia FZ-LLC">
+      </div>
+      <div class="field"><label>UAE VAT TRN</label>
+        <input id="vat_trn" type="text" placeholder="1000-xxxx-xxxx-xxx">
+      </div>
+    </div>
+    <div class="field"><label>Company address</label>
+      <textarea id="company_address" rows="2" placeholder="Office 123, Building Name, Area, Emirate, UAE"></textarea>
+    </div>
+  </div>
+
+  <button class="btn" onclick="save()">💾 Save contact info</button>
+  <p style="font-size:11.5px;color:#94A3B8;margin-top:8px">Cache refreshes within 30 sec across the site. To force-refresh now, restart Railway.</p>
+</div>
+
+<script>
+const TOKEN_KEY="servia.admin.token";
+const tok=document.getElementById("token");
+tok.value=localStorage.getItem(TOKEN_KEY)||"";
+tok.onchange=()=>localStorage.setItem(TOKEN_KEY,tok.value);
+function H(){return{"Authorization":"Bearer "+tok.value}}
+async function load(){
+  try{
+    const r=await fetch("/api/admin/contact",{headers:H()});
+    if(!r.ok){throw new Error("HTTP "+r.status)}
+    const d=await r.json();
+    ["brand_name","contact_phone","contact_whatsapp","contact_email","bookings_email","admin_email","company_legal_name","vat_trn","company_address"].forEach(k=>{
+      const el=document.getElementById(k);
+      if(el)el.value=d[k]||"";
+    });
+  }catch(e){showStatus("err","Load failed: "+e.message+" — check admin token")}
+}
+function showStatus(kind,msg){
+  const s=document.getElementById("status");s.className="status "+kind;s.textContent=msg;
+  setTimeout(()=>{s.className="status"},5000);
+}
+async function save(){
+  const body={};
+  ["brand_name","contact_phone","contact_whatsapp","contact_email","bookings_email","admin_email","company_legal_name","vat_trn","company_address"].forEach(k=>{
+    const el=document.getElementById(k);
+    if(el&&el.value.trim())body[k]=el.value.trim();
+  });
+  try{
+    const r=await fetch("/api/admin/contact/save",{method:"POST",headers:{...H(),"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.ok)showStatus("ok","Saved "+d.saved_fields.length+" fields. Cache will refresh in ~30 sec.");
+    else throw new Error(d.detail||"failed");
+  }catch(e){showStatus("err","Save failed: "+e.message)}
+}
+load();
+</script>
+</body>
+</html>

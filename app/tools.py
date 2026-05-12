@@ -671,10 +671,19 @@ def handoff_to_human(reason: str, customer_name: str | None = None,
 
 
 def send_whatsapp(phone: str, message: str) -> dict:
-    """Push a message via the WhatsApp bridge (Node service). No-op if unconfigured."""
+    """Push a message via the WhatsApp bridge (Node service). No-op if unconfigured.
+    v1.24.143: also logs every outbound message to the unified inbox so admin
+    can see what we sent."""
     s = get_settings()
     if not s.WA_BRIDGE_URL:
-        return {"ok": False, "error": "WhatsApp bridge not configured (WA_BRIDGE_URL unset)."}
+        result = {"ok": False, "error": "WhatsApp bridge not configured (WA_BRIDGE_URL unset)."}
+        try:
+            from . import inbox as _ix
+            _ix.log_message(direction="out", channel="whatsapp",
+                             sender="us", recipient=phone, body=message,
+                             status="failed", error="bridge not configured")
+        except Exception: pass
+        return result
     try:
         import httpx
         r = httpx.post(
@@ -683,8 +692,20 @@ def send_whatsapp(phone: str, message: str) -> dict:
             json={"to": phone, "text": message}, timeout=10,
         )
         r.raise_for_status()
+        try:
+            from . import inbox as _ix
+            _ix.log_message(direction="out", channel="whatsapp",
+                             sender="us", recipient=phone, body=message,
+                             status="delivered")
+        except Exception: pass
         return {"ok": True, "bridge_status": r.json()}
     except Exception as e:  # noqa: BLE001
+        try:
+            from . import inbox as _ix
+            _ix.log_message(direction="out", channel="whatsapp",
+                             sender="us", recipient=phone, body=message,
+                             status="failed", error=str(e)[:200])
+        except Exception: pass
         return {"ok": False, "error": f"Bridge error: {e}"}
 
 

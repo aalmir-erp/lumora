@@ -58,6 +58,15 @@ def inbound(msg: InboundMsg):
     sid = _phone_to_session(msg.from_number)
     _persist(sid, "user", msg.text, phone=msg.from_number)
 
+    # v1.24.143 — Log inbound WhatsApp to unified inbox so admin can review
+    # everything in one place. Never raises.
+    try:
+        from . import inbox as _ix
+        _ix.log_message(direction="in", channel="whatsapp",
+                         sender=msg.from_number, recipient="us",
+                         body=msg.text, status="delivered")
+    except Exception: pass
+
     # v1.22.93 — short-circuit NFC tap-confirm codes ("NFCABCD …") BEFORE
     # invoking LLM / agent routing. The customer just hit Send on the
     # pre-filled WhatsApp message → we deduct the wallet, confirm booking,

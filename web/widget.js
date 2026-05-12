@@ -701,6 +701,11 @@
     // optional reason via /api/chat/feedback.
     if (who === "bot" && !isAgent) {
       _attachFeedbackUI(div, cleanText, toolCalls);
+      // v1.24.143 — In hands-free voice mode, speak the bot reply via TTS
+      // then auto-re-activate the mic. Function is a no-op if not in voice mode.
+      if (typeof window.__servia_speak_reply === "function") {
+        try { window.__servia_speak_reply(cleanText); } catch (_) {}
+      }
     }
     body.appendChild(div);
     if (who === "bot" && actions.length) {
@@ -1231,44 +1236,58 @@
   }
 
   // ---------- Voice input — Web Speech API w/ 15-lang map + live transcript ----------
+  // v1.24.143 — Hands-free voice mode upgrade:
+  //   1. Single-tap activates "voice conversation mode" — silence
+  //      detection (1.6 sec) auto-submits the message
+  //   2. After bot responds, the reply is read aloud via TTS, then mic
+  //      auto-restarts so user can answer hands-free
+  //   3. Long-press mic = legacy push-to-talk (no auto-send)
+  //   4. Tap again while listening = cancel
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     micBtn.style.display = "none";
   } else {
     let rec = null;
     let listening = false;
-    // v1.24.16 — track the LAST dictation so re-tapping mic replaces it
-    // instead of treating it as prefix-to-append-to. This is what was
-    // actually producing the dup-text bug ("I I want I want to I want
-    // to know…"): the user kept tapping mic without sending, each tap
-    // captured the previous dictation as prefix, and new dictation
-    // appended. Now we strip the previous dictation off the input
-    // before capturing prefix, so re-taps replace cleanly.
+    let voiceConvMode = false;     // hands-free conversation mode flag
+    let silenceTimer = null;       // setTimeout for silence-detect auto-send
     let lastDictation = "";
-    micBtn.onclick = () => {
-      if (listening && rec) { try { rec.stop(); } catch {} return; }
+    let longPressTimer = null;
+    let lastInterimText = "";
+
+    function clearSilenceTimer(){ if (silenceTimer){ clearTimeout(silenceTimer); silenceTimer = null; } }
+
+    function startListening(autoSend) {
+      if (listening) return;
+      voiceConvMode = !!autoSend;
       const lang = (window.lumoraLang ? lumoraLang() : "en");
       rec = new SR();
-      rec.continuous = false;
+      rec.continuous = autoSend ? true : false;
       rec.interimResults = true;
       rec.lang = SR_LANG_MAP[lang] || "en-US";
-      rec.onstart = () => { listening = true; micBtn.classList.add("recording");
-                            micBtn.textContent = "🔴"; input.placeholder = "🎙 Listening… speak in any UAE language"; };
-      rec.onend = () => { listening = false; micBtn.classList.remove("recording");
-                          micBtn.textContent = "🎤"; input.placeholder = "Type your message…"; };
-      // STRIP previous dictation so the new dictation REPLACES it.
       let cur = (input.value || "").trim();
       if (lastDictation) {
-        if (cur === lastDictation) {
-          cur = "";
-        } else if (lastDictation.length >= 3 && cur.endsWith(" " + lastDictation)) {
+        if (cur === lastDictation) cur = "";
+        else if (lastDictation.length >= 3 && cur.endsWith(" " + lastDictation))
           cur = cur.slice(0, cur.length - lastDictation.length - 1).trim();
-        }
         input.value = cur;
       }
       const prefix = cur;
-      // Use ONLY the latest result (the canonical current interpretation).
-      // Never accumulate across e.results entries.
+      rec.onstart = () => {
+        listening = true;
+        micBtn.classList.add("recording");
+        micBtn.textContent = autoSend ? "🔵" : "🔴";
+        input.placeholder = autoSend
+          ? "🎙 Hands-free mode · pause 1.6s to send"
+          : "🎙 Listening… speak in any UAE language";
+      };
+      rec.onend = () => {
+        listening = false;
+        micBtn.classList.remove("recording");
+        micBtn.textContent = "🎤";
+        input.placeholder = "Type your message…";
+        clearSilenceTimer();
+      };
       rec.onresult = (e) => {
         if (!e.results || !e.results.length) return;
         const latest = e.results[e.results.length - 1];
@@ -1276,15 +1295,83 @@
         const txt = (latest[0].transcript || "").trim();
         lastDictation = txt;
         input.value = (prefix ? prefix + " " : "") + txt;
+        lastInterimText = txt;
+        // Reset silence timer on every new transcript chunk
+        if (voiceConvMode) {
+          clearSilenceTimer();
+          // If this result is FINAL, wait 1 sec then auto-send.
+          // If interim, wait 1.6 sec of silence before sending.
+          const wait = latest.isFinal ? 800 : 1600;
+          silenceTimer = setTimeout(() => {
+            try { rec.stop(); } catch {}
+            if ((input.value || "").trim()) {
+              form.requestSubmit();
+            }
+          }, wait);
+        }
       };
       rec.onerror = (e) => {
         listening = false; micBtn.classList.remove("recording");
         micBtn.textContent = "🎤"; input.placeholder = "Type your message…";
-        if (e.error === "not-allowed") {
-          alert("Microphone permission denied. Enable it in your browser to use voice input.");
-        }
+        clearSilenceTimer();
+        voiceConvMode = false;
+        if (e.error === "not-allowed") alert("Microphone permission denied. Enable it in your browser to use voice input.");
       };
       try { rec.start(); } catch {}
+    }
+
+    // Long-press = legacy push-to-talk (no auto-send)
+    micBtn.onpointerdown = (e) => {
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        startListening(false);
+      }, 600);
+    };
+    micBtn.onpointerup = micBtn.onpointercancel = (e) => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer); longPressTimer = null;
+      }
+    };
+    // Tap = hands-free conversation mode (auto-send on silence)
+    micBtn.onclick = () => {
+      if (listening && rec) {
+        try { rec.stop(); } catch {}
+        voiceConvMode = false;
+        clearSilenceTimer();
+        return;
+      }
+      startListening(true);
+    };
+
+    // ---------- TTS auto-play bot replies + auto-restart mic ----------
+    // When we're in voiceConvMode, after a bot reply finishes rendering,
+    // speak it via TTS, then restart listening so the user can answer.
+    window.__servia_speak_reply = function(text) {
+      if (!voiceConvMode || !text) return;
+      try {
+        const synth = window.speechSynthesis;
+        if (!synth) return;
+        // Strip markdown + URLs from spoken text
+        const clean = text
+          .replace(/\[\[[^\]]+\]\]/g, "")
+          .replace(/https?:\/\/\S+/g, "")
+          .replace(/[*_`#]/g, "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .substring(0, 500);   // cap at 500 chars to keep responses snappy
+        if (!clean) return;
+        const u = new SpeechSynthesisUtterance(clean);
+        const lang = (window.lumoraLang ? lumoraLang() : "en");
+        u.lang = SR_LANG_MAP[lang] || "en-US";
+        u.rate = 1.05;
+        u.onend = () => {
+          // After bot's reply ends → re-activate mic for user response
+          if (voiceConvMode && !listening) {
+            setTimeout(() => startListening(true), 250);
+          }
+        };
+        synth.speak(u);
+      } catch (_) {}
     };
   }
 

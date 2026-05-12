@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import admin, admin_live as _admin_live, ai_router, airbnb_ical as _airbnb_ical, cart, checkout_central as _checkout, commerce as _commerce, db, demo_brain, google_home as _gha, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, rlaif as _rlaif, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
+from . import admin, admin_live as _admin_live, ai_router, airbnb_ical as _airbnb_ical, brand_contact as _brand_contact, cart, checkout_central as _checkout, commerce as _commerce, db, demo_brain, google_home as _gha, inbox as _inbox, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, rlaif as _rlaif, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
 from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
 
@@ -353,6 +353,8 @@ app.include_router(_rlaif.router)               # /api/chat/feedback + /api/admi
 app.include_router(_airbnb_ical.router)         # /api/host/airbnb/* + /api/admin/airbnb/*
 app.include_router(_commerce.router)            # /api/admin/quotes/* + sales-orders/* + invoices/* + purchase-orders/* + payments/* + reports/*
 app.include_router(_checkout.router)            # /api/checkout/init + /quote + /pay (central checkout flow)
+app.include_router(_brand_contact.router)       # /api/brand/contact (public) + /api/admin/contact/* (admin)
+app.include_router(_inbox.router)               # /api/admin/inbox + /api/admin/inbox/{id} + /stats + mark-read
 
 
 # v1.24.136 — Explicit handler for the PIN-gated investor pitch. We serve
@@ -2812,6 +2814,10 @@ _PRIVATE_PAGES = {
     "pitch.html",
     # v1.24.141 — Commerce admin panel. Admin-token gated; not customer-facing.
     "admin-commerce.html",
+    # v1.24.143 — Admin tools (contact settings · unified inbox · AI engines).
+    "admin-contact.html",
+    "admin-inbox.html",
+    "admin-ai-engines.html",
 }
 
 # Per-page priority + change frequency overrides (anything not listed
