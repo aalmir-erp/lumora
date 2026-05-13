@@ -682,6 +682,19 @@ def chat(messages: list[dict], *, session_id: str | None = None,
         convo.append({"role": "user", "content": results})
 
     final_text = _enforce_picker_and_one_question(final_text)
+    # v1.24.159 — Strip [[picker:address]] if the conversation already has an
+    # address. Founder reported the bot asking for address AFTER confirming
+    # the address — caused by the picker-injector at line 918 firing on every
+    # turn the bot mentions the word "address". Smart architecture: trust the
+    # data we already collected. If a previous user turn or tool call shows
+    # the address, don't re-ask.
+    if "[[picker:address]]" in (final_text or "") and _address_already_in_convo(convo, tool_calls):
+        final_text = final_text.replace("[[picker:address]]", "")
+        # Also clean up any orphaned "📍 Where should we come?" prompt the
+        # LLM may have generated alongside the picker
+        import re as _r
+        final_text = _r.sub(r"📍[^\n]*pin[^\n]*\n?", "", final_text, flags=_r.IGNORECASE)
+        final_text = _r.sub(r"\n{3,}", "\n\n", final_text).strip()
     # v1.24.96 — wire up the Book-now → quote_card auto-converter.
     # This function was DEFINED at line ~1019 but NEVER CALLED until
     # now, which is why founder screenshots of v1.24.94/95 showed
@@ -863,6 +876,58 @@ _TIME_TRIGGER = _re.compile(
     r"what time|morning or afternoon|am or pm)",
     _re.IGNORECASE,
 )
+
+
+def _address_already_in_convo(convo: list, tool_calls: list) -> bool:
+    """v1.24.159 — Detect if the customer has ALREADY shared an address
+    earlier in this chat (typed it OR pinned on the map). Used to suppress
+    redundant [[picker:address]] re-asks.
+
+    Signals (any one is sufficient):
+    1. A tool call carried an `address` argument that's non-empty
+    2. A previous user message contains an address shape:
+       - Apt/Apartment/Suite/Bldg/Building/Villa/Tower + number/name
+       - Trade Centre, Marina, Downtown, Business Bay, etc. (UAE landmarks)
+       - "<thing>, Dubai/Sharjah/Ajman/Abu Dhabi/RAK/UAQ/Fujairah/Al Ain"
+    3. An assistant turn explicitly said "confirming your address in <emirate>"
+    """
+    import re as _r
+    # Signal 1: tool call carrying address
+    for tc in (tool_calls or []):
+        try:
+            inp = tc.get("input") or tc.get("arguments") or {}
+            if isinstance(inp, dict) and (inp.get("address") or "").strip():
+                return True
+        except Exception: pass
+
+    # Signal 2 + 3: scan convo text
+    UAE_EMIRATES = r"(?:Dubai|Sharjah|Ajman|Abu\s+Dhabi|Ras\s+Al\s+Khaimah|RAK|Umm\s+Al\s+Quwain|UAQ|Fujairah|Al\s+Ain)"
+    UAE_LANDMARKS = (
+        r"Trade\s+Cent(?:re|er)|Marina|Downtown|Business\s+Bay|JLT|JVC|JVT|"
+        r"Mirdif|Discovery\s+Gardens|Bur\s+Dubai|Deira|Al\s+Barsha|Al\s+Quoz|"
+        r"Karama|Mankhool|Silicon\s+Oasis|Arabian\s+Ranches|Damac\s+Hills|"
+        r"Jumeirah(?:\s+(?:Village|Beach|Lakes|Park|Islands))?|"
+        r"Saadiyat|Yas\s+Island|Khalifa\s+City|Reem\s+Island|Al\s+Reem|"
+        r"Muwaileh|Al\s+Khan|Al\s+Majaz|Al\s+Nahda"
+    )
+    addr_shape = _r.compile(
+        rf"(?:apt|apartment|suite|bldg|building|villa|tower|flat|unit|#)\s*[\w-]+"
+        rf"|{UAE_LANDMARKS}"
+        rf"|,\s*{UAE_EMIRATES}\b"
+        rf"|confirming\s+your\s+address",
+        _r.IGNORECASE,
+    )
+    for msg in (convo or []):
+        content = msg.get("content")
+        if isinstance(content, list):
+            for b in content:
+                if isinstance(b, dict) and b.get("text"):
+                    if addr_shape.search(b["text"]):
+                        return True
+        elif isinstance(content, str):
+            if addr_shape.search(content):
+                return True
+    return False
 
 
 def _enforce_picker_and_one_question(text: str) -> str:
