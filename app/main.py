@@ -1965,6 +1965,228 @@ def _ensure_invoice_payment_method():
 _ensure_invoice_payment_method()
 
 
+@app.get("/payment-success", response_class=HTMLResponse)
+def payment_success(q: str = "", inv: str = ""):
+    """v1.24.178 — Proper post-payment landing. Founder ask: 'show
+    recently paid quotation status, invoice + service-delivery details,
+    download + print options, clear success message with actual amount
+    received, nice user interface'.
+
+    Resolves the quote → SO → invoice → payment chain and renders a
+    real receipt. Works for both /payment-success?q=Q-XXX (Ziina /
+    quote-based) and ?inv=INV-XXX (Stripe / invoice-based) flows."""
+    quote_id, invoice_id, payment = "", "", None
+    customer_name = customer_phone = customer_email = ""
+    so_number = invoice_number = quote_number = ""
+    paid_amount = doc_total = 0.0
+    method = ref_num = paid_at = ""
+    line_items: list = []
+    error_msg = ""
+
+    try:
+        with db.connect() as c:
+            # Branch 1: quote-id flow (Ziina via /q/<id>)
+            if q and not inv:
+                row = c.execute(
+                    "SELECT * FROM quotes WHERE id=? OR quote_number=?",
+                    (q, q)).fetchone()
+                if row:
+                    quote_id = row["id"]
+                    quote_number = row["quote_number"]
+                    customer_name  = row["customer_name"] or ""
+                    customer_phone = row["customer_phone"] or ""
+                    customer_email = row["customer_email"] or ""
+                    try:
+                        line_items = json.loads(row["line_items_json"] or "[]")
+                    except Exception:
+                        pass
+                    # Linked SO + invoice
+                    so = c.execute(
+                        "SELECT id, so_number FROM sales_orders WHERE quote_id=? "
+                        "ORDER BY created_at DESC LIMIT 1", (quote_id,)).fetchone()
+                    if so:
+                        so_number = so["so_number"]
+                        inv_row = c.execute(
+                            "SELECT id, invoice_number, amount FROM invoices "
+                            "WHERE sales_order_id=? ORDER BY created_at DESC LIMIT 1",
+                            (so["id"],)).fetchone()
+                        if inv_row:
+                            invoice_id = inv_row["id"]
+                            invoice_number = inv_row["invoice_number"]
+                            doc_total = float(inv_row["amount"] or 0)
+                    if not doc_total:
+                        doc_total = float(row["total"] or 0)
+            # Branch 2: invoice-id flow (Stripe)
+            elif inv:
+                row = c.execute(
+                    "SELECT * FROM invoices WHERE id=? OR invoice_number=?",
+                    (inv, inv)).fetchone()
+                if row:
+                    invoice_id = row["id"]
+                    invoice_number = row["invoice_number"]
+                    customer_name = row["customer_name"] or ""
+                    customer_phone = row["customer_phone"] or ""
+                    customer_email = row["customer_email"] or ""
+                    doc_total = float(row["amount"] or 0)
+                    try:
+                        line_items = json.loads(row["line_items_json"] or "[]")
+                    except Exception:
+                        pass
+            else:
+                error_msg = "Missing payment reference (?q= or ?inv=)."
+
+            # Fetch the most recent payment registration against this invoice
+            if invoice_id:
+                pr = c.execute(
+                    "SELECT amount, method, reference_number, payment_date, notes "
+                    "FROM payment_registrations WHERE reference_type='invoice' "
+                    "AND reference_id=? ORDER BY payment_date DESC LIMIT 1",
+                    (invoice_id,)).fetchone()
+                if pr:
+                    payment = dict(pr)
+                    paid_amount = float(pr["amount"] or 0)
+                    method = pr["method"] or "—"
+                    ref_num = pr["reference_number"] or ""
+                    paid_at = (pr["payment_date"] or "")[:19].replace("T", " ")
+    except Exception as e:
+        error_msg = f"Lookup failed: {e}"
+
+    paid = (payment is not None) or (paid_amount > 0)
+    icon, kind, headline = ("✓", "ok", "Payment received") if paid else \
+                            (("⚠", "pending", "Payment is processing") if not error_msg else
+                              ("✗", "err", "Something went wrong"))
+
+    items_html = "".join(
+        f"<tr><td>{(it.get('name') or it.get('label') or '—')}</td>"
+        f"<td style='text-align:right'>{(it.get('qty') or 1):g}</td>"
+        f"<td style='text-align:right'>AED {(it.get('unit_price') or it.get('price_aed') or 0):.2f}</td>"
+        f"<td style='text-align:right'><b>AED {((it.get('qty') or 1) * (it.get('unit_price') or it.get('price_aed') or 0)):.2f}</b></td></tr>"
+        for it in line_items)
+
+    # Pre-build action buttons (skip when nothing to link to)
+    actions: list[str] = []
+    if quote_id:
+        actions.append(f'<a class="btn ghost" href="/q/{quote_id}">📋 View quote</a>')
+    if invoice_id:
+        actions.append(
+            f'<a class="btn" href="/admin/print/invoice/{invoice_id}" target="_blank">'
+            f'📄 Download / print invoice</a>'
+        )
+    if so_number:
+        actions.append(
+            f'<a class="btn ghost" href="/admin/print/sales-order/{so_number}" target="_blank">'
+            f'📦 Sales order</a>'
+        )
+    actions.append('<a class="btn ghost" href="/account">📋 My bookings</a>')
+    actions_html = " ".join(actions)
+
+    return HTMLResponse(f"""<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>{'Payment received' if paid else 'Payment status'} · Servia</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+:root {{ --t:#0F766E; --t2:#0D9488; --bg:#F8FAFC; --tx:#0F172A; --mu:#64748B;
+         --ln:#E2E8F0; --ok:#10B981; --warn:#F59E0B; --er:#DC2626; }}
+body {{ background:var(--bg);font-family:-apple-system,system-ui,sans-serif;
+        margin:0;color:var(--tx);min-height:100vh }}
+.wrap {{ max-width:680px;margin:0 auto;padding:24px 16px }}
+.hero {{ background:linear-gradient(135deg,var(--t),var(--t2));color:#fff;
+         padding:48px 24px 32px;text-align:center;border-radius:0 0 24px 24px;
+         margin:-24px -16px 18px;position:relative;overflow:hidden }}
+.hero img.logo {{ height:38px;filter:brightness(0) invert(1);margin-bottom:14px }}
+.badge {{ width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.18);
+          color:#fff;display:inline-flex;align-items:center;justify-content:center;
+          font-size:38px;margin:0 auto 14px;border:3px solid rgba(255,255,255,.4) }}
+.hero h1 {{ margin:6px 0 4px;font-size:24px;letter-spacing:-.01em }}
+.hero .amount {{ font-size:42px;font-weight:800;margin:14px 0 4px;letter-spacing:-.02em }}
+.hero .amount small {{ font-size:14px;color:#FCD34D;font-weight:600;vertical-align:super;margin-right:4px }}
+.hero .sub {{ color:#ECFDF5;font-size:14px }}
+.card {{ background:#fff;border:1px solid var(--ln);border-radius:14px;padding:18px;
+         margin-bottom:14px;box-shadow:0 6px 16px rgba(15,118,110,.06) }}
+.card h3 {{ margin:0 0 12px;font-size:15px;color:#0F172A }}
+.meta {{ display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13.5px }}
+.meta .l {{ color:var(--mu);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700 }}
+.meta .v {{ font-weight:600;color:var(--tx) }}
+table.lines {{ width:100%;border-collapse:collapse;font-size:13px;margin-top:8px }}
+table.lines th {{ background:#F0FDFA;text-align:left;padding:8px 10px;font-size:10.5px;
+                   text-transform:uppercase;letter-spacing:.04em;font-weight:800;color:#134E4A }}
+table.lines td {{ padding:8px 10px;border-bottom:1px solid var(--ln) }}
+table.lines td:not(:first-child) {{ text-align:right }}
+.btn {{ display:inline-flex;align-items:center;justify-content:center;gap:6px;
+        padding:12px 18px;min-height:44px;background:linear-gradient(135deg,var(--t),var(--t2));
+        color:#fff;border:0;border-radius:9px;text-decoration:none;font-weight:700;font-size:13.5px;
+        margin:4px;cursor:pointer }}
+.btn.ghost {{ background:#fff;color:var(--t);border:1.5px solid var(--t) }}
+.actions {{ text-align:center;margin-top:14px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px }}
+.bar {{ height:4px;background:linear-gradient(90deg,#00732F 25%,#fff 50%,#000 75%,#FF0000);margin-bottom:0 }}
+.status-pill {{ display:inline-block;padding:4px 12px;border-radius:99px;font-weight:700;font-size:11.5px;letter-spacing:.04em }}
+.status-pill.ok {{ background:#D1FAE5;color:#065F46 }}
+.status-pill.pending {{ background:#FEF3C7;color:#92400E }}
+.status-pill.err {{ background:#FEE2E2;color:#7F1D1D }}
+.note {{ font-size:12px;color:var(--mu);text-align:center;margin-top:14px;line-height:1.6 }}
+.warn-banner {{ background:#FEF3C7;color:#92400E;padding:12px 14px;border-radius:10px;
+                 font-size:13px;margin-bottom:14px;border-left:4px solid #F59E0B }}
+@media print {{ .actions,.hero{{display:none}} body{{background:#fff}} }}
+</style></head>
+<body>
+<div class="bar"></div>
+<div class="wrap">
+  <div class="hero">
+    <img class="logo" src="/brand/servia-logo-full.svg" alt="Servia" onerror="this.style.display='none'">
+    <div class="badge">{icon}</div>
+    <h1>{headline}</h1>
+    {f'<div class="amount"><small>AED</small>{paid_amount:.2f}</div>' if paid else ''}
+    <div class="sub">{('Reference ' + ref_num) if ref_num else ('We are confirming the payment with our gateway.' if not error_msg else error_msg)}</div>
+  </div>
+
+  {f'<div class="warn-banner">⚠ {error_msg}</div>' if error_msg else ''}
+
+  <div class="card">
+    <h3>📄 Receipt</h3>
+    <div class="meta">
+      <div><div class="l">Status</div>
+        <div class="v"><span class="status-pill {kind}">{headline.upper()}</span></div></div>
+      <div><div class="l">Method</div><div class="v">{method}</div></div>
+      <div><div class="l">Paid on</div><div class="v">{paid_at or '—'}</div></div>
+      <div><div class="l">Reference</div><div class="v">{ref_num or '—'}</div></div>
+      <div><div class="l">Quote #</div><div class="v">{quote_number or '—'}</div></div>
+      <div><div class="l">Invoice #</div><div class="v">{invoice_number or '—'}</div></div>
+      <div><div class="l">Sales order</div><div class="v">{so_number or '—'}</div></div>
+      <div><div class="l">Total billed</div><div class="v">AED {doc_total:.2f}</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🧾 What you paid for</h3>
+    <table class="lines">
+      <thead><tr><th>Service</th><th>Qty</th><th>Rate</th><th>Total</th></tr></thead>
+      <tbody>{items_html or '<tr><td colspan="4" style="text-align:center;color:#64748B;padding:18px">No line items recorded.</td></tr>'}</tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>👤 Customer</h3>
+    <div class="meta">
+      <div><div class="l">Name</div><div class="v">{customer_name or '—'}</div></div>
+      <div><div class="l">Phone</div><div class="v">{customer_phone or '—'}</div></div>
+      <div><div class="l">Email</div><div class="v">{customer_email or '—'}</div></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    {actions_html}
+    <button class="btn ghost" onclick="window.print()">🖨 Print receipt</button>
+  </div>
+
+  <p class="note">
+    A copy of this receipt was sent to your WhatsApp / email on file.<br>
+    Need help? Contact <a href="/contact">support</a> with your invoice number.
+  </p>
+</div>
+</body></html>""")
+
+
 @app.get("/pay/{invoice_id}", response_class=HTMLResponse)
 def pay_page(invoice_id: str):
     """Serves /web/pay.html — the rich multi-method checkout page that handles

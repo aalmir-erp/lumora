@@ -100,8 +100,14 @@ def _make_payment_link(invoice_id: str, amount: float, currency: str) -> str:
         if _ziina.is_configured():
             import asyncio
             domain = _gs().brand().get('domain', 'servia.ae')
+            # v1.24.178 — Success URL now goes to the proper /payment-success
+            # page (was 'account.html' which just showed a 'Track bookings'
+            # form). Pass the quote_id so the page can render the receipt,
+            # invoice, and SO details. Founder ask: 'success message with
+            # the details, how much payment received, invoice + service
+            # delivery details download/print options'.
             success_url = os.getenv("PAYMENT_SUCCESS_URL",
-                                     f"https://{domain}/account.html")
+                                     f"https://{domain}/payment-success?q={invoice_id}")
             cancel_url  = os.getenv("PAYMENT_CANCEL_URL",
                                      f"https://{domain}/q/{invoice_id}")
             try:
@@ -142,8 +148,10 @@ def _make_payment_link(invoice_id: str, amount: float, currency: str) -> str:
                     },
                     "quantity": 1,
                 }],
-                success_url=os.getenv("PAYMENT_SUCCESS_URL", "https://servia.ae/account.html"),
-                cancel_url=os.getenv("PAYMENT_CANCEL_URL", "https://servia.ae/account.html"),
+                success_url=os.getenv("PAYMENT_SUCCESS_URL",
+                                       f"https://servia.ae/payment-success?q={invoice_id}"),
+                cancel_url=os.getenv("PAYMENT_CANCEL_URL",
+                                      f"https://servia.ae/q/{invoice_id}"),
                 metadata={"invoice_id": invoice_id},
             )
             return sess.url

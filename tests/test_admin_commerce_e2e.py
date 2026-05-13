@@ -386,6 +386,29 @@ def test_po_bill_flow_v1_24_175():
     assert r2.get("bill", {}).get("bill_number") == "BILL-TEST-001"
 
 
+def test_payment_success_page_v1_24_178():
+    """v1.24.178 — Branded payment-success landing renders the receipt
+    + line items + actions. Founder ask: 'after payment, success message
+    with details, invoice + service delivery + print/download options,
+    nice user interface'."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    q = c.get("/api/admin/quotes", headers=H).json()["items"][0]
+    r = c.get(f"/payment-success?q={q['id']}")
+    assert r.status_code == 200
+    body = r.text
+    # Branding + structure
+    assert "servia-logo-full" in body
+    assert "Receipt" in body
+    assert 'class="lines"' in body
+    assert "window.print" in body
+    # By invoice id should also resolve
+    inv = c.get("/api/admin/invoices", headers=H).json()["items"][0]
+    r2 = c.get(f"/payment-success?inv={inv['id']}")
+    assert r2.status_code == 200
+
+
 def test_quote_edit_v1_24_177():
     """v1.24.177 — PATCH an existing draft quote to update fields.
     Founder ask: 'no option to modify existing quotation — what is the
