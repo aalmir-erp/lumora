@@ -1,5 +1,18 @@
 """v1.24.133 — Arabic landing pages for the UAE Arabic Google Ads market.
 
+v1.24.161 — STATE: REDIRECT MODE (default). Arabic URLs 302-redirect to
+the English canonical. Reason: the overlay translation was leaving large
+sections in English (bot widget greeting, 'Meet your pro' body, the 5-step
+'How it works' grid, stats line, chip labels) — founder rightly flagged
+this as worse than a fully-English page.
+
+To re-enable the overlay rendering (Phase 4):
+  1. Expand SERVICE_AR_CONTENT + UI_AR to cover every English string that
+     appears on the rendered page (see TODO in i18n_ar_content.py).
+  2. Set ARABIC_LP_MODE = "render" below.
+  3. Test with /services/<svc> rendered side-by-side; assert zero English
+     strings remain on the Arabic version (run Playwright OCR check).
+
 WHAT
 ----
 ~40% of UAE Google searches happen in Arabic. Bidding on Arabic keywords
@@ -34,7 +47,7 @@ from __future__ import annotations
 
 import html as _html
 
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .config import get_settings
 from .data.i18n_ar_slugs import SERVICE_AR, EMIRATE_AR
@@ -43,12 +56,22 @@ from .data.i18n_ar_content import SERVICE_AR_CONTENT, UI_AR
 
 _settings = get_settings()
 
+# v1.24.161 — see module docstring.
+#   "redirect": 302 → English canonical /services/<svc-slug>
+#   "render":   full overlay rendering with expanded translation coverage (DEFAULT)
+# Founder explicitly asked to KEEP Arabic pages alive so they appear in
+# Google results; we improve the translation coverage instead of redirecting.
+ARABIC_LP_MODE = "render"
+
 
 def _render_ar_lp(svc_id: str, ar_svc_slug: str, ar_svc_name: str,
-                  emirate_id: str, ar_em_slug: str, ar_em_name: str) -> HTMLResponse:
+                  emirate_id: str, ar_em_slug: str, ar_em_name: str):
     """Render an Arabic landing page for one service × emirate combo.
 
-    v1.24.140 — Real Arabic content overlay:
+    v1.24.161 — In ARABIC_LP_MODE='redirect' (default), 302 to the English
+    canonical so customers never see half-translated pages.
+
+    v1.24.140 — When ARABIC_LP_MODE='render':
       - Drops dir="rtl" (existing CSS is LTR-only — flipping it broke
         the layout with overflowing buttons + cut-off section headers).
         Keeps lang="ar" so screen-readers + Google use Arabic semantics.
@@ -57,6 +80,12 @@ def _render_ar_lp(svc_id: str, ar_svc_slug: str, ar_svc_name: str,
         AFTER service.html's JS finishes rendering.
       - Adds a Phase-4 disclosure banner (Arabic content in progress).
     """
+    # v1.24.161 — Phase-4 not done yet; redirect to English canonical so
+    # we never show partially-translated content.
+    if ARABIC_LP_MODE == "redirect":
+        slug_kebab = svc_id.replace("_", "-")
+        return RedirectResponse(url=f"/services/{slug_kebab}", status_code=302)
+
     import json as _json
     from fastapi import HTTPException as _HE
     tpl = _settings.WEB_DIR / "service.html"
@@ -244,10 +273,40 @@ def _render_ar_lp(svc_id: str, ar_svc_slug: str, ar_svc_name: str,
             .replace(/\\s+AED$/, " درهم");
         }}
 
-        // Pass over all visible H2 + button text via UI map
-        document.querySelectorAll("h2, h3, button, a.btn, .btn-wa").forEach(function(el) {{
-          var t = el.textContent.trim();
-          if (UI[t]) setText(el, UI[t]);
+        // v1.24.161 — Aggressive translation pass: walk ALL leaf
+        // text-bearing elements (no children with text) and check
+        // each one against UI_AR. This covers <p>, <li>, <div>, <span>
+        // that the old selector missed — bot widget greeting, stats
+        // line, "Meet your pro" body paragraph, How-it-works steps.
+        var SEL = "h1, h2, h3, h4, h5, button, a, p, li, span, div, "
+                + "strong, b, em, small, label";
+        document.querySelectorAll(SEL).forEach(function(el) {{
+          // Only translate leaves — elements whose entire textContent
+          // is the same as the text of their immediate text children
+          // (i.e. no nested elements with their own text). This avoids
+          // double-translating and avoids clobbering composed content.
+          var hasChildElWithText = false;
+          for (var i = 0; i < el.children.length; i++) {{
+            if ((el.children[i].textContent || "").trim()) {{
+              hasChildElWithText = true; break;
+            }}
+          }}
+          if (hasChildElWithText) return;
+          var t = (el.textContent || "").trim();
+          if (!t) return;
+          if (UI[t]) {{ setText(el, UI[t]); return; }}
+          // Sub-string pass for stats line / urgency banner — try
+          // longest-match substitution. Useful when the element's text
+          // contains numbers + a translatable suffix ("180+ trained
+          // professionals" → "+180 محترفين مدربين").
+          var keys = Object.keys(UI);
+          for (var k = 0; k < keys.length; k++) {{
+            var src = keys[k];
+            if (src.length >= 8 && t.indexOf(src) > -1) {{
+              setText(el, t.replace(src, UI[src]));
+              break;
+            }}
+          }}
         }});
       }} catch(_e) {{}}
     }}

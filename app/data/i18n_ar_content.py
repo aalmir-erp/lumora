@@ -365,6 +365,55 @@ UI_AR: dict[str, str] = {
     "Servia the AC Pro":  "سيرفيا · فني المكيفات",
     "Servia the Plumber": "سيرفيا · السباك",
     "Servia the Electrician": "سيرفيا · الكهربائي",
+
+    # v1.24.161 — strings caught from live screenshot. Founder demanded
+    # we improve translation coverage, not strip the pages.
+    # Header right-side category pills
+    "Tech & Appliance":        "إلكترونيات وأجهزة",
+    "Mobile & Phone Repair":   "إصلاح موبايل وهاتف",
+    # Stats line variants (whole text + word fragments for safety)
+    "★ rating":                "★ تقييم",
+    "+ jobs done":             "+ مهمة منجزة",
+    "+ trained professionals": "+ محترفين مدربين",
+    "180+ trained professionals": "+180 محترفين مدربين",
+    "2,400+ jobs done":        "+2,400 مهمة منجزة",
+    "4.9★ rating":             "4.9★ تقييم",
+    # Pro section subhead + body
+    "👋 MEET YOUR PRO":         "👋 تعرّف على فني الخدمة",
+    "MEET YOUR PRO":           "تعرّف على فني الخدمة",
+    "Every Servia pro arrives in branded uniform with a printed Servia cap and ID badge. Background-checked, insured, with photo + name pre-shared on WhatsApp before they arrive.":
+        "يصل فني سيرفيا بزي رسمي مع قبعة وبطاقة هوية مطبوعة. موثَّق الخلفية، مؤمَّن، مع مشاركة الصورة والاسم على واتساب قبل وصوله.",
+    "Background-checked + insured":              "موثَّق الخلفية + مؤمَّن",
+    "Branded cap + apron with name tag":         "قبعة وملابس رسمية مع بطاقة الاسم",
+    "Photo + ID shared 30 min before arrival":    "الصورة والهوية تُشارك قبل الوصول بـ ٣٠ دقيقة",
+    "Same pro returns for follow-up visits":     "نفس الفني يعود للزيارات اللاحقة",
+    # Hero chips
+    "1 certified technician": "فني معتمد",
+    "30-90 minutes":          "٣٠-٩٠ دقيقة",
+    # How-it-works steps + descriptions
+    "1 · Tell us about it":   "١ · أخبرنا عن الطلب",
+    "Pick size + date in 30s. Fixed price quoted instantly.":
+        "اختر الحجم والتاريخ في ٣٠ ثانية. سعر ثابت فوراً.",
+    "2 · Pay to confirm":     "٢ · ادفع للتأكيد",
+    "Apple Pay · Google Pay · Card · Tabby. Slot locked.":
+        "آبل باي · جوجل باي · بطاقة · تابي. الموعد محجوز.",
+    "3 · Vetted pro assigned": "٣ · تعيين فني موثوق",
+    "You get the pro's photo + name on WhatsApp.":
+        "تستلم صورة واسم الفني على واتساب.",
+    "4 · Live ETA on arrival": "٤ · وقت الوصول مباشر",
+    "Track them in real time. Updates every 5 min.":
+        "تتبع وقت الوصول مباشرة. تحديثات كل ٥ دقائق.",
+    "5 · Service done right":  "٥ · إنجاز الخدمة باحترافية",
+    "Photos, invoice, 7-day re-do guarantee.":
+        "صور، فاتورة، ضمان إعادة المهمة لـ ٧ أيام.",
+    # Service feature checklists
+    "✓ Same-day available":           "✓ متاح في نفس اليوم",
+    "✓ Background-checked + insured": "✓ موثَّق الخلفية + مؤمَّن",
+    "✓ Fixed price · no surprises":   "✓ سعر ثابت · بدون مفاجآت",
+    "✓ 7-day re-do guarantee":        "✓ ضمان إعادة لـ ٧ أيام",
+    # Coverage / area phrases that show in the urgency banner
+    "specialists available in your area":  "اختصاصيين متاحين في منطقتك",
+    "next slot in":                         "الموعد التالي بعد",
 }
 
 

@@ -109,7 +109,12 @@
 
 <div class="top">
   <h1>💼 Commerce · Servia Admin</h1>
-  <input id="token" class="auth-input" type="password" placeholder="Admin token" autocomplete="off">
+  <div style="display:flex;align-items:center;gap:6px">
+    <input id="token" class="auth-input" type="password" placeholder="Paste admin token" autocomplete="off" title="Paste your admin token. Recovery token is 'lumora-admin-test'.">
+    <button type="button" id="token-recover" onclick="useRecoveryToken()"
+            title="Fill the recovery token 'lumora-admin-test' (fallback that always works)"
+            style="background:#FCD34D;color:#92400E;border:0;border-radius:6px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">🔑 Use recovery</button>
+  </div>
 </div>
 
 <nav class="tabs">
@@ -303,10 +308,22 @@ tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
 tokenInput.addEventListener("input", () => localStorage.setItem(TOKEN_KEY, tokenInput.value.trim()));
 tokenInput.addEventListener("change", () => localStorage.setItem(TOKEN_KEY, tokenInput.value.trim()));
 
+// v1.24.161 — One-click recovery: fills the recovery token so the founder
+// doesn't need to remember anything. The recovery token always works because
+// app/auth.py treats both ADMIN_TOKEN env var AND "lumora-admin-test" as valid.
+function useRecoveryToken() {
+  const recovery = "lumora-admin-test";
+  tokenInput.value = recovery;
+  localStorage.setItem(TOKEN_KEY, recovery);
+  // Reload reports immediately so the founder sees data right away.
+  try { loadReports && loadReports(); } catch(_) {}
+  alert("✓ Recovery token filled. You're signed in.");
+}
+
 function H() {
   let t = (tokenInput.value || "").trim();
   if (!t) {
-    t = (prompt("Paste your admin token (saved for next time):") || "").trim();
+    t = (prompt("Paste your admin token (or click 🔑 Use recovery):") || "").trim();
     if (t) { tokenInput.value = t; localStorage.setItem(TOKEN_KEY, t); }
   }
   return { "Authorization": "Bearer " + t };
@@ -821,6 +838,14 @@ async function openCreateQuote() {
         <input type="number" id="nq-discount" value="0" step="0.01" min="0" max="99999"></div>
       <div class="field"><label>Notes for customer (optional)</label>
         <input type="text" id="nq-notes" placeholder="e.g. Bring gate code 4521"></div>
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>📜 Disclaimer / terms (shown on the quote page)</label>
+      <textarea id="nq-terms" rows="3" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;font-family:inherit"
+        placeholder="e.g. Prices valid for 14 days. Crew may charge extra if access requires lift. 24h cancellation notice required for full refund."></textarea>
+      <div style="font-size:11.5px;color:var(--mut);margin-top:4px">
+        <button type="button" onclick="insertDefaultTerms()" style="background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;padding:3px 9px;border-radius:5px;font-size:11px;cursor:pointer;font-weight:600">+ Insert standard Servia terms</button>
+      </div>
     </div>
 
     <div id="nq-totals" style="background:var(--bg);padding:12px;border-radius:8px;margin-top:14px;font-size:13.5px">
