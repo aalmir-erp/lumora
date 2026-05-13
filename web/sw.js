@@ -1,5 +1,5 @@
 /* Servia service worker — network-first for HTML/JS so deploys are seen instantly. */
-const CACHE = "servia-v1.24.170";
+const CACHE = "servia-v1.24.171";
 // v1.23.0 — pre-cache critical paint-path assets so first visit is instant
 // on a returning user. Keep small (<200KB total) to not blow Android cache.
 const SHELL = [

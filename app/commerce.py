@@ -891,6 +891,7 @@ class AssignVendorBody(BaseModel):
     vendor_rate: float                    # AED to pay vendor (per line if applicable)
     service_id: str                       # which service line(s) this PO covers
     qty: float = 1
+    discount: float = 0                   # v1.24.171 — admin-applied discount on the PO
     notes: Optional[str] = None
 
 
@@ -1118,12 +1119,16 @@ def admin_assign_vendor(so_id: str, body: AssignVendorBody):
     po_id = _id("PO")
     po_num = next_doc_number("po")
     now = _now()
-    vendor_total = round(body.qty * body.vendor_rate, 2)
+    gross = round(body.qty * body.vendor_rate, 2)
+    discount = round(float(body.discount or 0), 2)
+    vendor_total = max(0.0, round(gross - discount, 2))
     line_items = [{
         "svc_id": body.service_id,
         "qty": body.qty,
         "vendor_rate": body.vendor_rate,
-        "line_total": vendor_total,
+        "line_total": gross,
+        "discount": discount,
+        "net": vendor_total,
     }]
     with db.connect() as c:
         c.execute("""

@@ -125,6 +125,8 @@
   <a href="#delivery-notes" data-tab="delivery-notes" title="Service completion notes (was 'Delivery Notes' — renamed because we deliver SERVICE not goods)">✅ Service Notes <span class="count" id="cnt-delivery-notes">…</span></a>
   <a href="#purchase-orders" data-tab="purchase-orders">🛒 Purchase Orders <span class="count" id="cnt-purchase-orders">…</span></a>
   <a href="#payments" data-tab="payments">💳 Payments <span class="count" id="cnt-payments">…</span></a>
+  <a href="#customers" data-tab="customers" title="Customer A/R: open invoices per customer + merge into one payment">👤 Customers <span class="count" id="cnt-customers">…</span></a>
+  <a href="#vendors" data-tab="vendors" title="Vendor A/P: open POs per vendor + merge into one outgoing payment">🛒 Vendors <span class="count" id="cnt-vendors">…</span></a>
 </nav>
 
 <main>
@@ -297,6 +299,36 @@
   </tr></thead><tbody id="payments-rows"></tbody></table></div>
 </div>
 
+<!-- v1.24.171 — CUSTOMERS A/R TAB: lists customers + open balance + 1-click merge -->
+<div id="tab-customers" class="tab-body" style="display:none">
+  <div class="filters">
+    <input type="text" id="cust-q" placeholder="Search by name / phone / email…" style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--border);border-radius:8px">
+    <button class="btn" onclick="loadCustomersAR()">↻</button>
+    <span style="color:var(--mut);font-size:12px;align-self:center">
+      Total outstanding A/R: <b id="ar-total-out">AED 0.00</b>
+    </span>
+  </div>
+  <div class="panel"><table><thead><tr>
+    <th>#</th><th>Customer</th><th>Phone</th><th>Open invoices</th>
+    <th>Outstanding</th><th>Actions</th>
+  </tr></thead><tbody id="customers-rows"></tbody></table></div>
+</div>
+
+<!-- v1.24.171 — VENDORS A/P TAB: lists vendors + open POs + merge outgoing payment -->
+<div id="tab-vendors" class="tab-body" style="display:none">
+  <div class="filters">
+    <input type="text" id="vendor-q" placeholder="Search by name / phone…" style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--border);border-radius:8px">
+    <button class="btn" onclick="loadVendorsAP()">↻</button>
+    <span style="color:var(--mut);font-size:12px;align-self:center">
+      Total outstanding A/P: <b id="ap-total-out">AED 0.00</b>
+    </span>
+  </div>
+  <div class="panel"><table><thead><tr>
+    <th>#</th><th>Vendor</th><th>Phone</th><th>Open POs</th>
+    <th>Outstanding</th><th>Actions</th>
+  </tr></thead><tbody id="vendors-rows"></tbody></table></div>
+</div>
+
 </main>
 
 <!-- Detail modal -->
@@ -371,6 +403,8 @@ document.querySelectorAll("nav.tabs a").forEach(a => {
     const id = "tab-" + a.dataset.tab;
     document.getElementById(id).style.display = "";
     if (a.dataset.tab === "reports") loadReports();
+    else if (a.dataset.tab === "customers") loadCustomersAR();
+    else if (a.dataset.tab === "vendors")   loadVendorsAP();
     else loadList(a.dataset.tab);
     location.hash = a.dataset.tab;
   });
@@ -763,6 +797,225 @@ async function aiQuoteGenerate() {
   } catch (err) {
     document.getElementById("ai-msg").innerHTML =
       `<span style="color:var(--r)">Failed: ${err.message}. Tip: keep the request short and include name + phone + service.</span>`;
+  }
+}
+
+// v1.24.171 — Customer A/R tab: list customers + open invoices + merge.
+async function loadCustomersAR() {
+  const wrap = document.getElementById("customers-rows");
+  wrap.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--mut)">Loading…</td></tr>`;
+  try {
+    const q = (document.getElementById("cust-q").value || "").trim();
+    const r = await fetch("/api/admin/customers/search?q=" + encodeURIComponent(q || "a"),
+                         { headers: H() });
+    const items = (await r.json()).items || [];
+    let totalOut = 0;
+    const rows = [];
+    for (const cu of items.slice(0, 50)) {
+      const obR = await fetch(`/api/admin/customers/${cu.id}/open-balance`, { headers: H() });
+      const ob = await obR.json();
+      if (!ob.ok) continue;
+      totalOut += ob.total_outstanding || 0;
+      rows.push(`<tr>
+        <td>#${cu.id}</td>
+        <td><b>${cu.name || "—"}</b></td>
+        <td>${cu.phone || "—"}</td>
+        <td>${ob.invoice_count || 0}</td>
+        <td><b>${fmtA(ob.total_outstanding || 0)}</b></td>
+        <td>${ob.invoice_count > 0 ?
+          `<button class="btn btn-amber" style="font-size:11px;padding:5px 12px" onclick="openMergeCustomer(${cu.id},'${(cu.name||'').replace(/'/g,'&#39;')}')">💳 Merge & pay</button>` :
+          '<span style="color:var(--mut);font-size:11px">No open invoices</span>'}</td>
+      </tr>`);
+    }
+    if (!rows.length) {
+      wrap.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--mut)">No customers found.</td></tr>`;
+    } else {
+      wrap.innerHTML = rows.join("");
+    }
+    document.getElementById("ar-total-out").textContent = fmtA(totalOut);
+    document.getElementById("cnt-customers").textContent = items.length;
+  } catch (e) {
+    wrap.innerHTML = `<tr><td colspan="6" style="color:var(--r)">Failed: ${e.message}</td></tr>`;
+  }
+}
+
+async function loadVendorsAP() {
+  const wrap = document.getElementById("vendors-rows");
+  wrap.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--mut)">Loading…</td></tr>`;
+  try {
+    const q = (document.getElementById("vendor-q").value || "").trim();
+    const r = await fetch("/api/admin/vendors/search?q=" + encodeURIComponent(q || "a"),
+                         { headers: H() });
+    const items = (await r.json()).items || [];
+    let totalOut = 0;
+    const rows = [];
+    for (const v of items.slice(0, 50)) {
+      const obR = await fetch(`/api/admin/vendors/${v.id}/open-balance`, { headers: H() });
+      const ob = await obR.json();
+      if (!ob.ok) continue;
+      totalOut += ob.total_outstanding || 0;
+      rows.push(`<tr>
+        <td>#${v.id}</td>
+        <td><b>${v.name || "—"}</b></td>
+        <td>${v.phone || "—"}</td>
+        <td>${ob.po_count || 0}</td>
+        <td><b>${fmtA(ob.total_outstanding || 0)}</b></td>
+        <td>${ob.po_count > 0 ?
+          `<button class="btn btn-amber" style="font-size:11px;padding:5px 12px" onclick="openMergeVendor(${v.id},'${(v.name||'').replace(/'/g,'&#39;')}')">💸 Merge & pay out</button>` :
+          '<span style="color:var(--mut);font-size:11px">No open POs</span>'}</td>
+      </tr>`);
+    }
+    if (!rows.length) {
+      wrap.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--mut)">No vendors found.</td></tr>`;
+    } else {
+      wrap.innerHTML = rows.join("");
+    }
+    document.getElementById("ap-total-out").textContent = fmtA(totalOut);
+    document.getElementById("cnt-vendors").textContent = items.length;
+  } catch (e) {
+    wrap.innerHTML = `<tr><td colspan="6" style="color:var(--r)">Failed: ${e.message}</td></tr>`;
+  }
+}
+
+// Merge modal — customer side
+async function openMergeCustomer(cid, name) {
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("modal-content").innerHTML = `<h2>Loading…</h2>`;
+  const r = await fetch(`/api/admin/customers/${cid}/open-balance`, { headers: H() });
+  const d = await r.json();
+  if (!d.ok) { document.getElementById("modal-content").innerHTML = `<div style="color:var(--r)">Failed.</div>`; return; }
+  _renderMergeModal({
+    title: `💳 Merge & pay — ${name}`,
+    counterparty_label: "customer",
+    payment_type: "customer_in",
+    reference_type: "invoice",
+    rows: d.invoices || [],
+    row_key: "invoice_number",
+    total: d.total_outstanding || 0,
+  });
+}
+async function openMergeVendor(vid, name) {
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("modal-content").innerHTML = `<h2>Loading…</h2>`;
+  const r = await fetch(`/api/admin/vendors/${vid}/open-balance`, { headers: H() });
+  const d = await r.json();
+  if (!d.ok) { document.getElementById("modal-content").innerHTML = `<div style="color:var(--r)">Failed.</div>`; return; }
+  _renderMergeModal({
+    title: `💸 Merge & pay out — ${name}`,
+    counterparty_label: "vendor",
+    payment_type: "vendor_out",
+    reference_type: "purchase_order",
+    rows: d.purchase_orders || [],
+    row_key: "po_number",
+    total: d.total_outstanding || 0,
+  });
+}
+
+function _renderMergeModal(cfg) {
+  const checkboxRows = cfg.rows.map(it => `
+    <label style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);cursor:pointer">
+      <input type="checkbox" class="mg-pick" data-id="${it.id}" data-remaining="${it.remaining}" checked
+             onchange="mgRecalc()">
+      <span style="flex:1"><b>${it[cfg.row_key]}</b>
+        <span style="font-size:11px;color:var(--mut)"> · ${fmtD(it.created_at)}</span>
+        ${it.paid_so_far ? `<span style="font-size:11px;color:#0F766E"> · paid AED ${it.paid_so_far.toFixed(2)}</span>` : ""}
+      </span>
+      <span style="font-weight:700">${fmtA(it.remaining)}</span>
+    </label>
+  `).join("");
+  document.getElementById("modal-content").innerHTML = `
+    <h2>${cfg.title}</h2>
+    <p style="color:var(--mut);font-size:13px;margin-top:-4px">
+      Combine multiple open ${cfg.reference_type === "invoice" ? "invoices" : "POs"} into a single payment record. Each gets its own settlement row but shares the same reference number for audit.
+    </p>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 12px;margin:10px 0;max-height:280px;overflow-y:auto">
+      ${checkboxRows || `<div style="padding:14px;color:var(--mut)">Nothing to merge.</div>`}
+    </div>
+    <div style="background:var(--bg);padding:10px 14px;border-radius:8px;font-size:13.5px;display:flex;justify-content:space-between;font-weight:800">
+      <span>Selected total</span><b id="mg-sub">AED ${cfg.total.toFixed(2)}</b>
+    </div>
+
+    <div class="form-grid" style="margin-top:14px">
+      <div class="field"><label>Payment method *</label>
+        <select id="mg-method">
+          <option value="bank_transfer">🏦 Bank transfer</option>
+          <option value="card">💳 Card (Visa/MC)</option>
+          <option value="cash">💵 Cash</option>
+          <option value="cheque">📃 Cheque</option>
+          <option value="stripe">⚡ Stripe</option>
+          <option value="ziina">💛 Ziina</option>
+          <option value="writeoff">⚠️ Write-off</option>
+        </select>
+      </div>
+      <div class="field"><label>Payment date</label>
+        <input type="date" id="mg-date" value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Reference / transaction #</label>
+        <input type="text" id="mg-ref" placeholder="TXN-BULK-001"></div>
+      <div class="field"><label>Receipt URL (optional)</label>
+        <input type="url" id="mg-receipt" placeholder="https://..."></div>
+    </div>
+    <div class="field"><label>Notes (optional)</label>
+      <input type="text" id="mg-notes" placeholder="Settled by ${cfg.counterparty_label} on …"></div>
+
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick='submitMergePayment("${cfg.payment_type}","${cfg.reference_type}")'>✓ Record combined payment</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+    <div id="mg-msg" style="margin-top:8px;font-size:13px"></div>`;
+  mgRecalc();
+}
+
+function mgRecalc() {
+  let sum = 0;
+  document.querySelectorAll(".mg-pick").forEach(cb => {
+    if (cb.checked) sum += parseFloat(cb.dataset.remaining) || 0;
+  });
+  document.getElementById("mg-sub").textContent = "AED " + sum.toFixed(2);
+}
+
+async function submitMergePayment(payment_type, reference_type) {
+  const allocations = [];
+  document.querySelectorAll(".mg-pick").forEach(cb => {
+    if (cb.checked) {
+      allocations.push({
+        reference_id: cb.dataset.id,
+        amount: parseFloat(cb.dataset.remaining) || 0,
+      });
+    }
+  });
+  if (!allocations.length) {
+    document.getElementById("mg-msg").innerHTML = `<span style="color:var(--r)">Pick at least one document.</span>`;
+    return;
+  }
+  const body = {
+    payment_type, reference_type,
+    method: document.getElementById("mg-method").value,
+    payment_date: document.getElementById("mg-date").value || null,
+    reference_number: document.getElementById("mg-ref").value.trim() || null,
+    receipt_url: document.getElementById("mg-receipt").value.trim() || null,
+    notes: document.getElementById("mg-notes").value.trim() || null,
+    allocations,
+  };
+  document.getElementById("mg-msg").innerHTML = `<span style="color:var(--mut)">Saving…</span>`;
+  try {
+    const r = await fetch("/api/admin/payments/register-bulk", {
+      method:"POST", headers:{...H(),"Content-Type":"application/json"},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "bulk register failed");
+    document.getElementById("mg-msg").innerHTML = `<span style="color:var(--g);font-weight:700">
+      ✓ ${d.doc_count} doc(s) settled · total ${fmtA(d.total_settled)}
+    </span>`;
+    setTimeout(() => {
+      closeModal();
+      if (payment_type === "customer_in") loadCustomersAR();
+      else loadVendorsAP();
+    }, 1500);
+  } catch (e) {
+    document.getElementById("mg-msg").innerHTML = `<span style="color:var(--r)">Failed: ${e.message}</span>`;
   }
 }
 
@@ -1304,19 +1557,22 @@ async function openCreateQuote() {
 function addLine() {
   const wrap = document.getElementById("nq-lines");
   if (!wrap) return;
-  const idx = wrap.querySelectorAll(".nq-line").length;
   const row = document.createElement("div");
-  row.className = "nq-line";
-  row.style.cssText = "display:grid;grid-template-columns:2fr 50px 80px 80px 28px;gap:6px;margin-bottom:6px;align-items:center";
+  row.className = "nq-line-wrap";
+  row.style.cssText = "margin-bottom:8px;border:1px solid var(--border);border-radius:8px;padding:8px;background:#fff";
   row.innerHTML = `
-    <select class="nq-svc" onchange="onSvcPicked(this)" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;width:100%">
-      <option value="">— pick service or type custom —</option>
-      ${window.__nqSvcOpts}
-    </select>
-    <input type="number" class="nq-qty" value="1" min="0.5" step="0.5" placeholder="Qty" onchange="recalcTotals()" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
-    <input type="number" class="nq-price" value="0" min="0" step="0.5" placeholder="AED/unit" onchange="recalcTotals()" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
-    <input type="text" class="nq-name-override" placeholder="Custom name" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12px">
-    <button type="button" onclick="this.parentElement.remove();recalcTotals()" style="background:transparent;border:0;color:var(--r);cursor:pointer;font-size:16px" title="Remove line">✕</button>
+    <div class="nq-line" style="display:grid;grid-template-columns:2fr 50px 80px 80px 28px;gap:6px;align-items:center">
+      <select class="nq-svc" onchange="onSvcPicked(this)" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;width:100%">
+        <option value="">— pick service or type custom —</option>
+        ${window.__nqSvcOpts}
+      </select>
+      <input type="number" class="nq-qty" value="1" min="0.5" step="0.5" placeholder="Qty" onchange="recalcTotals()" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+      <input type="number" class="nq-price" value="0" min="0" step="0.5" placeholder="AED/unit" onchange="recalcTotals()" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+      <input type="text" class="nq-name-override" placeholder="Custom name" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12px">
+      <button type="button" onclick="this.closest('.nq-line-wrap').remove();recalcTotals()" style="background:transparent;border:0;color:var(--r);cursor:pointer;font-size:16px" title="Remove line">✕</button>
+    </div>
+    <!-- v1.24.171 — Add-ons render here when the service has any -->
+    <div class="nq-addons" style="margin-top:6px;display:none"></div>
   `;
   wrap.appendChild(row);
 }
@@ -1324,7 +1580,8 @@ function addLine() {
 function onSvcPicked(sel) {
   const opt = sel.options[sel.selectedIndex];
   const price = parseFloat(opt.dataset.price) || 0;
-  const row = sel.closest(".nq-line");
+  const wrap = sel.closest(".nq-line-wrap");
+  const row = wrap.querySelector(".nq-line");
   const priceInput = row.querySelector(".nq-price");
   if (price > 0 && !priceInput.value) priceInput.value = price;
   // Auto-fill name override if blank
@@ -1332,14 +1589,75 @@ function onSvcPicked(sel) {
   if (!nameInput.value && opt.textContent && !opt.textContent.startsWith("—")) {
     nameInput.value = opt.textContent.split(" — ")[0];
   }
+  // v1.24.171 — Render service add-ons as checkboxes. Ticking one
+  // adds it as its own line item with the configured price.
+  const svcId = sel.value;
+  const addonWrap = wrap.querySelector(".nq-addons");
+  addonWrap.innerHTML = "";
+  addonWrap.style.display = "none";
+  if (svcId && window.__nqSvc) {
+    const svc = window.__nqSvc.find(s => s.id === svcId);
+    if (svc && Array.isArray(svc.addons) && svc.addons.length) {
+      addonWrap.style.display = "block";
+      addonWrap.innerHTML = `
+        <div style="font-size:11px;font-weight:700;color:#92400E;margin:4px 0 4px 2px">
+          ➕ Add-ons (tick to include):
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${svc.addons.map(a => `
+            <label style="display:inline-flex;align-items:center;gap:4px;background:#FEFCE8;border:1px solid #FDE68A;padding:3px 8px;border-radius:99px;font-size:11px;cursor:pointer">
+              <input type="checkbox" data-addon-id="${a.id}" data-addon-name="${(a.name||a.id).replace(/"/g,'&quot;')}" data-addon-price="${a.price||0}"
+                onchange="onAddonToggled(this)">
+              <span>${a.name||a.id}</span>
+              <b style="color:#92400E">+AED ${(a.price||0).toFixed(0)}</b>
+            </label>
+          `).join("")}
+        </div>
+      `;
+    }
+  }
+  recalcTotals();
+}
+
+// v1.24.171 — When an add-on checkbox toggles, add/remove a dedicated
+// line item for it. Keeps add-on price separate from base service.
+function onAddonToggled(cb) {
+  const wrap = document.getElementById("nq-lines");
+  const id    = cb.dataset.addonId;
+  const name  = cb.dataset.addonName;
+  const price = parseFloat(cb.dataset.addonPrice) || 0;
+  const marker = `addon:${id}`;
+  if (cb.checked) {
+    const row = document.createElement("div");
+    row.className = "nq-line-wrap";
+    row.style.cssText = "margin-bottom:8px;border:1px dashed #FDE68A;border-radius:8px;padding:8px;background:#FFFBEB";
+    row.innerHTML = `
+      <div class="nq-line" style="display:grid;grid-template-columns:2fr 50px 80px 80px 28px;gap:6px;align-items:center" data-addon="${marker}">
+        <input type="text" class="nq-name-override" value="➕ ${name}" readonly
+          style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12px;background:#FFFBEB;font-weight:600">
+        <input type="number" class="nq-qty" value="1" min="0.5" step="0.5" onchange="recalcTotals()" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+        <input type="number" class="nq-price" value="${price}" min="0" step="0.5" onchange="recalcTotals()" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+        <input type="hidden" class="nq-svc-id" value="addon:${id}">
+        <input type="hidden" class="nq-svc" value="">
+        <button type="button" onclick="(()=>{const cb=document.querySelector('input[data-addon-id=\\'${id}\\']');if(cb)cb.checked=false;this.closest('.nq-line-wrap').remove();recalcTotals();})()" style="background:transparent;border:0;color:var(--r);cursor:pointer;font-size:16px" title="Remove">✕</button>
+      </div>
+    `;
+    wrap.appendChild(row);
+  } else {
+    const all = wrap.querySelectorAll(`[data-addon="${marker}"]`);
+    all.forEach(el => el.closest(".nq-line-wrap").remove());
+  }
   recalcTotals();
 }
 
 function recalcTotals() {
   let sub = 0;
   document.querySelectorAll("#nq-lines .nq-line").forEach(r => {
-    const qty = parseFloat(r.querySelector(".nq-qty").value) || 0;
-    const price = parseFloat(r.querySelector(".nq-price").value) || 0;
+    const qE = r.querySelector(".nq-qty");
+    const pE = r.querySelector(".nq-price");
+    if (!qE || !pE) return;
+    const qty = parseFloat(qE.value) || 0;
+    const price = parseFloat(pE.value) || 0;
     sub += qty * price;
   });
   const disc = parseFloat(document.getElementById("nq-discount").value) || 0;
@@ -1407,11 +1725,14 @@ async function submitNewQuote() {
   }
   const lines = [];
   document.querySelectorAll("#nq-lines .nq-line").forEach(r => {
-    const sel = r.querySelector(".nq-svc");
-    const svcId = sel.value;
+    // v1.24.171 — Add-on lines have nq-svc-id (hidden) instead of nq-svc (select)
+    const idEl  = r.querySelector(".nq-svc-id");   // present on add-on rows
+    const sel   = r.querySelector(".nq-svc");
+    const svcId = (idEl && idEl.value) || (sel && sel.value) || "";
     const qty = parseFloat(r.querySelector(".nq-qty").value) || 0;
     const price = parseFloat(r.querySelector(".nq-price").value) || 0;
-    const nameOverride = r.querySelector(".nq-name-override").value.trim();
+    const nameInput = r.querySelector(".nq-name-override");
+    const nameOverride = (nameInput && nameInput.value || "").trim();
     if (qty > 0 && price > 0) {
       lines.push({
         svc_id: svcId || "custom",
