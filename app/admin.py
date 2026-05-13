@@ -2774,33 +2774,55 @@ def llm_diagnose():
 # ---------- WhatsApp admin pairing + alerts ----------
 @router.get("/whatsapp/qr")
 def whatsapp_qr():
-    """Proxies the bridge's /qr page so admin can scan inline. Returns
-    {ready, paired_number, qr_data_url} JSON for the admin UI to render."""
+    """v1.24.191 — Proxies the bridge for inline QR rendering.
+    Tries /qr.json (added in v1.24.175 — returns clean {qr: dataUrl}),
+    falls back to /qr HTML scrape, then status. Founder hit: UI showed
+    'QR not yet generated' + 'Open bridge /qr' 404 while Railway logs
+    confirmed [wa-bridge] QR received. Root cause was a fragile HTML
+    regex; JSON endpoint is reliable."""
     from .config import get_settings
     s = get_settings()
     if not s.WA_BRIDGE_URL:
         return {"configured": False, "error":
                 "WA_BRIDGE_URL not set. Deploy whatsapp_bridge/ as a separate "
                 "Railway service and set WA_BRIDGE_URL + WA_BRIDGE_TOKEN."}
-    import httpx, base64
+    import httpx
+    base = s.WA_BRIDGE_URL.rstrip("/")
+    auth = {"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"} if s.WA_BRIDGE_TOKEN else {}
     try:
-        # Status check
-        r = httpx.get(s.WA_BRIDGE_URL.rstrip("/") + "/status",
-                      headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
-                      timeout=5)
-        info = r.json() if r.ok else {"error": r.text}
+        # 1) Status check
+        r = httpx.get(base + "/status", headers=auth, timeout=5)
+        info = r.json() if r.ok else {"error": r.text[:200]}
         if info.get("ready"):
             return {"configured": True, "ready": True,
-                    "paired_number": info.get("paired_number")}
-        # Fetch QR page
-        rq = httpx.get(s.WA_BRIDGE_URL.rstrip("/") + "/qr",
-                       headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
-                       timeout=8)
+                    "paired_number": info.get("paired_number"),
+                    "bridge_url": base}
+        # 2) Try /qr.json (preferred — added in v1.24.175)
+        try:
+            rq = httpx.get(base + "/qr.json", headers=auth, timeout=8)
+            if rq.ok:
+                j = rq.json()
+                if j.get("qr"):
+                    return {"configured": True, "ready": False,
+                            "qr_data_url": j["qr"],
+                            "bridge_url": base}
+        except Exception:
+            pass
+        # 3) Fallback: scrape /qr HTML
+        rq = httpx.get(base + "/qr", headers=auth, timeout=8)
+        qr_html = rq.text if rq.ok else None
+        qr_data_url = None
+        if qr_html:
+            import re as _re
+            m = _re.search(r'src="(data:image/png;base64,[^"]+)"', qr_html)
+            if m: qr_data_url = m.group(1)
         return {"configured": True, "ready": False,
-                "qr_html": rq.text if rq.ok else None,
-                "bridge_url": s.WA_BRIDGE_URL.rstrip("/")}
+                "qr_data_url": qr_data_url,
+                "qr_html": qr_html,
+                "bridge_url": base}
     except Exception as e:
-        return {"configured": True, "ready": False, "error": str(e)}
+        return {"configured": True, "ready": False, "error": str(e),
+                "bridge_url": base}
 
 
 class WaSendBody(BaseModel):
