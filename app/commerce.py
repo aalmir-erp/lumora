@@ -1636,6 +1636,94 @@ def _format_d(iso: str) -> str:
         return iso[:10]
 
 
+def _print_doc_chain(doc_type: str, row: dict) -> str:
+    """v1.24.166 — Cross-document link strip on every printable.
+    Founder said: 'there is no linking showing between quote to invoice
+    to PO or delivery or sale order'. Now every printable shows the
+    chain at the top with clickable links to other docs."""
+    cur_num = (row.get("quote_number") or row.get("so_number") or
+               row.get("invoice_number") or row.get("dn_number") or
+               row.get("po_number") or row.get("id") or "—")
+    links: list[tuple[str, str, str]] = []   # (label, num, url) with this-doc highlighted
+    with db.connect() as c:
+        # Walk OUTWARD from the current doc in both directions.
+        # Find the central SO + the source Quote first.
+        so_id = row.get("sales_order_id") if doc_type != "sales-order" else row.get("id")
+        quote_id = (row.get("quote_id") if doc_type != "quote" else row.get("id"))
+        if doc_type == "sales-order":
+            quote_id = row.get("quote_id")
+        # Quote
+        if quote_id:
+            q = c.execute(
+                "SELECT id, quote_number FROM quotes WHERE id=?", (quote_id,)
+            ).fetchone()
+            if q:
+                links.append(("📝 Quote", q["quote_number"],
+                              f"/admin/print/quote/{q['id']}"))
+        elif doc_type == "quote":
+            links.append(("📝 Quote", row.get("quote_number") or "—",
+                          f"/admin/print/quote/{row.get('id')}"))
+        # Sales Order
+        if so_id and doc_type != "sales-order":
+            so = c.execute(
+                "SELECT id, so_number FROM sales_orders WHERE id=?", (so_id,)
+            ).fetchone()
+            if so:
+                links.append(("📋 Sales Order", so["so_number"],
+                              f"/admin/print/sales-order/{so['id']}"))
+        elif doc_type == "sales-order":
+            links.append(("📋 Sales Order", row.get("so_number") or "—",
+                          f"/admin/print/sales-order/{row.get('id')}"))
+        # Invoices linked to the SO
+        if so_id:
+            for inv in c.execute(
+                "SELECT id, invoice_number FROM invoices WHERE sales_order_id=?",
+                (so_id,)).fetchall():
+                links.append(("📄 Invoice", inv["invoice_number"],
+                              f"/admin/print/invoice/{inv['id']}"))
+        elif doc_type == "invoice":
+            links.append(("📄 Invoice", row.get("invoice_number") or "—",
+                          f"/admin/print/invoice/{row.get('id')}"))
+        # Service Notes (DNs)
+        if so_id:
+            for dn in c.execute(
+                "SELECT id, dn_number FROM delivery_notes WHERE sales_order_id=?",
+                (so_id,)).fetchall():
+                links.append(("✅ Service Note", dn["dn_number"],
+                              f"/admin/print/delivery-note/{dn['id']}"))
+        elif doc_type == "delivery-note":
+            links.append(("✅ Service Note", row.get("dn_number") or "—",
+                          f"/admin/print/delivery-note/{row.get('id')}"))
+        # POs
+        if so_id:
+            for po in c.execute(
+                "SELECT id, po_number FROM purchase_orders WHERE sales_order_id=?",
+                (so_id,)).fetchall():
+                links.append(("🛒 Purchase Order", po["po_number"],
+                              f"/admin/print/purchase-order/{po['id']}"))
+        elif doc_type == "purchase-order":
+            links.append(("🛒 Purchase Order", row.get("po_number") or "—",
+                          f"/admin/print/purchase-order/{row.get('id')}"))
+    if not links:
+        return ""
+    # Deduplicate (by num) preserving order
+    seen, out = set(), []
+    for lbl, num, url in links:
+        if num in seen: continue
+        seen.add(num); out.append((lbl, num, url))
+    chips = []
+    for lbl, num, url in out:
+        is_this = num == cur_num
+        cls = "this" if is_this else ""
+        chips.append(f'<a class="{cls}" href="{url}" target="_blank">{lbl} {_html_escape(num)}</a>')
+    return (
+        '<div class="links-strip">'
+        '<span class="lab">🔗 Linked:</span>'
+        + "".join(chips) +
+        '</div>'
+    )
+
+
 def _render_quote_or_invoice_print(doc_type: str, row: dict) -> str:
     """Render a printable quote, invoice, or sales-order. They share enough
     structure to use the same template with a doc-type-specific header."""
@@ -1665,6 +1753,7 @@ def _render_quote_or_invoice_print(doc_type: str, row: dict) -> str:
                            row.get("customer_phone"), row.get("customer_email"),
                            row.get("customer_name"))
 
+    chain_strip = _print_doc_chain(doc_type, row)
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
 <title>{doc_label[0]} {doc_num} · {brand['name']}</title>
@@ -1674,6 +1763,9 @@ def _render_quote_or_invoice_print(doc_type: str, row: dict) -> str:
 <div class="doc">
   <div class="hd">
     <div class="left">
+      <div class="logo">
+        <img src="/brand/servia-logo-full.svg" alt="Servia" onerror="this.style.display='none'">
+      </div>
       <h1>{doc_label[0]}</h1>
       <span class="docnum">{doc_num}</span>
     </div>
@@ -1687,6 +1779,7 @@ def _render_quote_or_invoice_print(doc_type: str, row: dict) -> str:
       </div>
     </div>
   </div>
+  {chain_strip}
 
   <div class="grid2">
     <div class="card">
@@ -1769,6 +1862,7 @@ def _render_dn_print(row: dict) -> str:
     share = _share_buttons("delivery-note", row["id"], row.get("dn_number") or row["id"],
                            customer_phone, customer_email, customer_name)
 
+    chain_strip = _print_doc_chain("delivery-note", row)
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
 <title>Service Note {row.get('dn_number')} · {brand['name']}</title>
@@ -1778,6 +1872,9 @@ def _render_dn_print(row: dict) -> str:
 <div class="doc">
   <div class="hd">
     <div class="left">
+      <div class="logo">
+        <img src="/brand/servia-logo-full.svg" alt="Servia" onerror="this.style.display='none'">
+      </div>
       <h1>SERVICE COMPLETION NOTE</h1>
       <span class="docnum">{_html_escape(row.get('dn_number') or '—')}</span>
     </div>
@@ -1790,6 +1887,7 @@ def _render_dn_print(row: dict) -> str:
       </div>
     </div>
   </div>
+  {chain_strip}
 
   <div class="card" style="margin-bottom:24px">
     <div class="lab">Delivered on</div>
@@ -1824,6 +1922,7 @@ def _render_po_print(row: dict) -> str:
     share = _share_buttons("purchase-order", row["id"], row.get("po_number") or row["id"],
                            row.get("vendor_phone"), None, row.get("vendor_name"))
     status_class = "paid" if row.get("status") == "paid" else ("unpaid" if row.get("status") in ("sent", "open", "accepted") else "paid")
+    chain_strip = _print_doc_chain("purchase-order", row)
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
 <title>Purchase Order {row.get('po_number')} · {brand['name']}</title>
@@ -1833,6 +1932,9 @@ def _render_po_print(row: dict) -> str:
 <div class="doc">
   <div class="hd">
     <div class="left">
+      <div class="logo">
+        <img src="/brand/servia-logo-full.svg" alt="Servia" onerror="this.style.display='none'">
+      </div>
       <h1>PURCHASE ORDER</h1>
       <span class="docnum">{_html_escape(row.get('po_number') or '—')}</span>
     </div>
@@ -1846,6 +1948,7 @@ def _render_po_print(row: dict) -> str:
       </div>
     </div>
   </div>
+  {chain_strip}
 
   <div class="grid2">
     <div class="card">
