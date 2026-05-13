@@ -582,6 +582,83 @@ def admin_revise_quote(quote_id: str):
             "revised_from": orig["quote_number"], "rev": rev_n}
 
 
+class _QuoteFromTextBody(BaseModel):
+    """v1.24.167 — Admin types/speaks a free-form request, AI extracts
+    structured fields and returns them. UI then auto-fills the
+    new-quote modal (admin can review before saving).
+
+    Example inputs (founder's spec):
+      'Mariam +971501234567 wants 5 deep cleans next Monday at 2pm in JLT'
+      'sara, 050-123 4567, ac cleaning 3 units tomorrow morning, marina'
+    """
+    text: str
+
+
+@router.post("/api/admin/quote-from-text", dependencies=[Depends(require_admin)])
+def admin_extract_quote_from_text(body: _QuoteFromTextBody):
+    """Call Claude with the services catalog + the admin's free-form
+    request. Returns a structured object the front-end uses to pre-fill
+    the new-quote modal (admin reviews then clicks Save).
+
+    Returns: {"ok": True, "extracted": {customer_name, customer_phone,
+              customer_email, customer_address, notes, line_items:[...]}}
+    """
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(400, "text is required")
+    try:
+        from . import kb
+        svcs = kb.services().get("services", [])
+    except Exception:
+        svcs = []
+    cat = [{"id": s["id"], "name": s["name"],
+            "starting_price": s.get("starting_price", 0)} for s in svcs]
+    try:
+        import anthropic, json as _json, os as _os
+        from .config import get_settings as _gs
+        client = anthropic.Anthropic(
+            api_key=_gs().ANTHROPIC_API_KEY or _os.getenv("ANTHROPIC_API_KEY", ""),
+            timeout=12.0, max_retries=1,
+        )
+        sys_prompt = (
+            "You extract a service booking from the admin's free-form "
+            "request. Return STRICT JSON only, no prose. Schema:\n"
+            "{\n"
+            '  "customer_name": str,\n'
+            '  "customer_phone": str (UAE format, +971...),\n'
+            '  "customer_email": str | null,\n'
+            '  "customer_address": str | null,\n'
+            '  "notes": str | null,\n'
+            '  "line_items": [{"svc_id": str, "name": str, "qty": number, "unit_price": number}]\n'
+            "}\n\n"
+            "Rules:\n"
+            "- Match services from the catalog to the closest. 'AC cleaning' → 'ac_cleaning'.\n"
+            "- Use starting_price as unit_price unless admin overrides.\n"
+            "- qty defaults to 1.\n"
+            "- Normalise UAE phone: '050-123 4567' / '0501234567' → '+971501234567'.\n"
+            f"\nSERVICE CATALOG:\n{_json.dumps(cat, ensure_ascii=False)}\n"
+        )
+        resp = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=700,
+            system=sys_prompt,
+            messages=[{"role": "user", "content": text}],
+        )
+        out = ""
+        for blk in resp.content:
+            if getattr(blk, "type", "") == "text":
+                out += getattr(blk, "text", "")
+        out = out.strip()
+        if out.startswith("```"):
+            out = out.strip("`").split("\n", 1)[-1]
+            if out.endswith("```"):
+                out = out[:-3]
+        extracted = _json.loads(out)
+    except Exception as e:
+        raise HTTPException(502, f"AI extraction failed: {e}")
+    return {"ok": True, "extracted": extracted}
+
+
 @router.get("/api/admin/quotes/{quote_id}/remarks", dependencies=[Depends(require_admin)])
 def admin_list_remarks(quote_id: str):
     """v1.24.165 — List customer remarks/change-requests/reject-reasons

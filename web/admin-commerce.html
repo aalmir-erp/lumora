@@ -200,7 +200,10 @@
     </select>
     <input type="date" id="q-from"><input type="date" id="q-to">
     <button class="btn" onclick="loadList('quotes')">↻</button>
-    <div class="actions"><button class="btn btn-amber" onclick="openCreateQuote()">+ New quote</button></div>
+    <div class="actions" style="display:flex;gap:6px">
+      <button class="btn btn-amber" onclick="openCreateQuote()">+ New quote</button>
+      <button class="btn" style="background:#0F766E;color:#fff" onclick="openAiQuote()" title="Type or speak a service request — AI extracts customer/services/dates and fills the new-quote form">🎤 AI Quote</button>
+    </div>
   </div>
   <div class="panel"><table><thead><tr>
     <th>#</th><th>Customer</th><th>Service</th><th>Total</th>
@@ -653,6 +656,94 @@ async function openDetail(tab, id) {
   }
 }
 function closeModal() { document.getElementById("modal").classList.remove("open"); }
+// v1.24.167 — AI-powered quote intake: admin types or SPEAKS a service
+// request in plain language; Claude extracts customer/services/dates and
+// auto-fills the new-quote modal. Voice via Web Speech API.
+async function openAiQuote() {
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("modal-content").innerHTML = `
+    <h2>🎤 AI Quote Generator</h2>
+    <p style="color:var(--mut);font-size:13px;margin-top:-4px">
+      Type or speak a service request. AI extracts customer, services, dates, and auto-fills the new-quote form.
+    </p>
+    <div style="background:#FEFCE8;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#78350F;margin:10px 0">
+      <b>Examples:</b><br>
+      • <i>"Mariam, +971501234567, wants 5 deep cleans next Monday at 2pm in JLT"</i><br>
+      • <i>"Sara 0501234567, AC cleaning 3 units tomorrow morning, Marina building 3838"</i>
+    </div>
+    <textarea id="ai-text" rows="5" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit"
+      placeholder="Type the request here, or click 🎤 to dictate…"></textarea>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn" onclick="aiQuoteSpeak()" id="ai-mic-btn">🎤 Speak (start)</button>
+      <button class="btn btn-amber" onclick="aiQuoteGenerate()">⚡ Generate</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+    <div id="ai-msg" style="margin-top:10px;font-size:13px"></div>`;
+}
+let __aiRec = null;
+function aiQuoteSpeak() {
+  const ta = document.getElementById("ai-text");
+  const btn = document.getElementById("ai-mic-btn");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert("Voice not supported in this browser. Try Chrome / Edge."); return; }
+  if (__aiRec) { __aiRec.stop(); __aiRec = null; btn.textContent = "🎤 Speak (start)"; return; }
+  __aiRec = new SR();
+  __aiRec.lang = "en-AE"; __aiRec.continuous = true; __aiRec.interimResults = true;
+  __aiRec.onresult = (e) => {
+    let txt = "";
+    for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript + " ";
+    ta.value = txt.trim();
+  };
+  __aiRec.onerror = (e) => { alert("Voice error: " + e.error); };
+  __aiRec.onend = () => { __aiRec = null; btn.textContent = "🎤 Speak (start)"; };
+  __aiRec.start();
+  btn.textContent = "⏹ Stop";
+}
+async function aiQuoteGenerate() {
+  const text = (document.getElementById("ai-text").value || "").trim();
+  if (!text) { alert("Type or speak a request first."); return; }
+  document.getElementById("ai-msg").innerHTML = `<span style="color:var(--mut)">⚡ Extracting…</span>`;
+  try {
+    const r = await fetch("/api/admin/quote-from-text", {
+      method:"POST", headers:{...H(),"Content-Type":"application/json"},
+      body: JSON.stringify({ text }),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "extract failed");
+    const e = d.extracted || {};
+    // Open the existing new-quote modal and prefill all fields.
+    await openCreateQuote();
+    // Brief delay to let modal mount
+    setTimeout(() => {
+      document.getElementById("nq-name").value  = e.customer_name || "";
+      document.getElementById("nq-phone").value = e.customer_phone || "";
+      document.getElementById("nq-email").value = e.customer_email || "";
+      document.getElementById("nq-addr").value  = e.customer_address || "";
+      document.getElementById("nq-notes").value = e.notes || "";
+      // Clear default line + add extracted lines
+      document.getElementById("nq-lines").innerHTML = "";
+      (e.line_items || []).forEach(li => {
+        addLine();
+        const rows = document.querySelectorAll("#nq-lines .nq-line");
+        const row = rows[rows.length - 1];
+        if (li.svc_id) {
+          const sel = row.querySelector(".nq-svc");
+          sel.value = li.svc_id;
+          onSvcPicked(sel);
+        }
+        row.querySelector(".nq-qty").value   = li.qty || 1;
+        row.querySelector(".nq-price").value = li.unit_price || 0;
+        if (li.name) row.querySelector(".nq-name-override").value = li.name;
+      });
+      if (!(e.line_items || []).length) addLine();
+      recalcTotals();
+    }, 200);
+  } catch (err) {
+    document.getElementById("ai-msg").innerHTML =
+      `<span style="color:var(--r)">Failed: ${err.message}. Tip: keep the request short and include name + phone + service.</span>`;
+  }
+}
+
 async function acceptQuote(id) {
   if (!confirm("Accept quote? This creates a Sales Order + auto-generates an Invoice.")) return;
   try { await apiPost(`/api/admin/quotes/${id}/accept`); alert("Accepted!"); closeModal(); loadList("quotes"); }
@@ -779,33 +870,106 @@ async function _fetchChain(quoteId, docType) {
   }
 }
 
-// v1.24.163 — Register a manual payment (in / out) against an invoice or PO.
+// v1.24.167 — Proper payment-register MODAL (not prompts).
+// Founder feedback: 'so dumb way to register payment — neither partial,
+// neither details how much pending, no method selection, no receipt'.
+// Now a real form with all fields, paid-so-far breakdown, method
+// dropdown, reference + receipt + notes + optional writeoff.
 async function registerPayment(refType, refId, docTotal) {
   const isInvoice = refType === "invoice";
-  const label = isInvoice ? "customer payment IN" : "vendor payment OUT";
-  const amount = parseFloat(prompt(`Amount in AED for ${label} (doc total: ${docTotal})?`, docTotal));
-  if (!amount || amount <= 0) return;
-  const method = prompt("Payment method? (card / bank_transfer / cash / cheque / stripe / ziina)", "bank_transfer");
-  if (!method) return;
-  const ref = prompt("Reference / transaction number (optional)?", "") || "";
-  const receipt = prompt("Receipt URL or screenshot link (optional)?", "") || "";
-  const notes = prompt("Notes (optional)?", "") || "";
+  // Pull existing payments so we can show "paid so far" + remaining
+  let already = 0, payments = [];
+  try {
+    const r = await fetch(`/api/admin/payments?reference_id=${refId}`, { headers: H() });
+    const d = await r.json();
+    payments = d.items || [];
+    already = payments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+  } catch (_) {}
+  const remaining = Math.max(0, docTotal - already);
+  const hist = payments.length
+    ? payments.map(p => `<div style="font-size:11.5px;padding:4px 0;border-bottom:1px dashed var(--border)">${fmtA(p.amount)} via <b>${p.method||"—"}</b> on ${fmtD(p.payment_date)} ${p.reference_number?`· ref ${p.reference_number}`:""}</div>`).join("")
+    : `<div style="font-size:12px;color:var(--mut)">No payments yet.</div>`;
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("modal-content").innerHTML = `
+    <h2>${isInvoice ? "💳 Register customer payment" : "💸 Register vendor payment"}</h2>
+    <p style="color:var(--mut);font-size:13px;margin-top:-4px">${refType.replace("_"," ").toUpperCase()} reference: <code>${refId}</code></p>
+
+    <div style="background:var(--bg);border-radius:8px;padding:12px;margin:12px 0;font-size:13px">
+      <div style="display:flex;justify-content:space-between"><span>Document total</span><b>${fmtA(docTotal)}</b></div>
+      <div style="display:flex;justify-content:space-between;color:#0F766E"><span>Paid so far</span><b>${fmtA(already)}</b></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:6px;font-weight:800;color:${remaining > 0 ? "#92400E" : "#16A34A"}">
+        <span>${remaining > 0 ? "Remaining due" : "Fully paid"}</span><b>${fmtA(remaining)}</b>
+      </div>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--mut)">History:</div>
+      ${hist}
+    </div>
+
+    <div class="form-grid">
+      <div class="field"><label>Amount (AED) *</label>
+        <input type="number" id="pay-amount" min="0" step="0.01" value="${remaining.toFixed(2)}" required></div>
+      <div class="field"><label>Payment method *</label>
+        <select id="pay-method" required>
+          <option value="bank_transfer">🏦 Bank transfer</option>
+          <option value="card">💳 Card (Visa/MC)</option>
+          <option value="cash">💵 Cash</option>
+          <option value="cheque">📃 Cheque</option>
+          <option value="stripe">⚡ Stripe</option>
+          <option value="ziina">💛 Ziina</option>
+          <option value="wallet">👛 Wallet credit</option>
+          <option value="writeoff">⚠️ Write-off (bad debt / loss)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Payment date</label>
+        <input type="date" id="pay-date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>Reference / transaction #</label>
+        <input type="text" id="pay-ref" placeholder="e.g. TXN-2026-051, cheque #1234"></div>
+    </div>
+    <div class="field"><label>Receipt URL (screenshot, bank PDF, etc.)</label>
+      <input type="url" id="pay-receipt" placeholder="https://…"></div>
+    <div class="field"><label>Notes (optional)</label>
+      <input type="text" id="pay-notes" placeholder="Half payment, balance due in 7 days, etc."></div>
+
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="submitPayment('${refType}','${refId}',${docTotal})">✓ Record payment</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+    <div id="pay-msg" style="margin-top:8px;font-size:13px"></div>`;
+}
+
+async function submitPayment(refType, refId, docTotal) {
+  const amount = parseFloat(document.getElementById("pay-amount").value);
+  const method = document.getElementById("pay-method").value;
+  if (!amount || amount <= 0) {
+    document.getElementById("pay-msg").innerHTML = `<span style="color:var(--r)">Enter a valid amount.</span>`; return;
+  }
+  const body = {
+    payment_type: refType === "invoice" ? "customer_in" : "vendor_out",
+    reference_type: refType,
+    reference_id: refId,
+    amount,
+    method,
+    payment_date: document.getElementById("pay-date").value || null,
+    reference_number: document.getElementById("pay-ref").value.trim() || null,
+    receipt_url: document.getElementById("pay-receipt").value.trim() || null,
+    notes: document.getElementById("pay-notes").value.trim() || null,
+  };
+  document.getElementById("pay-msg").innerHTML = `<span style="color:var(--mut)">Saving…</span>`;
   try {
     const r = await fetch("/api/admin/payments/register", {
       method:"POST", headers:{...H(),"Content-Type":"application/json"},
-      body: JSON.stringify({
-        payment_type: isInvoice ? "customer_in" : "vendor_out",
-        reference_type: refType, reference_id: refId,
-        amount, method, reference_number: ref || null,
-        receipt_url: receipt || null, notes: notes || null,
-      }),
+      body: JSON.stringify(body),
     });
     const d = await r.json();
     if (!d.ok) throw new Error(d.detail || "register failed");
-    alert(`✓ Payment recorded.\nTotal paid: AED ${d.total_paid}\nRemaining: AED ${d.remaining}\nNew status: ${d.new_status || "unchanged"}`);
-    closeModal();
-    loadList(isInvoice ? "invoices" : "purchase-orders");
-  } catch (e) { alert("Failed: " + e.message); }
+    document.getElementById("pay-msg").innerHTML = `<span style="color:var(--g);font-weight:700">
+      ✓ Recorded. Total paid: ${fmtA(d.total_paid)} · Remaining: ${fmtA(d.remaining)} · Status: <b>${d.new_status || "unchanged"}</b>
+    </span>`;
+    setTimeout(() => { closeModal(); loadList(refType === "invoice" ? "invoices" : "purchase-orders"); }, 1400);
+  } catch (e) {
+    document.getElementById("pay-msg").innerHTML = `<span style="color:var(--r)">Failed: ${e.message}</span>`;
+  }
 }
 async function markInvoicePaid(id) {
   const method = prompt("Payment method (card / bank_transfer / cash / wallet / cheque)?", "bank_transfer");

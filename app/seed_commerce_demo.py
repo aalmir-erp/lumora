@@ -35,11 +35,11 @@ def _now(offset_days: float = 0) -> str:
 def _ensure_customers() -> list[int]:
     """Insert 5 demo customers if not already there. Return their IDs."""
     customers = [
-        ("+971501110501", "Aisha Al Mansoori",  "aisha@demo.servia.ae",  "ar", "Dubai Marina"),
-        ("+971501110502", "Mohammed Khan",       "mohd@demo.servia.ae",   "en", "Business Bay"),
-        ("+971501110503", "Priya Sharma",        "priya@demo.servia.ae",  "hi", "JLT"),
-        ("+971501110504", "Lara Petrov",         "lara@demo.servia.ae",   "ru", "Saadiyat"),
-        ("+971501110505", "Khaled Al Falasi",    "khaled@demo.servia.ae", "ar", "Jumeirah Village"),
+        ("+971500000501", "Aisha Al Mansoori",  "aisha@demo.servia.ae",  "ar", "Dubai Marina"),
+        ("+971500000502", "Mohammed Khan",       "mohd@demo.servia.ae",   "en", "Business Bay"),
+        ("+971500000503", "Priya Sharma",        "priya@demo.servia.ae",  "hi", "JLT"),
+        ("+971500000504", "Lara Petrov",         "lara@demo.servia.ae",   "ru", "Saadiyat"),
+        ("+971500000505", "Khaled Al Falasi",    "khaled@demo.servia.ae", "ar", "Jumeirah Village"),
     ]
     ids: list[int] = []
     with db.connect() as c:
@@ -60,10 +60,10 @@ def _ensure_customers() -> list[int]:
 def _ensure_vendors() -> list[int]:
     """Insert 4 demo vendors. Return their IDs."""
     vendors = [
-        ("crew-spotless@demo.servia.ae", "Spotless Crew LLC",     "+971501110601", "Spotless Crew LLC",     ["deep_cleaning", "general_cleaning", "maid_service"]),
-        ("plumbpro@demo.servia.ae",       "PlumbPro Maintenance",  "+971501110602", "PlumbPro Maintenance",  ["plumbing"]),
-        ("voltcraft@demo.servia.ae",      "VoltCraft Electrical",  "+971501110603", "VoltCraft Electrical",  ["electrical"]),
-        ("acmasters@demo.servia.ae",      "AC Masters UAE",        "+971501110604", "AC Masters UAE",        ["ac_cleaning", "ac_repair"]),
+        ("crew-spotless@demo.servia.ae", "Spotless Crew LLC",     "+971500000601", "Spotless Crew LLC",     ["deep_cleaning", "general_cleaning", "maid_service"]),
+        ("plumbpro@demo.servia.ae",       "PlumbPro Maintenance",  "+971500000602", "PlumbPro Maintenance",  ["plumbing"]),
+        ("voltcraft@demo.servia.ae",      "VoltCraft Electrical",  "+971500000603", "VoltCraft Electrical",  ["electrical"]),
+        ("acmasters@demo.servia.ae",      "AC Masters UAE",        "+971500000604", "AC Masters UAE",        ["ac_cleaning", "ac_repair"]),
     ]
     ids: list[int] = []
     from .auth_users import hash_password
@@ -124,8 +124,8 @@ def _seed_quotes(customer_ids: list[int]) -> list[str]:
 
     customer_names = ["Aisha Al Mansoori", "Mohammed Khan", "Priya Sharma",
                       "Lara Petrov", "Khaled Al Falasi"]
-    customer_phones = ["+971501110501", "+971501110502", "+971501110503",
-                       "+971501110504", "+971501110505"]
+    customer_phones = ["+971500000501", "+971500000502", "+971500000503",
+                       "+971500000504", "+971500000505"]
     customer_addrs = ["Marina Crown Tower, Dubai Marina",
                       "Executive Towers, Business Bay",
                       "Cluster X JLT, Dubai",
