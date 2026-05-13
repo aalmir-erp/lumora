@@ -4,8 +4,8 @@
 <meta name="servia-page" content="me"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My account • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preload" as="style" href="/style.css?v=1.24.187" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.187"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.187" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.187"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.188" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.188"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.188" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.188"></noscript>
 <script src="/banner.js" defer></script>
 <!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
@@ -753,10 +753,26 @@ function renderBooking(b) {
         ${canReschedule ? `<button class="btn btn-ghost" style="font-size:12px" onclick="openReschedule('${b.id}', '${b.target_date}', '${b.time_slot}')">📆 Reschedule</button>` : ''}
         ${canCancel ? `<button class="btn btn-ghost" style="font-size:12px;color:#DC2626" onclick="openCancel('${b.id}')">✕ Cancel</button>` : ''}
         ${canReview ? `<button class="btn btn-primary" style="font-size:12px" onclick="openReview('${b.id}')">⭐ Leave review</button>` : ''}
+        <!-- v1.24.188 — Customer 1-click 'Book again'. Founder ask:
+             'customer can also one click repeat'. -->
+        <button class="btn btn-primary" style="font-size:12px;background:#0F766E"
+                onclick="repeatBooking('${b.id}', '${(b.service_id||'').replace(/_/g,' ')}')">🔁 Book again</button>
         <a class="btn btn-ghost" style="font-size:12px;color:#25D366" href="https://wa.me/${(window.LUMORA_BRAND&&window.LUMORA_BRAND.whatsapp||'via our website').replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Hi, regarding my booking '+b.id)}" target="_blank">📲 WhatsApp us</a>
       </div>
     </div>`;
 }
+
+// v1.24.188 — Customer-side 'Book again': clones the past booking into
+// a new draft quote + opens the signing flow. Founder ask: 'customer
+// can also one-click repeat'.
+window.repeatBooking = async (bookingId, serviceName) => {
+  if (!confirm(`🔁 Book the same ${serviceName} again? A new draft quote will be created with the same details. You can change the date on the next screen.`)) return;
+  try {
+    const r = await authd(`/api/me/repeat-booking/${bookingId}`, { method:"POST" });
+    if (!r.ok) throw new Error(r.detail || "failed");
+    location.href = r.url;   // → /q/<new_quote_id>
+  } catch (e) { alert("Could not repeat booking: " + (e.message||e)); }
+};
 
 window.openCancel = (bid) => {
   showModal(`
@@ -1100,7 +1116,7 @@ async function submitVideoProof() {
   } catch (e) { alert("Network error: " + e.message); }
 }
 </script>
-<script src="/widget.js?v=1.24.187"></script>
+<script src="/widget.js?v=1.24.188"></script>
 <script src="/cms.js" defer></script>
 <script src="/share.js" defer></script>
 <script src="/install.js" defer></script>

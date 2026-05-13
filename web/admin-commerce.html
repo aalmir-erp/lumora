@@ -674,13 +674,17 @@ function fmtD(s) { if (!s) return "—"; const d = new Date(s); return isNaN(d) 
 function fmtA(n) { return "AED " + (Number(n)||0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function b(status) { return `<span class="badge badge-${status||'draft'}">${(status||'?').toUpperCase()}</span>`; }
 function rowActions(tab, id, doc_num, customer_phone, customer_email) {
-  const printUrl = `/admin/print/${tab.replace("-","-").replace("s","")}/${id}`.replace(/(invoice|payment|deliverynote|salesorder|purchaseorder|quote)s/, "$1");
-  // Correct mapping per doc type
   const printMap = { "quotes":"quote", "sales-orders":"sales-order", "invoices":"invoice",
                      "delivery-notes":"delivery-note", "purchase-orders":"purchase-order" };
   const printType = printMap[tab];
   if (!printType) return "";
+  // v1.24.188 — Founder couldn't find the Reorder button (it was only
+  // inside the detail panel). Now it shows DIRECTLY on every quote row.
+  const reorderBtn = tab === "quotes"
+    ? `<button onclick="event.stopPropagation();reorderQuote('${id}')" title="Repeat order — create new draft quote with same items + customer" style="background:#FEF3C7;color:#92400E;border-color:#FCD34D">🔁 Reorder</button>`
+    : "";
   return `<div class="row-actions">
+    ${reorderBtn}
     <a href="/admin/print/${printType}/${id}?token=${encodeURIComponent(tokenInput.value)}" target="_blank">View / Print</a>
     <button onclick="event.stopPropagation();openDetail('${tab}','${id}')">⋯</button>
   </div>`;

@@ -192,6 +192,77 @@ class CustomerLoginReq(BaseModel):
     password:   str
 
 
+# v1.24.188 — Customer-side 'Book again' / repeat past booking.
+# Founder ask: 'customer can also one-click repeat'.
+@router.post("/me/repeat-booking/{booking_id}")
+def me_repeat_booking(booking_id: str,
+                       user = Depends(a.current_customer)):
+    """Clone a past booking into a NEW draft quote tied to the same
+    customer, opens the standard /q/<id> signing flow. Idempotent —
+    you can repeat the same past booking multiple times."""
+    with db.connect() as c:
+        bk = c.execute(
+            "SELECT * FROM bookings WHERE id=? AND phone=?",
+            (booking_id, user.record.get("phone"))).fetchone()
+        if not bk:
+            raise HTTPException(404, "booking not found for this customer")
+        bk = db.row_to_dict(bk)
+    # Pull the most recent quote for this booking (for line items + total)
+    src_quote = None
+    try:
+        with db.connect() as c:
+            qr = c.execute(
+                "SELECT * FROM multi_quotes WHERE booking_id=? "
+                "ORDER BY created_at DESC LIMIT 1", (booking_id,)).fetchone()
+        if qr:
+            src_quote = db.row_to_dict(qr)
+    except Exception:
+        pass
+    # Build a new multi_quote (or fall back to a service entry)
+    import json as _json, time as _time
+    new_qid = f"Q-{int(_time.time() * 1000)}"
+    items = []
+    total_aed = 0.0
+    if src_quote:
+        try:
+            items = _json.loads(src_quote.get("items_json") or "[]")
+        except Exception:
+            items = []
+        total_aed = float(src_quote.get("total_aed") or 0)
+    if not items:
+        # Fall back: use the booking's service + estimated total
+        items = [{
+            "label": (bk.get("service_id") or "service").replace("_", " ").title(),
+            "qty": 1,
+            "price_aed": float(bk.get("estimated_total") or 0),
+        }]
+        total_aed = float(bk.get("estimated_total") or 0)
+    subtotal_aed = total_aed / 1.05 if total_aed else 0
+    vat_aed      = total_aed - subtotal_aed
+    now_iso = _dt.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        try:
+            c.execute("""
+                INSERT INTO multi_quotes
+                  (quote_id, customer_name, phone, address, items_json,
+                   subtotal_aed, vat_aed, total_aed, target_date, time_slot,
+                   created_at, booking_id)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+            """, (new_qid, user.record.get("name"), user.record.get("phone"),
+                  bk.get("address"), _json.dumps(items),
+                  round(subtotal_aed, 2), round(vat_aed, 2), round(total_aed, 2),
+                  bk.get("target_date"), bk.get("time_slot"),
+                  now_iso, None))
+        except Exception as e:
+            raise HTTPException(500, f"repeat-booking insert failed: {e}")
+    db.log_event("multi_quote", new_qid, "repeat_booking_from",
+                  actor=f"customer:{user.user_id}",
+                  details={"source_booking": booking_id})
+    return {"ok": True, "quote_id": new_qid,
+            "url": f"/q/{new_qid}",
+            "total_aed": round(total_aed, 2)}
+
+
 @router.post("/auth/customer/login")
 def customer_password_login(req: CustomerLoginReq):
     ident = (req.identifier or "").strip()
