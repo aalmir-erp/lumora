@@ -2,13 +2,12 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"y3yWIGX7TsGwWRte9I3ezw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"EqUH8cqNQ4WE7Hb-H4GxDA"}`
 
 ## Build logs
 ```
-[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [internal] load build context
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
@@ -31,10 +30,11 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
+uploading snapshot
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6N2IzZTUwNDkyOTcxMDdiYjg5ZmMwNDJhMzY2Nzc0NTgxMTliYjc1OGRhZTcwMjA1MmQ0NmE1MTEwMjJhNjdmYyIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxNTowNzoxOVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:6d38d015ad9a9012641946d8c1b0d88c4ff28dd6cf70af0f45b3dcb5b784bcd1
-containerimage.digest: sha256:7b3e5049297107bb89fc042a36677458119bb758dae702052d46a511022a67fc
+containerimage.config.digest: sha256:2470b87b1148b7e900a809fba7f8cf3df4af1a445aecac5245446c71d79aa371
+containerimage.digest: sha256:c345a741f38ad735953f70905abda2d336c1249100ebff136b2c26b97c9ff7cb
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6YzM0NWE3NDFmMzhhZDczNTk1M2Y3MDkwNWFiZGEyZDMzNmMxMjQ5MTAwZWJmZjEzNmIyYzI2Yjk3YzlmZjdjYiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxNToxNTozNVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 image push
 
@@ -50,34 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.19:30902 - "GET /manifest.webmanifest HTTP/1.1" 200 OK
-INFO:     100.64.0.18:48448 - "GET /ar-preview HTTP/1.1" 200 OK
-[push] pywebpush not installed — skipping push send
-INFO:     100.64.0.3:24370 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24248 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24258 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24248 - "GET /api/admin/analytics HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24278 - "GET /api/admin/bookings?limit=8 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24286 - "GET /api/admin/bookings?status=pending&limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24302 - "GET /api/admin/alerts?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24294 - "GET /api/admin/psi/latest HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24294 - "GET /api/admin/analytics HTTP/1.1" 200 OK
+INFO:     100.64.0.5:58696 - "GET /api/blog/latest?limit=200 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24262 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:58696 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.6:24262 - "GET /admin-commerce.html HTTP/1.1" 200 OK
+INFO:     100.64.0.5:57354 - "GET /api/admin/sales-orders?limit=1 HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.5:58696 - "GET /api/admin/reports/profit?from_date=2026-04-13&to_date=2026-05-13&group_by=month HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.5:57374 - "GET /api/admin/invoices?limit=1 HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.5:57362 - "GET /api/admin/quotes?limit=1 HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.5:57380 - "GET /api/admin/delivery-notes?limit=1 HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.5:57354 - "GET /api/admin/purchase-orders?limit=1 HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.5:58696 - "GET /api/admin/payments?limit=1 HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.6:24262 - "GET /api/admin/reports/top-customers?limit=8 HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.5:58696 - "GET /api/admin/reports/outstanding HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.3:18236 - "POST /api/admin/seed-commerce-demo HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.7:18878 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.14:32320 - "GET /api/admin/stats HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46382 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46370 - "GET /api/admin/stats HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46398 - "GET /api/admin/analytics HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46416 - "GET /api/admin/bookings?limit=8 HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46418 - "GET /api/admin/bookings?status=pending&limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46424 - "GET /api/admin/alerts?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46440 - "GET /api/admin/psi/latest HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46424 - "GET /api/admin/analytics HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46440 - "GET /api/admin/bookings?limit=300 HTTP/1.1" 200 OK
-INFO:     100.64.0.17:46390 - "GET /api/admin/llm/diagnose HTTP/1.1" 200 OK
-INFO:     100.64.0.18:16240 - "GET /api/wa/status HTTP/1.1" 200 OK
-INFO:     100.64.0.15:36098 - "GET /admin-commerce.html HTTP/1.1" 200 OK
-INFO:     100.64.0.15:36108 - "GET /api/admin/stats HTTP/1.1" 200 OK
-INFO:     100.64.0.14:32320 - "GET /api/admin/reports/profit?from_date=2026-04-13&to_date=2026-05-13&group_by=month HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.14:32336 - "GET /api/admin/sales-orders?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.14:32348 - "GET /api/admin/delivery-notes?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.14:32340 - "GET /api/admin/invoices?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.14:32324 - "GET /api/admin/quotes?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.14:32368 - "GET /api/admin/payments?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.14:32354 - "GET /api/admin/purchase-orders?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.14:32320 - "GET /api/admin/reports/top-customers?limit=8 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.17:46390 - "GET /api/admin/reports/outstanding HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.18:15034 - "GET /api/admin/quotes HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.3:47220 - "POST /api/admin/seed-commerce-demo HTTP/1.1" 401 Unauthorized
+[autoblog] catch-up SKIP (last_run @ 2026-05-13T14:00:00.000637Z is fresh AND ok)
+INFO:     100.64.0.3:47232 - "GET /api/admin/quotes HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.3:25114 - "GET /api/services HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
