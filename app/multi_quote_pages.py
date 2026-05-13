@@ -131,10 +131,30 @@ def _verify_token(token: str, quote_id: str, phone: str) -> bool:
 
 # ---------------------------------------------------------------------------
 @public_router.get("/q/{quote_id}", response_class=HTMLResponse)
-def quote_landing(quote_id: str) -> str:
+def quote_landing(quote_id: str, request: Request = None) -> str:
     q = _quote(quote_id)
     if not q:
         return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
+    # v1.24.168 — Track every page open for admin analytics overlay.
+    # Founder: 'in that URL for admin maintain full analytics — which
+    # customer opened, browser, location, when. Full history.'
+    try:
+        ua = ""
+        ip = ""
+        if request is not None:
+            ua = (request.headers.get("user-agent") or "")[:300]
+            # Railway sits behind a proxy → trust X-Forwarded-For
+            ip = (request.headers.get("x-forwarded-for") or
+                  (request.client.host if request.client else "")) or ""
+            ip = ip.split(",")[0].strip()[:64]
+        with db.connect() as c:
+            c.execute(
+                "INSERT INTO events (entity_type, entity_id, action, actor, details_json, created_at) "
+                "VALUES ('quote', ?, 'view_open', 'customer', ?, ?)",
+                (quote_id, _json.dumps({"ua": ua, "ip": ip}), _now()),
+            )
+    except Exception:
+        pass
     # v1.24.78 — light-theme redesign matching brand palette (teal/amber).
     # Designed per CLAUDE.md DESIGN-REVIEW gate: brand-aligned hero,
     # uniform typography, ≥44px touch targets, semantic color roles
@@ -550,8 +570,8 @@ def post_remark(quote_id: str, body: _RemarkBody, request: Request) -> dict:
         # Echo into events table so the existing admin live-feed picks it up.
         try:
             c.execute(
-                "INSERT INTO events (entity_type, entity_id, kind, details_json, created_at) "
-                "VALUES ('quote', ?, ?, ?, ?)",
+                "INSERT INTO events (entity_type, entity_id, action, actor, details_json, created_at) "
+                "VALUES ('quote', ?, ?, 'customer', ?, ?)",
                 (quote_id, f"customer_{action}", _json.dumps({
                     "remarks": text, "customer": q.get("customer_name"),
                 }), _now()),

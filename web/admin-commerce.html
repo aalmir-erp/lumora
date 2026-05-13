@@ -634,6 +634,27 @@ async function openDetail(tab, id) {
     // v1.24.163 — show the full chain (Quote → SO → Invoice + DNs + POs)
     let chain = "";
     if (tab === "quotes") chain = await _fetchChain(id, "quote");
+    // v1.24.168 — Customer portal QR + analytics for quotes
+    let qrBlock = "";
+    let analytics = "";
+    if (tab === "quotes") {
+      const publicUrl = `${location.origin}/q/${id}`;
+      const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(publicUrl)}`;
+      qrBlock = `
+        <div style="margin-top:12px;padding:12px;background:linear-gradient(135deg,#F0FDFA,#ECFDF5);border:1px solid #99F6E4;border-radius:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <img src="${qrSrc}" alt="QR" style="width:140px;height:140px;background:#fff;padding:6px;border-radius:8px;flex-shrink:0">
+          <div style="flex:1;min-width:200px">
+            <div style="font-weight:800;color:#0F766E;margin-bottom:4px">📱 Customer portal QR</div>
+            <div style="font-size:12px;color:var(--mut);margin-bottom:6px">Show this QR to customer or share the link. Customer can review the quote, digitally sign on their phone, leave change-requests, and pay on the spot. Every action is logged for admin review.</div>
+            <div style="font-size:11px"><code style="background:#fff;padding:2px 6px;border-radius:4px;border:1px solid var(--border)">${publicUrl}</code></div>
+            <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="navigator.clipboard.writeText('${publicUrl}');this.textContent='✓ Copied'">📋 Copy link</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="loadQuoteAnalytics('${id}')">📊 View analytics</button>
+            </div>
+            <div id="qa-${id}" style="margin-top:8px;font-size:12px"></div>
+          </div>
+        </div>`;
+    }
     document.getElementById("modal-content").innerHTML = `
       <h2>${num}</h2>
       <p style="color:var(--mut);font-size:13px;margin-top:-8px">${JSON.stringify(item.line_items_json ? JSON.parse(item.line_items_json) : []).substring(0,200)}…</p>
@@ -645,6 +666,7 @@ async function openDetail(tab, id) {
       </div>
       ${related}
       ${chain}
+      ${qrBlock}
       <div style="margin-top:18px;display:flex;gap:6px;flex-wrap:wrap">
         <a class="btn btn-ghost" href="/admin/print/${docType}/${id}?token=${encodeURIComponent(tokenInput.value)}" target="_blank">📄 Open printable</a>
         ${_shareButtons(tab, item)}
@@ -742,6 +764,58 @@ async function aiQuoteGenerate() {
     document.getElementById("ai-msg").innerHTML =
       `<span style="color:var(--r)">Failed: ${err.message}. Tip: keep the request short and include name + phone + service.</span>`;
   }
+}
+
+// v1.24.168 — Customer portal analytics overlay. Shows opens / views /
+// sign / pay events with browser + OS + IP and timestamps. Founder said:
+// 'admin maintain full analytics — which customer opened, browser,
+// location, when'.
+async function loadQuoteAnalytics(id) {
+  const wrap = document.getElementById(`qa-${id}`);
+  if (!wrap) return;
+  wrap.innerHTML = `<span style="color:var(--mut)">Loading analytics…</span>`;
+  try {
+    const r = await fetch(`/api/admin/quotes/${id}/analytics`, { headers: H() });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "fetch failed");
+    const s = d.summary || {};
+    const events = d.events || [];
+    const opensBadge = s.total_opens
+      ? `<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:99px;font-weight:700">${s.total_opens} opens</span>`
+      : `<span style="color:var(--mut);font-style:italic">Not yet opened</span>`;
+    const remarkBadge = s.remark_count
+      ? `<span style="background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:99px;font-weight:700">🗨️ ${s.remark_count} remark(s)</span>`
+      : "";
+    const signedBadge = s.signed_at
+      ? `<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:99px;font-weight:700">✓ Signed</span>`
+      : "";
+    const paidBadge = s.paid_at
+      ? `<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:99px;font-weight:700">💰 Paid</span>`
+      : "";
+    const summary = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      ${opensBadge} ${remarkBadge} ${signedBadge} ${paidBadge}
+    </div>`;
+    const list = events.length
+      ? `<div style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:#fff">
+          ${events.map(e => `
+            <div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:11.5px">
+              <b>${e.kind.replace(/_/g," ")}</b> · ${fmtT(e.created_at)}
+              ${e.browser ? `· <span style="background:#F0FDFA;padding:1px 6px;border-radius:4px">${e.browser} / ${e.os}</span>` : ""}
+              ${e.details && e.details.ip ? `· IP ${e.details.ip.replace(/^(\d+\.\d+).*/, '$1.x.x')}` : ""}
+              ${e.details && e.details.remarks ? `<div style="color:#92400E;margin-top:2px;font-style:italic">"${e.details.remarks.replace(/</g,"&lt;").substring(0,200)}"</div>` : ""}
+            </div>`).join("")}
+        </div>`
+      : `<div style="color:var(--mut);font-style:italic;font-size:12px">No events yet.</div>`;
+    wrap.innerHTML = summary + list;
+  } catch (err) {
+    wrap.innerHTML = `<span style="color:var(--r)">Failed: ${err.message}</span>`;
+  }
+}
+function fmtT(s) {
+  if (!s) return "—";
+  const d = new Date(s);
+  if (isNaN(d)) return s.substring(0,16);
+  return d.toLocaleString("en-GB", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
 }
 
 async function acceptQuote(id) {

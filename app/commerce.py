@@ -659,6 +659,66 @@ def admin_extract_quote_from_text(body: _QuoteFromTextBody):
     return {"ok": True, "extracted": extracted}
 
 
+@router.get("/api/admin/quotes/{quote_id}/analytics",
+             dependencies=[Depends(require_admin)])
+def admin_quote_analytics(quote_id: str):
+    """v1.24.168 — Full open/view/sign/pay/remark history for a quote.
+    Founder demanded: 'admin maintain full analytics — which customer
+    opened, browser, location, remarks, when payment made'.
+
+    Returns one row per event (view_open, customer_question,
+    customer_reject, customer_change_request, signed, paid) with the
+    user-agent + IP (parsed for browser/OS hints) and timestamp.
+    """
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT id, action AS kind, details_json, created_at FROM events "
+            "WHERE entity_type='quote' AND entity_id=? "
+            "ORDER BY created_at DESC LIMIT 200",
+            (quote_id,),
+        ).fetchall()
+        events = []
+        import json as _json2
+        for r in rows:
+            d = dict(r)
+            try:
+                d["details"] = _json2.loads(d.get("details_json") or "{}")
+            except Exception:
+                d["details"] = {}
+            ua = d["details"].get("ua", "")
+            d["browser"], d["os"] = _parse_ua(ua) if ua else ("", "")
+            events.append(d)
+        summary = {
+            "total_opens": sum(1 for e in events if e["kind"] == "view_open"),
+            "first_open_at": next((e["created_at"] for e in events
+                                    if e["kind"] == "view_open"), None),
+            "signed_at": next((e["created_at"] for e in events
+                                if e["kind"] == "signed"), None),
+            "paid_at":   next((e["created_at"] for e in events
+                                if e["kind"] == "paid"), None),
+            "remark_count": sum(1 for e in events
+                                 if e["kind"].startswith("customer_")),
+        }
+        return {"ok": True, "summary": summary, "events": events}
+
+
+def _parse_ua(ua: str) -> tuple[str, str]:
+    """Best-effort browser + OS from User-Agent string."""
+    ua = (ua or "").lower()
+    browser = "Other"
+    if "edg/" in ua: browser = "Edge"
+    elif "chrome/" in ua: browser = "Chrome"
+    elif "firefox/" in ua: browser = "Firefox"
+    elif "safari/" in ua and "chrome/" not in ua: browser = "Safari"
+    os_name = "Other"
+    if "iphone" in ua or "ipad" in ua: os_name = "iOS"
+    elif "android" in ua: os_name = "Android"
+    elif "mac os x" in ua or "macintosh" in ua: os_name = "macOS"
+    elif "windows" in ua: os_name = "Windows"
+    elif "linux" in ua: os_name = "Linux"
+    return browser, os_name
+
+
 @router.get("/api/admin/quotes/{quote_id}/remarks", dependencies=[Depends(require_admin)])
 def admin_list_remarks(quote_id: str):
     """v1.24.165 — List customer remarks/change-requests/reject-reasons
