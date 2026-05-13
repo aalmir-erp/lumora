@@ -427,14 +427,20 @@ async function loadReports() {
 //  - Lists orphan quotes (had Ziina intent created but never confirmed)
 //    with a 🔗 Reconcile button next to each
 async function loadZiinaDiagnostics() {
+  // v1.24.190 — Make this panel ALWAYS visible at the TOP of Reports tab.
+  // Founder hit: 'in Reports tab there is nothing related to Ziina or
+  // webhook'. The panel was being appended at the BOTTOM, easy to miss.
   let host = document.getElementById("ziina-diag");
   if (!host) {
     host = document.createElement("div");
     host.id = "ziina-diag";
-    host.style.cssText = "margin:14px 0;padding:14px;background:#fff;border:1px solid var(--border);border-radius:12px";
+    host.style.cssText = "margin:0 0 14px;padding:14px;background:#fff;border:2px solid #14B8A6;border-radius:12px;box-shadow:0 4px 14px rgba(20,184,166,.12)";
     const tab = document.getElementById("tab-reports");
-    if (tab) tab.appendChild(host);
+    if (tab) tab.insertBefore(host, tab.firstChild);   // PREPEND, not append
   }
+  // Always show the panel skeleton FIRST so it's visible even if fetch fails.
+  host.innerHTML = `<h3 style="margin:0 0 10px;font-size:15px;color:#0F766E">🧭 Ziina diagnostics</h3>
+    <p style="font-size:12px;color:var(--mut);margin:0">Loading webhook + orphan-payment status…</p>`;
   try {
     const [orph, act] = await Promise.all([
       fetch("/api/admin/ziina/orphan-payments?limit=20", { headers: H() }).then(r => r.json()),
@@ -442,17 +448,16 @@ async function loadZiinaDiagnostics() {
     ]);
     const orphans = orph.items || [];
     const webhooks = act.raw_webhooks || [];
-    const events = act.parsed_events || [];
     host.innerHTML = `
-      <h3 style="margin:0 0 10px;font-size:15px">🧭 Ziina diagnostics</h3>
+      <h3 style="margin:0 0 10px;font-size:15px;color:#0F766E">🧭 Ziina diagnostics</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">
         <div style="background:${webhooks.length ? '#D1FAE5' : '#FEE2E2'};padding:10px;border-radius:8px;font-size:13px;color:${webhooks.length ? '#065F46' : '#7F1D1D'}">
-          <b>Webhook calls received (last 10 events):</b> ${webhooks.length}<br>
-          <span style="font-size:11px">${webhooks.length ? '✓ Ziina IS reaching our /api/webhooks/ziina' : '⚠ Ziina has NOT called our webhook recently. Check the webhook URL is registered in Ziina dashboard.'}</span>
+          <b>${webhooks.length ? '✓' : '🚫'} Webhook calls received (last 10):</b> ${webhooks.length}<br>
+          <span style="font-size:11px">${webhooks.length ? 'Ziina IS reaching /api/webhooks/ziina' : 'Ziina has NOT called our webhook recently. <b>Action:</b> go to /admin → 💳 Payments → 🔗 Register webhook with Ziina.'}</span>
         </div>
         <div style="background:${orphans.length ? '#FEF3C7' : '#D1FAE5'};padding:10px;border-radius:8px;font-size:13px;color:${orphans.length ? '#92400E' : '#065F46'}">
-          <b>Orphan quotes (Ziina intent created but not confirmed):</b> ${orphans.length}<br>
-          <span style="font-size:11px">${orphans.length ? 'These quotes had a Ziina payment link but no invoice yet. Click "🔗 Reconcile" if the customer paid.' : '✓ No orphans — every Ziina intent has a matching invoice.'}</span>
+          <b>${orphans.length ? '⚠' : '✓'} Orphan quotes (Ziina intent without confirmation):</b> ${orphans.length}<br>
+          <span style="font-size:11px">${orphans.length ? 'Quotes that had a Ziina pay link but no invoice yet. Click "🔗 Reconcile" if the customer paid.' : 'No orphans — every Ziina intent has a matching invoice.'}</span>
         </div>
       </div>
       ${orphans.length ? `
@@ -470,7 +475,9 @@ async function loadZiinaDiagnostics() {
       </div>` : ""}
     `;
   } catch (e) {
-    host.innerHTML = `<div style="color:var(--r);font-size:12px">Ziina diagnostics failed: ${e.message}</div>`;
+    host.innerHTML = `<h3 style="margin:0 0 6px;font-size:14px;color:#0F766E">🧭 Ziina diagnostics</h3>
+      <div style="color:#B91C1C;font-size:12.5px">Diagnostics failed: ${e.message}<br>
+      <span style="color:var(--mut);font-size:11px">— probably the admin token isn't set. Try clicking 🔑 Use recovery in the header.</span></div>`;
   }
 }
 

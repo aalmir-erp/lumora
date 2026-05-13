@@ -138,7 +138,25 @@ async def run_selftest():
             wa = {"checked": True, "ok": False, "error": "WA_BRIDGE_URL not set"}
     except Exception as e:
         wa = {"checked": True, "ok": False, "error": str(e)[:200]}
-    report["groups"]["whatsapp"] = {"ok": bool(wa.get("ok") and wa.get("ready")),
+    # v1.24.190 — Three-state classifier (founder hit: '❌ WhatsApp' shown
+    # even when bridge was reachable with QR waiting — that's not a failure):
+    #   ok+ready                   → state='paired', group.ok=True
+    #   ok+!ready+has_qr           → state='awaiting_scan', group.ok=True
+    #                                 (bridge up + QR ready; admin just needs to scan)
+    #   ok+!ready+!has_qr          → state='no_qr_yet', group.ok=False
+    #   !ok                        → state='unreachable', group.ok=False
+    if wa.get("ok") and wa.get("ready"):
+        wa["state"] = "paired";          wa_ok = True
+    elif wa.get("ok") and wa.get("has_qr"):
+        wa["state"] = "awaiting_scan";   wa_ok = True
+        wa["hint"]  = "Bridge is up + QR is ready. Open /admin → WhatsApp tab (or /admin-wa-bridge) and scan."
+    elif wa.get("ok"):
+        wa["state"] = "no_qr_yet";       wa_ok = False
+        wa["hint"]  = "Bridge reachable but no QR yet. Restart the bridge service or check its logs."
+    else:
+        wa["state"] = "unreachable";     wa_ok = False
+        wa["hint"]  = "Bridge not reachable. Confirm WA_BRIDGE_URL + WA_BRIDGE_TOKEN on the bot AND that the bridge service is deployed."
+    report["groups"]["whatsapp"] = {"ok": wa_ok, "state": wa["state"],
                                     "items": [wa]}
 
     # ---- 6) database health (counts of key tables)
