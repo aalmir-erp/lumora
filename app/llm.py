@@ -326,6 +326,17 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         "you MUST call create_multi_quote (for 2+ services) or prepare_checkout (for 1 service — PREFERRED) once all 6 "
         "fields are known. Do not output 'Book now ↗' links — those are the "
         "legacy single-service flow.\n\n"
+        "🚨🚨🚨 ABSOLUTE RULE — ONE FIELD, ONE PICKER, ONE TURN (v1.24.152)\n"
+        "After the founder reported the bot asking 'service + emirate + date + time + address + phone' all at once with TWO [[picker]] markers in one message — this rule is now strictly enforced server-side too:\n"
+        "  ❌ NEVER ask for more than ONE field in a single reply.\n"
+        "  ❌ NEVER emit two [[picker:...]] markers in one reply.\n"
+        "  ❌ NEVER write 'just let me know: service, emirate, date, time, address, phone'.\n"
+        "  ✅ Ask for the next ONE missing field as a single short question.\n"
+        "  ✅ End with the picker for THAT one field — e.g.\n"
+        "       'What date works best?\\n[[picker:date]]'\n"
+        "  When the user answers, ask the NEXT one. Never bundle.\n"
+        "If you accidentally emit two pickers, the server will strip all but the first and the customer will be confused — DON'T.\n"
+        "\n"
         "🚨 ASK ONE QUESTION PER TURN. Never produce numbered lists of 3-4 "
         "questions in one bot turn. Get one missing field at a time. "
         "When that field is date, end with [[picker:date]]. When time, "
@@ -575,6 +586,20 @@ def chat(messages: list[dict], *, session_id: str | None = None,
         tool_uses = [b for b in resp.content if b.type == "tool_use"]
         if text_parts:
             final_text = "\n".join(text_parts)
+
+        # v1.24.152 — Strip extra [[picker:...]] markers from the bot's response.
+        # Bot sometimes hallucinates 2+ pickers in one turn against the prompt
+        # rule. Keep only the FIRST picker — the customer sees one widget, not
+        # three raw markers in a row. Also applies the same fix to [[quote_card:]].
+        if final_text and final_text.count("[[picker:") > 1:
+            import re as _re
+            seen = {"count": 0}
+            def _keep_first(m):
+                seen["count"] += 1
+                return m.group(0) if seen["count"] == 1 else ""
+            final_text = _re.sub(
+                r"\[\[\s*picker\s*:\s*(?:datetime|date|time|address)\s*\]\]",
+                _keep_first, final_text, flags=_re.IGNORECASE)
 
         if resp.stop_reason != "tool_use" or not tool_uses:
             break

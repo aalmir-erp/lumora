@@ -547,7 +547,11 @@
     let pickerKind = null;   // v1.24.64 — 'date' | 'time' | null
     let quoteCardId = null;  // v1.24.78 — Q-XXXXXX to render as in-chat card
     cleanText = cleanText.replace(/\[\[\s*picker\s*:\s*(datetime|date|time|address)\s*\]\]/gi, (_, kind) => {
-      pickerKind = kind.toLowerCase();
+      // v1.24.152 — only the FIRST picker survives. Bot sometimes hallucinates
+      // multiple pickers in one turn (against the prompt rule). Keep the first
+      // one we see and silently drop the rest so the UX shows one widget,
+      // not three buttons or three raw markers.
+      if (!pickerKind) pickerKind = kind.toLowerCase();
       return "";
     }).replace(/\[\[\s*quote_card\s*:\s*(Q-[A-Z0-9]+)\s*\]\]/gi, (_, qid) => {
       quoteCardId = qid;
@@ -559,7 +563,12 @@
         else if (pair.trim()) out.push({ label: pair.trim(), send: pair.trim() });
       });
       return "";
-    }).replace(/\n{3,}/g, "\n\n").trim();
+    })
+    // v1.24.152 — CATCH-ALL: strip any other [[...]] markers the bot leaks.
+    // Examples: [[picker:phone]] (unknown kind), [[unknown:foo]], [[]]
+    // Without this, leaked markers render as raw text and look broken.
+    .replace(/\[\[[^\]]{0,80}\]\]/g, "")
+    .replace(/\n{3,}/g, "\n\n").trim();
     if (pickerKind) out.__picker = pickerKind;
     if (quoteCardId) out.__quoteCard = quoteCardId;
     for (const tc of toolCalls || []) {
@@ -998,7 +1007,7 @@
           // Inject script tag if absent
           if (!document.querySelector('script[data-ap]')) {
             const s = document.createElement("script");
-            s.src = "/address-picker.js?v=1.24.149"; s.dataset.ap = "1";
+            s.src = "/address-picker.js?v=1.24.152"; s.dataset.ap = "1";
             s.onload = () => window.serviaAddressPicker &&
                               window.serviaAddressPicker.mount(apMount, { onPick: _commitAddress });
             document.head.appendChild(s);
