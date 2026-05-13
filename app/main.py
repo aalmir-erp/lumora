@@ -1728,11 +1728,101 @@ async def ziina_webhook(request: Request):
             "FROM invoices WHERE ziina_payment_intent_id=?",
             (intent_id,)).fetchone()
     if not row:
-        # Could be a webhook for an intent we don't recognise (test traffic,
-        # or a reconciliation race). Log but return 200 — Ziina would
-        # otherwise retry forever for an orphan.
+        # v1.24.179 — Could be a QUOTE-stage payment (admin quote that
+        # was paid before /accept turned it into an invoice). Founder
+        # case: 'Ziina says Payment Received but quote stays DRAFT, no
+        # invoice generated'. Look up by intent stashed in breakdown_json.
+        with db.connect() as c:
+            qrow = c.execute(
+                "SELECT id, quote_number, status, total, customer_id, "
+                "customer_name FROM quotes "
+                "WHERE breakdown_json LIKE ?",
+                (f'%"ziina_payment_intent_id": "{intent_id}"%',)).fetchone()
+        if qrow and status == "completed":
+            # Auto-confirm flow: accept quote → create SO + invoice →
+            # register payment → mark invoice paid.
+            qid = qrow["id"]
+            print(f"[ziina-webhook] Quote-stage payment confirmed: "
+                  f"{qrow['quote_number']} intent={intent_id}", flush=True)
+            try:
+                from . import commerce as _commerce
+                if qrow["status"] != "accepted":
+                    with db.connect() as c:
+                        c.execute("UPDATE quotes SET status='accepted' WHERE id=?", (qid,))
+                    q_dict = {
+                        "id": qid, "quote_number": qrow["quote_number"],
+                        "customer_id": qrow["customer_id"],
+                        "customer_name": qrow["customer_name"],
+                        "total": qrow["total"],
+                    }
+                    # Re-read full row for _create_so_from_quote
+                    with db.connect() as c:
+                        full = c.execute("SELECT * FROM quotes WHERE id=?",
+                                         (qid,)).fetchone()
+                    so  = _commerce._create_so_from_quote(dict(full))
+                    inv = _commerce._create_invoice_from_so(so)
+                    new_invoice_id = inv["id"]
+                    new_invoice_total = inv.get("total") or qrow["total"] or 0
+                else:
+                    with db.connect() as c:
+                        inv_row = c.execute(
+                            "SELECT id, amount FROM invoices WHERE sales_order_id IN "
+                            "(SELECT id FROM sales_orders WHERE quote_id=?) "
+                            "ORDER BY created_at DESC LIMIT 1",
+                            (qid,)).fetchone()
+                    new_invoice_id = inv_row["id"] if inv_row else None
+                    new_invoice_total = float(inv_row["amount"] or 0) if inv_row else 0
+                if new_invoice_id:
+                    paid_amount = float(amount or 0) / 100.0 if amount else float(qrow["total"] or 0)
+                    with db.connect() as c:
+                        c.execute("""
+                            INSERT INTO payment_registrations
+                              (payment_type, reference_type, reference_id,
+                               counterparty_id, counterparty_name, amount,
+                               currency, method, reference_number,
+                               payment_date, notes, created_at, created_by)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        """, ("customer_in", "invoice", new_invoice_id,
+                              qrow["customer_id"], qrow["customer_name"],
+                              paid_amount, currency or "AED", "ziina",
+                              intent_id, _dt.datetime.utcnow().isoformat() + "Z",
+                              f"Ziina webhook auto-confirm [intent:{intent_id}]",
+                              _dt.datetime.utcnow().isoformat() + "Z", "ziina"))
+                        # Mark invoice paid if cumulative covers total
+                        paid_row = c.execute(
+                            "SELECT COALESCE(SUM(amount),0) AS s "
+                            "FROM payment_registrations WHERE reference_type='invoice' "
+                            "AND reference_id=?", (new_invoice_id,)).fetchone()
+                        paid_so_far = float(paid_row["s"])
+                        if paid_so_far >= new_invoice_total - 0.01 and new_invoice_total > 0:
+                            c.execute("UPDATE invoices SET payment_status='paid', "
+                                      "paid_at=? WHERE id=?",
+                                      (_dt.datetime.utcnow().isoformat() + "Z",
+                                       new_invoice_id))
+                        elif paid_so_far > 0:
+                            c.execute("UPDATE invoices SET payment_status='partially_paid' "
+                                      "WHERE id=?", (new_invoice_id,))
+                    print(f"[ziina-webhook] ✓ Quote {qrow['quote_number']} auto-confirmed: "
+                          f"SO + invoice {new_invoice_id} + payment "
+                          f"{paid_amount:.2f} AED recorded", flush=True)
+                    db.log_event("ziina_webhook", intent_id, "quote_auto_confirmed",
+                                  actor="ziina",
+                                  details={"quote_id": qid,
+                                           "invoice_id": new_invoice_id,
+                                           "paid_amount": paid_amount})
+                    return {"ok": True, "auto_confirmed": True,
+                            "quote_number": qrow["quote_number"],
+                            "invoice_id": new_invoice_id,
+                            "paid_amount": paid_amount}
+            except Exception as e:
+                print(f"[ziina-webhook] Quote auto-confirm FAILED for {qid}: {e}",
+                      flush=True)
+                # Return 500 so Ziina retries
+                raise HTTPException(status_code=500,
+                                     detail=f"auto-confirm failed: {e}")
+        # Genuine orphan — log + 200 OK (don't trigger retries)
         print(f"[ziina-webhook] orphan intent {intent_id} — no invoice "
-              f"matches", flush=True)
+              f"or quote matches", flush=True)
         db.log_event("ziina_webhook", intent_id, "orphan",
                      actor="ziina", details={"status": status})
         return {"ok": True, "noted": "orphan"}

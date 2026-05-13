@@ -124,6 +124,43 @@ def _make_payment_link(invoice_id: str, amount: float, currency: str) -> str:
                 finally:
                     loop.close()
                 if res.get("ok") and res.get("redirect_url"):
+                    # v1.24.179 — Stash the Ziina intent_id against this
+                    # quote so the webhook can map payment-back to the
+                    # quote even though no invoice exists yet (quote is
+                    # still DRAFT pre-payment). Founder hit: 'Ziina sent
+                    # Payment Received but our side shows DRAFT — no
+                    # invoice generated, no payment record'.
+                    intent_id = res.get("id")
+                    if intent_id:
+                        try:
+                            from . import db as _db
+                            import json as _json
+                            with _db.connect() as _c:
+                                # Try the admin quotes table first
+                                row = _c.execute(
+                                    "SELECT breakdown_json FROM quotes WHERE id=? OR quote_number=?",
+                                    (invoice_id, invoice_id)).fetchone()
+                                if row:
+                                    try:
+                                        bd = _json.loads(row["breakdown_json"] or "{}")
+                                    except Exception:
+                                        bd = {}
+                                    bd["ziina_payment_intent_id"] = intent_id
+                                    _c.execute(
+                                        "UPDATE quotes SET breakdown_json=? WHERE id=? OR quote_number=?",
+                                        (_json.dumps(bd), invoice_id, invoice_id))
+                                else:
+                                    # Multi-quote / bot path
+                                    try:
+                                        _c.execute(
+                                            "UPDATE multi_quotes SET ziina_payment_intent_id=? "
+                                            "WHERE quote_id=?",
+                                            (intent_id, invoice_id))
+                                    except Exception:
+                                        pass
+                        except Exception as e:
+                            print(f"[pay-link] Failed to save Ziina intent_id: {e}",
+                                  flush=True)
                     return res["redirect_url"]
                 print(f"[pay-link] Ziina failed: {res.get('error')!r}", flush=True)
             except Exception as e:
