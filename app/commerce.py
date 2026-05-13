@@ -2168,6 +2168,22 @@ def admin_clear_commerce_demo():
     return seed_commerce_demo.clear()
 
 
+@router.post("/api/admin/reseed-commerce-demo", dependencies=[Depends(require_admin)])
+def admin_reseed_commerce_demo():
+    """v1.24.176 — One-click 'clear + reseed' so demo data is refreshed
+    with the latest placeholder phone pattern (+97150000XXXX, which the
+    _is_placeholder detector treats as fake).
+
+    Founder hit OLD demo phones (+971 50 111 XXXX) on WhatsApp share
+    because the demo was seeded BEFORE v1.24.167 changed the pattern.
+    This endpoint nukes the old rows + re-inserts with the new pattern.
+    """
+    from . import seed_commerce_demo
+    cleared = seed_commerce_demo.clear()
+    fresh   = seed_commerce_demo.seed()
+    return {"ok": True, "cleared": cleared, "fresh_seed": fresh}
+
+
 @router.get("/api/admin/reports/top-vendors",
              dependencies=[Depends(require_admin)])
 def report_top_vendors(from_date: Optional[str] = None, limit: int = 20):

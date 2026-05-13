@@ -148,6 +148,7 @@
     <button class="btn" onclick="loadProfit()">↻ Refresh</button>
     <div class="actions" style="margin-left:auto">
       <button class="btn btn-amber" onclick="seedDemo()" title="Insert sample customers/quotes/SOs/invoices so all tabs show data">🌱 Seed demo data</button>
+      <button class="btn btn-ghost" onclick="reseedDemo()" title="Wipe demo + reseed with latest placeholder phones (+97150000XXXX, auto-detected as fake)">♻️ Re-seed demo</button>
       <button class="btn btn-ghost" onclick="clearDemo()" title="Remove all seeded demo rows">🧹 Clear demo</button>
     </div>
   </div>
@@ -1203,6 +1204,17 @@ async function submitAcceptAndPay(quoteId) {
   }
 }
 
+// v1.24.176 — Detect demo-seed phones so admin doesn't accidentally
+// open WhatsApp to a fake number. Founder hit '+971 50 111 0503' on
+// share and asked 'why these real numbers'. Pattern catches both old
+// (+97150111XXXX, pre v1.24.167) and new (+97150000XXXX) demo phones.
+function _isDemoPhone(rawPhone) {
+  const digits = (rawPhone || "").replace(/[^\d]/g, "");
+  if (!digits) return false;
+  return /^9715011110\d{3}$/.test(digits) ||  // old: +971 50 111 0XXX
+         /^9715000000\d{3}$/.test(digits);    // new: +971 50 000 0XXX
+}
+
 // v1.24.164 — One-click WhatsApp + Email share for quotes / invoices.
 // Builds a wa.me / mailto: link with a pre-filled message that includes
 // the doc number, total, and the public-facing URL.
@@ -1212,6 +1224,13 @@ function _shareButtons(tab, item) {
   const num = item.quote_number || item.invoice_number || "";
   const total = (item.total || item.amount || 0).toFixed(2);
   const phone = (item.customer_phone || "").replace(/[^\d]/g, "");
+  const isDemoCustomer = (item.customer_name || "").startsWith("Demo:")
+                       || _isDemoPhone(item.customer_phone);
+  if (isDemoCustomer) {
+    return `<span style="background:#FEF3C7;color:#92400E;padding:6px 12px;border-radius:99px;font-size:11.5px;font-weight:700">
+      ⚠️ Demo data — WhatsApp share disabled (fake phone). Click "🌱 Re-seed demo" on Reports tab to refresh with placeholder numbers, or clear demo to use real customers.
+    </span>`;
+  }
   const email = item.customer_email || "";
   const name = item.customer_name || "there";
   // Public URLs: quotes use /q/<id> (existing signing+pay page),
@@ -1957,6 +1976,19 @@ async function clearDemo() {
     alert(`✓ Cleared: ${JSON.stringify(d)}`);
     loadReports();
   } catch (e) { alert("Clear error: " + e.message); }
+}
+
+// v1.24.176 — Wipe + re-seed in one click so the latest placeholder
+// phone pattern (+97150000XXXX) replaces any older +97150111XXXX rows.
+async function reseedDemo() {
+  if (!confirm("Wipe existing demo data + re-seed with the latest placeholder pattern? Your REAL customer data is NOT touched.")) return;
+  try {
+    const r = await fetch("/api/admin/reseed-commerce-demo", { method:"POST", headers: H() });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "reseed failed");
+    alert(`✓ Re-seeded with fresh demo data.\nFresh: ${JSON.stringify(d.fresh_seed)}`);
+    loadReports();
+  } catch (e) { alert("Re-seed error: " + e.message); }
 }
 
 // ───────── INIT ─────────
