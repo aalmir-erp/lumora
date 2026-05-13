@@ -1027,6 +1027,133 @@ def report_top_customers(from_date: Optional[str] = None, limit: int = 20):
         return {"ok": True, "items": [dict(r) for r in rows]}
 
 
+# v1.24.157 — Customer + vendor lookup/create for the admin commerce UI.
+# Customer autocomplete pulls from the existing `customers` table; vendor
+# picker pulls from `vendors`. One-click create-new keeps the founder out
+# of the admin → customers tab when they're in the middle of a quote.
+
+@router.get("/api/admin/customers/search", dependencies=[Depends(require_admin)])
+def admin_customers_search(q: str = "", limit: int = 12):
+    """Type-ahead search of existing customers by phone or name.
+    Returns up to `limit` matches ordered by most-recent activity."""
+    if not q or len(q.strip()) < 2:
+        # Default: return the 10 most-recent customers
+        with db.connect() as c:
+            rows = c.execute("""
+                SELECT id, name, phone, email, language, last_seen_at, created_at
+                FROM customers
+                ORDER BY COALESCE(last_seen_at, created_at) DESC
+                LIMIT ?
+            """, (limit,)).fetchall()
+            return {"ok": True, "items": [dict(r) for r in rows]}
+    pattern = f"%{q.strip()}%"
+    with db.connect() as c:
+        rows = c.execute("""
+            SELECT id, name, phone, email, language, last_seen_at, created_at
+            FROM customers
+            WHERE phone LIKE ? OR name LIKE ? OR email LIKE ?
+            ORDER BY COALESCE(last_seen_at, created_at) DESC
+            LIMIT ?
+        """, (pattern, pattern, pattern, limit)).fetchall()
+        return {"ok": True, "items": [dict(r) for r in rows]}
+
+
+class CustomerCreateBody(BaseModel):
+    name:    str
+    phone:   str
+    email:   Optional[str] = None
+    language: Optional[str] = "en"
+
+
+@router.post("/api/admin/customers/create", dependencies=[Depends(require_admin)])
+def admin_customer_create(body: CustomerCreateBody):
+    """1-click new-customer creation from the quote form."""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    with db.connect() as c:
+        # Idempotent — return existing if phone matches
+        existing = c.execute("SELECT id, name, phone FROM customers WHERE phone=?",
+                              (body.phone.strip(),)).fetchone()
+        if existing:
+            return {"ok": True, "existed": True, "id": existing["id"],
+                    "name": existing["name"], "phone": existing["phone"]}
+        try:
+            cur = c.execute("""
+                INSERT INTO customers (phone, name, email, language, created_at)
+                VALUES (?,?,?,?,?)
+            """, (body.phone.strip(), body.name.strip(),
+                  (body.email or "").strip() or None,
+                  body.language or "en", now))
+            return {"ok": True, "existed": False, "id": cur.lastrowid,
+                    "name": body.name.strip(), "phone": body.phone.strip()}
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/api/admin/vendors/search", dependencies=[Depends(require_admin)])
+def admin_vendors_search(q: str = "", service_id: Optional[str] = None, limit: int = 12):
+    """Pick a vendor for a PO. Optional filter by service_id so the
+    dropdown only shows vendors that offer the relevant service."""
+    args: list = []
+    where = ["v.is_active=1"]
+    if q and len(q.strip()) >= 2:
+        pattern = f"%{q.strip()}%"
+        where.append("(v.name LIKE ? OR v.email LIKE ? OR v.phone LIKE ? OR v.company LIKE ?)")
+        args.extend([pattern, pattern, pattern, pattern])
+    if service_id:
+        where.append("EXISTS (SELECT 1 FROM vendor_services vs WHERE vs.vendor_id=v.id AND vs.service_id=?)")
+        args.append(service_id)
+    with db.connect() as c:
+        rows = c.execute(f"""
+            SELECT v.id, v.name, v.email, v.phone, v.company, v.rating, v.completed_jobs,
+                   (SELECT GROUP_CONCAT(service_id) FROM vendor_services WHERE vendor_id=v.id) AS services
+            FROM vendors v
+            WHERE {' AND '.join(where)}
+            ORDER BY v.rating DESC, v.completed_jobs DESC
+            LIMIT ?
+        """, (*args, limit)).fetchall()
+        return {"ok": True, "items": [dict(r) for r in rows]}
+
+
+class VendorCreateBody(BaseModel):
+    name:    str
+    phone:   str
+    email:   Optional[str] = None
+    company: Optional[str] = None
+    service_ids: Optional[list[str]] = None
+
+
+@router.post("/api/admin/vendors/create", dependencies=[Depends(require_admin)])
+def admin_vendor_create(body: VendorCreateBody):
+    """1-click new-vendor creation from the assign-vendor flow."""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    email = (body.email or f"vendor-{int(time.time())}@servia.ae").strip()
+    with db.connect() as c:
+        existing = c.execute("SELECT id, name FROM vendors WHERE email=? OR phone=?",
+                              (email, body.phone.strip())).fetchone()
+        if existing:
+            return {"ok": True, "existed": True, "id": existing["id"], "name": existing["name"]}
+        try:
+            from .auth_users import hash_password
+            tmp_pwd = hash_password("temp-pass-" + str(int(time.time())))
+            cur = c.execute("""
+                INSERT INTO vendors (email, password_hash, name, phone, company,
+                                     rating, completed_jobs, is_active, is_approved, created_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?)
+            """, (email, tmp_pwd, body.name.strip(), body.phone.strip(),
+                  (body.company or body.name).strip(), 5.0, 0, 1, 1, now))
+            vid = cur.lastrowid
+            for svc in (body.service_ids or []):
+                try:
+                    c.execute("INSERT INTO vendor_services (vendor_id, service_id, area) VALUES (?,?,?)",
+                              (vid, svc, "*"))
+                except Exception: pass
+            return {"ok": True, "existed": False, "id": vid, "name": body.name.strip()}
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post("/api/admin/seed-commerce-demo", dependencies=[Depends(require_admin)])
 def admin_seed_commerce_demo():
     """v1.24.156 — Insert demo customers/vendors/quotes/SOs/DNs/invoices/POs/

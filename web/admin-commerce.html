@@ -554,6 +554,8 @@ async function openDetail(tab, id) {
     }
     if (tab === "sales-orders") {
       actions += `<button class="btn" onclick="markSoCompleted('${id}')">✅ Mark completed (creates DN)</button> `;
+      // v1.24.157 — Assign-vendor flow with vendor picker
+      actions += `<button class="btn" onclick="openAssignVendor('${id}','${(item.line_items_json||'').replace(/['"\\\\]/g,'')}')">🛒 Assign vendor → create PO</button> `;
     }
     document.getElementById("modal-content").innerHTML = `
       <h2>${num}</h2>
@@ -599,6 +601,151 @@ async function markSoCompleted(id) {
   catch (e) { alert("Failed: " + e.message); }
 }
 
+// v1.24.157 — Assign-vendor flow with searchable vendor picker
+async function openAssignVendor(soId, lineItemsRaw) {
+  // Try to parse the first service_id out of the line items for filtering
+  let primarySvc = "";
+  try {
+    const items = JSON.parse(lineItemsRaw || "[]");
+    if (items[0]) primarySvc = items[0].svc_id || "";
+  } catch (e) {}
+  // Fetch initial vendor list (filtered by primary service if available)
+  let url = "/api/admin/vendors/search?limit=20";
+  if (primarySvc) url += "&service_id=" + encodeURIComponent(primarySvc);
+  let vendors = [];
+  try {
+    const r = await fetch(url, { headers: H() });
+    vendors = (await r.json()).items || [];
+  } catch (e) {}
+  const opts = vendors.map(v => `
+    <div onclick="window.__avPicked = ${v.id};document.querySelectorAll('.av-vrow').forEach(x=>x.style.background='');this.style.background='#D1FAE5';document.getElementById('av-rate').focus()"
+         class="av-vrow" style="padding:10px 12px;cursor:pointer;border:1px solid var(--border);border-radius:8px;margin-bottom:5px;font-size:13px">
+      <div style="font-weight:700">${v.name} ${v.company ? '· ' + v.company : ''}</div>
+      <div style="font-size:11.5px;color:var(--mut)">${v.phone || 'no phone'} · ⭐ ${v.rating || '5.0'} · ${v.completed_jobs || 0} jobs · Services: ${v.services || 'general'}</div>
+    </div>
+  `).join("");
+  document.getElementById("modal-content").innerHTML = `
+    <h2>🛒 Assign vendor to SO + create PO</h2>
+    <p style="color:var(--mut);font-size:13px;margin-top:-8px">${primarySvc ? 'Filtered to vendors offering <code>'+primarySvc+'</code>.' : 'Showing all active vendors.'} Click a vendor row to select.</p>
+    <div class="field"><label>Filter vendors (name / phone / company)</label>
+      <input id="av-search" type="text" placeholder="Type to filter…" oninput="reAssignSearch(this.value, '${primarySvc}')"></div>
+    <div id="av-list" style="max-height:280px;overflow-y:auto;margin-bottom:14px">${opts || '<p style="color:var(--mut);font-size:13px">No active vendors yet — create one below.</p>'}</div>
+
+    <div style="background:#F0FDFA;border:1px dashed var(--p);border-radius:10px;padding:12px;margin-bottom:14px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px">➕ Or create a new vendor on the fly:</div>
+      <div class="form-grid">
+        <div class="field" style="margin:0"><input id="av-new-name" placeholder="Vendor name *" type="text" style="padding:7px 9px"></div>
+        <div class="field" style="margin:0"><input id="av-new-phone" placeholder="Phone *" type="tel" style="padding:7px 9px"></div>
+        <div class="field" style="margin:0"><input id="av-new-email" placeholder="Email (optional)" type="email" style="padding:7px 9px"></div>
+        <div class="field" style="margin:0"><input id="av-new-company" placeholder="Company (optional)" type="text" style="padding:7px 9px"></div>
+      </div>
+      <button class="btn btn-ghost" onclick="createNewVendorInline('${primarySvc}')">+ Create vendor</button>
+    </div>
+
+    <h3 style="font-size:14px;margin:10px 0 6px">PO terms</h3>
+    <div class="form-grid">
+      <div class="field"><label>Vendor rate (AED) *</label>
+        <input id="av-rate" type="number" min="0" step="0.5" placeholder="e.g. 350"></div>
+      <div class="field"><label>Quantity</label>
+        <input id="av-qty" type="number" min="0.5" step="0.5" value="1"></div>
+    </div>
+    <div class="field"><label>Service ID *</label>
+      <input id="av-svc" type="text" value="${primarySvc}" placeholder="deep_cleaning / plumbing / …"></div>
+    <div class="field"><label>Notes (optional)</label>
+      <input id="av-notes" type="text" placeholder="e.g. Customer prefers afternoon dispatch"></div>
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn" onclick="submitAssignVendor('${soId}')">💾 Create PO</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+    <div id="av-msg" style="margin-top:10px;font-size:13px"></div>
+  `;
+  document.getElementById("modal").classList.add("open");
+}
+
+async function reAssignSearch(q, svcId) {
+  let url = "/api/admin/vendors/search?limit=20&q=" + encodeURIComponent(q || "");
+  if (svcId) url += "&service_id=" + encodeURIComponent(svcId);
+  try {
+    const r = await fetch(url, { headers: H() });
+    const items = (await r.json()).items || [];
+    const wrap = document.getElementById("av-list");
+    if (!wrap) return;
+    if (!items.length) {
+      wrap.innerHTML = '<p style="color:var(--mut);font-size:13px">No match — create new below.</p>';
+      return;
+    }
+    wrap.innerHTML = items.map(v => `
+      <div onclick="window.__avPicked = ${v.id};document.querySelectorAll('.av-vrow').forEach(x=>x.style.background='');this.style.background='#D1FAE5';document.getElementById('av-rate').focus()"
+           class="av-vrow" style="padding:10px 12px;cursor:pointer;border:1px solid var(--border);border-radius:8px;margin-bottom:5px;font-size:13px">
+        <div style="font-weight:700">${v.name} ${v.company ? '· ' + v.company : ''}</div>
+        <div style="font-size:11.5px;color:var(--mut)">${v.phone || 'no phone'} · ⭐ ${v.rating || '5.0'} · ${v.completed_jobs || 0} jobs</div>
+      </div>
+    `).join("");
+  } catch (e) {}
+}
+
+async function createNewVendorInline(primarySvc) {
+  const name = document.getElementById("av-new-name").value.trim();
+  const phone = document.getElementById("av-new-phone").value.trim();
+  if (!name || !phone) { alert("Name + phone required"); return; }
+  try {
+    const r = await fetch("/api/admin/vendors/create", {
+      method:"POST", headers: {...H(),"Content-Type":"application/json"},
+      body: JSON.stringify({
+        name, phone,
+        email: document.getElementById("av-new-email").value.trim() || null,
+        company: document.getElementById("av-new-company").value.trim() || null,
+        service_ids: primarySvc ? [primarySvc] : [],
+      })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      window.__avPicked = d.id;
+      alert(`✓ ${d.existed ? "Linked existing" : "Created"} vendor: ${d.name}. Now fill PO terms + Create PO.`);
+      reAssignSearch("", primarySvc);
+    } else {
+      alert("Failed: " + JSON.stringify(d));
+    }
+  } catch (e) { alert("Failed: " + e.message); }
+}
+
+async function submitAssignVendor(soId) {
+  if (!window.__avPicked) {
+    document.getElementById("av-msg").innerHTML = '<span style="color:var(--r)">Pick or create a vendor first.</span>';
+    return;
+  }
+  const rate = parseFloat(document.getElementById("av-rate").value) || 0;
+  const qty = parseFloat(document.getElementById("av-qty").value) || 1;
+  const svcId = document.getElementById("av-svc").value.trim();
+  if (rate <= 0 || !svcId) {
+    document.getElementById("av-msg").innerHTML = '<span style="color:var(--r)">Vendor rate + service_id required.</span>';
+    return;
+  }
+  document.getElementById("av-msg").innerHTML = '<span style="color:var(--mut)">Creating PO…</span>';
+  try {
+    const r = await fetch(`/api/admin/sales-orders/${soId}/assign-vendor`, {
+      method:"POST", headers: {...H(),"Content-Type":"application/json"},
+      body: JSON.stringify({
+        vendor_id: window.__avPicked,
+        vendor_rate: rate,
+        service_id: svcId,
+        qty: qty,
+        notes: document.getElementById("av-notes").value.trim() || null,
+      })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById("av-msg").innerHTML = `<span style="color:var(--g);font-weight:700">✓ PO ${d.po_number} created. Vendor total AED ${d.vendor_total}.</span>`;
+      setTimeout(() => { closeModal(); loadList("purchase-orders"); }, 1500);
+    } else {
+      document.getElementById("av-msg").innerHTML = `<span style="color:var(--r)">Failed: ${d.detail || JSON.stringify(d)}</span>`;
+    }
+  } catch (e) {
+    document.getElementById("av-msg").innerHTML = `<span style="color:var(--r)">Failed: ${e.message}</span>`;
+  }
+}
+
 // v1.24.155 — Manual quote creation modal. Real form, no JSON-only API anymore.
 let _svcCache = null;
 async function _loadServices() {
@@ -612,6 +759,7 @@ async function _loadServices() {
 }
 
 async function openCreateQuote() {
+  window.__nqCustomerId = null;   // v1.24.157 — clear stale picked customer from a previous open
   const services = await _loadServices();
   const svcOpts = services.map(s =>
     `<option value="${s.id}" data-price="${s.starting_price || 0}">${s.name} — from AED ${s.starting_price||0}</option>`
@@ -621,6 +769,14 @@ async function openCreateQuote() {
   document.getElementById("modal-content").innerHTML = `
     <h2>📝 Create new quote</h2>
     <p style="color:var(--mut);font-size:13px;margin-top:-8px">VAT 5% added automatically. Quote starts in DRAFT — send / accept after creation.</p>
+
+    <!-- v1.24.157 — Customer autocomplete. Search existing first, create-new inline if not found. -->
+    <div class="field" style="position:relative">
+      <label>🔍 Find existing customer (or type new below)</label>
+      <input type="text" id="nq-cust-search" placeholder="Search by phone, name, or email…" autocomplete="off"
+             oninput="searchCustomers(this.value)" style="background:#FFFBEB;border-color:#FCD34D">
+      <div id="nq-cust-results" style="position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.1);max-height:240px;overflow-y:auto;z-index:10;display:none"></div>
+    </div>
 
     <div class="form-grid">
       <div class="field"><label>Customer name *</label>
@@ -725,6 +881,52 @@ function recalcTotals() {
   document.getElementById("nq-total").textContent = "AED " + total.toFixed(2);
 }
 
+// v1.24.157 — customer search-and-fill
+let _custSearchTimer = null;
+async function searchCustomers(q) {
+  clearTimeout(_custSearchTimer);
+  _custSearchTimer = setTimeout(async () => {
+    const wrap = document.getElementById("nq-cust-results");
+    try {
+      const r = await fetch("/api/admin/customers/search?q=" + encodeURIComponent(q||""), { headers: H() });
+      const d = await r.json();
+      const items = d.items || [];
+      if (!items.length) {
+        wrap.innerHTML = q && q.length >= 2
+          ? `<div style="padding:12px;color:var(--mut);font-size:13px">No match for "${q.replace(/[<>]/g,"")}". Type the customer details below to create a new one.</div>`
+          : `<div style="padding:12px;color:var(--mut);font-size:13px">Start typing to search…</div>`;
+        wrap.style.display = "block";
+        return;
+      }
+      wrap.innerHTML = items.map(cu => `
+        <div onclick="pickCustomer(${cu.id}, '${(cu.name||'').replace(/'/g,"&#39;")}', '${cu.phone||''}', '${(cu.email||'').replace(/'/g,"&#39;")}')"
+             style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px"
+             onmouseover="this.style.background='#F0FDFA'" onmouseout="this.style.background=''">
+          <div style="font-weight:700">${cu.name || '(no name)'}</div>
+          <div style="font-size:12px;color:var(--mut)">${cu.phone} · ${cu.email || 'no email'}</div>
+        </div>
+      `).join("");
+      wrap.style.display = "block";
+    } catch (e) { /* silent */ }
+  }, 180);
+}
+function pickCustomer(id, name, phone, email) {
+  document.getElementById("nq-name").value = name || "";
+  document.getElementById("nq-phone").value = phone || "";
+  document.getElementById("nq-email").value = email || "";
+  document.getElementById("nq-cust-search").value = `✓ Selected: ${name} (${phone})`;
+  document.getElementById("nq-cust-results").style.display = "none";
+  // Stash customer_id so submitNewQuote can pass it
+  window.__nqCustomerId = id;
+}
+// Close dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#nq-cust-search") && !e.target.closest("#nq-cust-results")) {
+    const r = document.getElementById("nq-cust-results");
+    if (r) r.style.display = "none";
+  }
+});
+
 async function submitNewQuote() {
   const name = document.getElementById("nq-name").value.trim();
   const phone = document.getElementById("nq-phone").value.trim();
@@ -753,6 +955,7 @@ async function submitNewQuote() {
     return;
   }
   const body = {
+    customer_id: window.__nqCustomerId || null,   // v1.24.157 — pass existing customer if picked
     customer_name: name,
     customer_phone: phone,
     customer_email: document.getElementById("nq-email").value.trim() || null,
@@ -762,6 +965,24 @@ async function submitNewQuote() {
     valid_until: document.getElementById("nq-valid").value || null,
     notes: document.getElementById("nq-notes").value.trim() || null,
   };
+  // If no customer was picked AND the typed phone doesn't exist, auto-create the customer first
+  if (!window.__nqCustomerId) {
+    try {
+      const cr = await fetch("/api/admin/customers/create", {
+        method:"POST", headers:{...H(),"Content-Type":"application/json"},
+        body: JSON.stringify({ name, phone, email: body.customer_email || undefined }),
+      });
+      const cd = await cr.json();
+      if (cd.ok && cd.id) {
+        body.customer_id = cd.id;
+        if (cd.existed) {
+          console.log("Linked to existing customer by phone:", cd.id);
+        } else {
+          console.log("Auto-created customer:", cd.id);
+        }
+      }
+    } catch (e) { /* non-blocking, quote can still be created without customer_id */ }
+  }
   document.getElementById("nq-msg").innerHTML = `<span style="color:var(--mut)">Saving…</span>`;
   try {
     const r = await fetch("/api/admin/quotes/create", {
