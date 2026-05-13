@@ -258,6 +258,31 @@ def test_open_balance_and_bulk_payment_v1_24_170():
         assert s.get("new_status") in ("paid", "partially_paid")
 
 
+def test_accept_and_pay_v1_24_172():
+    """v1.24.172 — One-click accept + register payment, atomic SO/invoice/pay."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    HJ = {**H, "Content-Type": "application/json"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    draft_quotes = [q for q in c.get("/api/admin/quotes", headers=H).json()["items"]
+                     if q["status"] == "draft"]
+    if not draft_quotes:
+        return  # No drafts to test against, endpoint shape still exists
+    q = draft_quotes[0]
+    total = float(q.get("total") or 100.0)
+    r = c.post(f"/api/admin/quotes/{q['id']}/accept-and-pay", headers=HJ, json={
+        "amount": total, "method": "cash",
+        "reference_number": "WALK-IN-001",
+        "notes": "Customer paid cash at door"
+    }).json()
+    assert r.get("ok")
+    assert r.get("status") == "paid"
+    assert r.get("invoice_id")
+    # Verify quote status is now accepted
+    q2 = c.get(f"/api/admin/quotes/{q['id']}", headers=H).json()
+    assert q2.get("quote", {}).get("status") == "accepted"
+
+
 def test_brand_contact_placeholder_v1_24_165_169():
     assert _is_placeholder("+971 50 000 0000")
     assert _is_placeholder("+971 50 111 0001")

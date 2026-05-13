@@ -38,7 +38,7 @@
   <a href="/admin-contact" style="color:#fff;text-decoration:none">📞 Brand contact</a>
   <a href="/admin-inbox" style="color:#fff;text-decoration:none">📬 Inbox</a>
   <a href="/admin-ai-engines" style="color:#fff;text-decoration:none">🤖 AI engines</a>
-  <span style="margin-left:auto;color:#475569">v1.24.158 admin tools</span>
+  <span style="margin-left:auto;color:#475569"><span id="srv-ver-pill" style="opacity:.65">v… admin tools</span></span>
 </div>
 
 <div class="head">
@@ -153,5 +153,34 @@ async function save(){
 }
 load();
 </script>
+
+<script>
+// v1.24.172 — fill version pill from /api/health + force SW reset on stale cache
+(function(){
+  function pageVer() {
+    const ln = document.querySelector('link[href*="?v=1.24."]');
+    const m = ln && ln.href.match(/[?&]v=(1\.24\.\d+)/);
+    return m ? m[1] : "?";
+  }
+  const PV = pageVer();
+  fetch("/api/health", { cache:"no-store" }).then(r => r.json()).then(d => {
+    const live = (d && d.version) || "?";
+    const pill = document.getElementById("srv-ver-pill");
+    if (pill) pill.textContent = `v${live} admin tools`;
+    if (live !== "?" && PV !== "?" && live !== PV && pill) {
+      pill.style.cssText = "background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:6px;opacity:1;cursor:pointer";
+      pill.title = `Server v${live} but this page v${PV}. Click to force-reload.`;
+      pill.onclick = () => {
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.getRegistrations().then(rs => {
+            Promise.all(rs.map(r => r.unregister())).then(() => location.reload(true));
+          });
+        } else location.reload(true);
+      };
+    }
+  }).catch(()=>{});
+})();
+</script>
 </body>
+
 </html>

@@ -103,7 +103,7 @@
   <a href="/admin-contact" style="color:#fff;text-decoration:none">📞 Brand contact</a>
   <a href="/admin-inbox" style="color:#fff;text-decoration:none">📬 Inbox</a>
   <a href="/admin-ai-engines" style="color:#fff;text-decoration:none">🤖 AI engines</a>
-  <span style="margin-left:auto;color:#475569">v1.24.158 admin tools</span>
+  <span style="margin-left:auto;color:#475569"><span id="srv-ver-pill" style="opacity:.65">v… admin tools</span></span>
 </div>
 
 
@@ -637,6 +637,8 @@ async function openDetail(tab, id) {
     if (tab === "quotes") {
       if (item.status === "draft" || item.status === "sent") {
         actions += `<button class="btn" onclick="acceptQuote('${id}')">✅ Accept (creates SO + invoice)</button> `;
+        // v1.24.172 — Atomic "accept + pay in one click" for on-the-spot payments
+        actions += `<button class="btn btn-amber" onclick="acceptAndPay('${id}', ${item.total || 0})">⚡ Accept + Pay now</button> `;
       }
       if (item.status !== "rejected" && item.status !== "cancelled" && item.status !== "accepted") {
         actions += `<button class="btn btn-ghost" onclick="rejectQuote('${id}')">❌ Reject</button> `;
@@ -672,7 +674,20 @@ async function openDetail(tab, id) {
     let qrBlock = "";
     let analytics = "";
     if (tab === "quotes") {
-      const publicUrl = `${location.origin}/q/${id}`;
+      // v1.24.172 — Use the short quote_number (QT-2026-0008) + HMAC
+      // share token so the URL is unguessable. Founder demanded
+      // both: 'small + identifiable' AND 'encoded so no one can guess'.
+      const shortNum = item.quote_number || item.invoice_number || id;
+      // Fetch the HMAC share token (computed server-side from the id)
+      let shareTok = "";
+      try {
+        const tokR = await fetch(`/api/admin/quotes/${id}/share-token`, { headers: H() });
+        if (tokR.ok) {
+          const tokD = await tokR.json();
+          if (tokD.ok) shareTok = tokD.token || "";
+        }
+      } catch(_) {}
+      const publicUrl = `${location.origin}/q/${shortNum}${shareTok ? "?t=" + shareTok : ""}`;
       const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(publicUrl)}`;
       qrBlock = `
         <div style="margin-top:12px;padding:12px;background:linear-gradient(135deg,#F0FDFA,#ECFDF5);border:1px solid #99F6E4;border-radius:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
@@ -1077,6 +1092,74 @@ async function acceptQuote(id) {
   catch (e) { alert("Failed: " + e.message); }
 }
 
+// v1.24.172 — One-click: accept quote + record on-the-spot payment.
+// Atomic flow per founder request — 'when customer is paying the
+// quotation should be confirmed automatically to sale order and
+// automatically invoice should be generated with the payment in it'.
+async function acceptAndPay(quoteId, suggested) {
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("modal-content").innerHTML = `
+    <h2>⚡ Accept + record payment</h2>
+    <p style="color:var(--mut);font-size:13px;margin-top:-4px">
+      One click: accepts the quote (auto-creates Sales Order + Invoice) AND records the customer's payment immediately. Use when customer pays cash/card on the spot.
+    </p>
+    <div class="form-grid">
+      <div class="field"><label>Amount (AED) *</label>
+        <input type="number" id="ap-amount" min="0" step="0.01" value="${(suggested||0).toFixed(2)}"></div>
+      <div class="field"><label>Method *</label>
+        <select id="ap-method">
+          <option value="card">💳 Card</option>
+          <option value="cash">💵 Cash</option>
+          <option value="bank_transfer">🏦 Bank transfer</option>
+          <option value="ziina">💛 Ziina</option>
+          <option value="cheque">📃 Cheque</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Reference / TXN #</label>
+        <input type="text" id="ap-ref" placeholder="optional"></div>
+      <div class="field"><label>Receipt URL</label>
+        <input type="url" id="ap-receipt" placeholder="optional"></div>
+    </div>
+    <div class="field"><label>Notes</label>
+      <input type="text" id="ap-notes" placeholder="optional"></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn" onclick='submitAcceptAndPay("${quoteId}")'>✓ Accept + record payment</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+    <div id="ap-msg" style="margin-top:8px;font-size:13px"></div>`;
+}
+async function submitAcceptAndPay(quoteId) {
+  const body = {
+    amount: parseFloat(document.getElementById("ap-amount").value) || 0,
+    method: document.getElementById("ap-method").value,
+    reference_number: document.getElementById("ap-ref").value.trim() || null,
+    receipt_url: document.getElementById("ap-receipt").value.trim() || null,
+    notes: document.getElementById("ap-notes").value.trim() || null,
+  };
+  if (body.amount <= 0) {
+    document.getElementById("ap-msg").innerHTML = `<span style="color:var(--r)">Enter amount > 0.</span>`; return;
+  }
+  document.getElementById("ap-msg").innerHTML = `<span style="color:var(--mut)">Processing…</span>`;
+  try {
+    const r = await fetch(`/api/admin/quotes/${quoteId}/accept-and-pay`, {
+      method:"POST", headers:{...H(),"Content-Type":"application/json"},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "failed");
+    document.getElementById("ap-msg").innerHTML =
+      `<span style="color:var(--g);font-weight:700">
+        ✓ Quote accepted, SO + invoice created, payment recorded.<br>
+        Invoice total: ${fmtA(d.invoice_total)} · Paid: ${fmtA(d.paid)} · Status: <b>${d.status}</b>
+       </span>`;
+    setTimeout(() => { closeModal(); loadList("quotes"); }, 1800);
+  } catch (e) {
+    document.getElementById("ap-msg").innerHTML = `<span style="color:var(--r)">Failed: ${e.message}</span>`;
+  }
+}
+
 // v1.24.164 — One-click WhatsApp + Email share for quotes / invoices.
 // Builds a wa.me / mailto: link with a pre-filled message that includes
 // the doc number, total, and the public-facing URL.
@@ -1091,7 +1174,7 @@ function _shareButtons(tab, item) {
   // Public URLs: quotes use /q/<id> (existing signing+pay page),
   // invoices fall back to the printable admin URL for now.
   const url = isQuote
-    ? `${location.origin}/q/${item.id}`
+    ? `${location.origin}/q/${item.quote_number || item.id}`
     : `${location.origin}/admin/print/invoice/${item.id}?token=PASTE_TOKEN`;
   const docKind = isQuote ? "quote" : "invoice";
   const msg = `Hi ${name}, your ${docKind} *${num}* is ready.\nTotal: AED ${total}\n\nReview / pay securely: ${url}\n\n— Servia`;
@@ -1788,7 +1871,7 @@ async function submitNewQuote() {
     const phone = (body.customer_phone || "").replace(/[^\d]/g, "");
     const email = body.customer_email || "";
     const customerName = body.customer_name || "there";
-    const publicUrl = `${location.origin}/q/${d.id}`;
+    const publicUrl = `${location.origin}/q/${d.quote_number || d.id}`;
     const msg = `Hi ${customerName}, your quote *${d.quote_number}* is ready.\nTotal: AED ${d.total.toFixed(2)}\n\nReview / sign / pay securely: ${publicUrl}\n\n— Servia`;
     const waBtn = phone
       ? `<a class="btn" style="background:#25D366;color:#fff" href="https://wa.me/${phone}?text=${encodeURIComponent(msg)}" target="_blank">📱 Share on WhatsApp</a>`
@@ -1852,6 +1935,42 @@ if (hash) {
 ["quotes","sales-orders","invoices","delivery-notes","purchase-orders","payments"].forEach(t => {
   api("/api/admin/" + t + "?limit=1").then(d => { document.getElementById("cnt-" + t).textContent = d.count; }).catch(()=>{});
 });
+
+// v1.24.172 — Fill the version pill from /api/health AND auto-reset SW if
+// this page was loaded from a stale cache. Founder kept seeing v1.24.158
+// because his service worker was serving an old admin-commerce.html.
+// Page version is auto-derived from the ?v= query param on any local
+// stylesheet link (cache-bump auto-updates these on every release).
+(function(){
+  function pageVer() {
+    const ln = document.querySelector('link[href*="?v=1.24."]');
+    const m = ln && ln.href.match(/[?&]v=(1\.24\.\d+)/);
+    return m ? m[1] : "?";
+  }
+  const HARDCODED_PAGE_VER = pageVer();
+  fetch("/api/health", { cache:"no-store" }).then(r => r.json()).then(d => {
+    const live = (d && d.version) || "?";
+    const pill = document.getElementById("srv-ver-pill");
+    if (pill) pill.textContent = `v${live} admin tools`;
+    // Stale-cache guard
+    if (live && live !== "?" && HARDCODED_PAGE_VER !== "?" && live !== HARDCODED_PAGE_VER) {
+      pill.style.background = "#FEF3C7";
+      pill.style.color      = "#92400E";
+      pill.style.padding    = "2px 8px";
+      pill.style.borderRadius= "6px";
+      pill.style.opacity    = "1";
+      pill.style.cursor     = "pointer";
+      pill.title            = `Live server is v${live} but this page is v${HARDCODED_PAGE_VER}. Click to force-reload.`;
+      pill.onclick = () => {
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.getRegistrations().then(rs => {
+            Promise.all(rs.map(r => r.unregister())).then(() => location.reload(true));
+          });
+        } else location.reload(true);
+      };
+    }
+  }).catch(()=>{});
+})();
 </script>
 
 </body>

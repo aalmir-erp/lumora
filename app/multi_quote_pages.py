@@ -101,17 +101,46 @@ def _quote(quote_id: str) -> dict | None:
             ).fetchone()
             if r:
                 d = dict(r)
-                # Normalize field names so the rest of this file can
-                # treat admin quotes the same as bot quotes.
-                try: d["items"] = _json.loads(d.get("line_items_json") or "[]")
-                except Exception: d["items"] = []
+                # v1.24.172 — Normalize BOTH the dict fields AND each line
+                # item to multi_quotes shape: items need {label, detail,
+                # price_aed} instead of {name, qty, unit_price}. Without
+                # this the /q/<id> page showed "AED undefined" for every
+                # admin-quote line.
+                try:
+                    raw_items = _json.loads(d.get("line_items_json") or "[]")
+                except Exception:
+                    raw_items = []
+                items: list = []
+                for it in raw_items:
+                    qty   = float(it.get("qty") or 1)
+                    unit  = float(it.get("unit_price") or 0)
+                    total = it.get("line_total") or round(qty * unit, 2)
+                    name  = it.get("name") or it.get("svc_id") or "Service"
+                    detail_parts: list[str] = []
+                    if qty and qty != 1:
+                        detail_parts.append(f"qty: {qty:g}")
+                    if unit:
+                        detail_parts.append(f"@ AED {unit:.2f}/unit")
+                    items.append({
+                        "label":     name,
+                        "detail":    " · ".join(detail_parts),
+                        "price_aed": float(total),
+                        # keep originals too for any consumer that needs them
+                        "name":      name,
+                        "qty":       qty,
+                        "unit_price": unit,
+                        "line_total": float(total),
+                    })
+                d["items"] = items
                 d["quote_id"]      = d.get("id") or quote_id
                 d["phone"]         = d.get("customer_phone") or ""
-                d["subtotal_aed"]  = d.get("subtotal")
-                d["vat_aed"]       = d.get("vat_amount")
-                d["total_aed"]     = d.get("total")
-                d["target_date"]   = d.get("valid_until")
-                d["address"]       = d.get("customer_address")
+                d["customer_name"] = d.get("customer_name") or ""
+                d["subtotal_aed"]  = float(d.get("subtotal") or 0)
+                d["vat_aed"]       = float(d.get("vat_amount") or 0)
+                d["total_aed"]     = float(d.get("total") or 0)
+                d["target_date"]   = d.get("valid_until") or ""
+                d["time_slot"]     = d.get("time_slot") or ""
+                d["address"]       = d.get("customer_address") or ""
                 return d
         except Exception:
             pass
@@ -129,9 +158,29 @@ def _verify_token(token: str, quote_id: str, phone: str) -> bool:
     return hmac.compare_digest(token or "", _sign_token(quote_id, phone))
 
 
+# v1.24.172 — Unguessable share token derived from quote_id alone (no phone).
+# Founder: 'quotation shared URL should be encoded so anyone can't guess and
+# check the quotation'. Anyone with the link is presumed authorized.
+def _share_token(quote_id: str) -> str:
+    s = get_settings()
+    secret = (getattr(s, "ADMIN_TOKEN", "") or "lumora-token").encode()
+    return hmac.new(secret, f"share|{quote_id}".encode(),
+                    hashlib.sha256).hexdigest()[:16]
+
+
+def _verify_share_token(token: str, quote_id: str) -> bool:
+    if not token:
+        return False
+    return hmac.compare_digest(token, _share_token(quote_id))
+
+
 # ---------------------------------------------------------------------------
 @public_router.get("/q/{quote_id}", response_class=HTMLResponse)
-def quote_landing(quote_id: str, request: Request = None) -> str:
+def quote_landing(quote_id: str, request: Request = None, t: str = "") -> str:
+    """v1.24.172 — `?t=<share_token>` lets the customer-with-link bypass
+    the phone gate (founder ask: 'shared URL should be encoded so anyone
+    can't guess and check the quotation'). Without t=, phone gate still
+    applies."""
     q = _quote(quote_id)
     if not q:
         return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
@@ -155,6 +204,22 @@ def quote_landing(quote_id: str, request: Request = None) -> str:
             )
     except Exception:
         pass
+    # v1.24.172 — Precompute the DIRECT pay URL (skip the /p/<id>
+    # intermediate page that the founder rightly called 'useless extra
+    # clicks'). In GATE_BOOKINGS mode → /gate.html. In live mode → the
+    # real gateway URL from quotes._make_payment_link.
+    from .config import get_settings as _gs
+    _amount = q.get("total_aed") or 0
+    if _gs().GATE_BOOKINGS:
+        direct_pay_url = f"/gate.html?inv={quote_id}&amount={_amount}"
+    else:
+        try:
+            from . import quotes as _qs
+            direct_pay_url = _qs._make_payment_link(quote_id, float(_amount), "AED")
+        except Exception:
+            # Final fallback — the legacy /p landing
+            direct_pay_url = f"/p/{quote_id}"
+
     # v1.24.78 — light-theme redesign matching brand palette (teal/amber).
     # Designed per CLAUDE.md DESIGN-REVIEW gate: brand-aligned hero,
     # uniform typography, ≥44px touch targets, semantic color roles
@@ -218,8 +283,14 @@ h3 {{ font-size: 14px; margin: 14px 0 6px; color: var(--tx); }}
 @media (max-width: 380px) {{ .row-2 {{ grid-template-columns: 1fr; }} }}
 </style></head><body>
 <div class="hdr">
-  <h1>📋 Servia Quote</h1>
+  <img src="/brand/servia-logo-full.svg" alt="Servia"
+       style="height:32px;margin-bottom:6px;filter:brightness(0) invert(1)"
+       onerror="this.style.display='none'">
+  <h1 style="margin:2px 0 4px">Your Servia Quote</h1>
   <div class="sub">{quote_id}</div>
+  <div style="font-size:11px;opacity:.8;margin-top:6px">
+    🛡️ 256-bit SSL · AED billed · No-show refund · 4.9★ from 2,400+ families
+  </div>
 </div>
 <div class="wrap">
   <div class="gate card" id="gate">
@@ -249,13 +320,68 @@ h3 {{ font-size: 14px; margin: 14px 0 6px; color: var(--tx); }}
         ✍️ <b>Sign below to approve.</b> After your service, we'll upload before/after
         photos and live status updates to this same page — view them anytime.
       </div>
-      <h3>✍️ Your signature</h3>
-      <canvas id="sig" width="500" height="140"></canvas>
-      <div class="row-2">
-        <button class="btn alt" onclick="clearSig()">Clear</button>
-        <button class="btn" onclick="approve()">✅ Approve &amp; sign</button>
+
+      <!-- v1.24.172 — Docusign-style three-way sign: draw, type, or
+           scan-on-mobile. Founder asked for 'multiple ways like DocuSign:
+           dragging the pen / typing a name / signing on mobile via QR'. -->
+      <div style="display:flex;gap:4px;margin-bottom:8px">
+        <button type="button" id="sig-tab-draw" class="sig-tab active" onclick="setSigMode('draw')"
+          style="flex:1;padding:8px 6px;border:1px solid var(--ln);background:#fff;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+          ✍️ Draw
+        </button>
+        <button type="button" id="sig-tab-type" class="sig-tab" onclick="setSigMode('type')"
+          style="flex:1;padding:8px 6px;border:1px solid var(--ln);background:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">
+          🅰️ Type
+        </button>
+        <button type="button" id="sig-tab-phone" class="sig-tab" onclick="setSigMode('phone')"
+          style="flex:1;padding:8px 6px;border:1px solid var(--ln);background:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">
+          📱 Send to phone
+        </button>
       </div>
-      <h3>💬 Add notes (optional)</h3>
+
+      <div id="sig-pane-draw">
+        <canvas id="sig" width="500" height="140"></canvas>
+        <div class="row-2" style="margin-top:6px">
+          <button class="btn alt" onclick="clearSig()">Clear</button>
+          <button class="btn" onclick="approve()">✅ Approve &amp; sign</button>
+        </div>
+      </div>
+
+      <div id="sig-pane-type" style="display:none">
+        <p style="font-size:12.5px;color:var(--mu);margin:4px 0 8px">
+          Type your full legal name — we'll render it in a signature font and
+          treat it as a legally binding e-signature (UAE Electronic
+          Transactions Law 2021).
+        </p>
+        <input id="sig-typed" type="text" placeholder="Your full legal name"
+               oninput="renderTypedSig()"
+               style="width:100%;padding:12px;border:1px solid var(--ln);border-radius:8px;font-size:15px">
+        <div id="sig-typed-preview"
+             style="border:1px dashed var(--ln);border-radius:8px;padding:18px;text-align:center;margin:8px 0;min-height:80px;font-family:'Brush Script MT','Lucida Handwriting',cursive;font-size:32px;color:#0F172A">
+          <span style="color:var(--mu);font-family:system-ui;font-size:13px">Your typed signature will preview here</span>
+        </div>
+        <div class="row-2">
+          <button class="btn alt" onclick="document.getElementById('sig-typed').value='';renderTypedSig()">Clear</button>
+          <button class="btn" onclick="approveTyped()">✅ Approve &amp; sign</button>
+        </div>
+      </div>
+
+      <div id="sig-pane-phone" style="display:none;text-align:center">
+        <p style="font-size:12.5px;color:var(--mu);margin:4px 0 10px">
+          Scan this QR with your phone to open the quote on your mobile and
+          sign there. The link is the same URL — your signature applies here
+          when you submit on your phone.
+        </p>
+        <img id="sig-qr" alt="Scan to sign on phone"
+             style="width:200px;height:200px;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--ln)"
+             src="">
+        <p style="font-size:11px;color:var(--mu);margin:10px 0 0">
+          Or copy the link: <code id="sig-link-code" style="background:#F0FDFA;padding:3px 6px;border-radius:4px;font-size:11px">…</code>
+          <button type="button" onclick="copyShareLink()" style="background:#fff;border:1px solid var(--ln);padding:3px 8px;border-radius:5px;font-size:11px;cursor:pointer;margin-left:6px">📋 Copy</button>
+        </p>
+      </div>
+
+      <h3 style="margin-top:14px">💬 Add notes (optional)</h3>
       <textarea id="cnote" rows="3" placeholder="Special instructions, parking info, etc."></textarea>
     </div>
 
@@ -277,7 +403,10 @@ h3 {{ font-size: 14px; margin: 14px 0 6px; color: var(--tx); }}
     </div>
 
     <div class="card" style="text-align:center">
-      <a class="btn full alt" href="/p/{quote_id}">💳 Pay online (AED <span id="payAmount">—</span>)</a>
+      <!-- v1.24.172 — DIRECT link to gateway (gate.html in stealth mode,
+           Stripe/Ziina in live). Founder demanded skipping the /p/<id>
+           intermediate page that added 'useless extra clicks'. -->
+      <a class="btn full alt" href="{direct_pay_url}">💳 Pay AED <span id="payAmount">{_amount}</span> securely</a>
       <p style="color:var(--mu);font-size:12px;margin:10px 0 0">
         Or pay manually via WhatsApp <b>{_wa_block()[0] or 'see /contact'}</b> with quote <code>{quote_id}</code>.
       </p>
@@ -337,6 +466,85 @@ function initSig() {{
   c.addEventListener("touchend",up);
 }}
 function clearSig() {{ const c=document.getElementById("sig");c.getContext("2d").clearRect(0,0,c.width,c.height); }}
+
+// v1.24.172 — Docusign-style: switch between draw / type / phone modes.
+function setSigMode(mode) {{
+  ["draw","type","phone"].forEach(m => {{
+    const tab = document.getElementById(`sig-tab-${{m}}`);
+    const pane = document.getElementById(`sig-pane-${{m}}`);
+    if (tab) {{
+      tab.classList.toggle("active", m === mode);
+      tab.style.background = m === mode ? "#0F766E" : "#fff";
+      tab.style.color      = m === mode ? "#fff" : "#0F172A";
+    }}
+    if (pane) pane.style.display = m === mode ? "block" : "none";
+  }});
+  if (mode === "phone") {{
+    const url = location.href;
+    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${{encodeURIComponent(url)}}`;
+    document.getElementById("sig-qr").src = qr;
+    document.getElementById("sig-link-code").textContent = url.replace(/^https?:\\/\\//, "");
+  }}
+}}
+
+function copyShareLink() {{
+  navigator.clipboard.writeText(location.href);
+  alert("✓ Link copied. Open it on your phone to sign there.");
+}}
+
+function renderTypedSig() {{
+  const v = (document.getElementById("sig-typed").value || "").trim();
+  const wrap = document.getElementById("sig-typed-preview");
+  if (!v) {{
+    wrap.innerHTML = '<span style="color:#64748B;font-family:system-ui;font-size:13px">Your typed signature will preview here</span>';
+  }} else {{
+    wrap.textContent = v;
+  }}
+}}
+
+// Convert the typed name into a PNG dataURL (canvas → toDataURL) so it
+// goes through the SAME /sign endpoint as drawn signatures. No backend
+// change needed.
+function _typedNameToDataUrl(name) {{
+  const cnv = document.createElement("canvas");
+  cnv.width = 500; cnv.height = 140;
+  const ctx = cnv.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,cnv.width,cnv.height);
+  ctx.fillStyle = "#0F172A";
+  ctx.font = "italic 56px 'Brush Script MT', 'Lucida Handwriting', cursive";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.fillText(name, cnv.width/2, cnv.height/2);
+  return cnv.toDataURL("image/png");
+}}
+
+async function approveTyped() {{
+  const name = (document.getElementById("sig-typed").value || "").trim();
+  if (!name || name.length < 2) {{
+    alert("Please type your full name to sign.");
+    return;
+  }}
+  const dataUrl = _typedNameToDataUrl(name);
+  const note    = document.getElementById("cnote").value.trim();
+  try {{
+    const r = await fetch("/api/q/{quote_id}/sign", {{
+      method:"POST", headers:{{"Content-Type":"application/json","X-Quote-Token":token}},
+      body: JSON.stringify({{ signature_data_url: dataUrl,
+                              customer_note: (note ? note + "\\n" : "") + `[Typed signature: ${{name}}]` }})
+    }});
+    const j = await r.json();
+    if (j.ok) {{
+      document.body.innerHTML = `<div style="background:#F8FAFC;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px">
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:32px 24px;max-width:480px;text-align:center;box-shadow:0 8px 32px rgba(15,23,42,.08)">
+          <div style="background:#D1FAE5;color:#065F46;width:64px;height:64px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:14px">✓</div>
+          <h1 style="margin:0 0 8px;font-size:22px;color:#0F172A;letter-spacing:-.01em">Signed by <i>${{name}}</i>!</h1>
+          <p style="color:#64748B;font-size:14px;margin:0 0 20px;line-height:1.6">Quote <code style="background:#F0FDFA;color:#0F766E;padding:2px 6px;border-radius:4px">{quote_id}</code> is approved.<br>Our team will dispatch within 30 minutes.</p>
+          <a href="/p/{quote_id}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:14px 28px;min-height:44px;background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border-radius:9px;font-weight:700;text-decoration:none;font-size:15px">💳 Pay AED ${{j.total_aed||""}}</a>
+        </div>
+      </div>`;
+    }} else alert("Could not sign: " + (j.error||"server error"));
+  }} catch(e) {{ alert("Network error — please try again."); }}
+}}
 
 // v1.24.165 — Customer leaves a remark / change request / reject reason.
 // Posts to /api/q/<id>/remark. Admin gets a 🔔 alert in /admin-commerce.

@@ -1968,7 +1968,34 @@ _ensure_invoice_payment_method()
 @app.get("/pay/{invoice_id}", response_class=HTMLResponse)
 def pay_page(invoice_id: str):
     """Serves /web/pay.html — the rich multi-method checkout page that handles
-    auto-account creation + login + payment selection."""
+    auto-account creation + login + payment selection.
+
+    v1.24.172 — if {invoice_id} is actually a quote_id (Q-… or QT-…),
+    redirect to the linked invoice, or back to /q/<id> if the quote
+    hasn't been accepted yet. Founder reported '/pay/Q-XXX → Invoice
+    not found' — that was because customers were getting quote URLs in
+    /pay/ form before the quote was accepted."""
+    if invoice_id.startswith(("Q-", "QT-")):
+        try:
+            with db.connect() as c:
+                row = c.execute(
+                    "SELECT id, status FROM quotes WHERE id=? OR quote_number=?",
+                    (invoice_id, invoice_id),
+                ).fetchone()
+                if row:
+                    real_qid = row["id"]
+                    if row["status"] != "accepted":
+                        return RedirectResponse(url=f"/q/{real_qid}", status_code=302)
+                    inv = c.execute(
+                        "SELECT id FROM invoices WHERE sales_order_id IN "
+                        "(SELECT id FROM sales_orders WHERE quote_id=?) "
+                        "ORDER BY created_at DESC LIMIT 1",
+                        (real_qid,),
+                    ).fetchone()
+                    if inv:
+                        return RedirectResponse(url=f"/pay/{inv['id']}", status_code=302)
+        except Exception:
+            pass
     p = pathlib.Path("web/pay.html")
     if not p.exists(): raise HTTPException(500, "pay.html missing")
     return HTMLResponse(p.read_text(encoding="utf-8"))

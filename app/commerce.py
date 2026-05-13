@@ -504,6 +504,87 @@ def admin_reject_quote(quote_id: str):
     return {"ok": True}
 
 
+class _AcceptAndPayBody(BaseModel):
+    """v1.24.172 — Accept the quote AND record customer payment in one step.
+
+    Use when the customer pays on the spot (cash, card swipe at door, on-the-spot
+    Ziina) and the admin doesn't want to do 3 separate clicks (accept → wait for
+    SO/invoice creation → register payment). Founder ask: 'when customer is
+    paying the quotation should be confirmed automatically to sale order and
+    automatically invoice should be generated with the payment in it'.
+    """
+    amount: float
+    method: str = "card"
+    payment_date: Optional[str] = None
+    reference_number: Optional[str] = None
+    receipt_url: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@router.post("/api/admin/quotes/{quote_id}/accept-and-pay",
+              dependencies=[Depends(require_admin)])
+def admin_accept_and_pay(quote_id: str, body: _AcceptAndPayBody):
+    """Atomic: accept quote → create SO → create Invoice → register payment
+    → mark invoice paid (or partially paid). Founder requested workflow."""
+    now = _now()
+    # 1) Read quote + decide path (don't hold the connection open)
+    with db.connect() as c:
+        q = c.execute("SELECT * FROM quotes WHERE id=?", (quote_id,)).fetchone()
+        if not q:
+            raise HTTPException(status_code=404, detail="quote not found")
+        q_dict = dict(q)
+        already_accepted = q_dict["status"] == "accepted"
+        cust_id   = q_dict.get("customer_id")
+        cust_name = q_dict.get("customer_name")
+
+    if already_accepted:
+        with db.connect() as c:
+            inv = c.execute(
+                "SELECT id, amount FROM invoices WHERE sales_order_id IN "
+                "(SELECT id FROM sales_orders WHERE quote_id=?) "
+                "ORDER BY created_at DESC LIMIT 1",
+                (quote_id,)).fetchone()
+        if not inv:
+            raise HTTPException(409, "quote accepted but no invoice found; use /accept first")
+        invoice_id, invoice_total = inv["id"], inv["amount"] or 0
+    else:
+        # Mark accepted (separate connection) then create SO + invoice
+        with db.connect() as c:
+            c.execute("UPDATE quotes SET status='accepted' WHERE id=?", (quote_id,))
+        so  = _create_so_from_quote(q_dict)
+        inv = _create_invoice_from_so(so)
+        invoice_id    = inv["id"]
+        invoice_total = inv.get("total") or so.get("total") or 0
+    # 2) Register payment
+    with db.connect() as c:
+        c.execute("""
+            INSERT INTO payment_registrations
+              (payment_type, reference_type, reference_id, counterparty_id,
+               counterparty_name, amount, currency, method, reference_number,
+               payment_date, notes, created_at, created_by)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, ("customer_in", "invoice", invoice_id,
+              cust_id, cust_name, body.amount, "AED",
+              body.method, body.reference_number,
+              body.payment_date or now,
+              (body.notes or "") + (f" [receipt:{body.receipt_url}]" if body.receipt_url else ""),
+              now, "admin"))
+        paid_row = c.execute(
+            "SELECT COALESCE(SUM(amount),0) AS s FROM payment_registrations "
+            "WHERE reference_type='invoice' AND reference_id=?", (invoice_id,)).fetchone()
+        paid = float(paid_row["s"])
+        new_status = "paid" if paid >= invoice_total - 0.01 and invoice_total > 0 else "partially_paid"
+        c.execute("UPDATE invoices SET payment_status=? WHERE id=?", (new_status, invoice_id))
+    return {
+        "ok": True,
+        "invoice_id": invoice_id,
+        "invoice_total": invoice_total,
+        "paid": paid,
+        "remaining": round(max(0, invoice_total - paid), 2),
+        "status": new_status,
+    }
+
+
 @router.post("/api/admin/quotes/{quote_id}/cancel", dependencies=[Depends(require_admin)])
 def admin_cancel_quote(quote_id: str):
     """v1.24.163 — Cancel a quote (any status). Soft state change."""
@@ -657,6 +738,19 @@ def admin_extract_quote_from_text(body: _QuoteFromTextBody):
     except Exception as e:
         raise HTTPException(502, f"AI extraction failed: {e}")
     return {"ok": True, "extracted": extracted}
+
+
+@router.get("/api/admin/quotes/{quote_id}/share-token",
+             dependencies=[Depends(require_admin)])
+def admin_quote_share_token(quote_id: str):
+    """v1.24.172 — Return the unguessable HMAC share token for a quote so
+    the admin UI can build /q/<num>?t=<tok> share links. Founder demand:
+    'shared URL should be encoded so no one can guess'."""
+    try:
+        from .multi_quote_pages import _share_token
+        return {"ok": True, "token": _share_token(quote_id)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 @router.get("/api/admin/quotes/{quote_id}/analytics",
@@ -1209,6 +1303,63 @@ def admin_list_dns(from_date: Optional[str] = None, to_date: Optional[str] = Non
 
 class DnSignBody(BaseModel):
     customer_signature: str               # base64 data URL
+
+
+@router.get("/api/admin/delivery-notes/{dn_id}", dependencies=[Depends(require_admin)])
+def admin_get_delivery_note(dn_id: str):
+    """v1.24.172 — Founder hit 'Failed: HTTP 404' when tapping a service-note
+    row. Detail panel was calling /api/admin/delivery-notes/<id> which
+    didn't exist. Adding now. Returns the SN + linked SO + customer info."""
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT * FROM delivery_notes WHERE id=?", (dn_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(404, "service note not found")
+        d = dict(row)
+        # Hydrate customer info from the linked SO
+        so_row = None
+        if d.get("sales_order_id"):
+            so_row = c.execute(
+                "SELECT id, so_number, customer_id, customer_name, customer_phone, "
+                "customer_email, customer_address, total FROM sales_orders WHERE id=?",
+                (d["sales_order_id"],)
+            ).fetchone()
+        if so_row:
+            d.update({
+                "so_number":         so_row["so_number"],
+                "customer_id":       so_row["customer_id"],
+                "customer_name":     so_row["customer_name"],
+                "customer_phone":    so_row["customer_phone"],
+                "customer_email":    so_row["customer_email"],
+                "customer_address":  so_row["customer_address"],
+                "total":             so_row["total"],
+            })
+        return {"ok": True, "delivery_note": d}
+
+
+@router.get("/api/admin/purchase-orders/{po_id}", dependencies=[Depends(require_admin)])
+def admin_get_purchase_order(po_id: str):
+    """Same gap — admin clicking PO row was getting 404. Add detail."""
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT * FROM purchase_orders WHERE id=?", (po_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(404, "purchase order not found")
+        return {"ok": True, "purchase_order": dict(row)}
+
+
+@router.get("/api/admin/sales-orders/{so_id}", dependencies=[Depends(require_admin)])
+def admin_get_sales_order(so_id: str):
+    """Same gap — admin clicking SO row was getting 404. Add detail."""
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT * FROM sales_orders WHERE id=?", (so_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(404, "sales order not found")
+        return {"ok": True, "sales_order": dict(row)}
 
 
 @router.post("/api/admin/delivery-notes/{dn_id}/sign",
