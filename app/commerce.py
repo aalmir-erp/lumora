@@ -894,6 +894,182 @@ class AssignVendorBody(BaseModel):
     notes: Optional[str] = None
 
 
+@router.get("/api/admin/customers/{customer_id}/open-balance",
+             dependencies=[Depends(require_admin)])
+def admin_customer_open_balance(customer_id: int):
+    """v1.24.170 — All unpaid + partially-paid invoices for a customer
+    so admin can merge them into a single payment / share one link.
+
+    Founder request: 'same customer multiple invoices or quotations
+    can be merged for payment so a single payment link can be shared'.
+    """
+    with db.connect() as c:
+        rows = c.execute("""
+            SELECT id, invoice_number, amount, payment_status, due_at, created_at
+              FROM invoices
+             WHERE customer_id=? AND (payment_status IS NULL OR
+                                       payment_status NOT IN ('paid','cancelled','void'))
+             ORDER BY created_at
+        """, (customer_id,)).fetchall()
+        # For each invoice, sum payments already registered.
+        items = []
+        total_outstanding = 0.0
+        for r in rows:
+            d = dict(r)
+            paid_row = c.execute(
+                "SELECT COALESCE(SUM(amount),0) AS paid FROM payment_registrations "
+                "WHERE reference_type='invoice' AND reference_id=?",
+                (d["id"],)).fetchone()
+            paid_so_far = float(paid_row["paid"]) if paid_row else 0.0
+            doc_total = float(d.get("amount") or 0)
+            remaining = max(0.0, doc_total - paid_so_far)
+            if remaining > 0.01:
+                d["paid_so_far"] = round(paid_so_far, 2)
+                d["remaining"]   = round(remaining, 2)
+                items.append(d)
+                total_outstanding += remaining
+        cust = c.execute(
+            "SELECT id, name, phone, email FROM customers WHERE id=?",
+            (customer_id,)).fetchone()
+        return {
+            "ok": True,
+            "customer": dict(cust) if cust else {"id": customer_id},
+            "invoices": items,
+            "total_outstanding": round(total_outstanding, 2),
+            "invoice_count": len(items),
+        }
+
+
+@router.get("/api/admin/vendors/{vendor_id}/open-balance",
+             dependencies=[Depends(require_admin)])
+def admin_vendor_open_balance(vendor_id: int):
+    """v1.24.170 — Same pattern for vendors. All unpaid POs.
+    Founder said: 'same goes for vendor — for same vendors multiple
+    bills or POs can be merged and one payment can be created'."""
+    with db.connect() as c:
+        rows = c.execute("""
+            SELECT id, po_number, vendor_total, status, created_at, vendor_name
+              FROM purchase_orders
+             WHERE vendor_id=? AND status NOT IN ('paid','cancelled')
+             ORDER BY created_at
+        """, (vendor_id,)).fetchall()
+        items = []
+        total_outstanding = 0.0
+        for r in rows:
+            d = dict(r)
+            paid_row = c.execute(
+                "SELECT COALESCE(SUM(amount),0) AS paid FROM payment_registrations "
+                "WHERE reference_type='purchase_order' AND reference_id=?",
+                (d["id"],)).fetchone()
+            paid_so_far = float(paid_row["paid"]) if paid_row else 0.0
+            doc_total = float(d.get("vendor_total") or 0)
+            remaining = max(0.0, doc_total - paid_so_far)
+            if remaining > 0.01:
+                d["paid_so_far"] = round(paid_so_far, 2)
+                d["remaining"]   = round(remaining, 2)
+                items.append(d)
+                total_outstanding += remaining
+        vendor = c.execute(
+            "SELECT id, name, phone FROM vendors WHERE id=?",
+            (vendor_id,)).fetchone()
+        return {
+            "ok": True,
+            "vendor": dict(vendor) if vendor else {"id": vendor_id},
+            "purchase_orders": items,
+            "total_outstanding": round(total_outstanding, 2),
+            "po_count": len(items),
+        }
+
+
+class _BulkPaymentBody(BaseModel):
+    """v1.24.170 — Register ONE payment that settles MULTIPLE invoices
+    or POs at once. The total of the per-item amounts must equal the
+    payment amount."""
+    payment_type:   str                            # 'customer_in' | 'vendor_out'
+    reference_type: str                            # 'invoice' | 'purchase_order'
+    method:         str                            # bank_transfer | card | etc.
+    payment_date:   Optional[str] = None
+    reference_number: Optional[str] = None
+    receipt_url:    Optional[str] = None
+    notes:          Optional[str] = None
+    allocations:    list[dict]                     # [{reference_id, amount}, ...]
+
+
+@router.post("/api/admin/payments/register-bulk",
+              dependencies=[Depends(require_admin)])
+def admin_register_payment_bulk(body: _BulkPaymentBody):
+    """One bank transfer settling 5 invoices? Tap once here. Each
+    allocation becomes its own payment_registrations row (so per-doc
+    status auto-updates), but they share the same reference_number +
+    notes + receipt_url + payment_date for audit traceability.
+
+    Returns a summary including total settled + per-doc status updates."""
+    if body.payment_type not in ("customer_in", "vendor_out"):
+        raise HTTPException(400, "payment_type must be customer_in or vendor_out")
+    if body.reference_type not in ("invoice", "purchase_order"):
+        raise HTTPException(400, "reference_type must be invoice or purchase_order")
+    if not body.allocations:
+        raise HTTPException(400, "allocations must be non-empty")
+    pay_date = body.payment_date or _now()
+    notes_blob = body.notes or ""
+    if body.receipt_url:
+        notes_blob = (notes_blob + " " if notes_blob else "") + f"[receipt:{body.receipt_url}]"
+    is_invoice = (body.reference_type == "invoice")
+    status_tbl = "invoices" if is_invoice else "purchase_orders"
+    status_col = "payment_status" if is_invoice else "status"
+    total_col  = "amount" if is_invoice else "vendor_total"
+    cp_id_col  = "customer_id" if is_invoice else "vendor_id"
+    cp_name_col= "customer_name" if is_invoice else "vendor_name"
+
+    settled = []
+    total_amount = 0.0
+    with db.connect() as c:
+        for alloc in body.allocations:
+            ref_id = alloc.get("reference_id")
+            amt    = float(alloc.get("amount") or 0)
+            if not ref_id or amt <= 0:
+                continue
+            row = c.execute(
+                f"SELECT id, {cp_id_col} AS cp_id, {cp_name_col} AS cp_name, "
+                f"{total_col} AS doc_total FROM {status_tbl} WHERE id=?",
+                (ref_id,)).fetchone()
+            if not row:
+                continue
+            c.execute("""
+                INSERT INTO payment_registrations
+                  (payment_type, reference_type, reference_id, counterparty_id,
+                   counterparty_name, amount, currency, method, reference_number,
+                   payment_date, notes, created_at, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """, (body.payment_type, body.reference_type, ref_id,
+                  row["cp_id"], row["cp_name"], amt, "AED", body.method,
+                  body.reference_number, pay_date,
+                  notes_blob + " [bulk]", _now(), "admin"))
+            # Cumulative paid against this doc → update status.
+            paid_row = c.execute(
+                "SELECT COALESCE(SUM(amount),0) AS s FROM payment_registrations "
+                "WHERE reference_type=? AND reference_id=?",
+                (body.reference_type, ref_id)).fetchone()
+            paid = float(paid_row["s"])
+            doc_total = float(row["doc_total"] or 0)
+            new_status = None
+            if paid >= doc_total - 0.01 and doc_total > 0:
+                new_status = "paid"
+            elif paid > 0:
+                new_status = "partially_paid"
+            if new_status:
+                c.execute(f"UPDATE {status_tbl} SET {status_col}=? WHERE id=?",
+                          (new_status, ref_id))
+            settled.append({"reference_id": ref_id, "amount": amt,
+                            "new_status": new_status,
+                            "paid_so_far": round(paid, 2),
+                            "remaining": round(max(0, doc_total - paid), 2)})
+            total_amount += amt
+    return {"ok": True, "settled": settled,
+            "total_settled": round(total_amount, 2),
+            "doc_count": len(settled)}
+
+
 @router.get("/api/admin/vendors/{vendor_id}/rate-for-service",
              dependencies=[Depends(require_admin)])
 def admin_vendor_rate_for_service(vendor_id: int, service_id: str):
@@ -1096,9 +1272,9 @@ def admin_list_invoices(status: Optional[str] = None, customer_id: Optional[int]
         args.extend([f"%{q}%", f"%{q}%", f"%{q}%"])
     with db.connect() as c:
         rows = c.execute(f"""
-            SELECT id, invoice_number, customer_name, customer_phone,
-                   subtotal, vat_amount, amount, currency, payment_status,
-                   issued_at, due_at, paid_at, created_at
+            SELECT id, invoice_number, customer_id, customer_name, customer_phone,
+                   sales_order_id, subtotal, vat_amount, amount, currency,
+                   payment_status, issued_at, due_at, paid_at, created_at
             FROM invoices WHERE {' AND '.join(where)}
             ORDER BY created_at DESC LIMIT ?
         """, (*args, limit)).fetchall()
