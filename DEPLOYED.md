@@ -1,24 +1,11 @@
 # Lumora deploy
 
 **URL:** https://lumora-production-4071.up.railway.app
-**Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"WZLnM8AjSg6xsg5gU79b0g"}`
+**Status:** FAILED
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"puYCYNmLQymldofec9o55Q"}`
 
 ## Build logs
 ```
-[ 5/12] RUN pip install -r requirements.txt
-[ 4/12] COPY requirements.txt ./
-[internal] load build context
-[ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
-[ 2/12] WORKDIR /app
-[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
-[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
-[internal] load build context
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
-[internal] load build context
 [internal] load build context
 [ 2/12] WORKDIR /app
 [ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -26,16 +13,23 @@
 [ 5/12] RUN pip install -r requirements.txt
 [ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+[ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+[ 8/12] COPY app ./app
 [ 8/12] COPY app ./app
 [ 9/12] COPY web ./web
+[ 9/12] COPY web ./web
+[10/12] COPY _e2e-shots ./_e2e-shots
 [10/12] COPY _e2e-shots ./_e2e-shots
 [11/12] COPY start.sh /app/start.sh
+[11/12] COPY start.sh /app/start.sh
+[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:15ba07791e9a4677bf172fffc74c8ebc0b4b7cdffd7e2aa0c6869c3a2ff1fbb3
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MTViYTA3NzkxZTlhNDY3N2JmMTcyZmZmYzc0YzhlYmMwYjRiN2NkZmZkN2UyYWEwYzY4NjljM2EyZmYxZmJiMyIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxNDowMToyM1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:d88f215a4fb0d88047fde4195ef341f708a0d8b2e3b8bc8b06be146d733b59f9
+containerimage.config.digest: sha256:be9244b72d6b25b6fe44603b4c5b5a3d69bdd0025024fcf945c620c7b91f1f7f
+containerimage.digest: sha256:10f040457832ac46283f241c1daa70bae443cf0975706105aa8a42b584969fc9
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MTBmMDQwNDU3ODMyYWM0NjI4M2YyNDFjMWRhYTcwYmFlNDQzY2YwOTc1NzA2MTA1YWE4YTQyYjU4NDk2OWZjOSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxNDo1ODoyNFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+image push
 image push
 
 [35m====================
@@ -45,30 +39,45 @@ Starting Healthcheck
 [37mPath: /api/health[0m
 [37mRetry window: 1m0s[0m
 
-[92m[1/1] Healthcheck succeeded![0m
+[93mAttempt #1 failed with service unavailable. Continuing to retry for 49s[0m
+[93mAttempt #2 failed with service unavailable. Continuing to retry for 38s[0m
+[93mAttempt #3 failed with service unavailable. Continuing to retry for 26s[0m
+[93mAttempt #4 failed with service unavailable. Continuing to retry for 12s[0m
+
+[91m1/1 replicas never became healthy![0m
+[91mHealthcheck failed![0m
 ```
 
 ## Runtime logs
 ```
-[start] launching whatsapp_bridge
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/ec825f77-89f4-4b80-a356-49cae5a6e3a4/vol_onr647rhdeir9di9
-Starting Container
-[wa-bridge] listening on :3001
-[wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
-[lp-ar] 133 Arabic landing-page routes registered
-[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
-[purge] scan complete — 29 posts, 0 flagged
-[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:42749 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:53058 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[autoblog] catch-up SKIP (last_run @ 2026-05-13T14:00:00.000637Z is fresh AND ok)
-INFO:     100.64.0.4:18172 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/config.py", line 449, in load
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    self.loaded_app = import_from_string(self.app)
+    await self._serve(sockets)
+  File "/usr/local/lib/python3.12/importlib/__init__.py", line 90, in import_module
+                      ^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/app/app/main.py", line 18, in <module>
+    from . import admin, admin_live as _admin_live, ai_router, airbnb_ical as _airbnb_ical, brand_contact as _brand_contact, cart, checkout_central as _checkout, commerce as _commerce, db, demo_brain, google_home as _gha, inbox as _inbox, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, rlaif as _rlaif, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/app/admin.py", line 12, in <module>
+    from . import auth_users, db, kb, quotes, tools
+  File "/app/app/kb.py", line 6, in <module>
+    from .config import get_settings
+ImportError: cannot import name 'get_settings' from 'app.config' (/app/app/config.py)
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/129bf508-b3de-4d25-bce0-138d99a908b1/vol_onr647rhdeir9di9
 ```
