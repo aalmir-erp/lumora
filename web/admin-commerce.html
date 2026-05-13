@@ -419,6 +419,22 @@ async function loadReports() {
   await loadPaymentsConfig();
 }
 
+// v1.24.182 — One-click flip Ziina from test → live so the founder
+// doesn't have to navigate to /admin separately.
+async function flipZiinaLive() {
+  if (!confirm("Switch Ziina to LIVE mode? Real cards WILL be charged. Continue?")) return;
+  try {
+    const r = await fetch("/admin/payment-providers", {
+      method:"POST", headers:{...H(),"Content-Type":"application/json"},
+      body: JSON.stringify({ ziina_test_mode: false }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || ("HTTP " + r.status));
+    alert("✓ Ziina is now LIVE. Next payment will charge a real card.");
+    loadPaymentsConfig();
+  } catch (e) { alert("Failed: " + e.message); }
+}
+
 // v1.24.175 — Payments-gateway status banner so admin sees WHY pay
 // buttons go to /gate.html instead of Stripe/Ziina (stealth-launch).
 async function loadPaymentsConfig() {
@@ -440,8 +456,23 @@ async function loadPaymentsConfig() {
       host.style.background = "#D1FAE5"; host.style.color = "#065F46";
       host.innerHTML = `<b>💳 Live payment processing ENABLED.</b>
         Stripe: ${d.stripe_configured ? "✓" : "✗"} ·
-        Ziina: ${d.ziina_configured ? "✓" : "✗"} ·
+        Ziina: ${d.ziina_configured ? "✓" : "✗"} (Live mode) ·
         WA bridge: ${d.wa_bridge_configured ? "✓" : "✗"}.`;
+    } else if (d.ziina_configured && d.ziina_test_mode) {
+      // v1.24.182 — Most common cause founder hit: Ziina key set but
+      // test_mode still true → notifications come but no real money.
+      host.style.background = "#FED7AA"; host.style.color = "#9A3412";
+      host.innerHTML = `<b>🧪 Ziina is in TEST MODE.</b>
+        Notifications come ('Payment Received') but no real card is
+        charged and nothing appears in your Ziina payment log.
+        <details style="margin-top:6px"><summary style="cursor:pointer">▸ How to switch to LIVE</summary>
+          <div style="background:rgba(255,255,255,.7);padding:10px;border-radius:6px;margin-top:6px;line-height:1.7">
+            <b>1.</b> Open <a href="/admin#payments" style="color:#9A3412">/admin → Settings → Payment providers</a><br>
+            <b>2.</b> Toggle <b>'Test mode'</b> OFF for Ziina<br>
+            <b>3.</b> Save → next payment is real.<br><br>
+            <button class="btn btn-amber" onclick="flipZiinaLive()">⚡ Flip to LIVE now (1-click)</button>
+          </div>
+        </details>`;
     } else {
       host.style.background = "#FEF3C7"; host.style.color = "#92400E";
       host.innerHTML = `<b>🚦 Stealth-launch mode.</b>

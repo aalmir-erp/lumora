@@ -976,22 +976,33 @@ def admin_payments_config():
     try:
         from . import ziina as _ziina
         ziina_ok = _ziina.is_configured()
+        ziina_test = _ziina.is_test_mode()
     except Exception:
         ziina_ok = False
+        ziina_test = True
+    # v1.24.182 — "Live mode" now requires GATE_BOOKINGS=0 AND a real
+    # gateway AND (for Ziina) test_mode=False. Founder hit confusion
+    # where notifications came but no money moved → that's because
+    # ziina_test_mode was still True by default.
+    truly_live = (not s.GATE_BOOKINGS) and (
+        bool(sk) or (bool(ziina_ok) and not ziina_test)
+    )
     return {
         "ok": True,
         "gate_bookings": bool(s.GATE_BOOKINGS),
         "stripe_configured": bool(sk),
         "ziina_configured": bool(ziina_ok),
+        "ziina_test_mode": bool(ziina_test),
         "wa_bridge_configured": bool(s.WA_BRIDGE_URL),
-        "live_mode": (not s.GATE_BOOKINGS) and (bool(sk) or bool(ziina_ok)),
+        "live_mode": truly_live,
         "stealth_explanation": (
             "GATE_BOOKINGS=1 → all pay buttons go to /gate.html "
             "(stealth-launch friendly 'card declined' page that "
             "captures interest with a 15% off coupon). Set "
             "GATE_BOOKINGS=0 in Railway, AND ensure your Ziina API "
-            "key is saved in /admin (Settings → Payment providers), "
-            "OR set STRIPE_SECRET_KEY env. Then restart the bot."
+            "key is saved in /admin (Settings → Payment providers) "
+            "WITH 'test_mode' = OFF, OR set STRIPE_SECRET_KEY env. "
+            "Then restart the bot."
         ),
     }
 
