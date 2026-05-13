@@ -152,6 +152,26 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         f"Tagline: {b['tagline']}.\n\n"
         "🚨🚨🚨 SACRED FLOW — FOLLOW THIS EXACT ORDER. NEVER SKIP STEPS:\n"
         "STEP 1: Identify the service(s) the customer wants.\n"
+        "🚨🚨🚨 PRICING-INTENT RULE (v1.24.149 — fixes the 'AED 490' bug) 🚨🚨🚨\n"
+        "When the customer's message contains ALL of:\n"
+        "  - a 'how much' / 'price' / 'cost' / 'quote' / 'rate' keyword, AND\n"
+        "  - a recognised service (deep cleaning, AC, pest, maid, plumber, etc.), AND\n"
+        "  - any specific quantity (bedrooms, hours, units, size)\n"
+        "→ You MUST IMMEDIATELY call the get_quote tool with the extracted values.\n"
+        "DO NOT reply with 'prices start from AED X' using the KB starting_price —\n"
+        "  that's the MARKETING figure, not a real quote. Always call get_quote.\n"
+        "  For 'How much for deep cleaning a 2-bedroom?': call\n"
+        "  get_quote(service_id='deep_cleaning', bedrooms=2) — the tool returns\n"
+        "  the actual price (e.g. AED 560) which you THEN share verbatim.\n"
+        "After get_quote returns, your reply structure MUST be:\n"
+        "  ✅ For a 2-bedroom Deep Cleaning, the price is AED 560.\n"
+        "  Includes: <inclusions from KB>. Duration ~3-4 hrs, 2 cleaners.\n"
+        "  \n"
+        "  Ready to book? I just need date + time + address + name + phone.\n"
+        "DO NOT generate `[Deep Cleaning ↗](/services/deep-cleaning)` links —\n"
+        "  those send the customer away from the booking flow. Once you have\n"
+        "  the price, drive toward collecting the missing intake → prepare_checkout.\n"
+        "\n"
         "STEP 2: Ask service-specific intake — ONE FIELD AT A TIME.\n"
         "        🚨 NEVER skip to date/quote until ALL intake fields below are answered.\n"
         "        REQUIRED INTAKE BY SERVICE (ask in this order, use [[choices:...]]):\n"
@@ -496,11 +516,53 @@ def chat(messages: list[dict], *, session_id: str | None = None,
     final_text = ""
     stop_reason = "end_turn"
 
+    # v1.24.149 — Pricing-intent server-side guardrail.
+    # Detect when the user's CURRENT message asks "how much" + names a service
+    # + supplies a quantity. If so, we PRE-INJECT a system note that forces
+    # the LLM to call get_quote rather than answering from KB starting_price.
+    _force_quote_hint = ""
+    if convo:
+        last_user = next((m for m in reversed(convo) if (m.get("role") == "user")), None)
+        if last_user:
+            uc = last_user.get("content") or ""
+            if isinstance(uc, list):
+                uc = " ".join(b.get("text", "") for b in uc if isinstance(b, dict))
+            uc_low = uc.lower()
+            has_price_intent = any(k in uc_low for k in (
+                "how much", "what is the price", "price for", "price of",
+                "cost for", "cost of", "rate for", "rate of", "quote for",
+                "how much would", "what would it cost", "تكلفة", "كم سعر",
+            ))
+            has_service = any(k in uc_low for k in (
+                "deep clean", "general clean", "ac clean", "ac service",
+                "pest control", "maid", "plumb", "electric", "carpenter",
+                "handyman", "sofa", "carpet", "car wash", "pool", "garden",
+                "painting", "babysit", "laundry", "window clean",
+            ))
+            import re as _re
+            has_qty = bool(_re.search(r"\b\d+\s*(bed|br|hour|hr|unit|ac|room)", uc_low))
+            if has_price_intent and has_service and has_qty:
+                _force_quote_hint = (
+                    "\n\n🚨 SERVER ENFORCEMENT: the user just asked a pricing "
+                    "question with a quantity. You MUST call get_quote with the "
+                    "extracted service_id + bedrooms/hours/units BEFORE replying. "
+                    "Do NOT answer from KB starting_price (that's marketing, "
+                    "not a real quote). Do NOT generate '[Service ↗](/services/...)' "
+                    "links — drive toward a real quote instead."
+                )
+
     for _ in range(max_iters):
+        system_blocks = _system_blocks(language=language, persona=persona)
+        if _force_quote_hint:
+            # Append the enforcement hint (NOT cached, so it always applies fresh
+            # for THIS turn — and doesn't pollute the cached persona blob).
+            system_blocks.append({"type": "text", "text": _force_quote_hint})
+            _force_quote_hint = ""  # only apply on the FIRST iteration
+
         resp = client.messages.create(
             model=settings.MODEL,
             max_tokens=settings.MAX_TOKENS,
-            system=_system_blocks(language=language, persona=persona),
+            system=system_blocks,
             tools=TOOL_SCHEMAS,
             messages=convo,
             thinking={"type": "adaptive"},
