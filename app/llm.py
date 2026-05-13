@@ -268,7 +268,8 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         "    \n"
         "    Your slot locks when payment clears (usually 30 seconds).\n"
         "\n"
-        "After create_multi_quote returns, follow the legacy [[quote_card]] flow.\n"
+        "After create_multi_quote (2+ services) returns, follow the legacy [[quote_card]] flow.\n"
+        "After prepare_checkout (1 service) returns, send the customer_message verbatim — it includes the /checkout URL with quote_number, subtotal, VAT, and total.\n"
         "\n"
         "🚨 INTAKE CHECKLIST BEFORE prepare_checkout — service-specific:\n"
         "  - deep_cleaning / general_cleaning / maid_service: bedrooms,\n"
@@ -293,7 +294,7 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         "\n"
         "🚨 MULTI-SERVICE FLOW: When the customer mentions 2 OR MORE "
         "services in the same chat (e.g. 'deep clean + pest control + sofa'), "
-        "you MUST call create_multi_quote (NOT create_booking) once all 6 "
+        "you MUST call create_multi_quote (for 2+ services) or prepare_checkout (for 1 service — PREFERRED) once all 6 "
         "fields are known. Do not output 'Book now ↗' links — those are the "
         "legacy single-service flow.\n\n"
         "🚨 ASK ONE QUESTION PER TURN. Never produce numbered lists of 3-4 "
@@ -315,13 +316,14 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         "pool_size_sqm for swimming_pool, ac_units_count for ac_cleaning, pest_type for "
         "pest_control). Then ask name, phone, then emit [[picker:address]] "
         "(NEVER ask address as free text). Then EITHER call "
-        "create_multi_quote (if 2+ services in the chat) OR create_booking (single service). "
-        "When in doubt between the two — use create_multi_quote.\n"
+        "create_multi_quote (if 2+ services in the chat) OR prepare_checkout (single service — PREFERRED v1.24.142 — generates /checkout URL with payment). "
+        "When in doubt between the two — count the services: 1 = prepare_checkout, 2+ = create_multi_quote. "
+        "NEVER call create_booking directly — that's the legacy path that bypasses /checkout.\n"
         "🚨 ASK ONLY ONE THING AT A TIME. Never group 'date + time + address + name' "
         "into one numbered list — that's slow UX. Ask the next missing field as a "
         "single short question. ALWAYS use [[picker:date]] when asking date and "
         "[[picker:time]] when asking time, NOT free-text questions.\n"
-        "After create_booking: share booking_id and a track URL.\n"
+        "After prepare_checkout (single service): share the customer_message verbatim — it has the /checkout URL. Never call create_booking directly anymore.\n"
         "After create_multi_quote: share the EXACT structured cart format from "
         "the MULTI-SERVICE CART RULES section below. Never output a bare "
         "'Book now ↗' link for multi-service quotes — that's banned.\n"
@@ -342,7 +344,7 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         # total + one approve link + one pay button.
         "MULTI-SERVICE CART RULES (very important):\n"
         "- If customer asks about / confirms 2+ services in the same chat session, "
-        "  call create_multi_quote (NOT multiple create_booking calls).\n"
+        "  call create_multi_quote (NOT multiple prepare_checkout calls or create_booking).\n"
         "- After create_multi_quote returns, REPLY in this exact structured format:\n"
         "    📋 *Quote Q-XXXXXX* (also sent to your phone)\n"
         "    \n"
@@ -445,8 +447,8 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         "   structured fields auto-emitted by the picker. Anything else is NOT\n"
         "   an address.\n"
         "5. Once you have a picker-emitted address message, summarize back to\n"
-        "   the customer for confirmation and proceed to create_multi_quote /\n"
-        "   create_booking.\n"
+        "   the customer for confirmation and proceed to create_multi_quote (2+ services) /\n"
+        "   prepare_checkout (1 service — generates /checkout URL).\n"
         "\n"
         "EXAMPLES (correct):\n"
         "  Great — and where should we come?\n"
@@ -516,6 +518,7 @@ def chat(messages: list[dict], *, session_id: str | None = None,
         # itemised cart instead of the legacy "Book now ↗" link.
         services_in_chat = _services_mentioned_in_convo(convo, tool_calls)
         for tu in tool_uses:
+            # v1.24.69 — multi-service: block create_booking, force create_multi_quote
             if tu.name == "create_booking" and len(services_in_chat) >= 2:
                 err = {
                     "ok": False,
@@ -533,10 +536,32 @@ def chat(messages: list[dict], *, session_id: str | None = None,
                 results.append({"type": "tool_result", "tool_use_id": tu.id,
                                 "content": _stringify(err)})
                 continue
-            # v1.24.77 — block create_booking / create_multi_quote /
+            # v1.24.146 — single-service: block create_booking, force prepare_checkout
+            # CLAUDE.md §2 was violated — bot was bypassing the central checkout
+            # by calling create_booking directly. This guardrail forces the
+            # /checkout flow for ALL single-service bookings (no exceptions).
+            if tu.name == "create_booking" and len(services_in_chat) < 2:
+                err = {
+                    "ok": False,
+                    "error": (
+                        "BLOCKED — create_booking is LEGACY and bypasses the "
+                        "customer-facing /checkout page. You MUST call "
+                        "prepare_checkout with the same arguments instead. "
+                        "prepare_checkout creates a draft quote and returns "
+                        "a checkout_url like /checkout?q=Q-XXXX where the "
+                        "customer reviews the price + UAE 5% VAT and pays via "
+                        "the payment gateway. Retry now with prepare_checkout."
+                    ),
+                }
+                tool_calls.append({"name": tu.name, "input": dict(tu.input),
+                                   "result": err})
+                results.append({"type": "tool_result", "tool_use_id": tu.id,
+                                "content": _stringify(err)})
+                continue
+            # v1.24.77 — block create_booking / create_multi_quote / prepare_checkout /
             # get_quote when service-specific intake fields are missing.
             # Forces the LLM to ask bedrooms/AC count/etc. BEFORE quoting.
-            if tu.name in ("get_quote", "create_booking", "create_multi_quote"):
+            if tu.name in ("get_quote", "create_booking", "create_multi_quote", "prepare_checkout"):
                 missing = _missing_intake(tu.name, dict(tu.input), convo)
                 if missing:
                     err = {
