@@ -594,20 +594,40 @@ async function openDetail(tab, id) {
     if (d.invoices) related += `<div><b>Linked Invoices</b>: ${d.invoices.length || 0}</div>`;
     if (d.delivery_notes) related += `<div><b>Linked Delivery Notes</b>: ${d.delivery_notes.length || 0}</div>`;
     let actions = "";
-    if (tab === "quotes" && (item.status === "draft" || item.status === "sent")) {
-      actions += `<button class="btn" onclick="acceptQuote('${id}')">✅ Mark accepted (creates SO + invoice)</button> `;
+    if (tab === "quotes") {
+      if (item.status === "draft" || item.status === "sent") {
+        actions += `<button class="btn" onclick="acceptQuote('${id}')">✅ Accept (creates SO + invoice)</button> `;
+      }
+      if (item.status !== "rejected" && item.status !== "cancelled" && item.status !== "accepted") {
+        actions += `<button class="btn btn-ghost" onclick="rejectQuote('${id}')">❌ Reject</button> `;
+      }
+      if (item.status !== "cancelled") {
+        actions += `<button class="btn btn-ghost" onclick="cancelQuote('${id}')">🚫 Cancel</button> `;
+      }
+      // v1.24.163 — Revise creates QT-XXXX-r1
+      actions += `<button class="btn btn-ghost" onclick="reviseQuote('${id}')">🔁 Revise (new -r1)</button> `;
+      // v1.24.163 — Delete only allowed for draft/cancelled/rejected/superseded
+      if (["draft","cancelled","rejected","superseded"].includes(item.status)) {
+        actions += `<button class="btn btn-ghost" style="color:#dc2626;border-color:#fecaca" onclick="deleteQuote('${id}')">🗑️ Delete</button> `;
+      }
     }
     if (tab === "invoices" && item.payment_status === "unpaid") {
       actions += `<button class="btn" onclick="markInvoicePaid('${id}')">💳 Mark paid</button> `;
+      // v1.24.163 — Register partial / split payment with method + reference + receipt
+      actions += `<button class="btn btn-ghost" onclick="registerPayment('invoice','${id}', ${item.amount || 0})">📥 Register payment</button> `;
     }
     if (tab === "purchase-orders" && item.status !== "paid") {
       actions += `<button class="btn" onclick="markPoPaid('${id}')">💸 Mark paid out</button> `;
+      actions += `<button class="btn btn-ghost" onclick="registerPayment('purchase_order','${id}', ${item.vendor_total || 0})">📤 Register vendor payment</button> `;
     }
     if (tab === "sales-orders") {
-      actions += `<button class="btn" onclick="markSoCompleted('${id}')">✅ Mark completed (creates DN)</button> `;
+      actions += `<button class="btn" onclick="markSoCompleted('${id}')">✅ Mark completed (creates Service Note)</button> `;
       // v1.24.157 — Assign-vendor flow with vendor picker
       actions += `<button class="btn" onclick="openAssignVendor('${id}','${(item.line_items_json||'').replace(/['"\\\\]/g,'')}')">🛒 Assign vendor → create PO</button> `;
     }
+    // v1.24.163 — show the full chain (Quote → SO → Invoice + DNs + POs)
+    let chain = "";
+    if (tab === "quotes") chain = await _fetchChain(id, "quote");
     document.getElementById("modal-content").innerHTML = `
       <h2>${num}</h2>
       <p style="color:var(--mut);font-size:13px;margin-top:-8px">${JSON.stringify(item.line_items_json ? JSON.parse(item.line_items_json) : []).substring(0,200)}…</p>
@@ -618,6 +638,7 @@ async function openDetail(tab, id) {
         <div><b>Status:</b> ${b(item.status || item.payment_status)}</div>
       </div>
       ${related}
+      ${chain}
       <div style="margin-top:18px;display:flex;gap:6px;flex-wrap:wrap">
         <a class="btn btn-ghost" href="/admin/print/${docType}/${id}?token=${encodeURIComponent(tokenInput.value)}" target="_blank">📄 Open printable</a>
         ${actions}
@@ -632,6 +653,120 @@ async function acceptQuote(id) {
   if (!confirm("Accept quote? This creates a Sales Order + auto-generates an Invoice.")) return;
   try { await apiPost(`/api/admin/quotes/${id}/accept`); alert("Accepted!"); closeModal(); loadList("quotes"); }
   catch (e) { alert("Failed: " + e.message); }
+}
+
+// v1.24.163 — Reject, Cancel, Revise, Delete quote actions.
+async function rejectQuote(id) {
+  if (!confirm("Reject quote? Customer-facing status → REJECTED. The quote stays for audit; you can later cancel or delete it.")) return;
+  try { await apiPost(`/api/admin/quotes/${id}/reject`); alert("✓ Rejected."); closeModal(); loadList("quotes"); }
+  catch (e) { alert("Failed: " + e.message); }
+}
+async function cancelQuote(id) {
+  if (!confirm("Cancel quote? Status → CANCELLED. Downstream SO/Invoice (if any) are NOT auto-cancelled — handle them separately if needed.")) return;
+  try { await apiPost(`/api/admin/quotes/${id}/cancel`); alert("✓ Cancelled."); closeModal(); loadList("quotes"); }
+  catch (e) { alert("Failed: " + e.message); }
+}
+async function reviseQuote(id) {
+  if (!confirm("Create a revision? A new draft quote with -r1 suffix will be created from this one. The original becomes 'superseded'.")) return;
+  try {
+    const d = await apiPost(`/api/admin/quotes/${id}/revise`);
+    alert(`✓ Revision created: ${d.quote_number}\nFrom: ${d.revised_from}`);
+    closeModal();
+    loadList("quotes");
+  } catch (e) { alert("Failed: " + e.message); }
+}
+async function deleteQuote(id) {
+  if (!confirm("⚠️ PERMANENTLY DELETE this quote? This cannot be undone. Only allowed for draft/cancelled/rejected/superseded quotes.")) return;
+  try {
+    const r = await fetch(`/api/admin/quotes/${id}`, { method:"DELETE", headers: H() });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "delete failed");
+    alert("✓ Deleted.");
+    closeModal();
+    loadList("quotes");
+  } catch (e) { alert("Failed: " + e.message); }
+}
+
+// v1.24.163 — Fetch the linked-doc chain (Quote → SO → Invoice + DNs + POs)
+// and render it as clickable badges so the founder can navigate the trail.
+async function _fetchChain(quoteId, docType) {
+  try {
+    const r = await fetch(`/api/admin/quotes/${quoteId}/links`, { headers: H() });
+    if (!r.ok) return "";
+    const d = await r.json();
+    if (!d.ok) return "";
+    const chip = (label, val, onclick) =>
+      `<button onclick="${onclick}" class="row-actions" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:5px 10px;border-radius:99px;font-weight:700;font-size:11px;margin:2px;cursor:pointer">${label} ${val}</button>`;
+    let parts = [`<div style="margin-top:12px;padding:10px;background:#F0FDF4;border-radius:8px;border:1px solid #BBF7D0"><div style="font-weight:700;font-size:12px;color:#166534;margin-bottom:6px">🔗 Linked documents</div>`];
+    if (d.revisions && d.revisions.length > 1) {
+      parts.push('<div style="margin-bottom:4px;font-size:11px;color:#15803D">Revisions:</div><div>');
+      for (const r of d.revisions) {
+        parts.push(chip("📝", r.quote_number, `event.stopPropagation();openDetail('quotes','${r.id}')`));
+      }
+      parts.push('</div>');
+    }
+    if (d.sales_orders && d.sales_orders.length) {
+      parts.push('<div style="margin:6px 0 4px;font-size:11px;color:#15803D">Sales orders:</div><div>');
+      for (const s of d.sales_orders) {
+        parts.push(chip("📋", s.so_number, `event.stopPropagation();openDetail('sales-orders','${s.id}')`));
+      }
+      parts.push('</div>');
+    }
+    if (d.invoices && d.invoices.length) {
+      parts.push('<div style="margin:6px 0 4px;font-size:11px;color:#15803D">Invoices:</div><div>');
+      for (const i of d.invoices) {
+        parts.push(chip("📄", i.invoice_number, `event.stopPropagation();openDetail('invoices','${i.id}')`));
+      }
+      parts.push('</div>');
+    }
+    if (d.delivery_notes && d.delivery_notes.length) {
+      parts.push('<div style="margin:6px 0 4px;font-size:11px;color:#15803D">Service notes:</div><div>');
+      for (const n of d.delivery_notes) {
+        parts.push(chip("✅", n.dn_number, `event.stopPropagation();openDetail('delivery-notes','${n.id}')`));
+      }
+      parts.push('</div>');
+    }
+    if (d.purchase_orders && d.purchase_orders.length) {
+      parts.push('<div style="margin:6px 0 4px;font-size:11px;color:#15803D">Purchase orders:</div><div>');
+      for (const p of d.purchase_orders) {
+        parts.push(chip("🛒", p.po_number + (p.vendor_name?` (${p.vendor_name})`:""), `event.stopPropagation();openDetail('purchase-orders','${p.id}')`));
+      }
+      parts.push('</div>');
+    }
+    parts.push('</div>');
+    return parts.join("");
+  } catch (e) {
+    return "";
+  }
+}
+
+// v1.24.163 — Register a manual payment (in / out) against an invoice or PO.
+async function registerPayment(refType, refId, docTotal) {
+  const isInvoice = refType === "invoice";
+  const label = isInvoice ? "customer payment IN" : "vendor payment OUT";
+  const amount = parseFloat(prompt(`Amount in AED for ${label} (doc total: ${docTotal})?`, docTotal));
+  if (!amount || amount <= 0) return;
+  const method = prompt("Payment method? (card / bank_transfer / cash / cheque / stripe / ziina)", "bank_transfer");
+  if (!method) return;
+  const ref = prompt("Reference / transaction number (optional)?", "") || "";
+  const receipt = prompt("Receipt URL or screenshot link (optional)?", "") || "";
+  const notes = prompt("Notes (optional)?", "") || "";
+  try {
+    const r = await fetch("/api/admin/payments/register", {
+      method:"POST", headers:{...H(),"Content-Type":"application/json"},
+      body: JSON.stringify({
+        payment_type: isInvoice ? "customer_in" : "vendor_out",
+        reference_type: refType, reference_id: refId,
+        amount, method, reference_number: ref || null,
+        receipt_url: receipt || null, notes: notes || null,
+      }),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "register failed");
+    alert(`✓ Payment recorded.\nTotal paid: AED ${d.total_paid}\nRemaining: AED ${d.remaining}\nNew status: ${d.new_status || "unchanged"}`);
+    closeModal();
+    loadList(isInvoice ? "invoices" : "purchase-orders");
+  } catch (e) { alert("Failed: " + e.message); }
 }
 async function markInvoicePaid(id) {
   const method = prompt("Payment method (card / bank_transfer / cash / wallet / cheque)?", "bank_transfer");

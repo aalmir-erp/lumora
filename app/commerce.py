@@ -504,6 +504,125 @@ def admin_reject_quote(quote_id: str):
     return {"ok": True}
 
 
+@router.post("/api/admin/quotes/{quote_id}/cancel", dependencies=[Depends(require_admin)])
+def admin_cancel_quote(quote_id: str):
+    """v1.24.163 — Cancel a quote (any status). Soft state change."""
+    with db.connect() as c:
+        q = c.execute("SELECT status FROM quotes WHERE id=?", (quote_id,)).fetchone()
+        if not q:
+            raise HTTPException(status_code=404, detail="quote not found")
+        c.execute("UPDATE quotes SET status='cancelled' WHERE id=?", (quote_id,))
+    return {"ok": True}
+
+
+@router.delete("/api/admin/quotes/{quote_id}", dependencies=[Depends(require_admin)])
+def admin_delete_quote(quote_id: str):
+    """v1.24.163 — Hard-delete a DRAFT (or cancelled/rejected) quote.
+    Accepted/sent quotes cannot be deleted — only cancelled — to keep
+    an audit trail of agreed prices."""
+    with db.connect() as c:
+        q = c.execute("SELECT status FROM quotes WHERE id=?", (quote_id,)).fetchone()
+        if not q:
+            raise HTTPException(status_code=404, detail="quote not found")
+        if q["status"] not in ("draft", "cancelled", "rejected", "superseded"):
+            raise HTTPException(
+                status_code=409,
+                detail=f"cannot delete a {q['status']} quote — cancel it first",
+            )
+        c.execute("DELETE FROM quotes WHERE id=?", (quote_id,))
+    return {"ok": True}
+
+
+@router.post("/api/admin/quotes/{quote_id}/revise", dependencies=[Depends(require_admin)])
+def admin_revise_quote(quote_id: str):
+    """v1.24.163 — Create a revision of an existing quote.
+    Numbering: QT-2026-0019 → QT-2026-0019-r1 → QT-2026-0019-r2.
+    Founder request: 'revision should be the sub number of the main'."""
+    now = _now()
+    with db.connect() as c:
+        orig = c.execute("SELECT * FROM quotes WHERE id=?", (quote_id,)).fetchone()
+        if not orig:
+            raise HTTPException(status_code=404, detail="quote not found")
+        orig = dict(orig)
+        base = orig["quote_number"].split("-r")[0]
+        existing = c.execute(
+            "SELECT quote_number FROM quotes WHERE quote_number LIKE ?",
+            (base + "%",),
+        ).fetchall()
+        rev_n = 1
+        for row in existing:
+            num = row["quote_number"]
+            if "-r" in num:
+                try:
+                    rev_n = max(rev_n, int(num.split("-r")[-1]) + 1)
+                except ValueError:
+                    pass
+        new_number = f"{base}-r{rev_n}"
+        new_id = _id("Q")
+        c.execute("""
+            INSERT INTO quotes
+              (id, quote_number, booking_id, service_id, breakdown_json,
+               line_items_json, subtotal, discount, vat_amount, total,
+               currency, valid_until, status, customer_id, customer_name,
+               customer_phone, customer_email, customer_address, terms,
+               notes, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, (new_id, new_number, orig.get("booking_id"), orig.get("service_id"),
+              orig.get("breakdown_json"), orig.get("line_items_json"),
+              orig.get("subtotal") or 0, orig.get("discount") or 0,
+              orig.get("vat_amount") or 0, orig.get("total") or 0,
+              orig.get("currency") or "AED", orig.get("valid_until"),
+              "draft", orig.get("customer_id"), orig.get("customer_name"),
+              orig.get("customer_phone"), orig.get("customer_email"),
+              orig.get("customer_address"), orig.get("terms"),
+              orig.get("notes"), now))
+        if orig["status"] not in ("accepted", "cancelled", "rejected", "superseded"):
+            c.execute("UPDATE quotes SET status='superseded' WHERE id=?", (quote_id,))
+    return {"ok": True, "id": new_id, "quote_number": new_number,
+            "revised_from": orig["quote_number"], "rev": rev_n}
+
+
+@router.get("/api/admin/quotes/{quote_id}/links", dependencies=[Depends(require_admin)])
+def admin_quote_links(quote_id: str):
+    """v1.24.163 — Full doc chain for breadcrumb UI:
+    Quote → revisions → SO → Invoice + DNs + POs."""
+    with db.connect() as c:
+        q = c.execute(
+            "SELECT id, quote_number, status FROM quotes WHERE id=?", (quote_id,)
+        ).fetchone()
+        if not q:
+            raise HTTPException(status_code=404, detail="quote not found")
+        base = q["quote_number"].split("-r")[0]
+        revs = c.execute(
+            "SELECT id, quote_number, status FROM quotes WHERE quote_number LIKE ? "
+            "ORDER BY quote_number",
+            (base + "%",),
+        ).fetchall()
+        sos = c.execute(
+            "SELECT id, so_number, status FROM sales_orders WHERE quote_id=?",
+            (quote_id,),
+        ).fetchall()
+        invs, dns, pos = [], [], []
+        for so in sos:
+            sid = so["id"]
+            invs += [dict(r) for r in c.execute(
+                "SELECT id, invoice_number, status FROM invoices WHERE sales_order_id=?",
+                (sid,)).fetchall()]
+            dns += [dict(r) for r in c.execute(
+                "SELECT id, dn_number, delivered_at FROM delivery_notes WHERE sales_order_id=?",
+                (sid,)).fetchall()]
+            pos += [dict(r) for r in c.execute(
+                "SELECT id, po_number, status, vendor_name FROM purchase_orders WHERE sales_order_id=?",
+                (sid,)).fetchall()]
+    return {
+        "ok": True,
+        "quote": dict(q),
+        "revisions": [dict(r) for r in revs],
+        "sales_orders": [dict(s) for s in sos],
+        "invoices": invs, "delivery_notes": dns, "purchase_orders": pos,
+    }
+
+
 # ═════════════════════════════════════════════════════════════════════
 # SALES ORDERS
 # ═════════════════════════════════════════════════════════════════════
@@ -878,10 +997,15 @@ def admin_mark_po_paid(po_id: str, body: MarkPaidBody):
 @router.get("/api/admin/payments", dependencies=[Depends(require_admin)])
 def admin_list_payments(payment_type: Optional[str] = None,
                          from_date: Optional[str] = None,
-                         to_date: Optional[str] = None, limit: int = 200):
-    """payment_type = customer_in | vendor_out"""
+                         to_date: Optional[str] = None,
+                         reference_id: Optional[str] = None,
+                         limit: int = 200):
+    """payment_type = customer_in | vendor_out;
+    reference_id optional — pass invoice.id or po.id to list payments
+    against a specific document (v1.24.163)."""
     where = ["1=1"]; args: list = []
     if payment_type: where.append("payment_type=?"); args.append(payment_type)
+    if reference_id: where.append("reference_id=?"); args.append(reference_id)
     if from_date: where.append("payment_date >= ?"); args.append(from_date)
     if to_date: where.append("payment_date <= ?"); args.append(to_date + "T23:59:59")
     with db.connect() as c:
@@ -890,6 +1014,96 @@ def admin_list_payments(payment_type: Optional[str] = None,
             ORDER BY payment_date DESC LIMIT ?
         """, (*args, limit)).fetchall()
         return {"ok": True, "count": len(rows), "items": [dict(r) for r in rows]}
+
+
+class PaymentRegisterBody(BaseModel):
+    """v1.24.163 — Register a manual payment in or out.
+
+    Founder feedback: 'no option to register a payment in quotations or
+    invoice, no method to register a manual vendor or customer payment,
+    no option to link payments to existing code or invoices.' This
+    closes that gap.
+    """
+    payment_type:   str                 # 'customer_in' | 'vendor_out'
+    reference_type: str                 # 'invoice' | 'purchase_order'
+    reference_id:   str                 # invoice.id or po.id
+    amount:         float
+    method:         str                 # card | bank_transfer | cash | wallet | cheque | stripe | ziina
+    payment_date:   Optional[str] = None
+    reference_number: Optional[str] = None   # bank txn / cheque #
+    receipt_url:    Optional[str] = None     # screenshot/PDF of receipt
+    notes:          Optional[str] = None
+
+
+@router.post("/api/admin/payments/register", dependencies=[Depends(require_admin)])
+def admin_register_payment(body: PaymentRegisterBody):
+    """Register an inbound or outbound payment and auto-link it to an
+    invoice or purchase order. The invoice/PO status is updated to
+    'paid' if the cumulative payments now equal or exceed the doc total.
+
+    Method values typical for UAE:
+      card · bank_transfer · cash · wallet · cheque · stripe · ziina
+    """
+    if body.payment_type not in ("customer_in", "vendor_out"):
+        raise HTTPException(400, "payment_type must be customer_in or vendor_out")
+    if body.reference_type not in ("invoice", "purchase_order"):
+        raise HTTPException(400, "reference_type must be invoice or purchase_order")
+    if body.amount <= 0:
+        raise HTTPException(400, "amount must be > 0")
+    pay_date = body.payment_date or _now()
+    # Stash receipt_url in notes JSON if provided — keeps schema additive.
+    notes_blob = body.notes or ""
+    if body.receipt_url:
+        notes_blob = (notes_blob + " " if notes_blob else "") + f"[receipt:{body.receipt_url}]"
+    with db.connect() as c:
+        # Resolve counterparty + doc total for paid-status update.
+        cp_id, cp_name, doc_total, status_col, status_tbl = None, None, 0.0, "payment_status", "invoices"
+        if body.reference_type == "invoice":
+            row = c.execute(
+                "SELECT id, customer_id, customer_name, amount FROM invoices WHERE id=?",
+                (body.reference_id,)).fetchone()
+            if not row:
+                raise HTTPException(404, "invoice not found")
+            cp_id, cp_name, doc_total = row["customer_id"], row["customer_name"], row["amount"] or 0
+            status_col, status_tbl = "payment_status", "invoices"
+        else:
+            row = c.execute(
+                "SELECT id, vendor_id, vendor_name, vendor_total FROM purchase_orders WHERE id=?",
+                (body.reference_id,)).fetchone()
+            if not row:
+                raise HTTPException(404, "purchase_order not found")
+            cp_id, cp_name, doc_total = row["vendor_id"], row["vendor_name"], row["vendor_total"] or 0
+            status_col, status_tbl = "status", "purchase_orders"
+        c.execute("""
+            INSERT INTO payment_registrations
+              (payment_type, reference_type, reference_id, counterparty_id,
+               counterparty_name, amount, currency, method, reference_number,
+               payment_date, notes, created_at, created_by)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, (body.payment_type, body.reference_type, body.reference_id,
+              cp_id, cp_name, body.amount, "AED", body.method,
+              body.reference_number, pay_date, notes_blob, _now(), "admin"))
+        new_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+        # Cumulative paid so far against this doc
+        total_paid = c.execute("""
+            SELECT COALESCE(SUM(amount), 0) FROM payment_registrations
+            WHERE reference_type=? AND reference_id=?
+        """, (body.reference_type, body.reference_id)).fetchone()[0]
+        new_status = None
+        if total_paid >= doc_total - 0.01 and doc_total > 0:
+            new_status = "paid"
+        elif total_paid > 0:
+            new_status = "partially_paid"
+        if new_status:
+            c.execute(f"UPDATE {status_tbl} SET {status_col}=? WHERE id=?",
+                      (new_status, body.reference_id))
+    return {
+        "ok": True, "payment_id": new_id,
+        "total_paid": round(total_paid, 2),
+        "doc_total": round(doc_total, 2),
+        "remaining": round(max(0, doc_total - total_paid), 2),
+        "new_status": new_status,
+    }
 
 
 # ═════════════════════════════════════════════════════════════════════
