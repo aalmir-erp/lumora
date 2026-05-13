@@ -18,6 +18,12 @@ from pydantic import BaseModel, Field
 from . import admin, admin_live as _admin_live, ai_router, airbnb_ical as _airbnb_ical, brand_contact as _brand_contact, cart, checkout_central as _checkout, commerce as _commerce, db, demo_brain, google_home as _gha, inbox as _inbox, kb, launch, live_visitors, llm, me_location as _me_loc, nfc as _nfc_mod, portal, portal_v2, psi as _psi_mod, push_notifications, quotes, recovery as _recovery_mod, recovery_auction as _rec_auc, rlaif as _rlaif, selftest, social_publisher, sos_custom as _sos_custom_mod, staff_portraits, tools, videos, visibility, wear_diag as _wear_diag, whatsapp
 from .auth import ADMIN_TOKEN, require_admin
 from .config import get_settings
+from . import log_buffer as _log_buffer
+
+# v1.24.192 — install stdout/stderr tee BEFORE any other module starts
+# printing so the in-admin Logs viewer captures everything from boot.
+_log_buffer.install()
+_log_buffer.manual(f"[boot] Servia v{get_settings().APP_VERSION} starting")
 
 settings = get_settings()
 # openapi_url=None disables FastAPI's auto-generated /openapi.json. We serve
@@ -1820,6 +1826,30 @@ async def ziina_webhook(request: Request):
                                   details={"quote_id": qid,
                                            "invoice_id": new_invoice_id,
                                            "paid_amount": paid_amount})
+                    # v1.24.192 — Notify the customer on WhatsApp that
+                    # payment landed (founder ask: "collect payment by
+                    # link in whatsapp for ziina and match and verify
+                    # in website and whatsapp also"). Best-effort —
+                    # bridge may not be paired yet; never block the
+                    # webhook on this.
+                    try:
+                        with db.connect() as c:
+                            cust = c.execute(
+                                "SELECT phone, name FROM customers WHERE id=?",
+                                (qrow["customer_id"],)).fetchone()
+                        if cust and cust["phone"]:
+                            from . import tools as _tools
+                            confirm_msg = (
+                                f"✅ Payment received — AED {paid_amount:.2f} for "
+                                f"{qrow['quote_number']}.\n\n"
+                                f"Your booking is confirmed. We'll send the team "
+                                f"details shortly. Track in your account: "
+                                f"https://servia.ae/me"
+                            )
+                            _tools.send_whatsapp(cust["phone"], confirm_msg)
+                    except Exception as _e:
+                        print(f"[ziina-webhook] WA confirm send failed: {_e}",
+                              flush=True)
                     return {"ok": True, "auto_confirmed": True,
                             "quote_number": qrow["quote_number"],
                             "invoice_id": new_invoice_id,

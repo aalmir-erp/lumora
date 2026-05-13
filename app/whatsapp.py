@@ -52,10 +52,40 @@ def _persist(session_id: str, role: str, content: str, *, phone: str) -> None:
         )
 
 
+def _upsert_customer_from_wa(phone: str, name: str | None) -> None:
+    """v1.24.192 — Every inbound WhatsApp message upserts a customer
+    record (phone is the identity). This is what makes the WA chat
+    discoverable in /admin → Customers AND lets the customer's later
+    web login show the same threads (cross-channel sync per founder
+    request: 'match and verify in website and whatsapp also')."""
+    if not phone:
+        return
+    now = _dt.datetime.utcnow().isoformat() + "Z"
+    try:
+        with db.connect() as c:
+            existing = c.execute(
+                "SELECT id, name FROM customers WHERE phone=?", (phone,)).fetchone()
+            if existing:
+                # Update last_seen_at + name if we have a better one
+                if name and not existing["name"]:
+                    c.execute("UPDATE customers SET name=?, last_seen_at=? WHERE id=?",
+                              (name, now, existing["id"]))
+                else:
+                    c.execute("UPDATE customers SET last_seen_at=? WHERE id=?",
+                              (now, existing["id"]))
+            else:
+                c.execute(
+                    "INSERT INTO customers(phone, name, created_at, last_seen_at) "
+                    "VALUES(?,?,?,?)", (phone, name, now, now))
+    except Exception as e:  # noqa: BLE001
+        print(f"[wa-webhook] customer upsert failed: {e}", flush=True)
+
+
 @router.post("/webhook", dependencies=[Depends(require_bridge_token)])
 def inbound(msg: InboundMsg):
     settings = get_settings()
     sid = _phone_to_session(msg.from_number)
+    _upsert_customer_from_wa(msg.from_number, msg.name)
     _persist(sid, "user", msg.text, phone=msg.from_number)
 
     # v1.24.143 — Log inbound WhatsApp to unified inbox so admin can review

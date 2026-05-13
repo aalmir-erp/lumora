@@ -4,8 +4,8 @@
 <meta name="servia-page" content="me"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My account • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preload" as="style" href="/style.css?v=1.24.191" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.191"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.191" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.191"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.192" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.192"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.192" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.192"></noscript>
 <script src="/banner.js" defer></script>
 <!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
@@ -459,33 +459,75 @@ function logout() {
 }
 
 let _user = null;
+
+// v1.24.192 — Diagnostic banner. If /me.html load fails for any reason,
+// show the error visibly INSTEAD of silently bouncing to home. Founder
+// hit a still-bouncing "login-as" even after v1.24.192; root cause was
+// masked by the auto-logout. Now we keep the user on the page and let
+// them see exactly what failed.
+function _showLoadError(stage, e) {
+  const div = document.createElement("div");
+  div.style.cssText = "max-width:760px;margin:24px auto;padding:18px 22px;"
+    + "border-radius:14px;background:#FEF2F2;border:1px solid #FCA5A5;"
+    + "color:#7F1D1D;font:14px/1.5 system-ui;box-shadow:0 4px 18px rgba(0,0,0,.06)";
+  const status = (e && e.status) ? ("HTTP " + e.status) : "";
+  const msg = (e && e.message) || String(e || "unknown");
+  div.innerHTML =
+    "<div style='font-weight:800;font-size:16px;margin-bottom:6px'>⚠ Couldn't load your account</div>"
+    + "<div style='margin:4px 0 12px'>Stage: <b>" + stage + "</b>" + (status ? " · " + status : "") + "</div>"
+    + "<div style='font-family:ui-monospace,monospace;font-size:12.5px;background:#fff;padding:10px;border-radius:8px;border:1px solid #FECACA;word-break:break-word'>"
+    + msg.replace(/[<>&]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;"}[c])) + "</div>"
+    + "<div style='margin-top:14px;display:flex;gap:8px;flex-wrap:wrap'>"
+    + "<button class='btn btn-primary' onclick='location.reload()'>🔄 Reload</button>"
+    + "<button class='btn btn-ghost' onclick='logout()'>🚪 Sign out</button>"
+    + "<a class='btn btn-ghost' href='/login.html'>↩ Go to sign-in</a>"
+    + "</div>";
+  const container = document.querySelector(".container") || document.body;
+  container.insertBefore(div, container.firstChild);
+}
+
 (async () => {
+  let m;
   try {
-    const m = await authd("/api/me");
-    _user = m.user;
-    // v1.24.191 — Guard against missing 'who' element. Founder hit:
-    // 'Login as flashes /me.html for a second then bounces home'. Root
-    // cause: getElementById('who') returned null (element was removed
-    // in a UI refactor but this line still tried to set its textContent
-    // → TypeError → caught → logout() → home.
-    const whoEl = document.getElementById("who");
-    if (whoEl) whoEl.textContent = _user.phone || "";
+    m = await authd("/api/me");
   } catch (e) {
     console.warn("[me] /api/me failed:", e);
-    logout(); return;
+    // Only auto-logout on 401 (token genuinely invalid). Any other
+    // error (network, 500, 403, etc.) — keep the user on the page so
+    // they can SEE what happened instead of silently bouncing home.
+    if (e && e.status === 401) {
+      logout(); return;
+    }
+    _showLoadError("loading /api/me", e);
+    return;
   }
-  loadBookings();
+  if (!m || !m.user) {
+    _showLoadError("loading /api/me", new Error("response missing 'user' field: " + JSON.stringify(m).slice(0, 200)));
+    return;
+  }
+  _user = m.user;
+  try {
+    // v1.24.192 — Guard against missing 'who' element. v1.24.192 —
+    // also guard _user.phone if user record is partial.
+    const whoEl = document.getElementById("who");
+    if (whoEl) whoEl.textContent = (_user && _user.phone) || "";
+  } catch (e) {
+    console.warn("[me] setting who element failed (non-fatal):", e);
+  }
+  try { loadBookings(); } catch (e) { console.warn("[me] loadBookings failed:", e); }
   // First-sign-in nudge — only if profile is empty AND user hasn't dismissed
-  const PROMPT_KEY = "lumora.profile.dismissed";
-  if (!_user.name && !_user.email && !localStorage.getItem(PROMPT_KEY)) {
-    localStorage.setItem(PROMPT_KEY, "1");
-    setTimeout(() => {
-      const want = confirm("Welcome to Servia! Add your name and preferred language to your profile? (You can do this later from the Profile tab.)");
-      if (want) setTab("profile");
-    }, 1200);
-  }
+  try {
+    const PROMPT_KEY = "lumora.profile.dismissed";
+    if (!_user.name && !_user.email && !localStorage.getItem(PROMPT_KEY)) {
+      localStorage.setItem(PROMPT_KEY, "1");
+      setTimeout(() => {
+        const want = confirm("Welcome to Servia! Add your name and preferred language to your profile? (You can do this later from the Profile tab.)");
+        if (want) setTab("profile");
+      }, 1200);
+    }
+  } catch (e) { console.warn("[me] welcome nudge failed:", e); }
   // Live polling every 20s
-  setInterval(loadBookings, 20000);
+  setInterval(() => { try { loadBookings(); } catch (_) {} }, 20000);
 })();
 
 function setTab(t) {
@@ -1125,7 +1167,7 @@ async function submitVideoProof() {
   } catch (e) { alert("Network error: " + e.message); }
 }
 </script>
-<script src="/widget.js?v=1.24.191"></script>
+<script src="/widget.js?v=1.24.192"></script>
 <script src="/cms.js" defer></script>
 <script src="/share.js" defer></script>
 <script src="/install.js" defer></script>

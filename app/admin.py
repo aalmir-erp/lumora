@@ -2825,6 +2825,62 @@ def whatsapp_qr():
                 "bridge_url": base}
 
 
+# v1.24.192 — Public-facing QR page. The bridge runs on 127.0.0.1:3001
+# inside the Railway container so the browser can't open it directly.
+# Founder hit: 'Open bridge /qr directly' link in admin went to
+# http://127.0.0.1:3001/qr which doesn't resolve from a browser, and
+# servia.ae/qr returned 404. This route renders the same QR on the
+# public domain so it can be opened in a new tab (e.g. from a phone
+# while paired device is the same phone).
+from fastapi import Response as _Response
+from fastapi.responses import HTMLResponse as _HTMLResponse
+
+
+@router.get("/whatsapp/qr-page", response_class=_HTMLResponse)
+def whatsapp_qr_page():
+    info = whatsapp_qr()
+    if info.get("ready"):
+        body = (f"<h2>✅ Paired</h2><p>WhatsApp number: <b>"
+                f"{info.get('paired_number') or '(unknown)'}</b></p>"
+                f"<p>To re-pair, log out from your phone first (WhatsApp → "
+                f"Linked devices → tap device → Log out).</p>")
+    elif info.get("qr_data_url"):
+        body = (f"<h2>📱 Scan with your phone</h2>"
+                f"<img src='{info['qr_data_url']}' alt='WhatsApp QR' "
+                f"style='width:320px;height:320px;display:block;margin:18px auto;"
+                f"border:8px solid #fff;border-radius:14px;"
+                f"box-shadow:0 10px 30px rgba(0,0,0,.12)'>"
+                f"<p style='text-align:center;color:#64748B'>"
+                f"WhatsApp → Settings → Linked devices → Link a device</p>"
+                f"<p style='text-align:center'><a href='javascript:location.reload()' "
+                f"style='color:#0F766E;font-weight:700'>🔄 Refresh</a></p>")
+    elif info.get("configured"):
+        body = (f"<h2>⏳ QR not yet generated</h2>"
+                f"<p>The bridge container is up but WhatsApp Web hasn't produced a QR. "
+                f"This can take 30-60s after a fresh start.</p>"
+                f"<p>Common reasons:</p>"
+                f"<ul><li>Bridge just (re)started — Chromium booting.</li>"
+                f"<li>Puppeteer crashed — check Railway logs for whatsapp_bridge.</li>"
+                f"<li>whatsapp-web.js needs upgrade after a Meta protocol change.</li></ul>"
+                f"<p><a href='javascript:location.reload()' "
+                f"style='color:#0F766E;font-weight:700'>🔄 Refresh</a></p>")
+    else:
+        body = (f"<h2>⚠ Bridge not configured</h2>"
+                f"<p>{info.get('error', '')}</p>"
+                f"<p>Set WA_BRIDGE_URL and WA_BRIDGE_TOKEN env vars, then refresh.</p>")
+    html = (f"<!doctype html><html><head><meta charset='utf-8'>"
+            f"<title>WhatsApp Pairing · Servia</title>"
+            f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            f"<meta http-equiv='refresh' content='8'>"
+            f"<style>body{{font:15px/1.6 system-ui;max-width:560px;margin:40px auto;"
+            f"padding:20px;color:#0F172A}}h2{{color:#0F766E;margin:0 0 16px}}"
+            f"</style></head><body>{body}"
+            f"<p style='margin-top:32px;color:#94A3B8;font-size:12px;text-align:center'>"
+            f"Auto-refreshing every 8 seconds · Servia admin</p>"
+            f"</body></html>")
+    return _HTMLResponse(html)
+
+
 class WaSendBody(BaseModel):
     to: str | None = None  # default: admin number
     text: str
@@ -2870,6 +2926,27 @@ def list_alerts(limit: int = 50):
 def fire_daily_summary():
     from . import admin_alerts
     return admin_alerts.push_daily_summary()
+
+
+# v1.24.192 — In-admin log viewer. Founder ask: "instead of railway
+# logs generate print produce everything in front end in admin and
+# see logs issue there itself." The /tail endpoint is poll-friendly
+# (admin UI passes ?after=<last_id> to get only new lines).
+@router.get("/logs/tail")
+def logs_tail(limit: int = 500, after: int = 0,
+              q: str | None = None, stream: str | None = None):
+    from . import log_buffer as _lb
+    return _lb.tail(limit=limit, after_id=after, q=q, stream=stream)
+
+
+@router.post("/logs/marker")
+def logs_marker(body: dict):
+    """Push a labeled marker into the log stream — useful when the
+    founder is replicating a bug ('about to click Reorder')."""
+    from . import log_buffer as _lb
+    text = "▸ " + str(body.get("text") or "marker")
+    _lb.manual(text, "stdout")
+    return {"ok": True}
 
 
 # ============================================================
