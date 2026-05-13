@@ -305,8 +305,24 @@
 const TOKEN_KEY = "servia.admin.token";
 const tokenInput = document.getElementById("token");
 tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
-tokenInput.addEventListener("input", () => localStorage.setItem(TOKEN_KEY, tokenInput.value.trim()));
-tokenInput.addEventListener("change", () => localStorage.setItem(TOKEN_KEY, tokenInput.value.trim()));
+
+// v1.24.162 — Persist the token as BOTH localStorage (for JS fetch) AND
+// a cookie (for direct browser navigation to print/download URLs). The
+// cookie lets /admin/print/quote/XXX, /admin/print/invoice/XXX etc. work
+// when opened in a new tab. Cookie expires in 30 days.
+function _persistToken(value) {
+  const t = (value || "").trim();
+  localStorage.setItem(TOKEN_KEY, t);
+  if (t) {
+    document.cookie = `servia_admin_token=${encodeURIComponent(t)}; max-age=2592000; path=/; SameSite=Lax`;
+  } else {
+    document.cookie = "servia_admin_token=; max-age=0; path=/";
+  }
+}
+tokenInput.addEventListener("input",  () => _persistToken(tokenInput.value));
+tokenInput.addEventListener("change", () => _persistToken(tokenInput.value));
+// Set cookie on load too, in case localStorage was already populated.
+if (tokenInput.value) _persistToken(tokenInput.value);
 
 // v1.24.161 — One-click recovery: fills the recovery token so the founder
 // doesn't need to remember anything. The recovery token always works because
@@ -314,10 +330,10 @@ tokenInput.addEventListener("change", () => localStorage.setItem(TOKEN_KEY, toke
 function useRecoveryToken() {
   const recovery = "lumora-admin-test";
   tokenInput.value = recovery;
-  localStorage.setItem(TOKEN_KEY, recovery);
+  _persistToken(recovery);
   // Reload reports immediately so the founder sees data right away.
   try { loadReports && loadReports(); } catch(_) {}
-  alert("✓ Recovery token filled. You're signed in.");
+  alert("✓ Recovery token filled and saved as a cookie. You're signed in — print/download links will now work too.");
 }
 
 function H() {
