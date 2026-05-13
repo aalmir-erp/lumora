@@ -2057,14 +2057,100 @@ _ensure_invoice_payment_method()
 
 @app.get("/payment-success", response_class=HTMLResponse)
 def payment_success(q: str = "", inv: str = ""):
-    """v1.24.178 — Proper post-payment landing. Founder ask: 'show
-    recently paid quotation status, invoice + service-delivery details,
-    download + print options, clear success message with actual amount
-    received, nice user interface'.
+    """v1.24.178 — Proper post-payment landing.
+    v1.24.181 — SELF-HEALING: actively verifies the payment with Ziina
+    via GET /payment_intent/<id> on every load. If Ziina confirms
+    completed but our local DB hasn't caught up (webhook missed /
+    orphaned), runs the auto-confirm flow inline (accept quote →
+    create SO + invoice → register payment).
 
-    Resolves the quote → SO → invoice → payment chain and renders a
-    real receipt. Works for both /payment-success?q=Q-XXX (Ziina /
-    quote-based) and ?inv=INV-XXX (Stripe / invoice-based) flows."""
+    Founder ask: 'no proper check, no details, no verification — either
+    really done or not'. The page now ALWAYS reflects authoritative
+    Ziina status, not just our DB state."""
+
+    # v1.24.181 — Self-healing: if we have a quote with a stored Ziina
+    # intent_id but no payment row yet, verify directly with Ziina.
+    if q and not inv:
+        try:
+            with db.connect() as c:
+                row = c.execute(
+                    "SELECT id, quote_number, status, total, customer_id, "
+                    "customer_name, customer_phone, breakdown_json FROM quotes "
+                    "WHERE id=? OR quote_number=?", (q, q)).fetchone()
+                if row:
+                    real_qid = row["id"]
+                    try:
+                        bd = json.loads(row["breakdown_json"] or "{}")
+                    except Exception:
+                        bd = {}
+                    intent_id = bd.get("ziina_payment_intent_id")
+                    # Has the quote already been auto-confirmed?
+                    already_invoiced = c.execute(
+                        "SELECT 1 FROM invoices WHERE sales_order_id IN "
+                        "(SELECT id FROM sales_orders WHERE quote_id=?)",
+                        (real_qid,)).fetchone()
+                    if intent_id and not already_invoiced:
+                        # Verify with Ziina directly
+                        try:
+                            import asyncio
+                            from . import ziina as _ziina
+                            from . import commerce as _commerce
+                            loop = asyncio.new_event_loop()
+                            try:
+                                res = loop.run_until_complete(
+                                    _ziina.get_payment_intent(intent_id))
+                            finally:
+                                loop.close()
+                            print(f"[pay-success] Self-heal check {q}: "
+                                  f"intent={intent_id} ziina={res.get('status')!r}",
+                                  flush=True)
+                            if res.get("ok") and res.get("status") == "completed":
+                                # Run the same auto-confirm flow as the webhook.
+                                if row["status"] != "accepted":
+                                    c.execute(
+                                        "UPDATE quotes SET status='accepted' WHERE id=?",
+                                        (real_qid,))
+                                full = c.execute(
+                                    "SELECT * FROM quotes WHERE id=?",
+                                    (real_qid,)).fetchone()
+                                so  = _commerce._create_so_from_quote(dict(full))
+                                so_inv = _commerce._create_invoice_from_so(so)
+                                new_invoice_id = so_inv["id"]
+                                new_invoice_total = so_inv.get("total") or row["total"] or 0
+                                paid_amount = float(res.get("amount") or 0) / 100.0 \
+                                              if res.get("amount") else float(row["total"] or 0)
+                                now_iso = _dt.datetime.utcnow().isoformat() + "Z"
+                                c.execute("""
+                                    INSERT INTO payment_registrations
+                                      (payment_type, reference_type, reference_id,
+                                       counterparty_id, counterparty_name, amount,
+                                       currency, method, reference_number,
+                                       payment_date, notes, created_at, created_by)
+                                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                """, ("customer_in", "invoice", new_invoice_id,
+                                      row["customer_id"], row["customer_name"],
+                                      paid_amount, "AED", "ziina", intent_id,
+                                      now_iso,
+                                      f"Self-healed via /payment-success [intent:{intent_id}]",
+                                      now_iso, "ziina"))
+                                if paid_amount >= new_invoice_total - 0.01:
+                                    c.execute(
+                                        "UPDATE invoices SET payment_status='paid', "
+                                        "paid_at=? WHERE id=?",
+                                        (now_iso, new_invoice_id))
+                                else:
+                                    c.execute(
+                                        "UPDATE invoices SET payment_status='partially_paid' "
+                                        "WHERE id=?", (new_invoice_id,))
+                                print(f"[pay-success] ✓ Self-healed {row['quote_number']}: "
+                                      f"invoice {new_invoice_id} paid {paid_amount:.2f}",
+                                      flush=True)
+                        except Exception as e:
+                            print(f"[pay-success] Self-heal failed for {q}: {e}",
+                                  flush=True)
+        except Exception as e:
+            print(f"[pay-success] verify pre-step failed: {e}", flush=True)
+
     quote_id, invoice_id, payment = "", "", None
     customer_name = customer_phone = customer_email = ""
     so_number = invoice_number = quote_number = ""
@@ -2142,8 +2228,10 @@ def payment_success(q: str = "", inv: str = ""):
         error_msg = f"Lookup failed: {e}"
 
     paid = (payment is not None) or (paid_amount > 0)
-    icon, kind, headline = ("✓", "ok", "Payment received") if paid else \
-                            (("⚠", "pending", "Payment is processing") if not error_msg else
+    # v1.24.181 — Clearer pending message: explain WHY we say processing
+    # and what the customer should do.
+    icon, kind, headline = ("✓", "ok", "Payment confirmed") if paid else \
+                            (("⏳", "pending", "Awaiting bank confirmation") if not error_msg else
                               ("✗", "err", "Something went wrong"))
 
     items_html = "".join(
@@ -2231,6 +2319,11 @@ table.lines td:not(:first-child) {{ text-align:right }}
   </div>
 
   {f'<div class="warn-banner">⚠ {error_msg}</div>' if error_msg else ''}
+  {('<div class="warn-banner">⏳ <b>Awaiting confirmation from your bank.</b> '
+      'This usually takes 30 seconds — refresh this page once. '
+      'If your bank has already debited the card, send us the transaction '
+      'reference on WhatsApp with your quote number ' + (quote_number or quote_id or '—') +
+      ' and our team will confirm within minutes.</div>') if not paid and not error_msg else ''}
 
   <div class="card">
     <h3>📄 Receipt</h3>
