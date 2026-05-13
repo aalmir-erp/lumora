@@ -324,6 +324,68 @@ def test_partial_fulfillment_back_order_v1_24_173():
     assert r.get("so_status") == "completed"
 
 
+def test_wa_bridge_status_v1_24_175():
+    """v1.24.175 — Bridge proxy returns helpful error when not configured."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    r = c.get("/api/admin/wa-bridge/status", headers=H).json()
+    # In test env WA_BRIDGE_URL is unset — must return ok=False + error message
+    assert r.get("ok") is False
+    assert "not set" in (r.get("error") or "").lower()
+
+
+def test_payments_config_v1_24_175():
+    """v1.24.175 — Payments-config status surfaces GATE_BOOKINGS + Stripe state."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    r = c.get("/api/admin/payments/config", headers=H).json()
+    assert r.get("ok") is True
+    assert "live_mode" in r
+    assert "gate_bookings" in r
+    assert "stealth_explanation" in r
+
+
+def test_print_hide_options_v1_24_175():
+    """v1.24.175 — ?hide=watermark,links toggles sections off in printable."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    q = c.get("/api/admin/quotes", headers=H).json()["items"][0]
+    # Without hide → has chain strip (the rendered DIV, not just the CSS class name)
+    r1 = c.get(f"/admin/print/quote/{q['id']}?t=lumora-admin-test")
+    assert r1.status_code == 200
+    assert '<div class="links-strip">' in r1.text
+    # With hide=links → chain strip is NOT rendered (CSS class def still exists in <style>)
+    r2 = c.get(f"/admin/print/quote/{q['id']}?t=lumora-admin-test&hide=links")
+    assert r2.status_code == 200
+    assert '<div class="links-strip">' not in r2.text
+    # With hide=watermark → mascot is display:none via override
+    r3 = c.get(f"/admin/print/quote/{q['id']}?t=lumora-admin-test&hide=watermark")
+    assert r3.status_code == 200
+    assert "display:none !important" in r3.text
+
+
+def test_po_bill_flow_v1_24_175():
+    """v1.24.175 — Record vendor bill against a PO + read it back."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    HJ = {**H, "Content-Type": "application/json"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    pos = c.get("/api/admin/purchase-orders", headers=H).json().get("items", [])
+    assert pos, "seed should provide POs"
+    po_id = pos[0]["id"]
+    r = c.post(f"/api/admin/purchase-orders/{po_id}/bill", headers=HJ, json={
+        "bill_number": "BILL-TEST-001",
+        "bill_date": "2026-05-13",
+        "amount": 150.0,
+        "notes": "Test vendor bill",
+    }).json()
+    assert r.get("ok")
+    assert r.get("bill_number") == "BILL-TEST-001"
+    r2 = c.get(f"/api/admin/purchase-orders/{po_id}/bill", headers=H).json()
+    assert r2.get("bill", {}).get("bill_number") == "BILL-TEST-001"
+
+
 def test_brand_contact_placeholder_v1_24_165_169():
     assert _is_placeholder("+971 50 000 0000")
     assert _is_placeholder("+971 50 111 0001")

@@ -415,6 +415,49 @@ async function loadReports() {
   await loadProfit();
   await loadTopLists();
   await loadOutstanding();
+  await loadPaymentsConfig();
+}
+
+// v1.24.175 — Payments-gateway status banner so admin sees WHY pay
+// buttons go to /gate.html instead of Stripe/Ziina (stealth-launch).
+async function loadPaymentsConfig() {
+  try {
+    const r = await fetch("/api/admin/payments/config", { headers: H() });
+    if (!r.ok) return;
+    const d = await r.json();
+    const live = d.live_mode;
+    const host = document.getElementById("pay-cfg-banner")
+              || (() => {
+                const el = document.createElement("div");
+                el.id = "pay-cfg-banner";
+                el.style.cssText = "margin:12px 0;padding:14px 16px;border-radius:10px;font-size:13px";
+                const tab = document.getElementById("tab-reports");
+                if (tab) tab.insertBefore(el, tab.firstChild);
+                return el;
+              })();
+    if (live) {
+      host.style.background = "#D1FAE5"; host.style.color = "#065F46";
+      host.innerHTML = `<b>💳 Live payment processing ENABLED.</b>
+        Stripe: ${d.stripe_configured ? "✓" : "✗"} ·
+        Ziina: ${d.ziina_configured ? "✓" : "✗"} ·
+        WA bridge: ${d.wa_bridge_configured ? "✓" : "✗"}.`;
+    } else {
+      host.style.background = "#FEF3C7"; host.style.color = "#92400E";
+      host.innerHTML = `<b>🚦 Stealth-launch mode.</b>
+        All "Pay" buttons currently route to <code>/gate.html</code>
+        (friendly "card declined / 15% off coupon" page — captures interest without charging cards).
+        <details style="margin-top:6px"><summary style="cursor:pointer">▸ How to enable real payments</summary>
+          <div style="background:rgba(255,255,255,.6);padding:10px;border-radius:6px;margin-top:6px;line-height:1.7">
+            <b>1.</b> Railway → bot service → Variables: set <code>GATE_BOOKINGS=0</code><br>
+            <b>2.</b> Set <code>STRIPE_SECRET_KEY=sk_live_...</code> (or Ziina equivalent)<br>
+            <b>3.</b> Restart the bot service<br>
+            <b>Current state:</b> GATE_BOOKINGS=${d.gate_bookings ? "1 (stealth)" : "0"} ·
+            Stripe=${d.stripe_configured ? "configured" : "not set"} ·
+            Ziina=${d.ziina_configured ? "configured" : "not set"}
+          </div>
+        </details>`;
+    }
+  } catch(_) {}
 }
 async function loadProfit() {
   const from = document.getElementById("rep-from").value;

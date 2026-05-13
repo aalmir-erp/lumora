@@ -104,6 +104,15 @@ app.get("/qr", checkAuth, async (req, res) => {
     <script>setTimeout(()=>location.reload(),8000)</script></body></html>`);
 });
 
+// v1.24.175 — JSON variant so the Servia /admin-wa-bridge page can
+// fetch + render the QR inline (instead of iframing /qr).
+app.get("/qr.json", checkAuth, async (req, res) => {
+  if (ready) return res.json({ ready: true, paired_number: pairedNumber, qr: null });
+  if (!lastQr) return res.json({ ready: false, qr: null });
+  const dataUrl = await QRCode.toDataURL(lastQr, { width: 320 });
+  res.json({ ready: false, qr: dataUrl });
+});
+
 app.post("/send", checkAuth, async (req, res) => {
   const { to, text } = req.body || {};
   if (!to || !text) return res.status(400).json({ error: "to + text required" });

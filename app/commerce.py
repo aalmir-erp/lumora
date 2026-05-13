@@ -740,6 +740,94 @@ def admin_extract_quote_from_text(body: _QuoteFromTextBody):
     return {"ok": True, "extracted": extracted}
 
 
+# ─────────────────────────────────────────────────────────────────────
+# WhatsApp Bridge proxy (v1.24.175)
+# ─────────────────────────────────────────────────────────────────────
+@router.get("/api/admin/wa-bridge/status",
+             dependencies=[Depends(require_admin)])
+def admin_wa_bridge_status():
+    """Proxy the bridge's /status + /qr.json so the admin page can render
+    everything inline. Returns:
+      {ok, bridge_url, paired, qr (data url or None), error}
+    """
+    import httpx as _httpx, os as _os
+    from .config import get_settings as _gs
+    url = _gs().WA_BRIDGE_URL or _os.getenv("WA_BRIDGE_URL") or ""
+    tok = _gs().WA_BRIDGE_TOKEN or _os.getenv("WA_BRIDGE_TOKEN") or ""
+    if not url:
+        return {"ok": False, "bridge_url": None,
+                "error": "WA_BRIDGE_URL not set in Railway env vars. "
+                          "Follow the deploy guide below."}
+    headers = {"Authorization": f"Bearer {tok}"} if tok else {}
+    try:
+        with _httpx.Client(timeout=5.0) as c:
+            r1 = c.get(f"{url}/status", headers=headers)
+            if r1.status_code != 200:
+                return {"ok": False, "bridge_url": url,
+                        "error": f"bridge /status HTTP {r1.status_code}"}
+            st = r1.json()
+            paired = bool(st.get("ready"))
+            qr_data = None
+            if not paired:
+                try:
+                    rq = c.get(f"{url}/qr.json", headers=headers)
+                    if rq.status_code == 200:
+                        qj = rq.json()
+                        qr_data = qj.get("qr")
+                except Exception:
+                    pass
+            return {"ok": True, "bridge_url": url, "paired": paired,
+                    "paired_number": st.get("paired_number"),
+                    "has_qr": bool(qr_data),
+                    "qr": qr_data}
+    except Exception as e:
+        return {"ok": False, "bridge_url": url,
+                "error": f"unreachable: {type(e).__name__}: {e}"}
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Payments-config admin status (v1.24.175)
+# ─────────────────────────────────────────────────────────────────────
+@router.get("/api/admin/payments/config",
+             dependencies=[Depends(require_admin)])
+def admin_payments_config():
+    """Surface the current payment-gateway state so the admin can see
+    why /q/<id> Pay buttons go to /gate.html instead of Stripe/Ziina.
+
+    Founder asked: 'why real payment link not generated' — answer: the
+    server is in GATE_BOOKINGS=1 stealth-launch mode. This endpoint
+    reports the env-var state so the admin UI can show a one-glance
+    'live vs stealth' summary.
+    """
+    import os as _os
+    from .config import get_settings as _gs
+    s = _gs()
+    sk = _os.getenv("STRIPE_SECRET_KEY", "")
+    # Ziina is configured via the admin panel (writes to `config` table)
+    # — NOT via env var. Check the proper path.
+    try:
+        from . import ziina as _ziina
+        ziina_ok = _ziina.is_configured()
+    except Exception:
+        ziina_ok = False
+    return {
+        "ok": True,
+        "gate_bookings": bool(s.GATE_BOOKINGS),
+        "stripe_configured": bool(sk),
+        "ziina_configured": bool(ziina_ok),
+        "wa_bridge_configured": bool(s.WA_BRIDGE_URL),
+        "live_mode": (not s.GATE_BOOKINGS) and (bool(sk) or bool(ziina_ok)),
+        "stealth_explanation": (
+            "GATE_BOOKINGS=1 → all pay buttons go to /gate.html "
+            "(stealth-launch friendly 'card declined' page that "
+            "captures interest with a 15% off coupon). Set "
+            "GATE_BOOKINGS=0 in Railway, AND ensure your Ziina API "
+            "key is saved in /admin (Settings → Payment providers), "
+            "OR set STRIPE_SECRET_KEY env. Then restart the bot."
+        ),
+    }
+
+
 @router.get("/api/admin/quotes/{quote_id}/share-token",
              dependencies=[Depends(require_admin)])
 def admin_quote_share_token(quote_id: str):
@@ -1163,6 +1251,80 @@ def admin_register_payment_bulk(body: _BulkPaymentBody):
     return {"ok": True, "settled": settled,
             "total_settled": round(total_amount, 2),
             "doc_count": len(settled)}
+
+
+# ─────────────────────────────────────────────────────────────────────
+# PO BILL FLOW (v1.24.175)
+# Founder: 'from PO generate the bill, and from PO + bill payment is must'.
+# A 'bill' represents the vendor's invoice TO us against an open PO.
+# It's a soft record (no separate table — stored in PO.terms_json) that
+# locks the PO for payment + adds the bill ref to printables.
+# ─────────────────────────────────────────────────────────────────────
+class _PoBillBody(BaseModel):
+    bill_number: str
+    bill_date:   Optional[str] = None
+    bill_url:    Optional[str] = None   # PDF / image link
+    amount:      Optional[float] = None  # vendor may bill less (discount, partial)
+    notes:       Optional[str] = None
+
+
+@router.post("/api/admin/purchase-orders/{po_id}/bill",
+              dependencies=[Depends(require_admin)])
+def admin_po_record_bill(po_id: str, body: _PoBillBody):
+    """Record the vendor's bill against an open PO. Required step before
+    /pay-out flow per founder's process. Stored in PO.notes as a JSON
+    blob so we don't add a new table for back-compat with existing
+    deployments."""
+    if not body.bill_number.strip():
+        raise HTTPException(400, "bill_number required")
+    now = _now()
+    bill_meta = {
+        "bill_number": body.bill_number.strip(),
+        "bill_date":   body.bill_date or now[:10],
+        "bill_url":    body.bill_url or None,
+        "billed_amount": body.amount,
+        "notes":       body.notes or "",
+        "recorded_at": now,
+    }
+    with db.connect() as c:
+        po = c.execute("SELECT id, notes FROM purchase_orders WHERE id=?",
+                       (po_id,)).fetchone()
+        if not po:
+            raise HTTPException(404, "PO not found")
+        existing_notes = po["notes"] or ""
+        # Stash bill in notes as a tagged JSON line so we can extract it
+        # for printables + admin UI without a schema migration.
+        new_notes = (existing_notes + "\n" if existing_notes else "") \
+                  + "[BILL]" + json.dumps(bill_meta)
+        c.execute("UPDATE purchase_orders SET notes=?, updated_at=? WHERE id=?",
+                  (new_notes, now, po_id))
+    return {"ok": True, "po_id": po_id, "bill_number": body.bill_number,
+            "bill_amount": body.amount}
+
+
+def _extract_po_bill(notes: str | None) -> dict | None:
+    """Pull the most recent [BILL]{...} JSON line from PO.notes."""
+    if not notes:
+        return None
+    for line in reversed(notes.splitlines()):
+        if line.strip().startswith("[BILL]"):
+            try:
+                return json.loads(line.strip()[len("[BILL]"):])
+            except Exception:
+                continue
+    return None
+
+
+@router.get("/api/admin/purchase-orders/{po_id}/bill",
+             dependencies=[Depends(require_admin)])
+def admin_po_get_bill(po_id: str):
+    """Return the recorded bill metadata for a PO, or None if not billed yet."""
+    with db.connect() as c:
+        po = c.execute("SELECT id, notes FROM purchase_orders WHERE id=?",
+                       (po_id,)).fetchone()
+        if not po:
+            raise HTTPException(404, "PO not found")
+    return {"ok": True, "bill": _extract_po_bill(po["notes"])}
 
 
 @router.get("/api/admin/vendors/{vendor_id}/rate-for-service",
@@ -2288,7 +2450,9 @@ def _print_doc_chain(doc_type: str, row: dict) -> str:
     )
 
 
-def _render_quote_or_invoice_print(doc_type: str, row: dict) -> str:
+def _render_quote_or_invoice_print(doc_type: str, row: dict, opts: dict = None) -> str:
+    opts = opts or {"discount": True, "links": True, "notes": True,
+                     "internal": True, "watermark": True, "footer": True}
     """Render a printable quote, invoice, or sales-order. They share enough
     structure to use the same template with a doc-type-specific header."""
     brand = _brand_block()
@@ -2317,11 +2481,14 @@ def _render_quote_or_invoice_print(doc_type: str, row: dict) -> str:
                            row.get("customer_phone"), row.get("customer_email"),
                            row.get("customer_name"))
 
-    chain_strip = _print_doc_chain(doc_type, row)
+    chain_strip = _print_doc_chain(doc_type, row) if opts.get("links", True) else ""
+    # v1.24.175 — Hide-watermark CSS override.
+    watermark_css = "" if opts.get("watermark", True) else "<style>.doc::before{display:none !important}</style>"
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
 <title>{doc_label[0]} {doc_num} · {brand['name']}</title>
 {_print_css()}
+{watermark_css}
 </head><body>
 {share}
 <div class="doc">
@@ -2553,34 +2720,60 @@ def _render_po_print(row: dict) -> str:
 </body></html>"""
 
 
+def _parse_print_opts(hide: str = "") -> dict:
+    """v1.24.175 — Parse the ?hide= query param into a print-options dict.
+
+    Founder ask: 'print toggle option to other print or not print'. Pass
+    hide=discount,links,notes,internal to omit those sections.
+
+    Returns: {"discount":bool, "links":bool, "notes":bool, "internal":bool,
+              "watermark":bool, "footer":bool}  — True = SHOW, False = HIDE.
+    """
+    bits = {p.strip().lower() for p in (hide or "").split(",") if p.strip()}
+    return {
+        "discount":  "discount"  not in bits,
+        "links":     "links"     not in bits and "chain" not in bits,
+        "notes":     "notes"     not in bits,
+        "internal":  "internal"  not in bits and "vendor" not in bits,
+        "watermark": "watermark" not in bits and "mascot" not in bits,
+        "footer":    "footer"    not in bits,
+    }
+
+
 @router.get("/admin/print/quote/{doc_id}", response_class=HTMLResponse,
              dependencies=[Depends(require_admin)])
-def print_quote(doc_id: str):
+def print_quote(doc_id: str, hide: str = ""):
     with db.connect() as c:
-        row = c.execute("SELECT * FROM quotes WHERE id=?", (doc_id,)).fetchone()
+        row = c.execute("SELECT * FROM quotes WHERE id=? OR quote_number=?",
+                         (doc_id, doc_id)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="not found")
-    return HTMLResponse(_render_quote_or_invoice_print("quote", dict(row)))
+    return HTMLResponse(_render_quote_or_invoice_print(
+        "quote", dict(row), opts=_parse_print_opts(hide)))
 
 
 @router.get("/admin/print/sales-order/{doc_id}", response_class=HTMLResponse,
              dependencies=[Depends(require_admin)])
-def print_so(doc_id: str):
+def print_so(doc_id: str, hide: str = ""):
     with db.connect() as c:
-        row = c.execute("SELECT * FROM sales_orders WHERE id=?", (doc_id,)).fetchone()
+        row = c.execute("SELECT * FROM sales_orders WHERE id=? OR so_number=?",
+                         (doc_id, doc_id)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="not found")
-    return HTMLResponse(_render_quote_or_invoice_print("sales-order", dict(row)))
+    return HTMLResponse(_render_quote_or_invoice_print(
+        "sales-order", dict(row), opts=_parse_print_opts(hide)))
 
 
 @router.get("/admin/print/invoice/{doc_id}", response_class=HTMLResponse,
              dependencies=[Depends(require_admin)])
-def print_invoice(doc_id: str):
+def print_invoice(doc_id: str, hide: str = ""):
     with db.connect() as c:
-        row = c.execute("SELECT * FROM invoices WHERE id=?", (doc_id,)).fetchone()
+        row = c.execute("SELECT * FROM invoices WHERE id=? OR invoice_number=?",
+                         (doc_id, doc_id)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="not found")
-    return HTMLResponse(_render_quote_or_invoice_print("invoice", dict(row)))
+    return HTMLResponse(_render_quote_or_invoice_print(
+        "invoice", dict(row), opts=_parse_print_opts(hide)))
 
 
 @router.get("/admin/print/delivery-note/{doc_id}", response_class=HTMLResponse,
