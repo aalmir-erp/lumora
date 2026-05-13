@@ -45,6 +45,15 @@ Admin endpoints (require_admin):
 """
 from __future__ import annotations
 
+def _bookings_email() -> str:
+    """v1.24.147 — admin-configurable bookings email."""
+    try:
+        from .brand_contact import get_bookings_email
+        return get_bookings_email() or "see /contact"
+    except Exception:
+        return "see /contact"
+
+
 import datetime as _dt
 import secrets
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -70,9 +79,24 @@ def _now() -> str:
 
 
 # Servia's WhatsApp inbound number (where customers send confirm codes)
-# Set SERVIA_WA_NUMBER env to override; default = +971 56 6900255 (production).
+# Reads from admin brand_contact at runtime (v1.24.147). Env var SERVIA_WA_NUMBER
+# can still override for staging.
 import os as _os
-SERVIA_WA = _os.getenv("SERVIA_WA_NUMBER", "971566900255")
+def _servia_wa() -> str:
+    """v1.24.147 — runtime lookup, no hardcoded fallback."""
+    v = _os.getenv("SERVIA_WA_NUMBER", "").strip()
+    if v:
+        return v.lstrip("+").replace(" ", "").replace("-", "")
+    try:
+        from .brand_contact import get_contact_whatsapp, get_contact_phone
+        w = get_contact_whatsapp() or get_contact_phone() or ""
+        return w.lstrip("+").replace(" ", "").replace("-", "")
+    except Exception:
+        return ""
+
+# Backwards compat: existing module-scope reference reads at import time;
+# converted to a property-style lookup below via SERVIA_WA() callable.
+SERVIA_WA = _servia_wa()
 
 
 def _ensure_schema() -> None:
@@ -1011,7 +1035,7 @@ _CONSULT_SYSTEM_PROMPT = (
     "```\n"
     "Anything else: plain conversational text.\n\n"
     "Currency: AED. Be kind. Be brief. Never make up information; "
-    "if asked something off-topic, redirect to bookings@servia.ae."
+    f"if asked something off-topic, redirect to {_bookings_email()}."
 )
 
 

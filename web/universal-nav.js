@@ -45,7 +45,18 @@
 
   // ---- 2. Small WhatsApp companion FAB -----------------------------
   // Sits above the chat launcher (which lives at bottom-right).
-  var WA_NUMBER = (window.SERVIA_WA || "971566900255").replace(/\D/g, "");
+  // v1.24.147 — Read WA number from /api/brand/contact instead of hardcoding.
+  var WA_NUMBER = (window.SERVIA_WA || "").replace(/\D/g, "");
+  try {
+    fetch("/api/brand/contact", { credentials: "same-origin" })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.ok && (d.contact_whatsapp || d.contact_phone)) {
+          WA_NUMBER = (d.contact_whatsapp || d.contact_phone).replace(/\D/g, "");
+        }
+      })
+      .catch(function(){});
+  } catch (_) {}
   function ensureWaFab() {
     if (document.getElementById("servia-wa-fab")) return;
     var a = document.createElement("a");

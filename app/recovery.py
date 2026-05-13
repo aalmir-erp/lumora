@@ -57,6 +57,15 @@ Endpoints:
 """
 from __future__ import annotations
 
+def _phone() -> str:
+    """v1.24.147 — current support phone from admin brand_contact config."""
+    try:
+        from .brand_contact import get_contact_phone
+        return get_contact_phone() or "see /contact"
+    except Exception:
+        return "see /contact"
+
+
 import datetime as _dt
 import math
 import secrets
@@ -299,7 +308,7 @@ def recovery_dispatch(body: DispatchBody, request: Request,
     pick = _find_best_vendor(body.lat, body.lng)
     if not pick:
         raise HTTPException(503,
-            "No recovery vendor available right now. Call our 24/7 hotline +971 56 690 0255.")
+            "No recovery vendor available right now. Call our 24/7 hotline " + _phone() + ".")
     vendor, meta = pick
     distance_km = meta["distance_km"]
     eta = _eta_minutes(distance_km)

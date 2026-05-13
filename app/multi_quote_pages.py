@@ -14,6 +14,18 @@ Routes:
   GET  /p/{quote_id}                 — payment page (Stripe checkout / cash msg)
 """
 from __future__ import annotations
+
+# v1.24.147 — centralize WhatsApp number references (no more hardcoding).
+def _wa_block():
+    """Return (display, raw) WhatsApp number from admin brand_contact config.
+    Falls back to "" if not set so we don't render a stale hardcoded number."""
+    try:
+        from .brand_contact import get_contact_whatsapp, get_contact_phone
+        wa = get_contact_whatsapp() or get_contact_phone() or ""
+        raw = wa.replace(" ", "").replace("-", "").lstrip("+")
+        return wa, raw
+    except Exception:
+        return "", ""
 import datetime as _dt
 import hashlib
 import hmac
@@ -171,7 +183,7 @@ h3 {{ font-size: 14px; margin: 14px 0 6px; color: var(--tx); }}
     <div class="card" style="text-align:center">
       <a class="btn full alt" href="/p/{quote_id}">💳 Pay online (AED <span id="payAmount">—</span>)</a>
       <p style="color:var(--mu);font-size:12px;margin:10px 0 0">
-        Or pay manually via WhatsApp <b>+971 56 4020087</b> with quote <code>{quote_id}</code>.
+        Or pay manually via WhatsApp <b>{_wa_block()[0] or 'see /contact'}</b> with quote <code>{quote_id}</code>.
       </p>
     </div>
   </div>
@@ -244,7 +256,7 @@ async function approve() {{
         <h1 style="margin:0 0 8px;font-size:22px;color:#0F172A;letter-spacing:-.01em">Quote signed!</h1>
         <p style="color:#64748B;font-size:14px;margin:0 0 20px;line-height:1.6">Quote <code style="background:#F0FDFA;color:#0F766E;padding:2px 6px;border-radius:4px">{quote_id}</code> is approved.<br>Our team will dispatch within 30 minutes.</p>
         <a href="/p/{quote_id}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:14px 28px;min-height:44px;background:linear-gradient(135deg,#0F766E,#0D9488);color:#fff;border-radius:9px;font-weight:700;text-decoration:none;font-size:15px">💳 Pay AED ${{j.total_aed||""}}</a>
-        <p style="font-size:12px;color:#94A3B8;margin:16px 0 0">Or WhatsApp <b>+971 56 4020087</b> with quote <code>{quote_id}</code></p>
+        <p style="font-size:12px;color:#94A3B8;margin:16px 0 0">Or WhatsApp <b>{_wa_block()[0] or "see /contact"}</b> with quote <code>{quote_id}</code></p>
       </div>
     </div>`;
   }} else alert("Could not sign: " + (j.error||"server error"));
@@ -495,7 +507,7 @@ body {{ font-family: -apple-system, system-ui, sans-serif; background: var(--bg)
   <p class="cust">Quote <span class="qid">{quote_id}</span><br>
   {q.get('customer_name','')} · {q.get('phone','')}</p>
   <a class="btn" href="{pay_url}">💳 Pay with card</a>
-  <a class="btn alt" href="https://wa.me/971564020087?text=Pay%20{quote_id}">📱 WhatsApp +971 56 4020087</a>
+  <a class="btn alt" href="https://wa.me/{_wa_block()[1]}?text=Pay%20{quote_id}">📱 WhatsApp {_wa_block()[0] or ""}</a>
   <p class="note">Pay manually via WhatsApp with the quote number for instant confirmation.</p>
 </div></body></html>"""
 
@@ -676,11 +688,11 @@ def invoice_pdf(quote_id: str):
     pdf.cell(0, 5, "CUSTOMER SATISFACTION", ln=1)
     pdf.set_font("Helvetica", "", 8); pdf.set_text_color(71, 85, 105)
     pdf.multi_cell(0, 4,
-        "If you are not satisfied with the service delivered, contact us "
-        "within 24 hours of completion via WhatsApp +971 56 4020087 or "
-        "support@servia.ae and we will arrange a free re-do or escalate "
-        "to our quality team. Photos and live status of your service are "
-        "available 24/7 at https://" + get_settings().brand().get("domain","servia.ae") + "/q/" + quote_id)
+        f"If you are not satisfied with the service delivered, contact us "
+        f"within 24 hours of completion via WhatsApp {_wa_block()[0] or 'see /contact'} or "
+        f"support@servia.ae and we will arrange a free re-do or escalate "
+        f"to our quality team. Photos and live status of your service are "
+        f"available 24/7 at https://{get_settings().brand().get('domain','servia.ae')}/q/{quote_id}")
     # ──────────────────────────────────────────────────────────
     # Customer Portal & Modern Features section (v1.24.82)
     # — beats every UAE competitor's static PDF with live links +
@@ -693,7 +705,7 @@ def invoice_pdf(quote_id: str):
     pdf.multi_cell(0, 4,
         f"Live status + photos + invoices + signature record:  https://{domain}/q/{quote_id}\n"
         f"All your bookings (phone-gated):     https://{domain}/me\n"
-        f"Need to talk to a human?            https://{domain}/contact   |   WhatsApp +971 56 4020087\n"
+        f"Need to talk to a human?            https://{domain}/contact   |   WhatsApp {_wa_block()[0]}\n"
         f"Refund policy:                       https://{domain}/refund")
     pdf.ln(2); pdf.set_font("Helvetica", "B", 9); pdf.set_text_color(15, 23, 42)
     pdf.cell(0, 5, _safe("BUILT FOR THE UAE - FEATURES YOU WILL NOT FIND ELSEWHERE"), ln=1)
@@ -739,7 +751,7 @@ def invoice_pdf(quote_id: str):
     pdf.multi_cell(0, 3.6, _safe(tnc))
     # Footer
     pdf.ln(2); pdf.set_font("Helvetica", "I", 7); pdf.set_text_color(148, 163, 184)
-    pdf.cell(0, 4, _safe(f"Servia - {get_settings().brand().get('domain','servia.ae')} - WhatsApp +971 56 4020087 - Issued {_now()[:19]}"), align="C", ln=1)
+    pdf.cell(0, 4, _safe(f"Servia - {get_settings().brand().get('domain','servia.ae')} - WhatsApp {_wa_block()[0]} - Issued {_now()[:19]}"), align="C", ln=1)
     out = pdf.output(dest="S")
     if isinstance(out, str): out = out.encode("latin-1")
     from fastapi.responses import Response

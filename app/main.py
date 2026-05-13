@@ -40,7 +40,11 @@ app.add_middleware(
 # GZip every response > 500 bytes — biggest single PageSpeed win.
 # Railway / proxy doesn't compress for us; PSI flagged "No compression applied"
 # with 30 KiB of saving on the document request alone.
-app.add_middleware(GZipMiddleware, minimum_size=500)
+# v1.24.147 — Original GZip registration removed from here. It's now
+# registered AFTER _ChromeMiddleware further down (line ~289) so chrome
+# processes the raw HTML BEFORE compression. The previous order caused
+# chrome to silently skip every page because it saw `Content-Encoding:
+# gzip` and bailed. Result: hardcoded contact numbers stayed in nav/footer.
 
 
 # v1.24.1 — Force-mobile injector. When Chrome system-wide "Request Desktop
@@ -280,7 +284,12 @@ class _ChromeMiddleware(_BHM):
             return response
 
 
+# v1.24.147 — Chrome middleware MUST be registered BEFORE GZip so it
+# processes RAW HTML on the response path. See the GZip registration
+# site below (was at line ~43, moved here).
 app.add_middleware(_ChromeMiddleware)
+from fastapi.middleware.gzip import GZipMiddleware as _GZ_late
+app.add_middleware(_GZ_late, minimum_size=500)
 
 
 # v1.24.18 — HTML minification middleware. Strips unnecessary whitespace

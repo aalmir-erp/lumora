@@ -7,6 +7,15 @@ Tools:
 """
 from __future__ import annotations
 
+def _wa() -> str:
+    """v1.24.147 — current WhatsApp number from admin brand_contact config."""
+    try:
+        from .brand_contact import get_contact_whatsapp, get_contact_phone
+        return get_contact_whatsapp() or get_contact_phone() or "see /contact"
+    except Exception:
+        return "see /contact"
+
+
 import datetime as _dt
 import json
 import secrets
@@ -541,7 +550,7 @@ def create_multi_quote(services: list, customer_name: str, phone: str,
                               "payment require contacting a specialist."),
                     "action": "handoff_to_human",
                     "quote_id": base,
-                    "contact": "WhatsApp +971 56 4020087"}
+                    "contact": "WhatsApp " + _wa()}
         # POST-SIGN → version bump
         if cur["signed_at"]:
             mm = _re.match(r"^(Q-[A-Z0-9]+?)(?:-(\d+))?$", base)
@@ -631,7 +640,7 @@ def create_multi_quote(services: list, customer_name: str, phone: str,
         "currency": "AED",
         "signing_url": f"https://{domain}/q/{quote_id}",
         "pay_url":     f"https://{domain}/p/{quote_id}",
-        "fallback_pay_contact": "WhatsApp +971 56 4020087",
+        "fallback_pay_contact": "WhatsApp " + _wa(),
         "scheduled": {"date": target_date, "time": time_slot},
         "delivery": {"name": customer_name, "phone": phone, "address": address},
     }

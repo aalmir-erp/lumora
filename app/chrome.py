@@ -49,13 +49,16 @@ NAV_HTML = """<div class="uae-flag-strip" aria-hidden="true" style="height:4px;b
 
 # ─────────────────────────────────────────────────────────────────────
 # CANONICAL FOOTER — single source of truth.
+# v1.24.147 — phone number is a placeholder `{{BC_WA_RAW}}` substituted
+# at request time by inject_chrome() with brand_contact.get_contact_whatsapp()
+# so the admin can change it once in /admin-contact and it flows to every page.
 # ─────────────────────────────────────────────────────────────────────
 FOOTER_HTML = """<footer id="servia-canonical-footer"><div class="container">
   <div>
     <img src="/logo.svg" width="112" height="36" alt="Servia" style="filter:brightness(0) invert(1)" decoding="async">
     <p style="margin:12px 0;font-size:13px;opacity:.85" data-i18n="footer_tagline">Built for UAE homes &amp; businesses · 4.9★ from 2,400+ families.</p>
     <div style="display:flex;gap:8px;margin-top:14px">
-      <a href="https://wa.me/971566900255" target="_blank" rel="noopener" style="background:#075E54;color:#fff;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none">WhatsApp</a>
+      <a href="https://wa.me/{{BC_WA_RAW}}" target="_blank" rel="noopener" style="background:#075E54;color:#fff;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none">WhatsApp</a>
       <a href="/install" style="background:#fff;color:#0F172A;padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none">Install app</a>
     </div>
   </div>
@@ -121,13 +124,43 @@ _FOOTER_RE = re.compile(
 
 
 def inject_chrome(html: str, path: str = "") -> str:
-    """Replace nav + footer in `html` with canonical versions.
-    Skips admin/transactional. Returns original `html` if no
-    matching nav/footer found."""
-    if not html or "<nav" not in html.lower():
+    """Replace nav + footer in `html` with canonical versions, AND
+    substitute brand-contact placeholders ({{BC_PHONE}}, {{BC_EMAIL}},
+    {{BC_WA_RAW}}, {{BC_BRAND}}) anywhere they appear in the body.
+    Skips admin/transactional.
+
+    v1.24.147 — Placeholder substitution runs even when no <nav> match
+    (so admin pages, transactional pages, and any HTML can use them).
+    Skip list still suppresses both nav-replace AND placeholder-replace
+    for genuinely-private surfaces (/api/, /admin, /pay, etc.).
+    """
+    if not html:
         return html
     if path and should_skip_chrome(path):
         return html
-    new_html = _NAV_RE.sub(NAV_HTML, html, count=1)
-    new_html = _FOOTER_RE.sub(FOOTER_HTML, new_html, count=1)
+
+    new_html = html
+    if "<nav" in html.lower():
+        new_html = _NAV_RE.sub(NAV_HTML, new_html, count=1)
+        new_html = _FOOTER_RE.sub(FOOTER_HTML, new_html, count=1)
+
+    # Substitute brand-contact placeholders anywhere in body
+    # so static HTML pages can reference {{BC_PHONE}} etc directly.
+    if "{{BC_" in new_html:
+        try:
+            from .brand_contact import get_brand_block
+            b = get_brand_block()
+            wa_raw = (b.get("contact_whatsapp") or b.get("contact_phone") or "").lstrip("+").replace(" ", "").replace("-", "")
+            phone_raw = (b.get("contact_phone") or "").replace(" ", "")
+            tel_url = f"tel:{phone_raw}" if phone_raw else "tel:"
+            wa_url = f"https://wa.me/{wa_raw}" if wa_raw else ""
+            new_html = (new_html
+                .replace("{{BC_WA_RAW}}",  wa_raw)
+                .replace("{{BC_WA_URL}}",  wa_url)
+                .replace("{{BC_PHONE}}",   b.get("contact_phone")    or "")
+                .replace("{{BC_TEL_URL}}", tel_url)
+                .replace("{{BC_EMAIL}}",   b.get("contact_email")    or "")
+                .replace("{{BC_BRAND}}",   b.get("brand_name")       or "Servia"))
+        except Exception:
+            pass
     return new_html

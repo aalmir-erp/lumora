@@ -8,6 +8,15 @@ This keeps cache hit-rate high across turns.
 """
 from __future__ import annotations
 
+def _wa() -> str:
+    """v1.24.147 — current WhatsApp number from admin brand_contact config."""
+    try:
+        from .brand_contact import get_contact_whatsapp, get_contact_phone
+        return get_contact_whatsapp() or get_contact_phone() or "see /contact"
+    except Exception:
+        return "see /contact"
+
+
 import datetime as _dt
 from typing import Any
 
@@ -362,7 +371,7 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         "    \n"
         "    ➜ *Approve & sign:* https://servia.ae/q/Q-XXXXXX  \n"
         "    ➜ *Pay online:* https://servia.ae/p/Q-XXXXXX\n"
-        "    ➜ Or pay manually: WhatsApp +971 56 4020087 with the quote number.\n"
+        "    ➜ Or pay manually: WhatsApp " + _wa() + " with the quote number.\n"
         "    \n"
         "    Once signed, our team is dispatched within 30 min.\n"
         "- The 3 links MUST come from the tool's return value, never invented.\n"
