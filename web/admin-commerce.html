@@ -678,15 +678,19 @@ function rowActions(tab, id, doc_num, customer_phone, customer_email) {
                      "delivery-notes":"delivery-note", "purchase-orders":"purchase-order" };
   const printType = printMap[tab];
   if (!printType) return "";
-  // v1.24.188 — Founder couldn't find the Reorder button (it was only
-  // inside the detail panel). Now it shows DIRECTLY on every quote row.
+  // v1.24.189 — Stop click bubbling for EVERY inner action so they don't
+  // also trigger the row's onclick=openDetail. Founder hit: 'clicking any
+  // button on a row opens the wizard, can't click View/Print, 3 dots,
+  // anything separately'. The trailing semicolon return false is the
+  // belt-and-braces pattern that works for both <a> and <button>.
+  const stop = `event.stopPropagation();`;
   const reorderBtn = tab === "quotes"
-    ? `<button onclick="event.stopPropagation();reorderQuote('${id}')" title="Repeat order — create new draft quote with same items + customer" style="background:#FEF3C7;color:#92400E;border-color:#FCD34D">🔁 Reorder</button>`
+    ? `<button onclick="${stop}reorderQuote('${id}')" title="Repeat order — clone as fresh draft" style="background:#FEF3C7;color:#92400E;border-color:#FCD34D">🔁 Reorder</button>`
     : "";
   return `<div class="row-actions">
     ${reorderBtn}
-    <a href="/admin/print/${printType}/${id}?token=${encodeURIComponent(tokenInput.value)}" target="_blank">View / Print</a>
-    <button onclick="event.stopPropagation();openDetail('${tab}','${id}')">⋯</button>
+    <a href="/admin/print/${printType}/${id}?token=${encodeURIComponent(tokenInput.value)}" target="_blank" onclick="event.stopPropagation()">📄 View / Print</a>
+    <button onclick="${stop}openDetail('${tab}','${id}')" title="Open full detail panel">⋯</button>
   </div>`;
 }
 
