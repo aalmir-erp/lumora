@@ -586,6 +586,25 @@ the container.
 
 If you skip step 1-6, you're lying about "tested." Don't.
 
+**Loophole 9 — Building a "fork/revise/clone" action without an EDIT
+action behind it (added v1.24.177).**
+Shipped `POST /api/admin/quotes/{id}/revise` (creates a -r1 draft) +
+UI button without thinking through: how does the admin actually
+MODIFY the new revision? The founder rightly asked "what is the
+purpose of revise if user cannot edit it?". Coverage rule going
+forward:
+- For any "clone / revise / copy" feature, the SAME push MUST include
+  the edit-existing UI for the new doc. A fork without an editor is
+  half-shipped.
+- Default to PATCH endpoints for any non-final-state row. State enum:
+  only DRAFT/SENT/SUPERSEDED rows are editable for quotes;
+  ACCEPTED/CANCELLED/REJECTED are immutable for audit.
+- Every PATCH endpoint must have an "edit modal" wired in the SAME
+  push (open existing-doc modal pre-filled → save calls PATCH not POST).
+- Founder feedback to add to this loophole: "you should be updating
+  these mistakes in MD file" — every time we miss a complementary
+  CRUD action, add to this list, don't repeat.
+
 ### 🔒 SCOPE-OF-WORK contract (NEVER violate, even silently)
 
 These are decisions the founder has already made about how the product

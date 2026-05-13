@@ -427,6 +427,100 @@ def admin_create_quote(body: QuoteCreateBody):
     return {"ok": True, "id": q_id, "quote_number": q_num, **totals}
 
 
+class QuoteUpdateBody(BaseModel):
+    """v1.24.177 — Update fields on an existing DRAFT/SENT/SUPERSEDED
+    quote. Founder ask: 'the quotation that is still not accepted or
+    not signed, there is no option to modify the existing — what is
+    the purpose of revise then if user cannot edit it?'
+
+    Editing is allowed only for non-final statuses (draft, sent,
+    superseded). Accepted / cancelled / rejected quotes are immutable
+    for audit; if you need to change them, use /revise to create a
+    new draft (-rN), then edit THAT draft.
+
+    All fields optional — only provided fields get updated.
+    """
+    customer_id: Optional[int] = None
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_email: Optional[str] = None
+    customer_address: Optional[str] = None
+    line_items: Optional[list[QuoteLineItem]] = None
+    discount: Optional[float] = None
+    valid_until: Optional[str] = None
+    terms: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@router.patch("/api/admin/quotes/{quote_id}", dependencies=[Depends(require_admin)])
+def admin_update_quote(quote_id: str, body: QuoteUpdateBody):
+    """Edit an existing quote. Only DRAFT/SENT/SUPERSEDED quotes allow edits.
+    Accepted quotes are immutable (use /revise to fork into a new draft)."""
+    now = _now()
+    with db.connect() as c:
+        q = c.execute(
+            "SELECT * FROM quotes WHERE id=? OR quote_number=?",
+            (quote_id, quote_id),
+        ).fetchone()
+        if not q:
+            raise HTTPException(404, "quote not found")
+        if q["status"] not in ("draft", "sent", "superseded"):
+            raise HTTPException(
+                409,
+                f"cannot edit a {q['status']} quote — use /revise to fork a new draft",
+            )
+        real_id = q["id"]
+
+    # Recompute totals if line items are being changed.
+    updates: dict = {}
+    if body.line_items is not None:
+        line_items = [li.model_dump() for li in body.line_items]
+        if not line_items:
+            raise HTTPException(400, "at least one line item required")
+        discount = body.discount if body.discount is not None else (q["discount"] or 0)
+        totals = calc_totals(line_items, discount=discount)
+        updates["line_items_json"] = json.dumps(line_items)
+        updates["breakdown_json"]  = json.dumps({"items": line_items, "totals": totals})
+        updates["service_id"]      = line_items[0]["svc_id"]
+        updates["subtotal"]        = totals["subtotal"]
+        updates["discount"]        = totals["discount"]
+        updates["vat_amount"]      = totals["vat_amount"]
+        updates["total"]           = totals["total"]
+    elif body.discount is not None:
+        # discount changed but line items unchanged — recompute on existing items
+        try:
+            line_items = json.loads(q["line_items_json"] or "[]")
+        except Exception:
+            line_items = []
+        totals = calc_totals(line_items, discount=body.discount)
+        updates["breakdown_json"]  = json.dumps({"items": line_items, "totals": totals})
+        updates["subtotal"]        = totals["subtotal"]
+        updates["discount"]        = totals["discount"]
+        updates["vat_amount"]      = totals["vat_amount"]
+        updates["total"]           = totals["total"]
+
+    # Simple field-level updates
+    for fld in ("customer_id", "customer_name", "customer_phone",
+                "customer_email", "customer_address", "valid_until",
+                "terms", "notes"):
+        v = getattr(body, fld)
+        if v is not None:
+            updates[fld] = v
+
+    if not updates:
+        return {"ok": True, "id": real_id, "no_changes": True}
+
+    set_clause = ", ".join(f"{k}=?" for k in updates.keys())
+    args = list(updates.values()) + [real_id]
+    with db.connect() as c:
+        c.execute(f"UPDATE quotes SET {set_clause} WHERE id=?", args)
+        row = c.execute("SELECT * FROM quotes WHERE id=?", (real_id,)).fetchone()
+    return {"ok": True, "id": real_id, "quote_number": row["quote_number"],
+            "updated_fields": list(updates.keys()),
+            "subtotal": row["subtotal"], "vat_amount": row["vat_amount"],
+            "total": row["total"]}
+
+
 @router.get("/api/admin/quotes", dependencies=[Depends(require_admin)])
 def admin_list_quotes(status: Optional[str] = None, customer_id: Optional[int] = None,
                        q: Optional[str] = None, from_date: Optional[str] = None,

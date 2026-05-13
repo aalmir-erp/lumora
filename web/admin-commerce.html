@@ -679,6 +679,10 @@ async function openDetail(tab, id) {
     if (d.delivery_notes) related += `<div><b>Linked Delivery Notes</b>: ${d.delivery_notes.length || 0}</div>`;
     let actions = "";
     if (tab === "quotes") {
+      // v1.24.177 — Edit existing quote (only when status allows it).
+      if (["draft","sent","superseded"].includes(item.status)) {
+        actions += `<button class="btn btn-ghost" onclick="editQuote('${id}')">✏️ Edit quote</button> `;
+      }
       if (item.status === "draft" || item.status === "sent") {
         actions += `<button class="btn" onclick="acceptQuote('${id}')">✅ Accept (creates SO + invoice)</button> `;
         // v1.24.172 — Atomic "accept + pay in one click" for on-the-spot payments
@@ -1268,13 +1272,122 @@ async function cancelQuote(id) {
   try { await apiPost(`/api/admin/quotes/${id}/cancel`); alert("✓ Cancelled."); closeModal(); loadList("quotes"); }
   catch (e) { alert("Failed: " + e.message); }
 }
+// v1.24.177 — Open the new-quote modal pre-filled with an existing
+// quote's data, save via PATCH /api/admin/quotes/<id> (not POST).
+// Founder ask: 'no option to modify the existing quotation — what is
+// the purpose of revise if user cannot edit it?'.
+async function editQuote(id) {
+  closeModal();
+  try {
+    const r = await fetch(`/api/admin/quotes/${id}`, { headers: H() });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = await r.json();
+    const q = d.quote || d.item || d;
+    await openCreateQuote();
+    setTimeout(() => {
+      // Flip the modal into EDIT mode by tagging the form so submit
+      // routes to PATCH instead of POST.
+      window.__nqEditingQuoteId = q.id || id;
+      const h2 = document.querySelector("#modal-content h2");
+      if (h2) h2.innerHTML = `✏️ Edit quote <code style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:5px;font-size:13px">${q.quote_number || id}</code>`;
+      // Prefill simple fields
+      document.getElementById("nq-name").value  = q.customer_name || "";
+      document.getElementById("nq-phone").value = q.customer_phone || "";
+      document.getElementById("nq-email").value = q.customer_email || "";
+      document.getElementById("nq-addr").value  = q.customer_address || "";
+      document.getElementById("nq-notes").value = q.notes || "";
+      const termsEl = document.getElementById("nq-terms");
+      if (termsEl) termsEl.value = q.terms || "";
+      const discEl = document.getElementById("nq-discount");
+      if (discEl) discEl.value = q.discount || 0;
+      const validEl = document.getElementById("nq-valid");
+      if (validEl && q.valid_until) validEl.value = (q.valid_until || "").slice(0, 10);
+      // Replace line items
+      let items = [];
+      try { items = JSON.parse(q.line_items_json || "[]"); } catch (_) {}
+      document.getElementById("nq-lines").innerHTML = "";
+      items.forEach(li => {
+        addLine();
+        const rows = document.querySelectorAll("#nq-lines .nq-line");
+        const row = rows[rows.length - 1];
+        const sel = row.querySelector(".nq-svc");
+        if (sel && li.svc_id) {
+          sel.value = li.svc_id;
+        }
+        row.querySelector(".nq-qty").value   = li.qty || 1;
+        row.querySelector(".nq-price").value = li.unit_price || 0;
+        const nameInp = row.querySelector(".nq-name-override");
+        if (nameInp) nameInp.value = li.name || "";
+      });
+      if (!items.length) addLine();
+      // Change the Save button label + handler
+      const submitBtn = Array.from(document.querySelectorAll("#modal-content button"))
+        .find(b => /Create quote|Save/i.test(b.textContent));
+      if (submitBtn) {
+        submitBtn.textContent = "💾 Save changes";
+        submitBtn.onclick = submitEditQuote;
+      }
+      recalcTotals();
+    }, 200);
+  } catch (e) { alert("Failed to load quote: " + e.message); }
+}
+
+async function submitEditQuote() {
+  const id = window.__nqEditingQuoteId;
+  if (!id) { return submitNewQuote(); }
+  const lines = [];
+  document.querySelectorAll("#nq-lines .nq-line").forEach(r => {
+    const idEl = r.querySelector(".nq-svc-id");
+    const sel  = r.querySelector(".nq-svc");
+    const svcId = (idEl && idEl.value) || (sel && sel.value) || "";
+    const qty   = parseFloat(r.querySelector(".nq-qty").value) || 0;
+    const price = parseFloat(r.querySelector(".nq-price").value) || 0;
+    const nameInput = r.querySelector(".nq-name-override");
+    const name = (nameInput && nameInput.value || "").trim() || svcId || "Custom service";
+    if (qty > 0 && price > 0) {
+      lines.push({ svc_id: svcId || "custom", name, qty, unit_price: price });
+    }
+  });
+  if (!lines.length) {
+    document.getElementById("nq-msg").innerHTML = `<span style="color:var(--r)">At least 1 line item required.</span>`;
+    return;
+  }
+  const body = {
+    customer_name:    document.getElementById("nq-name").value.trim() || null,
+    customer_phone:   document.getElementById("nq-phone").value.trim() || null,
+    customer_email:   document.getElementById("nq-email").value.trim() || null,
+    customer_address: document.getElementById("nq-addr").value.trim() || null,
+    line_items:       lines,
+    discount:         parseFloat(document.getElementById("nq-discount").value) || 0,
+    valid_until:      document.getElementById("nq-valid").value || null,
+    terms:            (document.getElementById("nq-terms") || {}).value || null,
+    notes:            document.getElementById("nq-notes").value.trim() || null,
+  };
+  document.getElementById("nq-msg").innerHTML = `<span style="color:var(--mut)">Saving…</span>`;
+  try {
+    const r = await fetch(`/api/admin/quotes/${id}`, {
+      method:"PATCH", headers:{...H(),"Content-Type":"application/json"},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "save failed");
+    document.getElementById("nq-msg").innerHTML =
+      `<span style="color:var(--g);font-weight:700">✓ Saved. New total AED ${(d.total||0).toFixed(2)}. Refreshing…</span>`;
+    window.__nqEditingQuoteId = null;
+    setTimeout(() => { closeModal(); loadList("quotes"); }, 1200);
+  } catch (e) {
+    document.getElementById("nq-msg").innerHTML = `<span style="color:var(--r)">Failed: ${e.message}</span>`;
+  }
+}
+
 async function reviseQuote(id) {
-  if (!confirm("Create a revision? A new draft quote with -r1 suffix will be created from this one. The original becomes 'superseded'.")) return;
+  if (!confirm("Create a revision? A new draft quote with -r1 suffix will be created and OPENED FOR EDITING. The original becomes 'superseded'.")) return;
   try {
     const d = await apiPost(`/api/admin/quotes/${id}/revise`);
-    alert(`✓ Revision created: ${d.quote_number}\nFrom: ${d.revised_from}`);
+    // v1.24.177 — Immediately open the new revision in edit mode so the
+    // founder can actually modify it (the whole point of Revise).
     closeModal();
-    loadList("quotes");
+    await editQuote(d.id);
   } catch (e) { alert("Failed: " + e.message); }
 }
 async function deleteQuote(id) {

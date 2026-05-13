@@ -386,6 +386,44 @@ def test_po_bill_flow_v1_24_175():
     assert r2.get("bill", {}).get("bill_number") == "BILL-TEST-001"
 
 
+def test_quote_edit_v1_24_177():
+    """v1.24.177 — PATCH an existing draft quote to update fields.
+    Founder ask: 'no option to modify existing quotation — what is the
+    purpose of revise if user cannot edit it?'."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    HJ = {**H, "Content-Type": "application/json"}
+    # Build a fresh quote
+    created = c.post("/api/admin/quotes/create", headers=HJ, json={
+        "customer_name": "Edit Test",
+        "customer_phone": "+971501112233",
+        "line_items": [
+            {"svc_id": "deep_cleaning", "name": "Deep clean", "qty": 1, "unit_price": 400},
+        ],
+    }).json()
+    qid = created["id"]
+    assert created.get("ok")
+
+    # Edit it — change customer name + bump qty + add a line
+    r = c.patch(f"/api/admin/quotes/{qid}", headers=HJ, json={
+        "customer_name": "Edit Test Modified",
+        "line_items": [
+            {"svc_id": "deep_cleaning", "name": "Deep clean",  "qty": 2, "unit_price": 400},
+            {"svc_id": "ac_cleaning",    "name": "AC cleaning", "qty": 3, "unit_price": 120},
+        ],
+    }).json()
+    assert r.get("ok")
+    # Total should reflect: (2*400 + 3*120) * 1.05 = (800+360) * 1.05 = 1218
+    assert abs((r.get("total") or 0) - 1218) < 0.5
+
+    # Editing an ACCEPTED quote should fail with 409
+    c.post(f"/api/admin/quotes/{qid}/accept", headers=H)
+    r2 = c.patch(f"/api/admin/quotes/{qid}", headers=HJ, json={
+        "customer_name": "Should fail — quote is accepted",
+    })
+    assert r2.status_code == 409
+
+
 def test_brand_contact_placeholder_v1_24_165_169():
     assert _is_placeholder("+971 50 000 0000")
     assert _is_placeholder("+971 50 111 0001")
