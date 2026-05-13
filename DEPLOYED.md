@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"BXuAf6n4T3uPKm4NnPRhug"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"7vc6Y6tWS66U6LfvPvyhXg"}`
 
 ## Build logs
 ```
@@ -32,9 +32,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:82b67254bdef9f033a0ea2d8d5e7c767e594856f3e8fd866842e2c4191686362
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ODJiNjcyNTRiZGVmOWYwMzNhMGVhMmQ4ZDVlN2M3NjdlNTk0ODU2ZjNlOGZkODY2ODQyZTJjNDE5MTY4NjM2MiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxNToyODoyMFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:eff5eeb85f867882576e5d2cca8087d60e5e09636f0c884d436e89a9954e78fa
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZDcwNDJhZjJiMDlkYWY4MWQ4YjdiYWYyMTc4ZjllMDc3NDUwODFkM2ZkYWY0ZDU3YjhiMGQyYjUzZGQ1OGVlNiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxNjoyNzo0MloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:d5e15810d33e7b8a1a75ce4d94347891af16fccb5d6391c2c1008535b89e2bab
+containerimage.digest: sha256:d7042af2b09daf81d8b7baf2178f9e07745081d3fdaf4d57b8b0d2b53dd58ee6
 image push
 image push
 
@@ -50,34 +50,26 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.8:17992 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.13:14200 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.12:14548 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.9:26542 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:28792 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:25118 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:25136 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:60966 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:60960 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.15:51570 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.15:51560 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.14:14054 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.8:18016 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:25146 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:25132 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.8:18024 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.16:35330 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.15:51560 - "GET /api/admin/reports/profit?from_date=2026-04-13&to_date=2026-05-13&group_by=month HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.15:51570 - "GET /api/admin/quotes?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.15:51578 - "GET /api/admin/delivery-notes?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.15:51590 - "GET /api/admin/sales-orders?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.15:51602 - "GET /api/admin/payments?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.15:51594 - "GET /api/admin/purchase-orders?limit=1 HTTP/1.1" 401 Unauthorized
-INFO:     100.64.0.15:51548 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.15:51570 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.15:51548 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:28806 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:28806 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/8fbec4d4-bc67-40f7-92dd-8f147da4d89d/vol_onr647rhdeir9di9
+[start] launching whatsapp_bridge
+[wa-bridge] listening on :3001
+Starting Container
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.6:24390 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=673 HTTP/1.1" 200 OK
+[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
+[lp-ar] 133 Arabic landing-page routes registered
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
+[purge] scan complete — 29 posts, 0 flagged
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
+INFO:     Application startup complete.
+INFO:     100.64.0.2:35753 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:39828 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+[autoblog] catch-up SKIP (last_run @ 2026-05-13T14:00:00.000637Z is fresh AND ok)
+INFO:     100.64.0.4:19532 - "GET /services/move-in-out/mirdif HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.5:19828 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
 ```
