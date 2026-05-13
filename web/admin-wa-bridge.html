@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>📱 WhatsApp Bridge · Servia Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#F1F5F9;color:#0F172A;line-height:1.55}
+.head{background:linear-gradient(135deg,#075E54,#128C7E);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.head h1{margin:0;font-size:20px}
+.head input{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 12px;border-radius:8px;font-size:12px;width:200px}
+.container{max-width:920px;margin:0 auto;padding:18px}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:24px;margin-bottom:14px}
+.card h2{margin:0 0 8px;font-size:18px;display:flex;align-items:center;gap:8px}
+.card p{color:#475569;font-size:13.5px;margin:0 0 12px}
+.status{padding:14px 16px;border-radius:10px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.status.ok{background:#D1FAE5;color:#065F46}
+.status.warn{background:#FEF3C7;color:#92400E}
+.status.err{background:#FEE2E2;color:#7F1D1D}
+.qr-wrap{display:flex;justify-content:center;padding:18px;background:#FAFAFA;border-radius:10px;margin:10px 0}
+.qr-wrap img{max-width:280px;height:auto;background:#fff;padding:8px;border-radius:8px}
+.step{display:flex;gap:14px;margin-bottom:18px;align-items:flex-start}
+.step .n{background:#075E54;color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+.step .body{flex:1}
+.step h3{margin:0 0 6px;font-size:15px}
+.step .body code{background:#F1F5F9;padding:2px 8px;border-radius:4px;font-size:12.5px;font-family:Menlo,monospace;display:inline-block;margin:1px 0}
+.step .body pre{background:#0F172A;color:#A5F3FC;padding:12px 14px;border-radius:8px;font-size:11.5px;overflow-x:auto;margin:6px 0}
+.btn{background:#075E54;color:#fff;border:0;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}
+.btn:hover{background:#0D9488}
+.btn.ghost{background:transparent;color:#075E54;border:1.5px solid #075E54}
+.btn.ghost:hover{background:#F0FDF4}
+.callout{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px;border-radius:8px;font-size:13px;color:#1E3A8A;line-height:1.7;margin-bottom:14px}
+.callout b{color:#1E40AF}
+</style>
+</head>
+<body>
+<div class="admin-tools-bar" style="background:#0F172A;color:#94A3B8;padding:8px 16px;display:flex;gap:14px;align-items:center;font-size:12.5px;font-weight:600;border-bottom:1px solid #1E293B;flex-wrap:wrap;position:sticky;top:0;z-index:100">
+  <a href="/admin" style="color:#FBBF24;text-decoration:none;font-weight:800">← Main admin</a>
+  <span style="color:#475569">|</span>
+  <a href="/admin-commerce" style="color:#fff;text-decoration:none">💼 Commerce</a>
+  <a href="/admin-contact" style="color:#fff;text-decoration:none">📞 Brand contact</a>
+  <a href="/admin-inbox" style="color:#fff;text-decoration:none">📬 Inbox</a>
+  <a href="/admin-ai-engines" style="color:#fff;text-decoration:none">🤖 AI engines</a>
+  <a href="/admin-wa-bridge" style="color:#FCD34D;text-decoration:none">📱 WA Bridge</a>
+  <span style="margin-left:auto;color:#475569"><span id="srv-ver-pill" style="opacity:.65">v… admin tools</span></span>
+</div>
+
+<div class="head">
+  <h1>📱 WhatsApp Bridge — QR pairing + deploy guide</h1>
+  <input id="token" type="password" placeholder="Admin token">
+</div>
+
+<div class="container">
+  <div id="status" class="status warn">⏳ Checking bridge status…</div>
+
+  <div class="card" id="qr-card" style="display:none">
+    <h2>📲 Scan QR with your WhatsApp</h2>
+    <p>Open WhatsApp on your phone → Settings → Linked Devices → Link a Device.<br>
+       Scan the QR below. Once linked, this bot will send + receive messages on your behalf.</p>
+    <div class="qr-wrap"><img id="qr-img" alt="QR" src=""></div>
+    <p style="text-align:center;font-size:12px;color:#64748B">
+      The QR refreshes every ~20s. If your scan window expires,
+      <button class="btn ghost" onclick="loadStatus()">↻ Refresh QR</button>
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>🛠 First-time setup: Deploy the bridge on Railway</h2>
+    <p>The bridge is a separate Node.js service that uses
+       <code>whatsapp-web.js</code> to pair to your personal WhatsApp account
+       (same flow as WhatsApp Web). It must be deployed alongside the bot,
+       with a persistent volume so the auth survives restarts.</p>
+
+    <div class="callout">
+      <b>One-time cost:</b> Railway free tier covers this comfortably.
+      Bridge uses ~150 MB RAM + 200 MB disk. Total ~$5/month if you
+      exceed free tier.
+    </div>
+
+    <div class="step">
+      <div class="n">1</div>
+      <div class="body">
+        <h3>Create a second Railway service in the same project</h3>
+        <p>In Railway → your Servia project → <b>+ New</b> → <b>GitHub Repo</b>
+           → pick the same repo → <b>Settings → Root Directory</b> set to
+           <code>whatsapp_bridge</code>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">2</div>
+      <div class="body">
+        <h3>Add a persistent volume (CRITICAL)</h3>
+        <p>Without this, every redeploy logs you out of WhatsApp.</p>
+        <p>Railway → bridge service → <b>Settings → Volumes → New Volume</b>:</p>
+        <pre>Mount path: /app/.wwebjs_auth
+Size:       1 GiB</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">3</div>
+      <div class="body">
+        <h3>Set environment variables on the bridge</h3>
+        <pre id="env-bridge">BOT_WEBHOOK=&lt;your-bot-url&gt;/api/wa/webhook
+BRIDGE_TOKEN=&lt;long random secret, e.g. <span id="rand-token">click rotate ⟳</span>&gt;
+PORT=3001</pre>
+        <button class="btn ghost" onclick="rotateToken()">⟳ Rotate token</button>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">4</div>
+      <div class="body">
+        <h3>Set environment variables on the bot (this service)</h3>
+        <p>Railway → bot service → Variables → add:</p>
+        <pre id="env-bot">WA_BRIDGE_URL=&lt;bridge-public-url, e.g. https://servia-wa.up.railway.app&gt;
+WA_BRIDGE_TOKEN=&lt;same value as BRIDGE_TOKEN above&gt;</pre>
+        <p style="font-size:12px;color:#64748B">After saving, restart both services. The QR appears in this page within ~30s once the bridge is live.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">5</div>
+      <div class="body">
+        <h3>Scan + pair</h3>
+        <p>Refresh this page (or click "Refresh QR" above) → scan with WhatsApp on your phone.
+           Once paired, all customer WhatsApp messages flow through the bot.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🩺 Diagnostics</h2>
+    <p>Hit these endpoints to debug:</p>
+    <ul style="font-size:13px;line-height:1.9">
+      <li><code>GET /api/health</code> — bot status; <code>wa_bridge: true</code> means <code>WA_BRIDGE_URL</code> is set</li>
+      <li><code>GET /api/admin/wa-bridge/status</code> — pings the bridge + returns its current state</li>
+      <li><code>GET /api/admin/wa-bridge/qr</code> — returns the current QR data URL (or "already paired")</li>
+    </ul>
+    <div id="diag-out" style="background:#0F172A;color:#A5F3FC;padding:14px;border-radius:8px;font-size:11.5px;font-family:Menlo,monospace;white-space:pre-wrap;margin-top:8px">(click below to run diagnostics)</div>
+    <button class="btn" onclick="runDiag()" style="margin-top:8px">🩺 Run diagnostics</button>
+  </div>
+</div>
+
+<script>
+const TOKEN_KEY="servia.admin.token";
+const tok=document.getElementById("token");
+tok.value=localStorage.getItem(TOKEN_KEY)||"";
+tok.oninput=()=>localStorage.setItem(TOKEN_KEY,tok.value.trim());
+tok.onchange=()=>localStorage.setItem(TOKEN_KEY,tok.value.trim());
+function H(){
+  let t=(tok.value||"").trim();
+  if(!t){t=(prompt("Paste your admin token:")||"").trim();
+    if(t){tok.value=t;localStorage.setItem(TOKEN_KEY,t);}}
+  return {"Authorization":"Bearer "+t};
+}
+
+function rotateToken(){
+  // Generate a random 32-char hex secret
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  const hex = Array.from(arr).map(b => b.toString(16).padStart(2,"0")).join("");
+  document.getElementById("rand-token").textContent = hex;
+}
+
+async function loadStatus(){
+  const s=document.getElementById("status");
+  s.className="status warn"; s.textContent="⏳ Checking…";
+  try{
+    const r=await fetch("/api/admin/wa-bridge/status",{headers:H()});
+    const d=await r.json();
+    if (!d.ok && !d.bridge_url){
+      s.className="status err";
+      s.innerHTML="🚫 <span><b>Bridge not configured.</b> Follow the deploy guide below to set up the WhatsApp QR pairing service.</span>";
+      return;
+    }
+    if (d.paired){
+      s.className="status ok";
+      s.innerHTML=`✅ <span><b>Paired and online.</b> Bridge reachable at <code>${d.bridge_url}</code></span>`;
+      document.getElementById("qr-card").style.display="none";
+      return;
+    }
+    if (d.qr){
+      s.className="status warn";
+      s.innerHTML="📲 <span><b>Awaiting QR scan.</b> Open WhatsApp → Linked Devices → scan below.</span>";
+      const qrCard=document.getElementById("qr-card");
+      qrCard.style.display="block";
+      document.getElementById("qr-img").src=d.qr;
+      return;
+    }
+    s.className="status err";
+    s.innerHTML=`🚫 <span><b>Bridge unreachable.</b> Last error: <code>${d.error||"unknown"}</code></span>`;
+  }catch(e){
+    s.className="status err";
+    s.textContent="🚫 Diagnostics failed: "+e.message;
+  }
+}
+
+async function runDiag(){
+  const out=document.getElementById("diag-out");
+  out.textContent="Running…";
+  try{
+    const [h,b] = await Promise.all([
+      fetch("/api/health").then(r=>r.json()),
+      fetch("/api/admin/wa-bridge/status",{headers:H()}).then(r=>r.json()),
+    ]);
+    out.textContent = "GET /api/health:\n" + JSON.stringify(h,null,2) +
+      "\n\nGET /api/admin/wa-bridge/status:\n" + JSON.stringify(b,null,2);
+  }catch(e){
+    out.textContent="Failed: "+e.message;
+  }
+}
+
+loadStatus();
+setInterval(loadStatus, 20000);  // refresh QR every 20s
+
+// version pill + stale-cache detect (same script as other admin pages)
+(function(){
+  function pageVer(){const ln=document.querySelector('link[href*="?v=1.24."]');const m=ln&&ln.href.match(/[?&]v=(1\.24\.\d+)/);return m?m[1]:"?";}
+  const PV=pageVer();
+  fetch("/api/health",{cache:"no-store"}).then(r=>r.json()).then(d=>{
+    const live=(d&&d.version)||"?";
+    const pill=document.getElementById("srv-ver-pill");
+    if(pill)pill.textContent=`v${live} admin tools`;
+    if(live!=="?"&&PV!=="?"&&live!==PV&&pill){
+      pill.style.cssText="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:6px;opacity:1;cursor:pointer";
+      pill.title=`Server v${live} but this page v${PV}. Click to force-reload.`;
+      pill.onclick=()=>{if(navigator.serviceWorker){navigator.serviceWorker.getRegistrations().then(rs=>{Promise.all(rs.map(r=>r.unregister())).then(()=>location.reload(true));});}else location.reload(true);};
+    }
+  }).catch(()=>{});
+})();
+</script>
+</body>
+</html>

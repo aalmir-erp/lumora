@@ -33,7 +33,7 @@ import json as _json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
 from . import db
@@ -316,14 +316,8 @@ h3 {{ font-size: 14px; margin: 14px 0 6px; color: var(--tx); }}
       </div>
     </div>
     <div class="card">
-      <div class="feature">
-        ✍️ <b>Sign below to approve.</b> After your service, we'll upload before/after
-        photos and live status updates to this same page — view them anytime.
-      </div>
-
-      <!-- v1.24.172 — Docusign-style three-way sign: draw, type, or
-           scan-on-mobile. Founder asked for 'multiple ways like DocuSign:
-           dragging the pen / typing a name / signing on mobile via QR'. -->
+      <!-- v1.24.174 — Trimmed verbose 'lecture' copy per founder feedback.
+           DocuSign-style three-way sign: draw, type, or scan-on-mobile. -->
       <div style="display:flex;gap:4px;margin-bottom:8px">
         <button type="button" id="sig-tab-draw" class="sig-tab active" onclick="setSigMode('draw')"
           style="flex:1;padding:8px 6px;border:1px solid var(--ln);background:#fff;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
@@ -835,20 +829,43 @@ def sign(quote_id: str, body: _SignBody, request: Request) -> dict:
 
 
 # ---------------------------------------------------------------------------
-@public_router.get("/p/{quote_id}", response_class=HTMLResponse)
-def pay_landing(quote_id: str) -> str:
+@public_router.get("/p/{quote_id}")
+def pay_landing(quote_id: str):
+    """v1.24.174 — Founder rightly complained that /p added 'useless extra
+    clicks'. This route now 302-redirects DIRECTLY to the gateway. The
+    old HTML pay-landing page is dead code (kept below as fallback but
+    never reached for normal flows)."""
+    q = _quote(quote_id)
+    if not q:
+        return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
+    from .config import get_settings as _gs
+    amt = q.get("total_aed") or 0
+    if _gs().GATE_BOOKINGS:
+        return RedirectResponse(url=f"/gate.html?inv={quote_id}&amount={amt}",
+                                 status_code=302)
+    try:
+        from . import quotes as _qs
+        url = _qs._make_payment_link(quote_id, float(amt), "AED")
+        # Don't loop: reject self-referential URLs.
+        if (url and not url.startswith("/q/")
+            and not url.startswith("/pay/")
+            and not url.startswith("/p/")):
+            return RedirectResponse(url=url, status_code=302)
+    except Exception:
+        pass
+    # Final fallback: gate.html
+    return RedirectResponse(url=f"/gate.html?inv={quote_id}&amount={amt}",
+                             status_code=302)
+
+
+# Legacy HTML pay-landing fallback (never reached for normal flow now)
+def _legacy_pay_landing(quote_id: str) -> str:
     q = _quote(quote_id)
     if not q: return HTMLResponse("<h1>Quote not found</h1>", status_code=404)
-    # v1.24.76 — honour GATE_BOOKINGS scope-of-work. The "Pay with card"
-    # button must NOT actually charge during stealth-launch — it routes
-    # to /gate.html where we show a friendly "your card was declined by
-    # bank" message and capture the customer's interest with a 15% off
-    # voucher. This was previously a javascript:alert placeholder.
     from .config import get_settings as _gs
     if _gs().GATE_BOOKINGS:
         pay_url = f"/gate.html?inv={quote_id}&amount={q.get('total_aed') or 0}"
     else:
-        # In live mode, route through the proper gateway link helper.
         try:
             from . import quotes as _qs
             pay_url = _qs._make_payment_link(

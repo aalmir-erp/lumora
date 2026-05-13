@@ -1979,13 +1979,12 @@ def pay_page(invoice_id: str):
         try:
             with db.connect() as c:
                 row = c.execute(
-                    "SELECT id, status FROM quotes WHERE id=? OR quote_number=?",
+                    "SELECT id, status, total FROM quotes WHERE id=? OR quote_number=?",
                     (invoice_id, invoice_id),
                 ).fetchone()
                 if row:
                     real_qid = row["id"]
-                    if row["status"] != "accepted":
-                        return RedirectResponse(url=f"/q/{real_qid}", status_code=302)
+                    # If quote has been accepted, find the invoice and route there.
                     inv = c.execute(
                         "SELECT id FROM invoices WHERE sales_order_id IN "
                         "(SELECT id FROM sales_orders WHERE quote_id=?) "
@@ -1994,6 +1993,27 @@ def pay_page(invoice_id: str):
                     ).fetchone()
                     if inv:
                         return RedirectResponse(url=f"/pay/{inv['id']}", status_code=302)
+                    # v1.24.174 — No invoice yet (quote not accepted). Don't
+                    # loop on /pay/Q-XXX. Don't loop to /q either. Go straight
+                    # to the gateway (gate.html in stealth; Stripe link in live).
+                    amt = row["total"] or 0
+                    if settings.GATE_BOOKINGS:
+                        return RedirectResponse(
+                            url=f"/gate.html?inv={real_qid}&amount={amt}",
+                            status_code=302)
+                    try:
+                        from . import quotes as _qs
+                        url = _qs._make_payment_link(real_qid, float(amt), "AED")
+                        # Reject self-referential URLs (would cause a loop).
+                        if (url and not url.startswith("/q/")
+                            and not url.startswith("/pay/")
+                            and not url.startswith("/p/")):
+                            return RedirectResponse(url=url, status_code=302)
+                    except Exception:
+                        pass
+                    return RedirectResponse(
+                        url=f"/gate.html?inv={real_qid}&amount={amt}",
+                        status_code=302)
         except Exception:
             pass
     p = pathlib.Path("web/pay.html")
