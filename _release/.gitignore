@@ -1,0 +1,2 @@
+# Exclude the raw keystore from git (only the base64 + password are tracked)
+upload-keystore.jks
