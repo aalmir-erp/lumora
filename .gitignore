@@ -9,3 +9,4 @@ venv/
 *.log
 .pytest_cache/
 servia.db
+servia_test.db
