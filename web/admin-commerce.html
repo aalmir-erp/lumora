@@ -129,6 +129,10 @@
       <option value="year">Year</option>
     </select>
     <button class="btn" onclick="loadProfit()">↻ Refresh</button>
+    <div class="actions" style="margin-left:auto">
+      <button class="btn btn-amber" onclick="seedDemo()" title="Insert sample customers/quotes/SOs/invoices so all tabs show data">🌱 Seed demo data</button>
+      <button class="btn btn-ghost" onclick="clearDemo()" title="Remove all seeded demo rows">🧹 Clear demo</button>
+    </div>
   </div>
 
   <div class="kpi-row">
@@ -595,8 +599,204 @@ async function markSoCompleted(id) {
   catch (e) { alert("Failed: " + e.message); }
 }
 
-function openCreateQuote() {
-  alert("Manual quote creation UI is next session — use the bot for now via /api/admin/quotes/create. JSON body: { customer_name, customer_phone, line_items:[{svc_id,name,qty,unit_price}], discount }");
+// v1.24.155 — Manual quote creation modal. Real form, no JSON-only API anymore.
+let _svcCache = null;
+async function _loadServices() {
+  if (_svcCache) return _svcCache;
+  try {
+    const r = await fetch("/api/services");
+    const d = await r.json();
+    _svcCache = d.services || [];
+  } catch (e) { _svcCache = []; }
+  return _svcCache;
+}
+
+async function openCreateQuote() {
+  const services = await _loadServices();
+  const svcOpts = services.map(s =>
+    `<option value="${s.id}" data-price="${s.starting_price || 0}">${s.name} — from AED ${s.starting_price||0}</option>`
+  ).join("");
+
+  const modal = document.getElementById("modal");
+  document.getElementById("modal-content").innerHTML = `
+    <h2>📝 Create new quote</h2>
+    <p style="color:var(--mut);font-size:13px;margin-top:-8px">VAT 5% added automatically. Quote starts in DRAFT — send / accept after creation.</p>
+
+    <div class="form-grid">
+      <div class="field"><label>Customer name *</label>
+        <input type="text" id="nq-name" placeholder="e.g. Aisha Al Mansoori" required></div>
+      <div class="field"><label>Mobile *</label>
+        <input type="tel" id="nq-phone" placeholder="+971 50 …" required></div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Email (optional)</label>
+        <input type="email" id="nq-email" placeholder="customer@example.com"></div>
+      <div class="field"><label>Valid until (default +14 days)</label>
+        <input type="date" id="nq-valid"></div>
+    </div>
+    <div class="field"><label>Address (optional)</label>
+      <input type="text" id="nq-addr" placeholder="Apt 1203, Marina Crown Tower, Dubai Marina"></div>
+
+    <h3 style="margin:18px 0 6px;font-size:14px">🧾 Line items</h3>
+    <p style="font-size:11.5px;color:var(--mut);margin:0 0 8px">Pick a service to auto-fill name + price, OR override the unit_price for custom pricing.</p>
+    <div id="nq-lines"></div>
+    <button type="button" onclick="addLine()" style="background:transparent;color:var(--p);border:1px dashed var(--p);padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-top:4px">+ Add line item</button>
+
+    <div class="form-grid" style="margin-top:18px">
+      <div class="field"><label>Discount (AED, optional)</label>
+        <input type="number" id="nq-discount" value="0" step="0.01" min="0" max="99999"></div>
+      <div class="field"><label>Notes for customer (optional)</label>
+        <input type="text" id="nq-notes" placeholder="e.g. Bring gate code 4521"></div>
+    </div>
+
+    <div id="nq-totals" style="background:var(--bg);padding:12px;border-radius:8px;margin-top:14px;font-size:13.5px">
+      <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span><b id="nq-sub">AED 0.00</b></span></div>
+      <div style="display:flex;justify-content:space-between"><span>− Discount</span><span><b id="nq-disc">AED 0.00</b></span></div>
+      <div style="display:flex;justify-content:space-between"><span>+ VAT 5%</span><span><b id="nq-vat">AED 0.00</b></span></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:6px;font-weight:800"><span>TOTAL</span><span id="nq-total">AED 0.00</span></div>
+    </div>
+
+    <div style="margin-top:18px;display:flex;gap:8px">
+      <button class="btn" onclick="submitNewQuote()">💾 Create quote (DRAFT)</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+    <div id="nq-msg" style="margin-top:10px;font-size:13px"></div>
+  `;
+  modal.classList.add("open");
+  // initialize with one empty line
+  window.__nqSvc = services;
+  window.__nqSvcOpts = svcOpts;
+  document.getElementById("nq-lines").innerHTML = "";
+  addLine();
+  // default valid_until = today + 14 days
+  const v = new Date(); v.setDate(v.getDate() + 14);
+  document.getElementById("nq-valid").value = v.toISOString().slice(0,10);
+  recalcTotals();
+}
+
+function addLine() {
+  const wrap = document.getElementById("nq-lines");
+  if (!wrap) return;
+  const idx = wrap.querySelectorAll(".nq-line").length;
+  const row = document.createElement("div");
+  row.className = "nq-line";
+  row.style.cssText = "display:grid;grid-template-columns:2fr 50px 80px 80px 28px;gap:6px;margin-bottom:6px;align-items:center";
+  row.innerHTML = `
+    <select class="nq-svc" onchange="onSvcPicked(this)" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;width:100%">
+      <option value="">— pick service or type custom —</option>
+      ${window.__nqSvcOpts}
+    </select>
+    <input type="number" class="nq-qty" value="1" min="0.5" step="0.5" placeholder="Qty" onchange="recalcTotals()" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+    <input type="number" class="nq-price" value="0" min="0" step="0.5" placeholder="AED/unit" onchange="recalcTotals()" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12.5px">
+    <input type="text" class="nq-name-override" placeholder="Custom name" style="padding:8px;border:1px solid var(--border);border-radius:7px;font-size:12px">
+    <button type="button" onclick="this.parentElement.remove();recalcTotals()" style="background:transparent;border:0;color:var(--r);cursor:pointer;font-size:16px" title="Remove line">✕</button>
+  `;
+  wrap.appendChild(row);
+}
+
+function onSvcPicked(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const price = parseFloat(opt.dataset.price) || 0;
+  const row = sel.closest(".nq-line");
+  const priceInput = row.querySelector(".nq-price");
+  if (price > 0 && !priceInput.value) priceInput.value = price;
+  // Auto-fill name override if blank
+  const nameInput = row.querySelector(".nq-name-override");
+  if (!nameInput.value && opt.textContent && !opt.textContent.startsWith("—")) {
+    nameInput.value = opt.textContent.split(" — ")[0];
+  }
+  recalcTotals();
+}
+
+function recalcTotals() {
+  let sub = 0;
+  document.querySelectorAll("#nq-lines .nq-line").forEach(r => {
+    const qty = parseFloat(r.querySelector(".nq-qty").value) || 0;
+    const price = parseFloat(r.querySelector(".nq-price").value) || 0;
+    sub += qty * price;
+  });
+  const disc = parseFloat(document.getElementById("nq-discount").value) || 0;
+  const taxable = Math.max(0, sub - disc);
+  const vat = Math.round(taxable * 0.05 * 100) / 100;
+  const total = taxable + vat;
+  document.getElementById("nq-sub").textContent   = "AED " + sub.toFixed(2);
+  document.getElementById("nq-disc").textContent  = "AED " + disc.toFixed(2);
+  document.getElementById("nq-vat").textContent   = "AED " + vat.toFixed(2);
+  document.getElementById("nq-total").textContent = "AED " + total.toFixed(2);
+}
+
+async function submitNewQuote() {
+  const name = document.getElementById("nq-name").value.trim();
+  const phone = document.getElementById("nq-phone").value.trim();
+  if (!name || !phone) {
+    document.getElementById("nq-msg").innerHTML = `<span style="color:var(--r)">Customer name + phone are required.</span>`;
+    return;
+  }
+  const lines = [];
+  document.querySelectorAll("#nq-lines .nq-line").forEach(r => {
+    const sel = r.querySelector(".nq-svc");
+    const svcId = sel.value;
+    const qty = parseFloat(r.querySelector(".nq-qty").value) || 0;
+    const price = parseFloat(r.querySelector(".nq-price").value) || 0;
+    const nameOverride = r.querySelector(".nq-name-override").value.trim();
+    if (qty > 0 && price > 0) {
+      lines.push({
+        svc_id: svcId || "custom",
+        name: nameOverride || (svcId || "Custom service"),
+        qty: qty,
+        unit_price: price,
+      });
+    }
+  });
+  if (lines.length === 0) {
+    document.getElementById("nq-msg").innerHTML = `<span style="color:var(--r)">Add at least one line item with quantity AND price > 0.</span>`;
+    return;
+  }
+  const body = {
+    customer_name: name,
+    customer_phone: phone,
+    customer_email: document.getElementById("nq-email").value.trim() || null,
+    customer_address: document.getElementById("nq-addr").value.trim() || null,
+    line_items: lines,
+    discount: parseFloat(document.getElementById("nq-discount").value) || 0,
+    valid_until: document.getElementById("nq-valid").value || null,
+    notes: document.getElementById("nq-notes").value.trim() || null,
+  };
+  document.getElementById("nq-msg").innerHTML = `<span style="color:var(--mut)">Saving…</span>`;
+  try {
+    const r = await fetch("/api/admin/quotes/create", {
+      method: "POST",
+      headers: { ...H(), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "Save failed");
+    document.getElementById("nq-msg").innerHTML = `<span style="color:var(--g);font-weight:700">✓ Quote ${d.quote_number} created. Total AED ${d.total.toFixed(2)}. Refreshing list…</span>`;
+    setTimeout(() => { closeModal(); loadList("quotes"); }, 1200);
+  } catch (e) {
+    document.getElementById("nq-msg").innerHTML = `<span style="color:var(--r)">Failed: ${e.message}</span>`;
+  }
+}
+
+async function seedDemo() {
+  if (!confirm("Insert demo customers, vendors, quotes, SOs, invoices, POs, payments? Safe to run multiple times — idempotent.")) return;
+  try {
+    const r = await fetch("/api/admin/seed-commerce-demo", { method:"POST", headers: H() });
+    const d = await r.json();
+    if (d.ok) {
+      alert(`✓ Demo seeded:\nCustomers: ${d.customers}\nVendors: ${d.vendors}\nQuotes: ${d.quotes}\nSOs: ${d.sos}\nInvoices: ${d.invoices}\nPOs: ${d.pos}\nDelivery notes: ${d.dns}\nPayments: ${d.payments}\n\nReload the page to see them.`);
+      loadReports();
+    } else { alert("Seed failed: " + JSON.stringify(d)); }
+  } catch (e) { alert("Seed error: " + e.message); }
+}
+async function clearDemo() {
+  if (!confirm("Delete ALL demo-seeded rows? This only removes rows tagged 'Demo: ...' — your real customer data is safe.")) return;
+  try {
+    const r = await fetch("/api/admin/clear-commerce-demo", { method:"POST", headers: H() });
+    const d = await r.json();
+    alert(`✓ Cleared: ${JSON.stringify(d)}`);
+    loadReports();
+  } catch (e) { alert("Clear error: " + e.message); }
 }
 
 // ───────── INIT ─────────

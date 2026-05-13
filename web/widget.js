@@ -1007,7 +1007,7 @@
           // Inject script tag if absent
           if (!document.querySelector('script[data-ap]')) {
             const s = document.createElement("script");
-            s.src = "/address-picker.js?v=1.24.152"; s.dataset.ap = "1";
+            s.src = "/address-picker.js?v=1.24.156"; s.dataset.ap = "1";
             s.onload = () => window.serviaAddressPicker &&
                               window.serviaAddressPicker.mount(apMount, { onPick: _commitAddress });
             document.head.appendChild(s);

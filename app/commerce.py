@@ -1027,6 +1027,23 @@ def report_top_customers(from_date: Optional[str] = None, limit: int = 20):
         return {"ok": True, "items": [dict(r) for r in rows]}
 
 
+@router.post("/api/admin/seed-commerce-demo", dependencies=[Depends(require_admin)])
+def admin_seed_commerce_demo():
+    """v1.24.156 — Insert demo customers/vendors/quotes/SOs/DNs/invoices/POs/
+    payments so the admin commerce tabs show real-looking data. Idempotent —
+    re-running won't duplicate. Call POST /api/admin/seed-commerce-demo with
+    admin auth to trigger. Use /clear-commerce-demo to remove."""
+    from . import seed_commerce_demo
+    return seed_commerce_demo.seed()
+
+
+@router.post("/api/admin/clear-commerce-demo", dependencies=[Depends(require_admin)])
+def admin_clear_commerce_demo():
+    """Remove all demo-seeded commerce rows."""
+    from . import seed_commerce_demo
+    return seed_commerce_demo.clear()
+
+
 @router.get("/api/admin/reports/top-vendors",
              dependencies=[Depends(require_admin)])
 def report_top_vendors(from_date: Optional[str] = None, limit: int = 20):
