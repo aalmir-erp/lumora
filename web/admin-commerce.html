@@ -417,6 +417,75 @@ async function loadReports() {
   await loadTopLists();
   await loadOutstanding();
   await loadPaymentsConfig();
+  await loadZiinaDiagnostics();
+}
+
+// v1.24.187 — Ziina diagnostics panel. Founder hit: 'transactions in
+// Ziina but our side shows nothing'. This panel:
+//  - Shows last N webhook calls received (so we know if Ziina is
+//    actually calling us)
+//  - Lists orphan quotes (had Ziina intent created but never confirmed)
+//    with a 🔗 Reconcile button next to each
+async function loadZiinaDiagnostics() {
+  let host = document.getElementById("ziina-diag");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "ziina-diag";
+    host.style.cssText = "margin:14px 0;padding:14px;background:#fff;border:1px solid var(--border);border-radius:12px";
+    const tab = document.getElementById("tab-reports");
+    if (tab) tab.appendChild(host);
+  }
+  try {
+    const [orph, act] = await Promise.all([
+      fetch("/api/admin/ziina/orphan-payments?limit=20", { headers: H() }).then(r => r.json()),
+      fetch("/api/admin/ziina/recent-activity?limit=10",  { headers: H() }).then(r => r.json()),
+    ]);
+    const orphans = orph.items || [];
+    const webhooks = act.raw_webhooks || [];
+    const events = act.parsed_events || [];
+    host.innerHTML = `
+      <h3 style="margin:0 0 10px;font-size:15px">🧭 Ziina diagnostics</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">
+        <div style="background:${webhooks.length ? '#D1FAE5' : '#FEE2E2'};padding:10px;border-radius:8px;font-size:13px;color:${webhooks.length ? '#065F46' : '#7F1D1D'}">
+          <b>Webhook calls received (last 10 events):</b> ${webhooks.length}<br>
+          <span style="font-size:11px">${webhooks.length ? '✓ Ziina IS reaching our /api/webhooks/ziina' : '⚠ Ziina has NOT called our webhook recently. Check the webhook URL is registered in Ziina dashboard.'}</span>
+        </div>
+        <div style="background:${orphans.length ? '#FEF3C7' : '#D1FAE5'};padding:10px;border-radius:8px;font-size:13px;color:${orphans.length ? '#92400E' : '#065F46'}">
+          <b>Orphan quotes (Ziina intent created but not confirmed):</b> ${orphans.length}<br>
+          <span style="font-size:11px">${orphans.length ? 'These quotes had a Ziina payment link but no invoice yet. Click "🔗 Reconcile" if the customer paid.' : '✓ No orphans — every Ziina intent has a matching invoice.'}</span>
+        </div>
+      </div>
+      ${orphans.length ? `
+      <div style="border:1px solid var(--border);border-radius:8px;max-height:240px;overflow-y:auto;font-size:12.5px">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="background:#F0FDFA"><th style="text-align:left;padding:6px 8px;font-size:11px">Quote</th><th>Customer</th><th>Total</th><th>Ziina intent</th><th></th></tr></thead>
+          <tbody>${orphans.map(o => `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 8px"><b>${o.quote_number}</b><br><span style="opacity:.6;font-size:10px">${o.status}</span></td>
+            <td>${o.customer_name||'—'}<br><span style="font-size:10px;color:var(--mut)">${o.customer_phone||''}</span></td>
+            <td>${fmtA(o.total||0)}</td>
+            <td><code style="font-size:10px">${(o.ziina_intent_id||'').substring(0,28)}…</code></td>
+            <td><button class="btn btn-amber" style="font-size:11px;padding:4px 10px" onclick="quickReconcile('${o.quote_id}','${o.ziina_intent_id}',${o.total||0})">🔗 Reconcile</button></td>
+          </tr>`).join("")}</tbody>
+        </table>
+      </div>` : ""}
+    `;
+  } catch (e) {
+    host.innerHTML = `<div style="color:var(--r);font-size:12px">Ziina diagnostics failed: ${e.message}</div>`;
+  }
+}
+
+async function quickReconcile(quoteId, intentId, total) {
+  if (!confirm(`Reconcile quote with Ziina intent ${intentId.substring(0,16)}… for AED ${total.toFixed(2)}?`)) return;
+  try {
+    const r = await fetch(`/api/admin/quotes/${quoteId}/reconcile-ziina`, {
+      method:"POST", headers:{...H(),"Content-Type":"application/json"},
+      body: JSON.stringify({ intent_id: intentId, amount: total, notes: "Diag panel auto-reconcile" }),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "failed");
+    alert(`✓ Reconciled. Invoice ${d.invoice_id} · paid AED ${d.paid_so_far} · status ${d.status}`);
+    loadZiinaDiagnostics();
+  } catch (e) { alert("Failed: " + e.message); }
 }
 
 // v1.24.182 — One-click flip Ziina from test → live so the founder

@@ -956,6 +956,83 @@ def admin_wa_bridge_status():
 # ─────────────────────────────────────────────────────────────────────
 # Payments-config admin status (v1.24.175)
 # ─────────────────────────────────────────────────────────────────────
+@router.get("/api/admin/ziina/recent-activity",
+             dependencies=[Depends(require_admin)])
+def admin_ziina_recent_activity(limit: int = 50):
+    """v1.24.187 — Last N Ziina webhook/event entries so admin can
+    diagnose 'transactions in Ziina but quotes not updating'.
+
+    Returns:
+      - recent_webhooks: every inbound /api/webhooks/ziina call (raw)
+      - recent_events: parsed webhook events that DID verify
+      - recent_payment_intents_created: intents we created (with quote ref)
+    """
+    with db.connect() as c:
+        wb_rows = c.execute(
+            "SELECT id, entity_id, action, details_json, created_at "
+            "FROM events WHERE entity_type='ziina_webhook_raw' "
+            "ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+        ev_rows = c.execute(
+            "SELECT id, entity_id, action, details_json, created_at "
+            "FROM events WHERE entity_type='ziina_webhook' "
+            "ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+    import json as _json
+    def _dec(r):
+        d = dict(r)
+        try: d["details"] = _json.loads(d.get("details_json") or "{}")
+        except Exception: d["details"] = {}
+        return d
+    return {
+        "ok": True,
+        "raw_webhook_count": len(wb_rows),
+        "raw_webhooks": [_dec(r) for r in wb_rows],
+        "parsed_events": [_dec(r) for r in ev_rows],
+    }
+
+
+@router.get("/api/admin/ziina/orphan-payments",
+             dependencies=[Depends(require_admin)])
+def admin_ziina_orphan_payments(limit: int = 50):
+    """v1.24.187 — Lists Ziina payment_intents we (the bot) created but
+    that don't have a matching invoice yet. These are the quotes that
+    customers paid but our system hasn't confirmed. Use this to find
+    candidates for the 🔗 Reconcile Ziina payment button.
+    """
+    with db.connect() as c:
+        # Find quotes with ziina_payment_intent_id in breakdown_json
+        rows = c.execute(
+            "SELECT id, quote_number, status, total, customer_name, "
+            "customer_phone, breakdown_json, created_at "
+            "FROM quotes WHERE breakdown_json LIKE '%ziina_payment_intent_id%' "
+            "ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+        orphans = []
+        import json as _json
+        for r in rows:
+            d = dict(r)
+            try: bd = _json.loads(d.get("breakdown_json") or "{}")
+            except Exception: bd = {}
+            intent = bd.get("ziina_payment_intent_id")
+            if not intent: continue
+            # Is there a matching invoice yet?
+            inv = c.execute(
+                "SELECT 1 FROM invoices WHERE sales_order_id IN "
+                "(SELECT id FROM sales_orders WHERE quote_id=?) LIMIT 1",
+                (d["id"],)).fetchone()
+            if not inv:
+                d["ziina_intent_id"] = intent
+                orphans.append({
+                    "quote_id": d["id"],
+                    "quote_number": d["quote_number"],
+                    "status": d["status"],
+                    "total": d["total"],
+                    "customer_name": d["customer_name"],
+                    "customer_phone": d["customer_phone"],
+                    "ziina_intent_id": intent,
+                    "created_at": d["created_at"],
+                })
+    return {"ok": True, "count": len(orphans), "items": orphans}
+
+
 @router.get("/api/admin/payments/config",
              dependencies=[Depends(require_admin)])
 def admin_payments_config():

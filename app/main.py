@@ -1680,21 +1680,31 @@ async def stripe_webhook(request: Request):
 @app.post("/api/webhooks/ziina")
 async def ziina_webhook(request: Request):
     """Ziina webhook receiver. Verifies HMAC-SHA256(raw_body, secret)
-    against X-Hmac-Signature before doing ANYTHING. On a verified
-    `payment_intent.status.updated` event with status `completed`:
-      1. Look up the invoice by ziina_payment_intent_id
-      2. Validate amount + currency match (defence against tampering)
-      3. Mark invoice paid + confirm booking + record webhook_received_at
-      4. Idempotent — if already paid, returns 200 without re-firing
-         confirmation alerts
-
-    Ziina docs say webhooks retry with exponential backoff on non-2xx.
-    So on transient failure (e.g. DB outage) we return 5xx; on permanent
-    issues (bad signature, amount mismatch) we return 4xx (do NOT retry).
+    against X-Hmac-Signature before doing ANYTHING.
+    v1.24.187 — Every incoming call is now logged to the events table
+    so the admin can see in /admin-commerce whether Ziina is actually
+    calling us. Founder hit: 'transactions in Ziina but nothing
+    confirms on our side' — could be webhook not arriving, signature
+    mismatch, or orphan intent.
     """
     from . import ziina as _ziina
     raw = await request.body()
     sig = request.headers.get("x-hmac-signature", "")
+    # v1.24.187 — Log EVERY incoming call (before signature check) so the
+    # admin can see attempts even when the signature is wrong.
+    try:
+        db.log_event(
+            "ziina_webhook_raw", "inbound", "received", actor="ziina",
+            details={
+                "body_bytes": len(raw),
+                "has_signature": bool(sig),
+                "ip": (request.headers.get("x-forwarded-for") or
+                       (request.client.host if request.client else ""))[:64],
+                "ua": (request.headers.get("user-agent") or "")[:200],
+                "body_preview": raw[:500].decode("utf-8", errors="replace"),
+            })
+    except Exception:
+        pass
     if not _ziina.verify_webhook_signature(raw, sig):
         # Reject without state change. Use 401 — Ziina will not retry.
         print(f"[ziina-webhook] BAD SIGNATURE — body={len(raw)}B sig_present={bool(sig)}",
