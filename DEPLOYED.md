@@ -2,13 +2,14 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"oQP7iBpRSuWTy_kNezItjw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"pcfPnzScQJutYCWGc9o55Q"}`
 
 ## Build logs
 ```
 [ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
-[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [internal] load build context
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [internal] load build context
@@ -19,7 +20,6 @@
 [ 5/12] RUN pip install -r requirements.txt
 [ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
-[ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/12] COPY app ./app
 [ 8/12] COPY app ./app
 [ 9/12] COPY web ./web
@@ -32,9 +32,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:6feecdd64ef30984e28b60fb89217d91ce81f3d1293a9b4ab275a52c20497024
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NmZlZWNkZDY0ZWYzMDk4NGUyOGI2MGZiODkyMTdkOTFjZTgxZjNkMTI5M2E5YjRhYjI3NWE1MmMyMDQ5NzAyNCIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxNjo1NDo0NloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:dbaf04c437726128d0ae532a395e9f1e04b9ea07851de0134c707f6497215396
+containerimage.digest: sha256:a85cc7ffa2ea5bae233901d222c5bbf7498173d91b4339b05ab0498455c08feb
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6YTg1Y2M3ZmZhMmVhNWJhZTIzMzkwMWQyMjJjNWJiZjc0OTgxNzNkOTFiNDMzOWIwNWFiMDQ5ODQ1NWMwOGZlYiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxNzowMTo0MloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:8c704ff6bfdf2680b90447dbe6a83834f534e52aa42d4ec4add9803f4c8b2c10
 image push
 image push
 
@@ -50,32 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/8c17ef83-1e9d-40a3-8d1f-f6bf856dcbe7/vol_onr647rhdeir9di9
-Starting Container
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
-[lp-ar] 133 Arabic landing-page routes registered
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
-[purge] scan complete — 29 posts, 0 flagged
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:38163 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:39434 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:59112 - "GET /style.css?v=1.24.161 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:42570 - "GET /api/reviews/marble_polish HTTP/1.1" 200 OK
-INFO:     100.64.0.6:12996 - "GET /widget.css?v=1.24.161 HTTP/1.1" 200 OK
-INFO:     100.64.0.7:35580 - "GET /services/marble-polish/al-nuaimiya?id=marble_polish HTTP/1.1" 200 OK
-INFO:     100.64.0.8:10238 - "GET /style.css?v=1.24.162 HTTP/1.1" 200 OK
-INFO:     100.64.0.9:31970 - "GET /widget.css?v=1.24.162 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:32880 - "GET /widget.js?v=1.24.162 HTTP/1.1" 200 OK
+INFO:     100.64.0.2:57921 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.6:57634 - "GET /widget.js?v=1.24.163 HTTP/1.1" 200 OK
+INFO:     100.64.0.7:53756 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.8:59054 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:10868 - "GET /services/water-heater-repair/al-nuaimiya?id=water_heater_repair HTTP/1.1" 200 OK
+INFO:     100.64.0.4:26724 - "GET /style.css?v=1.24.163 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:15942 - "GET /widget.css?v=1.24.163 HTTP/1.1" 200 OK
+INFO:     100.64.0.9:46022 - "GET /admin/print/quote/Q-1778690765101 HTTP/1.1" 401 Unauthorized
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [autoblog] catch-up SKIP (last_run @ 2026-05-13T14:00:00.000637Z is fresh AND ok)
+INFO:     100.64.0.10:17058 - "GET /admin/print/quote/Q-1778690765101 HTTP/1.1" 401 Unauthorized
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.11:24876 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.10:17058 - "GET /admin/print/quote/Q-1778690765101 HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.10:22520 - "GET /api/admin/quotes HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22492 - "GET /api/admin/delivery-notes?limit=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22474 - "GET /api/admin/sales-orders?limit=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22490 - "GET /api/admin/quotes?limit=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22456 - "GET /api/admin/quotes HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22464 - "GET /api/admin/purchase-orders?limit=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22474 - "GET /api/admin/payments?limit=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22490 - "GET /api/admin/quotes?limit=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22464 - "GET /api/admin/payments?limit=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22514 - "GET /api/admin/invoices?limit=1 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22456 - "GET /api/admin/quotes/Q-1778690827048 HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22456 - "GET /api/services HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22456 - "GET /api/admin/customers/search?q=A HTTP/1.1" 200 OK
+INFO:     100.64.0.10:22456 - "GET /api/admin/customers/search?q=Ai HTTP/1.1" 200 OK
 ```
