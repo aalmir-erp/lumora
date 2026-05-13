@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 48
+- ✅ Pass: 47
 - ⚠️ Warn: 1
-- ❌ Fail: 1
+- ❌ Fail: 2
 - ⏭ Skip: 1
 
 ## Items
@@ -41,7 +41,7 @@ Call log:
 - ✅ **[T30] /api/admin/nfc/stats auth-gated** — 401
 - ✅ **[T31] /login.html renders** — OK
 - ✅ **[T32] /me requires auth** — OK
-- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_KTd7FqaIQ...
+- ✅ **[T33] Demo customer login (test@servia.ae)** — lt_KWRDhV_5p...
 - ✅ **[T34] Demo customer (aisha@demo)** — OK
 - ✅ **[T35] Bad password rejected** — 401 OK
 - ✅ **[T36] /api/wallet/balance auth-gated** — 401
@@ -49,7 +49,7 @@ Call log:
 - ✅ **[T38] /api/me/bookings authed** — OK
 - ✅ **[T39] /api/nfc/my-tags authed** — OK
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.146
+- ✅ **[T41] /api/health responds** — v1.24.159
 - ✅ **[T42] /api/services >=10** — 40
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.108
 - ✅ **[T44] /api/site/social works** — OK
@@ -59,4 +59,4 @@ Call log:
 - ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
 - ✅ **[T49] /cart.html loads** — OK
 - ⚠️ **[T50] Service worker active** — not registered
-- ✅ **[T51] Admin viewer — _e2e-shots dir is in deployed container** — HTTP 200 ct=image/png
+- ❌ **[T51] Admin viewer — _e2e-shots dir is in deployed container** — exception: HTTP 404 — Dockerfile probably missed _e2e-shots/
