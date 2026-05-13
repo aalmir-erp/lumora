@@ -1695,14 +1695,14 @@ def _render_dn_print(row: dict) -> str:
 
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
-<title>Delivery Note {row.get('dn_number')} · {brand['name']}</title>
+<title>Service Note {row.get('dn_number')} · {brand['name']}</title>
 {_print_css()}
 </head><body>
 {share}
 <div class="doc">
   <div class="hd">
     <div class="left">
-      <h1>SERVICE DELIVERY NOTE</h1>
+      <h1>SERVICE COMPLETION NOTE</h1>
       <span class="docnum">{_html_escape(row.get('dn_number') or '—')}</span>
     </div>
     <div class="right">

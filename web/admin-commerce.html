@@ -122,7 +122,7 @@
   <a href="#quotes" data-tab="quotes">📝 Quotes <span class="count" id="cnt-quotes">…</span></a>
   <a href="#sales-orders" data-tab="sales-orders">📋 Sales Orders <span class="count" id="cnt-sales-orders">…</span></a>
   <a href="#invoices" data-tab="invoices">🧾 Invoices <span class="count" id="cnt-invoices">…</span></a>
-  <a href="#delivery-notes" data-tab="delivery-notes">🚚 Delivery Notes <span class="count" id="cnt-delivery-notes">…</span></a>
+  <a href="#delivery-notes" data-tab="delivery-notes" title="Service completion notes (was 'Delivery Notes' — renamed because we deliver SERVICE not goods)">✅ Service Notes <span class="count" id="cnt-delivery-notes">…</span></a>
   <a href="#purchase-orders" data-tab="purchase-orders">🛒 Purchase Orders <span class="count" id="cnt-purchase-orders">…</span></a>
   <a href="#payments" data-tab="payments">💳 Payments <span class="count" id="cnt-payments">…</span></a>
 </nav>
@@ -244,14 +244,17 @@
   </tr></thead><tbody id="invoices-rows"></tbody></table></div>
 </div>
 
-<!-- ━━━━━━━━━━━ DELIVERY NOTES TAB ━━━━━━━━━━━ -->
+<!-- ━━━━━━━━━━━ SERVICE NOTES (was "Delivery Notes") ━━━━━━━━━━━ -->
+<!-- v1.24.164 — Renamed UI labels from Delivery Note → Service Note.
+     The DB table delivery_notes stays for backwards compat; the URL
+     stays /admin/print/delivery-note/{id}. Only display labels change. -->
 <div id="tab-delivery-notes" class="tab-body" style="display:none">
   <div class="filters">
     <input type="date" id="d-from"><input type="date" id="d-to">
     <button class="btn" onclick="loadList('delivery-notes')">↻</button>
   </div>
   <div class="panel"><table><thead><tr>
-    <th>DN #</th><th>Customer</th><th>Delivered</th><th>Signed</th><th>SO total</th><th></th>
+    <th>SN #</th><th>Customer</th><th>Service done</th><th>Signed</th><th>SO total</th><th></th>
   </tr></thead><tbody id="delivery-notes-rows"></tbody></table></div>
 </div>
 
@@ -641,6 +644,7 @@ async function openDetail(tab, id) {
       ${chain}
       <div style="margin-top:18px;display:flex;gap:6px;flex-wrap:wrap">
         <a class="btn btn-ghost" href="/admin/print/${docType}/${id}?token=${encodeURIComponent(tokenInput.value)}" target="_blank">📄 Open printable</a>
+        ${_shareButtons(tab, item)}
         ${actions}
       </div>
     `;
@@ -653,6 +657,41 @@ async function acceptQuote(id) {
   if (!confirm("Accept quote? This creates a Sales Order + auto-generates an Invoice.")) return;
   try { await apiPost(`/api/admin/quotes/${id}/accept`); alert("Accepted!"); closeModal(); loadList("quotes"); }
   catch (e) { alert("Failed: " + e.message); }
+}
+
+// v1.24.164 — One-click WhatsApp + Email share for quotes / invoices.
+// Builds a wa.me / mailto: link with a pre-filled message that includes
+// the doc number, total, and the public-facing URL.
+function _shareButtons(tab, item) {
+  if (tab !== "quotes" && tab !== "invoices") return "";
+  const isQuote = tab === "quotes";
+  const num = item.quote_number || item.invoice_number || "";
+  const total = (item.total || item.amount || 0).toFixed(2);
+  const phone = (item.customer_phone || "").replace(/[^\d]/g, "");
+  const email = item.customer_email || "";
+  const name = item.customer_name || "there";
+  // Public URLs: quotes use /q/<id> (existing signing+pay page),
+  // invoices fall back to the printable admin URL for now.
+  const url = isQuote
+    ? `${location.origin}/q/${item.id}`
+    : `${location.origin}/admin/print/invoice/${item.id}?token=PASTE_TOKEN`;
+  const docKind = isQuote ? "quote" : "invoice";
+  const msg = `Hi ${name}, your ${docKind} *${num}* is ready.\nTotal: AED ${total}\n\nReview / pay securely: ${url}\n\n— Servia`;
+  let html = "";
+  if (phone) {
+    const wa = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    html += `<a class="btn" style="background:#25D366;color:#fff" href="${wa}" target="_blank">📱 WhatsApp share</a> `;
+  }
+  if (email) {
+    const subj = encodeURIComponent(`Your ${docKind} ${num} from Servia`);
+    const body = encodeURIComponent(msg);
+    html += `<a class="btn btn-ghost" href="mailto:${email}?subject=${subj}&body=${body}">✉️ Email share</a> `;
+  }
+  // Copy-link fallback for cases without phone/email
+  if (!phone && !email) {
+    html += `<button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${url}');this.textContent='✓ Copied!'">📋 Copy link</button>`;
+  }
+  return html;
 }
 
 // v1.24.163 — Reject, Cancel, Revise, Delete quote actions.
@@ -1186,8 +1225,29 @@ async function submitNewQuote() {
     });
     const d = await r.json();
     if (!d.ok) throw new Error(d.detail || "Save failed");
-    document.getElementById("nq-msg").innerHTML = `<span style="color:var(--g);font-weight:700">✓ Quote ${d.quote_number} created. Total AED ${d.total.toFixed(2)}. Refreshing list…</span>`;
-    setTimeout(() => { closeModal(); loadList("quotes"); }, 1200);
+    // v1.24.164 — Offer one-click share immediately instead of auto-closing.
+    const phone = (body.customer_phone || "").replace(/[^\d]/g, "");
+    const email = body.customer_email || "";
+    const customerName = body.customer_name || "there";
+    const publicUrl = `${location.origin}/q/${d.id}`;
+    const msg = `Hi ${customerName}, your quote *${d.quote_number}* is ready.\nTotal: AED ${d.total.toFixed(2)}\n\nReview / sign / pay securely: ${publicUrl}\n\n— Servia`;
+    const waBtn = phone
+      ? `<a class="btn" style="background:#25D366;color:#fff" href="https://wa.me/${phone}?text=${encodeURIComponent(msg)}" target="_blank">📱 Share on WhatsApp</a>`
+      : "";
+    const emailBtn = email
+      ? `<a class="btn btn-ghost" href="mailto:${email}?subject=${encodeURIComponent("Your quote " + d.quote_number + " from Servia")}&body=${encodeURIComponent(msg)}">✉️ Send email</a>`
+      : "";
+    document.getElementById("nq-msg").innerHTML = `
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:12px;margin-top:10px">
+        <div style="color:#166534;font-weight:700;margin-bottom:8px">✓ Quote ${d.quote_number} created · Total AED ${d.total.toFixed(2)}</div>
+        <div style="font-size:12px;color:#15803D;margin-bottom:8px">Customer-facing link: <a href="${publicUrl}" target="_blank" style="color:#0F766E">${publicUrl}</a></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${waBtn}
+          ${emailBtn}
+          <button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${publicUrl}');this.textContent='✓ Link copied'">📋 Copy link</button>
+          <button class="btn btn-ghost" onclick="closeModal();loadList('quotes')">Done</button>
+        </div>
+      </div>`;
   } catch (e) {
     document.getElementById("nq-msg").innerHTML = `<span style="color:var(--r)">Failed: ${e.message}</span>`;
   }
