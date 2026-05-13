@@ -2,14 +2,14 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"PGj77AwRThizSZU6LPU1MQ"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"WqcWM1koSYiVvHxZozsQ6Q"}`
 
 ## Build logs
 ```
-[ 2/12] WORKDIR /app
-[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 [ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [internal] load build context
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [internal] load build context
@@ -32,9 +32,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:bffdaaedc5da8e82f1612c1fbb9cdeb5f2800b10f68b7e778f65e888aad1ed88
-containerimage.digest: sha256:19f4d90d1c4fa68636a17560a3285f73b1cf49d0c399426c4129561fa20681f7
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MTlmNGQ5MGQxYzRmYTY4NjM2YTE3NTYwYTMyODVmNzNiMWNmNDlkMGMzOTk0MjZjNDEyOTU2MWZhMjA2ODFmNyIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxOToyMDozNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MTY4NTQ0ZmM1MTg2N2ZkYWEwNjk4M2Q3NjQ2NTBmOTgwZTg0NGYwMTY2ZTI1Mjk0N2I2Njg0NGVjMDNhNjk2MiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QxOToyNTozNFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:0795c9c186d9c2450b9686f35256cc2a84e1ec09625cb170778261a4606a3ff1
+containerimage.digest: sha256:168544fc51867fdaa06983d764650f980e844f0166e252947b66844ec03a6962
 image push
 image push
 
@@ -50,34 +50,22 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.11:28082 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=677 HTTP/1.1" 200 OK
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/4895b920-db0f-4655-870d-407491ff4c02/vol_onr647rhdeir9di9
+Starting Container
+[start] launching whatsapp_bridge
+[wa-bridge] listening on :3001
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     100.64.0.4:19500 - "GET /api/chat/poll?session_id=sw-6Bmkcdcnl0ZCsdME&since_id=677 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:60578 - "GET /admin.html HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.3:57706 - "GET /admin.html HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.5:60578 - "GET /__admin_token__ HTTP/1.1" 403 Forbidden
-INFO:     100.64.0.5:60580 - "GET /api/i18n HTTP/1.1" 200 OK
-INFO:     100.64.0.5:60578 - "GET /api/admin/stats HTTP/1.1" 200 OK
-INFO:     100.64.0.5:60588 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33546 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33550 - "GET /api/admin/stats HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33588 - "GET /api/admin/bookings?limit=8 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33574 - "GET /api/admin/alerts?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.7:59966 - "GET /api/admin/analytics HTTP/1.1" 200 OK
-INFO:     100.64.0.7:59962 - "GET /api/admin/bookings?status=pending&limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33576 - "GET /api/admin/psi/latest HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33576 - "GET /api/admin/analytics HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33574 - "GET /api/admin/bookings?limit=300 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33564 - "GET /api/admin/llm/diagnose HTTP/1.1" 200 OK
-INFO:     100.64.0.6:33574 - "POST /api/admin/push/subscribe HTTP/1.1" 200 OK
-INFO:     100.64.0.8:23534 - "GET /api/wa/status HTTP/1.1" 200 OK
-INFO:     100.64.0.9:30312 - "GET /api/admin/stats HTTP/1.1" 200 OK
-INFO:     100.64.0.10:18358 - "GET /api/videos/list?limit=500 HTTP/1.1" 200 OK
-INFO:     100.64.0.10:18348 - "GET /api/blog/latest?limit=200 HTTP/1.1" 200 OK
-INFO:     100.64.0.11:13670 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:54078 - "GET /api/brand HTTP/1.1" 200 OK
-INFO:     100.64.0.4:54078 - "GET /api/admin/payments/status HTTP/1.1" 200 OK
-INFO:     100.64.0.3:20076 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.5:27752 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+[lp-ar] 133 Arabic landing-page routes registered
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
+[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
+[purge] scan complete — 29 posts, 0 flagged
+[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.2:40447 - "GET /api/health HTTP/1.1" 200 OK
+[wa-bridge] QR received. Open /qr in your browser to scan.
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
