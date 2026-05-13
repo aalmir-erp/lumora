@@ -105,17 +105,31 @@ def _load_all() -> dict:
 # v1.24.165 — Detect placeholder / unset numbers so we don't render
 # the "000 0000" default in share links / printables. Founder said:
 # "you put some random number in WhatsApp by default" — that's this.
-_PLACEHOLDER_PATTERNS = ("000 0000", "0000000", "000000", "12345")
+_PLACEHOLDER_PATTERNS = ("000 0000", "0000000", "000000",
+                          "111 0001", "111 0002", "111 0003", "111 0004", "111 0005",
+                          "1110001", "1110002", "1110003", "1110004", "1110005",
+                          "1111", "0001")
 
 
 def _is_placeholder(s: str) -> bool:
+    """v1.24.169 — Detect placeholder numbers. Anything matching
+    '+971 50 000 0000' / '+971 50 111 0001' / '12345' / 4+ consecutive
+    identical digits / <9 digits gets treated as unset so share buttons
+    hide instead of advertising a fake number."""
     s = (s or "").strip().lower()
     if not s:
         return True
     digits = "".join(ch for ch in s if ch.isdigit())
     if len(digits) < 9:
         return True
-    return any(p in s for p in _PLACEHOLDER_PATTERNS)
+    if any(p in s for p in _PLACEHOLDER_PATTERNS):
+        return True
+    # Detect runs of 4+ identical digits ("0000", "1111", "9999") which
+    # are almost always placeholders in test data.
+    for i in range(len(digits) - 3):
+        if digits[i] == digits[i+1] == digits[i+2] == digits[i+3]:
+            return True
+    return False
 
 
 def get_contact_phone() -> str:

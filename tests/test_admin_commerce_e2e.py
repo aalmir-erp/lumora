@@ -1,0 +1,243 @@
+"""COMPREHENSIVE E2E TEST — verifies every feature shipped v1.24.160 → v1.24.168.
+
+Run with:
+    rm -f /tmp/lumora-deploy/servia_test.db
+    DB_PATH=/tmp/lumora-deploy/servia_test.db python3 -m pytest tests/test_admin_commerce_e2e.py -v
+    # or as a standalone script:
+    DB_PATH=/tmp/lumora-deploy/servia_test.db python3 tests/test_admin_commerce_e2e.py
+"""
+import sys
+import pathlib
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+
+from fastapi.testclient import TestClient
+
+from app.main import app
+from app.multi_quote_pages import _sign_token
+from app.config import get_settings
+from app.llm import _enforce_multi_quote_when_book_now
+from app.brand_contact import get_contact_whatsapp, _is_placeholder
+
+
+def _client():
+    c = TestClient(app)
+    return c
+
+
+def test_boot_and_version():
+    assert get_settings().APP_VERSION.startswith("1.24.")
+    assert len(app.routes) > 17000
+
+
+def test_seed_demo_data():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    r = c.post("/api/admin/seed-commerce-demo", headers=H)
+    assert r.status_code == 200
+    d = r.json()
+    assert d.get("ok") is True
+    assert d.get("quotes") == 9
+    assert d.get("sos") == 5
+    assert d.get("invoices") == 5
+    assert d.get("dns") == 4
+    assert d.get("pos") == 5
+
+
+def test_auth_sources_v1_24_162():
+    c = _client()
+    c.post("/api/admin/seed-commerce-demo",
+           headers={"Authorization": "Bearer lumora-admin-test"})
+    assert c.get(
+        "/api/admin/quotes",
+        headers={"Authorization": "Bearer lumora-admin-test"},
+    ).status_code == 200
+    assert c.get("/api/admin/quotes?t=lumora-admin-test").status_code == 200
+    assert c.get("/api/admin/quotes?token=lumora-admin-test").status_code == 200
+    c.cookies.set("servia_admin_token", "lumora-admin-test")
+    assert c.get("/api/admin/quotes").status_code == 200
+    c.cookies.clear()
+    assert c.get("/api/admin/quotes").status_code == 401
+    assert c.get("/api/admin/quotes?t=wrong").status_code == 403
+
+
+def test_bot_single_service_book_now_v1_24_160():
+    text = (
+        "Here's your summary:\n\n"
+        "📋 **Summary**\n"
+        "• Service: AC cleaning (2 units)\n"
+        "• Date: tomorrow at 2pm\n"
+        "• Address: Marina, Building Marina Crown, Apt 309, Dubai\n"
+        "• Name: Sara\n"
+        "• Phone: +971501234567\n\n"
+        "[Book now ↗](/book?service=ac_cleaning)"
+    )
+    out = _enforce_multi_quote_when_book_now(text, session_id="e2e-test")
+    assert "/checkout?q=" in out
+    assert "/book?service=" not in out
+
+
+def test_quote_actions_v1_24_163():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    q = c.get("/api/admin/quotes", headers=H).json()["items"][0]
+    qid = q["id"]
+    # revise
+    r = c.post(f"/api/admin/quotes/{qid}/revise", headers=H).json()
+    assert r.get("quote_number", "").endswith("-r1")
+    new_id = r["id"]
+    # reject + delete
+    assert c.post(f"/api/admin/quotes/{new_id}/reject", headers=H).json().get("ok")
+    assert c.delete(f"/api/admin/quotes/{new_id}", headers=H).json().get("ok")
+    # links
+    links = c.get(f"/api/admin/quotes/{qid}/links", headers=H).json()
+    assert links.get("ok")
+    assert isinstance(links.get("revisions"), list)
+
+
+def test_payment_register_v1_24_163():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    HJ = {**H, "Content-Type": "application/json"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    inv = c.get("/api/admin/invoices", headers=H).json()["items"][0]
+    half = float(inv.get("amount") or 100.0) / 2.0
+    r1 = c.post("/api/admin/payments/register", headers=HJ, json={
+        "payment_type": "customer_in", "reference_type": "invoice",
+        "reference_id": inv["id"], "amount": half, "method": "card",
+        "reference_number": "TXN-001",
+    }).json()
+    assert r1.get("new_status") == "partially_paid"
+    r2 = c.post("/api/admin/payments/register", headers=HJ, json={
+        "payment_type": "customer_in", "reference_type": "invoice",
+        "reference_id": inv["id"], "amount": half + 1, "method": "bank_transfer",
+    }).json()
+    assert r2.get("new_status") == "paid"
+    assert len(
+        c.get(f"/api/admin/payments?reference_id={inv['id']}", headers=H).json().get("items", [])
+    ) == 2
+
+
+def test_q_url_opens_admin_quotes_v1_24_165():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    q = c.get("/api/admin/quotes", headers=H).json()["items"][0]
+    assert c.get(f"/q/{q['id']}", follow_redirects=False).status_code == 200
+    assert c.get(f"/q/{q['quote_number']}", follow_redirects=False).status_code == 200
+
+
+def test_customer_remark_and_admin_alert_v1_24_165():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    q = c.get("/api/admin/quotes", headers=H).json()["items"][0]
+    qid = q["id"]
+    phone = "".join(ch for ch in (q.get("customer_phone") or "") if ch.isdigit())
+    tok = _sign_token(qid, phone)
+    r = c.post(
+        f"/api/q/{qid}/remark",
+        headers={"X-Quote-Token": tok, "Content-Type": "application/json"},
+        json={"action": "change_request", "remarks": "Can we do Saturday instead?"},
+    ).json()
+    assert r.get("ok")
+    items = c.get(f"/api/admin/quotes/{qid}/remarks", headers=H).json().get("items", [])
+    assert len(items) == 1
+    assert items[0]["remarks"].startswith("Can we")
+    assert c.get("/api/admin/quote-remarks/unread-count", headers=H).json().get("unread") == 1
+
+
+def test_printable_redesign_v1_24_166():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    q = c.get("/api/admin/quotes", headers=H).json()["items"][0]
+    r = c.get(f"/admin/print/quote/{q['id']}?t=lumora-admin-test")
+    assert r.status_code == 200
+    body = r.text
+    assert "servia-avatar-512x512.png" in body
+    assert "servia-logo-full.svg" in body
+    assert "links-strip" in body
+    assert 'class="this"' in body
+
+
+def test_all_five_print_urls_v1_24_166():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    quotes = c.get("/api/admin/quotes", headers=H).json()["items"]
+    sos = c.get("/api/admin/sales-orders", headers=H).json().get("items", [])
+    invs = c.get("/api/admin/invoices", headers=H).json().get("items", [])
+    dns = c.get("/api/admin/delivery-notes", headers=H).json().get("items", [])
+    pos = c.get("/api/admin/purchase-orders", headers=H).json().get("items", [])
+    for dtype, lst in [
+        ("quote", quotes), ("sales-order", sos), ("invoice", invs),
+        ("delivery-note", dns), ("purchase-order", pos),
+    ]:
+        assert lst, f"no {dtype} seeded"
+        r = c.get(f"/admin/print/{dtype}/{lst[0]['id']}?t=lumora-admin-test")
+        assert r.status_code == 200, f"{dtype} → {r.status_code}"
+
+
+def test_ai_quote_endpoint_reachable_v1_24_167():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    r = c.post(
+        "/api/admin/quote-from-text",
+        headers={**H, "Content-Type": "application/json"},
+        json={"text": "Sara +971501234567 wants AC cleaning 3 units tomorrow"},
+    )
+    # 200 if ANTHROPIC_API_KEY set; 502 if not (still proves the route exists).
+    assert r.status_code in (200, 502)
+
+
+def test_analytics_v1_24_168():
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    q = c.get("/api/admin/quotes", headers=H).json()["items"][0]
+    qid = q["id"]
+    for ua in [
+        "Mozilla/5.0 (iPhone) Safari",
+        "Mozilla/5.0 (Android) Chrome",
+        "Mozilla/5.0 (Windows) Chrome",
+    ]:
+        c.get(
+            f"/q/{qid}",
+            headers={"user-agent": ua, "x-forwarded-for": "82.137.20.10"},
+        )
+    r = c.get(f"/api/admin/quotes/{qid}/analytics", headers=H).json()
+    assert r.get("ok")
+    assert r["summary"]["total_opens"] >= 3
+    oses = {e.get("os") for e in r.get("events", [])}
+    assert {"iOS", "Android", "Windows"} & oses
+
+
+def test_brand_contact_placeholder_v1_24_165_169():
+    assert _is_placeholder("+971 50 000 0000")
+    assert _is_placeholder("+971 50 111 0001")
+    assert _is_placeholder("+971 50 1110001")
+    assert _is_placeholder("+971 50 555 0001")
+    assert _is_placeholder("+971 4 444 5566")
+    assert not _is_placeholder("+971 4 567 8910")
+    assert not _is_placeholder("+971 50 234 5678")
+    assert not _is_placeholder("+971 5012345678")
+    # When config has only placeholders → should return ""
+    assert get_contact_whatsapp() == ""
+
+
+if __name__ == "__main__":
+    # Standalone runner — useful in the sandbox where pytest isn't always installed.
+    tests = [v for k, v in globals().items() if k.startswith("test_")]
+    passed = failed = 0
+    for t in tests:
+        try:
+            t()
+            print(f"  PASS  {t.__name__}")
+            passed += 1
+        except Exception as e:
+            print(f"  FAIL  {t.__name__} — {e}")
+            failed += 1
+    print(f"\nRESULT: {passed}/{passed + failed} passed")
+    sys.exit(0 if failed == 0 else 1)

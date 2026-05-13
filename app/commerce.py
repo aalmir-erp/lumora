@@ -894,6 +894,38 @@ class AssignVendorBody(BaseModel):
     notes: Optional[str] = None
 
 
+@router.get("/api/admin/vendors/{vendor_id}/rate-for-service",
+             dependencies=[Depends(require_admin)])
+def admin_vendor_rate_for_service(vendor_id: int, service_id: str):
+    """v1.24.169 — Auto-fill vendor rate when admin picks a service.
+    Founder feedback: 'selected vendor rates neither in quotation neither
+    in inventory or generating it should be automatically coming by
+    default'. Look up the agreed price for this vendor × service from
+    the vendor_services table.
+
+    Returns:
+      {"ok": True, "vendor_rate": float | null,
+        "price_unit": str | null, "sla_hours": int | null}
+    """
+    try:
+        with db.connect() as c:
+            r = c.execute(
+                "SELECT price_aed, price_unit, sla_hours FROM vendor_services "
+                "WHERE vendor_id=? AND service_id=? AND active=1 LIMIT 1",
+                (vendor_id, service_id),
+            ).fetchone()
+            if not r:
+                return {"ok": True, "vendor_rate": None}
+            return {
+                "ok": True,
+                "vendor_rate": r["price_aed"],
+                "price_unit": r["price_unit"],
+                "sla_hours": r["sla_hours"],
+            }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @router.post("/api/admin/sales-orders/{so_id}/assign-vendor",
              dependencies=[Depends(require_admin)])
 def admin_assign_vendor(so_id: str, body: AssignVendorBody):
