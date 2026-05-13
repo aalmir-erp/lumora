@@ -4,7 +4,7 @@
 <meta name="googlebot" content="noindex,nofollow">
 <meta name="bingbot" content="noindex,nofollow">
 <title>Admin: Servia</title><meta name="theme-color" content="#0D9488">
-<link rel="stylesheet" href="/style.css?v=1.24.183">
+<link rel="stylesheet" href="/style.css?v=1.24.184">
 <style>
   /* Mobile drawer for the admin sidebar — style.css hides .admin-side on
    * <=880px with no way to bring it back. Re-introduce it as a slide-out
@@ -436,9 +436,46 @@
     </div>
 
     <div id="t-payments" class="tab" style="display:none">
-      <h2>Payments</h2>
-      <p class="sub" style="color:var(--muted)">Configure payment providers. Set the env vars in Railway, then refresh this page. We support Stripe (global), and UAE-local providers Telr, PayTabs, and Tap.</p>
+      <h2>Payments &amp; Gateway settings</h2>
+      <p class="sub" style="color:var(--muted)">Configure payment providers. Stripe + UAE-local options below. Ziina (UAE-local, primary) is configured in the yellow card below.</p>
       <div id="pay-status" style="margin-top:18px"></div>
+
+      <!-- v1.24.184 — Ziina settings (key + webhook + TEST MODE TOGGLE)
+           moved here from the Launch & Growth tab. Founder asked
+           'where is settings tab / test mode?' — they live in the
+           Payments tab now, prominently visible. -->
+      <div style="background:#fff;border:2px solid #F59E0B;border-radius:14px;padding:18px;margin:16px 0">
+        <h3 style="margin:0 0 4px;font-size:16px;color:#92400E">💳 Ziina + Payment provider keys <span style="font-size:11px;background:#FEF3C7;color:#7C2D12;padding:2px 8px;border-radius:6px;font-weight:700;margin-inline-start:8px">SERVER-SIDE ONLY</span></h3>
+        <p style="color:var(--muted);font-size:13px;margin:0 0 12px">These keys never leave the server. They're stored encrypted, displayed masked (last 4 chars).</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Ziina API key
+              <input id="pay-ziina-api-key-2" placeholder="paste new key, never the leaked one" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px" autocomplete="off"></label>
+            <div id="pay-ziina-api-status-2" style="font-size:11px;color:#15803D;margin-top:4px">— not set —</div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted)">Ziina webhook secret
+              <input id="pay-ziina-webhook-secret-2" placeholder="signing secret" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,monospace;margin-top:4px" autocomplete="off"></label>
+            <div id="pay-ziina-webhook-status-2" style="font-size:11px;color:#15803D;margin-top:4px">— not set —</div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#DC2626">🧪 Test mode
+              <select id="pay-ziina-test-mode-2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px">
+                <option value="true">ON — sandbox (no real charges)</option>
+                <option value="false">OFF — live charges</option>
+              </select>
+            </label>
+            <div style="font-size:11px;color:#DC2626;font-weight:700;margin-top:4px">⚠ While ON: Ziina sends notifications but NO money moves and nothing appears in Ziina payment log.</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="savePaymentProviders2()">💾 Save Ziina settings</button>
+          <button class="btn btn-ghost" style="background:#FEF3C7;color:#7C2D12;font-weight:700" onclick="registerZiinaWebhook()">🔗 Register webhook with Ziina</button>
+          <span id="pay-save-status-2" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+        <div id="pay-webhook-result-2" style="margin-top:10px;font-size:12px;line-height:1.55"></div>
+      </div>
+
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:20px">
         <h3 style="margin:0 0 12px;font-size:15px">How it works (advance-payment policy)</h3>
         <ol style="font-size:14px;line-height:1.7;color:var(--text)">
@@ -4889,6 +4926,48 @@ async function savePaymentProviders() {
     if (st) { st.textContent = "✗ " + (e.message || "save failed"); st.style.color = "#B91C1C"; }
   }
 }
+
+// v1.24.184 — Duplicate of savePaymentProviders for the second copy of
+// the Ziina settings card (now inside the Payments tab so founders find it).
+async function savePaymentProviders2() {
+  const body = {};
+  const apiK  = (document.getElementById("pay-ziina-api-key-2")        || {}).value || "";
+  const whSec = (document.getElementById("pay-ziina-webhook-secret-2") || {}).value || "";
+  const tMode = (document.getElementById("pay-ziina-test-mode-2")      || {}).value;
+  if (apiK.trim())  body.ziina_api_key        = apiK.trim();
+  if (whSec.trim()) body.ziina_webhook_secret = whSec.trim();
+  if (tMode !== undefined) body.ziina_test_mode = (tMode === "true");
+  const st = document.getElementById("pay-save-status-2");
+  if (st) st.textContent = "⏳ saving…";
+  try {
+    const r = await adm("/api/admin/payment-providers",
+                        { method: "POST", body: JSON.stringify(body) });
+    if (st) {
+      st.textContent = r.ok ? "✓ saved" : "✗ save failed";
+      st.style.color = r.ok ? "#15803D" : "#B91C1C";
+    }
+    setTimeout(loadPaymentProvidersIntoPaymentsTab, 600);
+  } catch (e) {
+    if (st) { st.textContent = "✗ " + (e.message || "save failed"); st.style.color = "#B91C1C"; }
+  }
+}
+
+async function loadPaymentProvidersIntoPaymentsTab() {
+  try {
+    const r = await adm("/api/admin/payment-providers");
+    const z = (r && r.ziina) || {};
+    const setSel = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) el.value = String(v); };
+    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setSel("pay-ziina-test-mode-2", z.test_mode);
+    setTxt("pay-ziina-api-status-2",     z.api_key_masked     ? ("✓ set · " + z.api_key_masked)     : "— not set —");
+    setTxt("pay-ziina-webhook-status-2", z.webhook_secret_masked ? ("✓ set · " + z.webhook_secret_masked) : "— not set —");
+  } catch (_) {}
+}
+// Wire to tab click
+document.addEventListener("DOMContentLoaded", () => {
+  const tab = document.querySelector('a[data-tab="payments"]');
+  if (tab) tab.addEventListener("click", loadPaymentProvidersIntoPaymentsTab);
+});
 
 async function loadLaunch() {
   loadVizScan(); loadVizBots(); loadGateMode();
