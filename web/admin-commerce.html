@@ -710,6 +710,9 @@ async function openDetail(tab, id) {
     if (d.delivery_notes) related += `<div><b>Linked Delivery Notes</b>: ${d.delivery_notes.length || 0}</div>`;
     let actions = "";
     if (tab === "quotes") {
+      // v1.24.186 — Reorder works for ANY status (most useful on already-
+      // accepted/paid quotes where the customer wants to repeat). Always show.
+      actions += `<button class="btn btn-ghost" style="background:#FEF3C7;color:#92400E" onclick="reorderQuote('${id}')">🔁 Reorder (repeat order)</button> `;
       // v1.24.177 — Edit existing quote (only when status allows it).
       if (["draft","sent","superseded"].includes(item.status)) {
         actions += `<button class="btn btn-ghost" onclick="editQuote('${id}')">✏️ Edit quote</button> `;
@@ -1380,19 +1383,28 @@ async function editQuote(id) {
         if (nameInp) nameInp.value = li.name || "";
       });
       if (!items.length) addLine();
-      // Change the Save button label + handler
+      // Change the Save button label + handler + add a one-click
+      // 'Save & Confirm' button right next to it (v1.24.186 — founder
+      // asked 'confirm the quotation by one click').
       const submitBtn = Array.from(document.querySelectorAll("#modal-content button"))
         .find(b => /Create quote|Save/i.test(b.textContent));
       if (submitBtn) {
         submitBtn.textContent = "💾 Save changes";
         submitBtn.onclick = submitEditQuote;
+        // Inject a green 'Save & Confirm' button right after the Save btn
+        const confirmBtn = document.createElement("button");
+        confirmBtn.className = "btn";
+        confirmBtn.style.cssText = "background:#10B981;color:#fff;margin-left:6px;font-weight:800";
+        confirmBtn.textContent = "✅ Save & Confirm (1-click accept)";
+        confirmBtn.onclick = () => submitEditQuote(true);
+        submitBtn.parentElement.insertBefore(confirmBtn, submitBtn.nextSibling);
       }
       recalcTotals();
     }, 200);
   } catch (e) { alert("Failed to load quote: " + e.message); }
 }
 
-async function submitEditQuote() {
+async function submitEditQuote(autoConfirm) {
   const id = window.__nqEditingQuoteId;
   if (!id) { return submitNewQuote(); }
   const lines = [];
@@ -1431,13 +1443,51 @@ async function submitEditQuote() {
     });
     const d = await r.json();
     if (!d.ok) throw new Error(d.detail || "save failed");
-    document.getElementById("nq-msg").innerHTML =
-      `<span style="color:var(--g);font-weight:700">✓ Saved. New total AED ${(d.total||0).toFixed(2)}. Refreshing…</span>`;
+    // v1.24.186 — One-click confirm after save (founder ask).
+    if (autoConfirm) {
+      document.getElementById("nq-msg").innerHTML =
+        `<span style="color:var(--g);font-weight:700">✓ Saved. Confirming the quote (creates SO + invoice)…</span>`;
+      try {
+        const cr = await fetch(`/api/admin/quotes/${id}/accept`, {
+          method:"POST", headers:{...H(),"Content-Type":"application/json"},
+        });
+        const cd = await cr.json();
+        if (!cd.ok) throw new Error(cd.detail || "accept failed");
+        document.getElementById("nq-msg").innerHTML =
+          `<span style="color:var(--g);font-weight:800">✅ Confirmed! SO + invoice created. Refreshing…</span>`;
+      } catch (e) {
+        document.getElementById("nq-msg").innerHTML =
+          `<span style="color:#92400E">Saved OK but auto-confirm failed: ${e.message}. You can click '✅ Accept' on the quote panel manually.</span>`;
+      }
+    } else {
+      document.getElementById("nq-msg").innerHTML =
+        `<span style="color:var(--g);font-weight:700">✓ Saved. New total AED ${(d.total||0).toFixed(2)}. Refreshing…</span>`;
+    }
     window.__nqEditingQuoteId = null;
-    setTimeout(() => { closeModal(); loadList("quotes"); }, 1200);
+    setTimeout(() => { closeModal(); loadList("quotes"); }, 1500);
   } catch (e) {
     document.getElementById("nq-msg").innerHTML = `<span style="color:var(--r)">Failed: ${e.message}</span>`;
   }
+}
+
+// v1.24.186 — Reorder: clones the quote as a fresh new draft (different
+// number, NOT a -r1 revision). Opens the new draft in edit mode so admin
+// can tweak the date/line items, then one-click confirm.
+async function reorderQuote(id) {
+  if (!confirm("🔁 Reorder this quote? A brand-new draft quote will be created with the same customer + services. You can then edit dates/quantities + confirm in one click.")) return;
+  try {
+    const d = await apiPost(`/api/admin/quotes/${id}/reorder`);
+    if (!d.ok) throw new Error(d.detail || "reorder failed");
+    // Brief toast so the founder sees what just happened
+    const toast = document.createElement("div");
+    toast.style.cssText = "position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#0F766E;color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:9999";
+    toast.textContent = `✓ Reorder created: ${d.quote_number} (from ${d.reordered_from}). Opening edit form…`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+    // Auto-open the new draft in edit mode
+    closeModal();
+    await editQuote(d.id);
+  } catch (e) { alert("Reorder failed: " + e.message); }
 }
 
 async function reviseQuote(id) {

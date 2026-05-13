@@ -1137,6 +1137,66 @@ def admin_reply_remark(remark_id: int, body: _RemarkReplyBody):
     return {"ok": True}
 
 
+@router.post("/api/admin/quotes/{quote_id}/reorder",
+              dependencies=[Depends(require_admin)])
+def admin_reorder_quote(quote_id: str):
+    """v1.24.186 — Repeat-order: clone an existing quote (any status)
+    into a brand-NEW DRAFT with a fresh QT-2026-XXXX number. Different
+    from /revise which creates a -r1 sub-number suffixed to the
+    original; reorder is a totally independent new quote.
+
+    Founder ask: 'reorder so a previous order of customer can be
+    repeated and new quotation should be created with draft state
+    and editable form where if something user want to change like
+    date they can do and confirm the quotation by one click'.
+
+    Use case: customer wants the same service again 2 months later.
+    Admin opens the old quote → 🔁 Reorder → new draft with same
+    line items + customer info but fresh valid_until → admin tweaks
+    date/quantity if needed → one click Confirm → SO + invoice.
+    """
+    now = _now()
+    # 1) Fetch source quote (separate connection — short lived)
+    with db.connect() as c:
+        orig = c.execute(
+            "SELECT * FROM quotes WHERE id=? OR quote_number=?",
+            (quote_id, quote_id)).fetchone()
+        if not orig:
+            raise HTTPException(404, "quote not found")
+        orig = dict(orig)
+    # 2) Allocate IDs (each next_doc_number opens its own connection;
+    #    do this OUTSIDE any open connection or sqlite will deadlock).
+    new_id  = _id("Q")
+    new_num = next_doc_number("quote")
+    from datetime import datetime as _dt2, timedelta as _td
+    valid_until = (_dt2.now(timezone.utc) + _td(days=14)).date().isoformat()
+    # 3) Insert the clone (fresh connection)
+    with db.connect() as c:
+        c.execute("""
+            INSERT INTO quotes
+              (id, quote_number, booking_id, service_id, breakdown_json,
+               line_items_json, subtotal, discount, vat_amount, total,
+               currency, valid_until, status, customer_id, customer_name,
+               customer_phone, customer_email, customer_address, terms,
+               notes, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, (new_id, new_num, None, orig.get("service_id"),
+              orig.get("breakdown_json"), orig.get("line_items_json"),
+              orig.get("subtotal") or 0, orig.get("discount") or 0,
+              orig.get("vat_amount") or 0, orig.get("total") or 0,
+              orig.get("currency") or "AED", valid_until,
+              "draft",
+              orig.get("customer_id"), orig.get("customer_name"),
+              orig.get("customer_phone"), orig.get("customer_email"),
+              orig.get("customer_address"), orig.get("terms"),
+              (orig.get("notes") or "") +
+                f"\n[Reordered from {orig.get('quote_number')} on {now[:10]}]",
+              now))
+    return {"ok": True, "id": new_id, "quote_number": new_num,
+            "reordered_from": orig["quote_number"],
+            "valid_until": valid_until}
+
+
 @router.get("/api/admin/quotes/{quote_id}/links", dependencies=[Depends(require_admin)])
 def admin_quote_links(quote_id: str):
     """v1.24.163 — Full doc chain for breadcrumb UI:

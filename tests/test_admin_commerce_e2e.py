@@ -409,6 +409,28 @@ def test_payment_success_page_v1_24_178():
     assert r2.status_code == 200
 
 
+def test_reorder_v1_24_186():
+    """v1.24.186 — Reorder clones the quote as a fresh new draft with
+    its own QT-2026-XXXX number, NOT a -r1 revision."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    c.post("/api/admin/seed-commerce-demo", headers=H)
+    src = c.get("/api/admin/quotes", headers=H).json()["items"][0]
+    src_num = src["quote_number"]
+    r = c.post(f"/api/admin/quotes/{src['id']}/reorder", headers=H).json()
+    assert r.get("ok")
+    new_num = r["quote_number"]
+    # New number must NOT be a -r1 revision of the source
+    assert "-r" not in new_num
+    assert new_num != src_num
+    assert r["reordered_from"] == src_num
+    # The new quote exists in DB + is draft
+    rows = c.get("/api/admin/quotes", headers=H).json()["items"]
+    new = next((x for x in rows if x["quote_number"] == new_num), None)
+    assert new is not None
+    assert new["status"] == "draft"
+
+
 def test_quote_edit_v1_24_177():
     """v1.24.177 — PATCH an existing draft quote to update fields.
     Founder ask: 'no option to modify existing quotation — what is the

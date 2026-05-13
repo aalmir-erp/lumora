@@ -182,6 +182,49 @@ def verify_magic_link(req: MagicLinkVerifyReq):
     raise HTTPException(401, "invalid or expired magic link")
 
 
+class CustomerLoginReq(BaseModel):
+    """v1.24.186 — Customer password login (was MISSING). Founder ask:
+    'login page shows magic link, no password option — if password is
+    set what is purpose?'. Demo seed customers in seed_demo.py have
+    plaintext passwords (aisha123 etc.) — this endpoint lets you sign
+    in with phone/email + password directly."""
+    identifier: str    # phone OR email
+    password:   str
+
+
+@router.post("/auth/customer/login")
+def customer_password_login(req: CustomerLoginReq):
+    ident = (req.identifier or "").strip()
+    pw    = req.password or ""
+    if not ident or not pw:
+        raise HTTPException(400, "identifier + password required")
+    digits = "".join(ch for ch in ident if ch.isdigit())
+    with db.connect() as c:
+        row = None
+        if digits and len(digits) >= 7:
+            row = c.execute(
+                "SELECT id, password_hash, phone, email, name FROM customers "
+                "WHERE replace(replace(phone,' ',''),'+','') LIKE ? LIMIT 1",
+                ("%" + digits[-9:],)).fetchone()
+        if not row and "@" in ident:
+            row = c.execute(
+                "SELECT id, password_hash, phone, email, name FROM customers "
+                "WHERE lower(email)=?",
+                (ident.lower(),)).fetchone()
+    if not row:
+        raise HTTPException(404, "no account found for that phone or email")
+    stored = row["password_hash"] or ""
+    if not stored:
+        raise HTTPException(401, "no password set — use OTP / magic link, or POST /auth/customer/set-password first")
+    if not a.verify_password(pw, stored):
+        raise HTTPException(401, "wrong password")
+    token = a.create_session("customer", row["id"])
+    return {"ok": True, "token": token, "user_type": "customer",
+            "user": {"id": row["id"], "name": row["name"],
+                     "phone": row["phone"], "email": row["email"]},
+            "redirect": "/me.html"}
+
+
 # --- Set/change password for customer (post-checkout claim) ---
 class SetPasswordReq(BaseModel):
     phone: str
@@ -195,7 +238,11 @@ def set_customer_password(req: SetPasswordReq):
         raise HTTPException(400, "password must be 6+ chars")
     pw = a.hash_password(req.password)
     with db.connect() as c:
-        r = c.execute("SELECT id FROM customers WHERE phone=?", (req.phone or "")).fetchone()
+        # v1.24.186 — fix latent bug: `(req.phone or "")` was a STRING, not
+        # a tuple → sqlite saw 13 bindings. Was breaking every set-password
+        # call silently (which is why no customer ever ended up with a
+        # password). Trailing comma now makes it a 1-element tuple.
+        r = c.execute("SELECT id FROM customers WHERE phone=?", (req.phone or "",)).fetchone()
         if not r: raise HTTPException(404, "no account for that phone")
         try: c.execute("ALTER TABLE customers ADD COLUMN password_hash TEXT")
         except Exception: pass

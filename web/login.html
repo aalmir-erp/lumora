@@ -9,8 +9,8 @@
 <link rel="canonical" href="https://servia.ae/login">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-<link rel="preload" as="style" href="/style.css?v=1.24.185" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.185"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.185" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.185"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.186" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.186"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.186" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.186"></noscript>
 <style>
   body { background:#FAFAFA; }
   /* Hide all floating buttons on the login page — they overlap the form on
@@ -449,12 +449,43 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
       <!-- ---------- CUSTOMER PANEL ---------- -->
       <div class="panel active" id="p-c">
         <h2>Sign in or create account</h2>
-        <p class="subhead">No password to remember. Pick the method you prefer.</p>
+        <p class="subhead">Pick a method — magic link, OTP, biometric, or password.</p>
 
         <div class="sub-pills" role="tablist" aria-label="Sign-in method">
           <button class="active" id="cs-phone" onclick="custSub('phone')">📱 Phone</button>
           <button id="cs-email"                onclick="custSub('email')">✉️ Email</button>
+          <button id="cs-password"             onclick="custSub('password')">🔑 Password</button>
           <button id="cs-social"               onclick="custSub('social')">🌐 Social</button>
+        </div>
+
+        <!-- v1.24.186 — Customer password sign-in (was missing).
+             Founder: 'login page, instead of password it shows magic link.
+             What is purpose of password if can't use it?'. Demo seed
+             accounts (seed_demo.py) ship with plaintext passwords. -->
+        <div class="panel" id="cs-password-pane">
+          <div class="row">
+            <label for="cpw-id">Phone or email</label>
+            <input id="cpw-id" type="text" placeholder="+971501234567 or you@example.com" autocomplete="username">
+          </div>
+          <div class="row">
+            <label for="cpw-pw">Password</label>
+            <input id="cpw-pw" type="password" placeholder="your password" autocomplete="current-password">
+          </div>
+          <div id="cpw-error" style="display:none;color:#B91C1C;font-size:12px;margin-top:6px"></div>
+          <button class="btn-auth" type="button" onclick="customerPasswordLogin()">
+            <span>🔑 Sign in with password</span> <span aria-hidden="true">→</span>
+          </button>
+          <p class="auth-foot" style="margin-top:14px">Forgot password? Use 📱 Phone or ✉️ Email tab — sign in with OTP / magic-link, then set a new password from your profile.</p>
+          <details style="margin-top:14px;background:#FEFCE8;border:1px solid #FDE68A;border-radius:8px;padding:10px 12px;font-size:12px">
+            <summary style="cursor:pointer;font-weight:700;color:#92400E">🧪 Demo accounts (test only)</summary>
+            <div style="margin-top:6px;line-height:1.7;color:#78350F">
+              <code>+971500000001</code> · <code>aisha123</code><br>
+              <code>+971500000002</code> · <code>mohd123</code><br>
+              <code>+971500000003</code> · <code>priya123</code><br>
+              <code>+971500000004</code> · <code>lara123</code><br>
+              <code>+971500000005</code> · <code>khalid123</code>
+            </div>
+          </details>
         </div>
 
         <!-- Phone OTP -->
@@ -761,11 +792,45 @@ function setTab(t) {
 
 // ---------- customer sub-tabs ----------
 function custSub(name) {
-  ["phone","email","social"].forEach(n => {
-    document.getElementById("cs-"+n).classList.toggle("active", n === name);
-    document.getElementById("cs-"+n+"-pane").classList.toggle("active", n === name);
+  ["phone","email","password","social"].forEach(n => {
+    const t = document.getElementById("cs-"+n);
+    if (t) t.classList.toggle("active", n === name);
+    const p = document.getElementById("cs-"+n+"-pane");
+    if (p) p.classList.toggle("active", n === name);
   });
   hideMsg();
+}
+
+// v1.24.186 — Customer password sign-in (founder ask)
+async function customerPasswordLogin() {
+  const id = (document.getElementById("cpw-id").value || "").trim();
+  const pw = (document.getElementById("cpw-pw").value || "");
+  const err = document.getElementById("cpw-error");
+  err.style.display = "none";
+  if (!id || !pw) {
+    err.textContent = "Enter phone/email + password.";
+    err.style.display = "block"; return;
+  }
+  try {
+    const r = await fetch("/api/auth/customer/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier: id, password: pw })
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) {
+      err.textContent = d.detail || ("HTTP " + r.status);
+      err.style.display = "block"; return;
+    }
+    localStorage.setItem("lumora.user.tok", d.token);
+    localStorage.setItem("lumora.user.type", "customer");
+    localStorage.removeItem("lumora.user.impersonated");
+    const next = new URLSearchParams(location.search).get("next") || d.redirect || "/me.html";
+    location.href = next;
+  } catch (e) {
+    err.textContent = "Network error — please try again.";
+    err.style.display = "block";
+  }
 }
 
 // ---------- vendor sub-tabs ----------
@@ -1153,5 +1218,5 @@ async function vendorRegister() {
 
 <script src="/theme.js" defer></script>
 <script src="/install.js" defer></script>
-<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.185";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.186";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 </body></html>
