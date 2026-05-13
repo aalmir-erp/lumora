@@ -103,6 +103,10 @@ SKIP_PREFIXES = (
     "/admin-", "/sitemap", "/robots", "/llms", "/.well-known",
     "/static/", "/img/", "/web/", "/_snippets", "/manifest",
     "/sw.js", "/widget.",
+    # v1.24.148 — self-contained pages with their own intentional dashboard/UI
+    # design. Chrome injection would break their layout because they don't
+    # load /style.css (their styles are inline + self-sufficient).
+    "/checkout", "/host", "/pitch", "/sos",
 )
 
 
