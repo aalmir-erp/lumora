@@ -1134,14 +1134,37 @@ def _name_to_service_id(name: str) -> str | None:
     nl = (name or "").lower().strip()
     if not nl:
         return None
+    # 1) exact name match
     for s in services:
         if (s.get("name") or "").lower() == nl:
             return s.get("id")
+    # 2) exact id match (rare — bot rarely emits IDs but cheap to check)
+    for s in services:
+        if (s.get("id") or "").lower() == nl.replace(" ", "_"):
+            return s.get("id")
+    # 3) substring (legacy)
     for s in services:
         sn = (s.get("name") or "").lower()
         if sn and (sn in nl or nl in sn):
             return s.get("id")
-    return None
+    # 4) token-overlap — v1.24.160. "AC cleaning" → "AC Duct & Coil Cleaning"
+    # Strip stop-words, then accept if every input token appears in the
+    # candidate (or its id). Picks the candidate with most overlap.
+    _stop = {"and", "the", "a", "an", "of", "for", "&", "service", "services"}
+    in_toks = {t for t in _re_q.split(r"[^a-z0-9]+", nl) if t and t not in _stop}
+    if not in_toks:
+        return None
+    best_id, best_overlap = None, 0
+    for s in services:
+        sn = (s.get("name") or "").lower()
+        sid = (s.get("id") or "").lower()
+        cand_toks = {t for t in _re_q.split(r"[^a-z0-9]+", sn + " " + sid)
+                     if t and t not in _stop}
+        overlap = len(in_toks & cand_toks)
+        # All input tokens must appear in candidate.
+        if overlap == len(in_toks) and overlap > best_overlap:
+            best_id, best_overlap = s.get("id"), overlap
+    return best_id
 
 
 _MONTH_NAMES = {
@@ -1262,10 +1285,11 @@ def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = No
     print(f"[auto-quote] parsed: services={parsed['services']} "
           f"name={parsed['name']!r} phone={parsed['phone']!r} "
           f"addr={parsed['address']!r} time={parsed['time']!r}", flush=True)
-    if len(parsed["services"]) < 2:
-        print(f"[auto-quote] SKIP: only {len(parsed['services'])} services parsed", flush=True)
+    if len(parsed["services"]) < 1:
+        print(f"[auto-quote] SKIP: zero services parsed", flush=True)
         return text
-    # Map to service_ids; require at least 2 mapped
+    # Map to service_ids; single-service path uses prepare_checkout,
+    # multi-service path uses create_multi_quote.
     services_arg = []
     unmapped = []
     for n in parsed["services"]:
@@ -1274,6 +1298,53 @@ def _enforce_multi_quote_when_book_now(text: str, *, session_id: str | None = No
             services_arg.append({"service_id": sid})
         else:
             unmapped.append(n)
+    # v1.24.160 — SINGLE-service path: bot emitted 'Book now ↗' for 1 service
+    # with all booking details. Call prepare_checkout (NOT create_multi_quote)
+    # and rewrite reply with /checkout?q=X URL. Founder complained that the
+    # legacy 'Book now' link sent users to an empty /book?service= form
+    # instead of the prepared checkout. This fixes that for single-service.
+    if len(services_arg) == 1:
+        name = parsed["name"] or "Customer"
+        phone = parsed["phone"] or ""
+        address = parsed["address"] or ""
+        if not phone or not address:
+            print(f"[auto-checkout] SKIP single-svc: missing phone={bool(phone)} address={bool(address)}", flush=True)
+            return text
+        target_date, time_slot = _normalise_date_time(parsed["time"])
+        try:
+            from .tools import prepare_checkout as _pc
+            r = _pc(
+                service_id=services_arg[0]["service_id"],
+                customer_name=name, phone=phone, address=address,
+                target_date=target_date, time_slot=time_slot,
+                session_id=session_id,
+            )
+        except Exception as e:
+            print(f"[auto-checkout] prepare_checkout failed: {e}", flush=True)
+            return text
+        if not r.get("ok"):
+            print(f"[auto-checkout] prepare_checkout returned: {r}", flush=True)
+            return text
+        # Rewrite the reply with a clean checkout URL message — drop the
+        # 'Book now ↗' legacy link entirely.
+        qn = r.get("quote_number", "?")
+        sub = r.get("subtotal", 0)
+        vat = r.get("vat_amount", 0)
+        total = r.get("total", 0)
+        url = r.get("checkout_url", "")
+        from .config import get_settings as _gs
+        domain = _gs().brand().get("domain", "servia.ae")
+        full_url = f"https://{domain}{url}" if url.startswith("/") else url
+        print(f"[auto-checkout] ✓ Single-service auto-routed to {qn} → {full_url}", flush=True)
+        return (
+            f"✅ Your quote *{qn}* is ready:\n"
+            f"  • Subtotal: AED {sub:.2f}\n"
+            f"  • UAE VAT 5%: AED {vat:.2f}\n"
+            f"  • Total: AED {total:.2f}\n\n"
+            f"Tap to review and pay securely:\n{full_url}\n\n"
+            f"Your slot locks when payment clears (usually 30 seconds)."
+        )
+
     if len(services_arg) < 2:
         print(f"[auto-quote] SKIP: only {len(services_arg)} services mapped to ids; unmapped={unmapped}", flush=True)
         return text

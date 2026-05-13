@@ -115,8 +115,14 @@
 const TOKEN_KEY="servia.admin.token";
 const tok=document.getElementById("token");
 tok.value=localStorage.getItem(TOKEN_KEY)||"";
-tok.onchange=()=>localStorage.setItem(TOKEN_KEY,tok.value);
-function H(){return{"Authorization":"Bearer "+tok.value}}
+tok.oninput=()=>localStorage.setItem(TOKEN_KEY,tok.value.trim());
+tok.onchange=()=>localStorage.setItem(TOKEN_KEY,tok.value.trim());
+function H(){
+  let t=(tok.value||"").trim();
+  if(!t){ t=(prompt("Paste your admin token (saved for next time):")||"").trim();
+    if(t){ tok.value=t; localStorage.setItem(TOKEN_KEY,t); } }
+  return {"Authorization":"Bearer "+t};
+}
 async function load(){
   try{
     const r=await fetch("/api/admin/contact",{headers:H()});

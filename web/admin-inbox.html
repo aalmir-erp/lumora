@@ -116,8 +116,14 @@ tr:hover{background:#FAFBFC}
 const TOK="servia.admin.token";
 const tk=document.getElementById("token");
 tk.value=localStorage.getItem(TOK)||"";
-tk.onchange=()=>localStorage.setItem(TOK,tk.value);
-const H=()=>({"Authorization":"Bearer "+tk.value});
+tk.oninput=()=>localStorage.setItem(TOK,tk.value.trim());
+tk.onchange=()=>localStorage.setItem(TOK,tk.value.trim());
+function H(){
+  let t=(tk.value||"").trim();
+  if(!t){ t=(prompt("Paste your admin token (saved for next time):")||"").trim();
+    if(t){ tk.value=t; localStorage.setItem(TOK,t); } }
+  return {"Authorization":"Bearer "+t};
+}
 
 async function api(p){const r=await fetch(p,{headers:H()});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
 

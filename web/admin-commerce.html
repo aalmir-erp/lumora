@@ -300,9 +300,17 @@
 const TOKEN_KEY = "servia.admin.token";
 const tokenInput = document.getElementById("token");
 tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
-tokenInput.addEventListener("change", () => localStorage.setItem(TOKEN_KEY, tokenInput.value));
+tokenInput.addEventListener("input", () => localStorage.setItem(TOKEN_KEY, tokenInput.value.trim()));
+tokenInput.addEventListener("change", () => localStorage.setItem(TOKEN_KEY, tokenInput.value.trim()));
 
-function H() { return { "Authorization": "Bearer " + tokenInput.value }; }
+function H() {
+  let t = (tokenInput.value || "").trim();
+  if (!t) {
+    t = (prompt("Paste your admin token (saved for next time):") || "").trim();
+    if (t) { tokenInput.value = t; localStorage.setItem(TOKEN_KEY, t); }
+  }
+  return { "Authorization": "Bearer " + t };
+}
 async function api(path) {
   const r = await fetch(path, { headers: H() });
   if (!r.ok) throw new Error("HTTP " + r.status);
