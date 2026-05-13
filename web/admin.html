@@ -4,7 +4,7 @@
 <meta name="googlebot" content="noindex,nofollow">
 <meta name="bingbot" content="noindex,nofollow">
 <title>Admin: Servia</title><meta name="theme-color" content="#0D9488">
-<link rel="stylesheet" href="/style.css?v=1.24.184">
+<link rel="stylesheet" href="/style.css?v=1.24.185">
 <style>
   /* Mobile drawer for the admin sidebar — style.css hides .admin-side on
    * <=880px with no way to bring it back. Re-introduce it as a slide-out
@@ -2676,8 +2676,39 @@ const _showBurger = () => {
 };
 window.addEventListener("resize", _showBurger);
 
+// v1.24.185 — Stale-cache detector. Founder hit: server reports
+// v1.24.184 but Payments tab still shows OLD content because the
+// service worker cached an older admin.html. Compares page-version
+// (from ?v=… on style.css) to server-version (/api/health). On
+// mismatch: amber badge + one-time alert + click-to-force-reload.
 async function boot() {
-  fetch("/api/health").then(r=>r.json()).then(j => { document.getElementById("admin-ver").textContent = "v" + j.version; }).catch(()=>{});
+  fetch("/api/health", { cache: "no-store" }).then(r=>r.json()).then(j => {
+    const live = "v" + j.version;
+    const badge = document.getElementById("admin-ver");
+    if (badge) badge.textContent = live;
+    const ln = document.querySelector('link[href*="?v=1.24."]');
+    const m  = ln && ln.href.match(/[?&]v=(1\.24\.\d+)/);
+    const pageVer = m ? "v" + m[1] : null;
+    if (pageVer && pageVer !== live && badge) {
+      badge.style.cssText = "background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:6px;cursor:pointer;font-weight:800";
+      badge.title = `Server is ${live} but this page is ${pageVer}. Click to force-reload.`;
+      badge.onclick = () => {
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.getRegistrations().then(rs => {
+            Promise.all(rs.map(r => r.unregister())).then(() => location.reload(true));
+          });
+        } else location.reload(true);
+      };
+      if (!sessionStorage.getItem("stale-cache-alert")) {
+        sessionStorage.setItem("stale-cache-alert", "1");
+        setTimeout(() => alert(
+          "⚠ This admin page is cached from " + pageVer + " but the server is on " + live + ".\n\n" +
+          "Tap the amber version badge in the sidebar to force-reload with the latest version " +
+          "(Ziina test-mode toggle + other recent fixes).\n\n" +
+          "Or open /admin?reset=1 once."), 600);
+      }
+    }
+  }).catch(()=>{});
   document.getElementById("login").style.display = "none";
   document.getElementById("shell").style.display = "";
   _showBurger();
