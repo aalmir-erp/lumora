@@ -1249,21 +1249,69 @@ class MarkCompletedBody(BaseModel):
     notes: Optional[str] = None
     photo_urls: Optional[list[str]] = None
     customer_signature: Optional[str] = None
+    # v1.24.173 — Indices into SO.line_items_json that are completed in
+    # this Service Note. Omit/None = ALL lines (full completion).
+    # Use a subset for partial fulfillment / back-order:
+    #   POST {line_item_indices: [0, 2]} → SN covers lines 0 + 2 only;
+    #   SO stays in_progress until remaining lines get their own SN.
+    line_item_indices: Optional[list[int]] = None
 
 
 @router.post("/api/admin/sales-orders/{so_id}/mark-completed",
              dependencies=[Depends(require_admin)])
 def admin_mark_so_completed(so_id: str, body: MarkCompletedBody):
-    """Mark SO completed → auto-create a Delivery Note."""
+    """Mark SO completed → auto-create a Service Note.
+
+    v1.24.173 — Partial fulfillment / back-order:
+    If body.line_item_indices is set, the Service Note only covers
+    those specific line items from the SO. Remaining items stay open
+    (SO status='in_progress'). Founder ask: 'might be one service
+    delivered partially, might be four or five services were required
+    and one is done one is not done so there should be a back order'.
+    """
     now = _now()
     with db.connect() as c:
         so = c.execute("SELECT * FROM sales_orders WHERE id=?", (so_id,)).fetchone()
         if not so:
             raise HTTPException(status_code=404, detail="not found")
-        c.execute("""
-            UPDATE sales_orders SET status='completed', completed_at=?, updated_at=?
-            WHERE id=?
-        """, (now, now, so_id))
+        so_items: list = []
+        try:
+            so_items = json.loads(so["line_items_json"] or "[]")
+        except Exception:
+            pass
+
+    # Decide which line items this SN covers.
+    idxs = body.line_item_indices
+    if idxs:
+        dn_items = [so_items[i] for i in idxs if 0 <= i < len(so_items)]
+    else:
+        dn_items = so_items
+
+    # Compute coverage by combining this DN with any previous DNs against
+    # the same SO. SO is fully completed only when every line is covered.
+    prior_covered: set = set()
+    with db.connect() as c:
+        prior = c.execute(
+            "SELECT line_items_json FROM delivery_notes WHERE sales_order_id=?",
+            (so_id,),
+        ).fetchall()
+        for r in prior:
+            try:
+                for it in json.loads(r["line_items_json"] or "[]"):
+                    key = it.get("svc_id") or it.get("name") or json.dumps(it, sort_keys=True)
+                    prior_covered.add(key)
+            except Exception:
+                pass
+    # Add this round's items
+    for it in dn_items:
+        key = it.get("svc_id") or it.get("name") or json.dumps(it, sort_keys=True)
+        prior_covered.add(key)
+    # Are all SO lines now covered?
+    so_keys = set()
+    for it in so_items:
+        key = it.get("svc_id") or it.get("name") or json.dumps(it, sort_keys=True)
+        so_keys.add(key)
+    fully_completed = so_keys.issubset(prior_covered)
 
     dn_id = _id("DN")
     dn_num = next_doc_number("dn")
@@ -1275,10 +1323,25 @@ def admin_mark_so_completed(so_id: str, body: MarkCompletedBody):
                photo_urls_json, notes, created_at)
             VALUES (?,?,?,?,?,?,?,?,?,?,?)
         """, (dn_id, dn_num, so_id, so["booking_id"], now,
-              so["line_items_json"], body.customer_signature,
+              json.dumps(dn_items), body.customer_signature,
               (now if body.customer_signature else None),
-              json.dumps(body.photo_urls or []), body.notes, now))
-    return {"ok": True, "dn_id": dn_id, "dn_number": dn_num}
+              json.dumps(body.photo_urls or []),
+              body.notes, now))
+        # Update SO status
+        new_status = "completed" if fully_completed else "in_progress"
+        c.execute("""
+            UPDATE sales_orders SET status=?, completed_at=?, updated_at=?
+            WHERE id=?
+        """, (new_status, (now if fully_completed else None), now, so_id))
+
+    return {
+        "ok": True, "dn_id": dn_id, "dn_number": dn_num,
+        "lines_in_this_sn": len(dn_items),
+        "lines_total_in_so": len(so_items),
+        "fully_completed": fully_completed,
+        "back_order_lines": max(0, len(so_keys) - len(prior_covered)),
+        "so_status": new_status,
+    }
 
 
 # ═════════════════════════════════════════════════════════════════════

@@ -283,6 +283,47 @@ def test_accept_and_pay_v1_24_172():
     assert q2.get("quote", {}).get("status") == "accepted"
 
 
+def test_partial_fulfillment_back_order_v1_24_173():
+    """v1.24.173 — Partial fulfillment: complete a subset of an SO's
+    lines first, then the rest. SO stays in_progress until all covered."""
+    c = _client()
+    H = {"Authorization": "Bearer lumora-admin-test"}
+    HJ = {**H, "Content-Type": "application/json"}
+    # Build a fresh quote with 3 line items so we have something to partially complete
+    new_q = c.post("/api/admin/quotes/create", headers=HJ, json={
+        "customer_name": "Test Partial",
+        "customer_phone": "+971501112222",
+        "line_items": [
+            {"svc_id": "deep_cleaning", "name": "Deep clean",  "qty": 1, "unit_price": 490},
+            {"svc_id": "ac_cleaning",    "name": "AC cleaning", "qty": 2, "unit_price": 150},
+            {"svc_id": "plumbing",       "name": "Plumbing",    "qty": 1, "unit_price": 200},
+        ],
+    }).json()
+    assert new_q.get("ok"), new_q
+    qid = new_q["id"]
+    # Accept → creates SO + invoice
+    r = c.post(f"/api/admin/quotes/{qid}/accept", headers=H).json()
+    so_id = r.get("sales_order", {}).get("id")
+    assert so_id
+    # Partial complete: only lines 0 + 1 (deep_clean + ac_cleaning)
+    r = c.post(f"/api/admin/sales-orders/{so_id}/mark-completed", headers=HJ, json={
+        "line_item_indices": [0, 1],
+        "notes": "First two services done, plumbing rescheduled",
+    }).json()
+    assert r.get("ok")
+    assert r.get("fully_completed") is False
+    assert r.get("lines_in_this_sn") == 2
+    assert r.get("so_status") == "in_progress"
+    # Second partial: complete the remaining plumbing line
+    r = c.post(f"/api/admin/sales-orders/{so_id}/mark-completed", headers=HJ, json={
+        "line_item_indices": [2],
+        "notes": "Plumbing done now",
+    }).json()
+    assert r.get("ok")
+    assert r.get("fully_completed") is True
+    assert r.get("so_status") == "completed"
+
+
 def test_brand_contact_placeholder_v1_24_165_169():
     assert _is_placeholder("+971 50 000 0000")
     assert _is_placeholder("+971 50 111 0001")
