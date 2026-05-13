@@ -687,6 +687,9 @@ async function openDetail(tab, id) {
         actions += `<button class="btn" onclick="acceptQuote('${id}')">✅ Accept (creates SO + invoice)</button> `;
         // v1.24.172 — Atomic "accept + pay in one click" for on-the-spot payments
         actions += `<button class="btn btn-amber" onclick="acceptAndPay('${id}', ${item.total || 0})">⚡ Accept + Pay now</button> `;
+        // v1.24.180 — Reconcile a Ziina payment that already landed but
+        // didn't auto-confirm (pre-v1.24.179 webhook bug).
+        actions += `<button class="btn btn-ghost" style="background:#FEF3C7;color:#92400E" onclick="reconcileZiina('${id}', ${item.total || 0})">🔗 Reconcile Ziina payment</button> `;
       }
       if (item.status !== "rejected" && item.status !== "cancelled" && item.status !== "accepted") {
         actions += `<button class="btn btn-ghost" onclick="rejectQuote('${id}')">❌ Reject</button> `;
@@ -1138,6 +1141,32 @@ async function acceptQuote(id) {
   if (!confirm("Accept quote? This creates a Sales Order + auto-generates an Invoice.")) return;
   try { await apiPost(`/api/admin/quotes/${id}/accept`); alert("Accepted!"); closeModal(); loadList("quotes"); }
   catch (e) { alert("Failed: " + e.message); }
+}
+
+// v1.24.180 — Reconcile a Ziina payment that already landed.
+// Founder hit QT-2026-0012 where Ziina sent 'Payment Received' but
+// the old webhook returned 'orphan' so quote stayed DRAFT. This
+// retroactively accepts the quote + creates SO/invoice + records
+// the payment using the intent_id from the Ziina notification.
+async function reconcileZiina(quoteId, suggested) {
+  const intent = prompt("Paste the Ziina payment intent ID (from the Ziina notification, e.g. pi_xxx):", "");
+  if (!intent) return;
+  const amtStr = prompt(`Amount received (AED)?`, String((suggested||0).toFixed(2)));
+  if (!amtStr) return;
+  const amount = parseFloat(amtStr);
+  if (!amount || amount <= 0) { alert("Enter a valid amount."); return; }
+  if (!confirm(`Reconcile: accept this quote → create SO + invoice → register AED ${amount.toFixed(2)} Ziina payment (ref ${intent})?`)) return;
+  try {
+    const r = await fetch(`/api/admin/quotes/${quoteId}/reconcile-ziina`, {
+      method:"POST", headers:{...H(),"Content-Type":"application/json"},
+      body: JSON.stringify({ intent_id: intent.trim(), amount, notes: "Manual reconcile from admin UI" })
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.detail || "reconcile failed");
+    alert(`✓ Reconciled.\nInvoice: ${d.invoice_id}\nTotal: AED ${d.invoice_total}\nPaid: AED ${d.paid_so_far}\nStatus: ${d.status}`);
+    closeModal();
+    loadList("quotes");
+  } catch (e) { alert("Failed: " + e.message); }
 }
 
 // v1.24.172 — One-click: accept quote + record on-the-spot payment.

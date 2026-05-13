@@ -598,6 +598,80 @@ def admin_reject_quote(quote_id: str):
     return {"ok": True}
 
 
+class _ReconcileZiinaBody(BaseModel):
+    """v1.24.180 — Manual reconciliation when a Ziina payment landed
+    before the auto-confirm logic existed (v1.24.179 fix). Founder hit
+    QT-2026-0012 where Ziina notified 'Payment Received' but the admin
+    quote stayed DRAFT because the v1.24.178-era webhook returned
+    'orphan'. This endpoint replays the auto-confirm flow."""
+    intent_id: str                  # Ziina payment_intent id (from notification)
+    amount:    Optional[float] = None   # AED — defaults to quote total
+    notes:     Optional[str] = None
+
+
+@router.post("/api/admin/quotes/{quote_id}/reconcile-ziina",
+              dependencies=[Depends(require_admin)])
+def admin_reconcile_ziina(quote_id: str, body: _ReconcileZiinaBody):
+    """Replay the v1.24.179 auto-confirm flow on an old quote whose Ziina
+    payment landed when the webhook was still orphaning quote-stage
+    intents. Equivalent to /accept-and-pay but tagged as ziina + intent."""
+    now = _now()
+    with db.connect() as c:
+        q = c.execute(
+            "SELECT * FROM quotes WHERE id=? OR quote_number=?",
+            (quote_id, quote_id)).fetchone()
+        if not q:
+            raise HTTPException(404, "quote not found")
+        q_dict = dict(q)
+        already_accepted = q_dict["status"] == "accepted"
+
+    if already_accepted:
+        with db.connect() as c:
+            inv = c.execute(
+                "SELECT id, amount FROM invoices WHERE sales_order_id IN "
+                "(SELECT id FROM sales_orders WHERE quote_id=?) "
+                "ORDER BY created_at DESC LIMIT 1",
+                (q_dict["id"],)).fetchone()
+        if not inv:
+            raise HTTPException(409, "quote accepted but no invoice — repair via /accept first")
+        invoice_id, invoice_total = inv["id"], inv["amount"] or 0
+    else:
+        with db.connect() as c:
+            c.execute("UPDATE quotes SET status='accepted' WHERE id=?", (q_dict["id"],))
+        so  = _create_so_from_quote(q_dict)
+        inv = _create_invoice_from_so(so)
+        invoice_id    = inv["id"]
+        invoice_total = inv.get("total") or so.get("total") or 0
+
+    paid_amount = float(body.amount or invoice_total or 0)
+    with db.connect() as c:
+        c.execute("""
+            INSERT INTO payment_registrations
+              (payment_type, reference_type, reference_id, counterparty_id,
+               counterparty_name, amount, currency, method, reference_number,
+               payment_date, notes, created_at, created_by)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, ("customer_in", "invoice", invoice_id,
+              q_dict.get("customer_id"), q_dict.get("customer_name"),
+              paid_amount, "AED", "ziina", body.intent_id,
+              now, (body.notes or "") + f" [reconciled-from-intent:{body.intent_id}]",
+              now, "admin"))
+        paid_row = c.execute(
+            "SELECT COALESCE(SUM(amount),0) AS s FROM payment_registrations "
+            "WHERE reference_type='invoice' AND reference_id=?",
+            (invoice_id,)).fetchone()
+        paid_so_far = float(paid_row["s"])
+        new_status = "paid" if paid_so_far >= invoice_total - 0.01 and invoice_total > 0 else "partially_paid"
+        c.execute("UPDATE invoices SET payment_status=?, paid_at=? WHERE id=?",
+                  (new_status, now if new_status == "paid" else None, invoice_id))
+    return {
+        "ok": True, "invoice_id": invoice_id,
+        "invoice_total": invoice_total,
+        "paid_amount": paid_amount, "paid_so_far": paid_so_far,
+        "status": new_status,
+    }
+
+
 class _AcceptAndPayBody(BaseModel):
     """v1.24.172 — Accept the quote AND record customer payment in one step.
 
