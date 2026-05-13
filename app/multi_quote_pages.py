@@ -47,17 +47,75 @@ def _now() -> str:
     return _dt.datetime.utcnow().isoformat() + "Z"
 
 
-def _quote(quote_id: str) -> dict | None:
+# v1.24.165 — Customer can leave remarks / change requests / reject reasons.
+# Stored in a small table; surfaced in admin Quotes tab as 🔔 badge.
+def _ensure_remarks_table() -> None:
     with db.connect() as c:
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS quote_remarks (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                quote_id      TEXT NOT NULL,
+                customer_name TEXT,
+                customer_phone TEXT,
+                action        TEXT,
+                remarks       TEXT NOT NULL,
+                created_at    TEXT NOT NULL,
+                admin_seen_at TEXT,
+                admin_reply   TEXT
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_qr_quote ON quote_remarks(quote_id)")
+
+
+try:
+    _ensure_remarks_table()
+except Exception as _e:
+    print(f"[quote_remarks] init: {_e}", flush=True)
+
+
+def _quote(quote_id: str) -> dict | None:
+    """v1.24.165 — Fetch a quote from EITHER multi_quotes (bot/chat path)
+    OR the admin-created quotes table (commerce admin path). Founder
+    reported: 'quotation is not opening on that link' — root cause was
+    admin quotes never appearing because this reader only checked
+    multi_quotes. Now checks both and normalizes the field names."""
+    with db.connect() as c:
+        # 1) Try the bot/chat table first (existing path)
         try:
-            r = c.execute("SELECT * FROM multi_quotes WHERE quote_id=?",
-                          (quote_id,)).fetchone()
-        except Exception: return None
-    if not r: return None
-    d = dict(r)
-    try: d["items"] = _json.loads(d.get("items_json") or "[]")
-    except Exception: d["items"] = []
-    return d
+            r = c.execute(
+                "SELECT * FROM multi_quotes WHERE quote_id=?",
+                (quote_id,),
+            ).fetchone()
+            if r:
+                d = dict(r)
+                try: d["items"] = _json.loads(d.get("items_json") or "[]")
+                except Exception: d["items"] = []
+                return d
+        except Exception:
+            pass
+        # 2) Fall back to the admin-created table (commerce flow)
+        try:
+            r = c.execute(
+                "SELECT * FROM quotes WHERE id=? OR quote_number=?",
+                (quote_id, quote_id),
+            ).fetchone()
+            if r:
+                d = dict(r)
+                # Normalize field names so the rest of this file can
+                # treat admin quotes the same as bot quotes.
+                try: d["items"] = _json.loads(d.get("line_items_json") or "[]")
+                except Exception: d["items"] = []
+                d["quote_id"]      = d.get("id") or quote_id
+                d["phone"]         = d.get("customer_phone") or ""
+                d["subtotal_aed"]  = d.get("subtotal")
+                d["vat_aed"]       = d.get("vat_amount")
+                d["total_aed"]     = d.get("total")
+                d["target_date"]   = d.get("valid_until")
+                d["address"]       = d.get("customer_address")
+                return d
+        except Exception:
+            pass
+    return None
 
 
 def _sign_token(quote_id: str, phone: str) -> str:
@@ -180,6 +238,24 @@ h3 {{ font-size: 14px; margin: 14px 0 6px; color: var(--tx); }}
       <h3>💬 Add notes (optional)</h3>
       <textarea id="cnote" rows="3" placeholder="Special instructions, parking info, etc."></textarea>
     </div>
+
+    <!-- v1.24.165 — Customer remark / change request / reject reason -->
+    <div class="card" id="remark-card" style="background:#FEFCE8;border:1px solid #FDE68A">
+      <h3>🗨️ Want changes or have questions?</h3>
+      <p style="color:var(--mu);font-size:13px;margin:-4px 0 8px">
+        Write below — our admin gets notified instantly and will reply via WhatsApp.
+      </p>
+      <textarea id="cremarks" rows="3" placeholder="e.g. Can we move the date to Saturday? Or only do bedrooms 1–2, skip the kitchen."></textarea>
+      <div class="row-2" style="margin-top:8px">
+        <button class="btn alt" onclick="sendRemark('change_request')">📝 Request changes</button>
+        <button class="btn" style="background:#DC2626" onclick="sendRemark('reject')">❌ Reject with reason</button>
+      </div>
+      <p style="font-size:11px;color:var(--mu);margin:6px 0 0">
+        You can also <a href="#" onclick="document.querySelector('.servia-chat-online,.us-launcher,.cmdk-fab')?.click();return false;" style="color:var(--t);font-weight:700">💬 chat with Servia AI</a>
+        — ask anything about this quote (what's included, can you do X, when can you start, etc.).
+      </p>
+    </div>
+
     <div class="card" style="text-align:center">
       <a class="btn full alt" href="/p/{quote_id}">💳 Pay online (AED <span id="payAmount">—</span>)</a>
       <p style="color:var(--mu);font-size:12px;margin:10px 0 0">
@@ -241,6 +317,30 @@ function initSig() {{
   c.addEventListener("touchend",up);
 }}
 function clearSig() {{ const c=document.getElementById("sig");c.getContext("2d").clearRect(0,0,c.width,c.height); }}
+
+// v1.24.165 — Customer leaves a remark / change request / reject reason.
+// Posts to /api/q/<id>/remark. Admin gets a 🔔 alert in /admin-commerce.
+async function sendRemark(action) {{
+  const txt = (document.getElementById("cremarks").value || "").trim();
+  if (!txt) {{ alert("Please write what you'd like to change or ask."); return; }}
+  if (action === "reject" && !confirm("Reject this quote with the reason above? Admin will be notified.")) return;
+  try {{
+    const r = await fetch("/api/q/{quote_id}/remark", {{
+      method:"POST", headers:{{"Content-Type":"application/json","X-Quote-Token":token}},
+      body: JSON.stringify({{ action, remarks: txt, session_id: new URLSearchParams(location.search).get("sid") }})
+    }});
+    const j = await r.json();
+    if (j.ok) {{
+      const card = document.getElementById("remark-card");
+      card.innerHTML = `<div style="text-align:center;padding:18px 6px">
+        <div style="background:#D1FAE5;color:#065F46;width:56px;height:56px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:10px">✓</div>
+        <h3 style="margin:0 0 6px">Thanks — we've received your message.</h3>
+        <p style="color:var(--mu);font-size:13px;margin:0">Our team will reply on WhatsApp within an hour. You can keep this page open to track updates.</p>
+      </div>`;
+    }} else alert("Could not send: " + (j.error||"server error"));
+  }} catch (e) {{ alert("Network error — please try again."); }}
+}}
+
 async function approve() {{
   const dataUrl = document.getElementById("sig").toDataURL("image/png");
   const note    = document.getElementById("cnote").value.trim();
@@ -407,6 +507,58 @@ def get_quote_card(quote_id: str, session_id: str = "") -> dict:
         "print_url":    f"/i/{quote_id}",
         "pay_url":      f"/p/{quote_id}",
     }
+
+
+class _RemarkBody(BaseModel):
+    """v1.24.165 — Customer leaves a remark / change-request / reject reason
+    from the /q/<id> page. Auth via phone-gate token (same as /sign)."""
+    action:  str           # 'change_request' | 'reject' | 'question'
+    remarks: str           # free-text body
+    session_id: str | None = None
+
+
+@public_router.post("/api/q/{quote_id}/remark")
+def post_remark(quote_id: str, body: _RemarkBody, request: Request) -> dict:
+    q = _quote(quote_id)
+    if not q: raise HTTPException(404)
+    tok = request.headers.get("X-Quote-Token", "")
+    stored = "".join(ch for ch in (q.get("phone") or "") if ch.isdigit())
+    auth_ok = _verify_token(tok, quote_id, stored)
+    if not auth_ok and body.session_id:
+        with db.connect() as c:
+            ev = c.execute(
+                "SELECT 1 FROM events WHERE entity_type='quote' AND entity_id=? "
+                "AND json_extract(details_json,'$.session_id')=? LIMIT 1",
+                (quote_id, body.session_id),
+            ).fetchone()
+        auth_ok = bool(ev)
+    if not auth_ok:
+        return {"ok": False, "error": "invalid token"}
+    action = (body.action or "").strip().lower()
+    if action not in ("change_request", "reject", "question", "accepted"):
+        return {"ok": False, "error": "invalid action"}
+    text = (body.remarks or "").strip()
+    if not text:
+        return {"ok": False, "error": "remarks required"}
+    with db.connect() as c:
+        c.execute(
+            "INSERT INTO quote_remarks (quote_id, customer_name, customer_phone, "
+            " action, remarks, created_at) VALUES (?,?,?,?,?,?)",
+            (quote_id, q.get("customer_name"), q.get("phone"),
+             action, text, _now()),
+        )
+        # Echo into events table so the existing admin live-feed picks it up.
+        try:
+            c.execute(
+                "INSERT INTO events (entity_type, entity_id, kind, details_json, created_at) "
+                "VALUES ('quote', ?, ?, ?, ?)",
+                (quote_id, f"customer_{action}", _json.dumps({
+                    "remarks": text, "customer": q.get("customer_name"),
+                }), _now()),
+            )
+        except Exception:
+            pass
+    return {"ok": True, "action": action}
 
 
 @public_router.post("/api/q/{quote_id}/sign")

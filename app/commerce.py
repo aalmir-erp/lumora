@@ -582,6 +582,63 @@ def admin_revise_quote(quote_id: str):
             "revised_from": orig["quote_number"], "rev": rev_n}
 
 
+@router.get("/api/admin/quotes/{quote_id}/remarks", dependencies=[Depends(require_admin)])
+def admin_list_remarks(quote_id: str):
+    """v1.24.165 — List customer remarks/change-requests/reject-reasons
+    against a quote (multi_quote or admin-quote). Founder demanded:
+    'admin side should be getting alerted that there are remarks on this
+    quotation by a customer or if there is any change suggested'."""
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT * FROM quote_remarks WHERE quote_id=? ORDER BY created_at DESC",
+            (quote_id,),
+        ).fetchall()
+        return {"ok": True, "items": [dict(r) for r in rows]}
+
+
+@router.get("/api/admin/quote-remarks/unread-count",
+             dependencies=[Depends(require_admin)])
+def admin_count_unread_remarks():
+    """v1.24.165 — Total unread remarks across all quotes. UI shows
+    this as a 🔔 badge next to the Quotes tab title."""
+    try:
+        with db.connect() as c:
+            row = c.execute(
+                "SELECT COUNT(*) AS n FROM quote_remarks WHERE admin_seen_at IS NULL"
+            ).fetchone()
+            return {"ok": True, "unread": int(row["n"]) if row else 0}
+    except Exception:
+        return {"ok": True, "unread": 0}
+
+
+@router.post("/api/admin/quote-remarks/{remark_id}/seen",
+              dependencies=[Depends(require_admin)])
+def admin_mark_remark_seen(remark_id: int):
+    """Mark a single remark as seen by admin (clears the 🔔 badge)."""
+    with db.connect() as c:
+        c.execute("UPDATE quote_remarks SET admin_seen_at=? WHERE id=?",
+                  (_now(), remark_id))
+    return {"ok": True}
+
+
+class _RemarkReplyBody(BaseModel):
+    reply: str
+
+
+@router.post("/api/admin/quote-remarks/{remark_id}/reply",
+              dependencies=[Depends(require_admin)])
+def admin_reply_remark(remark_id: int, body: _RemarkReplyBody):
+    """Admin replies to a customer remark. Stored on the remark row.
+    (Reply delivery to customer — via WhatsApp/email — is on the founder
+    to send; UI offers a one-click WA/email link using customer_phone.)"""
+    with db.connect() as c:
+        c.execute(
+            "UPDATE quote_remarks SET admin_reply=?, admin_seen_at=? WHERE id=?",
+            (body.reply, _now(), remark_id),
+        )
+    return {"ok": True}
+
+
 @router.get("/api/admin/quotes/{quote_id}/links", dependencies=[Depends(require_admin)])
 def admin_quote_links(quote_id: str):
     """v1.24.163 — Full doc chain for breadcrumb UI:
@@ -1428,18 +1485,37 @@ def _brand_block() -> dict:
 
 
 def _print_css() -> str:
+    """v1.24.165 — Redesign per founder feedback: 'design is bad, no logo,
+    no linking — add mascot watermark + interactive feel'."""
     return """<style>
         *,*::before,*::after{box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;background:#F1F5F9;color:#0F172A;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-        .doc{background:#fff;max-width:840px;margin:24px auto;padding:48px;box-shadow:0 8px 24px rgba(15,23,42,.1);border-radius:12px}
-        .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0F766E;padding-bottom:20px;margin-bottom:24px}
+        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;background:linear-gradient(180deg,#ECFDF5 0%,#F1F5F9 100%);color:#0F172A;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        .doc{background:#fff;max-width:880px;margin:24px auto;padding:48px;box-shadow:0 16px 48px rgba(15,118,110,.12);border-radius:14px;position:relative;overflow:hidden}
+        /* v1.24.165 — Servia mascot watermark, very faint */
+        .doc::before{
+            content:"";position:absolute;top:50%;right:-80px;width:480px;height:480px;
+            background:url("/brand/servia-avatar-512x512.png") center/contain no-repeat;
+            opacity:.05;pointer-events:none;transform:translateY(-50%) rotate(-8deg);
+            z-index:0;
+        }
+        .doc>*{position:relative;z-index:1}
+        .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0F766E;padding-bottom:20px;margin-bottom:18px;gap:24px}
         .hd .left{flex:1}
         .hd .right{text-align:right}
-        .hd h1{font-size:32px;margin:0 0 4px;letter-spacing:-.02em;color:#0F766E;font-weight:800}
-        .hd .docnum{font-size:14px;color:#64748B;font-weight:700;font-family:Menlo,monospace;background:#F1F5F9;padding:4px 10px;border-radius:6px;display:inline-block;margin-top:6px}
+        .hd .logo{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+        .hd .logo img{height:38px;width:auto;background:transparent}
+        .hd .logo .wm{font-size:18px;font-weight:900;color:#0F766E;letter-spacing:-.02em}
+        .hd h1{font-size:30px;margin:6px 0 4px;letter-spacing:-.02em;color:#0F766E;font-weight:800}
+        .hd .docnum{font-size:14px;color:#64748B;font-weight:700;font-family:Menlo,monospace;background:#F0FDFA;padding:4px 10px;border-radius:6px;display:inline-block;margin-top:6px;border:1px solid #99F6E4}
         .hd .brand{font-size:18px;font-weight:800;color:#0F172A;margin-bottom:4px}
         .hd .meta{font-size:12px;color:#64748B;line-height:1.7}
         .hd .meta b{color:#334155}
+        /* v1.24.165 — Cross-doc linking breadcrumb strip */
+        .links-strip{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:10px 14px;background:linear-gradient(90deg,#F0FDF4 0%,#ECFDF5 100%);border:1px solid #BBF7D0;border-radius:10px;font-size:11.5px}
+        .links-strip .lab{font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:.06em;margin-right:6px;display:flex;align-items:center}
+        .links-strip a{background:#fff;border:1px solid #86EFAC;padding:4px 10px;border-radius:99px;color:#0F766E;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+        .links-strip a:hover{background:#F0FDFA;border-color:#0F766E}
+        .links-strip a.this{background:#0F766E;color:#fff;border-color:#0F766E}
         .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
         .card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px 16px}
         .card .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#64748B;font-weight:800;margin-bottom:4px}

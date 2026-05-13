@@ -102,17 +102,43 @@ def _load_all() -> dict:
     return out
 
 
+# v1.24.165 — Detect placeholder / unset numbers so we don't render
+# the "000 0000" default in share links / printables. Founder said:
+# "you put some random number in WhatsApp by default" — that's this.
+_PLACEHOLDER_PATTERNS = ("000 0000", "0000000", "000000", "12345")
+
+
+def _is_placeholder(s: str) -> bool:
+    s = (s or "").strip().lower()
+    if not s:
+        return True
+    digits = "".join(ch for ch in s if ch.isdigit())
+    if len(digits) < 9:
+        return True
+    return any(p in s for p in _PLACEHOLDER_PATTERNS)
+
+
 def get_contact_phone() -> str:
-    return _load_all().get("contact_phone") or DEFAULTS["contact_phone"]
+    v = _load_all().get("contact_phone")
+    if v and not _is_placeholder(v):
+        return v
+    return ""   # blank → callers fall back to "see /contact"
 
 
 def get_contact_whatsapp() -> str:
     d = _load_all()
-    return d.get("contact_whatsapp") or d.get("contact_phone") or DEFAULTS["contact_whatsapp"]
+    for key in ("contact_whatsapp", "contact_phone"):
+        v = d.get(key)
+        if v and not _is_placeholder(v):
+            return v
+    return ""
 
 
 def get_contact_email() -> str:
-    return _load_all().get("contact_email") or DEFAULTS["contact_email"]
+    v = _load_all().get("contact_email") or DEFAULTS.get("contact_email") or ""
+    if "example" in v.lower() or "@example" in v.lower():
+        return ""
+    return v
 
 
 def get_bookings_email() -> str:
