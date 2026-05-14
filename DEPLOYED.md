@@ -2,12 +2,13 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"CbiGDB6MQ7KCJQGtBT7zVQ"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"KpASx2e3QLKiAUYyxtoGcA"}`
 
 ## Build logs
 ```
+[ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
 [internal] load build context
-[internal] load build context
+[ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
@@ -19,7 +20,6 @@
 [ 5/12] RUN pip install -r requirements.txt
 [ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
-[ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/12] COPY app ./app
 [ 8/12] COPY app ./app
 [ 9/12] COPY web ./web
@@ -32,9 +32,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:b7c152a074fd2dcd6ff72520ca4ca781522b8070e5d2afa963dcb3591e970807
-containerimage.digest: sha256:d2c7c42a0e61f78e838952d64e1ebe61e5619d060732534aa34a81181f749362
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZDJjN2M0MmEwZTYxZjc4ZTgzODk1MmQ2NGUxZWJlNjFlNTYxOWQwNjA3MzI1MzRhYTM0YTgxMTgxZjc0OTM2MiIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQxNDowNzowN1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZDFkNzdiNzZkNzU4Mjg1YWM3MmY0MWMxODQwY2EyZWUzZDk5ZTBiZjc1M2FiZDEyNDZhODI0MGI3YzBmMDNkZCIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQxNDoxNjo0NloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:bdeb9cdb057f786d68b6a68593d276c0b1ba945a94b24f02de77f23096d59039
+containerimage.digest: sha256:d1d77b76d758285ac72f41c1840ca2ee3d99e0bf753abd1246a8240b7c0f03dd
 image push
 image push
 
@@ -50,10 +50,10 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/234c6014-1593-46be-8186-7732d57feddc/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/8dd7c28e-12ec-4b2d-ae1a-7afddf210279/vol_onr647rhdeir9di9
 [start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
 Starting Container
+[wa-bridge] listening on :3001
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
 [lp-ar] 133 Arabic landing-page routes registered
@@ -64,8 +64,9 @@ INFO:     Waiting for application startup.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:36003 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.2:53763 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [autoblog] catch-up SKIP (last_run @ 2026-05-14T14:00:00.000637Z is fresh AND ok)
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
