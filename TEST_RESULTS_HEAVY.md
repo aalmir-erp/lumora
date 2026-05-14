@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 40
+- ✅ Pass: 42
 - ⚠️ Warn: 2
-- ❌ Fail: 8
+- ❌ Fail: 6
 - ⏭ Skip: 1
 
 ## Items
@@ -49,14 +49,14 @@ Call log:
 - ❌ **[T38] /api/me/bookings authed** — exception: HTTP 401
 - ❌ **[T39] /api/nfc/my-tags authed** — exception: HTTP 401
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.192
+- ✅ **[T41] /api/health responds** — v1.24.209
 - ✅ **[T42] /api/services >=10** — 40
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.108
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book renders form** — OK
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
-- ❌ **[T48] /book.html?nfc=<bogus> graceful** — exception: book button missing
+- ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
 - ✅ **[T49] /cart.html loads** — OK
 - ⚠️ **[T50] Service worker active** — not registered
-- ❌ **[T51] Admin viewer — _e2e-shots dir is in deployed container** — exception: HTTP 404 — Dockerfile probably missed _e2e-shots/
+- ✅ **[T51] Admin viewer — _e2e-shots dir is in deployed container** — HTTP 200 ct=image/png
