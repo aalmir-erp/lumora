@@ -41,9 +41,11 @@ on:
       - "twa/android/wear-faceonly/**"
       - "twa/android/wear-singleface/**"
       - "twa/android/twa-manifest.json"
+      - "twa/android/LauncherActivity.java.template"
       - ".scripts/build-wear-apk.sh"
       - ".scripts/build-wear-faceonly-apk.sh"
       - ".scripts/build-wear-singleface-apk.sh"
+      - ".scripts/twa-init.js"
       - ".github/workflows/build-android-twa.yml"
 
 permissions:
