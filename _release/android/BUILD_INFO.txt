@@ -1,0 +1,12 @@
+Build: 7de7fda
+Run:   https://github.com/aalmir-erp/lumora/actions/runs/25850147994
+Date:  Thu May 14 08:33:49 UTC 2026
+
+Files in this directory:
+total 3300
+drwxr-xr-x 2 runner runner    4096 May 14 08:33 .
+drwxr-xr-x 3 runner runner    4096 May 14 08:33 ..
+-rw-r--r-- 1 runner runner     146 May 14 08:33 BUILD_INFO.txt
+-rw-r--r-- 1 runner runner     305 May 14 08:33 assetlinks.json
+-rw-r--r-- 1 runner runner 1722263 May 14 08:33 servia-phone.aab
+-rw-r--r-- 1 runner runner 1636550 May 14 08:33 servia-phone.apk
