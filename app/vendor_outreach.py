@@ -115,7 +115,7 @@ def _smtp_cfg() -> dict:
         "port": int(db.cfg_get("smtp_port", "587") or 587),
         "user": (db.cfg_get("smtp_user", "") or "").strip(),
         "pass": (db.cfg_get("smtp_pass", "") or "").strip(),
-        "from": (db.cfg_get("smtp_from", "support@servia.ae") or "support@servia.ae").strip(),
+        "from": (db.cfg_get("smtp_from", "hello@servia.ae") or "hello@servia.ae").strip(),
         "from_name": (db.cfg_get("smtp_from_name", "Servia Partnerships") or "Servia Partnerships").strip(),
     }
 
@@ -183,7 +183,7 @@ async def outreach_vendor(vendor_id: int) -> dict:
             "SELECT service_id FROM vendor_services WHERE vendor_id=?",
             (vendor_id,)).fetchall()]
 
-    my_email = (db.cfg_get("partner_outreach_email", "") or "support@servia.ae").strip()
+    my_email = (db.cfg_get("partner_outreach_email", "") or "hello@servia.ae").strip()
     msg = _build_message(vendor, services, my_email)
 
     attempts = []
@@ -294,7 +294,7 @@ async def preview(vendor_id: int):
         services = [r["service_id"] for r in c.execute(
             "SELECT service_id FROM vendor_services WHERE vendor_id=?",
             (vendor_id,)).fetchall()]
-    my_email = (db.cfg_get("partner_outreach_email", "") or "support@servia.ae").strip()
+    my_email = (db.cfg_get("partner_outreach_email", "") or "hello@servia.ae").strip()
     return {
         "vendor": dict(v), "services": services,
         "message_text": _build_message(dict(v), services, my_email),

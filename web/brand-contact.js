@@ -4,7 +4,7 @@
  * Usage in any HTML page:
  *   <a href="" data-bc-href="tel">+971 4 000 0000</a>
  *   <a href="" data-bc-href="whatsapp" data-bc-text>WhatsApp us</a>
- *   <a href="" data-bc-href="mailto">support@servia.ae</a>
+ *   <a href="" data-bc-href="mailto">hello@servia.ae</a>
  *   <span data-bc-phone></span>
  *   <span data-bc-email></span>
  *   <span data-bc-whatsapp></span>

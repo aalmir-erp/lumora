@@ -1087,7 +1087,7 @@ def invoice_pdf(quote_id: str):
     pdf.multi_cell(0, 4,
         f"If you are not satisfied with the service delivered, contact us "
         f"within 24 hours of completion via WhatsApp {_wa_block()[0] or 'see /contact'} or "
-        f"support@servia.ae and we will arrange a free re-do or escalate "
+        f"hello@servia.ae and we will arrange a free re-do or escalate "
         f"to our quality team. Photos and live status of your service are "
         f"available 24/7 at https://{get_settings().brand().get('domain','servia.ae')}/q/{quote_id}")
     # ──────────────────────────────────────────────────────────

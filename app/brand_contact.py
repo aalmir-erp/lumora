@@ -7,7 +7,7 @@ website should pull from ONE field in admin general settings. Replace
 strictly wherever you're using everything from one field."
 
 Before v1.24.143:
-  - `support@servia.ae` hardcoded in 8+ places
+  - `hello@servia.ae` hardcoded in 8+ places
   - `bookings@servia.ae` hardcoded in nfc.py
   - `admin@servia.ae` hardcoded in push_notifications.py
   - WhatsApp number hardcoded in multiple HTML files
@@ -58,14 +58,17 @@ from .auth import require_admin
 router = APIRouter()
 
 
-# Defaults (used when admin hasn't configured these yet — preserves
-# backward compat with pre-v1.24.143 hardcoded values)
+# v1.24.217 — Founder set this as the OFFICIAL contact number + email:
+# phone everywhere (incl WhatsApp) = +971 52 363 3995, email = hello@servia.ae.
+# Used as the default until admin overrides via /admin-contact. The
+# _is_placeholder() guard will NOT match this number (it doesn't have
+# the placeholder digit-runs like 0000/1111/000-0000).
 DEFAULTS = {
-    "contact_phone":     "+971 4 000 0000",        # update via admin
-    "contact_whatsapp":  "+971 50 000 0000",
-    "contact_email":     "support@servia.ae",
-    "bookings_email":    "bookings@servia.ae",
-    "admin_email":       "admin@servia.ae",
+    "contact_phone":     "+971 52 363 3995",
+    "contact_whatsapp":  "+971 52 363 3995",
+    "contact_email":     "hello@servia.ae",
+    "bookings_email":    "hello@servia.ae",
+    "admin_email":       "hello@servia.ae",
     "brand_name":        "Servia",
     "company_address":   "Dubai, UAE",
     "vat_trn":           "",

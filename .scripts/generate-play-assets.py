@@ -76,7 +76,7 @@ def feature_graphic():
     text_with_shadow(d, (40, 280), "🆘  ONE-TAP RECOVERY", (252, 211, 77), font(28, True))
     text_with_shadow(d, (40, 320), "Tap once · GPS sent · Truck on the way", (226, 232, 240), font(22))
     text_with_shadow(d, (40, 360), "AED 250 · 18-min response · 24/7 UAE-wide", (226, 232, 240), font(22))
-    text_with_shadow(d, (40, 440), "servia.ae · 800-SERVIA", (252, 211, 77), font(20, True))
+    text_with_shadow(d, (40, 440), "servia.ae · +971 52 363 3995", (252, 211, 77), font(20, True))
 
     img.save(out, optimize=True, quality=92)
     print(f"✓ {out.name}")

@@ -2062,7 +2062,7 @@
         <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">
           <h4 style="margin:0 0 12px;font-size:14px">7-step setup (≈30 min total + 14 days for postcard)</h4>
           <ol style="padding-inline-start:24px;line-height:1.85;font-size:13.5px;color:var(--text)">
-            <li><b>Open <a href="https://business.google.com/create" target="_blank" rel="noopener" style="color:#1A73E8;font-weight:700">business.google.com/create</a></b> in a new tab. Sign in with a Google account you control (use a dedicated <code>support@servia.ae</code> account, not personal).</li>
+            <li><b>Open <a href="https://business.google.com/create" target="_blank" rel="noopener" style="color:#1A73E8;font-weight:700">business.google.com/create</a></b> in a new tab. Sign in with a Google account you control (use a dedicated <code>hello@servia.ae</code> account, not personal).</li>
             <li><b>Business name:</b> <code style="background:#F1F5F9;padding:2px 6px;border-radius:4px">Servia</code>. Don't add keywords like "Servia UAE Cleaning" — that gets your listing suspended.</li>
             <li><b>Category:</b> primary = <code>House cleaning service</code>. Secondary categories (after creation) = <code>Carpet cleaning service</code>, <code>HVAC contractor</code>, <code>Pest control service</code>, <code>Handyman service</code>, <code>Painter</code>. Add up to 9 categories — this is what GBP matches against AI search queries.</li>
             <li><b>Location:</b> when asked "Do you want to add a location customers can visit?" → choose <b>NO</b>. This unlocks the "Service-area business" path that fits Servia.</li>
@@ -2118,7 +2118,7 @@
         <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">
           <h4 style="margin:0 0 12px;font-size:14px">5-step setup (≈20 min)</h4>
           <ol style="padding-inline-start:24px;line-height:1.85;font-size:13.5px;color:var(--text)">
-            <li><b>Open <a href="https://businessconnect.apple.com/" target="_blank" rel="noopener" style="color:#1F2937;font-weight:700">businessconnect.apple.com</a></b> → Sign in with the Apple ID you'll use for Servia (use <code>support@servia.ae</code> — Apple will email it).</li>
+            <li><b>Open <a href="https://businessconnect.apple.com/" target="_blank" rel="noopener" style="color:#1F2937;font-weight:700">businessconnect.apple.com</a></b> → Sign in with the Apple ID you'll use for Servia (use <code>hello@servia.ae</code> — Apple will email it).</li>
             <li><b>Add a place →</b> choose "Service Area Business" (no fixed storefront). Add Servia.</li>
             <li><b>Categories:</b> Home Services → Cleaning, then add Maintenance, Pest Control, Painting Contractor.</li>
             <li><b>Service area:</b> all 7 emirates. Same as GBP.</li>
@@ -2380,7 +2380,7 @@ Context about Servia:
 - Vetted insured pros, transparent AED pricing, 24h re-clean guarantee
 - Booked online in 60 seconds or via WhatsApp / ChatGPT
 
-Tone: warm, direct, locally aware, no AI cliches (no em-dashes, no "delve", no "leverage"). Short, scannable, ends with one clear ask. Include a personalisation line that shows we know the outlet. Sign-off: "Best, Servia team" with reply-to support@servia.ae.`;
+Tone: warm, direct, locally aware, no AI cliches (no em-dashes, no "delve", no "leverage"). Short, scannable, ends with one clear ask. Include a personalisation line that shows we know the outlet. Sign-off: "Best, Servia team" with reply-to hello@servia.ae.`;
           const r = await fetch("/api/chat", {
             method:"POST", headers:{"content-type":"application/json"},
             body: JSON.stringify({message: prompt, language:"en"})
@@ -4807,7 +4807,7 @@ async function openScraperPanel() {
             <input id="smtp-port" placeholder="587" value="${smtp.port||'587'}" style="padding:8px;border:1px solid var(--border);border-radius:8px">
             <input id="smtp-user" placeholder="user@servia.ae" value="${escapeHtml(smtp.user||'')}" style="padding:8px;border:1px solid var(--border);border-radius:8px;grid-column:1/-1">
             <input id="smtp-pass" type="password" placeholder="••••••• (app password)" style="padding:8px;border:1px solid var(--border);border-radius:8px;grid-column:1/-1">
-            <input id="smtp-from" placeholder="From: support@servia.ae" value="${escapeHtml(smtp.from||'support@servia.ae')}" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+            <input id="smtp-from" placeholder="From: hello@servia.ae" value="${escapeHtml(smtp.from||'hello@servia.ae')}" style="padding:8px;border:1px solid var(--border);border-radius:8px">
             <input id="smtp-fromname" placeholder="Display name" value="${escapeHtml(smtp.from_name||'Servia Partnerships')}" style="padding:8px;border:1px solid var(--border);border-radius:8px">
           </div>
           <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;margin-top:8px" onclick="saveSmtp(this)">💾 Save SMTP</button>
@@ -7254,7 +7254,7 @@ async function loadBrand() {
   const fields = [
     ["name","Brand name","text"],
     ["tagline","Tagline (shown in hero, footer, search results)","text"],
-    ["phone","Phone (display format, e.g. via our website)","text"],
+    ["phone","Phone (display format, e.g. +971 52 363 3995)","text"],
     ["whatsapp","WhatsApp (digits only, no spaces — for wa.me links)","text"],
     ["email","Email","email"],
     ["address","Address (footer + invoices)","text"],

@@ -14,7 +14,7 @@ class Settings:
     BRAND_TAGLINE = os.getenv("BRAND_TAGLINE", "UAE's smart home services platform")
     BRAND_DOMAIN = os.getenv("BRAND_DOMAIN", "servia.ae")
 
-    APP_VERSION = "1.24.216"
+    APP_VERSION = "1.24.217"
 
     # Anthropic
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
@@ -41,8 +41,8 @@ class Settings:
         ).split(",") if o.strip()
     ]
 
-    HANDOFF_WHATSAPP = os.getenv("HANDOFF_WHATSAPP", "")  # internal-only
-    HANDOFF_EMAIL = os.getenv("HANDOFF_EMAIL", "support@servia.ae")
+    HANDOFF_WHATSAPP = os.getenv("HANDOFF_WHATSAPP", "+971523633995")  # internal-only
+    HANDOFF_EMAIL = os.getenv("HANDOFF_EMAIL", "hello@servia.ae")
 
     # WhatsApp bridge endpoint (Node service URL where the QR-paired bridge lives).
     WA_BRIDGE_URL = os.getenv("WA_BRIDGE_URL", "")

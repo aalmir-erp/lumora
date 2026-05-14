@@ -200,7 +200,7 @@ else {
         </div>
       </div>`;
     document.getElementById("cal-link").href = `/api/booking/${bid}/calendar.ics`;
-    const waBrand = (window.LUMORA_BRAND && window.LUMORA_BRAND.whatsapp) || "via our website";
+    const waBrand = (window.LUMORA_BRAND && window.LUMORA_BRAND.whatsapp) || "+971 52 363 3995";
     const waPhone = waBrand.replace(/[^0-9]/g, "");
     const text = encodeURIComponent(`I just booked ${b.service_id.replace(/_/g,' ')} with Servia on ${b.target_date} at ${b.time_slot}. Booking ${bid}. https://${(window.LUMORA_BRAND||{}).domain||'servia.ae'}/me.html?b=${bid}`);
     document.getElementById("wa-share").href = `https://wa.me/?text=${text}`;
@@ -244,7 +244,7 @@ else {
   </div>
   <div><h3>Contact</h3>
     <a href="/contact">Contact us</a><br>
-    <a href="mailto:support@servia.ae">support@servia.ae</a><br>
+    <a href="mailto:hello@servia.ae">hello@servia.ae</a><br>
     <span style="color:#94A3B8;font-size:12px;line-height:1.6">Replies in minutes,<br>7 days a week.</span>
   </div>
 </div></footer>

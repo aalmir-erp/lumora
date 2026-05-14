@@ -250,7 +250,9 @@ _FOOTER_SNIPPET = (
     b"<a href=\"/refund\">Refund</a></div>"
     b"<div><h3>Contact</h3>"
     b"<a href=\"/contact\">Contact us</a><br>"
-    b"<a href=\"mailto:support@servia.ae\">support@servia.ae</a></div>"
+    b"<a href=\"https://wa.me/971523633995\" target=\"_blank\" rel=\"noopener\">WhatsApp +971 52 363 3995</a><br>"
+    b"<a href=\"tel:+971523633995\">Call +971 52 363 3995</a><br>"
+    b"<a href=\"mailto:hello@servia.ae\">hello@servia.ae</a></div>"
     b"</div>"
     b"<div style=\"text-align:center;padding:14px 16px;color:#CBD5E1;font-size:11.5px;border-top:1px solid rgba(255,255,255,.08)\">"
     b"\xc2\xa9 2026 Servia FZ-LLC \xc2\xb7 Dubai, UAE"
@@ -4336,7 +4338,7 @@ def ai_plugin_manifest():
             "is_user_authenticated": False
         },
         "logo_url": f"https://{domain}/icon-512.svg",
-        "contact_email": "support@servia.ae",
+        "contact_email": "hello@servia.ae",
         "legal_info_url": f"https://{domain}/terms.html"
     })
 
@@ -4352,7 +4354,7 @@ def _openapi_public_spec():
             "title": "Servia Public API",
             "version": "1.1.0",
             "description": "Public booking + services API for Servia, the UAE home-services platform. Customers can list services, get a quote, create a booking, and chat with the AI concierge.",
-            "contact": {"email": "support@servia.ae", "url": f"https://{domain}/contact.html"},
+            "contact": {"email": "hello@servia.ae", "url": f"https://{domain}/contact.html"},
         },
         "servers": [{"url": f"https://{domain}"}],
         "components": {

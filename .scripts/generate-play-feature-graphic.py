@@ -140,7 +140,7 @@ def build():
     strip = Image.new("RGBA", (W, 36), (15, 23, 42, 200))
     sd = ImageDraw.Draw(strip)
     sd.text((W // 2, 18),
-            "servia.ae  ·  WhatsApp  ·  hello@servia.ae",
+            "servia.ae  ·  +971 52 363 3995  ·  hello@servia.ae",
             fill=(252, 211, 77), font=font(18, True), anchor="mm")
     bg.paste(strip, (0, H - 36), strip)
 
