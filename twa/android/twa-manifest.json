@@ -13,8 +13,8 @@
   "iconUrl": "https://servia.ae/brand/servia-icon-2048x2048.png",
   "maskableIconUrl": "https://servia.ae/brand/servia-icon-2048x2048.png",
   "splashScreenFadeOutDuration": 300,
-  "appVersion": "1.0.1",
-  "appVersionCode": 2,
+  "appVersion": "1.0.2",
+  "appVersionCode": 3,
   "fallbackType": "customtabs",
   "fullScopeUrl": "https://servia.ae/"
 }

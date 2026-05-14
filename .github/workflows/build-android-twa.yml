@@ -272,6 +272,28 @@ jobs:
           python3 "${GITHUB_WORKSPACE}/.scripts/inject-widgets.py" \
             "${GITHUB_WORKSPACE}/twa/android/generated"
 
+      - name: Inject custom LauncherActivity (proactive POST_NOTIFICATIONS request)
+        run: |
+          # v1.24.208 — Bubblewrap's auto-generated LauncherActivity only sets
+          # orientation; it never requests POST_NOTIFICATIONS, so on Android 13+
+          # the OS-level notification toggle stays OFF in app Settings even
+          # after Chrome's web push permission is granted via JS. Founder
+          # reported in-app Allow succeeds but Settings > Apps > Servia >
+          # Notifications stays disabled, so no push ever reaches the device.
+          # We replace the stub with one that requests POST_NOTIFICATIONS in
+          # onCreate so the native Android prompt appears on first launch.
+          SRC="${GITHUB_WORKSPACE}/twa/android/LauncherActivity.java.template"
+          DST="${GITHUB_WORKSPACE}/twa/android/generated/app/src/main/java/ae/servia/app/LauncherActivity.java"
+          if [ ! -f "$SRC" ]; then
+            echo "ERROR: template missing at $SRC"; exit 1
+          fi
+          if [ ! -f "$DST" ]; then
+            echo "ERROR: generated LauncherActivity missing at $DST"; exit 1
+          fi
+          cp "$SRC" "$DST"
+          echo "=== LauncherActivity.java after injection ==="
+          head -30 "$DST"
+
       - name: Inject Android permissions into AndroidManifest
         working-directory: twa/android/generated/app/src/main
         run: |

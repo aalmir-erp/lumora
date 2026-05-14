@@ -1,0 +1,52 @@
+/*
+ * Custom LauncherActivity for Servia TWA.
+ *
+ * Adds proactive POST_NOTIFICATIONS runtime-permission request on Android 13+
+ * (API 33+). Without this, the OS-level notification toggle for the app stays
+ * OFF in Settings > Apps > Servia > Notifications even after the user grants
+ * Chrome's web push permission via Notification.requestPermission(). The
+ * symptom: in-app "Allow" appears to succeed (web subscription is created)
+ * but no push ever reaches the device because DelegationService can't post.
+ *
+ * Replaces the auto-generated Bubblewrap LauncherActivity at workflow time.
+ */
+package ae.servia.app;
+
+import android.Manifest;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+public class LauncherActivity
+        extends com.google.androidbrowserhelper.trusted.LauncherActivity {
+
+    private static final int REQ_POST_NOTIFICATIONS = 7001;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        }
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        REQ_POST_NOTIFICATIONS);
+            }
+        }
+    }
+
+    @Override
+    protected Uri getLaunchingUrl() {
+        return super.getLaunchingUrl();
+    }
+}
