@@ -107,12 +107,18 @@ _FORCE_MOBILE_SNIPPET = (
 # customer-facing pages (path skip-list applied in the middleware). Without
 # this, the video player at /api/videos/play/* and other "no-chat" pages
 # loaded widget.js but not widget.css → unstyled chat broke layout.
-_CHAT_WIDGET_SNIPPET = (
-    b"<link rel='preload' as='style' href='/widget.css?v=1.24.202' "
+# v1.24.216 — Split into two halves so widget.css always lands even on
+# pages that inline their own <script src=widget.js> at the bottom.
+_CHAT_WIDGET_CSS_SNIPPET = (
+    b"<link rel='preload' as='style' href='/widget.css?v=1.24.216' "
     b"onload=\"this.rel='stylesheet';this.onload=null\">"
-    b"<noscript><link rel='stylesheet' href='/widget.css?v=1.24.202'></noscript>"
-    b"<script src='/widget.js?v=1.24.202' async data-api-base=''></script>"
+    b"<noscript><link rel='stylesheet' href='/widget.css?v=1.24.216'></noscript>"
 )
+_CHAT_WIDGET_JS_SNIPPET = (
+    b"<script src='/widget.js?v=1.24.216' async data-api-base=''></script>"
+)
+# Back-compat alias so any other module still importing this var keeps working.
+_CHAT_WIDGET_SNIPPET = _CHAT_WIDGET_CSS_SNIPPET + _CHAT_WIDGET_JS_SNIPPET
 
 # v1.24.207 — Visible "Enable notifications" banner. The auto-prompt in
 # app.js fires on first interaction, but Chrome's native permission dialog
@@ -187,6 +193,70 @@ _FAVICON_SNIPPET = (
     b"<link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/apple-touch-icon.png\">"
 )
 
+# v1.24.216 — Uniform header + footer injection.
+# Founder reported (multiple times) that some pages — notably sos.html and
+# certain video / landing pages — render without the standard Servia nav
+# at the top OR the footer at the bottom, breaking site-wide consistency.
+# Past fixes (universal-nav.js JS injection) caused layout shift; this
+# version does server-side injection in the middleware so the HTML arrives
+# already complete. If a page lacks <nav class="nav"> we drop in the
+# canonical nav right after <body>; if it lacks <footer> we drop in the
+# canonical footer right before </body>. Pages that intentionally have
+# their own chrome (admin/vendor/pay/api/etc.) are skipped.
+_NAV_SNIPPET = (
+    b"<nav class=\"nav\"><div class=\"nav-inner\">"
+    b"<a href=\"/\" aria-label=\"Servia home\">"
+    b"<img src=\"/logo.svg\" width=\"160\" height=\"52\" alt=\"Servia\" decoding=\"async\"></a>"
+    b"<div class=\"nav-links\">"
+    b"<a href=\"/services\">Services</a>"
+    b"<a href=\"/coverage\">Coverage</a>"
+    b"<a href=\"/nfc\">NFC tags</a>"
+    b"<a href=\"/sos.html\" style=\"color:#DC2626;font-weight:800\" title=\"SOS\">\xf0\x9f\x86\x98 SOS</a>"
+    b"<a href=\"/blog\">Blog</a>"
+    b"<a href=\"/me\">My account</a>"
+    b"</div>"
+    b"<div class=\"nav-cta\">"
+    b"<a class=\"btn btn-primary\" href=\"/book\">Book now</a>"
+    b"</div>"
+    b"</div></nav>"
+)
+_FOOTER_SNIPPET = (
+    b"<footer><div class=\"container\">"
+    b"<div>"
+    b"<img src=\"/logo.svg\" width=\"112\" height=\"36\" alt=\"Servia\" "
+    b"style=\"filter:brightness(0) invert(1)\" decoding=\"async\">"
+    b"<p style=\"margin:12px 0;font-size:13px;opacity:.85\">"
+    b"Built for UAE homes &amp; businesses \xc2\xb7 4.9\xe2\x98\x85 from 2,400+ families.</p>"
+    b"</div>"
+    b"<div><h3>Customers</h3>"
+    b"<a href=\"/services\">All services</a><br>"
+    b"<a href=\"/book\">Book online</a><br>"
+    b"<a href=\"/coverage\">Coverage map</a><br>"
+    b"<a href=\"/me\">My account</a><br>"
+    b"<a href=\"/faq\">FAQ</a></div>"
+    b"<div><h3>Service areas</h3>"
+    b"<a href=\"/area?city=dubai\">Dubai</a><br>"
+    b"<a href=\"/area?city=sharjah\">Sharjah</a><br>"
+    b"<a href=\"/area?city=abu-dhabi\">Abu Dhabi</a><br>"
+    b"<a href=\"/area?city=ajman\">Ajman</a><br>"
+    b"<a href=\"/area?city=ras-al-khaimah\">RAK</a></div>"
+    b"<div><h3>Apps &amp; AI</h3>"
+    b"<a href=\"/install\">Install app</a><br>"
+    b"<a href=\"/videos\">Videos</a><br>"
+    b"<a href=\"/blog\">Blog</a></div>"
+    b"<div><h3>Legal</h3>"
+    b"<a href=\"/terms\">Terms</a><br>"
+    b"<a href=\"/privacy\">Privacy</a><br>"
+    b"<a href=\"/refund\">Refund</a></div>"
+    b"<div><h3>Contact</h3>"
+    b"<a href=\"/contact\">Contact us</a><br>"
+    b"<a href=\"mailto:support@servia.ae\">support@servia.ae</a></div>"
+    b"</div>"
+    b"<div style=\"text-align:center;padding:14px 16px;color:#CBD5E1;font-size:11.5px;border-top:1px solid rgba(255,255,255,.08)\">"
+    b"\xc2\xa9 2026 Servia FZ-LLC \xc2\xb7 Dubai, UAE"
+    b"</div></footer>"
+)
+
 
 class _ForceMobileMiddleware(_BHM):
     """Inject force-mobile + favicon + SOS-FAB snippets into every HTML
@@ -234,10 +304,42 @@ class _ForceMobileMiddleware(_BHM):
             CHAT_SKIP = ("/admin", "/vendor", "/portal-vendor", "/pay",
                          "/api/videos/play", "/api/", "/q/", "/p/", "/i/",
                          "/sw.js", "/.well-known")
-            if (b"widget.js?v=" not in body
-                    and not path.startswith(CHAT_SKIP)):
-                if b"</body>" in body:
-                    body = body.replace(b"</body>", _CHAT_WIDGET_SNIPPET + b"</body>", 1)
+            # v1.24.216 — Uniform header + footer. If the served HTML has no
+            # standard nav OR footer, inject the canonical ones so the page
+            # has the same chrome as the rest of the site. Skip API/admin/
+            # vendor/etc. (same skip list as chat-widget injection) plus
+            # /api/videos/play (full-screen video viewer, intentional).
+            CHROME_SKIP = CHAT_SKIP + ("/_snippets", "/manifest", "/widget.")
+            if not path.startswith(CHROME_SKIP):
+                if b"<nav class=\"nav\"" not in body and b"<nav class='nav'" not in body and b"<body" in body:
+                    # Insert nav right after the first <body...> opening tag.
+                    bi = body.find(b"<body")
+                    if bi >= 0:
+                        bj = body.find(b">", bi)
+                        if bj > 0:
+                            body = body[:bj + 1] + _NAV_SNIPPET + body[bj + 1:]
+                if b"<footer" not in body and b"</body>" in body:
+                    body = body.replace(b"</body>", _FOOTER_SNIPPET + b"</body>", 1)
+            # Widget CSS injection split from widget.js detection.
+            # Founder reported sos.html and other pages showed the chat widget
+            # as a broken stack of inline DOM elements ("Servia / Concierge /
+            # 24x7 / v1.24.215" plus action buttons floating at the bottom)
+            # instead of a clean floating launcher button. Root cause: those
+            # pages had widget.js inline (loaded via their own bottom script)
+            # but NOT widget.css, so the widget's `position: fixed` styling
+            # never applied and its DOM rendered inline. The previous check
+            # `if b"widget.js?v=" not in body` saw widget.js → skipped
+            # injecting BOTH the css preload and the script tag, leaving
+            # widget.css missing forever. New approach: check the two
+            # independently so widget.css always lands.
+            if not path.startswith(CHAT_SKIP) and b"</body>" in body:
+                snippet = b""
+                if b"widget.css?v=" not in body:
+                    snippet += _CHAT_WIDGET_CSS_SNIPPET
+                if b"widget.js?v=" not in body:
+                    snippet += _CHAT_WIDGET_JS_SNIPPET
+                if snippet:
+                    body = body.replace(b"</body>", snippet + b"</body>", 1)
             # v1.24.207 — Visible push-opt-in banner on customer-facing pages.
             if (b"servia-push-banner" not in body
                     and not path.startswith(CHAT_SKIP)):
