@@ -1,0 +1,136 @@
+name: "Play Store · 03 Capture phone screenshots"
+# v1.24.203 — Captures real phone-viewport screenshots of servia.ae key
+# pages using Playwright, then commits them to web/brand/play-assets/phone/
+# so the founder can upload them to Play Console Main Store Listing.
+#
+# Trigger: workflow_dispatch (run manually) OR push to _release/screenshots-trigger.txt.
+#
+# Why not just take screenshots on the phone? Because Play wants
+# consistent dimensions (1080x1920) and the founder is mobile-only.
+# This automates it.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "_release/screenshots-trigger.txt"
+      - ".github/workflows/play-screenshots.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-audit --no-fund playwright@latest
+          npx playwright install chromium --with-deps
+
+      - name: Capture screenshots
+        run: |
+          cat > capture.js <<'JS'
+          const { chromium, devices } = require('playwright');
+          const fs = require('fs');
+
+          // Pixel 5 = 393x851. We use 1080x1920 deviceScaleFactor=1 for
+          // crisper Play-Store-grade images. Aspect ratio 9:16 = Play's
+          // sweet spot for phone screenshots.
+          const VIEWPORT = { width: 1080, height: 1920 };
+          const PHONE_UA = devices['Pixel 5'].userAgent;
+
+          // Pages to capture: page-path, output-filename, scroll-y (optional)
+          const SHOTS = [
+            { path: '/?nocache=1',          file: '01-home.png',     scroll: 0 },
+            { path: '/services?nocache=1',  file: '02-services.png', scroll: 0 },
+            { path: '/book?nocache=1',      file: '03-book.png',     scroll: 0 },
+            { path: '/services/deep-cleaning?nocache=1', file: '04-deep-cleaning.png', scroll: 0 },
+            { path: '/me?nocache=1',        file: '05-account.png',  scroll: 0 },
+          ];
+
+          (async () => {
+            const browser = await chromium.launch();
+            const ctx = await browser.newContext({
+              viewport: VIEWPORT,
+              userAgent: PHONE_UA,
+              deviceScaleFactor: 1,
+              isMobile: true,
+              hasTouch: true,
+            });
+            const outDir = 'web/brand/play-assets/phone';
+            fs.mkdirSync(outDir, { recursive: true });
+
+            for (const shot of SHOTS) {
+              const page = await ctx.newPage();
+              const url = 'https://servia.ae' + shot.path;
+              console.log('→', url);
+              try {
+                await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+                // Hide cookies banner / chat widget if open
+                await page.evaluate(() => {
+                  const sels = ['#servia-topbanner', '#servia-install-banner',
+                                '.us-launcher-tip', '.cookie-banner'];
+                  sels.forEach(s => document.querySelectorAll(s).forEach(el => el.style.display = 'none'));
+                });
+                if (shot.scroll) await page.evaluate((y) => window.scrollTo(0, y), shot.scroll);
+                await page.waitForTimeout(800);  // settle animations
+                await page.screenshot({
+                  path: `${outDir}/${shot.file}`,
+                  fullPage: false,
+                });
+                console.log('  ✓ wrote', shot.file);
+              } catch (e) {
+                console.error('  ✗ failed', shot.file, ':', e.message);
+              }
+              await page.close();
+            }
+            await browser.close();
+          })();
+          JS
+          node capture.js
+
+      - name: Optimize PNGs (smaller filesize)
+        run: |
+          sudo apt-get install -y --no-install-recommends pngquant || true
+          for f in web/brand/play-assets/phone/0*-*.png; do
+            if [ -f "$f" ]; then
+              pngquant --force --skip-if-larger --output "$f" --quality 85-95 "$f" || true
+              ls -la "$f"
+            fi
+          done
+
+      - name: Commit screenshots back to repo
+        run: |
+          set +e
+          # Remove the old marketing placeholders first
+          rm -f web/brand/play-assets/phone/01-hero.png web/brand/play-assets/phone/01-hero.webp \
+                web/brand/play-assets/phone/02-truck.png web/brand/play-assets/phone/02-truck.webp \
+                web/brand/play-assets/phone/03-split.png web/brand/play-assets/phone/03-split.webp \
+                web/brand/play-assets/phone/04-multi.png web/brand/play-assets/phone/04-multi.webp \
+                web/brand/play-assets/phone/05-panic.png web/brand/play-assets/phone/05-panic.webp
+          git config user.email "ci-bot@servia.ae"
+          git config user.name  "Servia CI"
+          git add web/brand/play-assets/phone/
+          if git diff --cached --quiet; then
+            echo "::notice::No screenshot changes"
+            exit 0
+          fi
+          git commit -m "ci: capture real phone screenshots of servia.ae for Play Store (run ${GITHUB_RUN_ID})"
+          for i in 1 2 3 4; do
+            git pull --rebase --autostash origin main 2>&1 || true
+            if git push origin HEAD:main; then
+              echo "::notice::screenshots pushed"
+              exit 0
+            fi
+            sleep $((2 ** i))
+          done
+          echo "::error::push failed after 4 retries"
+          exit 1
