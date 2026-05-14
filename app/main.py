@@ -114,6 +114,61 @@ _CHAT_WIDGET_SNIPPET = (
     b"<script src='/widget.js?v=1.24.202' async data-api-base=''></script>"
 )
 
+# v1.24.207 — Visible "Enable notifications" banner. The auto-prompt in
+# app.js fires on first interaction, but Chrome's native permission dialog
+# is small + easy to miss, and several users reported never seeing it.
+# This banner is a clear, dismissable in-page card that anchors the
+# permission request in user intent. Tapping "Enable" calls
+# window.serviaEnablePush() which triggers the OS prompt; tapping ✕
+# stores a 7-day cool-off in localStorage. Hidden when permission is
+# already granted/denied or subscription exists.
+_PUSH_OPTIN_SNIPPET = (
+    b"<style>"
+    b"#servia-push-banner{position:fixed;left:12px;right:12px;bottom:12px;"
+    b"z-index:9990;background:linear-gradient(135deg,#0F766E,#14B8A6);"
+    b"color:#fff;border-radius:16px;padding:14px 16px;display:none;"
+    b"box-shadow:0 8px 24px rgba(15,118,110,.35);"
+    b"font:500 14px/1.35 system-ui,-apple-system,sans-serif;"
+    b"align-items:center;gap:12px;max-width:520px;margin:0 auto;}"
+    b"#servia-push-banner.show{display:flex;}"
+    b"#servia-push-banner .ico{font-size:28px;line-height:1;flex-shrink:0;}"
+    b"#servia-push-banner .txt{flex:1;}"
+    b"#servia-push-banner .ttl{font-weight:700;font-size:15px;margin-bottom:2px;}"
+    b"#servia-push-banner .sub{font-size:12.5px;opacity:.92;}"
+    b"#servia-push-banner button{border:0;cursor:pointer;font-weight:700;}"
+    b"#servia-push-banner .yes{background:#FBBF24;color:#0F172A;"
+    b"padding:9px 14px;border-radius:10px;font-size:13.5px;}"
+    b"#servia-push-banner .no{background:transparent;color:#fff;opacity:.7;"
+    b"font-size:20px;padding:4px 8px;}"
+    b"@media (min-width:720px){#servia-push-banner{left:auto;right:24px;"
+    b"bottom:24px;max-width:380px;}}"
+    b"</style>"
+    b"<div id='servia-push-banner' role='dialog' aria-label='Enable notifications'>"
+    b"<span class='ico'>\xf0\x9f\x94\x94</span>"
+    b"<div class='txt'>"
+    b"<div class='ttl'>Get booking alerts</div>"
+    b"<div class='sub'>Live updates when your service is on the way.</div>"
+    b"</div>"
+    b"<button class='yes' type='button' "
+    b"onclick=\"this.parentNode.classList.remove('show');"
+    b"(window.serviaEnablePush&&window.serviaEnablePush())\">Allow</button>"
+    b"<button class='no' type='button' aria-label='Dismiss' "
+    b"onclick=\"this.parentNode.classList.remove('show');"
+    b"localStorage.setItem('servia.push.snoozed',Date.now()+604800000)\">&times;</button>"
+    b"</div>"
+    b"<script>(function(){try{"
+    b"if(!('Notification' in window))return;"
+    b"if(Notification.permission!=='default')return;"
+    b"if(localStorage.getItem('servia.push.declined')==='1')return;"
+    b"var snz=parseInt(localStorage.getItem('servia.push.snoozed')||'0',10);"
+    b"if(snz&&snz>Date.now())return;"
+    b"setTimeout(function(){"
+    b"var el=document.getElementById('servia-push-banner');"
+    b"if(el)el.classList.add('show');"
+    b"},2500);"
+    b"}catch(e){}})();</script>"
+)
+
 # v1.24.2 — universal SOS FAB. Injected on every public page so anyone can
 # summon recovery from any screen (homepage, services, faq, anywhere).
 # Tiny tag pointing at /sos-fab.js (the heavy lifting + styles live there
@@ -183,6 +238,11 @@ class _ForceMobileMiddleware(_BHM):
                     and not path.startswith(CHAT_SKIP)):
                 if b"</body>" in body:
                     body = body.replace(b"</body>", _CHAT_WIDGET_SNIPPET + b"</body>", 1)
+            # v1.24.207 — Visible push-opt-in banner on customer-facing pages.
+            if (b"servia-push-banner" not in body
+                    and not path.startswith(CHAT_SKIP)):
+                if b"</body>" in body:
+                    body = body.replace(b"</body>", _PUSH_OPTIN_SNIPPET + b"</body>", 1)
             from starlette.responses import Response as _R
             hdrs = {k: v for k, v in resp.headers.items() if k.lower() != "content-length"}
             return _R(content=body, status_code=resp.status_code,
