@@ -434,45 +434,6 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      # v1.24.208 — Auto-push AAB to Play Store internal-testing track if a
-      # service-account JSON is configured in repo secrets as
-      # GOOGLE_PLAY_SERVICE_ACCOUNT_JSON. If the secret is missing the step
-      # is skipped (NOT failed) so the build still succeeds. One-time setup
-      # for the founder: Play Console → Setup → API access → create service
-      # account → grant "Release manager" → download JSON → paste into
-      # GitHub Settings → Secrets → New repository secret.
-      - name: Check Play Store service-account secret
-        id: gp_check
-        if: steps.targets.outputs.phone == 'true'
-        run: |
-          if [ -n "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" ]; then
-            echo "present=true" >> $GITHUB_OUTPUT
-          else
-            echo "present=false" >> $GITHUB_OUTPUT
-            echo "::notice::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret not set — skipping Play Store upload. Add it under repo Settings → Secrets to enable auto-upload to internal testing."
-          fi
-
-      - name: Locate AAB for Play Store upload
-        id: locate_aab
-        if: steps.gp_check.outputs.present == 'true'
-        run: |
-          AAB=$(find twa/android/generated/_artifacts -maxdepth 1 -name "*.aab" | head -1)
-          if [ -z "$AAB" ]; then echo "no AAB found"; exit 1; fi
-          echo "path=$AAB" >> $GITHUB_OUTPUT
-
-      - name: Upload AAB to Play Store internal-testing track
-        if: steps.gp_check.outputs.present == 'true'
-        continue-on-error: true
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: ae.servia.app
-          releaseFiles: ${{ steps.locate_aab.outputs.path }}
-          track: internal
-          status: completed
-          inAppUpdatePriority: 2
-          whatsNewDirectory: twa/android/whatsnew
-
       # -----------------------------------------------------------------
       # Wear OS standalone APK build (v1.22.83 re-enabled).
       #

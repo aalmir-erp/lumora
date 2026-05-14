@@ -16,3 +16,8 @@ pywebpush>=2.0
 # v1.24.56 — fpdf2 for native PDF invoice generation (pure-Python, no
 # system deps, ~500KB install). Falls back to browser-print if missing.
 fpdf2>=2.7
+# v1.24.208 — Google Play Developer API for in-admin AAB upload to internal
+# testing track. Service-account JSON is pasted into the admin Mobile-App
+# tab, encrypted with ADMIN_TOKEN, stored in db.cfg — no GitHub secrets.
+google-api-python-client>=2.100
+google-auth>=2.20

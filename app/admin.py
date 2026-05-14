@@ -3046,6 +3046,177 @@ def twa_trigger_build(body: TwaWorkflowReq):
         return {"ok": False, "error": str(e), "manual_url": fallback}
 
 
+# ============================================================
+# Play Store internal-testing track upload
+#
+# Service-account JSON is stored encrypted in db.cfg under
+# 'play_store_sa_enc' using the same Fernet-from-ADMIN_TOKEN pattern as
+# twa_credentials.enc. NO GitHub secret is required — everything lives in
+# the app's existing admin panel.
+# ============================================================
+
+def _play_store_cipher():
+    """Return a Fernet instance keyed by ADMIN_TOKEN."""
+    import base64, hashlib, os
+    from cryptography.fernet import Fernet
+    salt = b"servia.play.sa.v1"
+    admin_token = os.environ.get("ADMIN_TOKEN", "lumora-admin-test")
+    key_bytes = hashlib.pbkdf2_hmac("sha256", admin_token.encode(), salt, 100_000, dklen=32)
+    return Fernet(base64.urlsafe_b64encode(key_bytes))
+
+
+class PlayStoreSavedReq(BaseModel):
+    service_account_json: str
+
+
+@router.post("/play-store/save-credentials")
+def play_store_save(body: PlayStoreSavedReq):
+    """Encrypt + store the Google Play service-account JSON. Validates the
+    payload is a JSON object with the expected fields before saving."""
+    import json as _json
+    from cryptography.fernet import InvalidToken
+    raw = (body.service_account_json or "").strip()
+    if not raw:
+        raise HTTPException(400, "empty payload")
+    try:
+        parsed = _json.loads(raw)
+    except Exception:
+        raise HTTPException(400, "not valid JSON")
+    required = ("client_email", "private_key", "project_id")
+    missing = [k for k in required if k not in parsed]
+    if missing:
+        raise HTTPException(400, f"service-account JSON missing fields: {', '.join(missing)}")
+    try:
+        cipher = _play_store_cipher()
+        enc = cipher.encrypt(raw.encode()).decode()
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"encryption failed: {e}")
+    import datetime as _dt
+    db.cfg_set("play_store_sa_enc", enc)
+    db.cfg_set("play_store_sa_meta", {
+        "client_email": parsed["client_email"],
+        "project_id": parsed["project_id"],
+        "saved_at": _dt.datetime.utcnow().isoformat() + "Z",
+    })
+    return {"ok": True, "client_email": parsed["client_email"]}
+
+
+@router.get("/play-store/status")
+def play_store_status():
+    """Show whether service-account is configured + latest AAB info so the
+    admin UI can render a 'ready' or 'setup needed' state."""
+    import datetime as _dt
+    from pathlib import Path
+    sa_meta = db.cfg_get("play_store_sa_meta", None)
+    aab_path = Path(__file__).resolve().parent.parent / "_release" / "android" / "servia-phone.aab"
+    aab = None
+    if aab_path.exists():
+        st = aab_path.stat()
+        aab = {
+            "size_kb": st.st_size // 1024,
+            "mtime": _dt.datetime.utcfromtimestamp(st.st_mtime).isoformat() + "Z",
+            "url": "/download/servia-phone.aab",
+        }
+    twa_manifest = Path(__file__).resolve().parent.parent / "twa" / "android" / "twa-manifest.json"
+    version_info = None
+    if twa_manifest.exists():
+        try:
+            import json as _json
+            mf = _json.loads(twa_manifest.read_text())
+            version_info = {
+                "version_name": mf.get("appVersion"),
+                "version_code": mf.get("appVersionCode"),
+                "package": mf.get("packageId"),
+            }
+        except Exception: pass
+    return {
+        "configured": bool(sa_meta),
+        "service_account": sa_meta,
+        "aab": aab,
+        "version": version_info,
+    }
+
+
+class PlayStoreUploadReq(BaseModel):
+    track: str = "internal"  # internal | alpha | beta | production
+    release_notes: str | None = None
+
+
+@router.post("/play-store/upload")
+def play_store_upload(body: PlayStoreUploadReq):
+    """Upload the latest AAB at _release/android/servia-phone.aab to the
+    selected Play Store track using the stored service-account JSON."""
+    import json as _json
+    from pathlib import Path
+    enc = db.cfg_get("play_store_sa_enc", None)
+    if not enc:
+        raise HTTPException(400, "service-account not configured — paste the JSON above first")
+    try:
+        sa_json = _play_store_cipher().decrypt(enc.encode()).decode()
+        sa_info = _json.loads(sa_json)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"could not decrypt service-account: {e}")
+
+    aab_path = Path(__file__).resolve().parent.parent / "_release" / "android" / "servia-phone.aab"
+    if not aab_path.exists():
+        raise HTTPException(400,
+            "no AAB at _release/android/servia-phone.aab — trigger a TWA build first")
+
+    try:
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build as _gbuild
+    except Exception:
+        raise HTTPException(500,
+            "google-api-python-client not installed on the server — "
+            "add 'google-api-python-client' + 'google-auth' to requirements.txt")
+
+    creds = service_account.Credentials.from_service_account_info(
+        sa_info, scopes=["https://www.googleapis.com/auth/androidpublisher"])
+    package = "ae.servia.app"
+    track = (body.track or "internal").strip()
+    if track not in ("internal", "alpha", "beta", "production"):
+        raise HTTPException(400, f"invalid track: {track}")
+
+    service = _gbuild("androidpublisher", "v3", credentials=creds, cache_discovery=False)
+    try:
+        edit_request = service.edits().insert(packageName=package, body={}).execute()
+        edit_id = edit_request["id"]
+        from googleapiclient.http import MediaFileUpload
+        media = MediaFileUpload(str(aab_path), mimetype="application/octet-stream",
+                                resumable=True)
+        bundle = service.edits().bundles().upload(
+            packageName=package, editId=edit_id, media_body=media).execute()
+        version_code = bundle["versionCode"]
+        track_body = {
+            "track": track,
+            "releases": [{
+                "name": f"Servia {version_code}",
+                "status": "completed",
+                "versionCodes": [str(version_code)],
+                "releaseNotes": [{
+                    "language": "en-US",
+                    "text": (body.release_notes or
+                             "Notifications now work end-to-end:\n"
+                             "• Native Android permission prompt on first launch\n"
+                             "• Booking alerts, payment confirmations, live updates")[:500],
+                }],
+            }]
+        }
+        service.edits().tracks().update(
+            packageName=package, editId=edit_id, track=track,
+            body=track_body).execute()
+        service.edits().commit(packageName=package, editId=edit_id).execute()
+        return {
+            "ok": True,
+            "track": track,
+            "version_code": version_code,
+            "package": package,
+            "console_url": f"https://play.google.com/console/u/0/developers/-/app-list?search={package}",
+        }
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"Play Store upload failed: {type(e).__name__}: {str(e)[:300]}")
+
+
 @router.get("/twa/installs")
 def twa_installs():
     """Aggregate install funnel metrics for the admin Mobile-App tab —

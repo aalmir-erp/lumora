@@ -127,17 +127,39 @@
     try {
       const r = await fetch("/api/health");
       const j = await r.json();
-      return j.version || "?";
+      // v1.24.208 — return both web + APK versions so the About sheet can
+      // show the TWA build number (e.g. "App v1.0.2 build 3") alongside
+      // the web payload version. Testers can verify install matches.
+      return {
+        web: j.version || "?",
+        apk: j.apk_version || null,
+        apk_code: j.apk_version_code || null,
+        pkg: j.apk_package || null,
+      };
     } catch (_) {
-      return "?";
+      return {web: "?", apk: null, apk_code: null, pkg: null};
     }
   }
 
   async function openSheet() {
     if (document.getElementById("servia-about-modal")) return;
-    const ver = await fetchVersion();
+    const verInfo = await fetchVersion();
+    const ver = verInfo.web || "?";
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches
                       || window.navigator.standalone === true;
+    // v1.24.208 — Build the version string with APK info prominent in TWA
+    // mode. Shows "App v1.0.2 · build 3" then "(web v1.24.208)" so the
+    // user knows which APK they installed.
+    const isTWA = (document.referrer||"").indexOf("android-app://") === 0;
+    let versionLine;
+    if ((isStandalone || isTWA) && verInfo.apk) {
+      versionLine = `App v${escapeHtml(verInfo.apk)} · build ${escapeHtml(String(verInfo.apk_code||"?"))}`
+                  + `<br><small style="opacity:.85;font-weight:500">web payload v${escapeHtml(ver)}</small>`;
+    } else if (verInfo.apk) {
+      versionLine = `v${escapeHtml(ver)} <small style="opacity:.85">· latest app v${escapeHtml(verInfo.apk)} (build ${escapeHtml(String(verInfo.apk_code||"?"))})</small>`;
+    } else {
+      versionLine = `v${escapeHtml(ver)} ${isStandalone ? "· installed" : "· browser"}`;
+    }
     const loggedIn = !!localStorage.getItem("lumora.user.tok");
     const userPhone = (function () {
       try {
@@ -153,7 +175,7 @@
           <img src="/brand/servia-icon-512x512.png" alt="" onerror="this.style.display='none'">
           <div>
             <h3>About this app</h3>
-            <div class="v">v${escapeHtml(ver)} ${isStandalone ? "· installed" : "· browser"}</div>
+            <div class="v">${versionLine}</div>
           </div>
         </div>
 

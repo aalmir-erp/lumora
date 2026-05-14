@@ -1580,7 +1580,25 @@ async def app_latest():
 
 @app.get("/api/health")
 def health():
+    # v1.24.208 — also surface the TWA APK version (from twa-manifest.json)
+    # so testers can verify the app on their device is the latest build.
+    # Web version = settings.APP_VERSION; APK version = appVersion +
+    # appVersionCode from the bundled twa-manifest.json.
+    apk_version = None
+    apk_version_code = None
+    apk_package = None
+    try:
+        import json as _j
+        mf_path = Path(__file__).resolve().parent.parent / "twa" / "android" / "twa-manifest.json"
+        if mf_path.exists():
+            mf = _j.loads(mf_path.read_text())
+            apk_version = mf.get("appVersion")
+            apk_version_code = mf.get("appVersionCode")
+            apk_package = mf.get("packageId")
+    except Exception: pass
     return {"ok": True, "service": settings.BRAND_NAME, "version": settings.APP_VERSION,
+            "apk_version": apk_version, "apk_version_code": apk_version_code,
+            "apk_package": apk_package,
             "mode": "llm" if settings.use_llm else "demo",
             "model": settings.MODEL if settings.use_llm else None,
             "wa_bridge": bool(settings.WA_BRIDGE_URL),

@@ -1350,6 +1350,137 @@
         </ol>
       </div>
 
+      <!-- v1.24.208 — One-tap Play Store upload from inside admin (no GitHub
+           secrets). Service account JSON is encrypted with ADMIN_TOKEN and
+           stored in db.cfg; once configured, one button uploads the latest
+           AAB straight to the chosen track. -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <h3 style="margin:0 0 8px;font-size:16px">🚀 One-tap Play Store upload</h3>
+        <p style="margin:0 0 12px;color:var(--muted);font-size:13px">
+          Push the latest signed AAB directly to your Play Console testing track — no GitHub secret needed. Service-account JSON is encrypted with <code>ADMIN_TOKEN</code> and stored in the app DB.
+        </p>
+
+        <!-- Status panel (configured? AAB ready? versions?) -->
+        <div id="ps-status" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;font-size:12.5px">
+          <div style="background:#F0FDFA;padding:10px 12px;border-radius:8px">
+            <div style="color:var(--muted);font-weight:600">App version</div>
+            <div id="ps-app-version" style="font-weight:800;font-size:14px;margin-top:2px">…</div>
+          </div>
+          <div style="background:#F0FDFA;padding:10px 12px;border-radius:8px">
+            <div style="color:var(--muted);font-weight:600">Latest AAB</div>
+            <div id="ps-aab-meta" style="font-weight:800;font-size:14px;margin-top:2px">…</div>
+          </div>
+          <div style="background:#F0FDFA;padding:10px 12px;border-radius:8px">
+            <div style="color:var(--muted);font-weight:600">Service account</div>
+            <div id="ps-sa-meta" style="font-weight:800;font-size:14px;margin-top:2px">…</div>
+          </div>
+        </div>
+
+        <!-- Step A: paste JSON (one time) -->
+        <details id="ps-paste-block" style="margin-bottom:12px">
+          <summary style="cursor:pointer;font-weight:700;font-size:13.5px;color:var(--primary)">⚙️ Paste service-account JSON (one-time setup)</summary>
+          <div style="margin-top:10px;background:#F1F5F9;padding:12px;border-radius:8px;font-size:12.5px">
+            <ol style="margin:0 0 10px;padding-inline-start:18px;line-height:1.7">
+              <li>Open <a href="https://play.google.com/console" target="_blank" style="color:var(--primary);font-weight:700">play.google.com/console</a> → Setup → API access.</li>
+              <li>Link a Google Cloud project (or pick an existing one).</li>
+              <li>Click <b>Create new service account</b> → grant role <b>Release manager</b>.</li>
+              <li>From Google Cloud Console, click the service account → Keys → Add key → Create new key → JSON → download.</li>
+              <li>Paste the entire JSON below and tap <b>Save</b>.</li>
+            </ol>
+            <textarea id="ps-sa-json" placeholder='{"type":"service_account","project_id":"…","private_key":"…","client_email":"…",…}' style="width:100%;height:120px;font-family:ui-monospace,monospace;font-size:11.5px;padding:10px;border-radius:6px;border:1px solid var(--border)"></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn btn-primary" type="button" onclick="psSaveSA()">💾 Save service account</button>
+              <span id="ps-save-status" style="align-self:center;font-size:12.5px"></span>
+            </div>
+          </div>
+        </details>
+
+        <!-- Step B: upload to track -->
+        <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:end">
+          <div>
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700">TRACK</label><br>
+            <select id="ps-track" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:14px">
+              <option value="internal" selected>Internal testing</option>
+              <option value="alpha">Closed alpha</option>
+              <option value="beta">Open beta</option>
+              <option value="production">⚠ Production</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700">RELEASE NOTES (optional)</label>
+            <input id="ps-notes" placeholder="What's new in this version" style="width:100%">
+          </div>
+          <button class="btn btn-primary" type="button" onclick="psUpload()" style="white-space:nowrap">🚀 Upload AAB</button>
+        </div>
+        <div id="ps-upload-status" style="margin-top:10px;font-size:13px"></div>
+      </div>
+
+      <script>
+      async function psLoadStatus() {
+        try {
+          const r = await fetch("/api/admin/play-store/status", {headers:{Authorization:"Bearer "+localStorage.getItem("adminToken")}});
+          const d = await r.json();
+          // App version card
+          const vEl = document.getElementById("ps-app-version");
+          if (d.version) {
+            vEl.textContent = (d.version.version_name||"?") + " (" + (d.version.version_code||"?") + ")";
+            vEl.title = d.version.package || "";
+          } else { vEl.textContent = "unknown"; }
+          // AAB card
+          const aEl = document.getElementById("ps-aab-meta");
+          if (d.aab) {
+            const mt = new Date(d.aab.mtime).toLocaleString();
+            aEl.innerHTML = d.aab.size_kb + " KB<br><small style='font-weight:500;opacity:.85'>built " + mt + "</small>";
+          } else { aEl.textContent = "(no AAB yet — run build)"; }
+          // SA card
+          const sEl = document.getElementById("ps-sa-meta");
+          if (d.configured) {
+            sEl.innerHTML = "✓ configured<br><small style='font-weight:500;opacity:.85'>" + (d.service_account.client_email||"") + "</small>";
+          } else {
+            sEl.innerHTML = "<span style='color:#DC2626'>not configured</span>";
+          }
+        } catch (e) { console.warn("[ps] status load failed:", e); }
+      }
+      async function psSaveSA() {
+        const raw = document.getElementById("ps-sa-json").value.trim();
+        const st = document.getElementById("ps-save-status");
+        if (!raw) { st.textContent = "paste JSON first"; st.style.color = "#DC2626"; return; }
+        st.textContent = "saving…"; st.style.color = "var(--muted)";
+        try {
+          const r = await fetch("/api/admin/play-store/save-credentials", {
+            method:"POST",
+            headers:{"content-type":"application/json", Authorization:"Bearer "+localStorage.getItem("adminToken")},
+            body: JSON.stringify({service_account_json: raw}),
+          });
+          const d = await r.json();
+          if (!r.ok) { st.textContent = "✗ " + (d.detail||"failed"); st.style.color = "#DC2626"; return; }
+          st.textContent = "✓ saved (" + d.client_email + ")"; st.style.color = "#059669";
+          document.getElementById("ps-sa-json").value = "";
+          psLoadStatus();
+        } catch (e) { st.textContent = "✗ " + e.message; st.style.color = "#DC2626"; }
+      }
+      async function psUpload() {
+        const track = document.getElementById("ps-track").value;
+        const notes = document.getElementById("ps-notes").value.trim() || null;
+        const st = document.getElementById("ps-upload-status");
+        if (track === "production" && !confirm("Push to PRODUCTION track? This release will be reviewed by Google and may go live to all users.")) return;
+        st.textContent = "uploading AAB to " + track + " track… (may take 30-60s)"; st.style.color = "var(--muted)";
+        try {
+          const r = await fetch("/api/admin/play-store/upload", {
+            method:"POST",
+            headers:{"content-type":"application/json", Authorization:"Bearer "+localStorage.getItem("adminToken")},
+            body: JSON.stringify({track: track, release_notes: notes}),
+          });
+          const d = await r.json();
+          if (!r.ok) { st.innerHTML = "<span style='color:#DC2626'>✗ " + (d.detail||"failed") + "</span>"; return; }
+          st.innerHTML = "<span style='color:#059669'>✓ uploaded as version " + d.version_code + " to " + d.track + " track.</span> <a href='" + d.console_url + "' target='_blank' style='color:var(--primary);font-weight:700'>Open Play Console →</a>";
+        } catch (e) { st.innerHTML = "<span style='color:#DC2626'>✗ " + e.message + "</span>"; }
+      }
+      // Wire up: load on tab open
+      document.querySelector('[data-tab="twa"]').addEventListener("click", psLoadStatus);
+      if (location.hash === "#twa") psLoadStatus();
+      </script>
+
       <!-- Step 5: Push notification composer -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px">
         <h3 style="margin:0 0 10px;font-size:16px">📨 Send a push notification</h3>
