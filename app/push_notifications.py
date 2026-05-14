@@ -273,22 +273,19 @@ def send_to_all(payload: dict, audience: str = "all", filters: dict | None = Non
         print("[push] pywebpush not installed — skipping push send", flush=True)
         return {"sent": 0, "pruned": 0, "failed": 0, "matched": 0,
                 "errors": ["pywebpush library missing on the server. pip install pywebpush"]}
-    # pywebpush 2.x requires SEC1 EC key format (-----BEGIN EC PRIVATE KEY-----)
-    # but _ensure_vapid_keys() stores PKCS8 (-----BEGIN PRIVATE KEY-----).
-    # Convert in-memory — does NOT change the underlying key pair so existing
-    # browser subscriptions (which registered against the same public key) remain valid.
+    # pywebpush calls py_vapid's Vapid.from_string() which does NOT parse PEM —
+    # it strips newlines from the whole input (header+body+footer) and tries to
+    # base64-decode the garbage, producing ASN.1 parse errors. We need to give it
+    # either a Vapid object OR a base64url-encoded 32-byte raw EC scalar.
+    # Extract the raw scalar from our stored PKCS8 PEM and base64url-encode it.
     priv_key_str = keys["private"]
-    if priv_key_str.strip().startswith("-----BEGIN PRIVATE KEY-----"):
+    if priv_key_str.strip().startswith("-----BEGIN"):
         try:
-            from cryptography.hazmat.primitives.serialization import (
-                load_pem_private_key, Encoding, PrivateFormat, NoEncryption)
+            from cryptography.hazmat.primitives.serialization import load_pem_private_key
             _priv_obj = load_pem_private_key(priv_key_str.encode(), password=None)
-            priv_key_str = _priv_obj.private_bytes(
-                encoding=Encoding.PEM,
-                format=PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=NoEncryption(),
-            ).decode()
-            print("[push] converted PKCS8 → EC SEC1 key for pywebpush", flush=True)
+            _raw = _priv_obj.private_numbers().private_value.to_bytes(32, "big")
+            priv_key_str = base64.urlsafe_b64encode(_raw).rstrip(b"=").decode()
+            print(f"[push] converted PEM → raw b64url scalar ({len(priv_key_str)} chars) for pywebpush", flush=True)
         except Exception as _e:
             print(f"[push] key format conversion error: {_e}", flush=True)
     # Build the WHERE clause for audience filtering. v1.22.88 expanded
@@ -404,15 +401,13 @@ def _send_all(payload: dict) -> dict:
     """Final fallback: send to all subscriptions ignoring audience."""
     keys = _ensure_vapid_keys()
     if not keys: return {"sent": 0}
-    # Same PKCS8→SEC1 conversion as send_to_all()
     priv_key_str = keys.get("private", "")
-    if priv_key_str.strip().startswith("-----BEGIN PRIVATE KEY-----"):
+    if priv_key_str.strip().startswith("-----BEGIN"):
         try:
-            from cryptography.hazmat.primitives.serialization import (
-                load_pem_private_key, Encoding, PrivateFormat, NoEncryption)
+            from cryptography.hazmat.primitives.serialization import load_pem_private_key
             _po = load_pem_private_key(priv_key_str.encode(), password=None)
-            priv_key_str = _po.private_bytes(
-                Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption()).decode()
+            _raw = _po.private_numbers().private_value.to_bytes(32, "big")
+            priv_key_str = base64.urlsafe_b64encode(_raw).rstrip(b"=").decode()
         except Exception: pass
     with db.connect() as c:
         rows = c.execute(
