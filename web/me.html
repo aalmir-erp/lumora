@@ -4,8 +4,8 @@
 <meta name="servia-page" content="me"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My account • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preload" as="style" href="/style.css?v=1.24.199" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.199"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.199" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.199"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.200" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.200"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.200" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.200"></noscript>
 <script src="/banner.js" defer></script>
 <!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
@@ -460,9 +460,9 @@ function logout() {
 
 let _user = null;
 
-// v1.24.199 — Diagnostic banner. If /me.html load fails for any reason,
+// v1.24.200 — Diagnostic banner. If /me.html load fails for any reason,
 // show the error visibly INSTEAD of silently bouncing to home. Founder
-// hit a still-bouncing "login-as" even after v1.24.199; root cause was
+// hit a still-bouncing "login-as" even after v1.24.200; root cause was
 // masked by the auto-logout. Now we keep the user on the page and let
 // them see exactly what failed.
 function _showLoadError(stage, e) {
@@ -507,7 +507,7 @@ function _showLoadError(stage, e) {
   }
   _user = m.user;
   try {
-    // v1.24.199 — Guard against missing 'who' element. v1.24.199 —
+    // v1.24.200 — Guard against missing 'who' element. v1.24.200 —
     // also guard _user.phone if user record is partial.
     const whoEl = document.getElementById("who");
     if (whoEl) whoEl.textContent = (_user && _user.phone) || "";
@@ -1167,7 +1167,7 @@ async function submitVideoProof() {
   } catch (e) { alert("Network error: " + e.message); }
 }
 </script>
-<script src="/widget.js?v=1.24.199"></script>
+<script src="/widget.js?v=1.24.200"></script>
 <script src="/cms.js" defer></script>
 <script src="/share.js" defer></script>
 <script src="/install.js" defer></script>

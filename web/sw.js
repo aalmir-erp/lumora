@@ -1,5 +1,5 @@
 /* Servia service worker — network-first for HTML/JS so deploys are seen instantly. */
-const CACHE = "servia-v1.24.199";
+const CACHE = "servia-v1.24.200";
 // v1.23.0 — pre-cache critical paint-path assets so first visit is instant
 // on a returning user. Keep small (<200KB total) to not blow Android cache.
 const SHELL = [
@@ -55,11 +55,18 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/pay/")) return;
 
   // Network-first for HTML / JS / CSS so new deploys are seen on next request.
+  // v1.24.200 — Force the SW's fetch to bypass the browser's HTTP cache too
+  // (`cache: "no-store"`). Without this, an older Cache-Control directive
+  // from a previous deploy (e.g. stale-while-revalidate=86400) could keep
+  // returning stale HTML for up to 24h even though the SW is asking for it
+  // from "the network". Founder hit this: v1.24.196/197/199 fixes were live
+  // on servia.ae but the TWA + mobile Chrome kept serving stale HTML.
   const isCode = /\.(html|js|css|json|webmanifest)$/i.test(url.pathname) ||
                  url.pathname === "/" || url.pathname.endsWith("/");
   if (isCode) {
+    const noStoreReq = new Request(e.request, { cache: "no-store" });
     e.respondWith(
-      fetch(e.request).then((res) => {
+      fetch(noStoreReq).then((res) => {
         if (e.request.method === "GET" && res.ok) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(e.request, copy));
