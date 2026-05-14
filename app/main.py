@@ -1584,6 +1584,19 @@ def chat(req: ChatRequest, request: Request):
         text = new_text
     except Exception as e:  # noqa: BLE001
         print(f"[auto-quote] post-processor error: {e}", flush=True)
+    # v1.24.217 — Strip /services/<slug> deep-links and ask intake instead.
+    # The LLM keeps generating [Service Name ↗](/services/slug) markdown
+    # links to escape the booking flow. This catches them and replaces
+    # with a clean intake question so the bot's NEXT turn can call
+    # get_quote / prepare_checkout with real data.
+    try:
+        from .llm import _strip_services_link_and_ask_intake as _ss
+        new_text = _ss(text)
+        if new_text != text:
+            print(f"[strip-services-link] sid={sid} rewrote bot reply", flush=True)
+        text = new_text
+    except Exception as e:  # noqa: BLE001
+        print(f"[strip-services-link] post-processor error: {e}", flush=True)
     usage = result.get("usage") or {}
     tin  = usage.get("input_tokens") or usage.get("prompt_tokens") or None
     tout = usage.get("output_tokens") or usage.get("completion_tokens") or None

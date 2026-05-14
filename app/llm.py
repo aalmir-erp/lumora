@@ -168,9 +168,18 @@ def _system_blocks(language: str = "en", persona: str = "customer") -> list[dict
         "  Includes: <inclusions from KB>. Duration ~3-4 hrs, 2 cleaners.\n"
         "  \n"
         "  Ready to book? I just need date + time + address + name + phone.\n"
-        "DO NOT generate `[Deep Cleaning ↗](/services/deep-cleaning)` links —\n"
-        "  those send the customer away from the booking flow. Once you have\n"
-        "  the price, drive toward collecting the missing intake → prepare_checkout.\n"
+        "🚨 ABSOLUTE BAN: NEVER generate `[X ↗](/services/<slug>)` markdown\n"
+        "  links anywhere in your replies, in ANY language. Server-side post-\n"
+        "  processor (v1.24.217) auto-strips ANY `/services/<slug>` URL the\n"
+        "  bot emits and replaces it with an intake-question prompt — so your\n"
+        "  reply gets REWRITTEN behind your back, leaving the customer\n"
+        "  confused about why the answer changed. Bypass: don't emit the link.\n"
+        "  Instead: call get_quote (for a price question) or prepare_checkout\n"
+        "  (when intake is complete) directly. If you need to mention a service\n"
+        "  page, use the bare URL `servia.ae/services/<slug>` ONLY as plain\n"
+        "  text reference inside an answer to a meta question like 'where can\n"
+        "  I see your services?' — and even then, prefer offering the chat to\n"
+        "  walk them through it. NEVER use it as a CTA.\n"
         "\n"
         "STEP 2: Ask service-specific intake — ONE FIELD AT A TIME.\n"
         "        🚨 NEVER skip to date/quote until ALL intake fields below are answered.\n"
@@ -1009,6 +1018,27 @@ _BOOK_NOW_RE = _re_q.compile(
 )
 _SUMMARY_RE = _re_q.compile(r"(services?|booking summary)\s*[:\-]", _re_q.IGNORECASE)
 
+# v1.24.217 — Catch the OTHER way the bot escapes the booking flow: when
+# it sends a `[Deep Cleaning ↗](/services/deep-cleaning)` link instead of
+# calling get_quote / prepare_checkout. Founder reported this multiple
+# times: "bot is still not able to generate quote and it shares the link
+# to service without filled even". The existing _BOOK_NOW_RE only catches
+# "Book now ↗"-style links — it misses these per-service links entirely.
+# This regex matches:
+#   [Anything](/services/some-slug)
+#   [Anything](/services/some-slug.html)
+#   [Anything](/services/some-slug/some-area)
+#   [Anything](https://servia.ae/services/some-slug)
+_SERVICES_DEEPLINK_RE = _re_q.compile(
+    r"\[([^\]]+)\]\((?:https?://[^/]*servia\.ae)?/services/([a-z0-9_\-]+)(?:[./?#][^)]*)?\)",
+    _re_q.IGNORECASE,
+)
+# Bot might also write the bare URL without markdown — catch that too.
+_SERVICES_BARE_URL_RE = _re_q.compile(
+    r"https?://[^\s)]*servia\.ae/services/[a-z0-9_\-]+|(?<!\()/services/[a-z0-9_\-]+(?!\.|\?|/)",
+    _re_q.IGNORECASE,
+)
+
 # v1.24.90 Slice A.5 — bot must NEVER ask for address as plain text.
 # This regex catches the patterns the LLM uses when it slips up; the
 # post-processor then auto-injects [[picker:address]] so the customer
@@ -1123,6 +1153,106 @@ def _parse_summary(text: str) -> dict:
         "time":    _field(r"Date\s*&\s*Time|Date/Time|Schedule|Time|Date"),
         "phone":   _field("Phone|Mobile"),
     }
+
+
+def _strip_services_link_and_ask_intake(text: str) -> str:
+    """v1.24.217 — When the bot sends a `[X ↗](/services/<slug>)` link
+    instead of calling get_quote / prepare_checkout, strip the link and
+    append an intake prompt for the FIRST service mentioned (so the next
+    user reply has the intake the bot needs to call the real tool).
+    Founder reported the bot keeps sending users to static service pages
+    instead of running the booking flow; this is the defense-in-depth
+    that fires no matter how many times the LLM ignores its prompt.
+    """
+    if not text:
+        return text
+    first_slug: str | None = None
+    rewrote = False
+
+    # Per-match replacement keeps each link's own anchor text.
+    def _replace_md_link(m):
+        nonlocal first_slug, rewrote
+        rewrote = True
+        if first_slug is None:
+            first_slug = (m.group(2) or "").lower().strip()
+        return m.group(1)  # keep the original anchor text
+
+    cleaned = _SERVICES_DEEPLINK_RE.sub(_replace_md_link, text)
+
+    # Also kill bare-URL references that escaped the markdown wrapper.
+    def _replace_bare(m):
+        nonlocal first_slug, rewrote
+        rewrote = True
+        raw = m.group(0)
+        slug = raw.split("/services/", 1)[-1].split("/")[0].split("?")[0].split("#")[0]
+        if first_slug is None:
+            first_slug = slug.lower().strip()
+        return ""
+
+    cleaned = _SERVICES_BARE_URL_RE.sub(_replace_bare, cleaned)
+
+    if not rewrote or not first_slug:
+        return text
+
+    # Normalise slug. removesuffix("...") strips the LITERAL string —
+    # rstrip would have removed any char in ".html" so e.g.
+    # "pest-control".rstrip(".html") -> "pest-contro" (l matched the set).
+    slug = first_slug
+    if slug.endswith(".html"):
+        slug = slug[:-5]
+    slug = slug.replace("-", "_")
+
+    intake = _build_intake_prompt_for_service(slug)
+    if not intake:
+        return text
+
+    print(f"[strip-services-link] stripped /services/{slug} link, "
+          f"appending intake prompt", flush=True)
+    # Tidy trailing whitespace + dangling punctuation from the stripped link.
+    cleaned = _re_q.sub(r"[ \t]+$", "", cleaned, flags=_re_q.MULTILINE)
+    cleaned = _re_q.sub(r"\s+(?=[\.,;:!?])", "", cleaned)   # space before punct
+    cleaned = _re_q.sub(r"\(\s*\)", "", cleaned)            # empty parens
+    cleaned = _re_q.sub(r"[ \t]{2,}", " ", cleaned)         # collapse runs of spaces
+    cleaned = cleaned.rstrip(",.;: \n\t").strip()
+    return (cleaned + "\n\n" + intake) if cleaned else intake
+
+
+def _build_intake_prompt_for_service(service_id: str) -> str | None:
+    """Return a one-question intake prompt with [[choices:...]] picker
+    appropriate for the given service. Returns None for unknown services."""
+    s = service_id.lower().strip()
+    # Bedroom-based cleaning services
+    if s in ("deep_cleaning", "general_cleaning", "holiday_cleaning",
+             "post_construction_cleaning", "move_in_cleaning",
+             "move_out_cleaning"):
+        return ("Got it — to give you an exact price I need a couple of "
+                "quick details. How many bedrooms in the property?\n"
+                "[[choices: Studio=studio; 1 BR=1; 2 BR=2; 3 BR=3; 4 BR=4; 5+ BR=5]]")
+    # AC services
+    if s in ("ac_cleaning", "ac_service", "ac_repair", "ac_installation"):
+        return ("Got it — to price your AC service I need to know the "
+                "number of AC units.\n"
+                "[[choices: 1=1; 2=2; 3=3; 4=4; 5+=5]]")
+    # Hourly services
+    if s in ("maid_service", "handyman", "babysitter", "chauffeur",
+             "nanny", "elderly_care"):
+        return ("Got it — these are charged by the hour. How many hours "
+                "do you need?\n"
+                "[[choices: 2 hrs=2; 4 hrs=4; 6 hrs=6; 8 hrs=8]]")
+    # Pest / disinfection
+    if s in ("pest_control", "disinfection", "fumigation"):
+        return ("Got it — what's the property size?\n"
+                "[[choices: Studio=studio; 1 BR=1; 2 BR=2; 3 BR=3; "
+                "4 BR=4; Villa=villa; Office=office]]")
+    # Vehicle / recovery
+    if s in ("vehicle_recovery", "tow_truck", "battery_jumpstart",
+             "tyre_change", "chauffeur_airport"):
+        return ("Got it — share your live location so we can dispatch "
+                "the closest recovery truck.\n"
+                "[[picker:address]]")
+    # Generic fallback: ask for area + intent
+    return ("Tell me a couple of quick details so I can give you a real "
+            "price — what's your address area + when do you need it?")
 
 
 def _name_to_service_id(name: str) -> str | None:

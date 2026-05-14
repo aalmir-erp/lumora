@@ -90,7 +90,7 @@ def _reverse_geocode_nominatim(lat: float, lng: float) -> dict:
         "accept-language": "en",
     }
     headers = {
-        "User-Agent": "Servia/1.24 (https://servia.ae; admin@servia.ae)",
+        "User-Agent": "Servia/1.24 (https://servia.ae; hello@servia.ae)",
     }
     try:
         with httpx.Client(timeout=8.0) as c:
