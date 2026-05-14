@@ -28,6 +28,9 @@ on:
   push:
     paths:
       - "_release/verification-snippet.txt"
+      - "_release/upload-keystore.b64"
+      - "_release/keystore-password.txt"
+      - ".github/workflows/play-verification-build.yml"
 
 jobs:
   build:
