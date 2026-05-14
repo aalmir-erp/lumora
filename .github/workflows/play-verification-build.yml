@@ -174,7 +174,7 @@ jobs:
           cat > verify-app/build.gradle <<GRADLE
           buildscript {
               repositories { google(); mavenCentral() }
-              dependencies { classpath 'com.android.tools.build:gradle:8.4.0' }
+              dependencies { classpath 'com.android.tools.build:gradle:8.3.2' }
           }
           allprojects { repositories { google(); mavenCentral() } }
           GRADLE
@@ -206,7 +206,7 @@ jobs:
           KS_PASSWORD: ${{ steps.keystore.outputs.password }}
         run: |
           set +e
-          gradle wrapper --gradle-version 8.5 2>&1 | tee gradle-wrapper.log
+          gradle wrapper --gradle-version 8.7 2>&1 | tee gradle-wrapper.log
           chmod +x ./gradlew
           ./gradlew :app:assembleRelease --stacktrace --info 2>&1 | tee gradle-build.log
           RC=${PIPESTATUS[0]}
