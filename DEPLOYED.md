@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"T0F1HbacTNSAa1XSozsQ6Q"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"S2QIhYvCQ5CZZyIL0_TJvA"}`
 
 ## Build logs
 ```
@@ -15,12 +15,12 @@
 [ 5/14] RUN pip install -r requirements.txt
 [ 6/14] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/14] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+[ 7/14] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/14] COPY app ./app
 [ 8/14] COPY app ./app
 [ 9/14] COPY web ./web
 [ 9/14] COPY web ./web
 [10/14] COPY _e2e-shots ./_e2e-shots
-uploading snapshot
 [10/14] COPY _e2e-shots ./_e2e-shots
 [11/14] COPY _release/android ./_release/android
 [11/14] COPY _release/android ./_release/android
@@ -32,9 +32,9 @@ uploading snapshot
 [14/14] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OTE4ZGM4OGEyZGQ0M2NlYjVkNWQ0MGFlNmI4NjdhMTk2NzA3Y2Q3NDIwNjgxODIzMTQzNzc2MTUwMzIxZjExZCIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQxNzoxNTo0OVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:13975f2ef288508ece17183bf174eca05edbc45593ba0cf7ecdc336f03801387
-containerimage.digest: sha256:918dc88a2dd43ceb5d5d40ae6b867a196707cd7420681823143776150321f11d
+containerimage.config.digest: sha256:d37763892ce860570c2e52cbf9d55deca9a9b54b127091ca044c0e176e4d2bf9
+containerimage.digest: sha256:4bf7fc24ca8d2ac58131dd2bb311fb59d249a08e3ac76c848134b5980b4de5dd
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NGJmN2ZjMjRjYThkMmFjNTgxMzFkZDJiYjMxMWZiNTlkMjQ5YTA4ZTNhYzc2Yzg0ODEzNGI1OTgwYjRkZTVkZCIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQxNzo0OToyNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 image push
 
@@ -51,7 +51,7 @@ Starting Healthcheck
 ## Runtime logs
 ```
 [start] launching whatsapp_bridge
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/f7e96483-45f2-40ef-a498-5100517a853c/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/67d447ab-9f93-43a1-94f5-379a17d18a66/vol_onr647rhdeir9di9
 Starting Container
 [wa-bridge] listening on :3001
 [wa-bridge] QR received. Open /qr in your browser to scan.
@@ -64,8 +64,9 @@ INFO:     Waiting for application startup.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:52195 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.2:45467 - "GET /api/health HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [autoblog] catch-up SKIP (last_run @ 2026-05-14T14:00:00.000637Z is fresh AND ok)
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
