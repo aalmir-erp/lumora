@@ -582,12 +582,14 @@ jobs:
           find twa/android/generated/_artifacts -maxdepth 1 -name "*.aab" \
             -exec cp -v {} _release/android/servia-phone.aab \; 2>/dev/null
           cp -v twa/android/generated/_artifacts/assetlinks.json _release/android/ 2>/dev/null
-          # Wear OS
-          cp -v twa/android/wear-build/_artifacts/servia-wear-signed.apk _release/android/ 2>/dev/null
-          cp -v twa/android/wear-build/_artifacts/servia-wear-bundle.aab _release/android/ 2>/dev/null
+          # Wear OS — v1.24.204 — fix path: build script outputs servia-wear.apk / .aab
+          # (no "-signed" suffix). Earlier copy with the wrong filename silently
+          # dropped the wear outputs even though the build succeeded.
+          cp -v twa/android/wear-build/_artifacts/servia-wear.apk _release/android/ 2>/dev/null
+          cp -v twa/android/wear-build/_artifacts/servia-wear.aab _release/android/ 2>/dev/null
           # Watch face standalone + single
-          cp -v twa/android/wear-faceonly-build/_artifacts/*signed*.apk    _release/android/servia-faces.apk    2>/dev/null
-          cp -v twa/android/wear-singleface-build/_artifacts/*signed*.apk  _release/android/servia-singleface.apk 2>/dev/null
+          cp -v twa/android/wear-faceonly-build/_artifacts/*.apk    _release/android/servia-faces.apk    2>/dev/null
+          cp -v twa/android/wear-singleface-build/_artifacts/*.apk  _release/android/servia-singleface.apk 2>/dev/null
           # Build info file
           {
             echo "Build: ${GITHUB_SHA::7}"

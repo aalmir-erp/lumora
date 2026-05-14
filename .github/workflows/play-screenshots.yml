@@ -41,19 +41,23 @@ jobs:
           const { chromium, devices } = require('playwright');
           const fs = require('fs');
 
-          // Pixel 5 = 393x851. We use 1080x1920 deviceScaleFactor=1 for
-          // crisper Play-Store-grade images. Aspect ratio 9:16 = Play's
-          // sweet spot for phone screenshots.
-          const VIEWPORT = { width: 1080, height: 1920 };
+          // v1.24.204 — CSS pixels, not physical pixels. Pixel 5 = 412x915.
+          // deviceScaleFactor:2 gives crisp 824x1830 output which Play
+          // accepts. The previous 1080x1920 was wider than our @media
+          // (max-width:720px) breakpoint, so pages rendered DESKTOP layout.
+          const VIEWPORT = { width: 412, height: 915 };
+          const SCALE = 2;
           const PHONE_UA = devices['Pixel 5'].userAgent;
 
-          // Pages to capture: page-path, output-filename, scroll-y (optional)
+          // Pages to capture — using .html suffix to avoid the
+          // clean-URL middleware 301 redirect that broke /services on
+          // the previous run.
           const SHOTS = [
-            { path: '/?nocache=1',          file: '01-home.png',     scroll: 0 },
-            { path: '/services?nocache=1',  file: '02-services.png', scroll: 0 },
-            { path: '/book?nocache=1',      file: '03-book.png',     scroll: 0 },
-            { path: '/services/deep-cleaning?nocache=1', file: '04-deep-cleaning.png', scroll: 0 },
-            { path: '/me?nocache=1',        file: '05-account.png',  scroll: 0 },
+            { path: '/?nocache=1',                        file: '01-home.png' },
+            { path: '/services.html?nocache=1',           file: '02-services.png' },
+            { path: '/book.html?nocache=1',               file: '03-book.png' },
+            { path: '/services/deep-cleaning.html?nocache=1', file: '04-deep-cleaning.png' },
+            { path: '/me.html?nocache=1',                 file: '05-account.png' },
           ];
 
           (async () => {
@@ -61,7 +65,7 @@ jobs:
             const ctx = await browser.newContext({
               viewport: VIEWPORT,
               userAgent: PHONE_UA,
-              deviceScaleFactor: 1,
+              deviceScaleFactor: SCALE,
               isMobile: true,
               hasTouch: true,
             });
@@ -73,15 +77,21 @@ jobs:
               const url = 'https://servia.ae' + shot.path;
               console.log('→', url);
               try {
-                await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-                // Hide cookies banner / chat widget if open
+                const resp = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+                const status = resp ? resp.status() : 0;
+                console.log('  http', status);
+                if (status >= 400) {
+                  console.error('  ✗ skipping', shot.file, '(http', status, ')');
+                  await page.close();
+                  continue;
+                }
+                // Hide banners + chat tooltips + cookie prompts
                 await page.evaluate(() => {
                   const sels = ['#servia-topbanner', '#servia-install-banner',
                                 '.us-launcher-tip', '.cookie-banner'];
                   sels.forEach(s => document.querySelectorAll(s).forEach(el => el.style.display = 'none'));
                 });
-                if (shot.scroll) await page.evaluate((y) => window.scrollTo(0, y), shot.scroll);
-                await page.waitForTimeout(800);  // settle animations
+                await page.waitForTimeout(1200);  // settle animations + chat-widget mount
                 await page.screenshot({
                   path: `${outDir}/${shot.file}`,
                   fullPage: false,
