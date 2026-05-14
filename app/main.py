@@ -3671,10 +3671,18 @@ def services_legacy_redirect(service: str = "", area: str = "",
     if area or city:
         return RedirectResponse(url=f"/area.html?city={(area or city).lower()}",
                                  status_code=301)
-    # bare /services.html (no params) → clean /services (handled by
-    # CleanURLMiddleware which 301s /services.html → /services anyway,
-    # but be explicit here)
-    return RedirectResponse(url="/services", status_code=301)
+    # v1.24.213 — Bare /services.html (no query params). Previously this
+    # 301-redirected to /services, but CleanURLMiddleware INTERNALLY
+    # rewrites /services → /services.html before this handler runs, so
+    # the redirect bounced back to /services → rewritten to /services.html
+    # → redirected again → infinite loop → Chrome bails with
+    # ERR_TOO_MANY_REDIRECTS, which the user sees as "page never opens".
+    # Serve the HTML file directly to break the loop.
+    from fastapi.responses import FileResponse
+    p = settings.WEB_DIR / "services.html"
+    if p.exists():
+        return FileResponse(str(p), media_type="text/html")
+    raise HTTPException(404, "services.html not found")
 
 
 # slug + a JS shim that pre-fills the `?id=` param so the dynamic loader

@@ -45,9 +45,31 @@
   ];
 
   function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; }
+  // v1.24.213 — Android-vs-other detection. Android users go straight to
+  // /install (which links to Play Store) instead of seeing the PWA modal —
+  // because on Android the real app gives them widgets / better notifications.
+  function isAndroid() {
+    return /Android/i.test(navigator.userAgent) && !/Windows|iPad|iPhone|iPod/i.test(navigator.userAgent);
+  }
+  // Currently running inside our installed TWA?
+  function isInTWA() {
+    return (document.referrer || "").indexOf("android-app://") === 0;
+  }
   function isStandalone() {
     return window.matchMedia("(display-mode: standalone)").matches ||
            window.navigator.standalone === true;
+  }
+  // v1.24.213 — session-only dismissal (founder requirement: banner clears
+  // on page refresh). sessionStorage clears when the tab closes OR a hard
+  // reload happens, which is what we want.
+  const SESSION_DISMISS_KEY = "servia.install.session_dismissed";
+  function isSessionDismissed() {
+    if (FORCE_SHOW) return false;
+    try { return sessionStorage.getItem(SESSION_DISMISS_KEY) === "1"; }
+    catch (_) { return false; }
+  }
+  function setSessionDismissed() {
+    try { sessionStorage.setItem(SESSION_DISMISS_KEY, "1"); } catch (_) {}
   }
   // Stable device fingerprint — first/last installs from the same device
   // collapse to one record. localStorage is per-origin, so this works for
@@ -111,22 +133,22 @@
 
   // ---------- Floating "Get the Servia app" CTA ----------
   function injectFAB() {
-    if (!FORCE_SHOW && (isStandalone() || localStorage.getItem(KEY_INSTALLED))) return;
+    // v1.24.213 — Skip if already installed (TWA or PWA standalone), if
+    // user dismissed this session, or if already on the install page.
+    if (!FORCE_SHOW && (isStandalone() || isInTWA() ||
+        localStorage.getItem(KEY_INSTALLED) || isSessionDismissed())) return;
+    if (location.pathname === "/install" || location.pathname === "/install.html") return;
     if (document.getElementById("servia-install-fab")) return;
-    // v1.24.76 — never show the FAB on TRANSACTIONAL pages where the
-    // user is mid-task (book / quote sign / pay / invoice / cart). It
-    // overlaps the form and the chat widget → looks like a mess.
+    // Never show on transactional flows (book / pay / cart / etc.)
     const TRANSACTIONAL = /^\/(book|q|p|i|pay|cart|quote|invoice|checkout)(\b|\/|\.)/;
     if (TRANSACTIONAL.test(location.pathname)) return;
     const fab = document.createElement("button");
     fab.id = "servia-install-fab";
     fab.type = "button";
-    fab.title = "Install the Servia app";
-    fab.setAttribute("aria-label", "Install the Servia app");
+    fab.title = isAndroid() ? "Get the Servia app on Play Store"
+                            : "Install the Servia app";
+    fab.setAttribute("aria-label", fab.title);
     fab.innerHTML = "📲";
-    // Compact 44px circular icon — no more "Get the Servia app" pill that
-    // ate horizontal space and overlapped page content. Sits left-side
-    // above the cart badge (which is at bottom:78). Both vertically stacked.
     fab.style.cssText =
       "position:fixed;bottom:128px;left:14px;z-index:997;" +
       "background:linear-gradient(135deg,#0F766E,#F59E0B);color:#fff;" +
@@ -136,11 +158,68 @@
       "transition:transform .12s, box-shadow .12s";
     fab.addEventListener("mouseover", () => fab.style.transform = "translateY(-2px)");
     fab.addEventListener("mouseout", () => fab.style.transform = "");
-    fab.onclick = openModal;
+    // v1.24.213 — Android web users go to /install (which has Play Store
+    // CTA + QR code + benefits). Non-Android users get the existing PWA
+    // install modal flow.
+    fab.onclick = () => {
+      if (isAndroid()) {
+        track("fab_android_to_install_page");
+        location.href = "/install";
+      } else {
+        openModal();
+      }
+    };
     document.body.appendChild(fab);
-    // On mobile bottom-nav pages, raise it so it doesn't collide
     if (document.querySelector(".mobile-nav")) fab.style.bottom = "150px";
     track("fab_shown");
+
+    // v1.24.213 — Pair the FAB with a soft slide-in banner on Android web
+    // (only). The banner has a clear "Get app" CTA + dismissable ✕. Session-
+    // only dismissal: refresh brings it back. Built once, lazily.
+    if (isAndroid()) injectAndroidBanner();
+  }
+
+  // ---------- Android-only install banner (alongside FAB) ----------
+  function injectAndroidBanner() {
+    if (!isAndroid()) return;
+    if (isSessionDismissed() || isStandalone() || isInTWA() ||
+        localStorage.getItem(KEY_INSTALLED)) return;
+    if (location.pathname === "/install" || location.pathname === "/install.html") return;
+    if (document.getElementById("servia-install-banner")) return;
+    const b = document.createElement("div");
+    b.id = "servia-install-banner";
+    b.setAttribute("role", "dialog");
+    b.setAttribute("aria-label", "Get the Servia Android app");
+    b.style.cssText =
+      "position:fixed;left:12px;right:12px;bottom:84px;z-index:9989;" +
+      "background:linear-gradient(135deg,#0F766E,#14B8A6);color:#fff;" +
+      "border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;" +
+      "box-shadow:0 10px 28px rgba(15,118,110,.35);" +
+      "font:600 13px/1.35 system-ui,-apple-system,sans-serif;" +
+      "max-width:520px;margin:0 auto;animation:servia-fab-slide .35s";
+    b.innerHTML =
+      "<div style='font-size:26px;line-height:1;flex-shrink:0'>📲</div>" +
+      "<div style='flex:1;min-width:0'>" +
+        "<div style='font-weight:800;font-size:14px;margin-bottom:1px'>Get the Servia app</div>" +
+        "<div style='opacity:.93;font-size:12px;font-weight:500'>Booking alerts, widgets, faster every day.</div>" +
+      "</div>" +
+      "<a href='/install' style='background:#FBBF24;color:#0F172A;padding:9px 14px;border-radius:10px;text-decoration:none;font-weight:800;font-size:12.5px;white-space:nowrap'>See more</a>" +
+      "<button type='button' aria-label='Dismiss' style='background:transparent;border:0;color:rgba(255,255,255,.85);font-size:18px;cursor:pointer;padding:4px 6px;font-weight:700'>&times;</button>";
+    b.querySelector("a").addEventListener("click", () => track("banner_android_to_install_page"));
+    b.querySelector("button").addEventListener("click", () => {
+      setSessionDismissed();
+      b.remove();
+      const fab = document.getElementById("servia-install-fab");
+      if (fab) fab.remove();
+      track("banner_session_dismissed");
+    });
+    document.body.appendChild(b);
+    if (!document.getElementById("servia-fab-anim")) {
+      const st = document.createElement("style");
+      st.id = "servia-fab-anim";
+      st.textContent = "@keyframes servia-fab-slide{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}";
+      document.head.appendChild(st);
+    }
   }
 
   // ---------- Subtle banner (top of page) ----------
@@ -295,7 +374,18 @@
   }
 
   // Public API for any "Install" button on the site
-  window.serviaShowInstall = openModal;
+  // v1.24.213 — banner.js + other surfaces call window.serviaShowInstall().
+  // On Android we redirect to /install instead of showing the PWA modal,
+  // because the user benefits from the real app (widgets, OS-level
+  // notifications, faster shell).
+  window.serviaShowInstall = function () {
+    if (isAndroid() && !isInTWA() && !isStandalone()) {
+      track("serviaShowInstall_android_to_install_page");
+      location.href = "/install";
+      return;
+    }
+    openModal();
+  };
 
   // Fire a `launched` event whenever the app loads in standalone (TWA / PWA)
   // mode — the admin Mobile-App tab uses these to count installs in the wild.

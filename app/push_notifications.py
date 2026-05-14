@@ -75,6 +75,43 @@ def _ensure_table() -> None:
                 last_sent_at TEXT,
                 last_error TEXT
             )""")
+        # v1.24.213 — Notification log: per-send + per-recipient delivery
+        # tracking + open-rate (when the user taps the notification, the
+        # service worker pings /api/push/click/{delivery_id} which flips
+        # opened_at). One row in push_log per broadcast, many rows in
+        # push_deliveries (one per subscriber it was sent to).
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS push_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sent_at TEXT,
+                title TEXT,
+                body TEXT,
+                kind TEXT,
+                url TEXT,
+                image TEXT,
+                audience TEXT,
+                filters_json TEXT,
+                require_interaction INTEGER,
+                sent_count INTEGER,
+                pruned_count INTEGER,
+                failed_count INTEGER,
+                matched_count INTEGER,
+                sent_by TEXT
+            )""")
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS push_deliveries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                log_id INTEGER NOT NULL,
+                subscription_id INTEGER,
+                endpoint TEXT,
+                status TEXT,
+                error TEXT,
+                sent_at TEXT,
+                opened_at TEXT,
+                FOREIGN KEY(log_id) REFERENCES push_log(id)
+            )""")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_push_log_sent_at ON push_log(sent_at DESC)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_push_deliveries_log ON push_deliveries(log_id)")
 
 
 def vapid_public_key() -> str:
@@ -215,15 +252,22 @@ def send_test():
 
 
 # ---------- Broadcast a custom-styled notification ----------
+class PushAction(BaseModel):
+    action: str          # short id (e.g. "book", "view")
+    title: str           # button label shown to user
+    url: str | None = None  # target URL (relative or absolute). null → fallback
+
+
 class BroadcastBody(BaseModel):
     title: str
     body: str
-    icon: str | None = None        # URL to small icon (default /icon-192.svg)
+    icon: str | None = None        # URL to small icon (default /icon-192.png)
     image: str | None = None       # large image URL for richer notifications
     url: str | None = None         # tap-target URL ("/me.html", etc)
     kind: str | None = None        # arbitrary tag (powers vibration pattern in sw.js)
     audience: str = "all"          # "all" | "customers" | "vendors" | "logged_in"
     require_interaction: bool = False  # stick around until user dismisses
+    actions: list[PushAction] = []     # up to 2 custom action buttons
 
 
 @router.post("/broadcast")
@@ -241,7 +285,14 @@ def broadcast(body: BroadcastBody):
     if body.image: payload["image"] = body.image
     if body.url: payload["url"] = body.url
     if body.require_interaction: payload["requireInteraction"] = True
-
+    # v1.24.213 — custom action buttons. Android shows up to 2-3 buttons
+    # below the notification body. Each carries its own URL; sw.js resolves
+    # the URL on click. Capped at 2 buttons for max compatibility.
+    if body.actions:
+        payload["actions"] = [
+            {"action": a.action[:30], "title": a.title[:30], "url": a.url}
+            for a in body.actions[:2]
+        ]
     # Audience filter — passes through to send_to_all which queries
     # push_subscriptions filtered by linked customer/vendor.
     result = send_to_all(payload, audience=body.audience or "all", filters=getattr(body, 'filters', None))
@@ -334,16 +385,42 @@ def send_to_all(payload: dict, audience: str = "all", filters: dict | None = Non
             f"SELECT id, endpoint, subscription_json FROM push_subscriptions{where}", params).fetchall()
     print(f"[push] sending '{payload.get('title','?')[:50]}' to {len(rows)} sub(s) "
           f"(audience={audience})", flush=True)
+    # v1.24.213 — Create a push_log row up-front so we can attach per-recipient
+    # delivery_ids in each payload (the service worker pings them back when
+    # the user taps the notification, so we can measure open rates).
+    now_iso = _dt.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        cur = c.execute(
+            "INSERT INTO push_log(sent_at, title, body, kind, url, image, "
+            "audience, filters_json, require_interaction, sent_count, "
+            "pruned_count, failed_count, matched_count, sent_by) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (now_iso, payload.get("title", ""), payload.get("body", ""),
+             payload.get("kind", ""), payload.get("url"), payload.get("image"),
+             audience, _json.dumps(filters or {}),
+             1 if payload.get("requireInteraction") else 0,
+             0, 0, 0, len(rows), "admin"))
+        log_id = cur.lastrowid
     n_ok = 0
     pruned: list[int] = []
     failed_errors: list[str] = []
     vapid_claims = {"sub": "mailto:" + os.getenv("ADMIN_EMAIL", "admin@servia.ae")}
     for r in rows:
+        # Insert a delivery row first so we have an id to put in the payload.
+        with db.connect() as c:
+            dcur = c.execute(
+                "INSERT INTO push_deliveries(log_id, subscription_id, endpoint, "
+                "status, sent_at) VALUES(?,?,?,?,?)",
+                (log_id, r["id"], r["endpoint"], "pending", now_iso))
+            delivery_id = dcur.lastrowid
+        # Inject delivery_id into payload so SW can ping back on click.
+        payload_with_id = dict(payload)
+        payload_with_id["_did"] = delivery_id
         try:
             sub = _json.loads(r["subscription_json"])
             webpush(
                 subscription_info=sub,
-                data=_json.dumps(payload),
+                data=_json.dumps(payload_with_id),
                 vapid_private_key=priv_key_str,
                 vapid_claims=vapid_claims,
                 ttl=86400,
@@ -351,33 +428,92 @@ def send_to_all(payload: dict, audience: str = "all", filters: dict | None = Non
             n_ok += 1
             with db.connect() as c:
                 c.execute("UPDATE push_subscriptions SET last_sent_at=?, last_error=NULL WHERE id=?",
-                          (_dt.datetime.utcnow().isoformat() + "Z", r["id"]))
+                          (now_iso, r["id"]))
+                c.execute("UPDATE push_deliveries SET status='sent' WHERE id=?", (delivery_id,))
         except WebPushException as e:
             err = str(e)[:300]
             # 410 Gone or 404 → subscription expired/revoked → prune
             if "410" in err or "404" in err:
                 pruned.append(r["id"])
                 failed_errors.append(f"sub#{r['id']}: 410 Gone (browser unregistered) — pruned")
+                with db.connect() as c:
+                    c.execute("UPDATE push_deliveries SET status='pruned', error=? WHERE id=?",
+                              (err[:200], delivery_id))
             else:
                 with db.connect() as c:
                     c.execute("UPDATE push_subscriptions SET last_error=? WHERE id=?",
                               (err, r["id"]))
+                    c.execute("UPDATE push_deliveries SET status='failed', error=? WHERE id=?",
+                              (err[:200], delivery_id))
                 failed_errors.append(f"sub#{r['id']}: {err[:120]}")
         except Exception as e:  # noqa: BLE001
             print(f"[push] send error: {e}", flush=True)
+            with db.connect() as c:
+                c.execute("UPDATE push_deliveries SET status='failed', error=? WHERE id=?",
+                          (f"{type(e).__name__}: {str(e)[:180]}", delivery_id))
             failed_errors.append(f"sub#{r['id']}: {type(e).__name__}: {str(e)[:120]}")
     if pruned:
         with db.connect() as c:
             c.execute(f"DELETE FROM push_subscriptions WHERE id IN ({','.join('?'*len(pruned))})",
                       pruned)
         print(f"[push] pruned {len(pruned)} expired subscriptions", flush=True)
+    # Update the log row with final counts.
+    with db.connect() as c:
+        c.execute("UPDATE push_log SET sent_count=?, pruned_count=?, failed_count=? WHERE id=?",
+                  (n_ok, len(pruned), len(failed_errors), log_id))
     return {
         "sent": n_ok,
         "pruned": len(pruned),
         "failed": len(failed_errors),
         "matched": len(rows),
+        "log_id": log_id,
         "errors": failed_errors[:30],   # cap so admin doesn't get a 1MB JSON
     }
+
+
+# ---------- Public: open/click tracking + admin log endpoints ----------
+@public_router.post("/click/{delivery_id}")
+def public_click(delivery_id: int):
+    """Service worker pings this from the notificationclick handler. Flips
+    opened_at on the delivery row so admin can measure open rate."""
+    _ensure_table()
+    now = _dt.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        c.execute("UPDATE push_deliveries SET opened_at=? WHERE id=? AND opened_at IS NULL",
+                  (now, delivery_id))
+    return {"ok": True}
+
+
+@router.get("/log")
+def admin_push_log(limit: int = 50):
+    """Admin: list recent push broadcasts with delivery + open stats."""
+    _ensure_table()
+    limit = max(1, min(int(limit or 50), 500))
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT l.*, "
+            "  (SELECT COUNT(*) FROM push_deliveries d WHERE d.log_id=l.id AND d.opened_at IS NOT NULL) AS opened_count "
+            "FROM push_log l ORDER BY l.id DESC LIMIT ?",
+            (limit,)).fetchall()
+    return {"items": [dict(r) for r in rows], "count": len(rows)}
+
+
+@router.get("/log/{log_id}")
+def admin_push_log_detail(log_id: int):
+    """Admin: full delivery breakdown for one broadcast (per-recipient status)."""
+    _ensure_table()
+    with db.connect() as c:
+        head = c.execute("SELECT * FROM push_log WHERE id=?", (log_id,)).fetchone()
+        if not head:
+            raise HTTPException(404, "log entry not found")
+        deliveries = c.execute(
+            "SELECT d.id, d.subscription_id, d.endpoint, d.status, d.error, "
+            "  d.sent_at, d.opened_at, s.user_agent "
+            "FROM push_deliveries d "
+            "LEFT JOIN push_subscriptions s ON s.id = d.subscription_id "
+            "WHERE d.log_id=? ORDER BY d.id",
+            (log_id,)).fetchall()
+    return {"log": dict(head), "deliveries": [dict(r) for r in deliveries]}
 
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /* Servia service worker — network-first for HTML/JS so deploys are seen instantly. */
-const CACHE = "servia-v1.24.212";
+const CACHE = "servia-v1.24.213";
 // v1.23.0 — pre-cache critical paint-path assets so first visit is instant
 // on a returning user. Keep small (<200KB total) to not blow Android cache.
 const SHELL = [
@@ -98,6 +98,9 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : { title: "Servia", body: "You have a new update" };
   const kind = (data.kind || "").toLowerCase();
+  // v1.24.213 — delivery id (assigned server-side) ping back on click for
+  // open-rate tracking. Stashed in notification.data.did.
+  const did = data._did || null;
 
   // Vibration patterns: distinct fingerprint per category
   // (Android picks the OS sound; vibration is the most reliable cross-device signal)
@@ -112,24 +115,50 @@ self.addEventListener("push", (event) => {
   };
   const vibrate = VIBRATION[kind] || [200, 100, 200];
 
-  // Body emoji + actions per category
+  // Body emoji + actions per category. v1.24.213 — payload.actions
+  // (from admin broadcast composer) overrides the category defaults so
+  // operators can supply custom CTA buttons with their own URLs.
   let actions = [];
-  if (kind === "new_visitor") {
-    actions = [{ action: "view-live", title: "👀 View live", icon: "/icon-192.svg" }];
+  if (Array.isArray(data.actions) && data.actions.length) {
+    actions = data.actions.slice(0, 2).map(a => ({
+      action: String(a.action || "open").slice(0, 30),
+      title:  String(a.title  || "Open").slice(0, 30),
+      icon:   "/icon-192.png",
+    }));
+  } else if (kind === "new_visitor") {
+    actions = [{ action: "view-live", title: "View live", icon: "/icon-192.png" }];
   } else if (kind === "new_booking" || kind === "booking_confirmed") {
-    actions = [{ action: "view-booking", title: "📋 Open booking", icon: "/icon-192.svg" }];
+    actions = [{ action: "view-booking", title: "Open booking", icon: "/icon-192.png" }];
   } else if (kind === "payment_request") {
-    actions = [{ action: "send-link", title: "💬 Send WA link", icon: "/icon-192.svg" }];
+    actions = [{ action: "send-link", title: "Send WA link", icon: "/icon-192.png" }];
   }
 
+  // v1.24.213 — Default tap URL: customer notifications open the app
+  // homepage (so the chat / quick-book is one tap away); admin-flavoured
+  // pushes (new_visitor, new_booking, payment_request) go to admin tab.
+  const adminKinds = new Set([
+    "new_visitor", "new_booking", "booking_confirmed",
+    "payment_request", "psi_alert", "test"
+  ]);
+  const defaultUrl = adminKinds.has(kind)
+    ? "/admin.html#" + (kind === "new_visitor" ? "live" : "dashboard")
+    : "/";
   event.waitUntil(self.registration.showNotification(data.title || "Servia", {
     body: data.body || "",
-    icon: "/icon-192.svg",
-    badge: "/icon-192.svg",
+    icon: "/icon-192.png",        // colour app icon (large)
+    badge: "/badge-72.png",       // monochrome silhouette for status bar
     image: data.image,
-    data: data.url || "/admin.html#" + (kind === "new_visitor" ? "live" : "dashboard"),
+    data: {
+      url: data.url || defaultUrl,
+      did: did,
+      // Per-action URL map: { "<action_id>": "<url>" } so the
+      // notificationclick handler can look up where an action button
+      // should take the user.
+      actionUrls: (Array.isArray(data.actions) ? data.actions : [])
+        .reduce((o, a) => { if (a.action && a.url) o[a.action] = a.url; return o; }, {}),
+    },
     tag: data.tag || ("servia-" + kind || "servia-notif"),
-    renotify: true,            // re-vibrate even if same tag still showing
+    renotify: true,
     requireInteraction: kind === "payment_request" || kind === "psi_alert",
     silent: false,
     vibrate,
@@ -138,9 +167,41 @@ self.addEventListener("push", (event) => {
 });
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data || "/me.html";
-  event.waitUntil(clients.matchAll({type:"window"}).then(list => {
-    for (const c of list) { if (c.url.includes(url) && "focus" in c) return c.focus(); }
-    if (clients.openWindow) return clients.openWindow(url);
-  }));
+  // v1.24.213 — `data` is now an object {url, did, actionUrls}. Old
+  // notifications (already on phones) may still have data as a raw URL
+  // string; handle both for back-compat.
+  let target, did = null, actionUrls = {};
+  const d = event.notification.data;
+  if (d && typeof d === "object") {
+    target = d.url || "/";
+    did = d.did || null;
+    actionUrls = d.actionUrls || {};
+  } else {
+    target = (typeof d === "string" && d) ? d : "/";
+  }
+  // If a specific action button was tapped, prefer its URL; otherwise the
+  // notification body itself (event.action is "" for the body click).
+  if (event.action && actionUrls[event.action]) {
+    target = actionUrls[event.action];
+  }
+  event.waitUntil((async () => {
+    // 1. Fire-and-forget click ping for open-rate tracking.
+    if (did) {
+      try { await fetch("/api/push/click/" + did, {method:"POST", keepalive:true}); }
+      catch (_) {}
+    }
+    // 2. Reuse an existing app window if one's already open.
+    const list = await clients.matchAll({type:"window", includeUncontrolled:true});
+    for (const c of list) {
+      if (c.url.endsWith(target) && "focus" in c) { try { return c.focus(); } catch(_){} }
+    }
+    // 3. Otherwise open the target. Browser/TWA auto-picks the right
+    //    handler — if the TWA app is installed and the URL is on our
+    //    domain, Android opens the TWA full-screen; else default browser.
+    if (clients.openWindow) {
+      const abs = (target.startsWith("http") || target.startsWith("/"))
+        ? target : ("/" + target);
+      return clients.openWindow(abs);
+    }
+  })());
 });
