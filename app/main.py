@@ -71,9 +71,21 @@ _FORCE_MOBILE_SNIPPET = (
     b"var sw=screen.width||window.innerWidth;"
     b"var hasTouch=('ontouchstart' in window)||(navigator.maxTouchPoints>0);"
     b"var uaDesktop=!/Mobi|Android.+Mobile|iPhone|iPad|iPod|Wear/.test(ua);"
-    # If touch device with small physical screen but UA reports desktop,
-    # Chrome's "Request Desktop Site" is on -> override viewport.
-    b"if(hasTouch && sw<=820 && uaDesktop){"
+    # v1.24.197 — Detect TWA / standalone (Servia Android app) explicitly.
+    # Founder reported: the installed app shows the desktop layout. TWA's
+    # user agent often includes 'Mobile' so the old uaDesktop check
+    # skipped it. Also covers PWA installs (display-mode: standalone).
+    b"var isTWA=(document.referrer||'').indexOf('android-app://')===0;"
+    b"var isStandalone=false;"
+    b"try{isStandalone=(window.matchMedia&&("
+    b"window.matchMedia('(display-mode: standalone)').matches||"
+    b"window.matchMedia('(display-mode: minimal-ui)').matches||"
+    b"window.matchMedia('(display-mode: fullscreen)').matches));}catch(_){}"
+    # Trigger if ANY of:
+    #   - Chrome 'Request Desktop Site' on a touch device with small screen
+    #   - Running inside the Servia Android TWA wrapper
+    #   - Running as installed PWA (standalone display mode)
+    b"if((hasTouch && sw<=820 && uaDesktop) || isTWA || isStandalone){"
       b"var vp=document.querySelector('meta[name=\"viewport\"]');"
       b"if(!vp){vp=document.createElement('meta');vp.name='viewport';"
         b"document.head.insertBefore(vp,document.head.firstChild);}"
@@ -82,6 +94,9 @@ _FORCE_MOBILE_SNIPPET = (
       b"var s=document.createElement('style');s.id='_fm';"
       b"s.textContent='html,body{max-width:100vw!important;overflow-x:hidden!important;}';"
       b"document.head.appendChild(s);"
+      # Tag <html> so CSS can target this state if needed (e.g. hide the
+      # nav header from inside the wrapper).
+      b"document.documentElement.setAttribute('data-servia-app','1');"
       # Mark so we never reload-loop
       b"if(!sessionStorage.getItem('_fm')){sessionStorage.setItem('_fm','1');}"
     b"}}catch(e){}})();</script>"
