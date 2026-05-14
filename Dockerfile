@@ -33,6 +33,13 @@ COPY app ./app
 COPY web ./web
 # v1.24.92 — Playwright thumbnails (auto-committed, pruned to last 14 runs)
 COPY _e2e-shots ./_e2e-shots
+# v1.24.209 — Signed APK + AAB outputs so the /download/* routes serve them
+# directly. ONLY _release/android/ is copied — the keystores + passwords
+# in _release/ root (upload-keystore.jks, servia-2a65.jks,
+# keystore-password.txt, etc.) MUST stay out of the deployed image.
+COPY _release/android ./_release/android
+# v1.24.209 — TWA manifest read by /api/health for apk_version surfacing
+COPY twa/android/twa-manifest.json ./twa/android/twa-manifest.json
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh && \
     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
