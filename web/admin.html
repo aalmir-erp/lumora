@@ -1404,6 +1404,7 @@
           <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
             <button class="btn btn-primary" type="button" onclick="sendBroadcast()">📨 Send to selected audience</button>
             <button class="btn btn-ghost" type="button" onclick="sendTestPush()">🧪 Send test (to me only)</button>
+            <button class="btn btn-ghost" type="button" onclick="pruneAllSubs()" style="color:#dc2626;border-color:#dc2626" title="Delete all subscriptions so devices re-register fresh. Use after a VAPID key issue.">🗑 Clear broken subs</button>
             <span id="pn-result" style="font-size:12.5px;color:var(--muted);align-self:center;margin-inline-start:6px"></span>
           </div>
         </div>
@@ -6229,6 +6230,20 @@ async function sendTestPush() {
     r.style.color = "#065F46";
   } catch (e) {
     r.textContent = "Test failed: " + (e.message || e); r.style.color = "#B91C1C";
+  }
+}
+
+async function pruneAllSubs() {
+  if (!confirm("Delete ALL push subscriptions? Devices will re-register automatically on next visit.")) return;
+  const r = document.getElementById("pn-result");
+  r.textContent = "Clearing…"; r.style.color = "var(--muted)";
+  try {
+    const res = await adm("/api/admin/push/subscriptions/all", {method:"DELETE"});
+    r.textContent = `✓ Cleared ${res.deleted} subscriptions — devices will re-register on next visit`;
+    r.style.color = "#065F46";
+    loadPushAudience();
+  } catch (e) {
+    r.textContent = "Clear failed: " + (e.message || e); r.style.color = "#B91C1C";
   }
 }
 

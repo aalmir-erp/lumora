@@ -2972,16 +2972,22 @@ def twa_credentials():
     if not blob_path.exists():
         raise HTTPException(404, "no twa keystore stored — run the bootstrap script")
 
-    admin_token = os.environ.get("ADMIN_TOKEN", "lumora-admin-test")
     salt = b"servia.twa.creds.v1"
-    key_bytes = hashlib.pbkdf2_hmac("sha256", admin_token.encode(), salt, 100_000, dklen=32)
-    fernet_key = base64.urlsafe_b64encode(key_bytes)
-    f = Fernet(fernet_key)
-
     encrypted = blob_path.read_bytes()
-    try:
-        decrypted = json.loads(f.decrypt(encrypted))
-    except InvalidToken:
+    # Try current ADMIN_TOKEN first, then the recovery constant as fallback.
+    # The file may have been created with either token across deploys.
+    admin_token = os.environ.get("ADMIN_TOKEN", "lumora-admin-test")
+    decrypted = None
+    for try_token in dict.fromkeys([admin_token, "lumora-admin-test"]):
+        try:
+            key_bytes = hashlib.pbkdf2_hmac("sha256", try_token.encode(), salt, 100_000, dklen=32)
+            fernet_key = base64.urlsafe_b64encode(key_bytes)
+            f = Fernet(fernet_key)
+            decrypted = json.loads(f.decrypt(encrypted))
+            break
+        except InvalidToken:
+            continue
+    if decrypted is None:
         raise HTTPException(500,
             "could not decrypt twa keystore — ADMIN_TOKEN may have been rotated since "
             "creds were stored. Regenerate via the keystore-rotate endpoint.")

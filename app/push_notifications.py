@@ -182,6 +182,18 @@ def list_subs():
     return {"subscriptions": [dict(r) for r in rows], "count": len(rows)}
 
 
+@router.delete("/subscriptions/all")
+def prune_all_subscriptions():
+    """Delete ALL push subscriptions so devices re-register fresh on next visit.
+    Use this after a VAPID key rotation or format change that invalidated
+    existing subscriptions."""
+    _ensure_table()
+    with db.connect() as c:
+        n = c.execute("DELETE FROM push_subscriptions").rowcount
+    print(f"[push] admin pruned all {n} push subscriptions", flush=True)
+    return {"ok": True, "deleted": n}
+
+
 @router.post("/test")
 def send_test():
     """Send a test notification to all subscribed devices."""
@@ -261,6 +273,24 @@ def send_to_all(payload: dict, audience: str = "all", filters: dict | None = Non
         print("[push] pywebpush not installed — skipping push send", flush=True)
         return {"sent": 0, "pruned": 0, "failed": 0, "matched": 0,
                 "errors": ["pywebpush library missing on the server. pip install pywebpush"]}
+    # pywebpush 2.x requires SEC1 EC key format (-----BEGIN EC PRIVATE KEY-----)
+    # but _ensure_vapid_keys() stores PKCS8 (-----BEGIN PRIVATE KEY-----).
+    # Convert in-memory — does NOT change the underlying key pair so existing
+    # browser subscriptions (which registered against the same public key) remain valid.
+    priv_key_str = keys["private"]
+    if priv_key_str.strip().startswith("-----BEGIN PRIVATE KEY-----"):
+        try:
+            from cryptography.hazmat.primitives.serialization import (
+                load_pem_private_key, Encoding, PrivateFormat, NoEncryption)
+            _priv_obj = load_pem_private_key(priv_key_str.encode(), password=None)
+            priv_key_str = _priv_obj.private_bytes(
+                encoding=Encoding.PEM,
+                format=PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=NoEncryption(),
+            ).decode()
+            print("[push] converted PKCS8 → EC SEC1 key for pywebpush", flush=True)
+        except Exception as _e:
+            print(f"[push] key format conversion error: {_e}", flush=True)
     # Build the WHERE clause for audience filtering. v1.22.88 expanded
     # to support a granular `filters` object: location/language/booking/...
     where_parts: list[str] = []
@@ -317,7 +347,7 @@ def send_to_all(payload: dict, audience: str = "all", filters: dict | None = Non
             webpush(
                 subscription_info=sub,
                 data=_json.dumps(payload),
-                vapid_private_key=keys["private"],
+                vapid_private_key=priv_key_str,
                 vapid_claims=vapid_claims,
                 ttl=86400,
             )
@@ -374,6 +404,16 @@ def _send_all(payload: dict) -> dict:
     """Final fallback: send to all subscriptions ignoring audience."""
     keys = _ensure_vapid_keys()
     if not keys: return {"sent": 0}
+    # Same PKCS8→SEC1 conversion as send_to_all()
+    priv_key_str = keys.get("private", "")
+    if priv_key_str.strip().startswith("-----BEGIN PRIVATE KEY-----"):
+        try:
+            from cryptography.hazmat.primitives.serialization import (
+                load_pem_private_key, Encoding, PrivateFormat, NoEncryption)
+            _po = load_pem_private_key(priv_key_str.encode(), password=None)
+            priv_key_str = _po.private_bytes(
+                Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption()).decode()
+        except Exception: pass
     with db.connect() as c:
         rows = c.execute(
             "SELECT id, endpoint, subscription_json FROM push_subscriptions"
@@ -384,7 +424,7 @@ def _send_all(payload: dict) -> dict:
         try:
             sub = _json.loads(r["subscription_json"])
             webpush(subscription_info=sub, data=_json.dumps(payload),
-                    vapid_private_key=keys["private"], vapid_claims=vapid_claims, ttl=86400)
+                    vapid_private_key=priv_key_str, vapid_claims=vapid_claims, ttl=86400)
             n += 1
         except Exception:
             pass
