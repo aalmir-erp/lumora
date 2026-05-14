@@ -1,12 +1,13 @@
-Build: 7de7fda
-Run:   https://github.com/aalmir-erp/lumora/actions/runs/25850147994
-Date:  Thu May 14 08:33:49 UTC 2026
+Build: e582854
+Run:   https://github.com/aalmir-erp/lumora/actions/runs/25868498402
+Date:  Thu May 14 15:25:39 UTC 2026
 
 Files in this directory:
-total 3300
-drwxr-xr-x 2 runner runner    4096 May 14 08:33 .
-drwxr-xr-x 3 runner runner    4096 May 14 08:33 ..
--rw-r--r-- 1 runner runner     146 May 14 08:33 BUILD_INFO.txt
--rw-r--r-- 1 runner runner     305 May 14 08:33 assetlinks.json
--rw-r--r-- 1 runner runner 1722263 May 14 08:33 servia-phone.aab
--rw-r--r-- 1 runner runner 1636550 May 14 08:33 servia-phone.apk
+total 17432
+drwxr-xr-x 2 runner runner    4096 May 14 15:25 .
+drwxr-xr-x 3 runner runner    4096 May 14 15:25 ..
+-rw-r--r-- 1 runner runner     146 May 14 15:25 BUILD_INFO.txt
+-rw-r--r-- 1 runner runner 7237450 May 14 15:25 servia-faces.apk
+-rw-r--r-- 1 runner runner 1722420 May 14 15:25 servia-phone.aab
+-rw-r--r-- 1 runner runner 1636642 May 14 15:25 servia-phone.apk
+-rw-r--r-- 1 runner runner 7235122 May 14 15:25 servia-singleface.apk
