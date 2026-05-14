@@ -1,0 +1,17 @@
+./_artifacts/servia-faces-v1.24.215-20260514-1752.apk
+./_artifacts/servia-faces-v1.24.215-20260514-1752.aab
+./app/src/main/AndroidManifest.xml
+./app/build/intermediates/intermediary_bundle/release/packageReleaseBundle/intermediary-bundle.aab
+./app/build/intermediates/packaged_manifests/release/processReleaseManifestForPackage/AndroidManifest.xml
+./app/build/intermediates/bundle_manifest/release/processApplicationManifestReleaseForBundle/AndroidManifest.xml
+./app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
+./app/build/intermediates/merged_manifest/release/processReleaseMainManifest/AndroidManifest.xml
+./app/build/outputs/bundle/release/app-release.aab
+./app/build/outputs/apk/release/app-release.apk
+app/build/outputs/bundle/release/app-release.aab
+app/build/outputs/apk/release/output-metadata.json
+app/build/outputs/apk/release/app-release.apk
+app/build/outputs/apk/release/baselineProfiles/1/app-release.dm
+app/build/outputs/apk/release/baselineProfiles/0/app-release.dm
+app/build/outputs/sdk-dependencies/release/sdkDependencies.txt
+app/build/outputs/logs/manifest-merger-release-report.txt

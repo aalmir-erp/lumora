@@ -1,0 +1,3 @@
+app/build/intermediates/intermediary_bundle/release/packageReleaseBundle/intermediary-bundle.aab
+app/build/outputs/bundle/release/app-release.aab
+app/build/outputs/apk/release/app-release.apk
