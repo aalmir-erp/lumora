@@ -134,8 +134,11 @@ jobs:
           }
           JAVA
 
-          # adi-registration.properties — THE VERIFICATION SNIPPET
-          echo "$SNIPPET" > verify-app/app/src/main/assets/adi-registration.properties
+          # adi-registration.properties — THE VERIFICATION SNIPPET.
+          # Play rejects with "invalid token file" if the file has extra
+          # whitespace/newlines. Use printf to write the snippet with no
+          # trailing newline.
+          printf '%s' "$SNIPPET" > verify-app/app/src/main/assets/adi-registration.properties
 
           # App-level build.gradle
           cat > verify-app/app/build.gradle <<GRADLE
