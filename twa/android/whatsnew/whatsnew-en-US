@@ -1,0 +1,4 @@
+Notifications now work end-to-end:
+• Native Android permission prompt on first launch
+• Booking alerts, payment confirmations, live updates
+• Cross-device delivery (phone + Wear OS)

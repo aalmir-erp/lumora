@@ -3121,6 +3121,96 @@ def apple_app_site_association():
     return JSONResponse({"applinks": {"apps": [], "details": []}})
 
 
+# v1.24.208 — Public direct-download routes for the latest signed APKs/AABs.
+# Files are committed by the Build Android TWA workflow into _release/android/
+# (see "Commit phone + wear outputs" step). Serving them publicly gives the
+# founder + testers a permanent URL — no GitHub login, no Play Store gating.
+_RELEASE_DIR = Path(__file__).resolve().parent.parent / "_release" / "android"
+_RELEASE_FILES = {
+    "servia.apk":            "servia-phone.apk",
+    "servia-phone.apk":      "servia-phone.apk",
+    "servia-phone.aab":      "servia-phone.aab",
+    "servia-wear.apk":       "servia-wear.apk",
+    "servia-wear.aab":       "servia-wear.aab",
+    "servia-faces.apk":      "servia-faces.apk",
+    "servia-singleface.apk": "servia-singleface.apk",
+    "servia-verification.apk": "../servia-verification.apk",
+}
+
+@app.get("/download/{name}", include_in_schema=False)
+def download_release(name: str):
+    """Direct download of the signed phone/wear APK or AAB. Files are kept
+    fresh by the Build Android TWA workflow which commits the latest build
+    to _release/android/ after every push. URLs are stable:
+        https://servia.ae/download/servia.apk          (phone APK, signed)
+        https://servia.ae/download/servia-phone.aab    (Play Store bundle)
+        https://servia.ae/download/servia-wear.apk     (Wear OS sideload)
+        https://servia.ae/download/servia-wear.aab     (Wear OS Play Store)
+    """
+    from fastapi.responses import FileResponse
+    rel = _RELEASE_FILES.get(name)
+    if not rel:
+        raise HTTPException(404, "unknown release file")
+    target = (_RELEASE_DIR / rel).resolve()
+    # Path-traversal guard — resolve and require parent stays inside _release/
+    base = _RELEASE_DIR.parent.resolve()
+    if not str(target).startswith(str(base)):
+        raise HTTPException(404, "not found")
+    if not target.exists():
+        raise HTTPException(404, f"file not built yet: {name}")
+    media = "application/vnd.android.package-archive" if name.endswith(".apk") \
+            else "application/octet-stream"
+    return FileResponse(str(target), media_type=media, filename=name)
+
+
+@app.get("/download", include_in_schema=False)
+def download_index():
+    """Tiny landing page that lists what's downloadable + each file's mtime/size."""
+    from fastapi.responses import HTMLResponse
+    import datetime as _dt
+    rows = []
+    for url_name, rel in _RELEASE_FILES.items():
+        p = (_RELEASE_DIR / rel).resolve()
+        if p.exists():
+            sz = p.stat().st_size
+            mt = _dt.datetime.utcfromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M UTC")
+            rows.append(
+                f"<tr><td><a href='/download/{url_name}'>{url_name}</a></td>"
+                f"<td>{sz//1024} KB</td><td>{mt}</td></tr>"
+            )
+        else:
+            rows.append(
+                f"<tr><td style='color:#999'>{url_name}</td>"
+                f"<td colspan='2' style='color:#999'>(not built yet)</td></tr>"
+            )
+    body = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        "<title>Servia — direct downloads</title>"
+        "<style>body{font:14px/1.5 system-ui,sans-serif;max-width:680px;"
+        "margin:32px auto;padding:0 16px;color:#0F172A}"
+        "h1{color:#0F766E}table{width:100%;border-collapse:collapse}"
+        "td,th{padding:8px 6px;border-bottom:1px solid #E5E7EB;text-align:left}"
+        "a{color:#0F766E;text-decoration:none;font-weight:600}"
+        ".note{background:#F0FDFA;border-left:3px solid #14B8A6;"
+        "padding:12px 14px;border-radius:6px;margin:20px 0}</style>"
+        "</head><body>"
+        "<h1>Servia · direct downloads</h1>"
+        "<p>Latest signed APKs / AABs from the most recent successful "
+        "<b>Build Android TWA</b> CI run.</p>"
+        "<table><tr><th>file</th><th>size</th><th>built</th></tr>"
+        + "".join(rows) +
+        "</table>"
+        "<div class='note'><b>Play Store testing:</b> upload "
+        "<code>servia-phone.aab</code> to "
+        "<a href='https://play.google.com/console'>play.google.com/console</a> "
+        "&rarr; Internal testing &rarr; Create new release.</div>"
+        "</body></html>"
+    )
+    return HTMLResponse(body)
+
+
+
 @app.get("/shortcuts/{slug}.shortcut", include_in_schema=False)
 def siri_shortcut(slug: str):
     """Serve a pre-built .shortcut binary plist with the correct iOS MIME
