@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  v1.24.41 — Wallpaper descriptor required for WallpaperService.
+  Without this file, AndroidManifest's <meta-data android:name=
+  "android.service.wallpaper" .../> resolves to nothing and the system
+  watch face picker silently skips our face.
+
+  thumbnail = the small preview shown in the picker. We use the same
+  hub preview PNG that's already bundled.
+-->
+<wallpaper xmlns:android="http://schemas.android.com/apk/res/android"
+    android:thumbnail="@drawable/wf_preview_servia" />

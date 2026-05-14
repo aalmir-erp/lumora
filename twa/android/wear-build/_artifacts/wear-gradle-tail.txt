@@ -1,0 +1,300 @@
+  Build cache is disabled
+  Caching not enabled.
+Caching disabled for AarTransform: /home/runner/.gradle/caches/8.11.1/transforms/c82110c813ef5441277957d323dc62b9/transformed/cursoradapter-1.0.0 because:
+  Build cache is disabled
+  Caching not enabled.
+Caching disabled for AarTransform: /home/runner/.gradle/caches/8.11.1/transforms/1df8ab0e3314dbd16d630b9f698b2c34/transformed/appcompat-1.1.0 because:
+  Build cache is disabled
+  Caching not enabled.
+Transforming FakeDependency.jar with D8BackportedMethodsGenerator
+Caching disabled for D8BackportedMethodsGenerator: /home/runner/.gradle/android/FakeDependency.jar because:
+  Build cache is disabled
+Caching disabled for task ':app:generateReleaseLintVitalReportModel' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:generateReleaseLintVitalReportModel' is not up-to-date because:
+  No history is available.
+Transforming tiles-material-1.4.1.aar (androidx.wear.tiles:tiles-material:1.4.1) with ExtractAarTransform
+Transforming tiles-1.4.1.aar (androidx.wear.tiles:tiles:1.4.1) with ExtractAarTransform
+Transforming watchface-client-1.2.1.aar (androidx.wear.watchface:watchface-client:1.2.1) with ExtractAarTransform
+Transforming watchface-complications-1.2.1.aar (androidx.wear.watchface:watchface-complications:1.2.1) with ExtractAarTransform
+Transforming watchface-guava-1.2.1.aar (androidx.wear.watchface:watchface-guava:1.2.1) with ExtractAarTransform
+Transforming watchface-editor-1.2.1.aar (androidx.wear.watchface:watchface-editor:1.2.1) with ExtractAarTransform
+Transforming watchface-complications-data-source-1.2.1.aar (androidx.wear.watchface:watchface-complications-data-source:1.2.1) with ExtractAarTransform
+Transforming watchface-data-1.2.1.aar (androidx.wear.watchface:watchface-data:1.2.1) with ExtractAarTransform
+Transforming watchface-style-1.2.1.aar (androidx.wear.watchface:watchface-style:1.2.1) with ExtractAarTransform
+Transforming watchface-1.2.1.aar (androidx.wear.watchface:watchface:1.2.1) with ExtractAarTransform
+Transforming watchface-complications-data-1.2.1.aar (androidx.wear.watchface:watchface-complications-data:1.2.1) with ExtractAarTransform
+Transforming protolayout-expression-1.2.1.aar (androidx.wear.protolayout:protolayout-expression:1.2.1) with ExtractAarTransform
+Transforming protolayout-material-1.2.1.aar (androidx.wear.protolayout:protolayout-material:1.2.1) with ExtractAarTransform
+Transforming protolayout-1.2.1.aar (androidx.wear.protolayout:protolayout:1.2.1) with ExtractAarTransform
+Transforming wear-1.3.0.aar (androidx.wear:wear:1.3.0) with ExtractAarTransform
+Transforming play-services-wearable-18.2.0.aar (com.google.android.gms:play-services-wearable:18.2.0) with ExtractAarTransform
+Transforming play-services-location-21.3.0.aar (com.google.android.gms:play-services-location:21.3.0) with ExtractAarTransform
+Transforming dynamicanimation-1.0.0.aar (androidx.dynamicanimation:dynamicanimation:1.0.0) with ExtractAarTransform
+Transforming play-services-base-18.5.0.aar (com.google.android.gms:play-services-base:18.5.0) with ExtractAarTransform
+Transforming play-services-tasks-18.2.0.aar (com.google.android.gms:play-services-tasks:18.2.0) with ExtractAarTransform
+Transforming play-services-basement-18.4.0.aar (com.google.android.gms:play-services-basement:18.4.0) with ExtractAarTransform
+Transforming fragment-1.2.4.aar (androidx.fragment:fragment:1.2.4) with ExtractAarTransform
+Transforming fragment-1.2.4.aar (androidx.fragment:fragment:1.2.4) with ExtractAarTransform
+Transforming recyclerview-1.1.0.aar (androidx.recyclerview:recyclerview:1.1.0) with ExtractAarTransform
+Transforming swiperefreshlayout-1.0.0.aar (androidx.swiperefreshlayout:swiperefreshlayout:1.0.0) with ExtractAarTransform
+Transforming activity-1.7.0.aar (androidx.activity:activity:1.7.0) with ExtractAarTransform
+Transforming activity-1.7.0.aar (androidx.activity:activity:1.7.0) with ExtractAarTransform
+Transforming legacy-support-core-utils-1.0.0.aar (androidx.legacy:legacy-support-core-utils:1.0.0) with ExtractAarTransform
+Transforming viewpager-1.0.0.aar (androidx.viewpager:viewpager:1.0.0) with ExtractAarTransform
+Transforming loader-1.0.0.aar (androidx.loader:loader:1.0.0) with ExtractAarTransform
+Transforming customview-1.0.0.aar (androidx.customview:customview:1.0.0) with ExtractAarTransform
+Transforming lifecycle-livedata-2.6.1.aar (androidx.lifecycle:lifecycle-livedata:2.6.1) with ExtractAarTransform
+Transforming lifecycle-viewmodel-2.6.1.aar (androidx.lifecycle:lifecycle-viewmodel:2.6.1) with ExtractAarTransform
+Transforming lifecycle-viewmodel-2.6.1.aar (androidx.lifecycle:lifecycle-viewmodel:2.6.1) with ExtractAarTransform
+Transforming lifecycle-livedata-core-2.6.1.aar (androidx.lifecycle:lifecycle-livedata-core:2.6.1) with ExtractAarTransform
+Transforming lifecycle-livedata-core-2.6.1.aar (androidx.lifecycle:lifecycle-livedata-core:2.6.1) with ExtractAarTransform
+Transforming lifecycle-runtime-2.6.1.aar (androidx.lifecycle:lifecycle-runtime:2.6.1) with ExtractAarTransform
+Transforming lifecycle-viewmodel-savedstate-2.6.1.aar (androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1) with ExtractAarTransform
+Transforming lifecycle-viewmodel-savedstate-2.6.1.aar (androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1) with ExtractAarTransform
+Transforming core-ktx-1.6.0.aar (androidx.core:core-ktx:1.6.0) with ExtractAarTransform
+Transforming core-1.8.0.aar (androidx.core:core:1.8.0) with ExtractAarTransform
+Transforming core-1.8.0.aar (androidx.core:core:1.8.0) with ExtractAarTransform
+Transforming versionedparcelable-1.1.1.aar (androidx.versionedparcelable:versionedparcelable:1.1.1) with ExtractAarTransform
+Transforming core-runtime-2.2.0.aar (androidx.arch.core:core-runtime:2.2.0) with ExtractAarTransform
+Transforming interpolator-1.0.0.aar (androidx.interpolator:interpolator:1.0.0) with ExtractAarTransform
+Transforming savedstate-1.2.1.aar (androidx.savedstate:savedstate:1.2.1) with ExtractAarTransform
+Transforming documentfile-1.0.0.aar (androidx.documentfile:documentfile:1.0.0) with ExtractAarTransform
+Transforming localbroadcastmanager-1.0.0.aar (androidx.localbroadcastmanager:localbroadcastmanager:1.0.0) with ExtractAarTransform
+Transforming print-1.0.0.aar (androidx.print:print:1.0.0) with ExtractAarTransform
+Transforming annotation-experimental-1.4.1.aar (androidx.annotation:annotation-experimental:1.4.1) with ExtractAarTransform
+Transforming tiles-material-1.4.1.aar (androidx.wear.tiles:tiles-material:1.4.1) with ExtractAarTransform
+Transforming tiles-1.4.1.aar (androidx.wear.tiles:tiles:1.4.1) with ExtractAarTransform
+Transforming watchface-client-1.2.1.aar (androidx.wear.watchface:watchface-client:1.2.1) with ExtractAarTransform
+Transforming watchface-complications-1.2.1.aar (androidx.wear.watchface:watchface-complications:1.2.1) with ExtractAarTransform
+Transforming watchface-guava-1.2.1.aar (androidx.wear.watchface:watchface-guava:1.2.1) with ExtractAarTransform
+Transforming watchface-editor-1.2.1.aar (androidx.wear.watchface:watchface-editor:1.2.1) with ExtractAarTransform
+Transforming watchface-complications-data-source-1.2.1.aar (androidx.wear.watchface:watchface-complications-data-source:1.2.1) with ExtractAarTransform
+Transforming watchface-data-1.2.1.aar (androidx.wear.watchface:watchface-data:1.2.1) with ExtractAarTransform
+Transforming watchface-style-1.2.1.aar (androidx.wear.watchface:watchface-style:1.2.1) with ExtractAarTransform
+Transforming watchface-1.2.1.aar (androidx.wear.watchface:watchface:1.2.1) with ExtractAarTransform
+Transforming watchface-complications-data-1.2.1.aar (androidx.wear.watchface:watchface-complications-data:1.2.1) with ExtractAarTransform
+Transforming protolayout-expression-pipeline-1.2.1.aar (androidx.wear.protolayout:protolayout-expression-pipeline:1.2.1) with ExtractAarTransform
+Transforming protolayout-material-core-1.2.1.aar (androidx.wear.protolayout:protolayout-material-core:1.2.1) with ExtractAarTransform
+Transforming protolayout-expression-1.2.1.aar (androidx.wear.protolayout:protolayout-expression:1.2.1) with ExtractAarTransform
+Transforming protolayout-material-1.2.1.aar (androidx.wear.protolayout:protolayout-material:1.2.1) with ExtractAarTransform
+Transforming protolayout-1.2.1.aar (androidx.wear.protolayout:protolayout:1.2.1) with ExtractAarTransform
+Transforming wear-1.3.0.aar (androidx.wear:wear:1.3.0) with ExtractAarTransform
+Transforming play-services-wearable-18.2.0.aar (com.google.android.gms:play-services-wearable:18.2.0) with ExtractAarTransform
+Transforming play-services-location-21.3.0.aar (com.google.android.gms:play-services-location:21.3.0) with ExtractAarTransform
+Transforming preference-1.1.0.aar (androidx.preference:preference:1.1.0) with ExtractAarTransform
+Transforming appcompat-1.1.0.aar (androidx.appcompat:appcompat:1.1.0) with ExtractAarTransform
+Transforming fragment-1.2.4.aar (androidx.fragment:fragment:1.2.4) with ExtractAarTransform
+Transforming activity-1.7.0.aar (androidx.activity:activity:1.7.0) with ExtractAarTransform
+Transforming dynamicanimation-1.0.0.aar (androidx.dynamicanimation:dynamicanimation:1.0.0) with ExtractAarTransform
+Transforming savedstate-1.2.1.aar (androidx.savedstate:savedstate:1.2.1) with ExtractAarTransform
+Transforming lifecycle-runtime-ktx-2.6.1.aar (androidx.lifecycle:lifecycle-runtime-ktx:2.6.1) with ExtractAarTransform
+Transforming lifecycle-livedata-core-2.6.1.aar (androidx.lifecycle:lifecycle-livedata-core:2.6.1) with ExtractAarTransform
+Transforming lifecycle-viewmodel-2.6.1.aar (androidx.lifecycle:lifecycle-viewmodel:2.6.1) with ExtractAarTransform
+Transforming lifecycle-runtime-2.6.1.aar (androidx.lifecycle:lifecycle-runtime:2.6.1) with ExtractAarTransform
+Transforming lifecycle-viewmodel-savedstate-2.6.1.aar (androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1) with ExtractAarTransform
+Transforming core-ktx-1.6.0.aar (androidx.core:core-ktx:1.6.0) with ExtractAarTransform
+Transforming recyclerview-1.1.0.aar (androidx.recyclerview:recyclerview:1.1.0) with ExtractAarTransform
+Transforming recyclerview-1.1.0.aar (androidx.recyclerview:recyclerview:1.1.0) with ExtractAarTransform
+Transforming swiperefreshlayout-1.0.0.aar (androidx.swiperefreshlayout:swiperefreshlayout:1.0.0) with ExtractAarTransform
+Transforming drawerlayout-1.0.0.aar (androidx.drawerlayout:drawerlayout:1.0.0) with ExtractAarTransform
+Transforming appcompat-resources-1.1.0.aar (androidx.appcompat:appcompat-resources:1.1.0) with ExtractAarTransform
+Transforming vectordrawable-animated-1.1.0.aar (androidx.vectordrawable:vectordrawable-animated:1.1.0) with ExtractAarTransform
+Transforming vectordrawable-1.1.0.aar (androidx.vectordrawable:vectordrawable:1.1.0) with ExtractAarTransform
+Transforming core-1.8.0.aar (androidx.core:core:1.8.0) with ExtractAarTransform
+Transforming profileinstaller-1.3.0.aar (androidx.profileinstaller:profileinstaller:1.3.0) with ExtractAarTransform
+Transforming versionedparcelable-1.1.1.aar (androidx.versionedparcelable:versionedparcelable:1.1.1) with ExtractAarTransform
+Transforming startup-runtime-1.1.1.aar (androidx.startup:startup-runtime:1.1.1) with ExtractAarTransform
+Transforming tracing-1.0.0.aar (androidx.tracing:tracing:1.0.0) with ExtractAarTransform
+Transforming core-runtime-2.2.0.aar (androidx.arch.core:core-runtime:2.2.0) with ExtractAarTransform
+Transforming cursoradapter-1.0.0.aar (androidx.cursoradapter:cursoradapter:1.0.0) with ExtractAarTransform
+Transforming annotation-experimental-1.4.1.aar (androidx.annotation:annotation-experimental:1.4.1) with ExtractAarTransform
+Resolve mutations for :app:lintVitalAnalyzeRelease (Thread[Execution worker Thread 3,5,main]) started.
+:app:lintVitalAnalyzeRelease (Thread[Execution worker Thread 3,5,main]) started.
+
+> Task :app:lintVitalAnalyzeRelease
+Transforming FakeDependency.jar with D8BackportedMethodsGenerator
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint-gradle/31.5.2/lint-gradle-31.5.2.pom to /home/runner/.gradle/.tmp/gradle_download579956672315309020bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/external/com-intellij/kotlin-compiler/31.5.2/kotlin-compiler-31.5.2.pom to /home/runner/.gradle/.tmp/gradle_download17473969189131845725bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/external/org-jetbrains/uast/31.5.2/uast-31.5.2.pom to /home/runner/.gradle/.tmp/gradle_download12594315922503033154bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/external/com-intellij/intellij-core/31.5.2/intellij-core-31.5.2.pom to /home/runner/.gradle/.tmp/gradle_download4496816260845418175bin
+Resource missing. [HTTP GET: https://dl.google.com/dl/android/maven2/org/codehaus/groovy/groovy/3.0.17/groovy-3.0.17.pom]
+Downloading https://repo.maven.apache.org/maven2/org/codehaus/groovy/groovy/3.0.17/groovy-3.0.17.pom to /home/runner/.gradle/.tmp/gradle_download12632088557684101441bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint/31.5.2/lint-31.5.2.pom to /home/runner/.gradle/.tmp/gradle_download14005693145782642961bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint-checks/31.5.2/lint-checks-31.5.2.pom to /home/runner/.gradle/.tmp/gradle_download2812856452114286662bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint-api/31.5.2/lint-api-31.5.2.pom to /home/runner/.gradle/.tmp/gradle_download7212190539915489448bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/play-sdk-proto/31.5.2/play-sdk-proto-31.5.2.pom to /home/runner/.gradle/.tmp/gradle_download2786739529667167694bin
+Resource missing. [HTTP GET: https://dl.google.com/dl/android/maven2/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6.pom]
+Downloading https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6.pom to /home/runner/.gradle/.tmp/gradle_download1580930346141199849bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint-gradle/31.5.2/lint-gradle-31.5.2.jar to /home/runner/.gradle/.tmp/gradle_download15919606269365305938bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint/31.5.2/lint-31.5.2.jar to /home/runner/.gradle/.tmp/gradle_download4330306769591754171bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint-checks/31.5.2/lint-checks-31.5.2.jar to /home/runner/.gradle/.tmp/gradle_download2486222062450403360bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/external/com-intellij/intellij-core/31.5.2/intellij-core-31.5.2.jar to /home/runner/.gradle/.tmp/gradle_download9362579324549916072bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/external/com-intellij/kotlin-compiler/31.5.2/kotlin-compiler-31.5.2.jar to /home/runner/.gradle/.tmp/gradle_download14058850499771471165bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/external/org-jetbrains/uast/31.5.2/uast-31.5.2.jar to /home/runner/.gradle/.tmp/gradle_download16261389819051108217bin
+Downloading https://repo.maven.apache.org/maven2/org/codehaus/groovy/groovy/3.0.17/groovy-3.0.17.jar to /home/runner/.gradle/.tmp/gradle_download16113936098770461768bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint-api/31.5.2/lint-api-31.5.2.jar to /home/runner/.gradle/.tmp/gradle_download14660313543908140703bin
+Downloading https://dl.google.com/dl/android/maven2/com/android/tools/play-sdk-proto/31.5.2/play-sdk-proto-31.5.2.jar to /home/runner/.gradle/.tmp/gradle_download383885687829988445bin
+Downloading https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6.jar to /home/runner/.gradle/.tmp/gradle_download11828615040827672906bin
+Downloading https://repo.maven.apache.org/maven2/commons-codec/commons-codec/1.10/commons-codec-1.10.jar to /home/runner/.gradle/.tmp/gradle_download17486489496767772734bin
+Transforming FakeDependency.jar with D8BackportedMethodsGenerator
+Caching disabled for task ':app:lintVitalAnalyzeRelease' because:
+  Build cache is disabled
+Task ':app:lintVitalAnalyzeRelease' is not up-to-date because:
+  No history is available.
+
+Resolve mutations for :app:buildReleasePreBundle (Thread[included builds,5,main]) started.
+:app:buildReleasePreBundle (Thread[included builds,5,main]) started.
+
+> Task :app:buildReleasePreBundle
+Caching disabled for task ':app:buildReleasePreBundle' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:buildReleasePreBundle' is not up-to-date because:
+  No history is available.
+Resolve mutations for :app:compileReleaseArtProfile (Thread[Execution worker Thread 2,5,main]) started.
+:app:compileReleaseArtProfile (Thread[Execution worker,5,main]) started.
+Resolve mutations for :app:mergeReleaseNativeDebugMetadata (Thread[Execution worker Thread 2,5,main]) started.
+:app:mergeReleaseNativeDebugMetadata (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+Skipping task ':app:mergeReleaseNativeDebugMetadata' as it has no source files and no previous output files.
+Resolve mutations for :app:compressReleaseAssets (Thread[included builds,5,main]) started.
+:app:compressReleaseAssets (Thread[included builds,5,main]) started.
+
+> Task :app:compressReleaseAssets
+Caching disabled for task ':app:compressReleaseAssets' because:
+  Build cache is disabled
+Task ':app:compressReleaseAssets' is not up-to-date because:
+  No history is available.
+The input changes require a full rebuild for incremental task ':app:compressReleaseAssets'.
+Resolve mutations for :app:optimizeReleaseResources (Thread[included builds,5,main]) started.
+:app:optimizeReleaseResources (Thread[included builds,5,main]) started.
+Resolve mutations for :app:sdkReleaseDependencyData (Thread[Execution worker Thread 2,5,main]) started.
+:app:sdkReleaseDependencyData (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:sdkReleaseDependencyData
+Caching disabled for task ':app:sdkReleaseDependencyData' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:sdkReleaseDependencyData' is not up-to-date because:
+  No history is available.
+Resolve mutations for :app:writeReleaseSigningConfigVersions (Thread[Execution worker Thread 2,5,main]) started.
+:app:writeReleaseSigningConfigVersions (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:writeReleaseSigningConfigVersions
+Caching disabled for task ':app:writeReleaseSigningConfigVersions' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:writeReleaseSigningConfigVersions' is not up-to-date because:
+  No history is available.
+
+> Task :app:optimizeReleaseResources
+Custom actions are attached to task ':app:optimizeReleaseResources'.
+Caching disabled for task ':app:optimizeReleaseResources' because:
+  Build cache is disabled
+Task ':app:optimizeReleaseResources' is not up-to-date because:
+  No history is available.
+
+> Task :app:compileReleaseArtProfile
+Caching disabled for task ':app:compileReleaseArtProfile' because:
+  Build cache is disabled
+Task ':app:compileReleaseArtProfile' is not up-to-date because:
+  No history is available.
+Resolve mutations for :app:packageReleaseBundle (Thread[included builds,5,main]) started.
+:app:packageReleaseBundle (Thread[Execution worker Thread 2,5,main]) started.
+Resolve mutations for :app:packageRelease (Thread[included builds,5,main]) started.
+:app:packageRelease (Thread[included builds,5,main]) started.
+
+> Task :app:packageReleaseBundle
+Caching disabled for task ':app:packageReleaseBundle' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:packageReleaseBundle' is not up-to-date because:
+  No history is available.
+file or directory '/home/runner/work/lumora/lumora/twa/android/wear-build/app/build/intermediates/native_symbol_tables/release/extractReleaseNativeSymbolTables/out', not found
+Resolve mutations for :app:signReleaseBundle (Thread[Execution worker Thread 2,5,main]) started.
+:app:signReleaseBundle (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:packageRelease
+Custom actions are attached to task ':app:packageRelease'.
+Caching disabled for task ':app:packageRelease' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:packageRelease' is not up-to-date because:
+  No history is available.
+The input changes require a full rebuild for incremental task ':app:packageRelease'.
+Resolve mutations for :app:createReleaseApkListingFileRedirect (Thread[Execution worker,5,main]) started.
+:app:createReleaseApkListingFileRedirect (Thread[Execution worker,5,main]) started.
+
+> Task :app:createReleaseApkListingFileRedirect
+Caching disabled for task ':app:createReleaseApkListingFileRedirect' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:createReleaseApkListingFileRedirect' is not up-to-date because:
+  No history is available.
+
+> Task :app:lintVitalAnalyzeRelease
+Android Lint: Creating lint class loader 31.5.2_false
+
+> Task :app:signReleaseBundle
+Caching disabled for task ':app:signReleaseBundle' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:signReleaseBundle' is not up-to-date because:
+  No history is available.
+Resolve mutations for :app:produceReleaseBundleIdeListingFile (Thread[Execution worker Thread 2,5,main]) started.
+:app:produceReleaseBundleIdeListingFile (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:produceReleaseBundleIdeListingFile
+Caching disabled for task ':app:produceReleaseBundleIdeListingFile' because:
+  Build cache is disabled
+  Fast task
+Task ':app:produceReleaseBundleIdeListingFile' is not up-to-date because:
+  No history is available.
+Resolve mutations for :app:createReleaseBundleListingFileRedirect (Thread[Execution worker,5,main]) started.
+:app:createReleaseBundleListingFileRedirect (Thread[Execution worker,5,main]) started.
+
+> Task :app:createReleaseBundleListingFileRedirect
+Caching disabled for task ':app:createReleaseBundleListingFileRedirect' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:createReleaseBundleListingFileRedirect' is not up-to-date because:
+  No history is available.
+Resolve mutations for :app:bundleRelease (Thread[Execution worker Thread 2,5,main]) started.
+:app:bundleRelease (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:bundleRelease
+Skipping task ':app:bundleRelease' as it has no actions.
+Resolve mutations for :app:lintVitalReportRelease (Thread[Execution worker Thread 3,5,main]) started.
+:app:lintVitalReportRelease (Thread[Execution worker Thread 3,5,main]) started.
+
+> Task :app:lintVitalReportRelease
+Caching disabled for task ':app:lintVitalReportRelease' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Task ':app:lintVitalReportRelease' is not up-to-date because:
+  No history is available.
+Android Lint: Reusing lint classloader 31.5.2_false
+Resolve mutations for :app:lintVitalRelease (Thread[Execution worker,5,main]) started.
+:app:lintVitalRelease (Thread[Execution worker,5,main]) started.
+
+> Task :app:lintVitalRelease
+Caching disabled for task ':app:lintVitalRelease' because:
+  Build cache is disabled
+Task ':app:lintVitalRelease' is not up-to-date because:
+  Task has not declared any outputs despite executing actions.
+Resolve mutations for :app:assembleRelease (Thread[Execution worker,5,main]) started.
+:app:assembleRelease (Thread[Execution worker,5,main]) started.
+
+> Task :app:assembleRelease
+Skipping task ':app:assembleRelease' as it has no actions.
+AAPT2 aapt2-8.5.2-11315950-linux Daemon #0: shutdown
+AAPT2 aapt2-8.5.2-11315950-linux Daemon #1: shutdown
+AAPT2 aapt2-8.5.2-11315950-linux Daemon #2: shutdown
+Android Lint: Disposing Uast application environment in lint classloader [31.5.2_false]
+[Incubating] Problems report is available at: file:///home/runner/work/lumora/lumora/twa/android/wear-build/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 1m 11s
+52 actionable tasks: 52 executed

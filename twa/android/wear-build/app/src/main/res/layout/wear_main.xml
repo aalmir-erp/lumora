@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v1.24.30 — round-screen safe launcher.
+     Outer 18dp padding keeps content inside the visible disc; tile
+     rows use insetting margins so the 4 corners don't get clipped on
+     round watches. Tested at 360x360, 384x384, 454x454. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F172A"
+    android:paddingLeft="18dp"
+    android:paddingRight="18dp"
+    android:paddingTop="22dp"
+    android:paddingBottom="22dp"
+    android:fillViewport="true"
+    android:scrollbars="none"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SERVIA"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.2"
+            android:gravity="center"
+            android:textColor="#FCD34D"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tap to act"
+            android:textSize="9sp"
+            android:gravity="center"
+            android:textColor="#CBD5E1"
+            android:layout_marginBottom="2dp" />
+
+        <!-- v1.24.48 — BIG version pill so the user can see at a glance
+             which build is running. Set dynamically in MainActivity. -->
+        <TextView
+            android:id="@+id/wear_app_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="v?"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#A7F3D0"
+            android:layout_marginBottom="6dp" />
+
+        <!-- Row 1: Voice (flagship) + SOS Recovery -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_voice"
+                style="@style/WearTile"
+                android:background="#F59E0B"
+                android:textColor="#1E293B"
+                android:text="🎙\nTalk"
+                android:contentDescription="Talk to Servia" />
+            <TextView
+                android:id="@+id/wear_tile_sos"
+                style="@style/WearTile"
+                android:background="#DC2626"
+                android:text="🆘\nSOS"
+                android:contentDescription="One-tap recovery" />
+        </LinearLayout>
+
+        <!-- Row 2: Track + Quick book -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_track"
+                style="@style/WearTile"
+                android:text="📍\nTrack"
+                android:contentDescription="Track booking" />
+            <TextView
+                android:id="@+id/wear_tile_book"
+                style="@style/WearTile"
+                android:text="📋\nBook"
+                android:contentDescription="Quick book" />
+        </LinearLayout>
+
+        <!-- Row 3: Quote + Chat -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_quote"
+                style="@style/WearTile"
+                android:text="💬\nQuote"
+                android:contentDescription="Get a quote" />
+            <TextView
+                android:id="@+id/wear_tile_chat"
+                style="@style/WearTile"
+                android:text="🤖\nChat"
+                android:contentDescription="Open chat" />
+        </LinearLayout>
+
+        <!-- v1.24.29 Row 4: Create custom SOS + My address -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_create_sos"
+                style="@style/WearTile"
+                android:background="#065F46"
+                android:text="➕\nCreate SOS"
+                android:contentDescription="Create custom SOS button" />
+            <TextView
+                android:id="@+id/wear_tile_address"
+                style="@style/WearTile"
+                android:background="#1E40AF"
+                android:text="📍\nAddress"
+                android:contentDescription="My saved address" />
+        </LinearLayout>
+
+        <!-- v1.24.29-30 Row 5: My SOS shortcuts + Theme picker -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_mysos"
+                style="@style/WearTile"
+                android:background="#6366F1"
+                android:text="🎯\nMy SOS"
+                android:contentDescription="Open my saved SOS shortcuts" />
+            <TextView
+                android:id="@+id/wear_tile_theme"
+                style="@style/WearTile"
+                android:background="#7C3AED"
+                android:text="🎨\nTheme"
+                android:contentDescription="Pick theme" />
+        </LinearLayout>
+
+        <!-- v1.24.33 + v1.24.35 Row 6: Watch face editor + NFC scan -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/wear_tile_face_editor"
+                style="@style/WearTile"
+                android:background="#0F766E"
+                android:text="🎭\nWatch face"
+                android:contentDescription="Edit Servia watch face" />
+            <TextView
+                android:id="@+id/wear_tile_nfc_scan"
+                style="@style/WearTile"
+                android:background="#6366F1"
+                android:text="📡\nNFC scan"
+                android:contentDescription="Scan a Servia NFC tag" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

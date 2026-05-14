@@ -1,0 +1,85 @@
+{
+  "packageId": "ae.servia.app",
+  "host": "servia.ae",
+  "name": "Servia — UAE Home Services",
+  "launcherName": "Servia",
+  "display": "standalone",
+  "themeColor": "#0D9488",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#F8FAFC",
+  "enableNotifications": true,
+  "startUrl": "/?source=twa",
+  "iconUrl": "http://localhost:8080/brand/servia-icon-2048x2048.png",
+  "maskableIconUrl": "http://localhost:8080/brand/servia-icon-2048x2048.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Search",
+      "shortName": "Search",
+      "url": "http://localhost:8080/search.html?source=shortcut",
+      "chosenIconUrl": "http://localhost:8080/icon-192.svg"
+    },
+    {
+      "name": "Book a service",
+      "shortName": "Book",
+      "url": "http://localhost:8080/book.html?source=shortcut",
+      "chosenIconUrl": "http://localhost:8080/icon-192.svg"
+    },
+    {
+      "name": "Track booking",
+      "shortName": "Track",
+      "url": "http://localhost:8080/me.html?source=shortcut",
+      "chosenIconUrl": "http://localhost:8080/icon-192.svg"
+    },
+    {
+      "name": "Talk to Servia",
+      "shortName": "Chat",
+      "url": "http://localhost:8080/?chat=1",
+      "chosenIconUrl": "http://localhost:8080/icon-192.svg"
+    }
+  ],
+  "generatorApp": "unknown",
+  "webManifestUrl": "https://servia.ae/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://servia.ae/",
+  "minSdkVersion": 21,
+  "shareTarget": {
+    "action": "http://localhost:8080/contact.html",
+    "method": "GET",
+    "params": {
+      "title": "subject",
+      "text": "message",
+      "url": "ref"
+    }
+  },
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "appVersion": "1"
+}

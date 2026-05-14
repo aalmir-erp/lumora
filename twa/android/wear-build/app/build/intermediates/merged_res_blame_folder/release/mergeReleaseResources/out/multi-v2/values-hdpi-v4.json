@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "ae.servia.wear.app-mergeReleaseResources-40:/values-hdpi-v4/values-hdpi-v4.xml",
+            "map": [
+                {
+                    "source": "/home/runner/.gradle/caches/8.11.1/transforms/1df8ab0e3314dbd16d630b9f698b2c34/transformed/appcompat-1.1.0/res/values-hdpi-v4/values-hdpi-v4.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "6",
+                        "endColumns": "13",
+                        "endOffsets": "327"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,4 @@
+#Thu May 14 08:31:07 UTC 2026
+base.0=/home/runner/work/lumora/lumora/twa/android/generated/app/build/intermediates/dex/release/minifyReleaseWithR8/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex

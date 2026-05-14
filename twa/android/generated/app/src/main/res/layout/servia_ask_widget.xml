@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/servia_ask_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/servia_widget_bg"
+    android:padding="14dp">
+
+    <!-- Header row: avatar + name -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🤖"
+            android:textSize="22sp"
+            android:layout_marginEnd="8dp" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Servia AI Concierge"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Online · replies in seconds"
+                android:textSize="10.5sp"
+                android:textColor="#A7F3D0" />
+        </LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🟢"
+            android:textSize="11sp"
+            android:layout_marginStart="6dp" />
+    </LinearLayout>
+
+    <!-- Faux chat bubble -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Hey! Tap to ask me anything…"
+        android:textSize="13sp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/servia_ask_bubble_bg"
+        android:padding="8dp" />
+
+    <!-- Quick action chips: Book / Quote / Track -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/servia_ask_book"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:gravity="center"
+            android:text="📋 Book"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#0F766E"
+            android:background="@drawable/servia_widget_btn_light"
+            android:padding="6dp"
+            android:clickable="true"
+            android:focusable="true" />
+        <TextView
+            android:id="@+id/servia_ask_quote"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:gravity="center"
+            android:text="💬 Quote"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#0F766E"
+            android:background="@drawable/servia_widget_btn_light"
+            android:padding="6dp"
+            android:clickable="true"
+            android:focusable="true" />
+        <TextView
+            android:id="@+id/servia_ask_track"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:gravity="center"
+            android:text="📍 Track"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#0F766E"
+            android:background="@drawable/servia_widget_btn_light"
+            android:padding="6dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!--
+  v1.24.45 — Watch Face Format (WFF) for p21_servia_hours (#FFFFFF time).
+  Auto-generated from tools-metadata.json + wf_frame_pNN.png.
+-->
+<WatchFace width="450" height="450" clipShape="CIRCLE">
+    <Metadata key="CLOCK_TYPE" value="DIGITAL" />
+    <Metadata key="STEP_GOAL" value="10000" />
+    <Scene>
+        <Group x="0" y="0" width="450" height="450">
+
+            <!-- Background frame -->
+            <PartImage x="0" y="0" width="450" height="450">
+                <Image resource="wf_frame_p21" />
+            </PartImage>
+
+            <!-- Digital time overlay -->
+            <DigitalClock x="100" y="65" width="80" height="24" alpha="255">
+                <TimeText format="HH:mm" align="CENTER">
+                    <Font family="SYNC_TO_DEVICE" size="20" weight="BOLD" color="#FFFFFFFF" />
+                </TimeText>
+            </DigitalClock>
+
+            <AnalogClock x="0" y="0" width="450" height="450">
+                <SecondHand x="224" y="45" width="2" height="180" pivotX="0.5" pivotY="1.0" tintColor="#FFFFFFFF" />
+            </AnalogClock>
+        </Group>
+    </Scene>
+</WatchFace>

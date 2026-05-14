@@ -1,0 +1,1485 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ae.servia.wear"
+    android:versionCode="11"
+    android:versionName="1.24.192" >
+
+    <uses-sdk
+        android:minSdkVersion="26"
+        android:targetSdkVersion="34" />
+
+    <uses-feature android:name="android.hardware.type.watch" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Wearable Data Layer requires foreground service when listening -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Recovery one-tap (v1.24.1): real GPS + dial-vendor button -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <!-- Voice assistant (v1.24.2): mic + speak-back -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- v1.24.35: watch NFC — works on Galaxy Watch 4+, Pixel Watch, Wear OS 3+ -->
+    <uses-permission android:name="android.permission.NFC" />
+
+    <uses-feature
+        android:name="android.hardware.nfc"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+
+    <queries>
+        <intent>
+            <action android:name="androidx.wear.tiles.action.BIND_UPDATE_REQUESTER" />
+        </intent>
+        <intent>
+
+            <!-- Needed to have visibility on complication data sources installed on the device. -->
+            <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+        </intent>
+        <intent>
+
+            <!-- Needed to have visibility on launcher items to handle app shortcuts in complications. -->
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <uses-permission android:name="com.google.android.wearable.permission.BIND_WATCH_FACE_CONTROL" />
+
+    <application
+        android:allowBackup="true"
+        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+        android:extractNativeLibs="false"
+        android:icon="@mipmap/wear_ic_launcher"
+        android:label="@string/wear_app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault" >
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <activity
+            android:name="ae.servia.wear.MainActivity"
+            android:exported="true"
+            android:label="@string/wear_app_name"
+            android:theme="@android:style/Theme.DeviceDefault.Light" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="ae.servia.wear.BookingTrackActivity"
+            android:exported="false"
+            android:label="Bookings" />
+        <activity
+            android:name="ae.servia.wear.QuickBookActivity"
+            android:exported="false"
+            android:label="Quick book" />
+        <activity
+            android:name="ae.servia.wear.QuoteActivity"
+            android:exported="false"
+            android:label="Quote" />
+        <activity
+            android:name="ae.servia.wear.ChatActivity"
+            android:exported="false"
+            android:label="Chat" />
+        <!-- v1.24.2: Servia voice assistant (mic-on-launch chat) -->
+        <activity
+            android:name="ae.servia.wear.VoiceAssistantActivity"
+            android:exported="true"
+            android:label="Servia voice"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+            <intent-filter>
+                <action android:name="ae.servia.wear.action.VOICE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!-- v1.24.1: One-tap vehicle-recovery dispatch -->
+        <activity
+            android:name="ae.servia.wear.RecoveryActivity"
+            android:exported="true"
+            android:label="SOS Recovery"
+            android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar" >
+            <intent-filter>
+                <action android:name="ae.servia.wear.action.RECOVERY_SOS" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!-- v1.24.4: First-run onboarding (phone + email) -->
+        <activity
+            android:name="ae.servia.wear.OnboardingActivity"
+            android:exported="false"
+            android:label="Welcome"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+        <!-- v1.24.15: MySos (user's custom shortcuts) + AllServices (8-svc grid) -->
+        <activity
+            android:name="ae.servia.wear.MySosActivity"
+            android:exported="true"
+            android:label="My Servia SOS"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="ae.servia.wear.AllServicesActivity"
+            android:exported="true"
+            android:label="All services"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
+        <!-- v1.24.29: create custom SOS button on watch + per-slot dispatch + address -->
+        <activity
+            android:name="ae.servia.wear.CustomSosCreateActivity"
+            android:exported="true"
+            android:label="Create SOS"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="ae.servia.wear.CustomSosSlotDispatchActivity"
+            android:exported="true"
+            android:label="SOS slot"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <activity
+            android:name="ae.servia.wear.LocationActivity"
+            android:exported="true"
+            android:label="My address"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <activity
+            android:name="ae.servia.wear.NfcScanActivity"
+            android:exported="true"
+            android:label="Scan NFC"
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:host="servia.ae"
+                    android:pathPrefix="/csos/"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="ae.servia.wear.ThemePickerActivity"
+            android:exported="true"
+            android:label="Theme"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
+        <!--
+             v1.24.33: Servia watch face (the dial itself) + companion editor.
+             10 curated presets (theme x layout) + 8 customizable slots
+             that can hold custom SOS shortcuts, click-to-talk, booking
+             ETA, address picker, weather/battery/steps complications.
+        -->
+        <activity
+            android:name="ae.servia.wear.watchface.WatchFaceEditorActivity"
+            android:exported="true"
+            android:label="Watch face editor"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+            <intent-filter>
+                <action android:name="ae.servia.wear.watchface.CONFIG" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WEARABLE_CONFIGURATION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- v1.24.43+45: 22 watch face services with WFF (Watch Face Format) property markers (Wear OS 5+ Jan 2025 mandate). -->
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace01BurjSunset"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Burj Sunset"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p01" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p01" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p01" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace02MarinaNeon"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Marina Neon"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p02" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p02" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p02" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace03DesertPremium"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Desert Premium"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p03" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p03" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p03" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace04SportPulse"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Sport Pulse"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p04" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p04" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p04" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace05EmergencyRed"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Emergency Red"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p05" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p05" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p05" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace06ModularDark"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Modular Pro"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p06" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p06" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p06" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace07NeonGrid"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Neon Grid"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p07" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p07" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p07" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace08CalligraphyGold"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Calligraphy Gold"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p08" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p08" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p08" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace09PearlLadies"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Pearl Ladies"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p09" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p09" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p09" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace10EcoBotanical"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Eco Botanical"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p10" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p10" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p10" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace11MinimalWhite"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Minimal White"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p11" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p11" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p11" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace12FalconPremium"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Falcon Premium"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p12" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p12" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p12" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace13PixelRetro"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Pixel Retro"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p13" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p13" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p13" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace14CarbonFiber"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Carbon Fiber"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p14" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p14" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p14" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace15KidsFun"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Kids Fun"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p15" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p15" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p15" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace16BusinessExec"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Business Exec"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p16" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p16" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p16" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace17SandstormPremium"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Sandstorm Premium"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p17" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p17" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p17" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace18VioletChrono"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Violet Chronograph"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p18" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p18" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p18" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace19OceanAnimated"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Ocean Live"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p19" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p19" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p19" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace20Aviation"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Aviation"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p20" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p20" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p20" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace21ServiaHours"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Servia Hours"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p21" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p21" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p21" />
+        </service>
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace22ServiaDial"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="Servia · Servia Dial"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p22" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p22" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!--
+                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+                 (since Jan 2025) for the face to appear in the system
+                 'Customize watch faces' picker. The actual face is
+                 declared in res/raw/watchface_pNN.xml.
+            -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p22" />
+        </service>
+        <!--
+     v1.24.7: SOS category grid (8 tiles, matches website /sos.html).
+             Launched by MainActivity SOS button + RecoveryTileService tap.
+        -->
+        <activity
+            android:name="ae.servia.wear.SosCategoryGridActivity"
+            android:exported="true"
+            android:label="Servia SOS"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+            <intent-filter>
+                <action android:name="ae.servia.wear.action.SOS_GRID" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!-- v1.24.4: Generic SOS dispatch (used by SosVehicle/Furniture/etc tiles) -->
+        <activity
+            android:name="ae.servia.wear.SosLauncherActivity"
+            android:exported="true"
+            android:label="SOS"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:windowSoftInputMode="adjustResize" >
+            <intent-filter>
+                <action android:name="ae.servia.wear.action.SOS_DISPATCH" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
+        ============== TILE SERVICES (v1.24.0 - 6 tiles total) ==============
+             Each TileService is registered as an exported service the
+             Wear OS Launcher discovers. After install, user long-presses
+             the watch face → swipe to "Add tile" → all 6 Servia tiles
+             appear in the picker.
+        ==============================================================
+        -->
+
+
+        <!--
+             ⭐ FLAGSHIP TILE — voice assistant. Tap to talk: book / quote /
+             recovery / wallet — all by speaking. Listed first so users
+             see it at the top of the picker.
+        -->
+        <service
+            android:name="ae.servia.wear.tiles.ServiaVoiceTileService"
+            android:description="@string/tile_voice_desc"
+            android:exported="true"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:label="Servia · Tap to talk"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.QuickBookTileService"
+            android:description="@string/tile_quickbook_desc"
+            android:exported="true"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:label="Servia · Quick book"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.NextBookingTileService"
+            android:description="@string/tile_nextbooking_desc"
+            android:exported="true"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:label="Servia · Next booking"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.RecoveryTileService"
+            android:description="@string/tile_recovery_desc"
+            android:exported="true"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:label="Servia · SOS Recovery"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.LoyaltyTileService"
+            android:description="@string/tile_loyalty_desc"
+            android:exported="true"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:label="Servia · Loyalty tier"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.WalletTileService"
+            android:description="@string/tile_wallet_desc"
+            android:exported="true"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:label="Servia · Wallet"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.DailyTipTileService"
+            android:description="@string/tile_dailytip_desc"
+            android:exported="true"
+            android:icon="@mipmap/wear_ic_launcher"
+            android:label="Servia · Daily tip"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@mipmap/wear_ic_launcher" />
+        </service>
+
+        <!--
+             ============== v1.24.4: SOS CATEGORY TILES (6 new) ==============
+             Each launches SosLauncherActivity with a different service_id
+             so the user can pick exactly the kind of SOS they want from
+             the watch's tile picker.
+        -->
+        <service
+            android:name="ae.servia.wear.tiles.SosVehicleTileService"
+            android:description="@string/tile_sos_vehicle_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_sos"
+            android:label="Servia · SOS Vehicle"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_sos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosFurnitureTileService"
+            android:description="@string/tile_sos_furniture_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_furniture"
+            android:label="Servia · SOS Furniture"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_furniture" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosElectricianTileService"
+            android:description="@string/tile_sos_electrician_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_electrician"
+            android:label="Servia · SOS Electrician"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_electrician" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosPlumberTileService"
+            android:description="@string/tile_sos_plumber_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_plumber"
+            android:label="Servia · SOS Plumber"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_plumber" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosAcTileService"
+            android:description="@string/tile_sos_ac_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_ac"
+            android:label="Servia · SOS AC"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_ac" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.SosHandymanTileService"
+            android:description="@string/tile_sos_handyman_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_handyman"
+            android:label="Servia · SOS Handyman"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_handyman" />
+        </service>
+
+        <!--
+             v1.24.15: HUB tile — 4 actions in ONE tile (replaces 4 separate
+             full-screen tiles per user feedback). Listed FIRST so it shows
+             at the top of the picker.
+        -->
+        <service
+            android:name="ae.servia.wear.tiles.HubTileService"
+            android:description="@string/tile_hub_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_hub"
+            android:label="Servia · Hub (4 actions)"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_hub" />
+        </service>
+
+        <!-- v1.24.15: My-SOS (user's custom shortcuts) + All-Services (8-svc grid) -->
+        <service
+            android:name="ae.servia.wear.tiles.MySosTileService"
+            android:description="@string/tile_mysos_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_mysos"
+            android:label="Servia · My SOS shortcuts"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.AllServicesTileService"
+            android:description="@string/tile_allservices_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_allservices"
+            android:label="Servia · All services"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_allservices" />
+        </service>
+
+        <!--
+             v1.24.29: 5 reusable Custom SOS slot tiles + Address tile.
+             Each slot tile reads SharedPreferences ("servia_csos_slots")
+             to know which user-created shortcut it's bound to. The
+             customer pins as many slots as they like from the watch face.
+        -->
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot1TileService"
+            android:description="@string/tile_csos_slot_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_mysos"
+            android:label="Servia · SOS Slot 1"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot2TileService"
+            android:description="@string/tile_csos_slot_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_mysos"
+            android:label="Servia · SOS Slot 2"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot3TileService"
+            android:description="@string/tile_csos_slot_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_mysos"
+            android:label="Servia · SOS Slot 3"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot4TileService"
+            android:description="@string/tile_csos_slot_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_mysos"
+            android:label="Servia · SOS Slot 4"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosSlot5TileService"
+            android:description="@string/tile_csos_slot_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_mysos"
+            android:label="Servia · SOS Slot 5"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_mysos" />
+        </service>
+
+        <!--
+             v1.24.30: Quad tile — 4 mini circular SOS buttons in ONE tile.
+             Listed FIRST in this group so it shows at the top of the
+             picker (it's the recommended way to expose 1-4 shortcuts;
+             the 5 individual slot tiles above remain for power users).
+        -->
+        <service
+            android:name="ae.servia.wear.tiles.CustomSosQuadTileService"
+            android:description="@string/tile_csos_quad_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_mysos"
+            android:label="Servia · 4 SOS shortcuts"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_mysos" />
+        </service>
+        <service
+            android:name="ae.servia.wear.tiles.LocationTileService"
+            android:description="@string/tile_location_desc"
+            android:exported="true"
+            android:icon="@drawable/tile_preview_hub"
+            android:label="Servia · Address"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview_hub" />
+        </service>
+
+        <!-- Wearable Listener Service for phone↔watch Data Layer sync -->
+        <service
+            android:name="ae.servia.wear.WearMessageListenerService"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+
+                <data
+                    android:host="*"
+                    android:pathPrefix="/servia/"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
+        <uses-library
+            android:name="wear-sdk"
+            android:required="false" />
+        <uses-library
+            android:name="com.google.android.wearable"
+            android:required="false" />
+
+        <service
+            android:name="androidx.wear.watchface.control.WatchFaceControlService"
+            android:directBootAware="true"
+            android:enabled="@bool/watch_face_instance_service_enabled"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_WATCH_FACE_CONTROL" >
+            <meta-data
+                android:name="androidx.wear.watchface.api_version"
+                android:value="@integer/watch_face_api_version" />
+            <meta-data
+                android:name="androidx.wear.watchface.xml_version"
+                android:value="@integer/watch_face_xml_version" />
+
+            <intent-filter>
+                <action android:name="com.google.android.wearable.action.WATCH_FACE_CONTROL" />
+            </intent-filter>
+        </service>
+        <!--
+      Used to configure complications. Applications can remove this using:
+      <activity
+	  android:name="androidx.wear.watchface.ComplicationHelperActivity"
+	  tools:node="remove" />
+      in their manifest if they do not support complications and want to allow
+      R8 to remove the code associated with this activity. If the activity is
+      remove while it is needed, this may lead to a runtime exception of type
+      android.content.ActivityNotFoundException.
+        -->
+        <activity
+            android:name="androidx.wear.watchface.ComplicationHelperActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
+            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="ae.servia.wear.androidx-startup"
+            android:exported="false" >
+            <meta-data
+                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+                android:value="androidx.startup" />
+        </provider>
+
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            android:directBootAware="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.DUMP" >
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="display_override">
+    
+      
+        <item>window-controls-overlay</item>
+      
+    
+      
+        <item>standalone</item>
+      
+    
+      
+        <item>minimal-ui</item>
+      
+    
+    </string-array>
+    <bool name="enableNotification">true</bool>
+    <bool name="enableSiteSettingsShortcut">true</bool>
+    <color name="backgroundColor">#F8FAFC</color>
+    <color name="colorPrimary">#0D9488</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="navigationColor">#000000</color>
+    <color name="navigationColorDark">#000000</color>
+    <color name="navigationDividerColor">#000000</color>
+    <color name="navigationDividerColorDark">#000000</color>
+    <color name="shortcut_background">#F5F5F5</color>
+    <integer name="splashScreenFadeOutDuration">300</integer>
+    <string name="appName" translatable="false">Servia — UAE Home Services</string>
+    <string name="assetStatements">
+    [{
+        \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+        \"target\": {
+            \"namespace\": \"web\",
+            \"site\": \"https://servia.ae\"
+        }
+    }]
+    
+  </string>
+    <string name="fallbackType" translatable="false">customtabs</string>
+    <string name="fullScopeUrl" translatable="false">https://servia.ae/</string>
+    <string name="generatorApp" translatable="false">unknown</string>
+    <string name="hostName" translatable="false">servia.ae</string>
+    <string name="launchUrl" translatable="false">https://servia.ae/?source=twa</string>
+    <string name="launcherName" translatable="false">Servia</string>
+    <string name="orientation" translatable="false">portrait</string>
+    <string name="providerAuthority" translatable="false">ae.servia.app.fileprovider</string>
+    <string name="servia_ask_widget_desc">Ask Servia — 1-tap chat to book, quote or track</string>
+    <string name="servia_dailytip_widget_desc">Servia daily tip — UAE home-services know-how</string>
+    <string name="servia_loyalty_widget_desc">Servia loyalty — your Ambassador tier + discount</string>
+    <string name="servia_quick_book_widget_desc">Servia quick-book — 4 most-used services in one tap</string>
+    <string name="servia_quote_widget_desc">Servia quick quote — 60-second AI estimate</string>
+    <string name="servia_search_widget_desc">Servia search — find services, areas, FAQs (with voice)</string>
+    <string name="servia_track_widget_desc">Servia booking tracker — live ETA + crew status</string>
+    <string name="servia_upcoming_widget_desc">Servia upcoming visit — next service + crew ETA</string>
+    <string name="servia_whatsapp_widget_desc">Servia WhatsApp support — 1-tap chat with the team</string>
+    <string name="shareTarget" translatable="false">{\"action\":\"http://localhost:8080/contact.html\",\"method\":\"GET\",\"params\":{\"title\":\"subject\",\"text\":\"message\",\"url\":\"ref\"}}</string>
+    <string name="shortcut_name_0" translatable="false">Search</string>
+    <string name="shortcut_name_1" translatable="false">Book a service</string>
+    <string name="shortcut_name_2" translatable="false">Track booking</string>
+    <string name="shortcut_name_3" translatable="false">Talk to Servia</string>
+    <string name="shortcut_short_name_0" translatable="false">Search</string>
+    <string name="shortcut_short_name_1" translatable="false">Book</string>
+    <string name="shortcut_short_name_2" translatable="false">Track</string>
+    <string name="shortcut_short_name_3" translatable="false">Chat</string>
+    <string name="webManifestUrl" translatable="false">http://localhost:8080/manifest.webmanifest</string>
+</resources>

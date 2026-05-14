@@ -1,0 +1,103 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Servia Wear OS app v1.24.2 — real voice assistant + chat-driven booking
+// + recovery one-tap. Brings in play-services-location for GPS and uses
+// HttpsURLConnection + system TTS (no OkHttp / no extra deps) so the
+// APK stays under 4 MB.
+//
+// History note: earlier appcompat dep caused kotlin-stdlib duplicate-class
+// errors. We carefully pin the wear-tiles + wear-protolayout deps to a
+// version-set that uses a single kotlin-stdlib (1.9.x) so no conflicts.
+
+android {
+    namespace 'ae.servia.wear'
+    compileSdk 34
+    defaultConfig {
+        applicationId "ae.servia.wear"
+        minSdk 26
+        targetSdk 34
+        versionCode 11
+        versionName "1.24.192"
+    }
+    signingConfigs {
+        release {
+            storeFile file("placeholder.jks")
+            storePassword "placeholder"
+            keyAlias "servia"
+            keyPassword "placeholder"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    packaging {
+        resources {
+            // Defensive: if any transitive jar still tries to drop
+            // kotlin-stdlib version metadata, dedupe via mergeStrategy.
+            excludes += ['/META-INF/{AL2.0,LGPL2.1}', '/META-INF/DEPENDENCIES']
+        }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Pin all kotlin-stdlib variants to 1.9.22 so wear-tiles deps
+        // align with what AGP brings in. Eliminates the duplicate-class
+        // crash that delayed the Wear APK for 4 versions earlier.
+        force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-common:1.9.22'
+    }
+}
+
+dependencies {
+    // Wear Tiles SDK — the swipe-able tile cards on the watch face
+    implementation 'androidx.wear.tiles:tiles:1.4.1'
+    implementation 'androidx.wear.tiles:tiles-material:1.4.1'
+    implementation 'androidx.wear.protolayout:protolayout:1.2.1'
+    implementation 'androidx.wear.protolayout:protolayout-material:1.2.1'
+    implementation 'androidx.wear.protolayout:protolayout-expression:1.2.1'
+
+    // Native Wear UI components for MainActivity (BoxInsetLayout etc)
+    implementation 'androidx.wear:wear:1.3.0'
+
+    // v1.24.33 — Servia Wear OS watch face (the dial itself, not tiles).
+    // Modern AndroidX watch face stack required for Wear OS 3+ ; the
+    // legacy android.support.wearable.watchface API is no longer accepted
+    // by the Play Store. Versions pinned to the same kotlin-stdlib 1.9.x
+    // family the existing wear-tiles deps use.
+    implementation 'androidx.wear.watchface:watchface:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-style:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-data:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-complications-data-source:1.2.1'
+    implementation 'androidx.wear.watchface:watchface-editor:1.2.1'
+    // v1.24.38 — Java/Guava interop module; ListenableWatchFaceService
+    // lives here, NOT in the core 'watchface' artifact. Without this
+    // the package-private import resolves to "cannot find symbol" and
+    // every override below it cascades into "does not override
+    // supertype" because the parent class is unknown.
+    implementation 'androidx.wear.watchface:watchface-guava:1.2.1'
+
+    // Wearable Data Layer — phone↔watch sync (used for booking state +
+    // wallet balance push from phone TWA via a companion service later).
+    implementation 'com.google.android.gms:play-services-wearable:18.2.0'
+
+    // Fused location provider — one-tap GPS for Recovery dispatch (v1.24.1).
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+
+    // Guava ListenableFuture — required by tile-builders' callback chain
+    implementation 'com.google.guava:guava:33.0.0-android'
+}

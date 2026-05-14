@@ -1,0 +1,270 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<!--
+3  v1.24.43 — Servia Single Face (minimum-viable test APK).
+4
+5  Bare-bones APK that registers exactly ONE watch face service
+6  (Burj Sunset). Different applicationId (ae.servia.wear.single)
+7  so it installs alongside both the main app and the multi-face
+8  standalone. If even THIS minimal APK doesn't show up in the
+9  system picker, the issue is environmental (Wear OS version,
+10  signing, etc.), not our code.
+11-->
+12<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+13    package="ae.servia.wear.single"
+14    android:versionCode="1"
+15    android:versionName="1.24.192" >
+16
+17    <uses-sdk
+18        android:minSdkVersion="26"
+19        android:targetSdkVersion="34" />
+20
+21    <uses-feature android:name="android.hardware.type.watch" />
+21-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:13:5-64
+21-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:13:19-61
+22
+23    <uses-permission android:name="android.permission.INTERNET" />
+23-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:14:5-67
+23-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:14:22-64
+24    <uses-permission android:name="com.google.android.wearable.permission.BIND_WATCH_FACE_CONTROL" />
+24-->[androidx.wear.watchface:watchface-client:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/549bb6a100da99c0b3e792ce2f96a658/transformed/watchface-client-1.2.1/AndroidManifest.xml:22:5-102
+24-->[androidx.wear.watchface:watchface-client:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/549bb6a100da99c0b3e792ce2f96a658/transformed/watchface-client-1.2.1/AndroidManifest.xml:22:22-99
+25
+26    <queries>
+26-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:22:5-35:15
+27        <intent>
+27-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:23:9-27:18
+28
+29            <!-- Needed to have visibility on complication data sources installed on the device. -->
+30            <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+30-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:26:13-112
+30-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:26:21-109
+31        </intent>
+32        <intent>
+32-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:28:9-34:18
+33
+34            <!-- Needed to have visibility on launcher items to handle app shortcuts in complications. -->
+35            <action android:name="android.intent.action.MAIN" />
+35-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:32:17-69
+35-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:32:25-66
+36
+37            <category android:name="android.intent.category.LAUNCHER" />
+37-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:33:17-77
+37-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:33:27-74
+38        </intent>
+39    </queries>
+40
+41    <application
+41-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:16:5-65:19
+42        android:allowBackup="false"
+42-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:20:9-36
+43        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+43-->[androidx.core:core:1.8.0] /home/runner/.gradle/caches/8.11.1/transforms/a20a06c614043e072fa507afe79f0192/transformed/core-1.8.0/AndroidManifest.xml:24:18-86
+44        android:extractNativeLibs="false"
+45        android:icon="@mipmap/wear_ic_launcher"
+45-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:18:9-48
+46        android:label="Servia Single"
+46-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:17:9-38
+47        android:supportsRtl="true"
+47-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:21:9-35
+48        android:theme="@android:style/Theme.DeviceDefault" >
+48-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:19:9-59
+49        <meta-data
+49-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:23:9-25:36
+50            android:name="com.google.android.wearable.standalone"
+50-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:24:13-66
+51            android:value="true" />
+51-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:25:13-33
+52
+53        <activity
+53-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:27:9-35:20
+54            android:name="ae.servia.wear.faces.LauncherActivity"
+54-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:28:13-65
+55            android:exported="true"
+55-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:29:13-36
+56            android:theme="@android:style/Theme.DeviceDefault.Light" >
+56-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:30:13-69
+57            <intent-filter>
+57-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:31:13-34:29
+58                <action android:name="android.intent.action.MAIN" />
+58-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:32:17-69
+58-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:32:25-66
+59
+60                <category android:name="android.intent.category.LAUNCHER" />
+60-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:33:17-77
+60-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:33:27-74
+61            </intent-filter>
+62        </activity>
+63
+64        <service
+64-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:37:9-63:19
+65            android:name="ae.servia.wear.watchface.ServiaFace01BurjSunset"
+65-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:38:13-75
+66            android:directBootAware="true"
+66-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:41:13-43
+67            android:exported="true"
+67-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:42:13-36
+68            android:label="Servia · Burj Sunset"
+68-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:39:13-49
+69            android:permission="android.permission.BIND_WALLPAPER" >
+69-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:40:13-67
+70            <intent-filter>
+70-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:43:13-46:29
+71                <action android:name="android.service.wallpaper.WallpaperService" />
+71-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:44:17-85
+71-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:44:25-82
+72
+73                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+73-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:45:17-102
+73-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:45:27-99
+74            </intent-filter>
+75
+76            <meta-data
+76-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:47:13-49:63
+77                android:name="com.google.android.wearable.watchface.preview"
+77-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:48:17-77
+78                android:resource="@drawable/wf_preview_p01" />
+78-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:49:17-60
+79            <meta-data
+79-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:50:13-52:63
+80                android:name="com.google.android.wearable.watchface.preview_circular"
+80-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:51:17-86
+81                android:resource="@drawable/wf_preview_p01" />
+81-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:52:17-60
+82            <meta-data
+82-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:53:13-55:54
+83                android:name="android.service.wallpaper"
+83-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:54:17-57
+84                android:resource="@xml/watch_face" />
+84-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:55:17-51
+85            <!-- v1.24.45 WFF marker (Wear OS 5+ requirement, Jan 2025) -->
+86            <property
+86-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:57:13-59:37
+87                android:name="com.google.wear.watchface.format.version"
+87-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:58:17-72
+88                android:value="1" />
+88-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:59:17-34
+89
+90            <meta-data
+90-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:60:13-62:57
+91                android:name="com.google.wear.watchface.format.RESOURCES"
+91-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:61:17-74
+92                android:resource="@raw/watchface_p01" />
+92-->/home/runner/work/lumora/lumora/twa/android/wear-singleface-build/app/src/main/AndroidManifest.xml:62:17-54
+93        </service>
+94
+95        <uses-library
+95-->[androidx.wear.watchface:watchface-complications-data:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/8a5257a1ee5fd4d5e30b3050299cf991/transformed/watchface-complications-data-1.2.1/AndroidManifest.xml:8:9-10:40
+96            android:name="com.google.android.wearable"
+96-->[androidx.wear.watchface:watchface-complications-data:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/8a5257a1ee5fd4d5e30b3050299cf991/transformed/watchface-complications-data-1.2.1/AndroidManifest.xml:9:13-55
+97            android:required="false" />
+97-->[androidx.wear.watchface:watchface-complications-data:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/8a5257a1ee5fd4d5e30b3050299cf991/transformed/watchface-complications-data-1.2.1/AndroidManifest.xml:10:13-37
+98
+99        <service
+99-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:42:9-58:19
+100            android:name="androidx.wear.watchface.control.WatchFaceControlService"
+100-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:43:13-83
+101            android:directBootAware="true"
+101-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:44:13-43
+102            android:enabled="@bool/watch_face_instance_service_enabled"
+102-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:45:13-72
+103            android:exported="true"
+103-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:46:13-36
+104            android:permission="com.google.android.wearable.permission.BIND_WATCH_FACE_CONTROL" >
+104-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:47:13-96
+105            <meta-data
+105-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:48:13-50:67
+106                android:name="androidx.wear.watchface.api_version"
+106-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:49:17-67
+107                android:value="@integer/watch_face_api_version" />
+107-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:50:17-64
+108            <meta-data
+108-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:51:13-53:67
+109                android:name="androidx.wear.watchface.xml_version"
+109-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:52:17-67
+110                android:value="@integer/watch_face_xml_version" />
+110-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:53:17-64
+111
+112            <intent-filter>
+112-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:55:13-57:29
+113                <action android:name="com.google.android.wearable.action.WATCH_FACE_CONTROL" />
+113-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:56:17-96
+113-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:56:25-93
+114            </intent-filter>
+115        </service>
+116        <!--
+117      Used to configure complications. Applications can remove this using:
+118      <activity
+119	  android:name="androidx.wear.watchface.ComplicationHelperActivity"
+120	  tools:node="remove" />
+121      in their manifest if they do not support complications and want to allow
+122      R8 to remove the code associated with this activity. If the activity is
+123      remove while it is needed, this may lead to a runtime exception of type
+124      android.content.ActivityNotFoundException.
+125        -->
+126        <activity
+126-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:70:9-74:75
+127            android:name="androidx.wear.watchface.ComplicationHelperActivity"
+127-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:71:13-78
+128            android:excludeFromRecents="true"
+128-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:72:13-46
+129            android:exported="false"
+129-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:73:13-37
+130            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+130-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:74:13-72
+131
+132        <provider
+132-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:24:9-32:20
+133            android:name="androidx.startup.InitializationProvider"
+133-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:25:13-67
+134            android:authorities="ae.servia.wear.single.androidx-startup"
+134-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:26:13-68
+135            android:exported="false" >
+135-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:27:13-37
+136            <meta-data
+136-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
+137                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+137-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
+138                android:value="androidx.startup" />
+138-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
+139        </provider>
+140
+141        <receiver
+141-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
+142            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+142-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
+143            android:directBootAware="false"
+143-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
+144            android:enabled="true"
+144-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
+145            android:exported="true"
+145-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
+146            android:permission="android.permission.DUMP" >
+146-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
+147            <intent-filter>
+147-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
+148                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+148-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
+148-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
+149            </intent-filter>
+150            <intent-filter>
+150-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
+151                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+151-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
+151-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
+152            </intent-filter>
+153            <intent-filter>
+153-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
+154                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+154-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
+154-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
+155            </intent-filter>
+156            <intent-filter>
+156-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
+157                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+157-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
+157-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
+158            </intent-filter>
+159        </receiver>
+160    </application>
+161
+162</manifest>

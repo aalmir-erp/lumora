@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  v1.24.43 — Servia Single Face (minimum-viable test APK).
+
+  Bare-bones APK that registers exactly ONE watch face service
+  (Burj Sunset). Different applicationId (ae.servia.wear.single)
+  so it installs alongside both the main app and the multi-face
+  standalone. If even THIS minimal APK doesn't show up in the
+  system picker, the issue is environmental (Wear OS version,
+  signing, etc.), not our code.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:name="android.hardware.type.watch" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:label="Servia Single"
+        android:icon="@mipmap/wear_ic_launcher"
+        android:theme="@android:style/Theme.DeviceDefault"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <activity
+            android:name="ae.servia.wear.faces.LauncherActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.Light">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name="ae.servia.wear.watchface.ServiaFace01BurjSunset"
+            android:label="Servia · Burj Sunset"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/wf_preview_p01" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/wf_preview_p01" />
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <!-- v1.24.45 WFF marker (Wear OS 5+ requirement, Jan 2025) -->
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="1" />
+            <meta-data
+                android:name="com.google.wear.watchface.format.RESOURCES"
+                android:resource="@raw/watchface_p01" />
+        </service>
+
+    </application>
+</manifest>

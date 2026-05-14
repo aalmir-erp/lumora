@@ -1,0 +1,346 @@
+[
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p22.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p22.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p10.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p10.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p17.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p17.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p15.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p15.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p06.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p06.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p19.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p19.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/xml_watch_face.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/xml/watch_face.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p03.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p03.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p14.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p14.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wear_tile_icon_144.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wear_tile_icon_144.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p12.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p12.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p11.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p11.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p07.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p07.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_servia.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_servia.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p03.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p03.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p22.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p22.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p18.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p18.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p04.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p04.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p22.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p22.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p21.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p21.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p03.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p03.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p15.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p15.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_electrician.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_electrician.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_handyman.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_handyman.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p20.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p20.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p09.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p09.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p02.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p02.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p07.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p07.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p13.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p13.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_mysos.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_mysos.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p13.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p13.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p12.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p12.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p06.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p06.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p07.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p07.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/layout_wear_main.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/layout/wear_main.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p16.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p16.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_furniture.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_furniture.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p19.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p19.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_plumber.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_plumber.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p04.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p04.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p19.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p19.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p10.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p10.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wear_tile_icon_96.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wear_tile_icon_96.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p06.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p06.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p02.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p02.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p16.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p16.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p12.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p12.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p21.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p21.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p13.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p13.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p09.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p09.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_ac.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_ac.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p01.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p01.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wear_tile_icon_192.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wear_tile_icon_192.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p16.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p16.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_hub.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_hub.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p05.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p05.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_book.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_book.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p17.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p17.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p08.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p08.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/mipmap-hdpi_wear_ic_launcher.png.flat",
+        "source": "ae.servia.wear.app-main-43:/mipmap-hdpi/wear_ic_launcher.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p18.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p18.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p17.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p17.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_sos.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_sos.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p05.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p05.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_voice.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_voice.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p11.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p11.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p18.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p18.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p04.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p04.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p20.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p20.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wear_tile_bg.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wear_tile_bg.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p01.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p01.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p05.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p05.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p10.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p10.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/mipmap-xhdpi_wear_ic_launcher.png.flat",
+        "source": "ae.servia.wear.app-main-43:/mipmap-xhdpi/wear_ic_launcher.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p14.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p14.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p09.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p09.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p08.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p08.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p08.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p08.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p14.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p14.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/raw_watchface_p11.xml.flat",
+        "source": "ae.servia.wear.app-main-43:/raw/watchface_p11.xml"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p21.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p21.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p02.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p02.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p20.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p20.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_frame_p01.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_frame_p01.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_tile_preview_allservices.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/tile_preview_allservices.png"
+    },
+    {
+        "merged": "ae.servia.wear.app-release-42:/drawable_wf_preview_p15.png.flat",
+        "source": "ae.servia.wear.app-main-43:/drawable/wf_preview_p15.png"
+    }
+]

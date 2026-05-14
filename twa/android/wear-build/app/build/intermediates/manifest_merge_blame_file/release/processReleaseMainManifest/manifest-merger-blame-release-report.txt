@@ -1,0 +1,2615 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="ae.servia.wear"
+4    android:versionCode="11"
+5    android:versionName="1.24.192" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-feature android:name="android.hardware.type.watch" />
+11-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:4:5-64
+11-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:4:19-61
+12
+13    <uses-permission android:name="android.permission.INTERNET" />
+13-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:6:5-67
+13-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:6:22-64
+14    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+14-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:7:5-79
+14-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:7:22-76
+15    <uses-permission android:name="android.permission.WAKE_LOCK" />
+15-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:8:5-68
+15-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:8:22-65
+16    <uses-permission android:name="android.permission.VIBRATE" />
+16-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:9:5-66
+16-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:9:22-63
+17    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+17-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:10:5-77
+17-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:10:22-74
+18    <!-- Wearable Data Layer requires foreground service when listening -->
+19    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+19-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:12:5-77
+19-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:12:22-74
+20    <!-- Recovery one-tap (v1.24.1): real GPS + dial-vendor button -->
+21    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+21-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:14:5-79
+21-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:14:22-76
+22    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+22-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:15:5-81
+22-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:15:22-78
+23    <uses-permission android:name="android.permission.CALL_PHONE" />
+23-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:16:5-69
+23-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:16:22-66
+24    <!-- Voice assistant (v1.24.2): mic + speak-back -->
+25    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+25-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:18:5-71
+25-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:18:22-68
+26    <!-- v1.24.35: watch NFC — works on Galaxy Watch 4+, Pixel Watch, Wear OS 3+ -->
+27    <uses-permission android:name="android.permission.NFC" />
+27-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:20:5-62
+27-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:20:22-59
+28
+29    <uses-feature
+29-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:21:5-82
+30        android:name="android.hardware.nfc"
+30-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:21:19-54
+31        android:required="false" />
+31-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:21:55-79
+32    <uses-feature
+32-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:22:5-89
+33        android:name="android.hardware.microphone"
+33-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:22:19-61
+34        android:required="false" />
+34-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:22:62-86
+35    <uses-feature
+35-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:23:5-91
+36        android:name="android.hardware.location.gps"
+36-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:23:19-63
+37        android:required="false" />
+37-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:23:64-88
+38
+39    <queries>
+39-->[androidx.wear.tiles:tiles:1.4.1] /home/runner/.gradle/caches/8.11.1/transforms/59b11ead53e8bd84caad546b2c5f8c27/transformed/tiles-1.4.1/AndroidManifest.xml:7:5-11:15
+40        <intent>
+40-->[androidx.wear.tiles:tiles:1.4.1] /home/runner/.gradle/caches/8.11.1/transforms/59b11ead53e8bd84caad546b2c5f8c27/transformed/tiles-1.4.1/AndroidManifest.xml:8:9-10:18
+41            <action android:name="androidx.wear.tiles.action.BIND_UPDATE_REQUESTER" />
+41-->[androidx.wear.tiles:tiles:1.4.1] /home/runner/.gradle/caches/8.11.1/transforms/59b11ead53e8bd84caad546b2c5f8c27/transformed/tiles-1.4.1/AndroidManifest.xml:9:13-87
+41-->[androidx.wear.tiles:tiles:1.4.1] /home/runner/.gradle/caches/8.11.1/transforms/59b11ead53e8bd84caad546b2c5f8c27/transformed/tiles-1.4.1/AndroidManifest.xml:9:21-84
+42        </intent>
+43        <intent>
+43-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:23:9-27:18
+44
+45            <!-- Needed to have visibility on complication data sources installed on the device. -->
+46            <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+46-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:26:13-112
+46-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:26:21-109
+47        </intent>
+48        <intent>
+48-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:28:9-34:18
+49
+50            <!-- Needed to have visibility on launcher items to handle app shortcuts in complications. -->
+51            <action android:name="android.intent.action.MAIN" />
+51-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:42:17-69
+51-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:42:25-66
+52
+53            <category android:name="android.intent.category.LAUNCHER" />
+53-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:43:17-77
+53-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:43:27-74
+54        </intent>
+55    </queries>
+56
+57    <uses-permission android:name="com.google.android.wearable.permission.BIND_WATCH_FACE_CONTROL" />
+57-->[androidx.wear.watchface:watchface-client:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/549bb6a100da99c0b3e792ce2f96a658/transformed/watchface-client-1.2.1/AndroidManifest.xml:22:5-102
+57-->[androidx.wear.watchface:watchface-client:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/549bb6a100da99c0b3e792ce2f96a658/transformed/watchface-client-1.2.1/AndroidManifest.xml:22:22-99
+58
+59    <application
+59-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:25:5-1204:19
+60        android:allowBackup="true"
+60-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:29:9-35
+61        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+61-->[androidx.core:core:1.8.0] /home/runner/.gradle/caches/8.11.1/transforms/a20a06c614043e072fa507afe79f0192/transformed/core-1.8.0/AndroidManifest.xml:24:18-86
+62        android:extractNativeLibs="false"
+63        android:icon="@mipmap/wear_ic_launcher"
+63-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:27:9-48
+64        android:label="@string/wear_app_name"
+64-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:26:9-46
+65        android:supportsRtl="true"
+65-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:30:9-35
+66        android:theme="@android:style/Theme.DeviceDefault" >
+66-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:28:9-59
+67        <meta-data
+67-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:32:9-34:36
+68            android:name="com.google.android.wearable.standalone"
+68-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:33:13-66
+69            android:value="true" />
+69-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:34:13-33
+70
+71        <activity
+71-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:36:9-45:20
+72            android:name="ae.servia.wear.MainActivity"
+72-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:37:13-55
+73            android:exported="true"
+73-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:38:13-36
+74            android:label="@string/wear_app_name"
+74-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:39:13-50
+75            android:theme="@android:style/Theme.DeviceDefault.Light" >
+75-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:40:13-69
+76            <intent-filter>
+76-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:41:13-44:29
+77                <action android:name="android.intent.action.MAIN" />
+77-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:42:17-69
+77-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:42:25-66
+78
+79                <category android:name="android.intent.category.LAUNCHER" />
+79-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:43:17-77
+79-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:43:27-74
+80            </intent-filter>
+81        </activity>
+82        <activity
+82-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:46:9-48:46
+83            android:name="ae.servia.wear.BookingTrackActivity"
+83-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:46:19-69
+84            android:exported="false"
+84-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:47:19-43
+85            android:label="Bookings" />
+85-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:48:19-43
+86        <activity
+86-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:49:9-51:48
+87            android:name="ae.servia.wear.QuickBookActivity"
+87-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:49:19-66
+88            android:exported="false"
+88-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:50:19-43
+89            android:label="Quick book" />
+89-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:51:19-45
+90        <activity
+90-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:52:9-54:43
+91            android:name="ae.servia.wear.QuoteActivity"
+91-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:52:19-62
+92            android:exported="false"
+92-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:53:19-43
+93            android:label="Quote" />
+93-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:54:19-40
+94        <activity
+94-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:55:9-57:42
+95            android:name="ae.servia.wear.ChatActivity"
+95-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:55:19-61
+96            android:exported="false"
+96-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:56:19-43
+97            android:label="Chat" />
+97-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:57:19-39
+98        <!-- v1.24.2: Servia voice assistant (mic-on-launch chat) -->
+99        <activity
+99-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:59:9-67:20
+100            android:name="ae.servia.wear.VoiceAssistantActivity"
+100-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:59:19-71
+101            android:exported="true"
+101-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:60:19-42
+102            android:label="Servia voice"
+102-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:61:19-47
+103            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+103-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:62:19-81
+104            <intent-filter>
+104-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:63:13-66:29
+105                <action android:name="ae.servia.wear.action.VOICE" />
+105-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:64:17-70
+105-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:64:25-67
+106
+107                <category android:name="android.intent.category.DEFAULT" />
+107-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:17-76
+107-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:27-73
+108            </intent-filter>
+109        </activity>
+110        <!-- v1.24.1: One-tap vehicle-recovery dispatch -->
+111        <activity
+111-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:69:9-77:20
+112            android:name="ae.servia.wear.RecoveryActivity"
+112-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:69:19-65
+113            android:exported="true"
+113-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:70:19-42
+114            android:label="SOS Recovery"
+114-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:71:19-47
+115            android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar" >
+115-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:72:19-87
+116            <intent-filter>
+116-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:73:13-76:29
+117                <action android:name="ae.servia.wear.action.RECOVERY_SOS" />
+117-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:74:17-77
+117-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:74:25-74
+118
+119                <category android:name="android.intent.category.DEFAULT" />
+119-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:17-76
+119-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:27-73
+120            </intent-filter>
+121        </activity>
+122        <!-- v1.24.4: First-run onboarding (phone + email) -->
+123        <activity
+123-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:79:9-83:64
+124            android:name="ae.servia.wear.OnboardingActivity"
+124-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:79:19-67
+125            android:exported="false"
+125-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:80:19-43
+126            android:label="Welcome"
+126-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:81:19-42
+127            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+127-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:82:19-81
+128            android:windowSoftInputMode="adjustResize" />
+128-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:83:19-61
+129        <!-- v1.24.15: MySos (user's custom shortcuts) + AllServices (8-svc grid) -->
+130        <activity
+130-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:85:9-89:64
+131            android:name="ae.servia.wear.MySosActivity"
+131-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:85:19-62
+132            android:exported="true"
+132-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:86:19-42
+133            android:label="My Servia SOS"
+133-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:87:19-48
+134            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+134-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:88:19-81
+135            android:windowSoftInputMode="adjustResize" />
+135-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:89:19-61
+136        <activity
+136-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:90:9-93:84
+137            android:name="ae.servia.wear.AllServicesActivity"
+137-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:90:19-68
+138            android:exported="true"
+138-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:91:19-42
+139            android:label="All services"
+139-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:92:19-47
+140            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+140-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:93:19-81
+141
+142        <!-- v1.24.29: create custom SOS button on watch + per-slot dispatch + address -->
+143        <activity
+143-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:96:9-100:64
+144            android:name="ae.servia.wear.CustomSosCreateActivity"
+144-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:96:19-72
+145            android:exported="true"
+145-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:97:19-42
+146            android:label="Create SOS"
+146-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:98:19-45
+147            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+147-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:99:19-81
+148            android:windowSoftInputMode="adjustResize" />
+148-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:100:19-61
+149        <activity
+149-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:101:9-104:84
+150            android:name="ae.servia.wear.CustomSosSlotDispatchActivity"
+150-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:101:19-78
+151            android:exported="true"
+151-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:102:19-42
+152            android:label="SOS slot"
+152-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:103:19-43
+153            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+153-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:104:19-81
+154        <activity
+154-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:105:9-108:84
+155            android:name="ae.servia.wear.LocationActivity"
+155-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:105:19-65
+156            android:exported="true"
+156-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:106:19-42
+157            android:label="My address"
+157-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:107:19-45
+158            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+158-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:108:19-81
+159        <activity
+159-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:109:9-121:20
+160            android:name="ae.servia.wear.NfcScanActivity"
+160-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:109:19-64
+161            android:exported="true"
+161-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:110:19-42
+162            android:label="Scan NFC"
+162-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:111:19-43
+163            android:launchMode="singleTop"
+163-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:113:19-49
+164            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+164-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:112:19-81
+165            <intent-filter>
+165-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:114:13-120:29
+166                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+166-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:115:17-77
+166-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:115:25-74
+167
+168                <category android:name="android.intent.category.DEFAULT" />
+168-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:17-76
+168-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:27-73
+169
+170                <data
+170-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:117:17-119:53
+171                    android:host="servia.ae"
+171-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:118:23-47
+172                    android:pathPrefix="/csos/"
+172-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:119:23-50
+173                    android:scheme="https" />
+173-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:117:23-45
+174            </intent-filter>
+175        </activity>
+176        <activity
+176-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:122:9-125:84
+177            android:name="ae.servia.wear.ThemePickerActivity"
+177-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:122:19-68
+178            android:exported="true"
+178-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:123:19-42
+179            android:label="Theme"
+179-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:124:19-40
+180            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+180-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:125:19-81
+181
+182        <!--
+183             v1.24.33: Servia watch face (the dial itself) + companion editor.
+184             10 curated presets (theme x layout) + 8 customizable slots
+185             that can hold custom SOS shortcuts, click-to-talk, booking
+186             ETA, address picker, weather/battery/steps complications.
+187        -->
+188        <activity
+188-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:131:9-140:20
+189            android:name="ae.servia.wear.watchface.WatchFaceEditorActivity"
+189-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:131:19-82
+190            android:exported="true"
+190-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:132:19-42
+191            android:label="Watch face editor"
+191-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:133:19-52
+192            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+192-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:134:19-81
+193            <intent-filter>
+193-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:135:13-139:29
+194                <action android:name="ae.servia.wear.watchface.CONFIG" />
+194-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:136:17-74
+194-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:136:25-71
+195
+196                <category android:name="com.google.android.wearable.watchface.category.WEARABLE_CONFIGURATION" />
+196-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:137:17-114
+196-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:137:27-111
+197                <category android:name="android.intent.category.DEFAULT" />
+197-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:17-76
+197-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:27-73
+198            </intent-filter>
+199        </activity>
+200
+201        <!-- v1.24.43+45: 22 watch face services with WFF (Watch Face Format) property markers (Wear OS 5+ Jan 2025 mandate). -->
+202
+203        <service
+203-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:144:9-173:19
+204            android:name="ae.servia.wear.watchface.ServiaFace01BurjSunset"
+204-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:145:13-75
+205            android:directBootAware="true"
+205-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:148:13-43
+206            android:exported="true"
+206-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:149:13-36
+207            android:label="Servia · Burj Sunset"
+207-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:146:13-49
+208            android:permission="android.permission.BIND_WALLPAPER" >
+208-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:147:13-67
+209            <intent-filter>
+209-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+210                <action android:name="android.service.wallpaper.WallpaperService" />
+210-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+210-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+211
+212                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+212-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+212-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+213            </intent-filter>
+214
+215            <meta-data
+215-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+216                android:name="com.google.android.wearable.watchface.preview"
+216-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+217                android:resource="@drawable/wf_preview_p01" />
+217-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+218            <meta-data
+218-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+219                android:name="com.google.android.wearable.watchface.preview_circular"
+219-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+220                android:resource="@drawable/wf_preview_p01" />
+220-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+221            <meta-data
+221-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+222                android:name="android.service.wallpaper"
+222-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+223                android:resource="@xml/watch_face" />
+223-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+224            <!--
+225                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+226                 (since Jan 2025) for the face to appear in the system
+227                 'Customize watch faces' picker. The actual face is
+228                 declared in res/raw/watchface_pNN.xml.
+229            -->
+230            <property
+230-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+231                android:name="com.google.wear.watchface.format.version"
+231-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+232                android:value="1" />
+232-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+233
+234            <meta-data
+234-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+235                android:name="com.google.wear.watchface.format.RESOURCES"
+235-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+236                android:resource="@raw/watchface_p01" />
+236-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+237        </service>
+238        <service
+238-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:175:9-204:19
+239            android:name="ae.servia.wear.watchface.ServiaFace02MarinaNeon"
+239-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:176:13-75
+240            android:directBootAware="true"
+240-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:179:13-43
+241            android:exported="true"
+241-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:180:13-36
+242            android:label="Servia · Marina Neon"
+242-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:177:13-49
+243            android:permission="android.permission.BIND_WALLPAPER" >
+243-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:178:13-67
+244            <intent-filter>
+244-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+245                <action android:name="android.service.wallpaper.WallpaperService" />
+245-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+245-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+246
+247                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+247-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+247-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+248            </intent-filter>
+249
+250            <meta-data
+250-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+251                android:name="com.google.android.wearable.watchface.preview"
+251-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+252                android:resource="@drawable/wf_preview_p02" />
+252-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+253            <meta-data
+253-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+254                android:name="com.google.android.wearable.watchface.preview_circular"
+254-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+255                android:resource="@drawable/wf_preview_p02" />
+255-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+256            <meta-data
+256-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+257                android:name="android.service.wallpaper"
+257-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+258                android:resource="@xml/watch_face" />
+258-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+259            <!--
+260                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+261                 (since Jan 2025) for the face to appear in the system
+262                 'Customize watch faces' picker. The actual face is
+263                 declared in res/raw/watchface_pNN.xml.
+264            -->
+265            <property
+265-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+266                android:name="com.google.wear.watchface.format.version"
+266-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+267                android:value="1" />
+267-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+268
+269            <meta-data
+269-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+270                android:name="com.google.wear.watchface.format.RESOURCES"
+270-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+271                android:resource="@raw/watchface_p02" />
+271-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+272        </service>
+273        <service
+273-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:206:9-235:19
+274            android:name="ae.servia.wear.watchface.ServiaFace03DesertPremium"
+274-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:207:13-78
+275            android:directBootAware="true"
+275-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:210:13-43
+276            android:exported="true"
+276-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:211:13-36
+277            android:label="Servia · Desert Premium"
+277-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:208:13-52
+278            android:permission="android.permission.BIND_WALLPAPER" >
+278-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:209:13-67
+279            <intent-filter>
+279-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+280                <action android:name="android.service.wallpaper.WallpaperService" />
+280-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+280-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+281
+282                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+282-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+282-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+283            </intent-filter>
+284
+285            <meta-data
+285-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+286                android:name="com.google.android.wearable.watchface.preview"
+286-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+287                android:resource="@drawable/wf_preview_p03" />
+287-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+288            <meta-data
+288-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+289                android:name="com.google.android.wearable.watchface.preview_circular"
+289-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+290                android:resource="@drawable/wf_preview_p03" />
+290-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+291            <meta-data
+291-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+292                android:name="android.service.wallpaper"
+292-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+293                android:resource="@xml/watch_face" />
+293-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+294            <!--
+295                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+296                 (since Jan 2025) for the face to appear in the system
+297                 'Customize watch faces' picker. The actual face is
+298                 declared in res/raw/watchface_pNN.xml.
+299            -->
+300            <property
+300-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+301                android:name="com.google.wear.watchface.format.version"
+301-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+302                android:value="1" />
+302-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+303
+304            <meta-data
+304-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+305                android:name="com.google.wear.watchface.format.RESOURCES"
+305-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+306                android:resource="@raw/watchface_p03" />
+306-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+307        </service>
+308        <service
+308-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:237:9-266:19
+309            android:name="ae.servia.wear.watchface.ServiaFace04SportPulse"
+309-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:238:13-75
+310            android:directBootAware="true"
+310-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:241:13-43
+311            android:exported="true"
+311-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:242:13-36
+312            android:label="Servia · Sport Pulse"
+312-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:239:13-49
+313            android:permission="android.permission.BIND_WALLPAPER" >
+313-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:240:13-67
+314            <intent-filter>
+314-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+315                <action android:name="android.service.wallpaper.WallpaperService" />
+315-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+315-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+316
+317                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+317-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+317-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+318            </intent-filter>
+319
+320            <meta-data
+320-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+321                android:name="com.google.android.wearable.watchface.preview"
+321-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+322                android:resource="@drawable/wf_preview_p04" />
+322-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+323            <meta-data
+323-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+324                android:name="com.google.android.wearable.watchface.preview_circular"
+324-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+325                android:resource="@drawable/wf_preview_p04" />
+325-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+326            <meta-data
+326-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+327                android:name="android.service.wallpaper"
+327-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+328                android:resource="@xml/watch_face" />
+328-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+329            <!--
+330                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+331                 (since Jan 2025) for the face to appear in the system
+332                 'Customize watch faces' picker. The actual face is
+333                 declared in res/raw/watchface_pNN.xml.
+334            -->
+335            <property
+335-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+336                android:name="com.google.wear.watchface.format.version"
+336-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+337                android:value="1" />
+337-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+338
+339            <meta-data
+339-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+340                android:name="com.google.wear.watchface.format.RESOURCES"
+340-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+341                android:resource="@raw/watchface_p04" />
+341-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+342        </service>
+343        <service
+343-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:268:9-297:19
+344            android:name="ae.servia.wear.watchface.ServiaFace05EmergencyRed"
+344-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:269:13-77
+345            android:directBootAware="true"
+345-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:272:13-43
+346            android:exported="true"
+346-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:273:13-36
+347            android:label="Servia · Emergency Red"
+347-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:270:13-51
+348            android:permission="android.permission.BIND_WALLPAPER" >
+348-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:271:13-67
+349            <intent-filter>
+349-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+350                <action android:name="android.service.wallpaper.WallpaperService" />
+350-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+350-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+351
+352                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+352-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+352-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+353            </intent-filter>
+354
+355            <meta-data
+355-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+356                android:name="com.google.android.wearable.watchface.preview"
+356-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+357                android:resource="@drawable/wf_preview_p05" />
+357-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+358            <meta-data
+358-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+359                android:name="com.google.android.wearable.watchface.preview_circular"
+359-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+360                android:resource="@drawable/wf_preview_p05" />
+360-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+361            <meta-data
+361-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+362                android:name="android.service.wallpaper"
+362-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+363                android:resource="@xml/watch_face" />
+363-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+364            <!--
+365                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+366                 (since Jan 2025) for the face to appear in the system
+367                 'Customize watch faces' picker. The actual face is
+368                 declared in res/raw/watchface_pNN.xml.
+369            -->
+370            <property
+370-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+371                android:name="com.google.wear.watchface.format.version"
+371-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+372                android:value="1" />
+372-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+373
+374            <meta-data
+374-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+375                android:name="com.google.wear.watchface.format.RESOURCES"
+375-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+376                android:resource="@raw/watchface_p05" />
+376-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+377        </service>
+378        <service
+378-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:299:9-328:19
+379            android:name="ae.servia.wear.watchface.ServiaFace06ModularDark"
+379-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:300:13-76
+380            android:directBootAware="true"
+380-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:303:13-43
+381            android:exported="true"
+381-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:304:13-36
+382            android:label="Servia · Modular Pro"
+382-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:301:13-49
+383            android:permission="android.permission.BIND_WALLPAPER" >
+383-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:302:13-67
+384            <intent-filter>
+384-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+385                <action android:name="android.service.wallpaper.WallpaperService" />
+385-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+385-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+386
+387                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+387-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+387-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+388            </intent-filter>
+389
+390            <meta-data
+390-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+391                android:name="com.google.android.wearable.watchface.preview"
+391-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+392                android:resource="@drawable/wf_preview_p06" />
+392-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+393            <meta-data
+393-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+394                android:name="com.google.android.wearable.watchface.preview_circular"
+394-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+395                android:resource="@drawable/wf_preview_p06" />
+395-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+396            <meta-data
+396-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+397                android:name="android.service.wallpaper"
+397-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+398                android:resource="@xml/watch_face" />
+398-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+399            <!--
+400                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+401                 (since Jan 2025) for the face to appear in the system
+402                 'Customize watch faces' picker. The actual face is
+403                 declared in res/raw/watchface_pNN.xml.
+404            -->
+405            <property
+405-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+406                android:name="com.google.wear.watchface.format.version"
+406-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+407                android:value="1" />
+407-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+408
+409            <meta-data
+409-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+410                android:name="com.google.wear.watchface.format.RESOURCES"
+410-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+411                android:resource="@raw/watchface_p06" />
+411-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+412        </service>
+413        <service
+413-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:330:9-359:19
+414            android:name="ae.servia.wear.watchface.ServiaFace07NeonGrid"
+414-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:331:13-73
+415            android:directBootAware="true"
+415-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:334:13-43
+416            android:exported="true"
+416-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:335:13-36
+417            android:label="Servia · Neon Grid"
+417-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:332:13-47
+418            android:permission="android.permission.BIND_WALLPAPER" >
+418-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:333:13-67
+419            <intent-filter>
+419-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+420                <action android:name="android.service.wallpaper.WallpaperService" />
+420-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+420-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+421
+422                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+422-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+422-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+423            </intent-filter>
+424
+425            <meta-data
+425-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+426                android:name="com.google.android.wearable.watchface.preview"
+426-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+427                android:resource="@drawable/wf_preview_p07" />
+427-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+428            <meta-data
+428-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+429                android:name="com.google.android.wearable.watchface.preview_circular"
+429-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+430                android:resource="@drawable/wf_preview_p07" />
+430-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+431            <meta-data
+431-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+432                android:name="android.service.wallpaper"
+432-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+433                android:resource="@xml/watch_face" />
+433-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+434            <!--
+435                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+436                 (since Jan 2025) for the face to appear in the system
+437                 'Customize watch faces' picker. The actual face is
+438                 declared in res/raw/watchface_pNN.xml.
+439            -->
+440            <property
+440-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+441                android:name="com.google.wear.watchface.format.version"
+441-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+442                android:value="1" />
+442-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+443
+444            <meta-data
+444-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+445                android:name="com.google.wear.watchface.format.RESOURCES"
+445-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+446                android:resource="@raw/watchface_p07" />
+446-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+447        </service>
+448        <service
+448-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:361:9-390:19
+449            android:name="ae.servia.wear.watchface.ServiaFace08CalligraphyGold"
+449-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:362:13-80
+450            android:directBootAware="true"
+450-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:365:13-43
+451            android:exported="true"
+451-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:366:13-36
+452            android:label="Servia · Calligraphy Gold"
+452-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:363:13-54
+453            android:permission="android.permission.BIND_WALLPAPER" >
+453-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:364:13-67
+454            <intent-filter>
+454-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+455                <action android:name="android.service.wallpaper.WallpaperService" />
+455-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+455-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+456
+457                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+457-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+457-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+458            </intent-filter>
+459
+460            <meta-data
+460-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+461                android:name="com.google.android.wearable.watchface.preview"
+461-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+462                android:resource="@drawable/wf_preview_p08" />
+462-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+463            <meta-data
+463-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+464                android:name="com.google.android.wearable.watchface.preview_circular"
+464-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+465                android:resource="@drawable/wf_preview_p08" />
+465-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+466            <meta-data
+466-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+467                android:name="android.service.wallpaper"
+467-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+468                android:resource="@xml/watch_face" />
+468-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+469            <!--
+470                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+471                 (since Jan 2025) for the face to appear in the system
+472                 'Customize watch faces' picker. The actual face is
+473                 declared in res/raw/watchface_pNN.xml.
+474            -->
+475            <property
+475-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+476                android:name="com.google.wear.watchface.format.version"
+476-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+477                android:value="1" />
+477-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+478
+479            <meta-data
+479-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+480                android:name="com.google.wear.watchface.format.RESOURCES"
+480-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+481                android:resource="@raw/watchface_p08" />
+481-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+482        </service>
+483        <service
+483-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:392:9-421:19
+484            android:name="ae.servia.wear.watchface.ServiaFace09PearlLadies"
+484-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:393:13-76
+485            android:directBootAware="true"
+485-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:396:13-43
+486            android:exported="true"
+486-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:397:13-36
+487            android:label="Servia · Pearl Ladies"
+487-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:394:13-50
+488            android:permission="android.permission.BIND_WALLPAPER" >
+488-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:395:13-67
+489            <intent-filter>
+489-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+490                <action android:name="android.service.wallpaper.WallpaperService" />
+490-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+490-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+491
+492                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+492-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+492-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+493            </intent-filter>
+494
+495            <meta-data
+495-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+496                android:name="com.google.android.wearable.watchface.preview"
+496-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+497                android:resource="@drawable/wf_preview_p09" />
+497-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+498            <meta-data
+498-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+499                android:name="com.google.android.wearable.watchface.preview_circular"
+499-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+500                android:resource="@drawable/wf_preview_p09" />
+500-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+501            <meta-data
+501-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+502                android:name="android.service.wallpaper"
+502-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+503                android:resource="@xml/watch_face" />
+503-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+504            <!--
+505                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+506                 (since Jan 2025) for the face to appear in the system
+507                 'Customize watch faces' picker. The actual face is
+508                 declared in res/raw/watchface_pNN.xml.
+509            -->
+510            <property
+510-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+511                android:name="com.google.wear.watchface.format.version"
+511-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+512                android:value="1" />
+512-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+513
+514            <meta-data
+514-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+515                android:name="com.google.wear.watchface.format.RESOURCES"
+515-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+516                android:resource="@raw/watchface_p09" />
+516-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+517        </service>
+518        <service
+518-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:423:9-452:19
+519            android:name="ae.servia.wear.watchface.ServiaFace10EcoBotanical"
+519-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:424:13-77
+520            android:directBootAware="true"
+520-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:427:13-43
+521            android:exported="true"
+521-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:428:13-36
+522            android:label="Servia · Eco Botanical"
+522-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:425:13-51
+523            android:permission="android.permission.BIND_WALLPAPER" >
+523-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:426:13-67
+524            <intent-filter>
+524-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+525                <action android:name="android.service.wallpaper.WallpaperService" />
+525-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+525-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+526
+527                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+527-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+527-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+528            </intent-filter>
+529
+530            <meta-data
+530-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+531                android:name="com.google.android.wearable.watchface.preview"
+531-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+532                android:resource="@drawable/wf_preview_p10" />
+532-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+533            <meta-data
+533-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+534                android:name="com.google.android.wearable.watchface.preview_circular"
+534-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+535                android:resource="@drawable/wf_preview_p10" />
+535-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+536            <meta-data
+536-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+537                android:name="android.service.wallpaper"
+537-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+538                android:resource="@xml/watch_face" />
+538-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+539            <!--
+540                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+541                 (since Jan 2025) for the face to appear in the system
+542                 'Customize watch faces' picker. The actual face is
+543                 declared in res/raw/watchface_pNN.xml.
+544            -->
+545            <property
+545-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+546                android:name="com.google.wear.watchface.format.version"
+546-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+547                android:value="1" />
+547-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+548
+549            <meta-data
+549-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+550                android:name="com.google.wear.watchface.format.RESOURCES"
+550-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+551                android:resource="@raw/watchface_p10" />
+551-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+552        </service>
+553        <service
+553-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:454:9-483:19
+554            android:name="ae.servia.wear.watchface.ServiaFace11MinimalWhite"
+554-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:455:13-77
+555            android:directBootAware="true"
+555-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:458:13-43
+556            android:exported="true"
+556-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:459:13-36
+557            android:label="Servia · Minimal White"
+557-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:456:13-51
+558            android:permission="android.permission.BIND_WALLPAPER" >
+558-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:457:13-67
+559            <intent-filter>
+559-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+560                <action android:name="android.service.wallpaper.WallpaperService" />
+560-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+560-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+561
+562                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+562-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+562-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+563            </intent-filter>
+564
+565            <meta-data
+565-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+566                android:name="com.google.android.wearable.watchface.preview"
+566-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+567                android:resource="@drawable/wf_preview_p11" />
+567-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+568            <meta-data
+568-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+569                android:name="com.google.android.wearable.watchface.preview_circular"
+569-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+570                android:resource="@drawable/wf_preview_p11" />
+570-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+571            <meta-data
+571-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+572                android:name="android.service.wallpaper"
+572-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+573                android:resource="@xml/watch_face" />
+573-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+574            <!--
+575                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+576                 (since Jan 2025) for the face to appear in the system
+577                 'Customize watch faces' picker. The actual face is
+578                 declared in res/raw/watchface_pNN.xml.
+579            -->
+580            <property
+580-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+581                android:name="com.google.wear.watchface.format.version"
+581-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+582                android:value="1" />
+582-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+583
+584            <meta-data
+584-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+585                android:name="com.google.wear.watchface.format.RESOURCES"
+585-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+586                android:resource="@raw/watchface_p11" />
+586-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+587        </service>
+588        <service
+588-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:485:9-514:19
+589            android:name="ae.servia.wear.watchface.ServiaFace12FalconPremium"
+589-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:486:13-78
+590            android:directBootAware="true"
+590-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:489:13-43
+591            android:exported="true"
+591-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:490:13-36
+592            android:label="Servia · Falcon Premium"
+592-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:487:13-52
+593            android:permission="android.permission.BIND_WALLPAPER" >
+593-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:488:13-67
+594            <intent-filter>
+594-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+595                <action android:name="android.service.wallpaper.WallpaperService" />
+595-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+595-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+596
+597                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+597-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+597-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+598            </intent-filter>
+599
+600            <meta-data
+600-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+601                android:name="com.google.android.wearable.watchface.preview"
+601-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+602                android:resource="@drawable/wf_preview_p12" />
+602-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+603            <meta-data
+603-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+604                android:name="com.google.android.wearable.watchface.preview_circular"
+604-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+605                android:resource="@drawable/wf_preview_p12" />
+605-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+606            <meta-data
+606-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+607                android:name="android.service.wallpaper"
+607-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+608                android:resource="@xml/watch_face" />
+608-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+609            <!--
+610                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+611                 (since Jan 2025) for the face to appear in the system
+612                 'Customize watch faces' picker. The actual face is
+613                 declared in res/raw/watchface_pNN.xml.
+614            -->
+615            <property
+615-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+616                android:name="com.google.wear.watchface.format.version"
+616-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+617                android:value="1" />
+617-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+618
+619            <meta-data
+619-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+620                android:name="com.google.wear.watchface.format.RESOURCES"
+620-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+621                android:resource="@raw/watchface_p12" />
+621-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+622        </service>
+623        <service
+623-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:516:9-545:19
+624            android:name="ae.servia.wear.watchface.ServiaFace13PixelRetro"
+624-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:517:13-75
+625            android:directBootAware="true"
+625-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:520:13-43
+626            android:exported="true"
+626-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:521:13-36
+627            android:label="Servia · Pixel Retro"
+627-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:518:13-49
+628            android:permission="android.permission.BIND_WALLPAPER" >
+628-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:519:13-67
+629            <intent-filter>
+629-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+630                <action android:name="android.service.wallpaper.WallpaperService" />
+630-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+630-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+631
+632                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+632-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+632-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+633            </intent-filter>
+634
+635            <meta-data
+635-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+636                android:name="com.google.android.wearable.watchface.preview"
+636-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+637                android:resource="@drawable/wf_preview_p13" />
+637-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+638            <meta-data
+638-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+639                android:name="com.google.android.wearable.watchface.preview_circular"
+639-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+640                android:resource="@drawable/wf_preview_p13" />
+640-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+641            <meta-data
+641-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+642                android:name="android.service.wallpaper"
+642-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+643                android:resource="@xml/watch_face" />
+643-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+644            <!--
+645                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+646                 (since Jan 2025) for the face to appear in the system
+647                 'Customize watch faces' picker. The actual face is
+648                 declared in res/raw/watchface_pNN.xml.
+649            -->
+650            <property
+650-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+651                android:name="com.google.wear.watchface.format.version"
+651-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+652                android:value="1" />
+652-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+653
+654            <meta-data
+654-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+655                android:name="com.google.wear.watchface.format.RESOURCES"
+655-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+656                android:resource="@raw/watchface_p13" />
+656-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+657        </service>
+658        <service
+658-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:547:9-576:19
+659            android:name="ae.servia.wear.watchface.ServiaFace14CarbonFiber"
+659-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:548:13-76
+660            android:directBootAware="true"
+660-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:551:13-43
+661            android:exported="true"
+661-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:552:13-36
+662            android:label="Servia · Carbon Fiber"
+662-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:549:13-50
+663            android:permission="android.permission.BIND_WALLPAPER" >
+663-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:550:13-67
+664            <intent-filter>
+664-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+665                <action android:name="android.service.wallpaper.WallpaperService" />
+665-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+665-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+666
+667                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+667-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+667-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+668            </intent-filter>
+669
+670            <meta-data
+670-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+671                android:name="com.google.android.wearable.watchface.preview"
+671-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+672                android:resource="@drawable/wf_preview_p14" />
+672-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+673            <meta-data
+673-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+674                android:name="com.google.android.wearable.watchface.preview_circular"
+674-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+675                android:resource="@drawable/wf_preview_p14" />
+675-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+676            <meta-data
+676-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+677                android:name="android.service.wallpaper"
+677-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+678                android:resource="@xml/watch_face" />
+678-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+679            <!--
+680                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+681                 (since Jan 2025) for the face to appear in the system
+682                 'Customize watch faces' picker. The actual face is
+683                 declared in res/raw/watchface_pNN.xml.
+684            -->
+685            <property
+685-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+686                android:name="com.google.wear.watchface.format.version"
+686-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+687                android:value="1" />
+687-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+688
+689            <meta-data
+689-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+690                android:name="com.google.wear.watchface.format.RESOURCES"
+690-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+691                android:resource="@raw/watchface_p14" />
+691-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+692        </service>
+693        <service
+693-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:578:9-607:19
+694            android:name="ae.servia.wear.watchface.ServiaFace15KidsFun"
+694-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:579:13-72
+695            android:directBootAware="true"
+695-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:582:13-43
+696            android:exported="true"
+696-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:583:13-36
+697            android:label="Servia · Kids Fun"
+697-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:580:13-46
+698            android:permission="android.permission.BIND_WALLPAPER" >
+698-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:581:13-67
+699            <intent-filter>
+699-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+700                <action android:name="android.service.wallpaper.WallpaperService" />
+700-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+700-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+701
+702                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+702-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+702-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+703            </intent-filter>
+704
+705            <meta-data
+705-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+706                android:name="com.google.android.wearable.watchface.preview"
+706-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+707                android:resource="@drawable/wf_preview_p15" />
+707-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+708            <meta-data
+708-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+709                android:name="com.google.android.wearable.watchface.preview_circular"
+709-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+710                android:resource="@drawable/wf_preview_p15" />
+710-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+711            <meta-data
+711-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+712                android:name="android.service.wallpaper"
+712-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+713                android:resource="@xml/watch_face" />
+713-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+714            <!--
+715                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+716                 (since Jan 2025) for the face to appear in the system
+717                 'Customize watch faces' picker. The actual face is
+718                 declared in res/raw/watchface_pNN.xml.
+719            -->
+720            <property
+720-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+721                android:name="com.google.wear.watchface.format.version"
+721-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+722                android:value="1" />
+722-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+723
+724            <meta-data
+724-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+725                android:name="com.google.wear.watchface.format.RESOURCES"
+725-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+726                android:resource="@raw/watchface_p15" />
+726-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+727        </service>
+728        <service
+728-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:609:9-638:19
+729            android:name="ae.servia.wear.watchface.ServiaFace16BusinessExec"
+729-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:610:13-77
+730            android:directBootAware="true"
+730-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:613:13-43
+731            android:exported="true"
+731-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:614:13-36
+732            android:label="Servia · Business Exec"
+732-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:611:13-51
+733            android:permission="android.permission.BIND_WALLPAPER" >
+733-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:612:13-67
+734            <intent-filter>
+734-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+735                <action android:name="android.service.wallpaper.WallpaperService" />
+735-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+735-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+736
+737                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+737-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+737-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+738            </intent-filter>
+739
+740            <meta-data
+740-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+741                android:name="com.google.android.wearable.watchface.preview"
+741-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+742                android:resource="@drawable/wf_preview_p16" />
+742-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+743            <meta-data
+743-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+744                android:name="com.google.android.wearable.watchface.preview_circular"
+744-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+745                android:resource="@drawable/wf_preview_p16" />
+745-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+746            <meta-data
+746-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+747                android:name="android.service.wallpaper"
+747-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+748                android:resource="@xml/watch_face" />
+748-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+749            <!--
+750                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+751                 (since Jan 2025) for the face to appear in the system
+752                 'Customize watch faces' picker. The actual face is
+753                 declared in res/raw/watchface_pNN.xml.
+754            -->
+755            <property
+755-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+756                android:name="com.google.wear.watchface.format.version"
+756-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+757                android:value="1" />
+757-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+758
+759            <meta-data
+759-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+760                android:name="com.google.wear.watchface.format.RESOURCES"
+760-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+761                android:resource="@raw/watchface_p16" />
+761-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+762        </service>
+763        <service
+763-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:640:9-669:19
+764            android:name="ae.servia.wear.watchface.ServiaFace17SandstormPremium"
+764-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:641:13-81
+765            android:directBootAware="true"
+765-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:644:13-43
+766            android:exported="true"
+766-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:645:13-36
+767            android:label="Servia · Sandstorm Premium"
+767-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:642:13-55
+768            android:permission="android.permission.BIND_WALLPAPER" >
+768-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:643:13-67
+769            <intent-filter>
+769-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+770                <action android:name="android.service.wallpaper.WallpaperService" />
+770-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+770-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+771
+772                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+772-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+772-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+773            </intent-filter>
+774
+775            <meta-data
+775-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+776                android:name="com.google.android.wearable.watchface.preview"
+776-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+777                android:resource="@drawable/wf_preview_p17" />
+777-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+778            <meta-data
+778-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+779                android:name="com.google.android.wearable.watchface.preview_circular"
+779-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+780                android:resource="@drawable/wf_preview_p17" />
+780-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+781            <meta-data
+781-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+782                android:name="android.service.wallpaper"
+782-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+783                android:resource="@xml/watch_face" />
+783-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+784            <!--
+785                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+786                 (since Jan 2025) for the face to appear in the system
+787                 'Customize watch faces' picker. The actual face is
+788                 declared in res/raw/watchface_pNN.xml.
+789            -->
+790            <property
+790-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+791                android:name="com.google.wear.watchface.format.version"
+791-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+792                android:value="1" />
+792-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+793
+794            <meta-data
+794-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+795                android:name="com.google.wear.watchface.format.RESOURCES"
+795-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+796                android:resource="@raw/watchface_p17" />
+796-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+797        </service>
+798        <service
+798-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:671:9-700:19
+799            android:name="ae.servia.wear.watchface.ServiaFace18VioletChrono"
+799-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:672:13-77
+800            android:directBootAware="true"
+800-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:675:13-43
+801            android:exported="true"
+801-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:676:13-36
+802            android:label="Servia · Violet Chronograph"
+802-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:673:13-56
+803            android:permission="android.permission.BIND_WALLPAPER" >
+803-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:674:13-67
+804            <intent-filter>
+804-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+805                <action android:name="android.service.wallpaper.WallpaperService" />
+805-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+805-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+806
+807                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+807-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+807-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+808            </intent-filter>
+809
+810            <meta-data
+810-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+811                android:name="com.google.android.wearable.watchface.preview"
+811-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+812                android:resource="@drawable/wf_preview_p18" />
+812-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+813            <meta-data
+813-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+814                android:name="com.google.android.wearable.watchface.preview_circular"
+814-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+815                android:resource="@drawable/wf_preview_p18" />
+815-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+816            <meta-data
+816-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+817                android:name="android.service.wallpaper"
+817-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+818                android:resource="@xml/watch_face" />
+818-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+819            <!--
+820                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+821                 (since Jan 2025) for the face to appear in the system
+822                 'Customize watch faces' picker. The actual face is
+823                 declared in res/raw/watchface_pNN.xml.
+824            -->
+825            <property
+825-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+826                android:name="com.google.wear.watchface.format.version"
+826-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+827                android:value="1" />
+827-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+828
+829            <meta-data
+829-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+830                android:name="com.google.wear.watchface.format.RESOURCES"
+830-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+831                android:resource="@raw/watchface_p18" />
+831-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+832        </service>
+833        <service
+833-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:702:9-731:19
+834            android:name="ae.servia.wear.watchface.ServiaFace19OceanAnimated"
+834-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:703:13-78
+835            android:directBootAware="true"
+835-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:706:13-43
+836            android:exported="true"
+836-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:707:13-36
+837            android:label="Servia · Ocean Live"
+837-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:704:13-48
+838            android:permission="android.permission.BIND_WALLPAPER" >
+838-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:705:13-67
+839            <intent-filter>
+839-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+840                <action android:name="android.service.wallpaper.WallpaperService" />
+840-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+840-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+841
+842                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+842-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+842-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+843            </intent-filter>
+844
+845            <meta-data
+845-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+846                android:name="com.google.android.wearable.watchface.preview"
+846-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+847                android:resource="@drawable/wf_preview_p19" />
+847-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+848            <meta-data
+848-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+849                android:name="com.google.android.wearable.watchface.preview_circular"
+849-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+850                android:resource="@drawable/wf_preview_p19" />
+850-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+851            <meta-data
+851-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+852                android:name="android.service.wallpaper"
+852-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+853                android:resource="@xml/watch_face" />
+853-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+854            <!--
+855                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+856                 (since Jan 2025) for the face to appear in the system
+857                 'Customize watch faces' picker. The actual face is
+858                 declared in res/raw/watchface_pNN.xml.
+859            -->
+860            <property
+860-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+861                android:name="com.google.wear.watchface.format.version"
+861-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+862                android:value="1" />
+862-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+863
+864            <meta-data
+864-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+865                android:name="com.google.wear.watchface.format.RESOURCES"
+865-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+866                android:resource="@raw/watchface_p19" />
+866-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+867        </service>
+868        <service
+868-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:733:9-762:19
+869            android:name="ae.servia.wear.watchface.ServiaFace20Aviation"
+869-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:734:13-73
+870            android:directBootAware="true"
+870-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:737:13-43
+871            android:exported="true"
+871-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:738:13-36
+872            android:label="Servia · Aviation"
+872-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:735:13-46
+873            android:permission="android.permission.BIND_WALLPAPER" >
+873-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:736:13-67
+874            <intent-filter>
+874-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+875                <action android:name="android.service.wallpaper.WallpaperService" />
+875-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+875-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+876
+877                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+877-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+877-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+878            </intent-filter>
+879
+880            <meta-data
+880-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+881                android:name="com.google.android.wearable.watchface.preview"
+881-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+882                android:resource="@drawable/wf_preview_p20" />
+882-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+883            <meta-data
+883-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+884                android:name="com.google.android.wearable.watchface.preview_circular"
+884-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+885                android:resource="@drawable/wf_preview_p20" />
+885-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+886            <meta-data
+886-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+887                android:name="android.service.wallpaper"
+887-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+888                android:resource="@xml/watch_face" />
+888-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+889            <!--
+890                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+891                 (since Jan 2025) for the face to appear in the system
+892                 'Customize watch faces' picker. The actual face is
+893                 declared in res/raw/watchface_pNN.xml.
+894            -->
+895            <property
+895-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+896                android:name="com.google.wear.watchface.format.version"
+896-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+897                android:value="1" />
+897-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+898
+899            <meta-data
+899-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+900                android:name="com.google.wear.watchface.format.RESOURCES"
+900-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+901                android:resource="@raw/watchface_p20" />
+901-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+902        </service>
+903        <service
+903-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:764:9-793:19
+904            android:name="ae.servia.wear.watchface.ServiaFace21ServiaHours"
+904-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:765:13-76
+905            android:directBootAware="true"
+905-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:768:13-43
+906            android:exported="true"
+906-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:769:13-36
+907            android:label="Servia · Servia Hours"
+907-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:766:13-50
+908            android:permission="android.permission.BIND_WALLPAPER" >
+908-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:767:13-67
+909            <intent-filter>
+909-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+910                <action android:name="android.service.wallpaper.WallpaperService" />
+910-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+910-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+911
+912                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+912-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+912-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+913            </intent-filter>
+914
+915            <meta-data
+915-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+916                android:name="com.google.android.wearable.watchface.preview"
+916-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+917                android:resource="@drawable/wf_preview_p21" />
+917-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+918            <meta-data
+918-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+919                android:name="com.google.android.wearable.watchface.preview_circular"
+919-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+920                android:resource="@drawable/wf_preview_p21" />
+920-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+921            <meta-data
+921-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+922                android:name="android.service.wallpaper"
+922-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+923                android:resource="@xml/watch_face" />
+923-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+924            <!--
+925                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+926                 (since Jan 2025) for the face to appear in the system
+927                 'Customize watch faces' picker. The actual face is
+928                 declared in res/raw/watchface_pNN.xml.
+929            -->
+930            <property
+930-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+931                android:name="com.google.wear.watchface.format.version"
+931-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+932                android:value="1" />
+932-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+933
+934            <meta-data
+934-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+935                android:name="com.google.wear.watchface.format.RESOURCES"
+935-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+936                android:resource="@raw/watchface_p21" />
+936-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+937        </service>
+938        <service
+938-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:795:9-824:19
+939            android:name="ae.servia.wear.watchface.ServiaFace22ServiaDial"
+939-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:796:13-75
+940            android:directBootAware="true"
+940-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:799:13-43
+941            android:exported="true"
+941-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:800:13-36
+942            android:label="Servia · Servia Dial"
+942-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:797:13-49
+943            android:permission="android.permission.BIND_WALLPAPER" >
+943-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:798:13-67
+944            <intent-filter>
+944-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:150:13-153:29
+945                <action android:name="android.service.wallpaper.WallpaperService" />
+945-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:17-85
+945-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:151:25-82
+946
+947                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+947-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:17-102
+947-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:152:27-99
+948            </intent-filter>
+949
+950            <meta-data
+950-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:154:13-156:63
+951                android:name="com.google.android.wearable.watchface.preview"
+951-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:155:17-77
+952                android:resource="@drawable/wf_preview_p22" />
+952-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:156:17-60
+953            <meta-data
+953-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:157:13-159:63
+954                android:name="com.google.android.wearable.watchface.preview_circular"
+954-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:158:17-86
+955                android:resource="@drawable/wf_preview_p22" />
+955-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:159:17-60
+956            <meta-data
+956-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:160:13-162:54
+957                android:name="android.service.wallpaper"
+957-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:161:17-57
+958                android:resource="@xml/watch_face" />
+958-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:162:17-51
+959            <!--
+960                 v1.24.45: WFF marker. Wear OS 5+ requires this property
+961                 (since Jan 2025) for the face to appear in the system
+962                 'Customize watch faces' picker. The actual face is
+963                 declared in res/raw/watchface_pNN.xml.
+964            -->
+965            <property
+965-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:167:13-169:37
+966                android:name="com.google.wear.watchface.format.version"
+966-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:168:17-72
+967                android:value="1" />
+967-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:169:17-34
+968
+969            <meta-data
+969-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:170:13-172:57
+970                android:name="com.google.wear.watchface.format.RESOURCES"
+970-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:171:17-74
+971                android:resource="@raw/watchface_p22" />
+971-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:172:17-54
+972        </service>
+973        <!--
+974     v1.24.7: SOS category grid (8 tiles, matches website /sos.html).
+975             Launched by MainActivity SOS button + RecoveryTileService tap.
+976        -->
+977        <activity
+977-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:827:9-835:20
+978            android:name="ae.servia.wear.SosCategoryGridActivity"
+978-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:827:19-72
+979            android:exported="true"
+979-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:828:19-42
+980            android:label="Servia SOS"
+980-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:829:19-45
+981            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+981-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:830:19-81
+982            <intent-filter>
+982-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:831:13-834:29
+983                <action android:name="ae.servia.wear.action.SOS_GRID" />
+983-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:832:17-73
+983-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:832:25-70
+984
+985                <category android:name="android.intent.category.DEFAULT" />
+985-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:17-76
+985-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:27-73
+986            </intent-filter>
+987        </activity>
+988        <!-- v1.24.4: Generic SOS dispatch (used by SosVehicle/Furniture/etc tiles) -->
+989        <activity
+989-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:837:9-846:20
+990            android:name="ae.servia.wear.SosLauncherActivity"
+990-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:837:19-68
+991            android:exported="true"
+991-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:838:19-42
+992            android:label="SOS"
+992-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:839:19-38
+993            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+993-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:840:19-81
+994            android:windowSoftInputMode="adjustResize" >
+994-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:841:19-61
+995            <intent-filter>
+995-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:842:13-845:29
+996                <action android:name="ae.servia.wear.action.SOS_DISPATCH" />
+996-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:843:17-77
+996-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:843:25-74
+997
+998                <category android:name="android.intent.category.DEFAULT" />
+998-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:17-76
+998-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:65:27-73
+999            </intent-filter>
+1000        </activity>
+1001
+1002        <!--
+1003        ============== TILE SERVICES (v1.24.0 - 6 tiles total) ==============
+1004             Each TileService is registered as an exported service the
+1005             Wear OS Launcher discovers. After install, user long-presses
+1006             the watch face → swipe to "Add tile" → all 6 Servia tiles
+1007             appear in the picker.
+1008        ==============================================================
+1009        -->
+1010
+1011
+1012        <!--
+1013             ⭐ FLAGSHIP TILE — voice assistant. Tap to talk: book / quote /
+1014             recovery / wallet — all by speaking. Listed first so users
+1015             see it at the top of the picker.
+1016        -->
+1017        <service
+1017-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:858:9-871:19
+1018            android:name="ae.servia.wear.tiles.ServiaVoiceTileService"
+1018-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:859:13-71
+1019            android:description="@string/tile_voice_desc"
+1019-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:861:13-58
+1020            android:exported="true"
+1020-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:863:13-36
+1021            android:icon="@mipmap/wear_ic_launcher"
+1021-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:862:13-52
+1022            android:label="Servia · Tap to talk"
+1022-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:860:13-49
+1023            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1023-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:864:13-91
+1024            <intent-filter>
+1024-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1025                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1025-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1025-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1026            </intent-filter>
+1027
+1028            <meta-data
+1028-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1029                android:name="androidx.wear.tiles.PREVIEW"
+1029-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1030                android:resource="@mipmap/wear_ic_launcher" />
+1030-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1031        </service>
+1032        <service
+1032-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:873:9-886:19
+1033            android:name="ae.servia.wear.tiles.QuickBookTileService"
+1033-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:874:13-69
+1034            android:description="@string/tile_quickbook_desc"
+1034-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:876:13-62
+1035            android:exported="true"
+1035-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:878:13-36
+1036            android:icon="@mipmap/wear_ic_launcher"
+1036-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:877:13-52
+1037            android:label="Servia · Quick book"
+1037-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:875:13-48
+1038            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1038-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:879:13-91
+1039            <intent-filter>
+1039-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1040                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1040-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1040-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1041            </intent-filter>
+1042
+1043            <meta-data
+1043-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1044                android:name="androidx.wear.tiles.PREVIEW"
+1044-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1045                android:resource="@mipmap/wear_ic_launcher" />
+1045-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1046        </service>
+1047        <service
+1047-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:888:9-901:19
+1048            android:name="ae.servia.wear.tiles.NextBookingTileService"
+1048-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:889:13-71
+1049            android:description="@string/tile_nextbooking_desc"
+1049-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:891:13-64
+1050            android:exported="true"
+1050-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:893:13-36
+1051            android:icon="@mipmap/wear_ic_launcher"
+1051-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:892:13-52
+1052            android:label="Servia · Next booking"
+1052-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:890:13-50
+1053            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1053-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:894:13-91
+1054            <intent-filter>
+1054-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1055                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1055-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1055-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1056            </intent-filter>
+1057
+1058            <meta-data
+1058-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1059                android:name="androidx.wear.tiles.PREVIEW"
+1059-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1060                android:resource="@mipmap/wear_ic_launcher" />
+1060-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1061        </service>
+1062        <service
+1062-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:903:9-916:19
+1063            android:name="ae.servia.wear.tiles.RecoveryTileService"
+1063-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:904:13-68
+1064            android:description="@string/tile_recovery_desc"
+1064-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:906:13-61
+1065            android:exported="true"
+1065-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:908:13-36
+1066            android:icon="@mipmap/wear_ic_launcher"
+1066-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:907:13-52
+1067            android:label="Servia · SOS Recovery"
+1067-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:905:13-50
+1068            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1068-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:909:13-91
+1069            <intent-filter>
+1069-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1070                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1070-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1070-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1071            </intent-filter>
+1072
+1073            <meta-data
+1073-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1074                android:name="androidx.wear.tiles.PREVIEW"
+1074-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1075                android:resource="@mipmap/wear_ic_launcher" />
+1075-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1076        </service>
+1077        <service
+1077-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:918:9-931:19
+1078            android:name="ae.servia.wear.tiles.LoyaltyTileService"
+1078-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:919:13-67
+1079            android:description="@string/tile_loyalty_desc"
+1079-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:921:13-60
+1080            android:exported="true"
+1080-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:923:13-36
+1081            android:icon="@mipmap/wear_ic_launcher"
+1081-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:922:13-52
+1082            android:label="Servia · Loyalty tier"
+1082-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:920:13-50
+1083            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1083-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:924:13-91
+1084            <intent-filter>
+1084-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1085                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1085-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1085-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1086            </intent-filter>
+1087
+1088            <meta-data
+1088-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1089                android:name="androidx.wear.tiles.PREVIEW"
+1089-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1090                android:resource="@mipmap/wear_ic_launcher" />
+1090-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1091        </service>
+1092        <service
+1092-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:933:9-946:19
+1093            android:name="ae.servia.wear.tiles.WalletTileService"
+1093-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:934:13-66
+1094            android:description="@string/tile_wallet_desc"
+1094-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:936:13-59
+1095            android:exported="true"
+1095-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:938:13-36
+1096            android:icon="@mipmap/wear_ic_launcher"
+1096-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:937:13-52
+1097            android:label="Servia · Wallet"
+1097-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:935:13-44
+1098            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1098-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:939:13-91
+1099            <intent-filter>
+1099-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1100                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1100-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1100-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1101            </intent-filter>
+1102
+1103            <meta-data
+1103-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1104                android:name="androidx.wear.tiles.PREVIEW"
+1104-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1105                android:resource="@mipmap/wear_ic_launcher" />
+1105-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1106        </service>
+1107        <service
+1107-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:948:9-961:19
+1108            android:name="ae.servia.wear.tiles.DailyTipTileService"
+1108-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:949:13-68
+1109            android:description="@string/tile_dailytip_desc"
+1109-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:951:13-61
+1110            android:exported="true"
+1110-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:953:13-36
+1111            android:icon="@mipmap/wear_ic_launcher"
+1111-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:952:13-52
+1112            android:label="Servia · Daily tip"
+1112-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:950:13-47
+1113            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1113-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:954:13-91
+1114            <intent-filter>
+1114-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1115                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1115-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1115-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1116            </intent-filter>
+1117
+1118            <meta-data
+1118-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1119                android:name="androidx.wear.tiles.PREVIEW"
+1119-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1120                android:resource="@mipmap/wear_ic_launcher" />
+1120-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1121        </service>
+1122
+1123        <!--
+1124             ============== v1.24.4: SOS CATEGORY TILES (6 new) ==============
+1125             Each launches SosLauncherActivity with a different service_id
+1126             so the user can pick exactly the kind of SOS they want from
+1127             the watch's tile picker.
+1128        -->
+1129        <service
+1129-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:967:9-979:19
+1130            android:name="ae.servia.wear.tiles.SosVehicleTileService"
+1130-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:968:13-70
+1131            android:description="@string/tile_sos_vehicle_desc"
+1131-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:970:13-64
+1132            android:exported="true"
+1132-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:972:13-36
+1133            android:icon="@drawable/tile_preview_sos"
+1133-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:971:13-54
+1134            android:label="Servia · SOS Vehicle"
+1134-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:969:13-49
+1135            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1135-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:973:13-91
+1136            <intent-filter>
+1136-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1137                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1137-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1137-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1138            </intent-filter>
+1139
+1140            <meta-data
+1140-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1141                android:name="androidx.wear.tiles.PREVIEW"
+1141-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1142                android:resource="@drawable/tile_preview_sos" />
+1142-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1143        </service>
+1144        <service
+1144-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:980:9-992:19
+1145            android:name="ae.servia.wear.tiles.SosFurnitureTileService"
+1145-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:981:13-72
+1146            android:description="@string/tile_sos_furniture_desc"
+1146-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:983:13-66
+1147            android:exported="true"
+1147-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:985:13-36
+1148            android:icon="@drawable/tile_preview_furniture"
+1148-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:984:13-60
+1149            android:label="Servia · SOS Furniture"
+1149-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:982:13-51
+1150            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1150-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:986:13-91
+1151            <intent-filter>
+1151-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1152                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1152-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1152-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1153            </intent-filter>
+1154
+1155            <meta-data
+1155-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1156                android:name="androidx.wear.tiles.PREVIEW"
+1156-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1157                android:resource="@drawable/tile_preview_furniture" />
+1157-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1158        </service>
+1159        <service
+1159-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:993:9-1005:19
+1160            android:name="ae.servia.wear.tiles.SosElectricianTileService"
+1160-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:994:13-74
+1161            android:description="@string/tile_sos_electrician_desc"
+1161-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:996:13-68
+1162            android:exported="true"
+1162-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:998:13-36
+1163            android:icon="@drawable/tile_preview_electrician"
+1163-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:997:13-62
+1164            android:label="Servia · SOS Electrician"
+1164-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:995:13-53
+1165            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1165-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:999:13-91
+1166            <intent-filter>
+1166-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1167                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1167-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1167-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1168            </intent-filter>
+1169
+1170            <meta-data
+1170-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1171                android:name="androidx.wear.tiles.PREVIEW"
+1171-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1172                android:resource="@drawable/tile_preview_electrician" />
+1172-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1173        </service>
+1174        <service
+1174-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1006:9-1018:19
+1175            android:name="ae.servia.wear.tiles.SosPlumberTileService"
+1175-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1007:13-70
+1176            android:description="@string/tile_sos_plumber_desc"
+1176-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1009:13-64
+1177            android:exported="true"
+1177-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1011:13-36
+1178            android:icon="@drawable/tile_preview_plumber"
+1178-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1010:13-58
+1179            android:label="Servia · SOS Plumber"
+1179-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1008:13-49
+1180            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1180-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1012:13-91
+1181            <intent-filter>
+1181-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1182                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1182-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1182-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1183            </intent-filter>
+1184
+1185            <meta-data
+1185-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1186                android:name="androidx.wear.tiles.PREVIEW"
+1186-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1187                android:resource="@drawable/tile_preview_plumber" />
+1187-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1188        </service>
+1189        <service
+1189-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1019:9-1031:19
+1190            android:name="ae.servia.wear.tiles.SosAcTileService"
+1190-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1020:13-65
+1191            android:description="@string/tile_sos_ac_desc"
+1191-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1022:13-59
+1192            android:exported="true"
+1192-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1024:13-36
+1193            android:icon="@drawable/tile_preview_ac"
+1193-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1023:13-53
+1194            android:label="Servia · SOS AC"
+1194-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1021:13-44
+1195            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1195-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1025:13-91
+1196            <intent-filter>
+1196-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1197                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1197-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1197-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1198            </intent-filter>
+1199
+1200            <meta-data
+1200-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1201                android:name="androidx.wear.tiles.PREVIEW"
+1201-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1202                android:resource="@drawable/tile_preview_ac" />
+1202-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1203        </service>
+1204        <service
+1204-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1032:9-1044:19
+1205            android:name="ae.servia.wear.tiles.SosHandymanTileService"
+1205-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1033:13-71
+1206            android:description="@string/tile_sos_handyman_desc"
+1206-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1035:13-65
+1207            android:exported="true"
+1207-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1037:13-36
+1208            android:icon="@drawable/tile_preview_handyman"
+1208-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1036:13-59
+1209            android:label="Servia · SOS Handyman"
+1209-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1034:13-50
+1210            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1210-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1038:13-91
+1211            <intent-filter>
+1211-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1212                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1212-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1212-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1213            </intent-filter>
+1214
+1215            <meta-data
+1215-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1216                android:name="androidx.wear.tiles.PREVIEW"
+1216-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1217                android:resource="@drawable/tile_preview_handyman" />
+1217-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1218        </service>
+1219
+1220        <!--
+1221             v1.24.15: HUB tile — 4 actions in ONE tile (replaces 4 separate
+1222             full-screen tiles per user feedback). Listed FIRST so it shows
+1223             at the top of the picker.
+1224        -->
+1225        <service
+1225-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1049:9-1061:19
+1226            android:name="ae.servia.wear.tiles.HubTileService"
+1226-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1050:13-63
+1227            android:description="@string/tile_hub_desc"
+1227-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1052:13-56
+1228            android:exported="true"
+1228-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1054:13-36
+1229            android:icon="@drawable/tile_preview_hub"
+1229-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1053:13-54
+1230            android:label="Servia · Hub (4 actions)"
+1230-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1051:13-53
+1231            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1231-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1055:13-91
+1232            <intent-filter>
+1232-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1233                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1233-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1233-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1234            </intent-filter>
+1235
+1236            <meta-data
+1236-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1237                android:name="androidx.wear.tiles.PREVIEW"
+1237-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1238                android:resource="@drawable/tile_preview_hub" />
+1238-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1239        </service>
+1240
+1241        <!-- v1.24.15: My-SOS (user's custom shortcuts) + All-Services (8-svc grid) -->
+1242        <service
+1242-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1064:9-1076:19
+1243            android:name="ae.servia.wear.tiles.MySosTileService"
+1243-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1065:13-65
+1244            android:description="@string/tile_mysos_desc"
+1244-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1067:13-58
+1245            android:exported="true"
+1245-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1069:13-36
+1246            android:icon="@drawable/tile_preview_mysos"
+1246-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1068:13-56
+1247            android:label="Servia · My SOS shortcuts"
+1247-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1066:13-54
+1248            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1248-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1070:13-91
+1249            <intent-filter>
+1249-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1250                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1250-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1250-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1251            </intent-filter>
+1252
+1253            <meta-data
+1253-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1254                android:name="androidx.wear.tiles.PREVIEW"
+1254-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1255                android:resource="@drawable/tile_preview_mysos" />
+1255-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1256        </service>
+1257        <service
+1257-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1077:9-1089:19
+1258            android:name="ae.servia.wear.tiles.AllServicesTileService"
+1258-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1078:13-71
+1259            android:description="@string/tile_allservices_desc"
+1259-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1080:13-64
+1260            android:exported="true"
+1260-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1082:13-36
+1261            android:icon="@drawable/tile_preview_allservices"
+1261-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1081:13-62
+1262            android:label="Servia · All services"
+1262-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1079:13-50
+1263            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1263-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1083:13-91
+1264            <intent-filter>
+1264-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1265                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1265-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1265-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1266            </intent-filter>
+1267
+1268            <meta-data
+1268-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1269                android:name="androidx.wear.tiles.PREVIEW"
+1269-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1270                android:resource="@drawable/tile_preview_allservices" />
+1270-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1271        </service>
+1272
+1273        <!--
+1274             v1.24.29: 5 reusable Custom SOS slot tiles + Address tile.
+1275             Each slot tile reads SharedPreferences ("servia_csos_slots")
+1276             to know which user-created shortcut it's bound to. The
+1277             customer pins as many slots as they like from the watch face.
+1278        -->
+1279        <service
+1279-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1096:9-1108:19
+1280            android:name="ae.servia.wear.tiles.CustomSosSlot1TileService"
+1280-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1097:13-74
+1281            android:description="@string/tile_csos_slot_desc"
+1281-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1099:13-62
+1282            android:exported="true"
+1282-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1101:13-36
+1283            android:icon="@drawable/tile_preview_mysos"
+1283-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1100:13-56
+1284            android:label="Servia · SOS Slot 1"
+1284-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1098:13-48
+1285            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1285-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1102:13-91
+1286            <intent-filter>
+1286-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1287                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1287-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1287-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1288            </intent-filter>
+1289
+1290            <meta-data
+1290-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1291                android:name="androidx.wear.tiles.PREVIEW"
+1291-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1292                android:resource="@drawable/tile_preview_mysos" />
+1292-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1293        </service>
+1294        <service
+1294-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1109:9-1121:19
+1295            android:name="ae.servia.wear.tiles.CustomSosSlot2TileService"
+1295-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1110:13-74
+1296            android:description="@string/tile_csos_slot_desc"
+1296-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1112:13-62
+1297            android:exported="true"
+1297-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1114:13-36
+1298            android:icon="@drawable/tile_preview_mysos"
+1298-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1113:13-56
+1299            android:label="Servia · SOS Slot 2"
+1299-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1111:13-48
+1300            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1300-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1115:13-91
+1301            <intent-filter>
+1301-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1302                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1302-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1302-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1303            </intent-filter>
+1304
+1305            <meta-data
+1305-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1306                android:name="androidx.wear.tiles.PREVIEW"
+1306-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1307                android:resource="@drawable/tile_preview_mysos" />
+1307-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1308        </service>
+1309        <service
+1309-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1122:9-1134:19
+1310            android:name="ae.servia.wear.tiles.CustomSosSlot3TileService"
+1310-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1123:13-74
+1311            android:description="@string/tile_csos_slot_desc"
+1311-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1125:13-62
+1312            android:exported="true"
+1312-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1127:13-36
+1313            android:icon="@drawable/tile_preview_mysos"
+1313-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1126:13-56
+1314            android:label="Servia · SOS Slot 3"
+1314-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1124:13-48
+1315            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1315-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1128:13-91
+1316            <intent-filter>
+1316-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1317                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1317-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1317-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1318            </intent-filter>
+1319
+1320            <meta-data
+1320-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1321                android:name="androidx.wear.tiles.PREVIEW"
+1321-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1322                android:resource="@drawable/tile_preview_mysos" />
+1322-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1323        </service>
+1324        <service
+1324-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1135:9-1147:19
+1325            android:name="ae.servia.wear.tiles.CustomSosSlot4TileService"
+1325-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1136:13-74
+1326            android:description="@string/tile_csos_slot_desc"
+1326-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1138:13-62
+1327            android:exported="true"
+1327-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1140:13-36
+1328            android:icon="@drawable/tile_preview_mysos"
+1328-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1139:13-56
+1329            android:label="Servia · SOS Slot 4"
+1329-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1137:13-48
+1330            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1330-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1141:13-91
+1331            <intent-filter>
+1331-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1332                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1332-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1332-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1333            </intent-filter>
+1334
+1335            <meta-data
+1335-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1336                android:name="androidx.wear.tiles.PREVIEW"
+1336-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1337                android:resource="@drawable/tile_preview_mysos" />
+1337-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1338        </service>
+1339        <service
+1339-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1148:9-1160:19
+1340            android:name="ae.servia.wear.tiles.CustomSosSlot5TileService"
+1340-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1149:13-74
+1341            android:description="@string/tile_csos_slot_desc"
+1341-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1151:13-62
+1342            android:exported="true"
+1342-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1153:13-36
+1343            android:icon="@drawable/tile_preview_mysos"
+1343-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1152:13-56
+1344            android:label="Servia · SOS Slot 5"
+1344-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1150:13-48
+1345            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1345-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1154:13-91
+1346            <intent-filter>
+1346-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1347                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1347-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1347-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1348            </intent-filter>
+1349
+1350            <meta-data
+1350-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1351                android:name="androidx.wear.tiles.PREVIEW"
+1351-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1352                android:resource="@drawable/tile_preview_mysos" />
+1352-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1353        </service>
+1354
+1355        <!--
+1356             v1.24.30: Quad tile — 4 mini circular SOS buttons in ONE tile.
+1357             Listed FIRST in this group so it shows at the top of the
+1358             picker (it's the recommended way to expose 1-4 shortcuts;
+1359             the 5 individual slot tiles above remain for power users).
+1360        -->
+1361        <service
+1361-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1166:9-1178:19
+1362            android:name="ae.servia.wear.tiles.CustomSosQuadTileService"
+1362-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1167:13-73
+1363            android:description="@string/tile_csos_quad_desc"
+1363-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1169:13-62
+1364            android:exported="true"
+1364-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1171:13-36
+1365            android:icon="@drawable/tile_preview_mysos"
+1365-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1170:13-56
+1366            android:label="Servia · 4 SOS shortcuts"
+1366-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1168:13-53
+1367            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1367-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1172:13-91
+1368            <intent-filter>
+1368-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1369                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1369-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1369-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1370            </intent-filter>
+1371
+1372            <meta-data
+1372-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1373                android:name="androidx.wear.tiles.PREVIEW"
+1373-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1374                android:resource="@drawable/tile_preview_mysos" />
+1374-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1375        </service>
+1376        <service
+1376-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1180:9-1192:19
+1377            android:name="ae.servia.wear.tiles.LocationTileService"
+1377-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1181:13-68
+1378            android:description="@string/tile_location_desc"
+1378-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1183:13-61
+1379            android:exported="true"
+1379-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1185:13-36
+1380            android:icon="@drawable/tile_preview_hub"
+1380-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1184:13-54
+1381            android:label="Servia · Address"
+1381-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1182:13-45
+1382            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER" >
+1382-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1186:13-91
+1383            <intent-filter>
+1383-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:865:13-867:29
+1384                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+1384-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:17-88
+1384-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:866:25-85
+1385            </intent-filter>
+1386
+1387            <meta-data
+1387-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:868:13-870:63
+1388                android:name="androidx.wear.tiles.PREVIEW"
+1388-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:869:17-59
+1389                android:resource="@drawable/tile_preview_hub" />
+1389-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:870:17-60
+1390        </service>
+1391
+1392        <!-- Wearable Listener Service for phone↔watch Data Layer sync -->
+1393        <service
+1393-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1195:9-1203:19
+1394            android:name="ae.servia.wear.WearMessageListenerService"
+1394-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1196:13-69
+1395            android:exported="true" >
+1395-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1197:13-36
+1396            <intent-filter>
+1396-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1198:13-1202:29
+1397                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+1397-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1199:17-91
+1397-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1199:25-88
+1398                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+1398-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1200:17-87
+1398-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:1200:25-84
+1399
+1400                <data
+1400-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:117:17-119:53
+1401                    android:host="*"
+1401-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:118:23-47
+1402                    android:pathPrefix="/servia/"
+1402-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:119:23-50
+1403                    android:scheme="wear" />
+1403-->/home/runner/work/lumora/lumora/twa/android/wear-build/app/src/main/AndroidManifest.xml:117:23-45
+1404            </intent-filter>
+1405        </service>
+1406
+1407        <uses-library
+1407-->[androidx.wear.tiles:tiles:1.4.1] /home/runner/.gradle/caches/8.11.1/transforms/59b11ead53e8bd84caad546b2c5f8c27/transformed/tiles-1.4.1/AndroidManifest.xml:14:9-16:40
+1408            android:name="wear-sdk"
+1408-->[androidx.wear.tiles:tiles:1.4.1] /home/runner/.gradle/caches/8.11.1/transforms/59b11ead53e8bd84caad546b2c5f8c27/transformed/tiles-1.4.1/AndroidManifest.xml:15:13-36
+1409            android:required="false" />
+1409-->[androidx.wear.tiles:tiles:1.4.1] /home/runner/.gradle/caches/8.11.1/transforms/59b11ead53e8bd84caad546b2c5f8c27/transformed/tiles-1.4.1/AndroidManifest.xml:16:13-37
+1410        <uses-library
+1410-->[androidx.wear.watchface:watchface-complications-data-source:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/ada7e517293ba97956941d7ac1559dd0/transformed/watchface-complications-data-source-1.2.1/AndroidManifest.xml:8:9-10:40
+1411            android:name="com.google.android.wearable"
+1411-->[androidx.wear.watchface:watchface-complications-data-source:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/ada7e517293ba97956941d7ac1559dd0/transformed/watchface-complications-data-source-1.2.1/AndroidManifest.xml:9:13-55
+1412            android:required="false" />
+1412-->[androidx.wear.watchface:watchface-complications-data-source:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/ada7e517293ba97956941d7ac1559dd0/transformed/watchface-complications-data-source-1.2.1/AndroidManifest.xml:10:13-37
+1413
+1414        <service
+1414-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:42:9-58:19
+1415            android:name="androidx.wear.watchface.control.WatchFaceControlService"
+1415-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:43:13-83
+1416            android:directBootAware="true"
+1416-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:44:13-43
+1417            android:enabled="@bool/watch_face_instance_service_enabled"
+1417-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:45:13-72
+1418            android:exported="true"
+1418-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:46:13-36
+1419            android:permission="com.google.android.wearable.permission.BIND_WATCH_FACE_CONTROL" >
+1419-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:47:13-96
+1420            <meta-data
+1420-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:48:13-50:67
+1421                android:name="androidx.wear.watchface.api_version"
+1421-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:49:17-67
+1422                android:value="@integer/watch_face_api_version" />
+1422-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:50:17-64
+1423            <meta-data
+1423-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:51:13-53:67
+1424                android:name="androidx.wear.watchface.xml_version"
+1424-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:52:17-67
+1425                android:value="@integer/watch_face_xml_version" />
+1425-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:53:17-64
+1426
+1427            <intent-filter>
+1427-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:55:13-57:29
+1428                <action android:name="com.google.android.wearable.action.WATCH_FACE_CONTROL" />
+1428-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:56:17-96
+1428-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:56:25-93
+1429            </intent-filter>
+1430        </service>
+1431        <!--
+1432      Used to configure complications. Applications can remove this using:
+1433      <activity
+1434	  android:name="androidx.wear.watchface.ComplicationHelperActivity"
+1435	  tools:node="remove" />
+1436      in their manifest if they do not support complications and want to allow
+1437      R8 to remove the code associated with this activity. If the activity is
+1438      remove while it is needed, this may lead to a runtime exception of type
+1439      android.content.ActivityNotFoundException.
+1440        -->
+1441        <activity
+1441-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:70:9-74:75
+1442            android:name="androidx.wear.watchface.ComplicationHelperActivity"
+1442-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:71:13-78
+1443            android:excludeFromRecents="true"
+1443-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:72:13-46
+1444            android:exported="false"
+1444-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:73:13-37
+1445            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+1445-->[androidx.wear.watchface:watchface:1.2.1] /home/runner/.gradle/caches/8.11.1/transforms/79513db1be9231e5677892af178d6750/transformed/watchface-1.2.1/AndroidManifest.xml:74:13-72
+1446        <activity
+1446-->[com.google.android.gms:play-services-base:18.5.0] /home/runner/.gradle/caches/8.11.1/transforms/4d5f03df25a8e6f3545674ed3190ad92/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:9-173
+1447            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+1447-->[com.google.android.gms:play-services-base:18.5.0] /home/runner/.gradle/caches/8.11.1/transforms/4d5f03df25a8e6f3545674ed3190ad92/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:19-85
+1448            android:exported="false"
+1448-->[com.google.android.gms:play-services-base:18.5.0] /home/runner/.gradle/caches/8.11.1/transforms/4d5f03df25a8e6f3545674ed3190ad92/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:146-170
+1449            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+1449-->[com.google.android.gms:play-services-base:18.5.0] /home/runner/.gradle/caches/8.11.1/transforms/4d5f03df25a8e6f3545674ed3190ad92/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:86-145
+1450
+1451        <meta-data
+1451-->[com.google.android.gms:play-services-basement:18.4.0] /home/runner/.gradle/caches/8.11.1/transforms/8259dead4fed705872a2ce6094107e0a/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:9-122
+1452            android:name="com.google.android.gms.version"
+1452-->[com.google.android.gms:play-services-basement:18.4.0] /home/runner/.gradle/caches/8.11.1/transforms/8259dead4fed705872a2ce6094107e0a/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:20-65
+1453            android:value="@integer/google_play_services_version" />
+1453-->[com.google.android.gms:play-services-basement:18.4.0] /home/runner/.gradle/caches/8.11.1/transforms/8259dead4fed705872a2ce6094107e0a/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:66-119
+1454
+1455        <provider
+1455-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:24:9-32:20
+1456            android:name="androidx.startup.InitializationProvider"
+1456-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:25:13-67
+1457            android:authorities="ae.servia.wear.androidx-startup"
+1457-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:26:13-68
+1458            android:exported="false" >
+1458-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:27:13-37
+1459            <meta-data
+1459-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
+1460                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+1460-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
+1461                android:value="androidx.startup" />
+1461-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
+1462        </provider>
+1463
+1464        <receiver
+1464-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
+1465            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+1465-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
+1466            android:directBootAware="false"
+1466-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
+1467            android:enabled="true"
+1467-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
+1468            android:exported="true"
+1468-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
+1469            android:permission="android.permission.DUMP" >
+1469-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
+1470            <intent-filter>
+1470-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
+1471                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+1471-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
+1471-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
+1472            </intent-filter>
+1473            <intent-filter>
+1473-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
+1474                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+1474-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
+1474-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
+1475            </intent-filter>
+1476            <intent-filter>
+1476-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
+1477                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+1477-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
+1477-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
+1478            </intent-filter>
+1479            <intent-filter>
+1479-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
+1480                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+1480-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
+1480-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/runner/.gradle/caches/8.11.1/transforms/be472123d64283795ed10e0d2bad4abc/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
+1481            </intent-filter>
+1482        </receiver>
+1483    </application>
+1484
+1485</manifest>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!--
+  v1.24.45 — Watch Face Format (WFF) for p15_kids_fun (#FFFFFF time).
+  Auto-generated from tools-metadata.json + wf_frame_pNN.png.
+-->
+<WatchFace width="450" height="450" clipShape="CIRCLE">
+    <Metadata key="CLOCK_TYPE" value="DIGITAL" />
+    <Metadata key="STEP_GOAL" value="10000" />
+    <Scene>
+        <Group x="0" y="0" width="450" height="450">
+
+            <!-- Background frame -->
+            <PartImage x="0" y="0" width="450" height="450">
+                <Image resource="wf_frame_p15" />
+            </PartImage>
+
+            <!-- Digital time overlay -->
+            <DigitalClock x="39" y="121" width="372" height="111" alpha="255">
+                <TimeText format="HH:mm" align="CENTER">
+                    <Font family="SYNC_TO_DEVICE" size="93" weight="BOLD" color="#FFFFFFFF" />
+                </TimeText>
+            </DigitalClock>
+
+        </Group>
+    </Scene>
+</WatchFace>

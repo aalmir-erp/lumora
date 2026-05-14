@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ae.servia.app",
+      "sha256_cert_fingerprints": ["2A:65:9C:75:45:76:E7:77:AC:27:75:3A:4E:01:78:C9:21:AC:7D:AF:D5:65:7C:C0:87:7D:34:BE:22:F6:5C:A7"]
+    }
+  }
+]
