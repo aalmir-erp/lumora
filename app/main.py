@@ -78,10 +78,6 @@ _FORCE_MOBILE_SNIPPET = (
     b"window.matchMedia('(display-mode: standalone)').matches||"
     b"window.matchMedia('(display-mode: minimal-ui)').matches||"
     b"window.matchMedia('(display-mode: fullscreen)').matches));}catch(_){}"
-    # v1.24.201 — Treat Chrome 'Desktop Site' mode on a phone as a mobile
-    # device too: sw is the real phone width (e.g. 412), but iw is the
-    # 980px layout-width Chrome forces. If sw<800 and iw>iw>820, it's
-    # Desktop-Site mode on a small physical screen.
     b"var isPhoneDesktopMode=(hasTouch && sw<=820 && iw>820);"
     b"var shouldForceMobile=("
     b"(hasTouch && sw<=820 && uaDesktop) || isTWA || isStandalone || isPhoneDesktopMode"
@@ -90,18 +86,12 @@ _FORCE_MOBILE_SNIPPET = (
       b"var vp=document.querySelector('meta[name=\"viewport\"]');"
       b"if(!vp){vp=document.createElement('meta');vp.name='viewport';"
         b"document.head.insertBefore(vp,document.head.firstChild);}"
-      # Use physical screen.width when Desktop-Site mode is on so Chrome
-      # actually re-lays out at phone width instead of ignoring the meta.
       b"if(isPhoneDesktopMode){"
         b"vp.setAttribute('content','width='+sw+',initial-scale=1,viewport-fit=cover');"
       b"}else{"
         b"vp.setAttribute('content','width=device-width,initial-scale=1,viewport-fit=cover');"
       b"}"
       b"var s=document.createElement('style');s.id='_fm';"
-      # v1.24.201 — CSS escape hatch: when viewport meta is being ignored,
-      # this html.servia-as-app data-attribute lets per-page CSS force a
-      # single-column layout. Pages that need it can target
-      # html[data-servia-app='1'] .hero-grid { grid-template-columns: 1fr }.
       b"s.textContent='html,body{max-width:100vw!important;overflow-x:hidden!important;}'+"
       b"'html[data-servia-app=\"1\"] .hero-grid{grid-template-columns:1fr!important;gap:24px!important;}'+"
       b"'html[data-servia-app=\"1\"] .nav-links{display:none!important;}'+"
@@ -111,13 +101,17 @@ _FORCE_MOBILE_SNIPPET = (
       b"document.documentElement.setAttribute('data-servia-app','1');"
       b"if(!sessionStorage.getItem('_fm')){sessionStorage.setItem('_fm','1');}"
     b"}}catch(e){}})();</script>"
-    # v1.24.201 — Eager-load widget.js so the chat launcher is mounted by
-    # the time the user can interact. The previous lazy loader (idle/touch)
-    # raced with the mobile-nav Chat button, leading to the founder-reported
-    # "tap does nothing" bug. Performance impact is small — widget.js is
-    # ~20 KB gzipped and loads async on the boot critical path; idle loaders
-    # mostly help LCP, but the chat panel itself is below-the-fold.
-    b"<script src='/widget.js?v=1.24.201' async data-api-base=''></script>"
+)
+
+# v1.24.202 — Chat-widget eager-load + CSS preload bundle. Injected only on
+# customer-facing pages (path skip-list applied in the middleware). Without
+# this, the video player at /api/videos/play/* and other "no-chat" pages
+# loaded widget.js but not widget.css → unstyled chat broke layout.
+_CHAT_WIDGET_SNIPPET = (
+    b"<link rel='preload' as='style' href='/widget.css?v=1.24.202' "
+    b"onload=\"this.rel='stylesheet';this.onload=null\">"
+    b"<noscript><link rel='stylesheet' href='/widget.css?v=1.24.202'></noscript>"
+    b"<script src='/widget.js?v=1.24.202' async data-api-base=''></script>"
 )
 
 # v1.24.2 — universal SOS FAB. Injected on every public page so anyone can
@@ -176,6 +170,19 @@ class _ForceMobileMiddleware(_BHM):
                                               "/pay", "/sos.html"))):
                 if b"</body>" in body:
                     body = body.replace(b"</body>", _SOS_FAB_SNIPPET + b"</body>", 1)
+            # v1.24.202 — Inject widget.js + widget.css preload on customer-
+            # facing pages. Skip admin / vendor / pay / API / video-player
+            # routes that don't have widget.css and shouldn't show chat.
+            # Founder hit a broken layout on /api/videos/play/* because
+            # v1.24.201 injected widget.js everywhere, including pages that
+            # don't load widget.css → unstyled chat elements scattered.
+            CHAT_SKIP = ("/admin", "/vendor", "/portal-vendor", "/pay",
+                         "/api/videos/play", "/api/", "/q/", "/p/", "/i/",
+                         "/sw.js", "/.well-known")
+            if (b"widget.js?v=" not in body
+                    and not path.startswith(CHAT_SKIP)):
+                if b"</body>" in body:
+                    body = body.replace(b"</body>", _CHAT_WIDGET_SNIPPET + b"</body>", 1)
             from starlette.responses import Response as _R
             hdrs = {k: v for k, v in resp.headers.items() if k.lower() != "content-length"}
             return _R(content=body, status_code=resp.status_code,

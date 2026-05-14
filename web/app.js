@@ -203,7 +203,7 @@
   // v1.24.199 — Bumped key because founder reported v1.24.196/197/198 fixes
   // never took effect inside the Android app: chat-button race, force-mobile,
   // and assetlinks updates were all masked by stale cached HTML.
-  const SW_RESET_KEY = "servia.sw.reset.v1.24.201";
+  const SW_RESET_KEY = "servia.sw.reset.v1.24.202";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {
