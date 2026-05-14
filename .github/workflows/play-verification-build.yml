@@ -139,9 +139,7 @@ jobs:
 
           # App-level build.gradle
           cat > verify-app/app/build.gradle <<GRADLE
-          plugins {
-              id 'com.android.application'
-          }
+          apply plugin: 'com.android.application'
           android {
               namespace 'ae.servia.verify'
               compileSdk 34
@@ -202,13 +200,54 @@ jobs:
           cat verify-app/app/src/main/assets/adi-registration.properties
 
       - name: Build signed release APK
+        id: build_apk
         working-directory: verify-app
         env:
           KS_PASSWORD: ${{ steps.keystore.outputs.password }}
         run: |
-          gradle wrapper --gradle-version 8.5
+          set +e
+          gradle wrapper --gradle-version 8.5 2>&1 | tee gradle-wrapper.log
           chmod +x ./gradlew
-          ./gradlew :app:assembleRelease --stacktrace
+          ./gradlew :app:assembleRelease --stacktrace --info 2>&1 | tee gradle-build.log
+          RC=${PIPESTATUS[0]}
+          echo "gradle exit code: $RC"
+          exit $RC
+
+      # v1.24.194d — Surface the gradle output to the run's Job Summary on failure.
+      # The summary is rendered into the publicly-readable workflow page,
+      # so the agent can diagnose CI failures without GitHub login.
+      - name: Dump build logs to job summary (on failure)
+        if: ${{ failure() && steps.build_apk.conclusion == 'failure' }}
+        working-directory: verify-app
+        run: |
+          {
+            echo "## Gradle build failed"
+            echo ""
+            echo '### Tail of gradle-build.log (last 200 lines)'
+            echo '```'
+            tail -200 gradle-build.log 2>/dev/null || echo "(no gradle-build.log)"
+            echo '```'
+            echo ""
+            echo '### Tail of gradle-wrapper.log'
+            echo '```'
+            tail -80 gradle-wrapper.log 2>/dev/null || echo "(no gradle-wrapper.log)"
+            echo '```'
+            echo ""
+            echo '### Generated build.gradle (app)'
+            echo '```groovy'
+            cat app/build.gradle 2>/dev/null || echo "(missing app/build.gradle)"
+            echo '```'
+            echo ""
+            echo '### Generated build.gradle (root)'
+            echo '```groovy'
+            cat build.gradle 2>/dev/null || echo "(missing root build.gradle)"
+            echo '```'
+            echo ""
+            echo '### Generated settings.gradle'
+            echo '```groovy'
+            cat settings.gradle 2>/dev/null || echo "(missing settings.gradle)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Locate built APK
         id: apk
