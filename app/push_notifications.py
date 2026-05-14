@@ -95,6 +95,32 @@ class SubscriptionBody(BaseModel):
     expirationTime: Any = None
 
 
+# v1.24.205 — Customer-side push subscribe (no admin auth required).
+# Used by the website / TWA when a customer-facing page calls
+# window.serviaEnablePush() in app.js after granting notification
+# permission. Without this endpoint the TWA never registered any
+# subscriptions — founder reported "install time it didn't ask
+# about any notifications permissions".
+@public_router.post("/subscribe")
+def public_subscribe(body: SubscriptionBody, request: Request):
+    _ensure_table()
+    sub_json = _json.dumps({
+        "endpoint": body.endpoint,
+        "keys": body.keys,
+        "expirationTime": body.expirationTime,
+    })
+    ua = (request.headers.get("user-agent") or "")[:200]
+    now = _dt.datetime.utcnow().isoformat() + "Z"
+    with db.connect() as c:
+        c.execute(
+            "INSERT INTO push_subscriptions(endpoint, subscription_json, user_agent, created_at) "
+            "VALUES(?,?,?,?) "
+            "ON CONFLICT(endpoint) DO UPDATE SET "
+            "subscription_json=excluded.subscription_json, user_agent=excluded.user_agent",
+            (body.endpoint, sub_json, ua, now))
+    return {"ok": True}
+
+
 @router.post("/subscribe")
 def subscribe(body: SubscriptionBody, request: Request):
     """Admin browser registers a push subscription."""
@@ -159,12 +185,21 @@ def list_subs():
 @router.post("/test")
 def send_test():
     """Send a test notification to all subscribed devices."""
-    n_sent = send_to_all({
+    # v1.24.205 — send_to_all() returns a DICT
+    # {sent,pruned,failed,matched,errors}; the previous code returned
+    # the whole dict under the 'sent' key, so the admin UI rendered
+    # "Test sent to [object Object] device(s)" instead of a count.
+    result = send_to_all({
         "title": "✅ Servia push working",
         "body": "If you see this, your admin PWA is fully wired for live alerts.",
         "kind": "test",
     })
-    return {"ok": True, "sent": n_sent}
+    return {"ok": True,
+            "sent": result.get("sent", 0),
+            "pruned": result.get("pruned", 0),
+            "failed": result.get("failed", 0),
+            "matched": result.get("matched", 0),
+            "errors": result.get("errors", [])}
 
 
 # ---------- Broadcast a custom-styled notification ----------

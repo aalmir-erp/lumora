@@ -155,6 +155,79 @@
     return json;
   };
 
+  // v1.24.205 — Customer-side push subscription. Asks for notification
+  // permission on first user interaction (NOT page load — Chrome heuristics
+  // penalise that). Once granted, subscribes via VAPID and POSTs to
+  // /api/push/subscribe. Founder reported that installing the TWA never
+  // prompted for notifications; that's because the website only prompted
+  // for admin push, never for customers.
+  if (!window.serviaEnablePush) {
+    let _pushRegistered = false;
+    let _pushArmed = false;
+    async function _doRegisterPush() {
+      if (_pushRegistered) return;
+      _pushRegistered = true;
+      try {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+        if (Notification.permission === "denied") return;
+        // Don't pop the prompt for users who already actively declined
+        if (localStorage.getItem("servia.push.declined") === "1") return;
+        if (Notification.permission !== "granted") {
+          const p = await Notification.requestPermission();
+          if (p !== "granted") {
+            if (p === "denied") localStorage.setItem("servia.push.declined", "1");
+            return;
+          }
+        }
+        const reg = await navigator.serviceWorker.ready;
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          const k = await fetch("/api/push/vapid-key").then(r => r.json());
+          if (!k.public_key) return;
+          const pad = "=".repeat((4 - k.public_key.length % 4) % 4);
+          const b64 = (k.public_key + pad).replace(/-/g, "+").replace(/_/g, "/");
+          const raw = atob(b64);
+          const arr = new Uint8Array(raw.length);
+          for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: arr,
+          });
+        }
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(sub.toJSON()),
+        });
+        console.log("[push] customer subscribed");
+      } catch (e) {
+        console.warn("[push] customer subscribe failed:", e);
+      }
+    }
+    window.serviaEnablePush = _doRegisterPush;
+    // Auto-arm: fire after 4s OR first user interaction, whichever sooner.
+    // Skip on admin / vendor / pay pages (they have their own auth flows).
+    const path = location.pathname;
+    const SKIP = ["/admin", "/vendor", "/portal-vendor", "/pay"];
+    const skip = SKIP.some(p => path.startsWith(p));
+    if (!skip && Notification && Notification.permission === "default") {
+      function _armOnce() {
+        if (_pushArmed) return;
+        _pushArmed = true;
+        // small delay so we don't fight LCP
+        setTimeout(_doRegisterPush, 500);
+      }
+      ["pointerdown", "touchstart", "click", "scroll", "keydown"].forEach(ev => {
+        addEventListener(ev, _armOnce, { once: true, passive: true });
+      });
+      // Fallback: prompt anyway after 8s in TWA (where users may not scroll/tap)
+      setTimeout(() => {
+        const isTWA = (document.referrer || "").indexOf("android-app://") === 0;
+        if (isTWA && !_pushArmed) _armOnce();
+      }, 8000);
+    }
+  }
+
   // v1.24.196 — Global chat-open helper. Every page's mobile-nav Chat button
   // calls window.serviaOpenChat(); this lazy-loads widget.js if it isn't on
   // the page yet, then clicks the launcher once it's mounted. Fixes the
@@ -203,7 +276,7 @@
   // v1.24.199 — Bumped key because founder reported v1.24.196/197/198 fixes
   // never took effect inside the Android app: chat-button race, force-mobile,
   // and assetlinks updates were all masked by stale cached HTML.
-  const SW_RESET_KEY = "servia.sw.reset.v1.24.202";
+  const SW_RESET_KEY = "servia.sw.reset.v1.24.205";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {

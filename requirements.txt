@@ -6,11 +6,13 @@ python-multipart>=0.0.9
 httpx>=0.27
 stripe>=10.0
 apscheduler>=3.10
-# VAPID key generation only (cryptography). pywebpush is OPTIONAL and lazy-
-# imported in app/push_notifications.py — if missing, push delivery silently
-# no-ops. Removed from required deps to keep Railway builds fast (pywebpush
-# pulls http-ece which needs C-compile).
 cryptography>=41.0
+# v1.24.205 — pywebpush re-added as a hard dep. Founder reported the
+# 'pywebpush library missing on the server' error when broadcasting from
+# admin → Push notifications card. The previous comment claimed it was
+# lazy-optional but the founder genuinely needs it now that 12 anonymous
+# subs are registered. http-ece compiles in <30s on Railway.
+pywebpush>=2.0
 # v1.24.56 — fpdf2 for native PDF invoice generation (pure-Python, no
 # system deps, ~500KB install). Falls back to browser-print if missing.
 fpdf2>=2.7
