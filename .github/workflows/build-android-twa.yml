@@ -42,10 +42,12 @@ on:
       - "twa/android/wear-singleface/**"
       - "twa/android/twa-manifest.json"
       - "twa/android/LauncherActivity.java.template"
+      - "web/brand/servia-mascot-1024x1024.png"
       - ".scripts/build-wear-apk.sh"
       - ".scripts/build-wear-faceonly-apk.sh"
       - ".scripts/build-wear-singleface-apk.sh"
       - ".scripts/twa-init.js"
+      - ".scripts/inject-notification-icon.py"
       - ".github/workflows/build-android-twa.yml"
 
 permissions:
@@ -295,6 +297,18 @@ jobs:
           cp "$SRC" "$DST"
           echo "=== LauncherActivity.java after injection ==="
           head -30 "$DST"
+
+      - name: Inject proper notification status-bar icon (mascot silhouette)
+        run: |
+          # v1.24.215 — Bubblewrap auto-generates ic_notification_icon.png
+          # from the FULL icon (rounded-square background), so Android tints
+          # it to a solid white square in the status bar. Founder reported
+          # the white-box icon next to the time/signal. Replace all 5 drawable
+          # densities with a proper white-mascot-on-transparent silhouette
+          # generated from servia-mascot-1024x1024.png (transparent BG).
+          python3 -m pip install --quiet Pillow
+          python3 "${GITHUB_WORKSPACE}/.scripts/inject-notification-icon.py" \
+            "${GITHUB_WORKSPACE}/twa/android/generated"
 
       - name: Inject Android permissions into AndroidManifest
         working-directory: twa/android/generated/app/src/main

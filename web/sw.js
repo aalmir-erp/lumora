@@ -1,5 +1,5 @@
 /* Servia service worker — network-first for HTML/JS so deploys are seen instantly. */
-const CACHE = "servia-v1.24.214";
+const CACHE = "servia-v1.24.215";
 // v1.23.0 — pre-cache critical paint-path assets so first visit is instant
 // on a returning user. Keep small (<200KB total) to not blow Android cache.
 const SHELL = [
@@ -118,6 +118,10 @@ self.addEventListener("push", (event) => {
   // Body emoji + actions per category. v1.24.213 — payload.actions
   // (from admin broadcast composer) overrides the category defaults so
   // operators can supply custom CTA buttons with their own URLs.
+  // v1.24.215 — ALWAYS include at least one action button. Founder reported
+  // the first notification had buttons but subsequent ones (admin tests with
+  // empty action fields) had none — confusing UX. Default = "Open" pointing
+  // at the notification's tap-target URL.
   let actions = [];
   if (Array.isArray(data.actions) && data.actions.length) {
     actions = data.actions.slice(0, 2).map(a => ({
@@ -131,6 +135,9 @@ self.addEventListener("push", (event) => {
     actions = [{ action: "view-booking", title: "Open booking", icon: "/icon-192.png" }];
   } else if (kind === "payment_request") {
     actions = [{ action: "send-link", title: "Send WA link", icon: "/icon-192.png" }];
+  } else {
+    // Default fallback so EVERY notification has at least one tappable button
+    actions = [{ action: "open", title: "Open Servia", icon: "/icon-192.png" }];
   }
 
   // v1.24.213 — Default tap URL: customer notifications open the app
@@ -157,7 +164,13 @@ self.addEventListener("push", (event) => {
       actionUrls: (Array.isArray(data.actions) ? data.actions : [])
         .reduce((o, a) => { if (a.action && a.url) o[a.action] = a.url; return o; }, {}),
     },
-    tag: data.tag || ("servia-" + kind || "servia-notif"),
+    // v1.24.215 — Unique tag per push so Android STACKS notifications
+    // instead of replacing the previous one. Founder reported only seeing
+    // 1 notification when multiple were sent — that was because every
+    // broadcast shared the same tag like "servia-broadcast", so each new
+    // one overwrote the old. Unique tag = unique notification = Android
+    // auto-groups them under the Servia app bundle.
+    tag: data.tag || ("servia-" + kind + "-" + (did || Date.now())),
     renotify: true,
     requireInteraction: kind === "payment_request" || kind === "psi_alert",
     silent: false,
