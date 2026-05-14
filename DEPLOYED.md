@@ -2,10 +2,11 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"YlNKzs_cT4-1HLebozsQ6Q"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"-29s_F2pQRW86evtGbGh5g"}`
 
 ## Build logs
 ```
+[ 5/12] RUN pip install -r requirements.txt
 [ 4/12] COPY requirements.txt ./
 [internal] load build context
 [ 3/12] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -30,12 +31,11 @@
 [10/12] COPY _e2e-shots ./_e2e-shots
 [11/12] COPY start.sh /app/start.sh
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
-[12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:e4ac4d6c19e08e78c0640261970d34c8c0252261122e6b22c0de8ee5e094d3e8
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZTRhYzRkNmMxOWUwOGU3OGMwNjQwMjYxOTcwZDM0YzhjMDI1MjI2MTEyMmU2YjIyYzBkZThlZTVlMDk0ZDNlOCIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQwNzo1Nzo1MFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 containerimage.config.digest: sha256:7914b9fec732e7434c65a6d00bc80368836d0de2ffc6fbb2cb928fa20c2dcac2
+containerimage.digest: sha256:e4ac4d6c19e08e78c0640261970d34c8c0252261122e6b22c0de8ee5e094d3e8
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZTRhYzRkNmMxOWUwOGU3OGMwNjQwMjYxOTcwZDM0YzhjMDI1MjI2MTEyMmU2YjIyYzBkZThlZTVlMDk0ZDNlOCIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQwODoyOTo0MloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 
 [35m====================
@@ -50,10 +50,10 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/d7cd4dba-6d1f-46a2-afe2-83c16d9173f4/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/edb42882-d1e9-4107-b229-6374fd0a664c/vol_onr647rhdeir9di9
+Starting Container
 [start] launching whatsapp_bridge
 [wa-bridge] listening on :3001
-Starting Container
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
 [lp-ar] 133 Arabic landing-page routes registered
@@ -64,12 +64,11 @@ INFO:     Waiting for application startup.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:55965 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:42994 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:56302 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.2:36005 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:23372 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:23372 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-Stopping Container
-Stopping Container
+[autoblog] catch-up SKIP (last_run @ 2026-05-14T02:00:00.000678Z is fresh AND ok)
+[wa-bridge] QR received. Open /qr in your browser to scan.
+[wa-bridge] QR received. Open /qr in your browser to scan.
 ```
