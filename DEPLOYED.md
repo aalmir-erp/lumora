@@ -2,11 +2,10 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"CW1l1ehTQ5ufbT6VHn5Ytg"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"MvC3mn0xQAOD4oy_xtoGcA"}`
 
 ## Build logs
 ```
-[11/12] COPY start.sh /app/start.sh
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [internal] load build context
 [ 1/12] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
@@ -20,6 +19,7 @@
 [ 5/12] RUN pip install -r requirements.txt
 [ 6/12] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
+[ 7/12] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/12] COPY app ./app
 [ 8/12] COPY app ./app
 [ 9/12] COPY web ./web
@@ -32,9 +32,9 @@
 [12/12] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZGQwMDhlZGU0MGY1NDAzOGNlYTA5N2U0MGUxNGZiNjg5MjI1MWQwNzI1Y2NkYmE1OGMzMGY5NWE3ZjZmNzcyYyIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QyMDo0Njo0MFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:f9a411ad94863f080c6d6e904ea498516cc3404f556a83cd54d2f0120e29101f
-containerimage.digest: sha256:dd008ede40f54038cea097e40e14fb6892251d0725ccdba58c30f95a7f6f772c
+containerimage.digest: sha256:6f26d6ad5a68514887c3270274a8b35922691ab1a2ce3c8e5f5d39805118505e
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NmYyNmQ2YWQ1YTY4NTE0ODg3YzMyNzAyNzRhOGIzNTkyMjY5MWFiMWEyY2UzYzhlNWY1ZDM5ODA1MTE4NTA1ZSIsInNpemUiOjMxNTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xM1QyMToxODozNloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:a5d146149f3b3a9ac744c9b9c20406f608a662417e02ff7d09667d2dc06311f2
 image push
 image push
 
@@ -50,23 +50,24 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/2d795260-92eb-48f4-b3d3-08be2a3c4831/vol_onr647rhdeir9di9
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/6795fc4e-88ce-42e8-a05b-e4f13944bdc5/vol_onr647rhdeir9di9
 [start] launching whatsapp_bridge
+Starting Container
 [wa-bridge] listening on :3001
 [wa-bridge] QR received. Open /qr in your browser to scan.
-Starting Container
-[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
-[lp-ar] 133 Arabic landing-page routes registered
-INFO:     Started server process [1]
 INFO:     Waiting for application startup.
+[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
 [scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
-[purge] scan complete — 29 posts, 0 flagged
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     Started server process [1]
+[lp-ar] 133 Arabic landing-page routes registered
+[purge] scan complete — 30 posts, 0 flagged
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
-INFO:     100.64.0.2:54293 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:40892 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.2:51451 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:17486 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
-[autoblog] catch-up SKIP (last_run @ 2026-05-13T14:00:00.000637Z is fresh AND ok)
+[autoblog] catch-up SKIP (last_run @ 2026-05-13T21:02:27.480474Z is fresh AND ok)
+[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
