@@ -3,8 +3,8 @@
 <link rel="canonical" href="https://servia.ae/account"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My account • Servia</title><meta name="theme-color" content="#0D9488">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/style.css?v=1.24.192">
-<link rel="preload" as="style" href="/widget.css?v=1.24.192" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.192"></noscript>
+<link rel="stylesheet" href="/style.css?v=1.24.196">
+<link rel="preload" as="style" href="/widget.css?v=1.24.196" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.196"></noscript>
 <script src="/universal-nav.js" defer></script>
 <style id="servia-gt-fix">
 /* Google Translate sanity overrides — keep content visible on RTL languages
@@ -168,7 +168,7 @@ function renderBooking(b) {
     </div>`;
 }
 </script>
-<script src="/widget.js?v=1.24.192"></script>
+<script src="/widget.js?v=1.24.196"></script>
 <script src="/theme.js"></script>
 
 <nav class="mobile-nav" aria-label="Primary mobile">
@@ -177,7 +177,7 @@ function renderBooking(b) {
     <a href="/services" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
     <a href="/book"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
     <a href="/me"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
-    <a href="#" onclick="document.querySelector('.us-launcher').click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
+    <a href="#" onclick="window.serviaOpenChat&&window.serviaOpenChat();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
   </div>
 </nav>
 

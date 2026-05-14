@@ -34,8 +34,8 @@
   {"@type":"ListItem","position":2,"name":"Book","item":"https://servia.ae/book.html"}]}
 </script>
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preload" as="style" href="/style.css?v=1.24.192" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.192"></noscript>
-<link rel="preload" as="style" href="/widget.css?v=1.24.192" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.192"></noscript>
+<link rel="preload" as="style" href="/style.css?v=1.24.196" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/style.css?v=1.24.196"></noscript>
+<link rel="preload" as="style" href="/widget.css?v=1.24.196" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="/widget.css?v=1.24.196"></noscript>
 <script src="/banner.js" defer></script>
 <!-- Non-critical: lazy-loaded after first interaction or 3s idle -->
 <script>window.__lazyLoadQueue=(window.__lazyLoadQueue||[]).concat([
@@ -640,7 +640,7 @@ document.getElementById("book-btn").addEventListener("click", async () => {
 
 function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 </script>
-<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.192";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
+<script>(function(){let l=false;function ld(){if(l)return;l=true;const s=document.createElement("script");s.src="/widget.js?v=1.24.196";s.async=true;document.body.appendChild(s);}if("requestIdleCallback" in window)requestIdleCallback(ld,{timeout:4000});else setTimeout(ld,3000);["pointerdown","touchstart","scroll","keydown"].forEach(ev=>addEventListener(ev,ld,{once:true,passive:true}));})();</script>
 <script src="/theme.js" defer></script>
 
 <nav class="mobile-nav" aria-label="Primary mobile">
@@ -649,7 +649,7 @@ function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<
     <a href="/services" data-mobnav="services"><span class="ico">📋</span><span>Services</span></a>
     <a href="/book"  data-mobnav="book"><span class="ico">➕</span><span>Book</span></a>
     <a href="/me"    data-mobnav="me"><span class="ico">👤</span><span>Account</span></a>
-    <a href="#" onclick="document.querySelector('.us-launcher').click();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
+    <a href="#" onclick="window.serviaOpenChat&&window.serviaOpenChat();return false" data-mobnav="chat"><span class="ico">💬</span><span>Chat</span></a>
   </div>
 </nav>
 

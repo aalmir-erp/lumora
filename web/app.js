@@ -155,6 +155,47 @@
     return json;
   };
 
+  // v1.24.196 — Global chat-open helper. Every page's mobile-nav Chat button
+  // calls window.serviaOpenChat(); this lazy-loads widget.js if it isn't on
+  // the page yet, then clicks the launcher once it's mounted. Fixes the
+  // founder-reported bug where the Chat button silently did nothing because
+  // .us-launcher hadn't been created yet (widget.js loads on idle/touch).
+  if (!window.serviaOpenChat) {
+    let _chatLoaderInflight = false;
+    let _chatPendingOpen = false;
+    window.serviaOpenChat = function () {
+      const existing = document.querySelector(".us-launcher");
+      if (existing) { existing.click(); return; }
+      _chatPendingOpen = true;
+      if (_chatLoaderInflight) return;
+      _chatLoaderInflight = true;
+      // If widget.js is already loaded but launcher isn't mounted yet
+      // (race during widget IIFE), just wait for it to appear.
+      if (Array.from(document.scripts).some(s => (s.src || "").includes("widget.js"))) {
+        let tries = 0;
+        (function poll() {
+          const el = document.querySelector(".us-launcher");
+          if (el && _chatPendingOpen) { _chatPendingOpen = false; el.click(); return; }
+          if (tries++ < 60) setTimeout(poll, 50);  // ~3s
+        })();
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = "/widget.js?v=1.24.196";
+      s.dataset.apiBase = "";
+      s.async = true;
+      s.onload = function () {
+        let tries = 0;
+        (function poll() {
+          const el = document.querySelector(".us-launcher");
+          if (el && _chatPendingOpen) { _chatPendingOpen = false; el.click(); return; }
+          if (tries++ < 60) setTimeout(poll, 50);
+        })();
+      };
+      document.body.appendChild(s);
+    };
+  }
+
   // ---------- service worker ----------
   // One-time purge: existing visitors are stuck on the old cache-first SW
   // (lumora-v0.2.0). Force a clean re-register so they pick up new deploys.
