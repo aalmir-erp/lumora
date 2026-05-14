@@ -567,12 +567,57 @@ jobs:
           echo "  differ, update the website's file and redeploy."
           echo "==================================================="
 
-      # -----------------------------------------------------------------
-      # Publish a GitHub Release on every v* tag with the signed APK +
-      # AAB attached. Public repos: release asset URLs are anonymous-
-      # downloadable, which lets the in-app "Check for updates" flow
-      # detect a new APK and link the user to the install file with no
-      # auth juggling.
+      # v1.24.195 — Commit final AAB + APK outputs to _release/android/
+      # so the founder (mobile-only, can't auth-download artifacts) can
+      # grab them via raw GitHub URLs without login. Mirrors the pattern
+      # used by play-verification-build.yml.
+      - name: Commit phone + wear outputs to _release/android/
+        if: always()
+        run: |
+          set +e
+          mkdir -p _release/android
+          # Phone TWA — final APK + AAB + assetlinks
+          find twa/android/generated/_artifacts -maxdepth 1 -name "*.apk" \
+            -exec cp -v {} _release/android/servia-phone.apk \; 2>/dev/null
+          find twa/android/generated/_artifacts -maxdepth 1 -name "*.aab" \
+            -exec cp -v {} _release/android/servia-phone.aab \; 2>/dev/null
+          cp -v twa/android/generated/_artifacts/assetlinks.json _release/android/ 2>/dev/null
+          # Wear OS
+          cp -v twa/android/wear-build/_artifacts/servia-wear-signed.apk _release/android/ 2>/dev/null
+          cp -v twa/android/wear-build/_artifacts/servia-wear-bundle.aab _release/android/ 2>/dev/null
+          # Watch face standalone + single
+          cp -v twa/android/wear-faceonly-build/_artifacts/*signed*.apk    _release/android/servia-faces.apk    2>/dev/null
+          cp -v twa/android/wear-singleface-build/_artifacts/*signed*.apk  _release/android/servia-singleface.apk 2>/dev/null
+          # Build info file
+          {
+            echo "Build: ${GITHUB_SHA::7}"
+            echo "Run:   https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "Date:  $(date -u)"
+            echo ""
+            echo "Files in this directory:"
+            ls -la _release/android/
+          } > _release/android/BUILD_INFO.txt
+          echo "--- _release/android/ contents ---"
+          ls -la _release/android/
+          # Commit only if something changed
+          git config user.email "ci-bot@servia.ae"
+          git config user.name "Servia CI"
+          git add _release/android/ 2>/dev/null
+          if git diff --cached --quiet; then
+            echo "::notice::No artifacts changed — skipping commit"
+            exit 0
+          fi
+          git commit -m "ci: commit android build outputs (run ${GITHUB_RUN_ID})" || exit 0
+          # Retry push 4x with backoff in case main moved between fetch + push
+          for i in 1 2 3 4; do
+            git pull --rebase --autostash origin main 2>&1 || true
+            if git push origin HEAD:main; then
+              echo "::notice::Artifacts pushed to _release/android/"
+              break
+            fi
+            sleep $((2**i))
+          done
+
       # -----------------------------------------------------------------
       - name: Publish GitHub Release with APK + AAB
         if: startsWith(github.ref, 'refs/tags/v')
