@@ -2,7 +2,7 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"gvJwmxRjR2WT33M0aP71AA"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"-IPksV25QKqN-z8enPRhug"}`
 
 ## Build logs
 ```
@@ -32,9 +32,9 @@
 [14/14] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:f94332690eb00b6249b003dcbac37b391d40952ac69468177df2d675f9c4b7e6
-containerimage.digest: sha256:cdb3e3dc97437590b3bc5e94e600c965115ccc5d20274376f729a647bd446697
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6Y2RiM2UzZGM5NzQzNzU5MGIzYmM1ZTk0ZTYwMGM5NjUxMTVjY2M1ZDIwMjc0Mzc2ZjcyOWE2NDdiZDQ0NjY5NyIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQyMTowNToyNVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZTA2YmI4Zjk3MjI4YTdmNTUxM2NjZjg1ZDBhMTQxN2RjNmI4MDMwZjQ4ZDA5NDU5NTMxOTNmN2VlZGViOWE3MCIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQyMTozNDoyMloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:f58ca2e133499038a893f121c28c347f0a937f982e28c3e9c5ed54c5184a659b
+containerimage.digest: sha256:e06bb8f97228a7f5513ccf85d0a1417dc6b8030f48d0945953193f7eedeb9a70
 image push
 image push
 
@@ -51,8 +51,9 @@ Starting Healthcheck
 ## Runtime logs
 ```
 [start] launching whatsapp_bridge
-Starting Container
 [wa-bridge] listening on :3001
+Starting Container
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/924161c7-ae54-493f-b3eb-1b4f54517fdd/vol_onr647rhdeir9di9
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
 [lp-ar] 133 Arabic landing-page routes registered
@@ -63,11 +64,12 @@ INFO:     Waiting for application startup.
 [seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:38777 - "GET /api/health HTTP/1.1" 200 OK
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/f6f8d2a2-1562-42ee-9df4-ca2a27b807ed/vol_onr647rhdeir9di9
+INFO:     100.64.0.2:36443 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:53194 - "GET /api/admin/play-store/status HTTP/1.1" 403 Forbidden
+INFO:     100.64.0.4:55464 - "GET /admin.html HTTP/1.1" 200 OK
+INFO:     100.64.0.5:29796 - "GET /api/admin/stats HTTP/1.1" 200 OK
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [autoblog] catch-up SKIP (last_run @ 2026-05-14T14:00:00.000637Z is fresh AND ok)
-[wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 [wa-bridge] QR received. Open /qr in your browser to scan.
 ```
