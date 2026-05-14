@@ -69,37 +69,55 @@ _FORCE_MOBILE_SNIPPET = (
     b"<script>(function(){"
     b"try{var ua=navigator.userAgent||'';"
     b"var sw=screen.width||window.innerWidth;"
+    b"var iw=window.innerWidth||sw;"
     b"var hasTouch=('ontouchstart' in window)||(navigator.maxTouchPoints>0);"
     b"var uaDesktop=!/Mobi|Android.+Mobile|iPhone|iPad|iPod|Wear/.test(ua);"
-    # v1.24.197 — Detect TWA / standalone (Servia Android app) explicitly.
-    # Founder reported: the installed app shows the desktop layout. TWA's
-    # user agent often includes 'Mobile' so the old uaDesktop check
-    # skipped it. Also covers PWA installs (display-mode: standalone).
     b"var isTWA=(document.referrer||'').indexOf('android-app://')===0;"
     b"var isStandalone=false;"
     b"try{isStandalone=(window.matchMedia&&("
     b"window.matchMedia('(display-mode: standalone)').matches||"
     b"window.matchMedia('(display-mode: minimal-ui)').matches||"
     b"window.matchMedia('(display-mode: fullscreen)').matches));}catch(_){}"
-    # Trigger if ANY of:
-    #   - Chrome 'Request Desktop Site' on a touch device with small screen
-    #   - Running inside the Servia Android TWA wrapper
-    #   - Running as installed PWA (standalone display mode)
-    b"if((hasTouch && sw<=820 && uaDesktop) || isTWA || isStandalone){"
+    # v1.24.201 — Treat Chrome 'Desktop Site' mode on a phone as a mobile
+    # device too: sw is the real phone width (e.g. 412), but iw is the
+    # 980px layout-width Chrome forces. If sw<800 and iw>iw>820, it's
+    # Desktop-Site mode on a small physical screen.
+    b"var isPhoneDesktopMode=(hasTouch && sw<=820 && iw>820);"
+    b"var shouldForceMobile=("
+    b"(hasTouch && sw<=820 && uaDesktop) || isTWA || isStandalone || isPhoneDesktopMode"
+    b");"
+    b"if(shouldForceMobile){"
       b"var vp=document.querySelector('meta[name=\"viewport\"]');"
       b"if(!vp){vp=document.createElement('meta');vp.name='viewport';"
         b"document.head.insertBefore(vp,document.head.firstChild);}"
-      b"vp.setAttribute('content','width=device-width,initial-scale=1,viewport-fit=cover');"
-      # Hard width clamp + force layout viewport recalc
+      # Use physical screen.width when Desktop-Site mode is on so Chrome
+      # actually re-lays out at phone width instead of ignoring the meta.
+      b"if(isPhoneDesktopMode){"
+        b"vp.setAttribute('content','width='+sw+',initial-scale=1,viewport-fit=cover');"
+      b"}else{"
+        b"vp.setAttribute('content','width=device-width,initial-scale=1,viewport-fit=cover');"
+      b"}"
       b"var s=document.createElement('style');s.id='_fm';"
-      b"s.textContent='html,body{max-width:100vw!important;overflow-x:hidden!important;}';"
+      # v1.24.201 — CSS escape hatch: when viewport meta is being ignored,
+      # this html.servia-as-app data-attribute lets per-page CSS force a
+      # single-column layout. Pages that need it can target
+      # html[data-servia-app='1'] .hero-grid { grid-template-columns: 1fr }.
+      b"s.textContent='html,body{max-width:100vw!important;overflow-x:hidden!important;}'+"
+      b"'html[data-servia-app=\"1\"] .hero-grid{grid-template-columns:1fr!important;gap:24px!important;}'+"
+      b"'html[data-servia-app=\"1\"] .nav-links{display:none!important;}'+"
+      b"'html[data-servia-app=\"1\"] .hero-h1{font-size:36px!important;}'+"
+      b"'html[data-servia-app=\"1\"] .stats-strip{grid-template-columns:repeat(2,1fr)!important;}';"
       b"document.head.appendChild(s);"
-      # Tag <html> so CSS can target this state if needed (e.g. hide the
-      # nav header from inside the wrapper).
       b"document.documentElement.setAttribute('data-servia-app','1');"
-      # Mark so we never reload-loop
       b"if(!sessionStorage.getItem('_fm')){sessionStorage.setItem('_fm','1');}"
     b"}}catch(e){}})();</script>"
+    # v1.24.201 — Eager-load widget.js so the chat launcher is mounted by
+    # the time the user can interact. The previous lazy loader (idle/touch)
+    # raced with the mobile-nav Chat button, leading to the founder-reported
+    # "tap does nothing" bug. Performance impact is small — widget.js is
+    # ~20 KB gzipped and loads async on the boot critical path; idle loaders
+    # mostly help LCP, but the chat panel itself is below-the-fold.
+    b"<script src='/widget.js?v=1.24.201' async data-api-base=''></script>"
 )
 
 # v1.24.2 — universal SOS FAB. Injected on every public page so anyone can
