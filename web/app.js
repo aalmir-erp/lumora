@@ -197,13 +197,13 @@
   }
 
   // ---------- service worker ----------
-  // One-time purge: existing visitors are stuck on the old cache-first SW
-  // (lumora-v0.2.0). Force a clean re-register so they pick up new deploys.
-  // v1.24.114 — bumped to force every browser to clear its service-worker
-  // cache and pick up the v1.24.113 admin.html (which has the new "🛡 Audit
-  // posts" button) + the v1.24.114 brand-free /vs/* pages. Founder reported
-  // the audit button wasn't visible after deploy — SW cache was the cause.
-  const SW_RESET_KEY = "servia.sw.reset.v1.24.144";
+  // One-time purge: bumped on every release so stuck-on-stale-SW users
+  // (especially TWA where Chrome SW cache outlives APK reinstalls) force
+  // a fresh fetch of HTML/JS/CSS on next visit.
+  // v1.24.199 — Bumped key because founder reported v1.24.196/197/198 fixes
+  // never took effect inside the Android app: chat-button race, force-mobile,
+  // and assetlinks updates were all masked by stale cached HTML.
+  const SW_RESET_KEY = "servia.sw.reset.v1.24.199";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       try {
@@ -215,7 +215,22 @@
             await Promise.all(keys.map(k => caches.delete(k)));
           }
           localStorage.setItem(SW_RESET_KEY, "1");
+          // Force-reload so the NEW unregistered state takes effect this turn.
+          if (!sessionStorage.getItem("_sw_reload_done")) {
+            sessionStorage.setItem("_sw_reload_done", "1");
+            location.reload();
+            return;
+          }
         }
+        // Listen for the SW telling us it activated with a new cache → reload
+        // so the new HTML is what's actually rendered.
+        navigator.serviceWorker.addEventListener("message", (e) => {
+          if (e.data && e.data.type === "sw-updated"
+              && !sessionStorage.getItem("_sw_msg_reloaded")) {
+            sessionStorage.setItem("_sw_msg_reloaded", "1");
+            location.reload();
+          }
+        });
         await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
       } catch (e) { console.warn(e); }
     });

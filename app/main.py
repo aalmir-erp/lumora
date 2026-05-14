@@ -2845,9 +2845,14 @@ async def _smart_cache(request, call_next):
     # an If-Modified-Since check on every load, so changes propagate.
     if p.startswith("/blog/") and not p.startswith("/blog/api"):
         resp.headers["Cache-Control"] = "no-cache, must-revalidate"
-    # HTML — short cache + long SWR so deploys land in <1 min
+    # HTML — v1.24.199 — was 'public, max-age=300, stale-while-revalidate=86400'
+    # but that meant every fix took up to 24 hours to land for users in a
+    # TWA (founder hit this with chat-button + force-mobile + assetlinks fixes
+    # all appearing invisible). 'no-cache' keeps a local copy but forces an
+    # If-Modified-Since check on every load so updates land instantly without
+    # killing efficient revalidation (304s are tiny).
     elif p.endswith(".html") or p == "/" or p.endswith("/"):
-        resp.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=86400"
+        resp.headers["Cache-Control"] = "no-cache, must-revalidate"
     # JS / CSS — 1-year cache (PSI requires ≥30d for 'efficient cache lifetimes' to score
     # well). Cache invalidation handled by the service-worker version bump (sw.js bumps
     # CACHE = "servia-vX.Y.Z" on every release so returning users get new code on next visit).
