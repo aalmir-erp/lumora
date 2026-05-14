@@ -623,24 +623,42 @@ jobs:
           } > _release/android/BUILD_INFO.txt
           echo "--- _release/android/ contents ---"
           ls -la _release/android/
-          # Commit only if something changed
+          # v1.24.210 — Bulletproof commit-back: save files to a TEMP dir
+          # outside the worktree, reset to latest origin/main, copy back,
+          # commit, push. On push failure, repeat from "reset to latest".
+          # The previous "git add + commit + pull --rebase --autostash"
+          # flow lost commits when rebase silently failed during a race
+          # (workflow run 25866212407 SUCCESS but no AAB commit landed).
           git config user.email "ci-bot@servia.ae"
           git config user.name "Servia CI"
-          git add _release/android/ 2>/dev/null
-          if git diff --cached --quiet; then
-            echo "::notice::No artifacts changed — skipping commit"
-            exit 0
-          fi
-          git commit -m "ci: commit android build outputs (run ${GITHUB_RUN_ID})" || exit 0
-          # Retry push 4x with backoff in case main moved between fetch + push
-          for i in 1 2 3 4; do
-            git pull --rebase --autostash origin main 2>&1 || true
-            if git push origin HEAD:main; then
-              echo "::notice::Artifacts pushed to _release/android/"
+          STAGE=$(mktemp -d)
+          cp -a _release/android/. "$STAGE/"
+          ls -la "$STAGE/"
+          PUSHED=0
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p _release/android
+            cp -a "$STAGE/." _release/android/
+            git add _release/android/
+            if git diff --cached --quiet; then
+              echo "::notice::No artifacts changed after fast-forward — skipping commit"
+              PUSHED=1
               break
             fi
+            git commit -m "ci: commit android build outputs (run ${GITHUB_RUN_ID})"
+            if git push origin HEAD:main; then
+              echo "::notice::Artifacts pushed to _release/android/ (attempt $i)"
+              PUSHED=1
+              break
+            fi
+            echo "::warning::Push attempt $i failed — sleeping then retrying with latest main"
             sleep $((2**i))
           done
+          if [ "$PUSHED" != "1" ]; then
+            echo "::error::Failed to push AAB commit after 5 retries — check repo permissions"
+            exit 1
+          fi
 
       # -----------------------------------------------------------------
       - name: Publish GitHub Release with APK + AAB
