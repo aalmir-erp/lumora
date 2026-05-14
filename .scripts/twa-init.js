@@ -11,10 +11,38 @@ const path = require("path");
 const fs = require("fs");
 
 (async () => {
-  const [manifestUrl, targetDir, packageId] = process.argv.slice(2);
+  const [manifestUrl, targetDir, packageId, repoManifestPath] = process.argv.slice(2);
   if (!manifestUrl || !targetDir || !packageId) {
-    console.error("Usage: twa-init.js <manifest_url> <target_dir> <package_id>");
+    console.error("Usage: twa-init.js <manifest_url> <target_dir> <package_id> [repo_manifest_path]");
     process.exit(2);
+  }
+
+  // Read the repo's twa-manifest.json for appVersion + appVersionCode so we
+  // don't hardcode versionCode 1 (which Play Store rejects after the first
+  // upload). Falls back to env vars TWA_APP_VERSION / TWA_APP_VERSION_CODE
+  // and finally GITHUB_RUN_NUMBER for guaranteed monotonic versionCode in CI.
+  let repoManifest = {};
+  const repoManifestFile = repoManifestPath ||
+    path.join(__dirname, "..", "twa", "android", "twa-manifest.json");
+  try {
+    if (fs.existsSync(repoManifestFile)) {
+      repoManifest = JSON.parse(fs.readFileSync(repoManifestFile, "utf8"));
+      console.log(`→ Read repo twa-manifest.json: appVersion=${repoManifest.appVersion} appVersionCode=${repoManifest.appVersionCode}`);
+    }
+  } catch (e) {
+    console.warn("Could not read repo twa-manifest.json:", e.message);
+  }
+  const APP_VERSION = process.env.TWA_APP_VERSION || repoManifest.appVersion || "1.0.0";
+  // CI: use the GitHub run number if it's higher than the manifest's code.
+  // Guarantees Play Store never sees a duplicate versionCode again.
+  let APP_VERSION_CODE = parseInt(process.env.TWA_APP_VERSION_CODE ||
+                                   repoManifest.appVersionCode || "1", 10);
+  if (process.env.GITHUB_RUN_NUMBER) {
+    const runNum = parseInt(process.env.GITHUB_RUN_NUMBER, 10);
+    if (runNum > APP_VERSION_CODE) {
+      console.log(`→ Bumping versionCode from ${APP_VERSION_CODE} to GITHUB_RUN_NUMBER=${runNum} for monotonic CI versioning`);
+      APP_VERSION_CODE = runNum;
+    }
   }
   // Find @bubblewrap/core regardless of where bubblewrap was installed.
   // After `npm install -g @bubblewrap/cli`, core sits at:
@@ -40,8 +68,9 @@ const fs = require("fs");
   tm.host = "servia.ae";  // make sure host is the public domain even though
                           // we're fetching from localhost in CI
   tm.startUrl = "/?source=twa";
-  tm.appVersion = "1.0.0";
-  tm.appVersionCode = 1;
+  tm.appVersion = APP_VERSION;
+  tm.appVersionCode = APP_VERSION_CODE;
+  console.log(`→ Setting appVersion=${tm.appVersion} appVersionCode=${tm.appVersionCode}`);
   tm.fallbackType = "customtabs";
   // Brand the splash screen — teal background instead of generic white.
   // Bubblewrap's Color type wraps via the `color` npm package, so we have
