@@ -3003,6 +3003,28 @@ class WaSendBody(BaseModel):
     text: str
 
 
+@router.post("/whatsapp/reset-session")
+def whatsapp_reset_session():
+    """v1.24.225 — Proxy the bridge's /reset endpoint. Destroys the
+    current whatsapp-web.js client, wipes /data/.wwebjs_auth, and asks
+    the bridge to re-initialize → fresh QR appears within 30-60s.
+    Use when the diagnostic shows auth_failure or 'ready then
+    disconnected' loops that won't self-heal."""
+    from .config import get_settings
+    import httpx
+    s = get_settings()
+    if not s.WA_BRIDGE_URL:
+        return {"ok": False, "error": "bridge not configured"}
+    try:
+        r = httpx.post(
+            s.WA_BRIDGE_URL.rstrip("/") + "/reset",
+            headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
+            timeout=15)
+        return r.json() if r.is_success else {"ok": False, "error": r.text}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @router.post("/whatsapp/reset-cooldown")
 def whatsapp_reset_cooldown():
     """v1.24.224 — Manually clear the auto-degrade outage cooldown so the

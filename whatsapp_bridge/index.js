@@ -29,6 +29,26 @@ const PORT = parseInt(process.env.PORT || "3001", 10);
 let lastQr = null;
 let ready = false;
 let pairedNumber = null;
+// v1.24.225 — Event audit trail. Founder reported QR scans appear to
+// pair (phone shows the device as linked) but the bridge keeps showing
+// "waiting for scan" after a refresh. To diagnose, log every lifecycle
+// event with a timestamp and expose the last 30 via /status. Common
+// causes the founder might see:
+//   - authenticated → disconnected (LOGOUT)  → phone unlinked it
+//   - authenticated → disconnected (NAVIGATION) → bridge container restarted
+//   - auth_failure → restart loop  → session file corrupted
+//   - qr received but never authenticated → user scanned the wrong QR
+let recentEvents = [];
+function logEvent(type, detail = "") {
+  const evt = {
+    type,
+    detail: typeof detail === "string" ? detail.slice(0, 200) : String(detail).slice(0, 200),
+    at: new Date().toISOString(),
+  };
+  recentEvents.push(evt);
+  if (recentEvents.length > 30) recentEvents.shift();
+  console.log(`[wa-bridge] ${type}${detail ? " : " + detail : ""}`);
+}
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: "./.wwebjs_auth" }),
@@ -39,16 +59,44 @@ const client = new Client({
 
 client.on("qr", (qr) => {
   lastQr = qr;
-  console.log("[wa-bridge] QR received. Open /qr in your browser to scan.");
+  logEvent("qr_received", "len=" + qr.length);
+});
+client.on("loading_screen", (percent, message) => {
+  logEvent("loading_screen", `${percent}% ${message || ""}`);
+});
+client.on("authenticated", () => {
+  // Fires AFTER QR scan succeeds, BEFORE ready. If we see authenticated
+  // but no subsequent ready, the bridge is stuck mid-handshake (Chromium
+  // memory pressure, WA Web protocol drift).
+  logEvent("authenticated", "session credentials received");
+});
+client.on("auth_failure", (msg) => {
+  // Session file corrupted or rejected. Common after WA major version
+  // bumps. Auto-recover: nuke the auth dir so next restart re-prompts QR.
+  logEvent("auth_failure", String(msg || "no detail"));
+  console.error("[wa-bridge] auth_failure — session file may be corrupted; consider clearing /data/.wwebjs_auth");
 });
 client.on("ready", () => {
   ready = true;
   pairedNumber = client.info?.wid?.user || null;
-  console.log("[wa-bridge] WhatsApp paired:", pairedNumber);
+  logEvent("ready", "paired=" + pairedNumber);
+});
+client.on("change_state", (state) => {
+  // CONNECTED / OPENING / PAIRING / TIMEOUT / CONFLICT / UNLAUNCHED / UNPAIRED / etc.
+  logEvent("change_state", state);
 });
 client.on("disconnected", (reason) => {
   ready = false;
-  console.warn("[wa-bridge] disconnected:", reason);
+  // reason values: LOGOUT, NAVIGATION, UNPAIRED, CONFLICT, etc.
+  logEvent("disconnected", String(reason));
+  console.warn(`[wa-bridge] disconnected: ${reason} — call client.initialize() to retry`);
+  // Auto-retry: re-initialize the client so we get a fresh QR or
+  // re-use the saved session. Without this, the bridge stays dead until
+  // the container restarts.
+  setTimeout(() => {
+    try { client.initialize(); logEvent("re_init", "after disconnect"); }
+    catch (e) { logEvent("re_init_failed", e.message || String(e)); }
+  }, 5000);
 });
 
 client.on("message", async (msg) => {
@@ -89,7 +137,64 @@ function checkAuth(req, res, next) {
 }
 
 app.get("/status", checkAuth, (req, res) => {
-  res.json({ ready, paired_number: pairedNumber, has_qr: !!lastQr });
+  // v1.24.225 — Expose recent lifecycle events + session-files count so
+  // the admin can see why pairing didn't stick (e.g. ready followed by
+  // disconnected reason=LOGOUT means the phone unlinked the device).
+  let sessionFiles = 0;
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const authDir = "./.wwebjs_auth";
+    if (fs.existsSync(authDir)) {
+      const walk = (dir) => {
+        let count = 0;
+        for (const f of fs.readdirSync(dir)) {
+          const full = path.join(dir, f);
+          const st = fs.statSync(full);
+          if (st.isDirectory()) count += walk(full);
+          else count++;
+        }
+        return count;
+      };
+      sessionFiles = walk(authDir);
+    }
+  } catch (_) {}
+  res.json({
+    ready,
+    paired_number: pairedNumber,
+    has_qr: !!lastQr,
+    session_files: sessionFiles,
+    recent_events: recentEvents.slice(-15),
+    process_uptime_s: Math.round(process.uptime()),
+  });
+});
+
+// v1.24.225 — Admin-triggered nuke + re-pair. Forces a fresh QR by
+// destroying the current client + wiping the session folder. Use when
+// the diagnostic shows auth_failure or repeated disconnect loops.
+app.post("/reset", checkAuth, async (req, res) => {
+  try {
+    logEvent("reset_requested", "admin triggered nuke + repair");
+    try { await client.destroy(); } catch (e) { logEvent("destroy_err", e.message); }
+    const fs = require("fs");
+    const path = require("path");
+    const authDir = "./.wwebjs_auth";
+    if (fs.existsSync(authDir)) {
+      // Recursive remove
+      fs.rmSync(authDir, { recursive: true, force: true });
+      logEvent("auth_dir_removed", authDir);
+    }
+    ready = false;
+    pairedNumber = null;
+    lastQr = null;
+    setTimeout(() => {
+      try { client.initialize(); logEvent("re_init", "after reset"); }
+      catch (e) { logEvent("re_init_failed", e.message || String(e)); }
+    }, 1500);
+    res.json({ ok: true, message: "Session wiped. A fresh QR will appear in ~30-60s." });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // QR page (open in browser, scan with WhatsApp on phone). Token-protected.
@@ -118,9 +223,44 @@ app.post("/send", checkAuth, async (req, res) => {
   if (!to || !text) return res.status(400).json({ error: "to + text required" });
   if (!ready) return res.status(503).json({ error: "WhatsApp not paired yet — open /qr" });
   try {
-    const chatId = to.includes("@") ? to : `${to.replace(/\D/g, "")}@c.us`;
-    const sent = await client.sendMessage(chatId, text);
-    res.json({ ok: true, id: sent.id?._serialized });
+    const cleanTo = to.replace(/\D/g, "");
+    // v1.24.225 — Detect "send to self" (admin test button → admin's own
+    // number). WhatsApp's new LID protocol rejects `971XXXXX@c.us` if X
+    // is your own phone. Use the resolved client.info.wid instead.
+    const myNumber = client.info?.wid?.user || "";
+    const isSelfSend = cleanTo && myNumber && cleanTo === myNumber;
+    let chatId;
+    if (to.includes("@")) {
+      chatId = to;
+    } else if (isSelfSend) {
+      // Self-send → use the client's own WID (correct format whether
+      // the user has a LID alias or a plain phone serial).
+      chatId = client.info.wid._serialized;
+      logEvent("self_send_lid_workaround", `using ${chatId} instead of ${cleanTo}@c.us`);
+    } else {
+      chatId = `${cleanTo}@c.us`;
+    }
+    try {
+      const sent = await client.sendMessage(chatId, text);
+      res.json({ ok: true, id: sent.id?._serialized });
+    } catch (firstErr) {
+      // Some accounts now require @lid for ANY send (recent WA protocol
+      // change). Retry once with the LID suffix as a fallback so the
+      // bridge doesn't fail on the "No LID for user" error.
+      if (/No LID for user/i.test(firstErr.message || "")) {
+        logEvent("send_retry_lid", firstErr.message.slice(0, 80));
+        try {
+          // Look up the contact to get its proper serialized ID.
+          const contact = await client.getContactById(chatId);
+          const properId = contact?.id?._serialized || chatId;
+          const sent2 = await client.sendMessage(properId, text);
+          return res.json({ ok: true, id: sent2.id?._serialized, retried: true });
+        } catch (retryErr) {
+          throw retryErr;  // fall through to outer catch with original error
+        }
+      }
+      throw firstErr;
+    }
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
