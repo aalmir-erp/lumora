@@ -90,14 +90,44 @@ client.on("disconnected", (reason) => {
   // reason values: LOGOUT, NAVIGATION, UNPAIRED, CONFLICT, etc.
   logEvent("disconnected", String(reason));
   console.warn(`[wa-bridge] disconnected: ${reason} — call client.initialize() to retry`);
-  // Auto-retry: re-initialize the client so we get a fresh QR or
-  // re-use the saved session. Without this, the bridge stays dead until
-  // the container restarts.
-  setTimeout(() => {
-    try { client.initialize(); logEvent("re_init", "after disconnect"); }
-    catch (e) { logEvent("re_init_failed", e.message || String(e)); }
-  }, 5000);
+  // v1.24.232 — exponential-backoff reconnect. Founder reported the
+  // bridge keeps signing out (sales.mir.ae's bridge does not, because
+  // it's in a separate container with dedicated memory; ours runs
+  // alongside FastAPI + can hit memory pressure). Without backoff,
+  // tight reconnect loops can make the situation worse if WA is
+  // rate-limiting us.
+  let attempt = 0;
+  const tryReconnect = () => {
+    attempt++;
+    const delay = Math.min(60000, 5000 * Math.pow(1.5, attempt - 1));
+    setTimeout(() => {
+      if (ready) return;  // already recovered (e.g. via heartbeat)
+      try {
+        client.initialize();
+        logEvent("re_init", `attempt #${attempt} after disconnect`);
+      } catch (e) {
+        logEvent("re_init_failed", e.message || String(e));
+        if (attempt < 12) tryReconnect();
+      }
+    }, delay);
+  };
+  tryReconnect();
 });
+
+// v1.24.232 — Heartbeat. Every 90s, if ready=false for more than 5 min,
+// force a re-initialize. Catches the case where disconnect event didn't
+// fire but the session went stale (Chromium hung, lost connection to
+// WA Web, etc.). Doesn't interfere if everything is fine.
+let _lastReadyAt = Date.now();
+setInterval(() => {
+  if (ready) { _lastReadyAt = Date.now(); return; }
+  const staleMs = Date.now() - _lastReadyAt;
+  if (staleMs > 5 * 60 * 1000) {  // 5 min without being ready
+    logEvent("heartbeat_reinit", `stale for ${Math.round(staleMs/1000)}s`);
+    try { client.initialize(); _lastReadyAt = Date.now(); }
+    catch (e) { logEvent("heartbeat_reinit_failed", e.message); }
+  }
+}, 90 * 1000);
 
 client.on("message", async (msg) => {
   if (msg.fromMe || !msg.body) return;

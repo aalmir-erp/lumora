@@ -5693,6 +5693,32 @@ try:
         except Exception as e:  # noqa: BLE001
             print(f"[scheduler] failed: {e}", flush=True)
 
+    # v1.24.232 — Run inspector scan 60 seconds after EVERY container
+    # start so the founder sees results immediately, not in 30 min when
+    # the first cron tick lands. Founder reported "LATEST RUN: never" on
+    # the admin UI even after deploy → first scan needed faster onset.
+    @app.on_event("startup")
+    def _inspector_first_run_after_boot():
+        import threading, time
+        def _later():
+            try:
+                time.sleep(60)  # let DB + LLM gates settle
+                from . import auto_tester as _at, admin_alerts as _aa
+                r = _at.run_scan(trigger="boot_first_scan")
+                e = r.get("errors", 0); w = r.get("warnings", 0)
+                emoji = "🚨" if e else ("⚠️" if w else "✅")
+                msg = (
+                    f"{emoji} Inspector first-scan after boot · run #{r['run_id']}: "
+                    f"{r['pages_tested']} pages · {e} errors · {w} warnings · "
+                    f"{r['infos']} info · {r['duration_ms']//1000}s"
+                )
+                try: _aa.notify_admin(msg, kind="auto_test_summary",
+                                       urgency="critical" if e else "normal")
+                except Exception: pass
+            except Exception as e:  # noqa: BLE001
+                print(f"[inspector] boot scan failed: {e}", flush=True)
+        threading.Thread(target=_later, daemon=True).start()
+
     @app.on_event("startup")
     def _psi_after_deploy():
         """Run PSI 5 min after each container start so admin sees the score

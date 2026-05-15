@@ -66,6 +66,34 @@ def _store(kind: str, urgency: str, text: str, meta: dict | None,
 
 
 _BRIDGE_OUTAGE_UNTIL = 0.0   # epoch ts; if now < this, skip the bridge call
+_PAIRED_NUMBER_CACHE: dict = {"value": None, "fetched_at": 0.0}
+
+
+def _paired_number_cached(settings_obj, ttl: int = 300) -> str | None:
+    """Return the bridge's paired phone number, cached for `ttl` seconds.
+    Was hitting /status on EVERY send → added 100-500ms latency per
+    call → contributed to the /alerts/daily-summary 502 the founder
+    reported. Cache keeps the latency to under 1ms for cache hits."""
+    import time as _t
+    now = _t.time()
+    if (_PAIRED_NUMBER_CACHE["value"] is not None and
+            now - _PAIRED_NUMBER_CACHE["fetched_at"] < ttl):
+        return _PAIRED_NUMBER_CACHE["value"]
+    try:
+        import httpx as _httpx
+        r = _httpx.get(
+            settings_obj.WA_BRIDGE_URL.rstrip("/") + "/status",
+            headers={"Authorization": f"Bearer {settings_obj.WA_BRIDGE_TOKEN}"},
+            timeout=2,
+        )
+        if r.is_success:
+            j = r.json()
+            v = (j.get("paired_number") or "").lstrip("+").replace(" ", "") or None
+            _PAIRED_NUMBER_CACHE["value"] = v
+            _PAIRED_NUMBER_CACHE["fetched_at"] = now
+            return v
+    except Exception: pass
+    return None
 
 
 def _push_admin(text: str) -> None:
@@ -129,24 +157,17 @@ def _send_via_bridge(text: str, force: bool = False) -> tuple[bool, str | None]:
     # number, WhatsApp will reject with "No LID for user" because you
     # can't WhatsApp yourself from the same account. Detect this case
     # BEFORE hitting the bridge and route via Web Push instead.
+    # v1.24.232 — Cache the paired number for 5 min so we don't hit
+    # /status on EVERY send (was adding 100-500ms latency per call,
+    # contributed to the /alerts/daily-summary 502 the founder hit).
+    global _PAIRED_NUMBER_CACHE
     try:
-        import httpx as _httpx
         admin_digits = _admin_number()
-        # Cheap /status check to learn the paired number
-        rs = _httpx.get(
-            s.WA_BRIDGE_URL.rstrip("/") + "/status",
-            headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
-            timeout=3,
-        )
-        if rs.is_success:
-            j = rs.json()
-            paired = (j.get("paired_number") or "").lstrip("+").replace(" ", "")
-            if paired and admin_digits and paired == admin_digits:
-                # Route via web push only — bridge can't deliver self-sends
-                _push_admin(text)
-                return True, "delivered_via_web_push_self_send_protected"
+        paired = _paired_number_cached(s)
+        if paired and admin_digits and paired == admin_digits:
+            _push_admin(text)
+            return True, "delivered_via_web_push_self_send_protected"
     except Exception:
-        # Fall through to the regular bridge attempt
         pass
     try:
         import httpx

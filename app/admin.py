@@ -3124,8 +3124,27 @@ def list_alerts(limit: int = 50):
 
 @router.post("/alerts/daily-summary")
 def fire_daily_summary():
+    """v1.24.232 — Returns IMMEDIATELY and runs the summary in a daemon
+    thread. The push_daily_summary() call does (1) Claude generation,
+    which can take 15-30s, then (2) bridge /send which now also does a
+    /status precheck for the self-send guard — combined latency can
+    exceed Railway's 30s proxy timeout → founder saw HTTP 502.
+
+    Same pattern as autoblog/run-now: spawn daemon thread, return
+    {ok, started}, admin polls /api/admin/alerts/daily-summary/status
+    (or watches push log) to see the result."""
+    import threading as _th
     from . import admin_alerts
-    return admin_alerts.push_daily_summary()
+    def _run():
+        try:
+            r = admin_alerts.push_daily_summary()
+            print(f"[daily-summary] fire-now done: {r}", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[daily-summary] fire-now failed: {e}", flush=True)
+    _th.Thread(target=_run, daemon=True).start()
+    return {"ok": True, "started": True,
+            "note": "Daily summary generation started. Check WhatsApp / "
+                    "push notifications in 15-30 seconds."}
 
 
 # v1.24.192 — In-admin log viewer. Founder ask: "instead of railway
