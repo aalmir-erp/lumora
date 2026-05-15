@@ -141,7 +141,14 @@ def _customer_pages(full: bool = False) -> list[str]:
                   "admin-wa-bridge.html", "admin-login.html",
                   "admin-widget.html", "vendor.html", "portal-vendor.html",
                   "login.html", "gate.html", "reset.html",
-                  "404.html", "brand-preview.html"}
+                  "404.html", "brand-preview.html",
+                  # v1.24.235 — these pages REQUIRE a query-string param
+                  # (?q=, ?inv=) and look "broken" without one. Tested
+                  # via dedicated /q/<id> / /p/<id> / /checkout?q= routes
+                  # that DO have a real ID, not the bare path.
+                  "checkout.html", "pay-declined.html", "pay-processing.html",
+                  "booked.html", "delivered.html", "invoice.html",
+                  "quote.html"}
     for f in sorted(WEB_DIR.glob("*.html")):
         if f.name in skip_files:
             continue
@@ -448,6 +455,63 @@ def _audit_page(client, path: str) -> list[dict[str, Any]]:
             "detail": "May be defined in a deferred script; check manually if button is broken",
         })
 
+    # v1.24.234 — MISLABELED WHATSAPP LINKS (founder caught these manually
+    # twice in a row — tester missed them every time). Any anchor whose
+    # visible TEXT contains 'WhatsApp' / 'whatsapp' / 'WA' (with context)
+    # but whose href is NOT a wa.me / tel: / mailto link → bait-and-switch.
+    # The bot was sending users to /contact (a form page) when the button
+    # said 'WhatsApp us'. Real WhatsApp links must use wa.me OR be a known
+    # JS-set href like '#' / 'javascript:' (set at runtime).
+    for m in re.finditer(
+        r'<a\b([^>]*?)>([^<]{0,80}?(?:WhatsApp|whatsapp|wa\.me|WA\s+chat|wA chat)[^<]{0,40})</a>',
+        scriptless
+    ):
+        attrs, anchor_text = m.group(1), m.group(2)
+        href_m = re.search(r'href\s*=\s*["\']([^"\']+)["\']', attrs, re.IGNORECASE)
+        if not href_m: continue
+        h = href_m.group(1).strip().lower()
+        # Acceptable destinations: actual WhatsApp deep-link, telephone,
+        # JS placeholder (set at runtime), or empty hash placeholder
+        if (h.startswith(("https://wa.me/", "http://wa.me/", "https://api.whatsapp.com",
+                            "wa.me/", "tel:", "mailto:", "javascript:", "#"))
+                or "${" in h):  # template literal handled by JS
+            continue
+        # Anchor labelled WhatsApp but goes to a non-WA URL → real bug
+        findings.append({
+            "severity": "error", "category": "mislabeled_whatsapp_link",
+            "message": f"Link labelled '{anchor_text.strip()[:40]}' goes to {h} instead of wa.me",
+            "detail": f"<a href='{href_m.group(1)}'>{anchor_text.strip()[:80]}</a>",
+            "proof_snippet": m.group(0),
+            "http_status": r.status_code,
+        })
+
+    # v1.24.234 — INVOICE-NOT-FOUND / quote-expired error visibility on
+    # transactional pages. Founder hit /pay/NFC-00001 → 'Invoice not found'
+    # because that ID didn't exist in DB. The page itself doesn't return
+    # HTTP 404 (it's the JS that displays an error inside a 200 OK page).
+    # Detect this signature so the inspector flags pages where the JS error
+    # state is the only visible content.
+    if path.startswith(("/pay/", "/p/", "/checkout", "/q/", "/i/")):
+        # The error UI patterns we use on transactional pages
+        error_signatures = [
+            "Invoice not found", "Quote not found", "Quote not available",
+            "looks invalid or expired", "Couldn't load quote",
+            "Missing quote reference",
+        ]
+        for sig in error_signatures:
+            if sig in body:
+                # Only an error if NO valid content is alongside it
+                # (e.g. /pay/<id> with no real invoice → 100% error UI)
+                if 'class="pay-amt"' not in body or 'pay-amt">…' in body:
+                    findings.append({
+                        "severity": "error",
+                        "category": "transactional_dead_link",
+                        "message": f"Transactional page shows '{sig}' — link is dead for users",
+                        "detail": f"path={path} — DB row missing or quote/invoice expired",
+                        "http_status": r.status_code,
+                    })
+                    break
+
     # 7. "Loading..." stuck-text — these are pages with un-resolved
     # JS spinner that never advanced. catch this signature.
     if re.search(r"\bLoading[^<]{0,30}\.{2,3}\b", body):
@@ -528,15 +592,9 @@ def run_scan(trigger: str = "manual", full: bool = False,
 
     duration_ms = int((time.time() - t0) * 1000)
     finished_at = _dt.datetime.utcnow().isoformat() + "Z"
-    errors = sum(1 for _, f, _i in all_findings if f["severity"] == "error")
-    warnings = sum(1 for _, f, _i in all_findings if f["severity"] == "warning")
-    infos = sum(1 for _, f, _i in all_findings if f["severity"] == "info")
-
-    duration_ms = int((time.time() - t0) * 1000)
-    finished_at = _dt.datetime.utcnow().isoformat() + "Z"
-    errors = sum(1 for _, f in all_findings if f["severity"] == "error")
-    warnings = sum(1 for _, f in all_findings if f["severity"] == "warning")
-    infos = sum(1 for _, f in all_findings if f["severity"] == "info")
+    errors = sum(1 for _p, f, _i in all_findings if f["severity"] == "error")
+    warnings = sum(1 for _p, f, _i in all_findings if f["severity"] == "warning")
+    infos = sum(1 for _p, f, _i in all_findings if f["severity"] == "info")
 
     # Persist
     with db.connect() as c:

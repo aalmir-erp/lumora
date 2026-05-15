@@ -251,7 +251,10 @@ def notify_admin_sync(text: str, *, kind: str = "general",
     test buttons default to force=True; background callers stay default
     (False) so they respect the cooldown."""
     # Explicit user-triggered kinds always bypass cooldown.
-    if kind in ("manual_test", "fire_now") or urgency == "critical":
+    # v1.24.235 — daily_summary added. Founder reported cooldown
+    # still showing on daily_summary kind despite v1.24.224 fix.
+    if kind in ("manual_test", "fire_now", "daily_summary",
+                 "auto_test_summary") or urgency == "critical":
         force = True
     ok, err = _send_via_bridge(text, force=force)
     rid = _store(kind, urgency, text, meta, ok, err)
