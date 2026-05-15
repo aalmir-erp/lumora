@@ -1,17 +1,15 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 42
+- ✅ Pass: 40
 - ⚠️ Warn: 2
-- ❌ Fail: 6
+- ❌ Fail: 8
 - ⏭ Skip: 1
 
 ## Items
 
-- ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
+- ✅ **[T01] Homepage loads (desktop)** — ""
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
-- ❌ **[T03] /services lists services** — (retried) exception: page.goto: net::ERR_TOO_MANY_REDIRECTS at https://servia.ae/services
-Call log:
-  - navigating to "https://servia.ae/ser
+- ✅ **[T03] /services lists services** — 40 cards
 - ✅ **[T04] /coverage.html renders** — OK
 - ✅ **[T05] /blog index loads** — OK
 - ✅ **[T06] Sitemap has /nfc** — OK
@@ -22,7 +20,7 @@ Call log:
 - ✅ **[T11] Mobile nav single-row** — Δy=-3
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
-- ✅ **[T14] Footer present** — OK
+- ❌ **[T14] Footer present** — exception: no footer
 - ✅ **[T15] /install APK card** — OK
 - ✅ **[T16] /install Wear OS card** — OK
 - ✅ **[T17] /install iOS section** — OK
@@ -49,14 +47,14 @@ Call log:
 - ❌ **[T38] /api/me/bookings authed** — exception: HTTP 401
 - ❌ **[T39] /api/nfc/my-tags authed** — exception: HTTP 401
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.209
+- ✅ **[T41] /api/health responds** — v1.24.218
 - ✅ **[T42] /api/services >=10** — 40
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.108
 - ✅ **[T44] /api/site/social works** — OK
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book renders form** — OK
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
-- ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
+- ❌ **[T48] /book.html?nfc=<bogus> graceful** — exception: book button missing
 - ✅ **[T49] /cart.html loads** — OK
 - ⚠️ **[T50] Service worker active** — not registered
-- ✅ **[T51] Admin viewer — _e2e-shots dir is in deployed container** — HTTP 200 ct=image/png
+- ❌ **[T51] Admin viewer — _e2e-shots dir is in deployed container** — exception: HTTP 404 — Dockerfile probably missed _e2e-shots/
