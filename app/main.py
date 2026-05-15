@@ -370,7 +370,21 @@ class _ForceMobileMiddleware(_BHM):
             # /api/videos/play (full-screen video viewer, intentional).
             CHROME_SKIP = CHAT_SKIP + ("/_snippets", "/manifest", "/widget.")
             if not path.startswith(CHROME_SKIP):
-                if b"<nav class=\"nav\"" not in body and b"<nav class='nav'" not in body and b"<body" in body:
+                # v1.24.223 — Founder reported /sos page showed duplicate
+                # unstyled nav stacked on top of the page's own header.
+                # Root cause: sos.html (and a couple other pages) already
+                # have their own <header> + own scoped CSS. We were
+                # injecting the canonical <nav class="nav"> on top of
+                # that, AND those pages don't load /style.css, so the
+                # injected nav rendered as raw unstyled <a> tags.
+                # Fix: skip nav injection if the page already has ANY
+                # <header> OR any <nav>. Same for footer (already had
+                # the check). Only pages with NO chrome at all get the
+                # canonical injection.
+                has_header = (b"<header" in body) or (b"<nav " in body) or \
+                             (b"<nav>" in body) or (b"<nav\n" in body) or \
+                             (b"<nav class" in body)
+                if not has_header and b"<body" in body:
                     # Insert nav right after the first <body...> opening tag.
                     bi = body.find(b"<body")
                     if bi >= 0:
