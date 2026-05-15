@@ -2,21 +2,21 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"fohnY4aaR-Krbp59Cx5-qw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"U_PXtwtZS_G5DdeZlt7tkg"}`
 
 ## Build logs
 ```
-
-added 300 packages in 9s
-
-npm notice
-npm notice New major version of npm available! 10.8.2 -> 11.14.1
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.14.1
-npm notice To update run: npm install -g npm@11.14.1
-npm notice
-
+[ 1/14] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
+[internal] load build context
+[internal] load build context
+[ 2/14] WORKDIR /app
+[ 3/14] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+[ 4/14] COPY requirements.txt ./
+[ 5/14] RUN pip install -r requirements.txt
+[ 6/14] COPY whatsapp_bridge ./whatsapp_bridge
 [ 7/14] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/14] COPY app ./app
+uploading snapshot
 [ 8/14] COPY app ./app
 [ 9/14] COPY web ./web
 [ 9/14] COPY web ./web
@@ -32,9 +32,9 @@ npm notice
 [14/14] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.digest: sha256:de83ca7d589c1932a324cc07fb4e993a4cef84b6a0dece0f8eb61c8910093677
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZGU4M2NhN2Q1ODljMTkzMmEzMjRjYzA3ZmI0ZTk5M2E0Y2VmODRiNmEwZGVjZTBmOGViNjFjODkxMDA5MzY3NyIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNVQxNTo0MjowMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:6ab78a8a14a7df6837759ea941905006b8bf8c17ec58f1f7becd4ac4fb789541
+containerimage.config.digest: sha256:35d355a6c0963d92a741d517cc2a8ac93b1148d47b8035c481e5f8ccb7c8908a
+containerimage.digest: sha256:66a5c21ba2b37791a357b5c52180527bcfd4a0135dd9f32916eb10ef0c393778
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6NjZhNWMyMWJhMmIzNzc5MWEzNTdiNWM1MjE4MDUyN2JjZmQ0YTAxMzVkZDlmMzI5MTZlYjEwZWYwYzM5Mzc3OCIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNVQxNTo0OTo1NFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
 image push
 image push
 
@@ -50,34 +50,22 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.3:19674 - "GET /api/chat/poll?session_id=sw-m-fcU-u8sZ01srRg&since_id=711 HTTP/1.1" 200 OK
-INFO:     100.64.0.7:17342 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:53290 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
-INFO:     100.64.0.7:17342 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
-INFO:     100.64.0.6:53290 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "POST /api/admin/whatsapp/send HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/2079a599-1f8f-4f18-a4ca-ec9eeb923f97/vol_onr647rhdeir9di9
+Starting Container
+[start] launching whatsapp_bridge
+[wa-bridge] listening on :3001
 [wa-bridge] qr_received : len=239
-INFO:     100.64.0.4:58388 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.8:13362 - "GET /services/move-in-out/arabian-ranches HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19674 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
-INFO:     100.64.0.4:58388 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
+[lp-ar] 133 Arabic landing-page routes registered
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
+[purge] scan complete — 34 posts, 0 flagged
+[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     100.64.0.2:42533 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.3:23628 - "GET /app.js?v=1.24.221 HTTP/1.1" 200 OK
 [wa-bridge] qr_received : len=239
-INFO:     100.64.0.3:19674 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+[wa-bridge] qr_received : len=239
 ```
