@@ -2792,7 +2792,7 @@ def whatsapp_qr():
     try:
         # 1) Status check
         r = httpx.get(base + "/status", headers=auth, timeout=5)
-        info = r.json() if r.ok else {"error": r.text[:200]}
+        info = r.json() if r.is_success else {"error": r.text[:200]}
         if info.get("ready"):
             return {"configured": True, "ready": True,
                     "paired_number": info.get("paired_number"),
@@ -2800,7 +2800,7 @@ def whatsapp_qr():
         # 2) Try /qr.json (preferred — added in v1.24.175)
         try:
             rq = httpx.get(base + "/qr.json", headers=auth, timeout=8)
-            if rq.ok:
+            if rq.is_success:
                 j = rq.json()
                 if j.get("qr"):
                     return {"configured": True, "ready": False,
@@ -2810,7 +2810,7 @@ def whatsapp_qr():
             pass
         # 3) Fallback: scrape /qr HTML
         rq = httpx.get(base + "/qr", headers=auth, timeout=8)
-        qr_html = rq.text if rq.ok else None
+        qr_html = rq.text if rq.is_success else None
         qr_data_url = None
         if qr_html:
             import re as _re
@@ -2870,9 +2870,9 @@ def whatsapp_diagnose():
     bridge_status = None
     try:
         r = httpx.get(base + "/status", headers=auth, timeout=4)
-        bridge_status = r.json() if r.ok else None
+        bridge_status = r.json() if r.is_success else None
         add(f"Bridge HTTP {base}/status",
-            r.ok, f"{r.status_code} · {r.text[:200]}",
+            r.is_success, f"{r.status_code} · {r.text[:200]}",
             "Bridge not responding. Check Railway logs for '[wa-bridge]' lines. start.sh auto-restarts it every 5s if it crashes.")
     except Exception as e:
         add(f"Bridge HTTP {base}/status",
@@ -2883,9 +2883,9 @@ def whatsapp_diagnose():
     if bridge_status is not None:
         try:
             r = httpx.get(base + "/qr.json", headers=auth, timeout=6)
-            j = r.json() if r.ok else {}
+            j = r.json() if r.is_success else {}
             add("Bridge /qr.json",
-                r.ok, f"{r.status_code} · ready={j.get('ready')} has_qr={bool(j.get('qr'))}",
+                r.is_success, f"{r.status_code} · ready={j.get('ready')} has_qr={bool(j.get('qr'))}",
                 "If r.status_code=401 the WA_BRIDGE_TOKEN doesn't match between Python and the bridge — restart to re-sync. If has_qr=False after 60s, see check below.")
         except Exception as e:
             add("Bridge /qr.json", False, f"{type(e).__name__}: {e}", "Same fix as /status above.")
@@ -3011,7 +3011,7 @@ def whatsapp_send(body: WaSendBody):
                 headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}",
                          "content-type": "application/json"},
                 json={"to": body.to, "text": body.text}, timeout=8)
-            return r.json() if r.ok else {"ok": False, "error": r.text}
+            return r.json() if r.is_success else {"ok": False, "error": r.text}
         except Exception as e:
             return {"ok": False, "error": str(e)}
     return admin_alerts.notify_admin_sync(body.text, kind="manual_test")

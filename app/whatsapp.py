@@ -198,6 +198,6 @@ def status():
         r = httpx.get(s.WA_BRIDGE_URL.rstrip("/") + "/status",
                       headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
                       timeout=5)
-        return {"configured": True, "bridge": r.json() if r.ok else {"error": r.text}}
+        return {"configured": True, "bridge": r.json() if r.is_success else {"error": r.text}}
     except Exception as e:  # noqa: BLE001
         return {"configured": True, "ready": False, "error": str(e)}
