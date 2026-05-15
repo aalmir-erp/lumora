@@ -13,12 +13,14 @@ from __future__ import annotations
 
 import datetime as _dt
 import hashlib
+import os
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from . import db, demo_brain, llm, tools
 from .config import get_settings
+from .auth import require_admin as _require_admin_for_wa
 
 router = APIRouter(prefix="/api/wa", tags=["whatsapp"])
 
@@ -81,12 +83,82 @@ def _upsert_customer_from_wa(phone: str, name: str | None) -> None:
         print(f"[wa-webhook] customer upsert failed: {e}", flush=True)
 
 
+def _normalize_phone(p: str) -> str:
+    """Strip everything that isn't a digit, then drop a leading 00 / + so
+    971523633995, +971 52 363 3995, 00971523633995 all normalize to the
+    same string for membership checks."""
+    digits = "".join(ch for ch in (p or "") if ch.isdigit())
+    if digits.startswith("00"):
+        digits = digits[2:]
+    return digits
+
+
+def _trial_allowlist_active() -> bool:
+    """Returns True when the trial-mode allowlist is enabled. Toggle via
+    admin Mobile-App tab OR by setting WA_TRIAL_ALLOWLIST=1 env var."""
+    try:
+        if os.getenv("WA_TRIAL_ALLOWLIST", "").strip() in ("1", "true", "on", "yes"):
+            return True
+        v = db.cfg_get("wa_trial_allowlist_active", False)
+        return bool(v)
+    except Exception:
+        return False
+
+
+def _trial_allowlist_numbers() -> set[str]:
+    """Set of normalized phone digits allowed to receive auto-bot replies
+    during the trial. Admin number is ALWAYS included so the founder can
+    still test from their own phone. Reads from db.cfg key
+    'wa_trial_allowlist' (admin-editable) + the ADMIN_WA_NUMBER env."""
+    out: set[str] = set()
+    try:
+        raw = db.cfg_get("wa_trial_allowlist", []) or []
+        if isinstance(raw, list):
+            for p in raw:
+                n = _normalize_phone(str(p))
+                if n: out.add(n)
+        elif isinstance(raw, str):
+            for p in raw.replace(",", " ").split():
+                n = _normalize_phone(p)
+                if n: out.add(n)
+    except Exception: pass
+    admin = _normalize_phone(os.getenv("ADMIN_WA_NUMBER", "971523633995"))
+    if admin: out.add(admin)
+    return out
+
+
 @router.post("/webhook", dependencies=[Depends(require_bridge_token)])
 def inbound(msg: InboundMsg):
     settings = get_settings()
     sid = _phone_to_session(msg.from_number)
     _upsert_customer_from_wa(msg.from_number, msg.name)
     _persist(sid, "user", msg.text, phone=msg.from_number)
+
+    # v1.24.221 — Trial allowlist gate. When enabled, only whitelisted
+    # numbers get auto-bot replies. Everyone else gets a polite "we're in
+    # private trial" notice and the conversation lands in admin inbox for
+    # manual takeover. Founder wants to limit who gets to test the bot
+    # during early rollout to avoid bad WhatsApp experiences with random
+    # contacts before the bot is fully tuned.
+    if _trial_allowlist_active():
+        allowed = _trial_allowlist_numbers()
+        from_norm = _normalize_phone(msg.from_number)
+        if from_norm and from_norm not in allowed:
+            holding_reply = (
+                "Hi! Servia is in private trial right now — we'll be in "
+                "touch as soon as it's live for everyone. Meanwhile if "
+                "you need a home service urgently you can WhatsApp our "
+                "team directly at +971 52 363 3995. Thanks for reaching "
+                "out! 🙏"
+            )
+            _persist(sid, "assistant", holding_reply, phone=msg.from_number)
+            try:
+                from .whatsapp_bridge import send_message  # type: ignore
+                send_message(msg.from_number, holding_reply)
+            except Exception: pass
+            print(f"[wa-allowlist] blocked auto-reply for {from_norm} "
+                  f"(allowlist has {len(allowed)} entries)", flush=True)
+            return {"ok": True, "trial_blocked": True}
 
     # v1.24.143 — Log inbound WhatsApp to unified inbox so admin can review
     # everything in one place. Never raises.
@@ -156,7 +228,7 @@ def inbound(msg: InboundMsg):
     #   - everyone else → 'customer'
     persona = "customer"
     import os as _os
-    admin_num = _os.getenv("ADMIN_WA_NUMBER", "").strip().lstrip("+")
+    admin_num = _os.getenv("ADMIN_WA_NUMBER", "971523633995").strip().lstrip("+")
     if admin_num and msg.from_number.lstrip("+").replace(" ", "") == admin_num:
         persona = "admin"
     else:
@@ -185,6 +257,44 @@ def inbound(msg: InboundMsg):
     push = tools.send_whatsapp(msg.from_number, text)
     return {"ok": True, "reply_text": text, "tool_calls": result.get("tool_calls", []),
             "bridge_send": push}
+
+
+class AllowlistBody(BaseModel):
+    active: bool | None = None
+    numbers: list[str] | None = None  # full list to replace; or null = no change
+
+
+@router.get("/trial-allowlist", dependencies=[Depends(_require_admin_for_wa)])
+def get_trial_allowlist():
+    """Admin: return the current trial-allowlist state (active flag + the
+    full list of normalized phone numbers that are allowed to receive
+    auto-bot replies during the trial)."""
+    nums = sorted(_trial_allowlist_numbers())
+    return {
+        "active": _trial_allowlist_active(),
+        "numbers": nums,
+        "count": len(nums),
+        "admin_always_allowed": _normalize_phone(os.getenv("ADMIN_WA_NUMBER", "971523633995")),
+    }
+
+
+@router.post("/trial-allowlist", dependencies=[Depends(_require_admin_for_wa)])
+def set_trial_allowlist(body: AllowlistBody):
+    """Admin: toggle the trial-mode allowlist on/off, or replace the
+    allowed-numbers list. Both fields are optional — passing one
+    without the other updates only that one."""
+    if body.active is not None:
+        db.cfg_set("wa_trial_allowlist_active", bool(body.active))
+    if body.numbers is not None:
+        normalized = []
+        seen: set[str] = set()
+        for raw in body.numbers:
+            n = _normalize_phone(str(raw))
+            if n and n not in seen:
+                seen.add(n)
+                normalized.append(n)
+        db.cfg_set("wa_trial_allowlist", normalized)
+    return get_trial_allowlist()
 
 
 @router.get("/status")

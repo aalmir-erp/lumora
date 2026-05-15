@@ -20,7 +20,11 @@ from .config import get_settings
 
 
 def _admin_number() -> str:
-    return os.getenv("ADMIN_WA_NUMBER", "").strip().lstrip("+")
+    # v1.24.221 — Default to the founder's official Servia WhatsApp number
+    # so the admin test-send button works out-of-the-box (was returning
+    # bridge 400: 'to + text required' because ADMIN_WA_NUMBER env wasn't
+    # set, so `to` ended up empty when calling the bridge).
+    return os.getenv("ADMIN_WA_NUMBER", "971523633995").strip().lstrip("+")
 
 
 def _ensure_table() -> None:

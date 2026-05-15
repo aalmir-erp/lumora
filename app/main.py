@@ -157,22 +157,69 @@ _PUSH_OPTIN_SNIPPET = (
     b"</div>"
     b"<button class='yes' type='button' "
     b"onclick=\"this.parentNode.classList.remove('show');"
-    b"(window.serviaEnablePush&&window.serviaEnablePush())\">Allow</button>"
+    b"_serviaPushSelfPrompt()\">Allow</button>"
     b"<button class='no' type='button' aria-label='Dismiss' "
     b"onclick=\"this.parentNode.classList.remove('show');"
     b"localStorage.setItem('servia.push.snoozed',Date.now()+604800000)\">&times;</button>"
     b"</div>"
-    b"<script>(function(){try{"
-    b"if(!('Notification' in window))return;"
-    b"if(Notification.permission!=='default')return;"
-    b"if(localStorage.getItem('servia.push.declined')==='1')return;"
-    b"var snz=parseInt(localStorage.getItem('servia.push.snoozed')||'0',10);"
-    b"if(snz&&snz>Date.now())return;"
-    b"setTimeout(function(){"
-    b"var el=document.getElementById('servia-push-banner');"
-    b"if(el)el.classList.add('show');"
-    b"},2500);"
-    b"}catch(e){}})();</script>"
+    # v1.24.221 — Self-sufficient permission prompt. Doesn't depend on
+    # app.js exporting window.serviaEnablePush — that was undefined on
+    # the 3 customer pages (sos.html, install.html, privacy.html) that
+    # never loaded app.js, so the founder's "Allow" tap did NOTHING.
+    # This inline version registers /sw.js, calls requestPermission,
+    # subscribes via PushManager, and POSTs to /api/push/subscribe —
+    # all without touching window.serviaEnablePush.
+    b"<script>"
+    b"window._serviaPushSelfPrompt=async function(){"
+    b"  try{"
+    b"    if(!('serviceWorker' in navigator)||!('PushManager' in window)){"
+    b"      alert('Notifications are not supported in this browser.');return;"
+    b"    }"
+    b"    if(Notification.permission==='denied'){"
+    b"      alert('Notifications are blocked for this site. Tap the lock icon next to the URL, then Permissions, then Notifications, then Allow, then retry.');"
+    b"      return;"
+    b"    }"
+    b"    if(Notification.permission==='default'){"
+    b"      var p=await Notification.requestPermission();"
+    b"      if(p!=='granted'){"
+    b"        if(p==='denied')localStorage.setItem('servia.push.declined','1');"
+    b"        return;"
+    b"      }"
+    b"    }"
+    b"    var reg;"
+    b"    try{reg=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});}"
+    b"    catch(e){console.warn('[push] sw register failed',e);return;}"
+    b"    await navigator.serviceWorker.ready;"
+    b"    var sub=await reg.pushManager.getSubscription();"
+    b"    if(!sub){"
+    b"      var kr=await fetch('/api/push/vapid-key');"
+    b"      var k=await kr.json();"
+    b"      if(!k.public_key)return;"
+    b"      var pad='='.repeat((4-k.public_key.length%4)%4);"
+    b"      var b64=(k.public_key+pad).replace(/-/g,'+').replace(/_/g,'/');"
+    b"      var raw=atob(b64);"
+    b"      var arr=new Uint8Array(raw.length);"
+    b"      for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);"
+    b"      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr});"
+    b"    }"
+    b"    await fetch('/api/push/subscribe',{method:'POST',"
+    b"      headers:{'content-type':'application/json'},"
+    b"      body:JSON.stringify(sub.toJSON())});"
+    b"    console.log('[push] self-subscribed');"
+    b"  }catch(e){console.warn('[push] self-prompt failed',e);}"
+    b"};"
+    b"(function(){try{"
+    b"  if(!('Notification' in window))return;"
+    b"  if(Notification.permission!=='default')return;"
+    b"  if(localStorage.getItem('servia.push.declined')==='1')return;"
+    b"  var snz=parseInt(localStorage.getItem('servia.push.snoozed')||'0',10);"
+    b"  if(snz&&snz>Date.now())return;"
+    b"  setTimeout(function(){"
+    b"    var el=document.getElementById('servia-push-banner');"
+    b"    if(el)el.classList.add('show');"
+    b"  },2500);"
+    b"}catch(e){}})();"
+    b"</script>"
 )
 
 # v1.24.2 — universal SOS FAB. Injected on every public page so anyone can
@@ -180,6 +227,16 @@ _PUSH_OPTIN_SNIPPET = (
 # Tiny tag pointing at /sos-fab.js (the heavy lifting + styles live there
 # so we don't bloat every HTML response).
 _SOS_FAB_SNIPPET = b"<script src=\"/sos-fab.js\" defer></script>"
+
+# v1.24.221 — Universal app.js injection. Several customer-facing pages
+# (sos.html, install.html, privacy.html) never loaded app.js — which
+# meant /sw.js was never registered, the global window.serviaEnablePush
+# helper didn't exist, and window.serviaOpenChat for the mobile-nav Chat
+# button also didn't exist. Founder reported "floating permission to
+# activate notifications is also not working properly". Inject app.js
+# (with defer) on every page that doesn't already load it, with the
+# same skip-list as the chat widget.
+_APP_JS_SNIPPET = b"<script src='/app.js?v=1.24.221' defer></script>"
 
 # v1.24.12 — favicon link tags. Customer reported Google search showed a
 # generic globe icon for servia.ae results because /favicon.ico was missing.
@@ -340,6 +397,14 @@ class _ForceMobileMiddleware(_BHM):
                     snippet += _CHAT_WIDGET_CSS_SNIPPET
                 if b"widget.js?v=" not in body:
                     snippet += _CHAT_WIDGET_JS_SNIPPET
+                # v1.24.221 — also ensure app.js loads (registers SW,
+                # defines serviaEnablePush + serviaOpenChat). Check both
+                # the bare `/app.js` and the versioned form because some
+                # pages already include it without a query string.
+                if (b"/app.js?v=" not in body and
+                        b"src=\"/app.js\"" not in body and
+                        b"src='/app.js'" not in body):
+                    snippet += _APP_JS_SNIPPET
                 if snippet:
                     body = body.replace(b"</body>", snippet + b"</body>", 1)
             # v1.24.207 — Visible push-opt-in banner on customer-facing pages.
