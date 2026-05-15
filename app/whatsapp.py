@@ -44,13 +44,37 @@ def _phone_to_session(phone: str) -> str:
     return "wa-" + hashlib.sha256(phone.encode()).hexdigest()[:16]
 
 
-def _persist(session_id: str, role: str, content: str, *, phone: str) -> None:
+def _persist(session_id: str, role: str, content: str, *, phone: str,
+             tokens_in: int | None = None, tokens_out: int | None = None,
+             cost_usd: float | None = None, model_used: str | None = None,
+             tool_calls: list | None = None) -> None:
+    """v1.24.226 — Persist conversation row with token + cost metadata so
+    the admin Conversations view shows real numbers for WhatsApp threads.
+    Previous version dropped tokens silently → every WA thread in admin
+    showed '0+0 tokens (in/out) · $0.0000 spent' even when the bot ran
+    real LLM calls. Schema already has columns; we just weren't filling them.
+    Uses ALTER ... ADD COLUMN guarded by try/except so older databases
+    auto-upgrade on first call."""
+    import json as _j
     with db.connect() as c:
+        # Idempotent migrations for the metadata columns (safe to run every call)
+        for stmt in (
+            "ALTER TABLE conversations ADD COLUMN tokens_in INTEGER",
+            "ALTER TABLE conversations ADD COLUMN tokens_out INTEGER",
+            "ALTER TABLE conversations ADD COLUMN cost_usd REAL",
+            "ALTER TABLE conversations ADD COLUMN model_used TEXT",
+            "ALTER TABLE conversations ADD COLUMN tool_calls TEXT",
+        ):
+            try: c.execute(stmt)
+            except Exception: pass
         c.execute(
-            "INSERT INTO conversations(session_id, role, content, channel, phone, created_at) "
-            "VALUES(?,?,?,?,?,?)",
+            "INSERT INTO conversations(session_id, role, content, channel, phone, "
+            "created_at, tokens_in, tokens_out, cost_usd, model_used, tool_calls) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
             (session_id, role, content, "whatsapp", phone,
-             _dt.datetime.utcnow().isoformat() + "Z"),
+             _dt.datetime.utcnow().isoformat() + "Z",
+             tokens_in, tokens_out, cost_usd, model_used,
+             _j.dumps(tool_calls) if tool_calls else None),
         )
 
 
@@ -241,6 +265,39 @@ def inbound(msg: InboundMsg):
         except Exception:  # noqa: BLE001
             pass
 
+    # v1.24.226 — Spam pre-filter. Catches Amazon review scams, electronics
+    # resale ads, property rental listings, crypto offers, Arabic relationship
+    # spam, etc. Returns a canned reply WITHOUT calling the LLM ($0 cost).
+    # Only applied to FIRST user message in a session so mid-conversation
+    # short replies ("yes", "1 BR", etc.) still route to the bot normally.
+    try:
+        from . import spam_filter as _sf
+        # Count prior user messages in this session (not including current one
+        # that we just persisted a few lines up).
+        prior_user_msgs = sum(1 for h in history[:-1] if h.get("role") == "user")
+        if prior_user_msgs == 0:
+            canned = _sf.classify(msg.text)
+            if canned["category"]:
+                reply = canned["reply_ar"] if canned.get("is_arabic") else canned["reply_en"]
+                _persist(sid, "assistant", reply, phone=msg.from_number,
+                         tokens_in=0, tokens_out=0, cost_usd=0.0,
+                         model_used=f"spam_filter:{canned['category']}",
+                         tool_calls=None)
+                try:
+                    from .whatsapp_bridge import send_message  # type: ignore
+                    send_message(msg.from_number, reply)
+                except Exception:
+                    try:
+                        tools.send_whatsapp(msg.from_number, reply)
+                    except Exception: pass
+                print(f"[spam-filter] blocked {canned['category']} "
+                      f"from {msg.from_number} (conf={canned['confidence']}) — "
+                      f"saved ~$0.005", flush=True)
+                return {"ok": True, "spam_blocked": canned["category"],
+                        "confidence": canned["confidence"]}
+    except Exception as e:  # noqa: BLE001
+        print(f"[spam-filter] error (falling through to LLM): {e}", flush=True)
+
     if settings.use_llm:
         try:
             result = llm.chat(history, session_id=sid, language="en", persona=persona)
@@ -251,12 +308,25 @@ def inbound(msg: InboundMsg):
         result = demo_brain.respond(msg.text, history)
 
     text = result.get("text") or "Got it — a team member will follow up shortly."
-    _persist(sid, "assistant", text, phone=msg.from_number)
+    # v1.24.226 — record real token usage + cost so admin Conversations
+    # view doesn't show "0+0 tokens · $0.0000 spent" for every WA thread.
+    usage = result.get("usage") or {}
+    tin = usage.get("input_tokens") or usage.get("prompt_tokens")
+    tout = usage.get("output_tokens") or usage.get("completion_tokens")
+    cost = None
+    try:
+        if tin is not None and tout is not None:
+            # Claude Sonnet 4.6 pricing: $3 in / $15 out per 1M tokens
+            cost = round((tin / 1_000_000) * 3.0 + (tout / 1_000_000) * 15.0, 4)
+    except Exception: pass
+    _persist(sid, "assistant", text, phone=msg.from_number,
+             tokens_in=tin, tokens_out=tout, cost_usd=cost,
+             model_used=settings.MODEL, tool_calls=result.get("tool_calls"))
 
     # Push reply through the bridge.
     push = tools.send_whatsapp(msg.from_number, text)
     return {"ok": True, "reply_text": text, "tool_calls": result.get("tool_calls", []),
-            "bridge_send": push}
+            "bridge_send": push, "tokens": {"in": tin, "out": tout, "cost_usd": cost}}
 
 
 class AllowlistBody(BaseModel):

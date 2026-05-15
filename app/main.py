@@ -1561,6 +1561,31 @@ def chat(req: ChatRequest, request: Request):
                             mode="agent_handling", usage={}, agent_handled=True)
 
     history = _history(sid)
+    # v1.24.226 — Spam pre-filter for the website widget too. Catches the same
+    # categories as the WhatsApp inbound path: Amazon review scams, electronics
+    # resale ads, property rentals, crypto/forex offers, Arabic relationship
+    # spam, etc. Returns canned reply WITHOUT calling the LLM ($0 cost).
+    # Only runs on the FIRST user message in a session so mid-conversation
+    # short replies still go to the bot normally.
+    try:
+        from . import spam_filter as _sf
+        prior_user_msgs = sum(1 for h in history if h.get("role") == "user")
+        if prior_user_msgs <= 1:  # this msg already persisted earlier in handler
+            canned = _sf.classify(req.message or "")
+            if canned["category"]:
+                reply = canned["reply_ar"] if canned.get("is_arabic") else canned["reply_en"]
+                _persist(sid, "assistant", reply, phone=req.phone,
+                         model_used=f"spam_filter:{canned['category']}",
+                         tokens_in=0, tokens_out=0, cost_usd=0.0)
+                print(f"[spam-filter] /api/chat blocked {canned['category']} "
+                      f"(conf={canned['confidence']}) — saved ~$0.005", flush=True)
+                return ChatResponse(session_id=sid, text=reply, tool_calls=[],
+                                    mode="spam_filter", usage={
+                                        "spam_category": canned["category"],
+                                        "spam_confidence": canned["confidence"],
+                                    })
+    except Exception as e:  # noqa: BLE001
+        print(f"[spam-filter] /api/chat error (falling through): {e}", flush=True)
     # Resolve which model+key to use. Priority order so customer NEVER sees an
     # error and admin-side configuration takes precedence over Railway env vars:
     #
