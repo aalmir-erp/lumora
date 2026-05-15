@@ -106,15 +106,26 @@ def _ensure_tables() -> None:
               created_at TEXT NOT NULL,
               FOREIGN KEY(run_id) REFERENCES auto_test_runs(id)
             )""")
+        # v1.24.229 — Proof artefact column. Stores up to ~4 KB of
+        # rendered HTML around the broken element so the founder can
+        # see EXACTLY what was caught, not just a category label.
+        for stmt in (
+            "ALTER TABLE auto_test_findings ADD COLUMN proof_snippet TEXT",
+            "ALTER TABLE auto_test_findings ADD COLUMN http_status INTEGER",
+        ):
+            try: c.execute(stmt)
+            except Exception: pass
         c.execute("CREATE INDEX IF NOT EXISTS idx_findings_run ON auto_test_findings(run_id)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_findings_resolved ON auto_test_findings(resolved, severity)")
 
 
 def _customer_pages() -> list[str]:
     """Return every customer-facing path to audit. Built from the actual
-    HTML files in web/ so the list stays in sync as pages are added."""
+    HTML files in web/ + a representative sample of the 17K+ programmatic
+    routes (service/area combos, blog, AI listing landings) so the tester
+    catches issues across the whole site, not just static HTML."""
     pages: list[str] = []
-    # Static HTML files → both clean URL and .html form
+    # 1. Static HTML files
     skip_files = {"admin.html", "admin-inbox.html", "admin-live.html",
                   "admin-contact.html", "admin-commerce.html",
                   "admin-ai-engines.html", "admin-e2e-shots.html",
@@ -127,13 +138,49 @@ def _customer_pages() -> list[str]:
             continue
         slug = f.stem
         pages.append(f"/{slug}" if slug != "index" else "/")
-    # A few dynamic routes worth checking
+
+    # 2. v1.24.229 — Programmatic /services/<slug> pages (40 services).
+    # Founder reported the tester only covered 44 pages — the site has
+    # ~18K routes. Sample all service slugs + every emirate combo for
+    # the top-volume services so we catch any template breakage that
+    # only manifests on dynamic routes.
+    try:
+        from . import kb as _kb
+        services = _kb.services().get("services", [])
+        for s in services:
+            sid = (s.get("id") or "").replace("_", "-")
+            if sid:
+                pages.append(f"/services/{sid}")
+    except Exception:
+        pass
+
+    # 3. Top-volume service × emirate combos (5 services × 7 emirates = 35)
+    emirates = ["dubai", "sharjah", "ajman", "abu-dhabi",
+                "ras-al-khaimah", "umm-al-quwain", "fujairah"]
+    hot_services = ["deep-cleaning", "ac-cleaning", "maid-service",
+                    "handyman", "pest-control"]
+    for s in hot_services:
+        for em in emirates:
+            pages.append(f"/services/{s}/{em}")
+
+    # 4. Area pages (every emirate)
+    for em in emirates:
+        pages.append(f"/area?city={em}")
+
+    # 5. NFC subpages (already-covered as static, just ensure)
+    pages.extend(["/nfc-villa-bundle", "/nfc-vehicle-recovery",
+                  "/nfc-laptop-it", "/nfc-vs-qr"])
+
+    # 6. Key API endpoints (sanity — they should respond 200)
     pages.extend([
-        "/services/deep-cleaning",
-        "/services/ac-cleaning",
-        "/area?city=dubai",
-        "/area?city=sharjah",
+        "/api/health", "/api/brand", "/api/services",
+        "/manifest.webmanifest", "/sw.js", "/sitemap.xml",
+        "/robots.txt", "/llms.txt",
     ])
+
+    # 7. Blog index + a couple of blog posts (if any exist in DB)
+    pages.extend(["/blog", "/videos"])
+
     return pages
 
 
@@ -206,15 +253,18 @@ def _audit_page(client, path: str) -> list[dict[str, Any]]:
     # 4. Template literal leaks (`${...}` or `+ C.name` in rendered HTML)
     leak = _TEMPLATE_LEAK_RE.search(body)
     if leak:
-        # Ignore matches inside <script>...</script> blocks (JS code is fine)
-        # by stripping script blocks and re-checking
-        stripped = re.sub(r"<script[\s\S]*?</script>", "", body, flags=re.IGNORECASE)
-        leak2 = _TEMPLATE_LEAK_RE.search(stripped)
+        leak2 = _TEMPLATE_LEAK_RE.search(scriptless)
         if leak2:
+            # v1.24.229 — capture the surrounding HTML as proof so the
+            # founder sees exactly what leaked, not just a category label.
+            proof_start = max(0, leak2.start() - 100)
+            proof_end = min(len(scriptless), leak2.end() + 200)
             findings.append({
                 "severity": "error", "category": "template_leak",
                 "message": "JS template literal escaped to rendered HTML",
-                "detail": f"Match near: ...{stripped[max(0,leak2.start()-30):leak2.end()+30]}...",
+                "detail": f"Match: {scriptless[leak2.start():leak2.end()][:80]}",
+                "proof_snippet": scriptless[proof_start:proof_end],
+                "http_status": r.status_code,
             })
 
     # 5. Title + meta
@@ -287,10 +337,17 @@ def _audit_page(client, path: str) -> list[dict[str, Any]]:
         try:
             rr = client.get(src.split("?")[0])
             if rr.status_code == 404:
+                idx = scriptless.find(src)
+                snippet = ""
+                if idx >= 0:
+                    s = max(0, idx - 80); e = min(len(scriptless), idx + len(src) + 100)
+                    snippet = scriptless[s:e]
                 findings.append({
                     "severity": "error", "category": "broken_image",
                     "message": f"Broken image src: {src}",
                     "detail": f"<img src='{src}'> returns 404",
+                    "proof_snippet": snippet,
+                    "http_status": 404,
                 })
         except Exception: pass
 
@@ -354,10 +411,18 @@ def _audit_page(client, path: str) -> list[dict[str, Any]]:
         try:
             rr = client.get(target, follow_redirects=False)
             if rr.status_code == 404:
+                # Capture the surrounding HTML so the founder can locate it
+                idx = scriptless.find(href)
+                snippet = ""
+                if idx >= 0:
+                    s = max(0, idx - 100); e = min(len(scriptless), idx + len(href) + 100)
+                    snippet = scriptless[s:e]
                 findings.append({
                     "severity": "error", "category": "broken_link",
                     "message": f"Broken internal link: {target}",
                     "detail": f"<a href='{href}'> returns 404",
+                    "proof_snippet": snippet,
+                    "http_status": 404,
                 })
         except Exception: pass
 
@@ -398,10 +463,14 @@ def run_scan(trigger: str = "manual") -> dict[str, Any]:
         run_id = cur.lastrowid
         for path, f in all_findings:
             c.execute(
-                "INSERT INTO auto_test_findings(run_id, path, severity, category, "
-                "message, detail, created_at) VALUES(?,?,?,?,?,?,?)",
+                "INSERT INTO auto_test_findings(run_id, path, severity, "
+                "category, message, detail, proof_snippet, http_status, "
+                "created_at) VALUES(?,?,?,?,?,?,?,?,?)",
                 (run_id, path, f["severity"], f["category"], f["message"],
-                 f.get("detail", "")[:1000], finished_at))
+                 (f.get("detail") or "")[:1000],
+                 (f.get("proof_snippet") or "")[:4000],
+                 f.get("http_status"),
+                 finished_at))
 
     print(f"[auto-tester] run #{run_id}: {len(pages)} pages, "
           f"{errors} errors, {warnings} warnings, {infos} info "

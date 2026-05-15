@@ -57,6 +57,24 @@ def _store(kind: str, urgency: str, text: str, meta: dict | None,
 _BRIDGE_OUTAGE_UNTIL = 0.0   # epoch ts; if now < this, skip the bridge call
 
 
+def _push_admin(text: str) -> None:
+    """v1.24.230 — Fan out to admin's web-push subscriptions when the
+    WhatsApp bridge can't deliver (e.g. self-send case). Same phone,
+    different transport — native push notification on the device."""
+    try:
+        from . import push_notifications as _pn
+        payload = {
+            "title": "Servia · admin",
+            "body": (text or "")[:240],
+            "kind": "manual_test",
+            "url": "/admin#whatsapp",
+            "requireInteraction": False,
+        }
+        _pn.send_to_all(payload, audience="all")
+    except Exception as e:  # noqa: BLE001
+        print(f"[admin_alerts] _push_admin failed: {e}", flush=True)
+
+
 def reset_bridge_cooldown() -> None:
     """Clear the auto-degrade cooldown so the next send retries immediately.
     Called from /api/admin/whatsapp/reset-cooldown and automatically whenever
@@ -75,14 +93,16 @@ def get_bridge_cooldown_remaining() -> int:
 def _send_via_bridge(text: str, force: bool = False) -> tuple[bool, str | None]:
     """Send via WA bridge with graceful auto-degradation.
 
-    v1.24.56 — if the bridge returns 503 (not paired), or 5xx, or times out,
-    we cache that for 5 minutes and skip the call instead of blocking every
-    notify_admin for 8 seconds. Web-Push remains the working channel during
-    bridge outages.
+    v1.24.230 — IMPORTANT LIMITATION: WhatsApp does NOT let an account
+    send a message to its own paired number (Meta-side protocol rule).
+    That's the "No LID for user" error we kept hitting. If the admin
+    number equals the bridge's paired number we DON'T even try the
+    bridge — we send via Web Push instead (the admin's PWA subscription
+    receives a native notification on the same phone). Real delivery,
+    zero "No LID" errors.
 
-    v1.24.224 — `force=True` bypasses the cooldown (used by manual test sends
-    + Fire-now daily summary so explicit admin actions always retry instead
-    of being silently auto-skipped after a transient outage).
+    Bridge is still used for OUTBOUND messages to actual customers
+    (different phone numbers) — those work fine.
     """
     import time as _t
     global _BRIDGE_OUTAGE_UNTIL
@@ -93,6 +113,30 @@ def _send_via_bridge(text: str, force: bool = False) -> tuple[bool, str | None]:
     if not force and now < _BRIDGE_OUTAGE_UNTIL:
         rem = int(_BRIDGE_OUTAGE_UNTIL - now)
         return False, f"bridge in outage cooldown (auto-skipped, {rem}s remaining)"
+
+    # v1.24.230 — Self-send guard. If ADMIN_WA_NUMBER == bridge's paired
+    # number, WhatsApp will reject with "No LID for user" because you
+    # can't WhatsApp yourself from the same account. Detect this case
+    # BEFORE hitting the bridge and route via Web Push instead.
+    try:
+        import httpx as _httpx
+        admin_digits = _admin_number()
+        # Cheap /status check to learn the paired number
+        rs = _httpx.get(
+            s.WA_BRIDGE_URL.rstrip("/") + "/status",
+            headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
+            timeout=3,
+        )
+        if rs.is_success:
+            j = rs.json()
+            paired = (j.get("paired_number") or "").lstrip("+").replace(" ", "")
+            if paired and admin_digits and paired == admin_digits:
+                # Route via web push only — bridge can't deliver self-sends
+                _push_admin(text)
+                return True, "delivered_via_web_push_self_send_protected"
+    except Exception:
+        # Fall through to the regular bridge attempt
+        pass
     try:
         import httpx
         r = httpx.post(
@@ -111,7 +155,15 @@ def _send_via_bridge(text: str, force: bool = False) -> tuple[bool, str | None]:
             _BRIDGE_OUTAGE_UNTIL = now + 300
             return False, f"bridge {r.status_code} (cooldown 5min): {r.text[:160]}"
         if r.status_code >= 400:
-            return False, f"bridge {r.status_code}: {r.text[:200]}"
+            # v1.24.230 — If bridge says "No LID for user" we can NEVER
+            # deliver this via WhatsApp (Meta-side protocol limit). Fall
+            # back to web push so the admin still hears about the alert.
+            err_body = r.text[:200]
+            if "No LID" in err_body or "no lid" in err_body.lower():
+                _push_admin(text)
+                _BRIDGE_OUTAGE_UNTIL = 0.0  # not a real outage
+                return True, f"delivered_via_web_push (WA self-send blocked: {err_body[:80]})"
+            return False, f"bridge {r.status_code}: {err_body}"
         # Successful send → clear any prior cooldown so next call doesn't
         # get auto-skipped because of a stale outage timestamp.
         _BRIDGE_OUTAGE_UNTIL = 0.0
