@@ -2,11 +2,10 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"-IPksV25QKqN-z8enPRhug"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"DFwuBDHRRQyq7B8-ljLL4A"}`
 
 ## Build logs
 ```
-[ 1/14] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [ 1/14] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
 [internal] load build context
 [internal] load build context
@@ -15,6 +14,7 @@
 [ 4/14] COPY requirements.txt ./
 [ 5/14] RUN pip install -r requirements.txt
 [ 6/14] COPY whatsapp_bridge ./whatsapp_bridge
+[ 7/14] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 7/14] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/14] COPY app ./app
 [ 8/14] COPY app ./app
@@ -32,9 +32,9 @@
 [14/14] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZTA2YmI4Zjk3MjI4YTdmNTUxM2NjZjg1ZDBhMTQxN2RjNmI4MDMwZjQ4ZDA5NDU5NTMxOTNmN2VlZGViOWE3MCIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNFQyMTozNDoyMloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
-containerimage.config.digest: sha256:f58ca2e133499038a893f121c28c347f0a937f982e28c3e9c5ed54c5184a659b
-containerimage.digest: sha256:e06bb8f97228a7f5513ccf85d0a1417dc6b8030f48d0945953193f7eedeb9a70
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MjhlZmU5NzNlYzA0NmQzOTAzMjI4MWJlMTY4YjRiY2U0NTQzMTRlZDBmMjFmMjEwYTUxNjU1OGY1NmE3MTZhMiIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNVQxNDo1NTozMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:da38abceb51f0933cd728dfdb41328cd8ef23ad4eb6450489ad06e708faf7609
+containerimage.digest: sha256:28efe973ec046d39032281be168b4bce454314ed0f21f210a516558f56a716a2
 image push
 image push
 
@@ -50,26 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-[start] launching whatsapp_bridge
-[wa-bridge] listening on :3001
-Starting Container
-Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/924161c7-ae54-493f-b3eb-1b4f54517fdd/vol_onr647rhdeir9di9
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[lp] 17320 Google Ads landing-page routes registered (base=9384, qualifier=7752, near-me=184, 184 service aliases × 51 areas)
-[lp-ar] 133 Arabic landing-page routes registered
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-[scheduler] started — autoblog 06:00 + 18:00, PSI 03:00, summary 21:00 (Asia/Dubai)
-[purge] scan complete — 32 posts, 0 flagged
-[seed-users] test accounts ready: test@servia.ae/test123, demo@servia.ae/demo123, vendor@servia.ae/vendor123
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
-INFO:     100.64.0.2:36443 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     100.64.0.3:53194 - "GET /api/admin/play-store/status HTTP/1.1" 403 Forbidden
-INFO:     100.64.0.4:55464 - "GET /admin.html HTTP/1.1" 200 OK
-INFO:     100.64.0.5:29796 - "GET /api/admin/stats HTTP/1.1" 200 OK
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[autoblog] catch-up SKIP (last_run @ 2026-05-14T14:00:00.000637Z is fresh AND ok)
-[wa-bridge] QR received. Open /qr in your browser to scan.
-[wa-bridge] QR received. Open /qr in your browser to scan.
+INFO:     100.64.0.5:62008 - "GET /admin.html HTTP/1.1" 200 OK
+INFO:     100.64.0.5:62008 - "GET /__admin_token__ HTTP/1.1" 403 Forbidden
+INFO:     100.64.0.5:20622 - "GET /api/i18n HTTP/1.1" 200 OK
+INFO:     100.64.0.5:62008 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20646 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.5:62008 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20638 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20646 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20646 - "GET /api/push/vapid-key HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20646 - "GET /api/brand HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20638 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/admin/whatsapp/qr-page HTTP/1.1" 401 Unauthorized
+INFO:     100.64.0.5:20622 - "POST /api/admin/push/subscribe HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.5:20622 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61758 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61758 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61758 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61758 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.5:61758 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
 ```
