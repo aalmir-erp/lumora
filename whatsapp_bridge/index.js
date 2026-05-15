@@ -50,12 +50,56 @@ function logEvent(type, detail = "") {
   console.log(`[wa-bridge] ${type}${detail ? " : " + detail : ""}`);
 }
 
+// v1.24.236 — Harder-on-memory Chromium flags so the bridge survives
+// the shared-container memory pressure that's been killing the session.
+// Investigation summary (founder asked 'check sales.mir.ae what logic'):
+//   sales.mir.ae runs its bridge as a SEPARATE Railway service with
+//   dedicated 1GB+ memory. Servia's bridge shares ~512MB with FastAPI
+//   + the inspector bot + image generation + APScheduler crons. When
+//   memory spikes (during inspector scan, autoblog, social-image gen),
+//   Chromium gets OOM-killed → WA Web session in browser memory dies.
+//   Reconnect SOMETIMES works, but if the session file was mid-write
+//   during the OOM, the restore from /data/.wwebjs_auth fails → stays
+//   signed out. PERMANENT fix = separate Railway service (see
+//   docs/WA_BRIDGE_SEPARATE_SERVICE.md). Mitigations below.
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: "./.wwebjs_auth" }),
   puppeteer: {
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    args: [
+      "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage",
+      // v1.24.236 — Memory + perf flags. --memory-pressure-off prevents
+      // Chromium from voluntarily killing tabs on pressure. --js-flags
+      // caps V8 inside Chromium so it doesn't try to grab > 384MB.
+      // --disable-gpu / --disable-extensions / --disable-background-*
+      // reduce baseline footprint.
+      "--memory-pressure-off",
+      "--js-flags=--max-old-space-size=384",
+      "--disable-gpu",
+      "--disable-extensions",
+      "--disable-background-networking",
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "--disable-features=TranslateUI",
+      "--disable-default-apps",
+      "--no-default-browser-check",
+      "--mute-audio",
+    ],
+    // Force the headed-Chromium env vars even if not set by the Dockerfile
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
   },
 });
+
+// v1.24.236 — Graceful shutdown on SIGTERM/SIGINT so the WA session
+// file isn't half-written when Railway restarts the container. Without
+// this, every deploy + every OOM corrupts /data/.wwebjs_auth and the
+// bridge has to re-pair via QR.
+async function _gracefulExit(sig) {
+  console.log(`[wa-bridge] received ${sig} — destroying client to flush session…`);
+  try { await client.destroy(); } catch (e) { console.warn("destroy err:", e.message); }
+  process.exit(0);
+}
+process.on("SIGTERM", () => _gracefulExit("SIGTERM"));
+process.on("SIGINT",  () => _gracefulExit("SIGINT"));
 
 client.on("qr", (qr) => {
   lastQr = qr;
@@ -114,20 +158,20 @@ client.on("disconnected", (reason) => {
   tryReconnect();
 });
 
-// v1.24.232 — Heartbeat. Every 90s, if ready=false for more than 5 min,
-// force a re-initialize. Catches the case where disconnect event didn't
-// fire but the session went stale (Chromium hung, lost connection to
-// WA Web, etc.). Doesn't interfere if everything is fine.
+// v1.24.236 — Faster heartbeat. Every 30s (was 90s), if ready=false for
+// more than 2 min (was 5 min), force re-init. Founder reported the
+// bridge silently dying for long stretches — faster detection brings
+// it back before they notice.
 let _lastReadyAt = Date.now();
 setInterval(() => {
   if (ready) { _lastReadyAt = Date.now(); return; }
   const staleMs = Date.now() - _lastReadyAt;
-  if (staleMs > 5 * 60 * 1000) {  // 5 min without being ready
+  if (staleMs > 2 * 60 * 1000) {  // 2 min without being ready
     logEvent("heartbeat_reinit", `stale for ${Math.round(staleMs/1000)}s`);
     try { client.initialize(); _lastReadyAt = Date.now(); }
     catch (e) { logEvent("heartbeat_reinit_failed", e.message); }
   }
-}, 90 * 1000);
+}, 30 * 1000);
 
 client.on("message", async (msg) => {
   if (msg.fromMe || !msg.body) return;

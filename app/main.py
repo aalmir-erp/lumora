@@ -2814,10 +2814,75 @@ def pay_page(invoice_id: str):
 
 @app.get("/api/pay/invoice/{invoice_id}")
 def api_get_invoice(invoice_id: str):
-    """Returns invoice + booking details for the payment page to render summary."""
+    """Returns invoice + booking details for the payment page to render
+    summary.
+
+    v1.24.236 — Multi-table fallback. Founder hit '/pay/{id} Invoice not
+    found' twice in a row. The /pay/<id> URL is used by legacy emails +
+    NFC bulk orders + manual links — sometimes the row in `invoices`
+    didn't get created (insert failed, race, schema migration). Instead
+    of returning 404 and showing a dead-end UI, we now fall back through:
+        1. invoices.id  (canonical)
+        2. invoices.quote_id  (was created against a quote)
+        3. quotes.id  (synthesise a minimal invoice from the quote row)
+        4. bookings.id  (synthesise from booking total)
+    If a quote is found in step 3, we ALSO create the missing invoice
+    row so future lookups + analytics work correctly.
+    """
     from . import quotes as _q
     with db.connect() as c:
         r = c.execute("SELECT * FROM invoices WHERE id=?", (invoice_id,)).fetchone()
+        if not r:
+            r = c.execute(
+                "SELECT * FROM invoices WHERE quote_id=? "
+                "ORDER BY created_at DESC LIMIT 1", (invoice_id,)).fetchone()
+        # Try as a quote ID — synthesise a virtual invoice and persist it
+        if not r:
+            qrow = c.execute(
+                "SELECT * FROM quotes WHERE id=? OR quote_number=? LIMIT 1",
+                (invoice_id, invoice_id)).fetchone()
+            if qrow:
+                # Auto-create the missing invoice row so the next lookup hits
+                try:
+                    c.execute(
+                        "INSERT OR IGNORE INTO invoices(id, customer_id, amount_aed, "
+                        "status, description, created_at) VALUES(?,?,?,?,?,?)",
+                        (qrow["id"], qrow.get("customer_id") if hasattr(qrow, "get") else None,
+                         qrow["total"], "unpaid",
+                         f"Auto-created from quote {qrow['quote_number']}",
+                         _dt.datetime.utcnow().isoformat() + "Z"))
+                except Exception: pass
+                # Build a response that looks like an invoice
+                return {
+                    "id": qrow["id"],
+                    "quote_id": qrow["id"],
+                    "quote_number": qrow["quote_number"],
+                    "amount": qrow["total"],
+                    "amount_aed": qrow["total"],
+                    "currency": "AED",
+                    "status": qrow["status"] or "unpaid",
+                    "description": f"Servia · {qrow['service_id']}",
+                    "booking": {
+                        "service_id": qrow["service_id"],
+                        "customer_name": qrow["customer_name"],
+                        "customer_phone": qrow["customer_phone"],
+                        "customer_address": qrow["customer_address"],
+                    },
+                    "synthesised_from": "quotes",
+                }
+        # Try as a booking ID
+        if not r:
+            brow = c.execute(
+                "SELECT * FROM bookings WHERE id=?", (invoice_id,)).fetchone()
+            if brow:
+                return {
+                    "id": brow["id"],
+                    "amount": brow.get("total") if hasattr(brow, "get") else None,
+                    "currency": "AED",
+                    "status": brow["status"] or "pending",
+                    "booking": db.row_to_dict(brow),
+                    "synthesised_from": "bookings",
+                }
     if not r:
         raise HTTPException(404, "invoice not found")
     inv = db.row_to_dict(r)
