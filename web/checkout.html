@@ -189,14 +189,37 @@ async function load() {
     showError("Missing quote reference. Please return to chat to get a quote.");
     return;
   }
+  // v1.24.227 — Founder reported the page sometimes stuck on "Loading your
+  // quote…" forever. Three guards added: an explicit 12s fetch timeout via
+  // AbortController, surfacing the raw HTTP status + body in error UI so we
+  // know WHY a quote can't load (404 = quote not in DB, 410 = already paid/
+  // cancelled, etc.), and a /contact fallback CTA so the user isn't stuck.
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 12000);
   try {
-    const r = await fetch("/api/checkout/quote/" + encodeURIComponent(quoteId));
-    if (!r.ok) throw new Error("Quote not found or expired (status " + r.status + ").");
+    const r = await fetch("/api/checkout/quote/" + encodeURIComponent(quoteId),
+                          { signal: ctrl.signal });
+    clearTimeout(timeout);
+    if (!r.ok) {
+      let detail = "";
+      try { const j = await r.json(); detail = j.detail || j.error || ""; }
+      catch (_) { try { detail = await r.text(); } catch(_) {} }
+      const hint = r.status === 404
+        ? "This quote may have expired or never been created."
+        : r.status === 410
+        ? "This quote was already paid for or cancelled."
+        : "";
+      throw new Error(`Couldn't load quote (HTTP ${r.status}). ${detail || ""} ${hint}`.trim());
+    }
     quote = await r.json();
-    if (!quote.ok) throw new Error(quote.detail || "Unable to load quote.");
+    if (!quote.ok) throw new Error(quote.detail || "Quote response missing 'ok' flag.");
     render();
   } catch (e) {
-    showError(e.message);
+    clearTimeout(timeout);
+    const msg = (e.name === "AbortError")
+      ? "Quote loading timed out after 12 seconds. The server may be slow."
+      : (e.message || String(e));
+    showError(msg + "\nQuote ID: " + (quoteId || "(none)"));
   }
 }
 

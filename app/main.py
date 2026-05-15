@@ -362,7 +362,7 @@ class _ForceMobileMiddleware(_BHM):
             # don't load widget.css → unstyled chat elements scattered.
             CHAT_SKIP = ("/admin", "/vendor", "/portal-vendor", "/pay",
                          "/api/videos/play", "/api/", "/q/", "/p/", "/i/",
-                         "/sw.js", "/.well-known")
+                         "/checkout", "/cart", "/sw.js", "/.well-known")
             # v1.24.216 — Uniform header + footer. If the served HTML has no
             # standard nav OR footer, inject the canonical ones so the page
             # has the same chrome as the rest of the site. Skip API/admin/
