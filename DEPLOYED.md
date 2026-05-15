@@ -2,23 +2,23 @@
 
 **URL:** https://lumora-production-4071.up.railway.app
 **Status:** SUCCESS
-**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"Em1LLgWsTDGuVmafCx5-qw"}`
+**Health:** `{"status":"error","code":404,"message":"Application not found","request_id":"fohnY4aaR-Krbp59Cx5-qw"}`
 
 ## Build logs
 ```
-[ 1/14] FROM docker.io/library/python:3.12-slim@sha256:401f6e1a67dad31a1bd78e9ad22d0ee0a3b52154e6bd30e90be696bb6a3d7461
-[internal] load build context
-[internal] load build context
-[ 2/14] WORKDIR /app
-[ 3/14] RUN apt-get update && apt-get install -y --no-install-recommends       curl ca-certificates gnupg       chromium fonts-liberation libnss3 libxss1 libgbm-dev libgtk-3-0       libxkbcommon0 libdrm2 libxcomposite1 libxdamage1 libxfixes3 libxrandr2       libasound2 libatk1.0-0 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2 &&     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&     apt-get install -y --no-install-recommends nodejs &&     apt-get clean && rm -rf /var/lib/apt/lists/*
-[ 4/14] COPY requirements.txt ./
-[ 5/14] RUN pip install -r requirements.txt
-[ 6/14] COPY whatsapp_bridge ./whatsapp_bridge
+
+added 300 packages in 9s
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.14.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.14.1
+npm notice To update run: npm install -g npm@11.14.1
+npm notice
+
 [ 7/14] RUN cd whatsapp_bridge && npm install --omit=dev --no-audit --no-fund
 [ 8/14] COPY app ./app
 [ 8/14] COPY app ./app
 [ 9/14] COPY web ./web
-uploading snapshot
 [ 9/14] COPY web ./web
 [10/14] COPY _e2e-shots ./_e2e-shots
 [10/14] COPY _e2e-shots ./_e2e-shots
@@ -32,9 +32,9 @@ uploading snapshot
 [14/14] RUN chmod +x /app/start.sh &&     mkdir -p /data /app/whatsapp_bridge/.wwebjs_auth
 exporting to docker image format
 exporting to docker image format
-containerimage.config.digest: sha256:3060c2e82a8ef370446f0b6714dea867533d389d659d355e141c72b5498a980f
-containerimage.digest: sha256:e249738cde6d05aba649d3caf205b2bb8daf301f9ec30bd6ccb13bc4e28d5595
-containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZTI0OTczOGNkZTZkMDVhYmE2NDlkM2NhZjIwNWIyYmI4ZGFmMzAxZjllYzMwYmQ2Y2NiMTNiYzRlMjhkNTU5NSIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNVQxNTozNTo0MloifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.digest: sha256:de83ca7d589c1932a324cc07fb4e993a4cef84b6a0dece0f8eb61c8910093677
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6ZGU4M2NhN2Q1ODljMTkzMmEzMjRjYzA3ZmI0ZTk5M2E0Y2VmODRiNmEwZGVjZTBmOGViNjFjODkxMDA5MzY3NyIsInNpemUiOjM1MzMsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNS0xNVQxNTo0MjowMVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:6ab78a8a14a7df6837759ea941905006b8bf8c17ec58f1f7becd4ac4fb789541
 image push
 image push
 
@@ -50,34 +50,34 @@ Starting Healthcheck
 
 ## Runtime logs
 ```
-INFO:     100.64.0.3:32640 - "GET /api/admin/ai/catalog HTTP/1.1" 200 OK
-INFO:     100.64.0.4:46114 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:46114 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:46114 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.4:46102 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19138 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19138 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:19126 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27666 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:50190 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:50178 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.4:50202 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.3:27674 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:51420 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:50202 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.4:50202 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.4:50202 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.4:50202 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:51418 - "POST /api/admin/conversations/translate HTTP/1.1" 200 OK
-INFO:     100.64.0.11:35934 - "GET /api/videos/play/svc-general-cleaning HTTP/1.1" 301 Moved Permanently
-INFO:     100.64.0.3:52414 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:20042 - "GET /api/chat/poll?session_id=sw-m-fcU-u8sZ01srRg&since_id=711 HTTP/1.1" 200 OK
-INFO:     100.64.0.7:23224 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.13:60492 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:52414 - "GET /api/chat/poll?session_id=sw-m-fcU-u8sZ01srRg&since_id=711 HTTP/1.1" 200 OK
-INFO:     100.64.0.7:23224 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-INFO:     100.64.0.13:60492 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:20042 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.3:52416 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
-INFO:     100.64.0.4:46206 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/chat/poll?session_id=sw-m-fcU-u8sZ01srRg&since_id=711 HTTP/1.1" 200 OK
+INFO:     100.64.0.7:17342 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:53290 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.7:17342 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+INFO:     100.64.0.6:53290 - "GET /api/chat/poll?session_id=sw-I6iuwfPXJ2LRdtDe&since_id=647 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "POST /api/admin/whatsapp/send HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+[wa-bridge] qr_received : len=239
+INFO:     100.64.0.4:58388 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.8:13362 - "GET /services/move-in-out/arabian-ranches HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
+INFO:     100.64.0.3:19674 - "GET /api/admin/whatsapp/qr HTTP/1.1" 200 OK
+INFO:     100.64.0.4:58388 - "GET /api/admin/alerts?limit=80 HTTP/1.1" 200 OK
+[wa-bridge] qr_received : len=239
+INFO:     100.64.0.3:19674 - "GET /api/admin/conversations?limit=20 HTTP/1.1" 200 OK
 ```
