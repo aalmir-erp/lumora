@@ -648,6 +648,11 @@
           <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5">
             On your phone: WhatsApp → <b>Settings</b> → <b>Linked devices</b> → <b>Link a device</b> → scan the QR above. Persists across redeploys when bridge volume is mounted.
           </div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-ghost" type="button" onclick="diagnoseWA()" style="font-size:12.5px">🔍 Diagnose</button>
+            <span style="font-size:11.5px;color:var(--muted)">Runs all checks and tells you what's broken.</span>
+          </div>
+          <div id="wa-diagnose" style="margin-top:12px;display:none"></div>
         </div>
         <!-- Send test -->
         <div class="card" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
@@ -5022,6 +5027,45 @@ window.confirmCreateVendor = async function() {
   try { await adm("/api/admin/vendors", { method:"POST", body }); closeModal(); loadVendors(); }
   catch(e) { alert("Error: "+e.message); }
 };
+
+// v1.24.219 — Inline diagnose for the WhatsApp QR pipeline. Hitting
+// 🔍 Diagnose runs every check (env vars, bridge reachable, /qr.json
+// response, session-dir mounted, etc.) and surfaces the first failure
+// with a one-line fix. Saves the founder from having to read Railway logs.
+async function diagnoseWA() {
+  const el = document.getElementById("wa-diagnose");
+  el.style.display = "block";
+  el.innerHTML = `<div style="padding:12px;background:#F1F5F9;border-radius:10px;font-size:12.5px;color:var(--muted)">Running diagnostics…</div>`;
+  try {
+    const r = await adm("/api/admin/whatsapp/diagnose");
+    const checks = (r && r.checks) || [];
+    const rows = checks.map(c => {
+      const icon = c.ok ? "✓" : "✗";
+      const color = c.ok ? "#059669" : "#B91C1C";
+      const fix = c.fix && !c.ok
+        ? `<div style="font-size:11.5px;color:#92400E;background:#FFFBEB;padding:6px 8px;border-radius:6px;margin-top:4px;line-height:1.45">💡 ${escapeHtml(c.fix)}</div>`
+        : "";
+      return `<div style="border-top:1px solid var(--border);padding:8px 4px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:start">
+          <b style="color:${color};font-family:ui-monospace,monospace">${icon}</b>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:12.5px">${escapeHtml(c.name)}</div>
+            <div style="font-size:11.5px;color:var(--muted);word-break:break-all">${escapeHtml(c.detail)}</div>
+            ${fix}
+          </div>
+        </div></div>`;
+    }).join("");
+    const verdictColor = r.ok ? "#065F46" : "#B91C1C";
+    const verdictBg = r.ok ? "#ECFDF5" : "#FEE2E2";
+    el.innerHTML = `<div style="background:${verdictBg};border-left:3px solid ${verdictColor};padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;color:${verdictColor};margin-bottom:10px">
+      ${r.ok ? "✓ All checks pass" : `✗ ${r.failed_count} check(s) failed`}
+      <div style="font-weight:500;font-size:12px;margin-top:4px;color:#334155">${escapeHtml(r.next_action || "")}</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:6px 10px;max-height:420px;overflow:auto">${rows}</div>`;
+  } catch (e) {
+    el.innerHTML = `<div style="padding:12px;color:#B91C1C">Diagnostic failed: ${escapeHtml(e.message||String(e))}</div>`;
+  }
+}
 
 async function loadWA() {
   // Status + QR

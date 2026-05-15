@@ -2836,6 +2836,114 @@ from fastapi import Response as _Response
 from fastapi.responses import HTMLResponse as _HTMLResponse
 
 
+# v1.24.219 — One-shot diagnostic for the WhatsApp QR pipeline. Founder
+# reported QR scan isn't working but the existing /qr endpoint just
+# returns "QR not yet generated" without telling us WHY. This endpoint
+# walks every link in the chain (env vars present, bridge process
+# reachable, /status returns, /qr.json returns, auth folder writable,
+# bridge restart count from /data/.bridge_token file, whatsapp-web.js
+# library version) and returns a structured report.
+@router.get("/whatsapp/diagnose")
+def whatsapp_diagnose():
+    import os, json as _j, time, httpx
+    from pathlib import Path
+    from .config import get_settings
+    s = get_settings()
+    report: dict = {"checks": []}
+
+    def add(name: str, ok: bool, detail: str, fix: str | None = None):
+        report["checks"].append({"name": name, "ok": ok, "detail": detail, "fix": fix})
+
+    # 1. ENV vars
+    add("WA_BRIDGE_URL env var",
+        bool(s.WA_BRIDGE_URL),
+        s.WA_BRIDGE_URL or "(empty)",
+        "Set WA_BRIDGE_URL=http://127.0.0.1:3001 in Railway env (already default in Dockerfile)")
+    add("WA_BRIDGE_TOKEN env var",
+        bool(s.WA_BRIDGE_TOKEN),
+        f"{len(s.WA_BRIDGE_TOKEN)} chars (hidden)" if s.WA_BRIDGE_TOKEN else "(empty)",
+        "start.sh auto-generates one. If missing the bridge will accept any request (dev mode). Restart to re-generate.")
+
+    # 2. Bridge process reachable
+    base = (s.WA_BRIDGE_URL or "http://127.0.0.1:3001").rstrip("/")
+    auth = {"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"} if s.WA_BRIDGE_TOKEN else {}
+    bridge_status = None
+    try:
+        r = httpx.get(base + "/status", headers=auth, timeout=4)
+        bridge_status = r.json() if r.ok else None
+        add(f"Bridge HTTP {base}/status",
+            r.ok, f"{r.status_code} · {r.text[:200]}",
+            "Bridge not responding. Check Railway logs for '[wa-bridge]' lines. start.sh auto-restarts it every 5s if it crashes.")
+    except Exception as e:
+        add(f"Bridge HTTP {base}/status",
+            False, f"connection failed: {type(e).__name__}: {e}",
+            "Bridge process isn't listening. Check Railway logs — Chromium may have crashed on startup (out-of-memory is common). Look for '[wa-bridge] launching' followed by silence.")
+
+    # 3. /qr.json reachable
+    if bridge_status is not None:
+        try:
+            r = httpx.get(base + "/qr.json", headers=auth, timeout=6)
+            j = r.json() if r.ok else {}
+            add("Bridge /qr.json",
+                r.ok, f"{r.status_code} · ready={j.get('ready')} has_qr={bool(j.get('qr'))}",
+                "If r.status_code=401 the WA_BRIDGE_TOKEN doesn't match between Python and the bridge — restart to re-sync. If has_qr=False after 60s, see check below.")
+        except Exception as e:
+            add("Bridge /qr.json", False, f"{type(e).__name__}: {e}", "Same fix as /status above.")
+
+    # 4. whatsapp-web.js + chromium installed in bridge container
+    pkg_path = Path(__file__).resolve().parent.parent / "whatsapp_bridge" / "package.json"
+    wwjs_version = "?"
+    if pkg_path.exists():
+        try:
+            pkg = _j.loads(pkg_path.read_text())
+            wwjs_version = pkg.get("dependencies", {}).get("whatsapp-web.js", "?")
+        except Exception: pass
+    add("whatsapp-web.js library version (declared)",
+        wwjs_version != "?", wwjs_version,
+        "Meta keeps deprecating old WA Web protocols. If pairing constantly fails, bump this version in whatsapp_bridge/package.json and redeploy.")
+
+    # 5. Session folder mounted + writable
+    session_dir = Path("/data/.wwebjs_auth")
+    add("Session storage /data/.wwebjs_auth",
+        session_dir.exists() and os.access(str(session_dir), os.W_OK),
+        f"exists={session_dir.exists()} writable={os.access(str(session_dir), os.W_OK)}",
+        "Railway volume not mounted at /data. Without persistence, the bridge has to re-pair via QR on EVERY restart, which is why pairing seems to never stick.")
+
+    # 6. Bridge has been alive for >30s
+    if bridge_status:
+        # Bridge doesn't expose uptime — but if /status returned, it's at least running.
+        # Check the .bridge_token timestamp as a proxy for last restart.
+        tok_path = Path("/data/.bridge_token")
+        if tok_path.exists():
+            age_s = int(time.time() - tok_path.stat().st_mtime)
+            add("Bridge process uptime (proxy)",
+                age_s > 30, f"~{age_s}s since /data/.bridge_token mtime",
+                "If <30s, Chromium is still booting — QR appears 30-60s after restart. If always low, bridge is crash-looping; check Railway logs.")
+
+    # 7. ready + has_qr summary
+    if bridge_status:
+        summary = (
+            f"ready={bridge_status.get('ready')} · "
+            f"paired_number={bridge_status.get('paired_number')} · "
+            f"has_qr={bridge_status.get('has_qr')}"
+        )
+        add("Bridge state summary", True, summary,
+            "If ready=True → done. If has_qr=True → scan the QR in admin → WhatsApp tab. If both False after 60s → check whatsapp-web.js version (Meta may have deprecated the current one).")
+
+    # Overall verdict
+    failed = [c for c in report["checks"] if not c["ok"]]
+    report["ok"] = (len(failed) == 0)
+    report["failed_count"] = len(failed)
+    report["next_action"] = (
+        "All checks pass. QR should be on /admin#wa or /api/admin/whatsapp/qr-page. "
+        "If you still can't scan, the issue is at the WhatsApp app on your phone: "
+        "WhatsApp → Settings → Linked devices → Link a device → scan the QR."
+        if not failed else
+        "First failed check above tells you what to fix."
+    )
+    return report
+
+
 @router.get("/whatsapp/qr-page", response_class=_HTMLResponse)
 def whatsapp_qr_page():
     info = whatsapp_qr()
