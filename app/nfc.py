@@ -55,6 +55,7 @@ def _bookings_email() -> str:
 
 
 import datetime as _dt
+import json as _json
 import secrets
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
@@ -160,6 +161,14 @@ def _ensure_schema() -> None:
             #                     (owner trusts the linked location enough to skip WA)
             "ALTER TABLE nfc_tags ADD COLUMN payment_mode TEXT DEFAULT 'manual_pay'",
             "ALTER TABLE nfc_tags ADD COLUMN max_auto_amount_aed REAL DEFAULT 500",
+            # v1.24.229 — Pre-configured intake stored at order time. When
+            # the tag is scanned later, we use this directly to call
+            # prepare_checkout instead of re-asking the customer. Founder
+            # requirement: "on next tap it knows all and if pin is required
+            # then only direct ask pin or wallet/Ziina routing".
+            "ALTER TABLE nfc_tags ADD COLUMN intake_json TEXT",
+            "ALTER TABLE nfc_tags ADD COLUMN pin_required INTEGER DEFAULT 0",
+            "ALTER TABLE nfc_tags ADD COLUMN pin_hash TEXT",
         ):
             try: c.execute(stmt)
             except Exception: pass
@@ -193,13 +202,29 @@ def _ensure_schema() -> None:
 # ============================================================================
 @public_router.get("/t/{slug}")
 def nfc_tap(slug: str, request: Request):
-    """The URL written onto every NFC sticker. Records the tap and 302s to
-    /book.html?nfc=<slug> (or /sos.html?auto=1 for vehicle_recovery tags so
-    the dispatch fires the moment the screen loads)."""
+    """The URL written onto every NFC sticker. Records the tap, then
+    routes based on what was captured at ORDER time:
+
+      - intake stored + payment_mode='wallet' + balance OK  → /t/{slug}/pin
+        (asks PIN if required, else auto-deducts → /booked.html)
+      - intake stored + payment_mode='wallet' + balance LOW → /pay-now/{Q-id}
+        (creates a quote and 302s straight to Ziina)
+      - intake stored + payment_mode='ziina'                → /pay-now/{Q-id}
+      - intake stored + payment_mode='manual_pay'           → /checkout?q=Q-id
+        (full review-and-pay page)
+      - NO intake stored  → /book.html?nfc={slug} (legacy flow, ask everything)
+
+    v1.24.229 founder requirement: "on next tap it knows all and if pin
+    required then only direct ask pin or if wallet selected but balance
+    insufficient then directly show pay icon takes to Ziina payment and
+    back from there with confirmation properly."
+    """
     _ensure_schema()
     with db.connect() as c:
         row = c.execute(
-            "SELECT id, is_active, service_id FROM nfc_tags WHERE slug=?", (slug,)
+            "SELECT id, is_active, service_id, owner_customer_id, "
+            "saved_address_id, intake_json, payment_mode, pin_required, "
+            "max_auto_amount_aed FROM nfc_tags WHERE slug=?", (slug,)
         ).fetchone()
         if not row:
             return RedirectResponse(f"/nfc-not-found.html?slug={slug}", status_code=302)
@@ -216,12 +241,268 @@ def nfc_tap(slug: str, request: Request):
             "INSERT INTO nfc_taps(tag_id, ip, user_agent, ts) VALUES(?,?,?,?)",
             (row["id"], ip, ua, _now()),
         )
-        svc = row["service_id"] or ""
+    svc = row["service_id"] or ""
     db.log_event("nfc", slug, "tap")
-    # Recovery tags skip the booking confirm card and go straight to one-tap dispatch.
+    # Vehicle recovery → still gets the SOS auto-dispatch UI
     if svc == "vehicle_recovery":
         return RedirectResponse(f"/sos.html?auto=1&from=nfc&slug={slug}", status_code=302)
+
+    # v1.24.229 — Pre-configured tag with intake? Skip /book.html entirely.
+    intake_json = row["intake_json"]
+    if intake_json:
+        return RedirectResponse(f"/t/{slug}/dispatch", status_code=302)
+    # Legacy path: no intake stored at order time → ask in /book.html
     return RedirectResponse(f"/book.html?nfc={slug}", status_code=302)
+
+
+@public_router.get("/t/{slug}/dispatch")
+def nfc_dispatch(slug: str, request: Request):
+    """v1.24.229 — Owner-aware fast-dispatch for pre-configured tags.
+    Reads intake from the tag, creates a quote on the fly via
+    prepare_checkout, then routes per payment_mode:
+      - wallet + sufficient balance → PIN page or auto-deduct
+      - wallet + insufficient OR ziina → 302 to /pay-now/{quote}
+      - manual_pay → 302 to /checkout?q={quote}"""
+    _ensure_schema()
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT * FROM nfc_tags WHERE slug=?", (slug,)).fetchone()
+        if not row or not row["is_active"]:
+            return RedirectResponse(f"/nfc-not-found.html?slug={slug}", status_code=302)
+        if not row["intake_json"]:
+            return RedirectResponse(f"/book.html?nfc={slug}", status_code=302)
+        owner = c.execute(
+            "SELECT id, name, phone, email FROM customers WHERE id=?",
+            (row["owner_customer_id"],)).fetchone()
+        addr_row = None
+        if row["saved_address_id"]:
+            addr_row = c.execute(
+                "SELECT * FROM customer_locations WHERE id=?",
+                (row["saved_address_id"],)).fetchone()
+    if not owner:
+        return RedirectResponse(f"/book.html?nfc={slug}", status_code=302)
+
+    # Build a fresh quote using the pre-stored intake.
+    try:
+        intake = _json.loads(row["intake_json"] or "{}")
+    except Exception:
+        intake = {}
+    addr = ""
+    if addr_row:
+        bits = [addr_row["building"], addr_row["apartment"],
+                addr_row["area"], addr_row["city"]]
+        addr = ", ".join([b for b in bits if b])
+    elif intake.get("address"):
+        addr = intake.get("address")
+
+    from . import checkout_central
+    try:
+        body = checkout_central.CheckoutInitBody(
+            service_id=row["service_id"],
+            customer_name=owner["name"] or f"NFC-{slug}",
+            customer_phone=owner["phone"] or "",
+            customer_email=owner["email"] or None,
+            customer_address=addr or "Saved address",
+            target_date=intake.get("target_date") or "",
+            time_slot=intake.get("time_slot") or "next available",
+            bedrooms=intake.get("bedrooms"),
+            hours=intake.get("hours"),
+            units=intake.get("units"),
+            materials_needed=intake.get("materials_needed"),
+            cleaning_type=intake.get("cleaning_type"),
+            area=intake.get("area"),
+            notes=f"NFC tap · tag {slug}",
+            session_id=f"nfc-{slug}",
+        )
+        out = checkout_central.checkout_init(body)
+    except Exception as e:  # noqa: BLE001
+        # Quote couldn't be built (intake incomplete) → fall back to /book
+        print(f"[nfc] dispatch quote failed for {slug}: {e}", flush=True)
+        return RedirectResponse(f"/book.html?nfc={slug}", status_code=302)
+
+    qid = out["quote_id"]
+    payment_mode = row["payment_mode"] or "manual_pay"
+
+    # Wallet-mode → check balance
+    if payment_mode == "wallet":
+        with db.connect() as c:
+            w = c.execute(
+                "SELECT balance_aed FROM customer_wallet WHERE customer_id=?",
+                (owner["id"],)).fetchone()
+        balance = float(w["balance_aed"]) if w else 0.0
+        if balance >= float(out["total"]):
+            # Wallet has enough — PIN page if required, else auto-deduct
+            if row["pin_required"]:
+                return RedirectResponse(
+                    f"/t/{slug}/pin?q={qid}", status_code=302)
+            # No PIN → auto-deduct + confirm
+            return RedirectResponse(
+                f"/t/{slug}/wallet-pay?q={qid}", status_code=302)
+        # Insufficient balance → Ziina
+        return RedirectResponse(f"/pay-now/{qid}", status_code=302)
+
+    if payment_mode == "ziina":
+        return RedirectResponse(f"/pay-now/{qid}", status_code=302)
+
+    # manual_pay → full review page
+    return RedirectResponse(f"/checkout?q={qid}", status_code=302)
+
+
+@public_router.get("/t/{slug}/pin", response_class=HTMLResponse)
+def nfc_pin_prompt(slug: str, q: str = ""):
+    """v1.24.229 — PIN entry page for wallet-mode tags with pin_required.
+    Minimal self-contained HTML so we don't depend on widgets / chrome
+    loading. On submit, posts the PIN to /t/{slug}/pin-verify which
+    either auto-deducts from wallet (success → /booked) or redirects
+    to /pay-now if balance dropped between tap and submit."""
+    if not q:
+        return HTMLResponse("<h2>Missing quote</h2>", status_code=400)
+    return HTMLResponse(
+        f"""<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confirm tap · Servia</title>
+<style>
+  body{{margin:0;font:16px/1.5 system-ui,-apple-system,sans-serif;
+       background:linear-gradient(135deg,#0F766E,#14B8A6);min-height:100vh;
+       display:flex;align-items:center;justify-content:center;color:#fff}}
+  .card{{background:#fff;color:#0F172A;border-radius:18px;padding:30px 26px;
+        width:92%;max-width:340px;box-shadow:0 12px 30px rgba(0,0,0,.2);text-align:center}}
+  h1{{margin:0 0 8px;font-size:22px}}
+  p{{margin:0 0 18px;color:#64748B;font-size:14px}}
+  input{{font-size:34px;text-align:center;letter-spacing:14px;
+         width:100%;padding:14px 4px;border:2px solid #E2E8F0;border-radius:12px;
+         font-family:ui-monospace,monospace;margin-bottom:12px}}
+  input:focus{{outline:none;border-color:#0F766E}}
+  button{{width:100%;padding:14px;background:#0F766E;color:#fff;border:0;
+         border-radius:12px;font-weight:700;font-size:16px;cursor:pointer}}
+  button:disabled{{opacity:.5}}
+  #err{{color:#B91C1C;font-size:13px;min-height:16px;margin-top:10px;font-weight:600}}
+</style></head><body>
+<form class="card" id="f">
+  <div style="font-size:38px">🔒</div>
+  <h1>Enter your PIN</h1>
+  <p>Confirm this Servia tap to charge from your wallet.</p>
+  <input id="pin" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{{4,6}}" maxlength="6" required autofocus>
+  <button type="submit" id="b">Confirm</button>
+  <div id="err"></div>
+</form>
+<script>
+const slug={slug!r}, q={q!r};
+document.getElementById("f").addEventListener("submit", async (e) => {{
+  e.preventDefault();
+  const pin = document.getElementById("pin").value;
+  const err = document.getElementById("err"); err.textContent = "";
+  const b = document.getElementById("b"); b.disabled = true; b.textContent = "Verifying…";
+  try {{
+    const r = await fetch(`/t/${{slug}}/pin-verify`, {{
+      method: "POST", headers: {{"content-type":"application/json"}},
+      body: JSON.stringify({{q: q, pin: pin}})
+    }});
+    const j = await r.json();
+    if (j.ok && j.redirect) {{ location.href = j.redirect; return; }}
+    err.textContent = j.error || "Verification failed";
+  }} catch(e) {{ err.textContent = "Network error"; }}
+  finally {{ b.disabled = false; b.textContent = "Confirm"; }}
+}});
+</script>
+</body></html>"""
+    )
+
+
+class _NfcPinVerifyBody(BaseModel):
+    q: str = Field(min_length=3, max_length=64)
+    pin: str = Field(min_length=4, max_length=6)
+
+
+@public_router.post("/t/{slug}/pin-verify")
+def nfc_pin_verify(slug: str, body: _NfcPinVerifyBody):
+    """v1.24.229 — verify PIN, then either deduct wallet + 302 to /booked,
+    or fall through to /pay-now if balance is now insufficient."""
+    import hashlib as _hl
+    _ensure_schema()
+    with db.connect() as c:
+        tag = c.execute(
+            "SELECT * FROM nfc_tags WHERE slug=?", (slug,)).fetchone()
+        if not tag or not tag["is_active"]:
+            return {"ok": False, "error": "Tag not found or inactive"}
+        if not tag["pin_required"]:
+            return {"ok": False, "error": "PIN not required for this tag"}
+        # Check PIN
+        cid = tag["owner_customer_id"]
+        expected = _hl.sha256((str(cid) + ":" + body.pin).encode()).hexdigest()
+        if expected != tag["pin_hash"]:
+            return {"ok": False, "error": "Incorrect PIN. Please try again."}
+        # Fetch quote
+        q = c.execute("SELECT * FROM quotes WHERE id=?", (body.q,)).fetchone()
+        if not q:
+            return {"ok": False, "error": "Quote expired. Tap the tag again."}
+        amt = float(q["total"] or 0)
+        # Re-check wallet balance (could have changed since dispatch)
+        w = c.execute(
+            "SELECT balance_aed FROM customer_wallet WHERE customer_id=?",
+            (cid,)).fetchone()
+        balance = float(w["balance_aed"]) if w else 0.0
+        if balance < amt:
+            # Balance dropped → route to Ziina instead
+            return {"ok": True, "redirect": f"/pay-now/{body.q}"}
+        # Deduct atomically
+        new_bal = round(balance - amt, 2)
+        c.execute(
+            "UPDATE customer_wallet SET balance_aed=?, updated_at=? WHERE customer_id=?",
+            (new_bal, _now(), cid))
+        c.execute(
+            "INSERT INTO wallet_ledger(customer_id, delta_aed, kind, ref_id, created_at) "
+            "VALUES(?,?,?,?,?)",
+            (cid, -amt, "nfc_tap_charge", body.q, _now()))
+        c.execute(
+            "UPDATE quotes SET status='paid' WHERE id=?", (body.q,))
+        c.execute(
+            "UPDATE nfc_tags SET booking_count=booking_count+1, last_booking_at=? WHERE id=?",
+            (_now(), tag["id"]))
+    db.log_event("nfc", slug, "wallet_paid",
+                 details={"quote_id": body.q, "amount": amt})
+    return {"ok": True, "redirect": f"/booked.html?q={body.q}"}
+
+
+@public_router.get("/t/{slug}/wallet-pay")
+def nfc_wallet_pay_no_pin(slug: str, q: str = ""):
+    """v1.24.229 — auto-deduct wallet for tags with payment_mode=wallet
+    and pin_required=0. Same logic as pin-verify but no PIN check."""
+    import hashlib as _hl
+    if not q:
+        return HTMLResponse("<h2>Missing quote</h2>", status_code=400)
+    _ensure_schema()
+    with db.connect() as c:
+        tag = c.execute(
+            "SELECT * FROM nfc_tags WHERE slug=?", (slug,)).fetchone()
+        if not tag or not tag["is_active"] or tag["pin_required"]:
+            return RedirectResponse(f"/checkout?q={q}", status_code=302)
+        cid = tag["owner_customer_id"]
+        qrow = c.execute("SELECT * FROM quotes WHERE id=?", (q,)).fetchone()
+        if not qrow:
+            return RedirectResponse(f"/nfc-not-found.html?slug={slug}", status_code=302)
+        amt = float(qrow["total"] or 0)
+        w = c.execute(
+            "SELECT balance_aed FROM customer_wallet WHERE customer_id=?",
+            (cid,)).fetchone()
+        balance = float(w["balance_aed"]) if w else 0.0
+        if balance < amt:
+            return RedirectResponse(f"/pay-now/{q}", status_code=302)
+        new_bal = round(balance - amt, 2)
+        c.execute(
+            "UPDATE customer_wallet SET balance_aed=?, updated_at=? WHERE customer_id=?",
+            (new_bal, _now(), cid))
+        c.execute(
+            "INSERT INTO wallet_ledger(customer_id, delta_aed, kind, ref_id, created_at) "
+            "VALUES(?,?,?,?,?)",
+            (cid, -amt, "nfc_tap_charge", q, _now()))
+        c.execute("UPDATE quotes SET status='paid' WHERE id=?", (q,))
+        c.execute(
+            "UPDATE nfc_tags SET booking_count=booking_count+1, last_booking_at=? WHERE id=?",
+            (_now(), tag["id"]))
+    db.log_event("nfc", slug, "wallet_paid",
+                 details={"quote_id": q, "amount": amt})
+    return RedirectResponse(f"/booked.html?q={q}", status_code=302)
 
 
 # ============================================================================
@@ -333,6 +614,17 @@ class _NfcOrderBody(BaseModel):
     location_label: str | None = Field(default=None, max_length=80)
     size: str = Field(default="sticker")  # sticker | card | keychain
     delivery: str = Field(default="next_visit")  # next_visit | courier
+    # v1.24.229 — Service-specific intake captured at order time so tap
+    # → no questions asked. bedrooms/units/hours/etc., free-form dict.
+    intake: dict | None = None
+    # Payment routing on tap. 'wallet' deducts from balance; 'ziina'
+    # always routes to gateway; 'manual_pay' lets user choose at tap time.
+    payment_mode: str = Field(default="manual_pay")  # wallet|ziina|manual_pay
+    max_auto_amount_aed: float | None = Field(default=500, ge=0, le=10000)
+    # Founder said: "if pin required for that then only direct ask pin".
+    # Optional 4-6 digit PIN guards wallet auto-deducts on tap.
+    pin_required: bool = False
+    pin: str | None = Field(default=None, min_length=4, max_length=6)
 
 
 @router.post("/api/nfc/order")
@@ -359,18 +651,34 @@ def customer_order_tag(body: _NfcOrderBody, request: Request):
             taken = c.execute("SELECT 1 FROM nfc_tags WHERE slug=?", (slug,)).fetchone()
         if not taken: break
         slug = _new_slug()
+    import hashlib as _hl
+    pin_hash = None
+    if body.pin_required and body.pin:
+        if not body.pin.isdigit():
+            raise HTTPException(400, "PIN must be digits only")
+        pin_hash = _hl.sha256((str(cid) + ":" + body.pin).encode()).hexdigest()
+    if body.payment_mode not in ("wallet", "ziina", "manual_pay"):
+        raise HTTPException(400, "payment_mode must be wallet/ziina/manual_pay")
+    intake_str = _json.dumps(body.intake) if body.intake else None
     with db.connect() as c:
         cur = c.execute(
             """INSERT INTO nfc_tags(slug, owner_customer_id, service_id, saved_address_id,
-                                     alias, location_label, size, is_active, created_at)
-               VALUES(?,?,?,?,?,?,?,1,?)""",
+                                     alias, location_label, size, is_active, created_at,
+                                     intake_json, payment_mode, max_auto_amount_aed,
+                                     pin_required, pin_hash)
+               VALUES(?,?,?,?,?,?,?,1,?,?,?,?,?,?)""",
             (slug, cid, body.service_id, body.saved_address_id,
-             body.alias, body.location_label, body.size, _now()),
+             body.alias, body.location_label, body.size, _now(),
+             intake_str, body.payment_mode, body.max_auto_amount_aed,
+             1 if body.pin_required else 0, pin_hash),
         )
         tag_id = cur.lastrowid
     db.log_event("nfc", slug, "ordered", actor=str(cid),
                  details={"service": body.service_id, "size": body.size,
-                          "delivery": body.delivery})
+                          "delivery": body.delivery,
+                          "intake_keys": list(body.intake.keys()) if body.intake else [],
+                          "payment_mode": body.payment_mode,
+                          "pin_required": body.pin_required})
     return {
         "ok": True,
         "tag_id": tag_id,

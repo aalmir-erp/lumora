@@ -260,6 +260,12 @@ def prepare_checkout(service_id: str, customer_name: str, phone: str, address: s
     )
     try:
         out = checkout_central.checkout_init(body)
+        # v1.24.229 — Return BOTH a 'pay now' shortcut URL and the full
+        # review URL so the bot can offer two CTAs (the founder asked
+        # for the sales.mir.ae UX: two buttons in the reply, one
+        # direct-to-payment, one for review-first).
+        review_url = f"https://servia.ae{out['checkout_url']}"
+        pay_now_url = f"https://servia.ae/pay-now/{out['quote_id']}"
         return {
             "ok": True,
             "quote_id": out["quote_id"],
@@ -268,12 +274,16 @@ def prepare_checkout(service_id: str, customer_name: str, phone: str, address: s
             "vat_amount": out["vat_amount"],
             "total": out["total"],
             "checkout_url": out["checkout_url"],
+            "pay_now_url": pay_now_url,
+            "review_url": review_url,
             "customer_message": (
-                f"Here's your quote {out['quote_number']}:\n"
-                f"Subtotal: AED {out['subtotal']:.2f}\n"
-                f"UAE VAT 5%: AED {out['vat_amount']:.2f}\n"
-                f"Total: AED {out['total']:.2f}\n\n"
-                f"Review & pay securely: https://servia.ae{out['checkout_url']}"
+                f"✅ Your quote *{out['quote_number']}* is ready:\n"
+                f"• Subtotal: AED {out['subtotal']:.2f}\n"
+                f"• UAE VAT 5%: AED {out['vat_amount']:.2f}\n"
+                f"• Total: AED {out['total']:.2f}\n\n"
+                f"💳 Pay now: {pay_now_url}\n"
+                f"📋 Review details first: {review_url}\n\n"
+                f"Your slot locks the moment payment clears (usually 30 sec)."
             ),
         }
     except Exception as e:

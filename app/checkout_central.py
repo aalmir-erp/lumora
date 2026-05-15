@@ -334,6 +334,45 @@ def _payment_gateway_link(quote_id: str, amount: float, customer: dict) -> dict:
     }}
 
 
+@router.get("/pay-now/{quote_id}")
+def pay_now_shortcut(quote_id: str):
+    """v1.24.229 — Direct-to-Ziina shortcut. Founder explicitly asked
+    to copy sales.mir.ae's UX: bot reply should have a 'Pay now' link
+    that takes the user STRAIGHT to the payment page (Ziina checkout)
+    without an intermediate review step, AND a 'Review' link to the
+    full /checkout page for users who want to see line items first.
+
+    This route resolves a quote → Ziina (or Stripe / bank-transfer
+    fallback per gateway config) → 302 redirect. No review screen,
+    no review-page latency, no JS — pure server redirect that works
+    even on slow phones.
+
+    URL pattern matches the gate.html / quotes.py family so it's
+    recognised everywhere as a 'direct pay' shortcut."""
+    from fastapi.responses import RedirectResponse
+    with db.connect() as c:
+        row = c.execute("SELECT * FROM quotes WHERE id=?", (quote_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="quote not found")
+        if row["status"] not in ("draft", "sent"):
+            # Already paid / cancelled — send to confirmation page
+            return RedirectResponse(url=f"/booked.html?q={quote_id}",
+                                     status_code=302)
+        if row["status"] == "draft":
+            c.execute("UPDATE quotes SET status='sent' WHERE id=?", (quote_id,))
+    customer = {
+        "name": row["customer_name"], "phone": row["customer_phone"],
+        "email": row["customer_email"], "address": row["customer_address"],
+    }
+    pay = _payment_gateway_link(quote_id, row["total"], customer)
+    url = pay.get("payment_url")
+    if url:
+        return RedirectResponse(url=url, status_code=302)
+    # No gateway available → fall back to the /checkout review page so the
+    # user at least sees the bank-transfer instructions instead of a 404.
+    return RedirectResponse(url=f"/checkout?q={quote_id}", status_code=302)
+
+
 @router.post("/api/checkout/{quote_id}/pay")
 def checkout_pay(quote_id: str, body: CheckoutPayBody):
     """Generate a payment-gateway URL for this quote. Marks the quote as 'sent'
