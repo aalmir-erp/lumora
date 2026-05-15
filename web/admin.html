@@ -2788,7 +2788,8 @@ Tone: warm, direct, locally aware, no AI cliches (no em-dashes, no "delve", no "
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
-        <button class="btn btn-primary" type="button" onclick="atRunNow()">🚀 Run scan now</button>
+        <button class="btn btn-primary" type="button" onclick="atRunNow(false)">🚀 Quick scan (~140 pages, 1 min)</button>
+        <button class="btn btn-primary" type="button" onclick="atRunNow(true)" style="background:linear-gradient(135deg,#7C3AED,#9333EA)">🔬 FULL scan (~2000 pages + screenshots, 5 min)</button>
         <button class="btn btn-ghost" type="button" onclick="atLoadAll()">🔄 Refresh</button>
         <select id="at-filter-severity" onchange="atLoadFindings()"
                 style="padding:7px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px">
@@ -3035,6 +3036,7 @@ async function atLoadRuns() {
         <th style="text-align:left;padding:7px 10px">Info</th>
         <th style="text-align:left;padding:7px 10px">Duration</th>
         <th style="text-align:left;padding:7px 10px">Trigger</th>
+        <th style="text-align:left;padding:7px 10px">Proof</th>
       </tr></thead>
       <tbody>
       ${r.items.map(run => `<tr style="border-top:1px solid var(--border)">
@@ -3044,21 +3046,59 @@ async function atLoadRuns() {
         <td style="padding:6px 10px;color:#B91C1C;font-weight:700">${run.errors||0}</td>
         <td style="padding:6px 10px;color:#B45309">${run.warnings||0}</td>
         <td style="padding:6px 10px;color:#0F766E">${run.infos||0}</td>
-        <td style="padding:6px 10px">${run.duration_ms||0}ms</td>
+        <td style="padding:6px 10px">${Math.round((run.duration_ms||0)/1000)}s</td>
         <td style="padding:6px 10px"><span style="background:#F1F5F9;padding:2px 7px;border-radius:6px;font-size:11px">${escapeHtml(run.trigger||'?')}</span></td>
+        <td style="padding:6px 10px"><button class="btn btn-ghost" style="font-size:11px;padding:3px 8px" onclick="atShowShots(${run.id})">📸 Shots</button></td>
       </tr>`).join("")}
       </tbody></table>`;
   } catch (e) { console.warn("[auto-tests] runs:", e); }
 }
-async function atRunNow() {
+async function atRunNow(full) {
   const s = document.getElementById("at-status");
-  s.textContent = "Running scan… (typically 30-60s)"; s.style.color = "var(--muted)";
+  const eta = full ? "3-5 min" : "30-60s";
+  s.textContent = full
+    ? "🔬 Running FULL scan (≈2000 pages + screenshots, " + eta + ")…"
+    : "🚀 Running quick scan (~140 pages, " + eta + ")…";
+  s.style.color = "var(--muted)";
   try {
-    const r = await adm("/api/admin/auto-tests/run-now", {method:"POST"});
-    s.innerHTML = `<span style="color:#059669">✓ Run #${r.run_id}: ${r.pages_tested} pages · ${r.errors} errors · ${r.warnings} warnings · ${r.duration_ms}ms</span>`;
+    const url = "/api/admin/auto-tests/run-now" + (full ? "?full=true" : "");
+    const r = await adm(url, {method:"POST"});
+    s.innerHTML = `<span style="color:#059669">✓ Run #${r.run_id}: ${r.pages_tested} pages · ${r.errors} errors · ${r.warnings} warnings · ${Math.round((r.duration_ms||0)/1000)}s</span>` +
+      ` · <a href="#" onclick="atShowShots(${r.run_id});return false" style="color:var(--primary);font-weight:700">📸 View ${r.pages_tested} screenshots →</a>`;
     atLoadAll();
   } catch (e) {
     s.innerHTML = `<span style="color:#B91C1C">✗ ${escapeHtml(e.message||e)}</span>`;
+  }
+}
+
+// v1.24.233 — Screenshot gallery viewer. Opens a modal with thumbnails
+// of every page the inspector captured in this run.
+async function atShowShots(runId) {
+  try {
+    const r = await adm("/api/admin/auto-tests/shots/" + runId);
+    if (!r.count) { alert("No screenshots saved for this run."); return; }
+    let m = document.getElementById("at-shots-modal");
+    if (m) m.remove();
+    m = document.createElement("div");
+    m.id = "at-shots-modal";
+    m.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:9999;overflow:auto;padding:20px";
+    m.innerHTML = `<div style="max-width:1100px;margin:0 auto;background:#fff;border-radius:14px;padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0">📸 Run #${runId} screenshots (${r.count} pages)</h3>
+        <button class="btn btn-ghost" onclick="document.getElementById('at-shots-modal').remove()">✕ Close</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+        ${r.items.map(it => `<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#F8FAFC">
+          <a href="${escapeHtml(it.url)}" target="_blank">
+            <img src="${escapeHtml(it.url)}" loading="lazy" style="width:100%;display:block;aspect-ratio:412/915;object-fit:cover">
+          </a>
+          <div style="padding:6px 8px;font-family:ui-monospace,monospace;font-size:11px;background:#fff;color:#475569;border-top:1px solid var(--border);word-break:break-all">${escapeHtml(it.path)}</div>
+        </div>`).join("")}
+      </div>
+    </div>`;
+    document.body.appendChild(m);
+  } catch (e) {
+    alert("Failed: " + (e.message || e));
   }
 }
 async function atResolve(findingId) {

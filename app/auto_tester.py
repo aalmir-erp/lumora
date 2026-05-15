@@ -59,12 +59,13 @@ from __future__ import annotations
 
 import datetime as _dt
 import json as _j
+import os
 import re
 import time
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from . import db
 from .auth import require_admin
@@ -74,6 +75,11 @@ router = APIRouter(prefix="/api/admin/auto-tests",
                    dependencies=[Depends(require_admin)])
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+# v1.24.233 — Screenshot directory. /data is the Railway volume mount.
+SHOTS_DIR = Path(os.getenv("DATA_DIR", "/data")) / "inspector-shots"
+try: SHOTS_DIR.mkdir(parents=True, exist_ok=True)
+except Exception: SHOTS_DIR = Path("/tmp/inspector-shots"); SHOTS_DIR.mkdir(parents=True, exist_ok=True)
+CHROMIUM_PATH = os.getenv("PUPPETEER_EXECUTABLE_PATH", "/usr/bin/chromium")
 
 
 def _ensure_tables() -> None:
@@ -119,11 +125,14 @@ def _ensure_tables() -> None:
         c.execute("CREATE INDEX IF NOT EXISTS idx_findings_resolved ON auto_test_findings(resolved, severity)")
 
 
-def _customer_pages() -> list[str]:
-    """Return every customer-facing path to audit. Built from the actual
-    HTML files in web/ + a representative sample of the 17K+ programmatic
-    routes (service/area combos, blog, AI listing landings) so the tester
-    catches issues across the whole site, not just static HTML."""
+def _customer_pages(full: bool = False) -> list[str]:
+    """Return every customer-facing path to audit.
+
+    v1.24.233 — `full=True` returns the full programmatic route set
+    (~2000+ pages) instead of the 136-page sample. Used for the
+    "deep scan" cron + the manual 'Run full scan' button. The default
+    `full=False` is the fast representative sample for hourly checks.
+    """
     pages: list[str] = []
     # 1. Static HTML files
     skip_files = {"admin.html", "admin-inbox.html", "admin-live.html",
@@ -181,7 +190,57 @@ def _customer_pages() -> list[str]:
     # 7. Blog index + a couple of blog posts (if any exist in DB)
     pages.extend(["/blog", "/videos"])
 
-    return pages
+    # 8. Real blog posts from DB (sample 20 if exists)
+    try:
+        with db.connect() as c:
+            rows = c.execute(
+                "SELECT slug FROM blog_posts WHERE published=1 "
+                "ORDER BY id DESC LIMIT 20").fetchall()
+        for r in rows:
+            pages.append(f"/blog/{r['slug']}")
+    except Exception: pass
+
+    # 9. v1.24.233 — FULL mode: sample ALL programmatic routes
+    if full:
+        try:
+            # Service × neighbourhood combos (17K+ routes — sample 200)
+            from . import seo_pages as _seo
+            slugs = list(_seo.AREA_INDEX.keys())[:50]  # first 50 neighbourhoods
+            for s in hot_services:
+                for area_slug in slugs:
+                    pages.append(f"/services/{s}/{area_slug}")
+        except Exception: pass
+
+        try:
+            # Arabic landing pages (133 routes — sample 30)
+            from .data.i18n_ar_slugs import SERVICE_AR, EMIRATE_AR
+            ar_count = 0
+            for svc_id, (ar_svc, _) in list(SERVICE_AR.items())[:10]:
+                for em_id, (ar_em, _) in list(EMIRATE_AR.items())[:3]:
+                    pages.append(f"/{ar_svc}-{ar_em}")
+                    ar_count += 1
+                    if ar_count >= 30: break
+                if ar_count >= 30: break
+        except Exception: pass
+
+        try:
+            # Google Ads landing pages — sample 50
+            from .data.seed_variant_pages import VARIANT_PAGES as _RVP
+            for v in _RVP[:50]:
+                pages.append(f"/{v['slug']}")
+        except Exception: pass
+
+        # All NFC variants
+        for f in WEB_DIR.glob("nfc-*.html"):
+            pages.append(f"/{f.stem}")
+
+        # All vs/* comparison pages
+        try:
+            for f in (WEB_DIR / "vs").glob("*.html"):
+                pages.append(f"/vs/{f.stem}")
+        except Exception: pass
+
+    return list(dict.fromkeys(pages))  # de-dupe while preserving order
 
 
 _TEMPLATE_LEAK_RE = re.compile(
@@ -440,22 +499,38 @@ def _audit_page(client, path: str) -> list[dict[str, Any]]:
     return findings
 
 
-def run_scan(trigger: str = "manual") -> dict[str, Any]:
-    """Run a full audit pass. Returns summary dict."""
+def run_scan(trigger: str = "manual", full: bool = False,
+              capture_screenshots: bool = True) -> dict[str, Any]:
+    """Run a full audit pass. Returns summary dict.
+
+    v1.24.233 — `full=True` scans 2000+ programmatic routes (~3-5 min).
+    `capture_screenshots=True` runs each page through Playwright after
+    the HTML audit and stores a PNG to /data/inspector-shots/{run_id}/
+    so the founder can SEE every page the bot tested.
+    """
     _ensure_tables()
-    # Test client (in-process)
     from fastapi.testclient import TestClient
     from .main import app
     client = TestClient(app)
 
     started_at = _dt.datetime.utcnow().isoformat() + "Z"
     t0 = time.time()
-    pages = _customer_pages()
-    all_findings: list[tuple[str, dict]] = []
-    for path in pages:
+    pages = _customer_pages(full=full)
+    all_findings: list[tuple[str, dict, int]] = []  # (path, finding, page_idx)
+    page_status: dict[int, dict] = {}  # idx → {path, status, has_screenshot}
+    for idx, path in enumerate(pages):
         findings = _audit_page(client, path)
         for f in findings:
-            all_findings.append((path, f))
+            all_findings.append((path, f, idx))
+        page_status[idx] = {"path": path,
+                            "findings": len(findings),
+                            "has_screenshot": False}
+
+    duration_ms = int((time.time() - t0) * 1000)
+    finished_at = _dt.datetime.utcnow().isoformat() + "Z"
+    errors = sum(1 for _, f, _i in all_findings if f["severity"] == "error")
+    warnings = sum(1 for _, f, _i in all_findings if f["severity"] == "warning")
+    infos = sum(1 for _, f, _i in all_findings if f["severity"] == "info")
 
     duration_ms = int((time.time() - t0) * 1000)
     finished_at = _dt.datetime.utcnow().isoformat() + "Z"
@@ -472,7 +547,7 @@ def run_scan(trigger: str = "manual") -> dict[str, Any]:
             (started_at, finished_at, len(pages), len(all_findings),
              errors, warnings, infos, duration_ms, trigger))
         run_id = cur.lastrowid
-        for path, f in all_findings:
+        for path, f, _idx in all_findings:
             c.execute(
                 "INSERT INTO auto_test_findings(run_id, path, severity, "
                 "category, message, detail, proof_snippet, http_status, "
@@ -482,6 +557,18 @@ def run_scan(trigger: str = "manual") -> dict[str, Any]:
                  (f.get("proof_snippet") or "")[:4000],
                  f.get("http_status"),
                  finished_at))
+
+    # v1.24.233 — Screenshot capture pass. Runs after the HTML audit so
+    # we don't slow down the JSON findings. Saves PNG per page to
+    # /data/inspector-shots/{run_id}/{idx}.png + records the path on
+    # the auto_test_findings row (if any) OR on a new auto_test_shots
+    # row so the admin UI can show every screenshot, not just ones
+    # with findings.
+    if capture_screenshots:
+        try:
+            _capture_screenshots(run_id, pages, base_url="http://127.0.0.1:8000")
+        except Exception as e:  # noqa: BLE001
+            print(f"[auto-tester] screenshot capture failed: {e}", flush=True)
 
     print(f"[auto-tester] run #{run_id}: {len(pages)} pages, "
           f"{errors} errors, {warnings} warnings, {infos} info "
@@ -494,16 +581,147 @@ def run_scan(trigger: str = "manual") -> dict[str, Any]:
     }
 
 
+# v1.24.233 — Screenshot capture via Playwright (chromium installed by
+# the Dockerfile at /usr/bin/chromium). Runs in a fresh browser context
+# per run so we get clean cookies / no state leakage. Mobile viewport
+# (Pixel 5 dimensions) so screenshots match what real customers see.
+def _capture_screenshots(run_id: int, pages: list[str], base_url: str) -> int:
+    """Walk every page in `pages`, save a PNG screenshot per page to
+    SHOTS_DIR/{run_id}/{idx}.png. Returns count of successful captures."""
+    _ensure_shots_table()
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception as e:
+        print(f"[auto-tester] playwright not installed: {e}", flush=True)
+        return 0
+    run_dir = SHOTS_DIR / str(run_id)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    saved = 0
+    started = time.time()
+    BUDGET_SEC = 600  # cap at 10 min for screenshot pass
+    with sync_playwright() as p:
+        try:
+            browser = p.chromium.launch(
+                headless=True,
+                executable_path=CHROMIUM_PATH if Path(CHROMIUM_PATH).exists() else None,
+                args=["--no-sandbox", "--disable-dev-shm-usage",
+                       "--disable-setuid-sandbox"],
+            )
+        except Exception as e:
+            print(f"[auto-tester] chromium launch failed: {e}", flush=True)
+            return 0
+        ctx = browser.new_context(viewport={"width": 412, "height": 915},
+                                   device_scale_factor=2)
+        for idx, path in enumerate(pages):
+            if time.time() - started > BUDGET_SEC:
+                print(f"[auto-tester] screenshot budget exceeded "
+                      f"at page {idx}/{len(pages)}", flush=True)
+                break
+            try:
+                page = ctx.new_page()
+                page.goto(base_url + path, wait_until="domcontentloaded",
+                          timeout=8000)
+                shot_path = run_dir / f"{idx:04d}.png"
+                page.screenshot(path=str(shot_path), full_page=False)
+                page.close()
+                # Record for admin UI lookup
+                with db.connect() as c:
+                    c.execute(
+                        "INSERT INTO auto_test_shots(run_id, page_idx, path, "
+                        "screenshot_file, created_at) VALUES(?,?,?,?,?)",
+                        (run_id, idx, path, str(shot_path.name),
+                         _dt.datetime.utcnow().isoformat() + "Z"))
+                saved += 1
+            except Exception as e:
+                # Continue past individual failures; log compactly
+                if "ERR_CONNECTION_REFUSED" in str(e):
+                    # Server not running on localhost:8000 (e.g. dev env)
+                    print(f"[auto-tester] screenshots aborted: {e}", flush=True)
+                    break
+        try: ctx.close()
+        except Exception: pass
+        try: browser.close()
+        except Exception: pass
+    print(f"[auto-tester] screenshots: {saved}/{len(pages)} captured in "
+          f"{int(time.time()-started)}s, run_id={run_id}", flush=True)
+    return saved
+
+
+def _ensure_shots_table() -> None:
+    with db.connect() as c:
+        c.execute("""
+          CREATE TABLE IF NOT EXISTS auto_test_shots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER NOT NULL,
+            page_idx INTEGER NOT NULL,
+            path TEXT NOT NULL,
+            screenshot_file TEXT NOT NULL,
+            created_at TEXT NOT NULL
+          )""")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_shots_run ON auto_test_shots(run_id)")
+
+
 # ─────────────────────────────────────────────────────────────────────────
 # Admin endpoints
 # ─────────────────────────────────────────────────────────────────────────
 
+
+@router.get("/screenshot/{run_id}/{page_idx}")
+def admin_get_screenshot(run_id: int, page_idx: int):
+    """v1.24.233 — Serve a captured PNG screenshot file. Path-validated
+    so we never read outside SHOTS_DIR even if someone crafts a bad
+    page_idx."""
+    from fastapi.responses import FileResponse
+    _ensure_shots_table()
+    with db.connect() as c:
+        row = c.execute(
+            "SELECT path, screenshot_file FROM auto_test_shots "
+            "WHERE run_id=? AND page_idx=?", (run_id, page_idx)).fetchone()
+    if not row:
+        raise HTTPException(404, "screenshot not found")
+    target = (SHOTS_DIR / str(run_id) / row["screenshot_file"]).resolve()
+    base = SHOTS_DIR.resolve()
+    if not str(target).startswith(str(base)):
+        raise HTTPException(404, "path traversal blocked")
+    if not target.exists():
+        raise HTTPException(404, "file missing")
+    return FileResponse(str(target), media_type="image/png",
+                         headers={"X-Page-Path": row["path"]})
+
+
+@router.get("/shots/{run_id}")
+def admin_list_shots(run_id: int):
+    """List every screenshot captured for a run, with the original path."""
+    _ensure_shots_table()
+    with db.connect() as c:
+        rows = c.execute(
+            "SELECT page_idx, path, screenshot_file FROM auto_test_shots "
+            "WHERE run_id=? ORDER BY page_idx", (run_id,)).fetchall()
+    return {
+        "run_id": run_id, "count": len(rows),
+        "items": [{
+            "page_idx": r["page_idx"], "path": r["path"],
+            "url": f"/api/admin/auto-tests/screenshot/{run_id}/{r['page_idx']}",
+        } for r in rows],
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Original admin endpoints
+# ─────────────────────────────────────────────────────────────────────────
+
 @router.post("/run-now")
-def admin_run_now():
+def admin_run_now(full: bool = False, screenshots: bool = True):
     """Trigger an immediate audit scan. Returns the run summary. Also
     pushes a one-line summary to admin WhatsApp so the founder gets
-    confirmation on every manual run (mandate: 'never stop reporting')."""
-    r = run_scan(trigger="manual_admin")
+    confirmation on every manual run (mandate: 'never stop reporting').
+
+    v1.24.233 — `full=true` scans 2000+ programmatic routes instead of
+    the 136-page sample (takes 3-5 min instead of 1 min). `screenshots=
+    true` (default) captures a PNG per page via Playwright.
+    """
+    r = run_scan(trigger="manual_full" if full else "manual",
+                  full=full, capture_screenshots=screenshots)
     try:
         from . import admin_alerts as _aa
         errors = r.get("errors", 0); warnings = r.get("warnings", 0)
