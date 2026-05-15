@@ -336,12 +336,17 @@ html.hide-install-banner #servia-install-banner { display:none !important; }
         $("step-pay").style.display = "none";
       }
     } catch (e) {
+      // v1.24.234 — WhatsApp link now opens wa.me directly (was going to
+      // /contact page — founder rightly called this out). Includes the
+      // broken invoice ID in the prefilled message so support knows what
+      // to look up.
+      const waText = encodeURIComponent("Hi Servia, my payment link /pay/" + inv + " says invoice not found. Please help.");
       $("pay-summary").innerHTML =
         `<div style="background:#FEE2E2;color:#B91C1C;padding:12px;border-radius:10px;font-size:13.5px;line-height:1.55">` +
         `⚠ ${esc(e.message)}<br>` +
-        `<small>This payment link looks invalid or expired. ` +
-        `<a href='/me.html' style='color:#7F1D1D;font-weight:700'>Go to my bookings</a> · ` +
-        `<a href='/contact.html' style='color:#7F1D1D;font-weight:700'>WhatsApp us</a> for help.</small></div>`;
+        `<small>This payment link looks invalid or expired.<br>` +
+        `<a href='/me' style='color:#7F1D1D;font-weight:700'>Go to my bookings</a> · ` +
+        `<a href='https://wa.me/971523633995?text=${waText}' target='_blank' rel='noopener' style='color:#25D366;font-weight:700'>💬 WhatsApp +971 52 363 3995</a></small></div>`;
       // Hide everything below the error so the user isn't tempted to enter
       // info into a broken page
       ["step-id", "step-method", "step-pay"].forEach(id => {
