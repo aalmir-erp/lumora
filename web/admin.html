@@ -680,6 +680,22 @@
         <div class="card" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
           <h3 style="margin:0 0 6px;font-size:15px">✉️ Send test message</h3>
           <p style="font-size:13px;color:var(--muted);margin:0 0 10px">Sends to your admin number. Confirms the bridge is paired and reachable.</p>
+
+          <!-- v1.24.230 — Inline destination editor. Founder asked: "show the
+               number also to which it is going and can be changed at the
+               spot and saved so test and report both go on that number
+               onwards" — same number powers Send-test + all alerts. -->
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            <label style="font-size:11.5px;color:var(--muted);font-weight:700;white-space:nowrap">SEND TO:</label>
+            <span style="font-size:14px;font-weight:700;color:#0F766E">+</span>
+            <input id="wa-test-to" type="text" inputmode="numeric"
+                   placeholder="971XXXXXXXXX"
+                   style="flex:1;min-width:140px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-family:ui-monospace,monospace;font-size:13px">
+            <button class="btn btn-ghost" type="button" onclick="waSaveDestNumber()"
+                    style="font-size:11.5px;padding:6px 12px" title="Save as the admin/alert number for all future messages">💾 Save</button>
+          </div>
+          <div id="wa-test-dest-note" style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.4"></div>
+
           <textarea id="wa-test-text" style="width:100%;min-height:80px;border:1px solid var(--border);border-radius:8px;padding:10px;font-family:inherit" placeholder="Test message…">Test from Servia admin panel ✅</textarea>
           <button class="btn btn-primary btn-block" onclick="sendWaTest()" style="margin-top:8px">Send to admin</button>
           <div id="wa-test-result" style="font-size:12px;margin-top:8px"></div>
@@ -2928,7 +2944,7 @@ function show(tab) {
   if (tab==="analytics") loadAnalytics();
   if (tab==="autoblog")  loadAutoblog();
   if (tab==="brand")     loadBrand();
-  if (tab==="whatsapp")  { loadWA(); waLoadAdminNumber(); }
+  if (tab==="whatsapp")  { loadWA(); waLoadAdminNumber(); waPopulateDest(); }
   if (tab==="launch")    loadLaunch();
   if (tab==="aiarena")   loadAIArena();
   if (tab==="videos")    loadVideos();
@@ -5398,17 +5414,56 @@ async function loadWA() {
   } catch (e) { /* ignore */ }
 }
 
+// v1.24.230 — Test-send card now passes an explicit `to` so the
+// admin can target any number (not just the saved admin number).
 async function sendWaTest() {
   const txt = document.getElementById("wa-test-text").value.trim();
   if (!txt) return;
   const r = document.getElementById("wa-test-result");
+  const toInput = document.getElementById("wa-test-to");
+  const to = (toInput?.value || "").replace(/[^0-9]/g, "");
   r.textContent = "Sending…";
   try {
-    const res = await adm("/api/admin/whatsapp/send", {method:"POST", body:{text: txt}});
-    if (res.ok) r.innerHTML = '<span style="color:#15803D;font-weight:700">✅ Sent</span>';
+    const body = {text: txt};
+    if (to) body.to = to;
+    const res = await adm("/api/admin/whatsapp/send", {method:"POST", body});
+    if (res.ok) r.innerHTML = '<span style="color:#15803D;font-weight:700">✅ Sent to +' + escapeHtml(to || "admin") + '</span>';
     else r.innerHTML = '<span style="color:#B91C1C">❌ ' + escapeHtml(res.error||'failed') + '</span>';
     setTimeout(loadWA, 800);
   } catch (e) { r.innerHTML = '<span style="color:#B91C1C">❌ '+escapeHtml(e.message)+'</span>'; }
+}
+
+// v1.24.230 — Save the destination number AS the new admin number for
+// all future alerts (test-send + auto-alerts + summaries). Founder
+// wanted "test and report both go on that number onwards".
+async function waSaveDestNumber() {
+  const inp = document.getElementById("wa-test-to");
+  const num = (inp.value || "").trim();
+  const note = document.getElementById("wa-test-dest-note");
+  if (!num) { note.innerHTML = '<span style="color:#B91C1C">Enter a number first.</span>'; return; }
+  try {
+    const r = await adm("/api/admin/whatsapp/admin-number", {method:"POST", body:{number: num}});
+    note.innerHTML = '<span style="color:#15803D;font-weight:700">✓ Saved.</span> +' + escapeHtml(r.admin_number) + ' is now your admin number — every test send + automated alert + daily summary goes here.';
+    // Also refresh the dedicated admin-number card if it's loaded
+    if (typeof waLoadAdminNumber === "function") waLoadAdminNumber();
+  } catch (e) {
+    note.innerHTML = '<span style="color:#B91C1C">Failed: ' + escapeHtml(e.message || e) + '</span>';
+  }
+}
+
+// Populate the destination input from the saved admin number on tab load.
+async function waPopulateDest() {
+  try {
+    const r = await adm("/api/admin/whatsapp/admin-number");
+    const inp = document.getElementById("wa-test-to");
+    if (inp && !inp.value) inp.value = r.admin_number || "";
+    const note = document.getElementById("wa-test-dest-note");
+    if (r.collision) {
+      note.innerHTML = '⚠️ This number is the SAME as your paired WhatsApp. Self-sends will fall back to web push notification. To receive actual WhatsApp messages, set this to a different number.';
+    } else if (r.paired_number) {
+      note.innerHTML = `Paired account: +${escapeHtml(r.paired_number)} → will send to the number above.`;
+    }
+  } catch (e) {}
 }
 
 async function fireDailySummary() {
