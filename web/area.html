@@ -532,9 +532,17 @@ document.getElementById("hero-sub").textContent = C.sub;
 document.getElementById("stat-areas").innerHTML = `${C.areaCount}+<small>neighbourhoods covered</small>`;
 document.getElementById("reason-slots").textContent = C.slots;
 document.getElementById("cta-sub").textContent = `Book a Servia professional in ${C.name} in under 60 seconds.`;
+// v1.24.222 — Fix corrupted template literal that was sending users to a
+// 404 like servia.ae/contact.html"Hi Servia, I'd like a service in " + C.name)
+// when they tapped the green WhatsApp hero button on /area?city=*. The
+// previous line was missing the wa.me prefix + encodeURIComponent wrapper.
 document.getElementById("hero-wa").href =
-  `/contact.html"Hi Servia, I'd like a service in " + C.name)}`;
+  `https://wa.me/971523633995?text=${encodeURIComponent("Hi Servia, I'd like a service in " + C.name)}`;
+document.getElementById("hero-wa").target = "_blank";
+document.getElementById("hero-wa").rel = "noopener";
 document.getElementById("cta-wa").href = document.getElementById("hero-wa").href;
+document.getElementById("cta-wa").target = "_blank";
+document.getElementById("cta-wa").rel = "noopener";
 
 document.getElementById("sec-services-h").textContent = `Most-booked services in ${C.name}`;
 document.getElementById("sec-areas-h").textContent = `Servia covers ${C.areaCount}+ areas in ${C.name}`;
