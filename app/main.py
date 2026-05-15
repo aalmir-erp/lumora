@@ -3992,6 +3992,19 @@ def service_area_page(slug: str, area_slug: str):
         raise _HE(status_code=404, detail="service not found")
     area_info = _seo.area_by_slug(area_slug)
     if not area_info:
+        # v1.24.231 — Emirate-level fallback. Founder's auto-tester
+        # found that /services/<svc>/<emirate> URLs (e.g.
+        # /services/deep-cleaning/dubai) returned 404 because
+        # AREA_INDEX only contains neighbourhood slugs, not emirate
+        # slugs. Instead of breaking SEO and bouncing users to a
+        # 404, 301-redirect to the parent /services/<svc> page so
+        # they land somewhere useful.
+        EMIRATE_SLUGS = {"dubai", "sharjah", "ajman", "abu-dhabi",
+                          "ras-al-khaimah", "umm-al-quwain", "fujairah",
+                          "rak", "uaq"}
+        if area_slug.lower() in EMIRATE_SLUGS:
+            from fastapi.responses import RedirectResponse as _RR
+            return _RR(url=f"/services/{slug}", status_code=301)
         from fastapi import HTTPException as _HE
         raise _HE(status_code=404, detail="area not found")
     p = settings.WEB_DIR / "service.html"

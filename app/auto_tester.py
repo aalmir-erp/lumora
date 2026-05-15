@@ -235,12 +235,23 @@ def _audit_page(client, path: str) -> list[dict[str, Any]]:
                          "message": f"Slow response: {elapsed_ms}ms",
                          "detail": f"Threshold: 3000ms"})
 
-    # 3. Content-Type
+    # 3. Content-Type — only flag if we EXPECTED HTML (skip API + asset paths).
     ct = r.headers.get("content-type", "").lower()
-    if "text/html" not in ct:
+    is_asset_path = (
+        path.startswith(("/api/", "/sitemap", "/robots", "/llms",
+                          "/manifest", "/sw.js", "/.well-known"))
+        or path.endswith((".xml", ".txt", ".json", ".webmanifest", ".js",
+                           ".css", ".png", ".jpg", ".svg", ".ico"))
+    )
+    if "text/html" not in ct and not is_asset_path:
         findings.append({"severity": "warning", "category": "content_type",
                          "message": f"Not HTML: {ct}",
-                         "detail": ""})
+                         "detail": f"path={path}"})
+        return findings
+    if is_asset_path:
+        # For asset / API endpoints we only care about status code +
+        # response time, not HTML structure. Return whatever findings
+        # we've collected so far (status + speed) without HTML checks.
         return findings
 
     body = r.text
