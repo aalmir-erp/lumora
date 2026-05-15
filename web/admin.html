@@ -108,6 +108,7 @@
     <a href="#sitemap"   data-tab="sitemap">🗺 Sitemap</a>
     <a href="#twa"       data-tab="twa">📱 Mobile App / TWA</a>
     <a href="#voice"     data-tab="voice">🗣 Voice integrations</a>
+    <a href="#auto-tests" data-tab="auto-tests" style="color:#FCA5A5">🔍 Inspector bot (auto-tests)</a>
     <a href="#logs"      data-tab="logs" style="color:#FCD34D">📜 Server logs (live)</a>
     <a href="/admin-widget.html" target="_blank" style="margin-top:14px;color:#7DD3FC;border-top:1px solid #1E293B;padding-top:14px">📲 Home-screen widget ↗</a>
     <a href="/?edit=1" target="_blank" style="color:#FCD34D" title="Opens the public site with every editable text block highlighted in dashed purple. Click any block to type, then 'Save all'.">✏️ Edit pages inline ↗</a>
@@ -2725,6 +2726,67 @@ Tone: warm, direct, locally aware, no AI cliches (no em-dashes, no "delve", no "
     </div>
 
     <!-- ====== SERVER LOGS (live) v1.24.205 ====== -->
+    <!-- ====== INSPECTOR BOT (auto-tests) ====== -->
+    <div id="t-auto-tests" class="tab" style="display:none">
+      <h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        🔍 Inspector bot
+        <small style="font-size:12px;color:var(--muted);font-weight:500">
+          Walks every customer-facing page on a schedule, records findings, surfaces them here for you to triage.
+        </small>
+      </h2>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0">
+        <div style="background:#FEF2F2;border:1px solid #FECACA;padding:14px;border-radius:12px">
+          <div style="font-size:11.5px;color:#991B1B;font-weight:700">OPEN ERRORS</div>
+          <div id="at-open-errors" style="font-size:30px;font-weight:800;color:#B91C1C;line-height:1">—</div>
+        </div>
+        <div style="background:#FFFBEB;border:1px solid #FDE68A;padding:14px;border-radius:12px">
+          <div style="font-size:11.5px;color:#92400E;font-weight:700">OPEN FINDINGS</div>
+          <div id="at-open-total" style="font-size:30px;font-weight:800;color:#B45309;line-height:1">—</div>
+        </div>
+        <div style="background:#F0FDFA;border:1px solid #99F6E4;padding:14px;border-radius:12px">
+          <div style="font-size:11.5px;color:#0F766E;font-weight:700">LATEST RUN</div>
+          <div id="at-latest-when" style="font-size:13px;font-weight:700;color:#134E4A;margin-top:6px">never</div>
+          <div id="at-latest-meta" style="font-size:11px;color:#475569;margin-top:2px">—</div>
+        </div>
+        <div style="background:#F1F5F9;border:1px solid var(--border);padding:14px;border-radius:12px">
+          <div style="font-size:11.5px;color:var(--muted);font-weight:700">SCHEDULE</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-top:6px">Hourly auto-scan</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">+ on every git push</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        <button class="btn btn-primary" type="button" onclick="atRunNow()">🚀 Run scan now</button>
+        <button class="btn btn-ghost" type="button" onclick="atLoadAll()">🔄 Refresh</button>
+        <select id="at-filter-severity" onchange="atLoadFindings()"
+                style="padding:7px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <option value="">All severities</option>
+          <option value="error" selected>Errors only</option>
+          <option value="warning">Warnings</option>
+          <option value="info">Info</option>
+        </select>
+        <label style="font-size:12.5px;display:flex;gap:6px;align-items:center;color:var(--muted)">
+          <input type="checkbox" id="at-show-resolved" onchange="atLoadFindings()"> Show resolved
+        </label>
+        <span id="at-status" style="align-self:center;font-size:12.5px;color:var(--muted)"></span>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="background:#F1F5F9;padding:10px 14px;font-weight:700;font-size:13px">
+          📋 Findings <span id="at-findings-count" style="color:var(--muted);font-weight:500">(loading…)</span>
+        </div>
+        <div id="at-findings-tbl" style="max-height:560px;overflow:auto">
+          <div style="padding:24px;text-align:center;color:var(--muted)">Loading findings…</div>
+        </div>
+      </div>
+
+      <details style="margin-top:18px">
+        <summary style="cursor:pointer;font-weight:700;font-size:14px;color:var(--primary)">📊 Recent runs (last 30)</summary>
+        <div id="at-runs-tbl" style="margin-top:10px;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:auto;max-height:340px"></div>
+      </details>
+    </div>
+
     <div id="t-logs" class="tab" style="display:none">
       <h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">📜 Server logs (live)
         <small style="font-weight:400;font-size:12px;color:var(--muted)">Last ~2,000 lines · auto-refresh every 3s</small>
@@ -2863,8 +2925,116 @@ function show(tab) {
   if (tab==="demo")      loadDemoAccounts();
   if (tab==="e2e")       loadE2E();
   if (tab==="twa")       { loadTwaCreds(); loadTwaInstalls(); loadPushLog(); }
+  if (tab==="auto-tests") atLoadAll();
   if (tab==="logs")      startLogTail();
   else                   stopLogTail();
+}
+
+// v1.24.228 — Inspector bot panel
+async function atLoadAll() {
+  await Promise.all([atLoadSummary(), atLoadFindings(), atLoadRuns()]);
+}
+async function atLoadSummary() {
+  try {
+    const r = await adm("/api/admin/auto-tests/summary");
+    document.getElementById("at-open-errors").textContent = r.open_errors ?? 0;
+    document.getElementById("at-open-total").textContent = r.open_findings ?? 0;
+    if (r.latest_run) {
+      const when = new Date(r.latest_run.finished_at || r.latest_run.started_at).toLocaleString();
+      document.getElementById("at-latest-when").textContent = when;
+      document.getElementById("at-latest-meta").textContent =
+        `${r.latest_run.pages_tested||0} pages · ${r.latest_run.errors||0} errors · ${r.latest_run.warnings||0} warnings · ${r.latest_run.duration_ms||0}ms`;
+    }
+  } catch (e) { console.warn("[auto-tests] summary load:", e); }
+}
+async function atLoadFindings() {
+  const sev = document.getElementById("at-filter-severity").value;
+  const showResolved = document.getElementById("at-show-resolved").checked;
+  const params = new URLSearchParams();
+  if (sev) params.set("severity", sev);
+  params.set("resolved", showResolved ? "1" : "0");
+  params.set("limit", "200");
+  const tbl = document.getElementById("at-findings-tbl");
+  const count = document.getElementById("at-findings-count");
+  try {
+    const r = await adm("/api/admin/auto-tests/findings?" + params.toString());
+    count.textContent = `(${r.count} items)`;
+    if (!r.items.length) {
+      tbl.innerHTML = `<div style="padding:32px;text-align:center;color:#059669"><b>✓ No matching findings.</b><br><small style="color:var(--muted)">Either the filter matched nothing or all issues are fixed.</small></div>`;
+      return;
+    }
+    const sevColor = {error:"#B91C1C", warning:"#B45309", info:"#0F766E"};
+    tbl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead style="background:#F8FAFC;position:sticky;top:0">
+        <tr>
+          <th style="text-align:left;padding:7px 10px">When</th>
+          <th style="text-align:left;padding:7px 10px">Path</th>
+          <th style="text-align:left;padding:7px 10px">Category</th>
+          <th style="text-align:left;padding:7px 10px">Message</th>
+          <th style="text-align:left;padding:7px 10px">Sev</th>
+          <th style="text-align:left;padding:7px 10px"></th>
+        </tr>
+      </thead>
+      <tbody>
+      ${r.items.map(f => `<tr style="border-top:1px solid var(--border)${f.resolved?';opacity:.55':''}">
+        <td style="padding:6px 10px;white-space:nowrap;color:var(--muted)">${escapeHtml(new Date(f.created_at).toLocaleString())}</td>
+        <td style="padding:6px 10px;font-family:ui-monospace,monospace;font-size:11.5px">${escapeHtml(f.path)}</td>
+        <td style="padding:6px 10px"><span style="background:#F1F5F9;padding:2px 7px;border-radius:6px;font-size:11px">${escapeHtml(f.category)}</span></td>
+        <td style="padding:6px 10px">${escapeHtml(f.message)}${f.detail?`<details style="margin-top:3px"><summary style="cursor:pointer;font-size:11px;color:var(--muted)">detail</summary><div style="font-size:11px;color:var(--muted);margin-top:3px;word-break:break-all;max-width:500px">${escapeHtml(f.detail)}</div></details>`:''}</td>
+        <td style="padding:6px 10px"><b style="color:${sevColor[f.severity]||'#666'};text-transform:uppercase;font-size:10.5px">${f.severity}</b></td>
+        <td style="padding:6px 10px">${f.resolved?'<span style="color:#059669;font-size:11px">✓ resolved</span>':`<button class="btn btn-ghost" type="button" style="font-size:11px;padding:3px 9px" onclick="atResolve(${f.id})">✓ Resolved</button>`}</td>
+      </tr>`).join("")}
+      </tbody></table>`;
+  } catch (e) {
+    tbl.innerHTML = `<div style="padding:20px;color:#B91C1C">Failed to load: ${escapeHtml(e.message||e)}</div>`;
+  }
+}
+async function atLoadRuns() {
+  try {
+    const r = await adm("/api/admin/auto-tests/runs?limit=30");
+    const wrap = document.getElementById("at-runs-tbl");
+    if (!r.items.length) { wrap.innerHTML = `<div style="padding:20px;color:var(--muted)">No runs yet. Tap "Run scan now" to start.</div>`; return; }
+    wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead style="background:#F8FAFC;position:sticky;top:0"><tr>
+        <th style="text-align:left;padding:7px 10px">#</th>
+        <th style="text-align:left;padding:7px 10px">When</th>
+        <th style="text-align:left;padding:7px 10px">Pages</th>
+        <th style="text-align:left;padding:7px 10px">Errors</th>
+        <th style="text-align:left;padding:7px 10px">Warn</th>
+        <th style="text-align:left;padding:7px 10px">Info</th>
+        <th style="text-align:left;padding:7px 10px">Duration</th>
+        <th style="text-align:left;padding:7px 10px">Trigger</th>
+      </tr></thead>
+      <tbody>
+      ${r.items.map(run => `<tr style="border-top:1px solid var(--border)">
+        <td style="padding:6px 10px">${run.id}</td>
+        <td style="padding:6px 10px;white-space:nowrap">${escapeHtml(new Date(run.finished_at||run.started_at).toLocaleString())}</td>
+        <td style="padding:6px 10px">${run.pages_tested||0}</td>
+        <td style="padding:6px 10px;color:#B91C1C;font-weight:700">${run.errors||0}</td>
+        <td style="padding:6px 10px;color:#B45309">${run.warnings||0}</td>
+        <td style="padding:6px 10px;color:#0F766E">${run.infos||0}</td>
+        <td style="padding:6px 10px">${run.duration_ms||0}ms</td>
+        <td style="padding:6px 10px"><span style="background:#F1F5F9;padding:2px 7px;border-radius:6px;font-size:11px">${escapeHtml(run.trigger||'?')}</span></td>
+      </tr>`).join("")}
+      </tbody></table>`;
+  } catch (e) { console.warn("[auto-tests] runs:", e); }
+}
+async function atRunNow() {
+  const s = document.getElementById("at-status");
+  s.textContent = "Running scan… (typically 30-60s)"; s.style.color = "var(--muted)";
+  try {
+    const r = await adm("/api/admin/auto-tests/run-now", {method:"POST"});
+    s.innerHTML = `<span style="color:#059669">✓ Run #${r.run_id}: ${r.pages_tested} pages · ${r.errors} errors · ${r.warnings} warnings · ${r.duration_ms}ms</span>`;
+    atLoadAll();
+  } catch (e) {
+    s.innerHTML = `<span style="color:#B91C1C">✗ ${escapeHtml(e.message||e)}</span>`;
+  }
+}
+async function atResolve(findingId) {
+  try {
+    await adm(`/api/admin/auto-tests/findings/${findingId}/resolve`, {method:"POST", body:{resolved_by:"admin"}});
+    atLoadAll();
+  } catch (e) { alert("Failed: " + e.message); }
 }
 async function adm(path, opts={}) {
   try {

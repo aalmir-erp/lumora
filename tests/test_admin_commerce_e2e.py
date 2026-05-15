@@ -478,8 +478,14 @@ def test_brand_contact_placeholder_v1_24_165_169():
     assert not _is_placeholder("+971 4 567 8910")
     assert not _is_placeholder("+971 50 234 5678")
     assert not _is_placeholder("+971 5012345678")
-    # When config has only placeholders → should return ""
-    assert get_contact_whatsapp() == ""
+    # v1.24.217 — Default brand contact changed from a placeholder to the
+    # official Servia number (+971 52 363 3995), so when DB has no admin
+    # override, get_contact_whatsapp() now returns that real number, not "".
+    # The _is_placeholder() guard still works for any leftover placeholder
+    # admin entries; the assertion below verifies the new default.
+    v = get_contact_whatsapp()
+    assert v and not _is_placeholder(v), f"expected real number, got {v!r}"
+    assert "523633995" in v.replace(" ", "").replace("-", ""), f"expected +971523633995, got {v!r}"
 
 
 if __name__ == "__main__":

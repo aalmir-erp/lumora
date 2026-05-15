@@ -100,8 +100,9 @@ except Exception as e:
 # We can't easily run _autoblog_tick in test (it tries to call the LLM)
 # but we can grep app/main.py to verify the new gate logic exists.
 import app.main as _mainmod
+import app.admin as _adminmod
 import inspect as _ins
-src = _ins.getsource(_mainmod)
+src = _ins.getsource(_mainmod) + "\n" + _ins.getsource(_adminmod)
 
 t("13. Bug 12 fix: any_router_key check exists in _autoblog_tick",
   "any_router_key" in src and "AI Arena" in src,
@@ -129,8 +130,13 @@ t("18. status endpoint returns scheduler_running + post_count + ai_provider_keys
 t("19. status endpoint exposes db_warning when DB on /tmp on Railway",
   '"db_warning"' in src and "EPHEMERAL" in src)
 t("20. run-now uses background thread (proxy-timeout safe)",
+  # v1.24.228 — accepts either the direct function reference
+  # (_autoblog_tick) or the cross-module reference (_AUTOBLOG_TICK_REF)
+  # that admin.py uses; both spawn a daemon thread the same way.
   "_th.Thread(target=_autoblog_tick" in src or
-  "Thread(target=_autoblog_tick" in src)
+  "Thread(target=_autoblog_tick" in src or
+  "_th.Thread(target=_AUTOBLOG_TICK_REF" in src or
+  "Thread(target=_AUTOBLOG_TICK_REF" in src)
 
 # ─── Observability: _AUTOBLOG_LAST records each run ───────────────────
 t("21. _AUTOBLOG_LAST module-level state initialized",

@@ -178,14 +178,23 @@ r = client.get("/q/Q-NOPE99")
 t("28 /q/<bogus> → 404 (REJECTION)", r.status_code == 404)
 
 # ─── 29) Pay page honours GATE_BOOKINGS ──────────────────────────────
-from app.config import Settings as _ST
-_ST.GATE_BOOKINGS = True   # override class attr (frozen at import)
-r = client.get(f"/p/{qid_str}")
-gate_link = f'href="/gate.html?inv={qid_str}'
+# v1.24.174 changed /p/<id> from an HTML pay-landing page to a 302
+# redirect that goes DIRECTLY to /gate.html?inv=... when GATE_BOOKINGS
+# is on. Test updated to assert on the redirect Location header
+# (with follow_redirects=False) instead of looking for the link in the
+# HTML body — the body is now an empty redirect response.
+from app.config import Settings as _ST, get_settings as _gs
+_orig_gate = _ST.GATE_BOOKINGS
+_ST.GATE_BOOKINGS = True
+_gs.cache_clear()  # bust @lru_cache so the change takes effect
+r = client.get(f"/p/{qid_str}", follow_redirects=False)
+expected_target = f"/gate.html?inv={qid_str}"
+location = r.headers.get("location", "")
 t("29 /p/<id> uses /gate.html when GATE_BOOKINGS=1",
-  gate_link in r.text and "javascript:alert" not in r.text,
-  f"gate_link_present={gate_link in r.text}")
-_ST.GATE_BOOKINGS = False  # restore
+  r.status_code in (302, 303, 307, 308) and expected_target in location,
+  f"status={r.status_code} location={location!r}")
+_ST.GATE_BOOKINGS = _orig_gate
+_gs.cache_clear()
 
 # ─── 30) FAB suppression on transactional pages (visual contract) ────
 js = open("/tmp/lumora-deploy/web/install.js").read()

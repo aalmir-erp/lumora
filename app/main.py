@@ -941,6 +941,13 @@ app.include_router(portal.router)
 app.include_router(portal_v2.router)
 app.include_router(portal_v2.public_router)
 app.include_router(whatsapp.router)
+# v1.24.228 — Autonomous tester ("Inspector bot"). Walks every customer
+# page on a schedule, records findings to db, surfaces them in admin UI.
+try:
+    from . import auto_tester as _at
+    app.include_router(_at.router)
+except Exception as _e:  # noqa: BLE001
+    print(f"[auto-tester] router registration failed: {_e}", flush=True)
 app.include_router(launch.router)
 app.include_router(cart.router)
 app.include_router(ai_router.router)
@@ -5621,6 +5628,48 @@ try:
                   flush=True)
         except Exception as e:  # noqa: BLE001
             print(f"[scheduler] social-images daily failed: {e}", flush=True)
+
+    # v1.24.228 — Inspector bot. Runs full site audit every 30 min. Each
+    # finding lands in auto_test_findings table and surfaces in the
+    # admin Auto-tests tab. Always sends a WhatsApp summary (founder
+    # mandate: "testing shall never stop, I need successful or testing
+    # what is going on report in WhatsApp"). On clean scans it sends a
+    # one-line "all green" message so the founder knows the bot is alive.
+    @_scheduler.scheduled_job("interval", minutes=30, id="auto_tester_tick",
+                              max_instances=1, coalesce=True)
+    def _job_auto_tester_tick():
+        try:
+            from . import auto_tester as _at, admin_alerts as _aa
+            r = _at.run_scan(trigger="30min_cron")
+            errors = r.get("errors", 0)
+            warnings = r.get("warnings", 0)
+            infos = r.get("infos", 0)
+            pages = r.get("pages_tested", 0)
+            dur_s = max(1, r.get("duration_ms", 0) // 1000)
+            if errors > 0:
+                emoji = "🚨"
+                tag = "ERRORS FOUND"
+            elif warnings > 0:
+                emoji = "⚠️"
+                tag = "warnings"
+            else:
+                emoji = "✅"
+                tag = "all green"
+            msg = (
+                f"{emoji} Inspector bot · run #{r['run_id']} · {tag}\n"
+                f"• {pages} pages tested in {dur_s}s\n"
+                f"• {errors} errors · {warnings} warnings · {infos} info\n"
+                f"Open admin → Inspector bot tab to triage."
+            )
+            try:
+                # urgency=critical bypasses bridge outage cooldown so the
+                # founder ALWAYS hears about scan results, not just severe ones
+                _aa.notify_admin(msg, kind="auto_test_summary",
+                                 urgency="critical" if errors > 0 else "normal")
+            except Exception as _ae:
+                print(f"[scheduler] auto-tester WA notify failed: {_ae}", flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"[scheduler] auto-tester tick failed: {e}", flush=True)
 
     @app.on_event("startup")
     def _start_scheduler():

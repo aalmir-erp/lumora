@@ -213,8 +213,17 @@ def classify(text: str) -> dict[str, Any]:
         if n >= _THRESHOLDS["arabic_relationship"]:
             candidates.append(("arabic_relationship", n))
 
-    if _is_off_topic_short(t):
-        candidates.append(("off_topic_too_short", 1))
+    # v1.24.228 — off_topic_too_short DISABLED as an auto-block path.
+    # The previous version caught legitimate short first messages
+    # ("hi", "how much", "what time", etc.) and replied with the canned
+    # "tell me which service" message — but the LLM bot is designed
+    # to handle exactly those greetings properly with an intake prompt
+    # + price calculator. Blocking them at the spam layer prevented
+    # the bot from doing its actual job. Verified by test_e2e_chat,
+    # test_quote_card_e2e, test_address_card_e2e all failing with the
+    # canned reply appearing where bot output was expected.
+    # Keeping the detector function around for future telemetry but
+    # NOT firing it as a category.
 
     if not candidates:
         return {"category": None, "confidence": 0.0, "reply_en": "", "reply_ar": ""}
