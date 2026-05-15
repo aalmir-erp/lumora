@@ -658,6 +658,21 @@
             ♻️ Reset cooldown = clears the "bridge in outage cooldown" auto-skip timer.<br>
             🆘 Reset session = nukes the WhatsApp pairing and forces a fresh QR (use if the device shows linked on your phone but the bridge here says "waiting for scan").
           </div>
+
+          <!-- v1.24.230 — Admin WhatsApp number config -->
+          <div style="margin-top:14px;background:#F0FDFA;border:1px solid #99F6E4;padding:12px 14px;border-radius:10px">
+            <div style="font-weight:700;font-size:13.5px;color:#0F766E;margin-bottom:6px">📨 Admin number (receives all alerts)</div>
+            <div id="wa-admin-number-row" style="font-size:12.5px;color:#475569;margin-bottom:8px">Loading…</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <input id="wa-admin-number-input" placeholder="971XXXXXXXXX" inputmode="numeric"
+                     style="flex:1;min-width:160px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-family:ui-monospace,monospace">
+              <button class="btn btn-primary" type="button" onclick="waSaveAdminNumber()" style="font-size:12.5px;padding:7px 14px">💾 Save</button>
+            </div>
+            <div id="wa-admin-collision" style="font-size:11.5px;color:#92400E;margin-top:6px;line-height:1.5"></div>
+            <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">
+              ⚠️ If this number matches the paired number above, WhatsApp will reject sends ("No LID for user"). Use a DIFFERENT number — a colleague's, second SIM, or your business line. Alerts to your own paired number fall back to web push automatically.
+            </div>
+          </div>
           <div id="wa-diagnose" style="margin-top:12px;display:none"></div>
           <div id="wa-cooldown-result" style="margin-top:8px;font-size:12.5px"></div>
         </div>
@@ -2913,7 +2928,7 @@ function show(tab) {
   if (tab==="analytics") loadAnalytics();
   if (tab==="autoblog")  loadAutoblog();
   if (tab==="brand")     loadBrand();
-  if (tab==="whatsapp")  loadWA();
+  if (tab==="whatsapp")  { loadWA(); waLoadAdminNumber(); }
   if (tab==="launch")    loadLaunch();
   if (tab==="aiarena")   loadAIArena();
   if (tab==="videos")    loadVideos();
@@ -5247,6 +5262,36 @@ async function resetWaSession() {
     }
   } catch (e) {
     el.innerHTML = `<span style="color:#B91C1C">✗ ${escapeHtml(e.message||String(e))}</span>`;
+  }
+}
+
+// v1.24.230 — Load + save the admin WhatsApp number from db.cfg
+async function waLoadAdminNumber() {
+  try {
+    const r = await adm("/api/admin/whatsapp/admin-number");
+    const row = document.getElementById("wa-admin-number-row");
+    const inp = document.getElementById("wa-admin-number-input");
+    const col = document.getElementById("wa-admin-collision");
+    const src = r.from_db ? "(from DB)" : "(env/default)";
+    row.innerHTML = `Current: <code style="background:#fff;padding:2px 7px;border-radius:5px">+${escapeHtml(r.admin_number)}</code> <small style="color:var(--muted)">${src}</small>${r.paired_number?` · Paired: <code style="background:#fff;padding:2px 7px;border-radius:5px">+${escapeHtml(r.paired_number)}</code>`:""}`;
+    if (!inp.value) inp.value = r.admin_number || "";
+    if (r.collision) {
+      col.innerHTML = `🚨 <b>COLLISION:</b> admin_number equals paired_number. WhatsApp can't deliver self-sends — alerts will route via web push instead. Change to a different number to receive WhatsApp messages.`;
+    } else {
+      col.innerHTML = "";
+    }
+  } catch (e) { console.warn("[wa] admin-number load:", e); }
+}
+async function waSaveAdminNumber() {
+  const inp = document.getElementById("wa-admin-number-input");
+  const num = (inp.value || "").trim();
+  if (!num) { alert("Enter a number first"); return; }
+  try {
+    const r = await adm("/api/admin/whatsapp/admin-number", {method:"POST", body:{number: num}});
+    alert(`✅ Admin number saved: +${r.admin_number}`);
+    waLoadAdminNumber();
+  } catch (e) {
+    alert("Failed: " + (e.message || e));
   }
 }
 

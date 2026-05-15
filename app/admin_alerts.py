@@ -20,10 +20,21 @@ from .config import get_settings
 
 
 def _admin_number() -> str:
-    # v1.24.221 — Default to the founder's official Servia WhatsApp number
-    # so the admin test-send button works out-of-the-box (was returning
-    # bridge 400: 'to + text required' because ADMIN_WA_NUMBER env wasn't
-    # set, so `to` ended up empty when calling the bridge).
+    """Resolve the admin WhatsApp number. Priority order:
+       1. db.cfg 'admin_wa_number'  (set via admin UI — runtime editable,
+          no redeploy needed)
+       2. ADMIN_WA_NUMBER env var   (set on Railway)
+       3. Default                   (971523633995, the official number)
+
+    v1.24.230 — Added DB-first lookup so the founder can change the
+    target number from the admin UI without touching Railway env vars.
+    """
+    try:
+        from . import db as _db
+        v = (_db.cfg_get("admin_wa_number", "") or "").strip()
+        if v:
+            return v.lstrip("+").replace(" ", "").replace("-", "")
+    except Exception: pass
     return os.getenv("ADMIN_WA_NUMBER", "971523633995").strip().lstrip("+")
 
 

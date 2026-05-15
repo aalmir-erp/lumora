@@ -7,7 +7,7 @@ import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import auth_users, db, kb, quotes, tools
 from .auth import require_admin
@@ -3001,6 +3001,53 @@ def whatsapp_qr_page():
 class WaSendBody(BaseModel):
     to: str | None = None  # default: admin number
     text: str
+
+
+class _AdminNumberBody(BaseModel):
+    number: str = Field(min_length=8, max_length=20)
+
+
+@router.get("/whatsapp/admin-number")
+def whatsapp_get_admin_number():
+    """v1.24.230 — Return the currently-configured admin WhatsApp number
+    (which receives all alerts + test sends) plus the bridge's paired
+    number so the admin can see if they collide (self-send blocked)."""
+    from . import admin_alerts as _aa
+    from . import db as _db
+    paired = None
+    try:
+        from .config import get_settings as _gs
+        import httpx as _httpx
+        s = _gs()
+        if s.WA_BRIDGE_URL:
+            r = _httpx.get(s.WA_BRIDGE_URL.rstrip("/") + "/status",
+                           headers={"Authorization": f"Bearer {s.WA_BRIDGE_TOKEN}"},
+                           timeout=3)
+            if r.is_success:
+                paired = (r.json().get("paired_number") or "").lstrip("+")
+    except Exception: pass
+    return {
+        "admin_number": _aa._admin_number(),
+        "from_db": bool(_db.cfg_get("admin_wa_number", "")),
+        "paired_number": paired,
+        "collision": paired and paired.lstrip("+") == _aa._admin_number(),
+        "note": ("If admin_number == paired_number, WhatsApp will reject "
+                 "sends with 'No LID for user' because you can't message "
+                 "yourself from the same account. Set admin_number to a "
+                 "DIFFERENT number (e.g. a colleague's, or a second SIM)."),
+    }
+
+
+@router.post("/whatsapp/admin-number")
+def whatsapp_set_admin_number(body: _AdminNumberBody):
+    """v1.24.230 — Save the admin WhatsApp number to db.cfg. Effective
+    immediately (no Railway restart). Stripped of all non-digit chars."""
+    digits = "".join(ch for ch in body.number if ch.isdigit())
+    if len(digits) < 8 or len(digits) > 15:
+        raise HTTPException(400, "Number must have 8-15 digits")
+    from . import db as _db
+    _db.cfg_set("admin_wa_number", digits)
+    return {"ok": True, "admin_number": digits}
 
 
 @router.post("/whatsapp/reset-session")
