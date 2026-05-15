@@ -2871,6 +2871,15 @@ def whatsapp_diagnose():
     try:
         r = httpx.get(base + "/status", headers=auth, timeout=4)
         bridge_status = r.json() if r.is_success else None
+        # v1.24.224 — Bridge proved alive on this check → clear any stale
+        # outage cooldown so the next send doesn't get auto-skipped.
+        if r.is_success:
+            try:
+                from . import admin_alerts as _aa
+                if _aa.get_bridge_cooldown_remaining() > 0:
+                    _aa.reset_bridge_cooldown()
+                    print("[diagnose] bridge healthy — cleared stale cooldown", flush=True)
+            except Exception: pass
         add(f"Bridge HTTP {base}/status",
             r.is_success, f"{r.status_code} · {r.text[:200]}",
             "Bridge not responding. Check Railway logs for '[wa-bridge]' lines. start.sh auto-restarts it every 5s if it crashes.")
@@ -2992,6 +3001,20 @@ def whatsapp_qr_page():
 class WaSendBody(BaseModel):
     to: str | None = None  # default: admin number
     text: str
+
+
+@router.post("/whatsapp/reset-cooldown")
+def whatsapp_reset_cooldown():
+    """v1.24.224 — Manually clear the auto-degrade outage cooldown so the
+    next bridge send retries instead of being skipped. Founder reported
+    'bridge in outage cooldown (auto-skipped)' on every send button even
+    though the bridge was paired + healthy — the cooldown timer from an
+    earlier transient outage was still ticking. This endpoint resets it
+    to 0 so retries fire immediately."""
+    from . import admin_alerts
+    prev = admin_alerts.get_bridge_cooldown_remaining()
+    admin_alerts.reset_bridge_cooldown()
+    return {"ok": True, "previous_cooldown_s": prev}
 
 
 @router.post("/whatsapp/send")

@@ -56,13 +56,33 @@ def _store(kind: str, urgency: str, text: str, meta: dict | None,
 
 _BRIDGE_OUTAGE_UNTIL = 0.0   # epoch ts; if now < this, skip the bridge call
 
-def _send_via_bridge(text: str) -> tuple[bool, str | None]:
+
+def reset_bridge_cooldown() -> None:
+    """Clear the auto-degrade cooldown so the next send retries immediately.
+    Called from /api/admin/whatsapp/reset-cooldown and automatically whenever
+    a successful /status check confirms the bridge is healthy again."""
+    global _BRIDGE_OUTAGE_UNTIL
+    _BRIDGE_OUTAGE_UNTIL = 0.0
+
+
+def get_bridge_cooldown_remaining() -> int:
+    """Seconds remaining on the outage cooldown (0 if not active)."""
+    import time as _t
+    rem = int(_BRIDGE_OUTAGE_UNTIL - _t.time())
+    return max(0, rem)
+
+
+def _send_via_bridge(text: str, force: bool = False) -> tuple[bool, str | None]:
     """Send via WA bridge with graceful auto-degradation.
 
     v1.24.56 — if the bridge returns 503 (not paired), or 5xx, or times out,
     we cache that for 5 minutes and skip the call instead of blocking every
     notify_admin for 8 seconds. Web-Push remains the working channel during
     bridge outages.
+
+    v1.24.224 — `force=True` bypasses the cooldown (used by manual test sends
+    + Fire-now daily summary so explicit admin actions always retry instead
+    of being silently auto-skipped after a transient outage).
     """
     import time as _t
     global _BRIDGE_OUTAGE_UNTIL
@@ -70,8 +90,9 @@ def _send_via_bridge(text: str) -> tuple[bool, str | None]:
     if not s.WA_BRIDGE_URL:
         return False, "WA_BRIDGE_URL not configured"
     now = _t.time()
-    if now < _BRIDGE_OUTAGE_UNTIL:
-        return False, "bridge in outage cooldown (auto-skipped)"
+    if not force and now < _BRIDGE_OUTAGE_UNTIL:
+        rem = int(_BRIDGE_OUTAGE_UNTIL - now)
+        return False, f"bridge in outage cooldown (auto-skipped, {rem}s remaining)"
     try:
         import httpx
         r = httpx.post(
@@ -91,6 +112,9 @@ def _send_via_bridge(text: str) -> tuple[bool, str | None]:
             return False, f"bridge {r.status_code} (cooldown 5min): {r.text[:160]}"
         if r.status_code >= 400:
             return False, f"bridge {r.status_code}: {r.text[:200]}"
+        # Successful send → clear any prior cooldown so next call doesn't
+        # get auto-skipped because of a stale outage timestamp.
+        _BRIDGE_OUTAGE_UNTIL = 0.0
         return True, None
     except Exception as e:  # noqa: BLE001
         # Network/connection error → also cooldown
@@ -132,10 +156,20 @@ def notify_admin(text: str, *, kind: str = "general",
 
 
 def notify_admin_sync(text: str, *, kind: str = "general",
-                      urgency: str = "normal", meta: dict | None = None) -> dict:
+                      urgency: str = "normal", meta: dict | None = None,
+                      force: bool = False) -> dict:
     """Synchronous version — used by admin UI 'send test' so we can return
-    the actual delivery result."""
-    ok, err = _send_via_bridge(text)
+    the actual delivery result.
+
+    v1.24.224 — `force=True` bypasses the outage cooldown so explicit admin
+    actions (manual test send, fire-now daily summary) always actually try
+    instead of being auto-skipped after a transient bridge outage. Manual
+    test buttons default to force=True; background callers stay default
+    (False) so they respect the cooldown."""
+    # Explicit user-triggered kinds always bypass cooldown.
+    if kind in ("manual_test", "fire_now") or urgency == "critical":
+        force = True
+    ok, err = _send_via_bridge(text, force=force)
     rid = _store(kind, urgency, text, meta, ok, err)
     return {"ok": ok, "error": err, "id": rid}
 
