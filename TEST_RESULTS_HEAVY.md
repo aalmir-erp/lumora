@@ -1,8 +1,8 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 42
-- ⚠️ Warn: 2
-- ❌ Fail: 6
+- ✅ Pass: 38
+- ⚠️ Warn: 3
+- ❌ Fail: 9
 - ⏭ Skip: 1
 
 ## Items
@@ -21,17 +21,17 @@
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
 - ✅ **[T14] Footer present** — OK
-- ✅ **[T15] /install APK card** — OK
-- ✅ **[T16] /install Wear OS card** — OK
+- ❌ **[T15] /install APK card** — exception: no apk-download
+- ❌ **[T16] /install Wear OS card** — exception: no wear-download
 - ✅ **[T17] /install iOS section** — OK
 - ✅ **[T18] Search input has ss-input class** — ss-input
-- ✅ **[T19] Search trending chips load** — 16 chips
+- ⚠️ **[T19] Search trending chips load** — 0 chips
 - ✅ **[T20] Hero rotator present** — present
 - ✅ **[T21] /nfc loads** — OK
 - ✅ **[T22] /nfc 3-mode panel** — OK
 - ✅ **[T23] /nfc bot widget** — OK
 - ✅ **[T24] /nfc bulk-order section** — OK
-- ✅ **[T25] /nfc schema set** — HowTo+FAQ+Product
+- ❌ **[T25] /nfc schema set** — exception: locator.allInnerTexts: Execution context was destroyed, most likely because of a navigation
 - ✅ **[T26] /api/nfc/tag bad slug 404** — OK
 - ✅ **[T27] /t/<bad-slug> redirects** — /nfc-not-found.html?slug=zzzzbogus99
 - ✅ **[T28] /nfc vehicle recovery section** — OK
@@ -47,7 +47,7 @@
 - ❌ **[T38] /api/me/bookings authed** — exception: HTTP 401
 - ❌ **[T39] /api/nfc/my-tags authed** — exception: HTTP 401
 - ✅ **[T40] /admin.html responds** — OK
-- ✅ **[T41] /api/health responds** — v1.24.220
+- ✅ **[T41] /api/health responds** — v1.24.235
 - ✅ **[T42] /api/services >=10** — 40
 - ✅ **[T43] /api/app/latest works** — apk_v=1.24.108
 - ✅ **[T44] /api/site/social works** — OK
