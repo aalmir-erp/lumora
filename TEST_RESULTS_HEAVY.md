@@ -1,13 +1,13 @@
 # E2E Heavy Test Results
 
-- ✅ Pass: 38
+- ✅ Pass: 36
 - ⚠️ Warn: 3
-- ❌ Fail: 9
+- ❌ Fail: 11
 - ⏭ Skip: 1
 
 ## Items
 
-- ✅ **[T01] Homepage loads (desktop)** — "Servia: UAE home services in 60 sec · NFC tap-to-book · Cleaning, AC, Recovery"
+- ✅ **[T01] Homepage loads (desktop)** — ""
 - ✅ **[T02] Homepage loads (mobile)** — iPhone 12
 - ✅ **[T03] /services lists services** — 40 cards
 - ✅ **[T04] /coverage.html renders** — OK
@@ -20,7 +20,7 @@
 - ✅ **[T11] Mobile nav single-row** — Δy=-3
 - ✅ **[T12] Topbanner placeholder bg teal** — OK
 - ⏭ **[T13] Install banner single row height** — dismissed
-- ✅ **[T14] Footer present** — OK
+- ❌ **[T14] Footer present** — exception: no footer
 - ❌ **[T15] /install APK card** — exception: no apk-download
 - ❌ **[T16] /install Wear OS card** — exception: no wear-download
 - ✅ **[T17] /install iOS section** — OK
@@ -54,7 +54,7 @@
 - ✅ **[T45] /api/brand works** — OK
 - ✅ **[T46] /book renders form** — OK
 - ✅ **[T47] /book.html?service=deep_cleaning prefills** — prefilled
-- ✅ **[T48] /book.html?nfc=<bogus> graceful** — OK
+- ❌ **[T48] /book.html?nfc=<bogus> graceful** — exception: book button missing
 - ✅ **[T49] /cart.html loads** — OK
 - ⚠️ **[T50] Service worker active** — not registered
 - ❌ **[T51] Admin viewer — _e2e-shots dir is in deployed container** — exception: HTTP 404 — Dockerfile probably missed _e2e-shots/
